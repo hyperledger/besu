@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -97,12 +96,9 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
     peerTaskExecutor = mock(PeerTaskExecutor.class);
   }
 
-  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}, isPeerTaskSystemEnabled={2}")
+  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}")
   @MethodSource("parameters")
-  public void searchesAgainstNetwork(
-      final int headerRequestSize,
-      final int commonAncestorHeight,
-      final boolean isPeerTaskSystemEnabled) {
+  public void searchesAgainstNetwork(final int headerRequestSize, final int commonAncestorHeight) {
     BlockHeader commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {
       commonHeader = localBlockchain.getBlockHeader(i).get();
@@ -165,9 +161,6 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             headerRequestSize,
-            SynchronizerConfiguration.builder()
-                .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
-                .build(),
             metricsSystem);
 
     when(peerTaskExecutor.executeAgainstPeer(

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.blockchainResponder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -26,16 +26,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
@@ -89,17 +87,25 @@ public class DownloadHeadersStepTest {
   public void shouldRetrieveHeadersForCheckpointRange() {
     downloader =
         new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem());
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    final CompletableFuture<RangeHeaders> result = downloader.apply(checkpointRange);
+            protocolSchedule, ethProtocolManager.ethContext(), HEADER_REQUEST_SIZE);
 
-    peer.respond(blockchainResponder(blockchain));
+    GetHeadersFromPeerTask task1 =
+        new GetHeadersFromPeerTask(2, 8, 0, Direction.FORWARD, protocolSchedule);
+    when(peerTaskExecutor.execute(task1))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(headersFromChain(2, 6)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                Collections.emptyList()));
+    GetHeadersFromPeerTask task2 =
+        new GetHeadersFromPeerTask(7, 3, 0, Direction.FORWARD, protocolSchedule);
+    when(peerTaskExecutor.execute(task2))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(headersFromChain(7, 9)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                Collections.emptyList()));
+    final CompletableFuture<RangeHeaders> result = downloader.apply(checkpointRange);
 
     // The start of the range should have been imported as part of the previous batch hence 2-10.
     assertThat(result)
@@ -110,22 +116,11 @@ public class DownloadHeadersStepTest {
   public void shouldCancelRequestToPeerWhenReturnedFutureIsCancelled() {
     downloader =
         new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem());
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+            protocolSchedule, ethProtocolManager.ethContext(), HEADER_REQUEST_SIZE);
 
     final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
 
     result.cancel(true);
-
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-
-    peer.respond(blockchainResponder(blockchain));
 
     assertThat(EthProtocolManagerTestUtil.getPendingFuturesCount(ethProtocolManager)).isZero();
   }
@@ -134,13 +129,7 @@ public class DownloadHeadersStepTest {
   public void shouldReturnOnlyEndHeaderWhenCheckpointRangeHasLengthOfOne() {
     downloader =
         new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem());
+            protocolSchedule, ethProtocolManager.ethContext(), HEADER_REQUEST_SIZE);
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(
             syncTarget, blockchain.getBlockHeader(3).get(), blockchain.getBlockHeader(4).get());
@@ -155,64 +144,18 @@ public class DownloadHeadersStepTest {
   public void shouldGetRemainingHeadersWhenRangeHasNoEnd() {
     downloader =
         new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem());
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+            protocolSchedule, ethProtocolManager.ethContext(), HEADER_REQUEST_SIZE);
     final SyncTargetRange checkpointRange =
-        new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
-
-    final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
-
-    peer.respond(blockchainResponder(blockchain));
-
-    assertThat(result)
-        .isCompletedWithValue(new RangeHeaders(checkpointRange, headersFromChain(4, 19)));
-  }
-
-  @Test
-  public void shouldGetRemainingHeadersWhenRangeHasNoEndUsingPeerTaskSystem() {
-    downloader =
-        new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem());
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    final SyncTargetRange checkpointRange =
-        new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
+        new SyncTargetRange(null, blockchain.getBlockHeader(3).get());
 
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
-        .thenAnswer(
-            (invocationOnMock) -> {
-              GetHeadersFromPeerTask task =
-                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
-              List<BlockHeader> result = new ArrayList<>();
-              for (long i = task.getBlockNumber() + 1; i < task.getMaxHeaders(); i++) {
-                Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(i);
-                if (blockHeader.isPresent()) {
-                  result.add(blockHeader.get());
-                } else {
-                  // we have reached the end of the blockchain, do nothing and break out of the loop
-                  break;
-                }
-              }
-              return new PeerTaskExecutorResult<List<BlockHeader>>(
-                  Optional.of(result),
-                  PeerTaskExecutorResponseCode.SUCCESS,
-                  Collections.emptyList());
-            });
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(headersFromChain(4, 19)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                Collections.emptyList()));
 
     final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
-
-    peer.respond(blockchainResponder(blockchain));
 
     assertThat(result)
         .isCompletedWithValue(new RangeHeaders(checkpointRange, headersFromChain(4, 19)));

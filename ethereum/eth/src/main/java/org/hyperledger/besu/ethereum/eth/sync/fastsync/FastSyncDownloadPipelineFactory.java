@@ -123,8 +123,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -132,14 +131,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
     final DownloadHeadersStep downloadHeadersStep =
-        new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            detachedValidationPolicy,
-            syncConfig,
-            headerRequestSize,
-            metricsSystem);
+        new DownloadHeadersStep(protocolSchedule, ethContext, headerRequestSize);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
@@ -149,9 +141,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             getCheckpointBlockNumber(syncState),
             protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadSyncBodiesStep downloadSyncBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
+        new DownloadSyncBodiesStep(protocolSchedule, ethContext);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+        new DownloadSyncReceiptsStep(protocolSchedule, ethContext);
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolSchedule,

@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
@@ -57,7 +56,6 @@ public class ChainHeadTrackerTest {
   private RespondingEthPeer respondingPeer;
 
   private PeerTaskExecutor peerTaskExecutor;
-  private SynchronizerConfiguration synchronizerConfiguration;
 
   private ChainHeadTracker chainHeadTracker;
 
@@ -104,41 +102,12 @@ public class ChainHeadTrackerTest {
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
-    synchronizerConfiguration =
-        SynchronizerConfiguration.builder()
-            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
-            .build();
-    chainHeadTracker =
-        new ChainHeadTracker(
-            ethProtocolManager.ethContext(),
-            protocolSchedule,
-            synchronizerConfiguration,
-            new NoOpMetricsSystem());
+    chainHeadTracker = new ChainHeadTracker(ethProtocolManager.ethContext(), protocolSchedule);
   }
 
   @ParameterizedTest
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
-  public void shouldRequestHeaderChainHeadWhenNewPeerConnects(
-      final DataStorageFormat storageFormat) {
-    setup(storageFormat, false);
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(),
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
-
-    Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
-
-    respondingPeer.respond(responder);
-
-    Assertions.assertThat(chainHeadState().getEstimatedHeight())
-        .isEqualTo(blockchain.getChainHeadBlockNumber());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(ChainHeadTrackerTestArguments.class)
-  public void shouldRequestHeaderChainHeadWhenNewPeerConnectsUsingPeerTaskSystem(
+  public void shouldRequestHeaderChainHeadWhenNewPeerConnectsUsing(
       final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
@@ -152,26 +121,6 @@ public class ChainHeadTrackerTest {
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
   public void shouldIgnoreHeadersIfChainHeadHasAlreadyBeenUpdatedWhileWaiting(
       final DataStorageFormat storageFormat) {
-    setup(storageFormat, false);
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(),
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
-
-    // Change the hash of the current known head
-    respondingPeer.getEthPeer().chainState().statusReceived(Hash.EMPTY_TRIE_HASH, Difficulty.ONE);
-
-    respondingPeer.respond(responder);
-
-    Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(ChainHeadTrackerTestArguments.class)
-  public void shouldIgnoreHeadersIfChainHeadHasAlreadyBeenUpdatedWhileWaitingUsingPeerTaskSystem(
-      final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 
@@ -184,26 +133,6 @@ public class ChainHeadTrackerTest {
   @ParameterizedTest
   @ArgumentsSource(ChainHeadTrackerTestArguments.class)
   public void shouldCheckTrialingPeerLimits(final DataStorageFormat storageFormat) {
-    setup(storageFormat, false);
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchainSetupUtil.getBlockchain(),
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getTransactionPool());
-    chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
-
-    Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
-
-    respondingPeer.respond(responder);
-
-    Assertions.assertThat(chainHeadState().getEstimatedHeight())
-        .isEqualTo(blockchain.getChainHeadBlockNumber());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(ChainHeadTrackerTestArguments.class)
-  public void shouldCheckTrialingPeerLimitsUsingPeerTaskSystem(
-      final DataStorageFormat storageFormat) {
     setup(storageFormat, true);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
 

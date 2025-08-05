@@ -240,7 +240,6 @@ public class CheckPointSyncChainDownloaderTest {
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(5)
             .downloaderHeadersRequestSize(3)
-            .isPeerTaskSystemEnabled(false)
             .build();
     final long pivotBlockNumber = 25;
     ethContext
@@ -273,78 +272,7 @@ public class CheckPointSyncChainDownloaderTest {
         RespondingEthPeer.blockchainResponder(otherBlockchain);
 
     final long pivotBlockNumber = 10;
-    final SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build();
-    ethContext
-        .getEthPeers()
-        .streamAvailablePeers()
-        .forEach(
-            ethPeer -> {
-              ethPeer.setCheckpointHeader(
-                  otherBlockchainSetup.getBlocks().get((int) checkpoint.blockNumber()).getHeader());
-            });
-    final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
-    final CompletableFuture<Void> result = downloader.start();
-
-    peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
-
-    assertThat(result).isCompleted();
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
-    assertThat(localBlockchain.getChainHeadHeader())
-        .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
-  public void shouldSyncToPivotBlockInMultipleSegmentsWithPeerTaskSystem(
-      final DataStorageFormat storageFormat) {
-    setup(storageFormat);
-
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(otherBlockchain);
-
-    final SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder()
-            .downloaderChainSegmentSize(5)
-            .downloaderHeadersRequestSize(3)
-            .isPeerTaskSystemEnabled(true)
-            .build();
-    final long pivotBlockNumber = 25;
-    ethContext
-        .getEthPeers()
-        .streamAvailablePeers()
-        .forEach(
-            ethPeer -> {
-              ethPeer.setCheckpointHeader(
-                  otherBlockchainSetup.getBlocks().get((int) checkpoint.blockNumber()).getHeader());
-            });
-    final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
-    final CompletableFuture<Void> result = downloader.start();
-
-    peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
-
-    assertThat(result).isCompleted();
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
-    assertThat(localBlockchain.getChainHeadHeader())
-        .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(CheckPointSyncChainDownloaderTestArguments.class)
-  public void shouldSyncToPivotBlockInSingleSegmentWithPeerTaskSystem(
-      final DataStorageFormat storageFormat) {
-    setup(storageFormat);
-
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(otherBlockchain);
-
-    final long pivotBlockNumber = 10;
-    final SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build();
+    final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
     ethContext
         .getEthPeers()
         .streamAvailablePeers()

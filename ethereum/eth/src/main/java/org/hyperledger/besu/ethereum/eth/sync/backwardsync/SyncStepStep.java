@@ -50,7 +50,6 @@ public class SyncStepStep {
         RetryingGetBlockFromPeersTask.create(
             context.getProtocolSchedule(),
             context.getEthContext(),
-            context.getSynchronizerConfiguration(),
             context.getMetricsSystem(),
             context.getEthContext().getEthPeers().peerCount(),
             Optional.of(targetHash),

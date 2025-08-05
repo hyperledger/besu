@@ -88,7 +88,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -96,18 +96,11 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig.getDownloaderCheckpointRetries(),
             fullSyncTerminationCondition);
     final DownloadHeadersStep downloadHeadersStep =
-        new DownloadHeadersStep(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            detachedValidationPolicy,
-            syncConfig,
-            headerRequestSize,
-            metricsSystem);
+        new DownloadHeadersStep(protocolSchedule, ethContext, headerRequestSize);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+        new DownloadBodiesStep(protocolSchedule, ethContext);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep importBlockStep =
         new FullImportBlockStep(

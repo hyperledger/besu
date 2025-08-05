@@ -31,17 +31,9 @@ public class ClassicForkPeerValidator extends AbstractPeerBlockValidator {
   ClassicForkPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
-    super(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        daoBlockNumber,
-        chainHeightEstimationBuffer);
+    super(protocolSchedule, peerTaskExecutor, daoBlockNumber, chainHeightEstimationBuffer);
   }
 
   public ClassicForkPeerValidator(
@@ -51,12 +43,7 @@ public class ClassicForkPeerValidator extends AbstractPeerBlockValidator {
       final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
     this(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        daoBlockNumber,
-        DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+        protocolSchedule, peerTaskExecutor, daoBlockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override

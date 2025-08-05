@@ -22,10 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,33 +43,20 @@ public abstract class AbstractDownloadReceiptsStep<B, BWR>
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final SynchronizerConfiguration synchronizerConfiguration;
-  private final MetricsSystem metricsSystem;
 
   public AbstractDownloadReceiptsStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
+      final ProtocolSchedule protocolSchedule, final EthContext ethContext) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.synchronizerConfiguration = synchronizerConfiguration;
-    this.metricsSystem = metricsSystem;
   }
 
   @Override
   public CompletableFuture<List<BWR>> apply(final List<B> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(this::getBlockHeader).collect(toList());
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      return ethContext
-          .getScheduler()
-          .scheduleServiceTask(() -> getReceiptsWithPeerTaskSystem(headers))
-          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
-    } else {
-      return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
-          .run()
-          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
-    }
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(() -> getReceiptsWithPeerTaskSystem(headers))
+        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
   }
 
   abstract BlockHeader getBlockHeader(final B b);

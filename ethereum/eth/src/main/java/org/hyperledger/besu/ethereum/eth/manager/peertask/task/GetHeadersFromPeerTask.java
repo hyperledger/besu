@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetHeadersFromPeerTask.class);
+
   private final long blockNumber;
   private final Hash blockHash;
   private final int maxHeaders;
@@ -265,5 +267,32 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       prevBlockHeader = header;
     }
     return true;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    GetHeadersFromPeerTask that = (GetHeadersFromPeerTask) o;
+    return blockNumber == that.blockNumber
+        && maxHeaders == that.maxHeaders
+        && skip == that.skip
+        && maximumRetriesAgainstDifferentPeers == that.maximumRetriesAgainstDifferentPeers
+        && requiredBlockchainHeight == that.requiredBlockchainHeight
+        && Objects.equals(blockHash, that.blockHash)
+        && direction == that.direction
+        && Objects.equals(protocolSchedule, that.protocolSchedule);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        blockNumber,
+        blockHash,
+        maxHeaders,
+        skip,
+        direction,
+        maximumRetriesAgainstDifferentPeers,
+        protocolSchedule,
+        requiredBlockchainHeight);
   }
 }

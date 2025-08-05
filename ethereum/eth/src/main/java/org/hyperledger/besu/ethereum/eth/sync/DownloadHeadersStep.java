@@ -17,19 +17,15 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
 
 import java.util.ArrayList;
@@ -44,28 +40,16 @@ public class DownloadHeadersStep
     implements Function<SyncTargetRange, CompletableFuture<RangeHeaders>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadHeadersStep.class);
   private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final ValidationPolicy validationPolicy;
-  private final SynchronizerConfiguration synchronizerConfiguration;
   private final int headerRequestSize;
-  private final MetricsSystem metricsSystem;
 
   public DownloadHeadersStep(
       final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final ValidationPolicy validationPolicy,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final int headerRequestSize,
-      final MetricsSystem metricsSystem) {
+      final int headerRequestSize) {
     this.protocolSchedule = protocolSchedule;
-    this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.validationPolicy = validationPolicy;
-    this.synchronizerConfiguration = synchronizerConfiguration;
     this.headerRequestSize = headerRequestSize;
-    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -79,60 +63,54 @@ public class DownloadHeadersStep
 
   private CompletableFuture<List<BlockHeader>> downloadHeaders(final SyncTargetRange range) {
     if (range.hasEnd()) {
-      LOG.debug(
-          "Downloading headers for range {} to {}",
-          range.getStart().getNumber(),
-          range.getEnd().getNumber());
       if (range.getSegmentLengthExclusive() == 0) {
         // There are no extra headers to download.
         return completedFuture(emptyList());
       }
-      return DownloadHeaderSequenceTask.endingAtHeader(
-              protocolSchedule,
-              protocolContext,
-              ethContext,
-              synchronizerConfiguration,
-              range.getEnd(),
-              range.getSegmentLengthExclusive(),
-              validationPolicy,
-              metricsSystem)
-          .run();
+      LOG.debug(
+          "Downloading headers for range {} to {}",
+          range.getStart().getNumber(),
+          range.getEnd().getNumber());
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
-      if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-        return ethContext
-            .getScheduler()
-            .scheduleServiceTask(
-                () -> {
-                  GetHeadersFromPeerTask task =
-                      new GetHeadersFromPeerTask(
-                          range.getStart().getHash(),
-                          range.getStart().getNumber(),
-                          headerRequestSize,
-                          0,
-                          GetHeadersFromPeerTask.Direction.FORWARD,
-                          protocolSchedule);
-                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                      ethContext.getPeerTaskExecutor().execute(task);
-                  if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                      || taskResult.result().isEmpty()) {
-                    return CompletableFuture.failedFuture(
-                        new RuntimeException("Unable to download headers for range " + range));
-                  }
-                  return CompletableFuture.completedFuture(taskResult.result().get());
-                });
-      } else {
-        return GetHeadersFromPeerByHashTask.startingAtHash(
-                protocolSchedule,
-                ethContext,
-                range.getStart().getHash(),
-                range.getStart().getNumber(),
-                headerRequestSize,
-                metricsSystem)
-            .run()
-            .thenApply(PeerTaskResult::getResult);
-      }
     }
+
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              List<BlockHeader> retrievedHeaders = new ArrayList<>();
+              long blockNumber = range.getStart().getNumber() + 1;
+              int requestSize =
+                  range.hasEnd()
+                      ? Math.toIntExact(
+                          Math.min(headerRequestSize, range.getEnd().getNumber() - blockNumber))
+                      : headerRequestSize;
+              while (requestSize > 0) {
+                GetHeadersFromPeerTask task =
+                    new GetHeadersFromPeerTask(
+                        blockNumber, requestSize, 0, Direction.FORWARD, protocolSchedule);
+                PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                    ethContext.getPeerTaskExecutor().execute(task);
+
+                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  return CompletableFuture.failedFuture(
+                      new RuntimeException("Unable to download headers for range " + range));
+                } else {
+                  retrievedHeaders.addAll(taskResult.result().get());
+                  if (!range.hasEnd()) {
+                    break;
+                  }
+                  blockNumber = retrievedHeaders.getLast().getNumber() + 1;
+                  requestSize =
+                      Math.toIntExact(
+                          Math.min(headerRequestSize, range.getEnd().getNumber() - blockNumber));
+                }
+              }
+
+              return CompletableFuture.completedFuture(retrievedHeaders);
+            });
   }
 
   private RangeHeaders processHeaders(
@@ -143,7 +121,7 @@ public class DownloadHeadersStep
       return new RangeHeaders(checkpointRange, headersToImport);
     } else {
       List<BlockHeader> headersToImport = headers;
-      if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
+      if (!headers.isEmpty() && headers.getFirst().equals(checkpointRange.getStart())) {
         headersToImport = headers.subList(1, headers.size());
       }
       return new RangeHeaders(checkpointRange, headersToImport);

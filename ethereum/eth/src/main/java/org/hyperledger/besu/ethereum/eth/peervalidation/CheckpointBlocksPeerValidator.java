@@ -27,19 +27,10 @@ public class CheckpointBlocksPeerValidator extends RequiredBlocksPeerValidator {
   public CheckpointBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash,
       final long chainHeightEstimationBuffer) {
-    super(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        blockNumber,
-        hash,
-        chainHeightEstimationBuffer);
+    super(protocolSchedule, peerTaskExecutor, blockNumber, hash, chainHeightEstimationBuffer);
   }
 
   public CheckpointBlocksPeerValidator(
@@ -52,8 +43,6 @@ public class CheckpointBlocksPeerValidator extends RequiredBlocksPeerValidator {
     this(
         protocolSchedule,
         peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
         blockNumber,
         hash,
         DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);

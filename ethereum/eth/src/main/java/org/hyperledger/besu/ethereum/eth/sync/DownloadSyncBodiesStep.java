@@ -20,9 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteSyncBlocksTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,31 +32,18 @@ public class DownloadSyncBodiesStep
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
-  private final SynchronizerConfiguration synchronizerConfiguration;
 
   public DownloadSyncBodiesStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final MetricsSystem metricsSystem,
-      final SynchronizerConfiguration syncConfig) {
+      final ProtocolSchedule protocolSchedule, final EthContext ethContext) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
-    synchronizerConfiguration = syncConfig;
   }
 
   @Override
   public CompletableFuture<List<SyncBlock>> apply(final List<BlockHeader> blockHeaders) {
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      return ethContext
-          .getScheduler()
-          .scheduleServiceTask(() -> getSyncBodiesWithPeerTaskSystem(blockHeaders));
-    } else {
-      return CompleteSyncBlocksTask.forHeaders(
-              protocolSchedule, ethContext, blockHeaders, metricsSystem)
-          .run();
-    }
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(() -> getSyncBodiesWithPeerTaskSystem(blockHeaders));
   }
 
   private CompletableFuture<List<SyncBlock>> getSyncBodiesWithPeerTaskSystem(

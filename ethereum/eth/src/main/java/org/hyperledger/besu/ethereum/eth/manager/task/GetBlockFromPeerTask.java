@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -41,7 +40,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LoggerFactory.getLogger(GetBlockFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
-  private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
@@ -49,12 +47,10 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   protected GetBlockFromPeerTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
-    this.synchronizerConfiguration = synchronizerConfiguration;
     this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
     this.protocolSchedule = protocolSchedule;
@@ -64,12 +60,10 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   public static GetBlockFromPeerTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
-    return new GetBlockFromPeerTask(
-        protocolSchedule, ethContext, synchronizerConfiguration, hash, blockNumber, metricsSystem);
+    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
   }
 
   @Override
@@ -79,40 +73,14 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         "Downloading block {} from peer {}.",
         blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                downloadHeaderUsingPeerTaskSystem()
-                    .thenCompose(this::completeBlock)
-                    .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
-              });
-    } else {
-      downloadHeader()
-          .thenCompose(
-              (peerTaskResult) -> CompletableFuture.completedFuture(peerTaskResult.getResult()))
-          .thenCompose(this::completeBlock)
-          .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
-    }
-  }
-
-  private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
-    return executeSubTask(
-        () -> {
-          final AbstractGetHeadersFromPeerTask task;
-          task =
-              hash.map(
-                      value ->
-                          GetHeadersFromPeerByHashTask.forSingleHash(
-                              protocolSchedule, ethContext, value, blockNumber, metricsSystem))
-                  .orElseGet(
-                      () ->
-                          GetHeadersFromPeerByNumberTask.forSingleNumber(
-                              protocolSchedule, ethContext, blockNumber, metricsSystem));
-          assignedPeer.ifPresent(task::assignPeer);
-          return task.run();
-        });
+    ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              downloadHeaderUsingPeerTaskSystem()
+                  .thenCompose(this::completeBlock)
+                  .whenComplete((r, t) -> completeTask(r, t, blockIdentifier));
+            });
   }
 
   private CompletableFuture<List<BlockHeader>> downloadHeaderUsingPeerTaskSystem() {

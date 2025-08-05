@@ -24,16 +24,12 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractEthTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.util.BlockchainUtil;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.OptionalInt;
-import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -52,8 +48,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private final ProtocolContext protocolContext;
   private final EthPeer peer;
   private final int headerRequestSize;
-  private final SynchronizerConfiguration synchronizerConfiguration;
-  private final MetricsSystem metricsSystem;
 
   private long maximumPossibleCommonAncestorNumber;
   private long minimumPossibleCommonAncestorNumber;
@@ -66,7 +60,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
-      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
     this.protocolSchedule = protocolSchedule;
@@ -74,8 +67,6 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.protocolContext = protocolContext;
     this.peer = peer;
     this.headerRequestSize = headerRequestSize;
-    this.synchronizerConfiguration = synchronizerConfiguration;
-    this.metricsSystem = metricsSystem;
 
     maximumPossibleCommonAncestorNumber =
         Math.min(
@@ -92,16 +83,9 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
-      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem) {
     return new DetermineCommonAncestorTask(
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        peer,
-        headerRequestSize,
-        synchronizerConfiguration,
-        metricsSystem);
+        protocolSchedule, protocolContext, ethContext, peer, headerRequestSize, metricsSystem);
   }
 
   @Override
@@ -117,75 +101,33 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       return;
     }
 
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                do {
-                  PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                      requestHeadersUsingPeerTaskSystem();
-                  if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                    result.completeExceptionally(new PeerDisconnectedException(peer));
-                    continue;
-                  } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                      || taskResult.result().isEmpty()) {
-                    result.completeExceptionally(
-                        new RuntimeException(
-                            "Peer failed to successfully return requested block headers"));
-                    continue;
-                  }
-                  taskResult.ethPeers().stream()
-                      .findAny()
-                      .ifPresent((unused) -> taskResult.result().get().getFirst());
-                  processHeaders(taskResult.result().get());
-                  if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
-                    // Bingo, we found our common ancestor.
-                    result.complete(commonAncestorCandidate);
-                  } else if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
-                      && !result.isDone()) {
-                    result.completeExceptionally(new IllegalStateException("No common ancestor."));
-                  }
-                } while (!result.isDone());
-              });
-
-    } else {
-      requestHeaders()
-          .thenApply(AbstractPeerTask.PeerTaskResult::getResult)
-          .thenCompose(this::processHeaders)
-          .whenComplete(
-              (peerResult, error) -> {
-                if (error != null) {
-                  result.completeExceptionally(error);
-                } else if (!result.isDone()) {
-                  executeTaskTimed();
+    ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              do {
+                PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                    requestHeadersUsingPeerTaskSystem();
+                if (taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                  result.completeExceptionally(new PeerDisconnectedException(peer));
+                  continue;
+                } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  result.completeExceptionally(
+                      new RuntimeException(
+                          "Peer failed to successfully return requested block headers"));
+                  continue;
                 }
-              });
-    }
-  }
-
-  @VisibleForTesting
-  CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> requestHeaders() {
-    final long range = maximumPossibleCommonAncestorNumber - minimumPossibleCommonAncestorNumber;
-    final int skipInterval = initialQuery ? 0 : calculateSkipInterval(range, headerRequestSize);
-    final int count =
-        initialQuery ? headerRequestSize : calculateCount((double) range, skipInterval);
-    LOG.debug(
-        "Searching for common ancestor with {} between {} and {}",
-        peer,
-        minimumPossibleCommonAncestorNumber,
-        maximumPossibleCommonAncestorNumber);
-    return executeSubTask(
-        () ->
-            GetHeadersFromPeerByNumberTask.endingAtNumber(
-                    protocolSchedule,
-                    ethContext,
-                    maximumPossibleCommonAncestorNumber,
-                    count,
-                    skipInterval,
-                    metricsSystem)
-                .assignPeer(peer)
-                .run());
+                processHeaders(taskResult.result().get());
+                if (maximumPossibleCommonAncestorNumber == minimumPossibleCommonAncestorNumber) {
+                  // Bingo, we found our common ancestor.
+                  result.complete(commonAncestorCandidate);
+                } else if (maximumPossibleCommonAncestorNumber < BlockHeader.GENESIS_BLOCK_NUMBER
+                    && !result.isDone()) {
+                  result.completeExceptionally(new IllegalStateException("No common ancestor."));
+                }
+              } while (!result.isDone());
+            });
   }
 
   PeerTaskExecutorResult<List<BlockHeader>> requestHeadersUsingPeerTaskSystem() {
@@ -223,11 +165,11 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     return Math.toIntExact((long) Math.ceil(range / (skipInterval + 1)) + 1);
   }
 
-  private CompletableFuture<Void> processHeaders(final List<BlockHeader> headers) {
+  private void processHeaders(final List<BlockHeader> headers) {
     initialQuery = false;
     if (headers.isEmpty()) {
       // Nothing to do
-      return CompletableFuture.completedFuture(null);
+      return;
     }
 
     final OptionalInt maybeAncestorNumber =
@@ -236,7 +178,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     // Means the insertion point is in the next header request.
     if (!maybeAncestorNumber.isPresent()) {
       maximumPossibleCommonAncestorNumber = headers.get(headers.size() - 1).getNumber() - 1L;
-      return CompletableFuture.completedFuture(null);
+      return;
     }
     final int ancestorNumber = maybeAncestorNumber.getAsInt();
     commonAncestorCandidate = headers.get(ancestorNumber);
@@ -245,7 +187,5 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       maximumPossibleCommonAncestorNumber = headers.get(ancestorNumber - 1).getNumber() - 1L;
     }
     minimumPossibleCommonAncestorNumber = headers.get(ancestorNumber).getNumber();
-
-    return CompletableFuture.completedFuture(null);
   }
 }
