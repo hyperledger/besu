@@ -32,6 +32,11 @@ public class DebugTracerOptions {
     return new DebugTracerOptions();
   }
 
+  /**
+   * Enables additional debug tracers such as callTracer and flatCallTracer.
+   *
+   * @param enableExtraDebugTracers When true, enables the extra debug tracers
+   */
   @CommandLine.Option(
       names = {"--Xenable-extra-debug-tracers"},
       description =
