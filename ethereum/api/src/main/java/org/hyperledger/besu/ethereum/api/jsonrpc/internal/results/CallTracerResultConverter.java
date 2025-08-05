@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -30,12 +31,14 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class CallTracerResultConverter {
   public static CallTracerResult convert(final TransactionTrace transactionTrace) {
-    if (transactionTrace == null) {
-      throw new IllegalArgumentException("TransactionTrace cannot be null");
-    }
-    if (transactionTrace.getTransaction() == null || transactionTrace.getResult() == null) {
-      throw new IllegalArgumentException("TransactionTrace must have valid transaction and result");
-    }
+    checkNotNull(
+        transactionTrace, "CallTracerResultConverter requires a non-null TransactionTrace");
+    checkNotNull(
+        transactionTrace.getTransaction(),
+        "CallTracerResultConverter requires non-null Transaction");
+    checkNotNull(
+        transactionTrace.getResult(), "CallTracerResultConverter requires non-null Result");
+
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
       return createRootCallFromTransaction(transactionTrace);
     }
@@ -397,14 +400,7 @@ public class CallTracerResultConverter {
   }
 
   /** Helper class to track call information during trace processing. */
-  private static class CallInfo {
-    final CallTracerResult.Builder builder;
-    final TraceFrame entryFrame;
-
-    CallInfo(final CallTracerResult.Builder builder, final TraceFrame entryFrame) {
-      this.builder = builder;
-      this.entryFrame = entryFrame;
-    }
+  private record CallInfo(CallTracerResult.Builder builder, TraceFrame entryFrame) {
 
     void incGasUsed(final long gas) {
       long currentGasUsed = builder.getGasUsed().longValueExact();
