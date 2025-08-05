@@ -16,45 +16,53 @@ package org.hyperledger.besu.ethereum.eth.peervalidation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
-import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public abstract class AbstractPeerBlockValidatorTest {
 
-  abstract AbstractPeerBlockValidator createValidator(long blockNumber, long buffer);
+  abstract AbstractPeerBlockValidator createValidator(
+      long blockNumber, long buffer, PeerTaskExecutor peerTaskExecutor);
 
   @Test
   public void validatePeer_unresponsivePeer() {
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-            .setEthScheduler(
-                new DeterministicEthScheduler(
-                    DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT))
+            .setEthScheduler(new DeterministicEthScheduler())
             .build();
     final long blockNumber = 500;
 
-    final PeerValidator validator = createValidator(blockNumber, 0);
+    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+
+    final PeerValidator validator = createValidator(blockNumber, 0, peerTaskExecutor);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.TIMEOUT,
+                List.of(peer.getEthPeer())));
 
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
@@ -62,40 +70,6 @@ public abstract class AbstractPeerBlockValidatorTest {
     // Request should timeout immediately
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
-  }
-
-  @Test
-  public void validatePeer_requestBlockFromPeerBeingTested() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
-    final BlockDataGenerator gen = new BlockDataGenerator(1);
-    final long blockNumber = 500;
-    final Block block = gen.block(BlockOptions.create().setBlockNumber(blockNumber));
-
-    final PeerValidator validator = createValidator(blockNumber, 0);
-
-    final int peerCount = 24;
-    final List<RespondingEthPeer> otherPeers =
-        Stream.generate(
-                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber))
-            .limit(peerCount)
-            .collect(Collectors.toList());
-    final RespondingEthPeer targetPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
-
-    final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
-
-    assertThat(result).isNotDone();
-
-    // Other peers should not receive request for target block
-    for (final RespondingEthPeer otherPeer : otherPeers) {
-      final AtomicBoolean blockRequestedForOtherPeer = respondToBlockRequest(otherPeer, block);
-      assertThat(blockRequestedForOtherPeer).isFalse();
-    }
-
-    // Target peer should receive request for target block
-    final AtomicBoolean blockRequested = respondToBlockRequest(targetPeer, block);
-    assertThat(blockRequested).isTrue();
   }
 
   @Test
@@ -110,7 +84,9 @@ public abstract class AbstractPeerBlockValidatorTest {
     final long blockNumber = 500;
     final long buffer = 10;
 
-    final PeerValidator validator = createValidator(blockNumber, buffer);
+    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+
+    final PeerValidator validator = createValidator(blockNumber, buffer, peerTaskExecutor);
     final EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 
     peer.chainState().update(gen.hash(), blockNumber - 10);
@@ -127,31 +103,5 @@ public abstract class AbstractPeerBlockValidatorTest {
 
     peer.chainState().update(gen.hash(), blockNumber + buffer + 10);
     assertThat(validator.canBeValidated(peer)).isTrue();
-  }
-
-  AtomicBoolean respondToBlockRequest(final RespondingEthPeer peer, final Block block) {
-    final AtomicBoolean blockRequested = new AtomicBoolean(false);
-
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.targetedResponder(
-            (cap, msg) -> {
-              if (msg.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
-                return false;
-              }
-              final GetBlockHeadersMessage headersRequest = GetBlockHeadersMessage.readFrom(msg);
-              final boolean isTargetedBlockRequest =
-                  headersRequest.blockNumber().isPresent()
-                      && headersRequest.blockNumber().getAsLong() == block.getHeader().getNumber();
-              if (isTargetedBlockRequest) {
-                blockRequested.set(true);
-              }
-              return isTargetedBlockRequest;
-            },
-            (cap, msg) -> BlockHeadersMessage.create(block.getHeader()));
-
-    // Respond
-    peer.respond(responder);
-
-    return blockRequested;
   }
 }

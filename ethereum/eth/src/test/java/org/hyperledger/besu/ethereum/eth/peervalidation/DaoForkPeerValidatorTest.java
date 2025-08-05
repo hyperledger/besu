@@ -24,25 +24,35 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Override
-  AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
+  AbstractPeerBlockValidator createValidator(
+      final long blockNumber, final long buffer, final PeerTaskExecutor peerTaskExecutor) {
     return new DaoForkPeerValidator(
-        ProtocolScheduleFixture.TESTING_NETWORK, null, blockNumber, buffer);
+        ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, blockNumber, buffer);
   }
 
   @Test
   public void validatePeer_responsivePeerOnRightSideOfFork() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
+    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder().setPeerTaskExecutor(peerTaskExecutor).build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long daoBlockNumber = 500;
     final Block daoBlock =
@@ -52,69 +62,86 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
                 .setExtraData(MainnetBlockHeaderValidator.DAO_EXTRA_DATA));
 
     final PeerValidator validator =
-        new DaoForkPeerValidator(ProtocolScheduleFixture.TESTING_NETWORK, null, daoBlockNumber, 0);
+        new DaoForkPeerValidator(
+            ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(daoBlock.getHeader())),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer.getEthPeer())));
+
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
-    assertThat(result).isNotDone();
-
-    // Send response for dao block
-    final AtomicBoolean daoBlockRequested = respondToBlockRequest(peer, daoBlock);
-
-    assertThat(daoBlockRequested).isTrue();
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(true);
   }
 
   @Test
   public void validatePeer_responsivePeerOnWrongSideOfFork() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
+    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder().setPeerTaskExecutor(peerTaskExecutor).build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long daoBlockNumber = 500;
     final Block daoBlock =
         gen.block(BlockOptions.create().setBlockNumber(daoBlockNumber).setExtraData(Bytes.EMPTY));
 
     final PeerValidator validator =
-        new DaoForkPeerValidator(ProtocolScheduleFixture.TESTING_NETWORK, null, daoBlockNumber, 0);
+        new DaoForkPeerValidator(
+            ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(daoBlock.getHeader())),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer.getEthPeer())));
+
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
-    assertThat(result).isNotDone();
-
-    // Send response for dao block
-    final AtomicBoolean daoBlockRequested = respondToBlockRequest(peer, daoBlock);
-
-    assertThat(daoBlockRequested).isTrue();
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
   }
 
   @Test
   public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
+    final PeerTaskExecutor peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder().setPeerTaskExecutor(peerTaskExecutor).build();
     final long daoBlockNumber = 500;
 
     final PeerValidator validator =
-        new DaoForkPeerValidator(ProtocolScheduleFixture.TESTING_NETWORK, null, daoBlockNumber, 0);
+        new DaoForkPeerValidator(
+            ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(Collections.emptyList()),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer.getEthPeer())));
+
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
-
-    assertThat(result).isNotDone();
-
-    // Respond to block header request with empty
-    peer.respond(RespondingEthPeer.emptyResponder());
 
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(true);
