@@ -633,7 +633,7 @@ subprojects {
   if (file('src/jmh').directory) {
     apply plugin: 'me.champeau.jmh'
     tasks.named("jmh") {
-      description = "Usage: gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
+      description = "Usage: gradle jmh -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
         "\t-Pincludes=<includePattern>\tInclude pattern (regular expression) for benchmarks to be executed. Defaults to including all benchmarks.\n" +
         "\t-PasyncProfiler=<libPath>\tLibrary path to fetch the Async profiler from. Default is to disable profiling.\n" +
@@ -642,6 +642,7 @@ subprojects {
 
     jmh {
       jmhVersion = '1.37'
+      fork = 3
       includes = _strListCmdArg('includes', [''])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')

@@ -31,7 +31,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OperationsPerInvocation;
@@ -43,11 +42,14 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 @State(Scope.Thread)
+@Warmup(iterations = 2, time = 1, timeUnit = TimeUnit.SECONDS)
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
-@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(2)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
 public class CountLeadingZerosOperationBenchmark {
+  // variable used to run inner loop of invocations because CLZ runs in under 15 nanoseconds so overhead from framework
+  // taking measurements is high. There are variable and offset errors either in baseline and the operation benchmarks that
+  // can't be ignored.
   private static final int OPERATIONS_PER_INVOCATION = 1_000_000;
 
   @Param({
@@ -90,7 +92,6 @@ public class CountLeadingZerosOperationBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
-  @Warmup(iterations = 3, time = 500, timeUnit = TimeUnit.MILLISECONDS)
   public void executeOperation() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       frame.pushStackItem(bytes);
@@ -101,7 +102,6 @@ public class CountLeadingZerosOperationBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
-  @Warmup(iterations = 1, time = 500, timeUnit = TimeUnit.MILLISECONDS)
   public void baseline() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       frame.pushStackItem(bytes);

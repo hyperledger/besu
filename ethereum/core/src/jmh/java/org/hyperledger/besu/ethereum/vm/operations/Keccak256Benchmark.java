@@ -22,10 +22,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OperationsPerInvocation;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -34,13 +32,11 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 @State(Scope.Thread)
-@Warmup(iterations = 8, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
+@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
-@Fork(2)
 @BenchmarkMode(Mode.AverageTime)
 public class Keccak256Benchmark {
-  private static final int OPERATIONS_PER_INVOCATION = 20_000;
 
   @Param({"32", "64", "128", "256", "512"})
   private String inputSize;
@@ -56,10 +52,7 @@ public class Keccak256Benchmark {
   }
 
   @Benchmark
-  @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void executeOperation() {
-    for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      Hash.keccak256(bytes);
-    }
+    Hash.keccak256(bytes);
   }
 }
