@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockAccessListParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -95,7 +94,7 @@ public class BlockResult implements JsonRpcResult {
   private final String parentBeaconBlockRoot;
   private final String requestsHash;
   private final String balHash;
-  private final Optional<BlockAccessListParameter> blockAccessList;
+  private final Optional<BlockAccessListResult> blockAccessList;
 
   public BlockResult(
       final BlockHeader header,
@@ -157,7 +156,7 @@ public class BlockResult implements JsonRpcResult {
         header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     this.requestsHash = header.getRequestsHash().map(Hash::toString).orElse(null);
     this.balHash = header.getBalHash().map(Hash::toString).orElse(null);
-    this.blockAccessList = blockAccessList.map(BlockAccessListParameter::fromBlockAccessList);
+    this.blockAccessList = blockAccessList.map(BlockAccessListResult::fromBlockAccessList);
   }
 
   @JsonGetter(value = "number")
@@ -307,7 +306,7 @@ public class BlockResult implements JsonRpcResult {
   }
 
   @JsonGetter(value = "blockAccessList")
-  public Optional<BlockAccessListParameter> getBlockAccessList() {
+  public Optional<BlockAccessListResult> getBlockAccessList() {
     return blockAccessList;
   }
 }
