@@ -67,6 +67,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.google.common.base.Stopwatch;
@@ -118,7 +119,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
-  private int currentTxnLocation;
+  private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -159,7 +160,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
-    currentTxnLocation = 0;
     balBuilder = new BlockAccessList.BlockAccessListBuilder();
   }
 
@@ -455,7 +455,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     final TransactionAccessList transactionAccessList =
-        new TransactionAccessList(currentTxnLocation);
+        new TransactionAccessList(currentTxnLocation.get());
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             txWorldStateUpdater,
@@ -507,9 +507,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           LOG.atTrace()
               .setMessage("Selected and commited {} with location {} for block creation")
               .addArgument(transaction::toTraceLog)
-              .addArgument(currentTxnLocation)
+              .addArgument(currentTxnLocation.get())
               .log();
-          currentTxnLocation += 1;
+          currentTxnLocation.incrementAndGet();
         });
 
     if (isTimeout.get()) {
@@ -525,7 +525,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         .setMessage(
             "Potentially selected {} with location {} for block creation, evaluated in {}, waiting for commit")
         .addArgument(transaction::toTraceLog)
-        .addArgument(currentTxnLocation)
+        .addArgument(currentTxnLocation.get())
         .addArgument(evaluationContext.getEvaluationTimer())
         .log();
     return SELECTED;
