@@ -19,6 +19,7 @@
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959]
 - Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
 - Add --attempt-cache-bust to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
+- Add gas usage metric to eth_call [#9019](https://github.com/hyperledger/besu/pull/9019)
 
 #### Fusaka devnets
 - EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
