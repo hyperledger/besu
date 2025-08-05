@@ -123,7 +123,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
             header)
         .orElseGet(
             () -> {
-              gasUsedCounter.labels("validation_error").inc(0);
+              gasUsedCounter.labels("internal_error").inc(0);
               return errorResponse(request, INTERNAL_ERROR);
             });
   }
