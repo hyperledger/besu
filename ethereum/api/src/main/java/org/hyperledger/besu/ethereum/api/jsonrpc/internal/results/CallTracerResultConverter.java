@@ -27,12 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CallTracerResultConverter {
-  private static final Logger LOG = LoggerFactory.getLogger("CallTracerConverter");
-
   public static CallTracerResult convert(final TransactionTrace transactionTrace) {
     if (transactionTrace == null) {
       throw new IllegalArgumentException("TransactionTrace cannot be null");
@@ -41,10 +37,8 @@ public class CallTracerResultConverter {
       throw new IllegalArgumentException("TransactionTrace must have valid transaction and result");
     }
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
-      LOG.warn("No Trace Frames, Calling createRootCallFromTransaction()");
       return createRootCallFromTransaction(transactionTrace);
     }
-    LOG.warn("Trace Frames, Calling buildCallHierarchyFromFrames()");
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
@@ -95,7 +89,6 @@ public class CallTracerResultConverter {
         // Get child call info
         final CallInfo childCallInfo = depthToCallInfo.get(currentDepth);
         if (childCallInfo == null) {
-          LOG.warn("No call info found for depth {}", currentDepth);
           continue;
         }
 
@@ -113,10 +106,6 @@ public class CallTracerResultConverter {
           if (isCreateOp(childCallInfo.builder.getType()) && frame.getOutputData() != null) {
             // 200 gas per byte of deployed code
             long codeDepositCost = frame.getOutputData().size() * 200L;
-            LOG.warn(
-                "Adding code deposit cost: {} for {} bytes",
-                codeDepositCost,
-                frame.getOutputData().size());
             childCallInfo.incGasUsed(codeDepositCost);
           }
 
@@ -210,13 +199,6 @@ public class CallTracerResultConverter {
 
     final long gasProvided = nextTrace != null ? nextTrace.getGasRemaining() : 0;
 
-    LOG.warn(
-        "Creating call: opcode={}, from={}, to={}, gas={}",
-        opcode,
-        fromAddress,
-        toAddress,
-        gasProvided);
-
     return CallTracerResult.builder()
         .type(opcode)
         .from(fromAddress)
@@ -271,7 +253,6 @@ public class CallTracerResultConverter {
       return entryFrame.getGasCost().getAsLong();
     }
 
-    LOG.warn("Unable to determine gas used, defaulting to 0");
     return 0;
   }
 
@@ -294,85 +275,33 @@ public class CallTracerResultConverter {
 
   private static Bytes resolveInputData(final TraceFrame frame, final String opcode) {
     if (isCallOp(opcode)) {
-      LOG.warn("Resolving input data for {} opcode", opcode);
 
       // Check if stack is present
       if (frame.getStack().isEmpty()) {
-        LOG.warn("Stack is not present in frame for {} opcode", opcode);
         return frame.getInputData();
       }
 
       // Try to extract call data from stack and memory
       return frame
           .getStack()
-          .filter(
-              stack -> {
-                boolean hasEnoughItems = stack.length >= 5;
-                if (!hasEnoughItems) {
-                  LOG.warn("Stack has insufficient items: {} (need at least 5)", stack.length);
-                }
-                return hasEnoughItems;
-              })
+          .filter(stack -> stack.length >= 5)
           .map(
               stack -> {
                 // For CALL operations, extract offset and length from stack
                 final int offset = bytesToInt(stack[stack.length - 4]);
                 final int length = bytesToInt(stack[stack.length - 5]);
 
-                LOG.warn("CALL stack info: offset={}, length={}", offset, length);
-
                 // Check if memory is present
                 if (frame.getMemory().isEmpty()) {
-                  LOG.warn("Memory is not present in frame");
                   return frame.getInputData();
                 }
 
                 return frame
                     .getMemory()
-                    .map(
-                        memory -> {
-                          LOG.warn("Memory array length: {}", memory.length);
-
-                          if (offset >= 0 && length > 0) {
-                            // Calculate memory indices
-                            final int startWord = offset / 32;
-                            final int endWord =
-                                Math.min((offset + length + 31) / 32, memory.length);
-
-                            LOG.warn(
-                                "Memory access: startWord={}, endWord={}, memory.length={}",
-                                startWord,
-                                endWord,
-                                memory.length);
-
-                            if (startWord < memory.length) {
-                              // Log some memory content for debugging
-                              for (int i = startWord; i < Math.min(endWord, startWord + 3); i++) {
-                                if (memory[i] != null) {
-                                  LOG.warn("Memory[{}]: {}", i, memory[i].toHexString());
-                                } else {
-                                  LOG.warn("Memory[{}] is null", i);
-                                }
-                              }
-                            }
-                          }
-
-                          // Extract the call data
-                          Bytes result = extractCallDataFromMemory(memory, offset, length);
-                          LOG.warn("Extracted input data: {}", result.toHexString());
-                          return result;
-                        })
-                    .orElseGet(
-                        () -> {
-                          LOG.warn("Using frame.getInputData() as fallback");
-                          return frame.getInputData();
-                        });
+                    .map(memory -> extractCallDataFromMemory(memory, offset, length))
+                    .orElseGet(frame::getInputData);
               })
-          .orElseGet(
-              () -> {
-                LOG.warn("Stack filter failed, using frame.getInputData()");
-                return frame.getInputData();
-              });
+          .orElseGet(frame::getInputData);
     } else if (isCreateOp(opcode)) {
       // For create operations, extract initialization code from memory
       return frame
@@ -390,7 +319,6 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
-    LOG.warn("Not a CALL or CREATE op, using frame.getInputData()");
     return frame.getInputData();
   }
 
@@ -489,8 +417,7 @@ public class CallTracerResultConverter {
     try {
       // Use the built-in toBigInteger method and convert to int
       return bytes.toBigInteger().intValue();
-    } catch (Exception e) {
-      LOG.warn("Failed to convert Bytes to int: {}", bytes, e);
+    } catch (final Exception e) {
       return 0;
     }
   }
