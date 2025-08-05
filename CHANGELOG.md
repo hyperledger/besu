@@ -26,6 +26,7 @@
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
+- Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
@@ -36,7 +37,7 @@
 - EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946), [#9015](https://github.com/hyperledger/besu/pull/9015)
 
 ### Bug fixes
-
+- Fix bug with `eth_estimateGas` on QBFT - use zero address when doing simulation against `pending` block [#9031](https://github.com/hyperledger/besu/pull/9031)
 
 ## 25.7.0
 ### Breaking Changes

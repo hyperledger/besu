@@ -53,7 +53,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class BackwardSyncAlgSpec {
+public class BackwardSyncAlgSpecTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
@@ -210,6 +210,7 @@ public class BackwardSyncAlgSpec {
     backwardChain.addNewHash(hash);
     doReturn(CompletableFuture.completedFuture(null)).when(algorithm).executeSyncStep(hash);
 
+    doReturn(true).when(context).isReady();
     algorithm.pickNextStep();
     verify(algorithm).executeSyncStep(hash);
   }
