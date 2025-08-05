@@ -399,7 +399,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
-      final WorldUpdater blockUpdater,
+      final WorldUpdater transactionUpdater,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
       final Transaction transaction,
@@ -407,7 +407,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup,
       final Optional<TransactionAccessList> transactionAccessList) {
     return transactionProcessor.processTransaction(
-        blockUpdater,
+        transactionUpdater,
         blockProcessingContext.getBlockHeader(),
         transaction,
         miningBeneficiary,

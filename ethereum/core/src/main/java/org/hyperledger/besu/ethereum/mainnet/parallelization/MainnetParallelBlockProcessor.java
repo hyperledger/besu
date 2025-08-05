@@ -88,7 +88,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   protected TransactionProcessingResult getTransactionProcessingResult(
       final Optional<PreprocessingContext> preProcessingContext,
       final BlockProcessingContext blockProcessingContext,
-      final WorldUpdater blockUpdater,
+      final WorldUpdater transactionUpdater,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
       final Transaction transaction,
@@ -118,7 +118,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       return super.getTransactionProcessingResult(
           preProcessingContext,
           blockProcessingContext,
-          blockUpdater,
+          transactionUpdater,
           blobGasPrice,
           miningBeneficiary,
           transaction,
