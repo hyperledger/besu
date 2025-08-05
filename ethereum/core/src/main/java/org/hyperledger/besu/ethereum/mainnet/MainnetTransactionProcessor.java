@@ -50,7 +50,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -58,7 +57,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -329,14 +327,6 @@ public class MainnetTransactionProcessor {
 
       if (eip7928AccessList.isPresent()) {
         commonMessageFrameBuilder.eip7928AccessList(eip7928AccessList.get());
-
-        for (Map.Entry<Address, Bytes32> entry : eip2930StorageList.entries()) {
-          final Address address = entry.getKey();
-          final Bytes32 slotKey = entry.getValue();
-          eip7928AccessList
-              .get()
-              .addSlotAccessForAccount(address, UInt256.fromHexString(slotKey.toHexString()));
-        }
       }
 
       if (transaction.getVersionedHashes().isPresent()) {
