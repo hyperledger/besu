@@ -47,8 +47,10 @@ import org.openjdk.jmh.annotations.Warmup;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
 public class CountLeadingZerosOperationBenchmark {
-  // variable used to run inner loop of invocations because CLZ runs in under 15 nanoseconds so overhead from framework
-  // taking measurements is high. There are variable and offset errors either in baseline and the operation benchmarks that
+  // variable used to run inner loop of invocations because CLZ runs in under 15 nanoseconds so
+  // overhead from framework
+  // taking measurements is high. There are variable and offset errors either in baseline and the
+  // operation benchmarks that
   // can't be ignored.
   private static final int OPERATIONS_PER_INVOCATION = 1_000_000;
 
