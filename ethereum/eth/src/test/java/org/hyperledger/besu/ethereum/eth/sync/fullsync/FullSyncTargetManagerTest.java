@@ -95,7 +95,7 @@ public class FullSyncTargetManagerTest {
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-                .setPeerTaskExecutor(peerTaskExecutor)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
@@ -109,7 +109,8 @@ public class FullSyncTargetManagerTest {
             new NoOpMetricsSystem(),
             SyncTerminationCondition.never());
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
-            .thenAnswer(new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers()));
+        .thenAnswer(
+            new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers()));
   }
 
   @AfterEach
@@ -121,7 +122,8 @@ public class FullSyncTargetManagerTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
-  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat) throws InterruptedException {
+  public void findSyncTarget_withHeightEstimates(final DataStorageFormat storageFormat)
+      throws InterruptedException {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
@@ -169,7 +171,8 @@ public class FullSyncTargetManagerTest {
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
-    // unfortunately, this is the only way I could find to give the peer disconnection a chance to happen before we do the below checks
+    // unfortunately, this is the only way I could find to give the peer disconnection a chance to
+    // happen before we do the below checks
     Thread.sleep(1000);
 
     assertThat(result).isNotCompleted();
