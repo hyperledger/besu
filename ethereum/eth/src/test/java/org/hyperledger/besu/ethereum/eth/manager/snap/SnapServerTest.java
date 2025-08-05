@@ -74,7 +74,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class SnapServerTest {
   static Random rand = new Random();
 
-  // Paramaterized test to exercise BONSAI and BONSAI_ARCHIVE
+  // Parameterized test to exercise BONSAI and BONSAI_ARCHIVE
   public static Collection<Object[]> flatDbMode() {
     return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.ARCHIVE}});
   }

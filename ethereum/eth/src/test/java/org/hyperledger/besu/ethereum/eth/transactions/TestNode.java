@@ -144,6 +144,7 @@ public class TestNode implements Closeable {
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     when(syncState.isInSync(anyLong())).thenReturn(true);
     when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 

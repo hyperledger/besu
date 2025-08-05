@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -44,7 +45,7 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
   public void runBenchmark(final Boolean attemptNative, final String fork) {
     EvmSpecVersion evmSpecVersion = EvmSpecVersion.fromName(fork);
 
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
         Bytes.fromHexString(

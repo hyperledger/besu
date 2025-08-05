@@ -65,9 +65,10 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
@@ -190,7 +191,7 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
+        .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
         .blockProcessorBuilder(
@@ -202,7 +203,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
-        .blockHashProcessor(new FrontierBlockHashProcessor())
+        .preExecutionProcessor(new FrontierPreExecutionProcessor())
         .hardforkId(FRONTIER);
   }
 
@@ -348,10 +349,7 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
-        .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
+        .transactionReceiptFactory(new ByzantiumTransactionReceiptFactory(enableRevertReason))
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .hardforkId(BYZANTIUM);
   }
@@ -457,10 +455,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
-        .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
+        .transactionReceiptFactory(new BerlinTransactionReceiptFactory(enableRevertReason))
         .hardforkId(BERLIN);
   }
 
@@ -763,7 +758,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
-        .blockHashProcessor(new CancunBlockHashProcessor())
+        .preExecutionProcessor(new CancunPreExecutionProcessor())
         .hardforkId(CANCUN);
   }
 
@@ -863,7 +858,7 @@ public abstract class MainnetProtocolSpecs {
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
-            .blockHashProcessor(new PragueBlockHashProcessor())
+            .preExecutionProcessor(new PraguePreExecutionProcessor())
             .hardforkId(PRAGUE);
     try {
       RequestContractAddresses requestContractAddresses =
@@ -1114,63 +1109,84 @@ public abstract class MainnetProtocolSpecs {
         .hardforkId(EXPERIMENTAL_EIPS);
   }
 
-  private static TransactionReceipt frontierTransactionReceiptFactory(
-      // ignored because it's always FRONTIER
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        worldState.frontierRootHash(),
-        gasUsed,
-        result.getLogs(),
-        Optional.empty()); // No revert reason in frontier
+  private static class FrontierTransactionReceiptFactory implements TransactionReceiptFactory {
+
+    @Override
+    public TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final WorldState worldState,
+        final long gasUsed) {
+      return new TransactionReceipt(
+          worldState.frontierRootHash(),
+          gasUsed,
+          result.getLogs(),
+          Optional.empty()); // No revert reason in Frontier
+    }
+
+    @Override
+    public TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final long gasUsed) {
+      throw new UnsupportedOperationException("No stateless transaction receipt in Frontier");
+    }
   }
 
-  private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      // ignored because it's always FRONTIER
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
+  private abstract static class PostFrontierTransactionReceiptFactory
+      implements TransactionReceiptFactory {
+    protected final boolean revertReasonEnabled;
+
+    public PostFrontierTransactionReceiptFactory(final boolean revertReasonEnabled) {
+      this.revertReasonEnabled = revertReasonEnabled;
+    }
+
+    @Override
+    public TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final WorldState worldState,
+        final long gasUsed) {
+      return create(transactionType, result, gasUsed);
+    }
   }
 
-  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      // ignored because it's always FRONTIER
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
+  static class ByzantiumTransactionReceiptFactory extends PostFrontierTransactionReceiptFactory {
+    public ByzantiumTransactionReceiptFactory(final boolean revertReasonEnabled) {
+      super(revertReasonEnabled);
+    }
+
+    @Override
+    public TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final long gasUsed) {
+      return new TransactionReceipt(
+          result.isSuccessful() ? 1 : 0,
+          gasUsed,
+          result.getLogs(),
+          revertReasonEnabled ? result.getRevertReason() : Optional.empty());
+    }
   }
 
-  static TransactionReceipt berlinTransactionReceiptFactory(
-      final TransactionType transactionType,
-      final TransactionProcessingResult transactionProcessingResult,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        transactionType,
-        transactionProcessingResult.isSuccessful() ? 1 : 0,
-        gasUsed,
-        transactionProcessingResult.getLogs(),
-        Optional.empty());
-  }
+  static class BerlinTransactionReceiptFactory extends PostFrontierTransactionReceiptFactory {
 
-  static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionType transactionType,
-      final TransactionProcessingResult transactionProcessingResult,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        transactionType,
-        transactionProcessingResult.isSuccessful() ? 1 : 0,
-        gasUsed,
-        transactionProcessingResult.getLogs(),
-        transactionProcessingResult.getRevertReason());
+    public BerlinTransactionReceiptFactory(final boolean revertReasonEnabled) {
+      super(revertReasonEnabled);
+    }
+
+    @Override
+    public TransactionReceipt create(
+        final TransactionType transactionType,
+        final TransactionProcessingResult result,
+        final long gasUsed) {
+      return new TransactionReceipt(
+          transactionType,
+          result.isSuccessful() ? 1 : 0,
+          gasUsed,
+          result.getLogs(),
+          revertReasonEnabled ? result.getRevertReason() : Optional.empty());
+    }
   }
 
   private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {

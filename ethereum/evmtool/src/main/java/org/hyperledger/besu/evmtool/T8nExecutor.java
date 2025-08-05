@@ -363,12 +363,12 @@ public class T8nExecutor {
             worldState,
             protocolSpec,
             protocolSpec
-                .getBlockHashProcessor()
+                .getPreExecutionProcessor()
                 .createBlockHashLookup(blockchain, referenceTestEnv),
             OperationTracer.NO_TRACING);
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+      protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -403,7 +403,7 @@ public class T8nExecutor {
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         BlockHashLookup blockHashLookup =
-            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader);
+            protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader);
         if (blockHashLookup instanceof BlockchainBasedBlockHashLookup) {
           // basically t8n test cases for blockhash are broken and one cannot create a blockchain
           // from them so need to
