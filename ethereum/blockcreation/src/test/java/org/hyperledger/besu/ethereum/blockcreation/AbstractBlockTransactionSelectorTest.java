@@ -62,6 +62,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
@@ -79,7 +80,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -135,7 +135,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected GenesisConfig genesisConfig;
   protected MutableBlockchain blockchain;
   protected TransactionPool transactionPool;
-  protected PathBasedWorldState worldState;
+  protected MutableWorldState worldState;
   protected ProtocolSchedule protocolSchedule;
   protected TransactionSelectionService transactionSelectionService;
   protected MiningConfiguration defaultTestMiningConfiguration;
@@ -178,16 +178,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
 
-    worldState =
-        (PathBasedWorldState)
-            InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain)
-                .getWorldState();
+    worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     final var worldStateUpdater = worldState.updater();
     Arrays.stream(Sender.values())
         .map(Sender::address)
         .forEach(address -> worldStateUpdater.createAccount(address, 0, Wei.of(1_000_000_000L)));
     worldStateUpdater.commit();
-    worldState.persist(null);
 
     when(protocolContext.getWorldStateArchive().getWorldState(any(WorldStateQueryParams.class)))
         .thenReturn(Optional.of(worldState));
