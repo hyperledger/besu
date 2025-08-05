@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 public class BlockOverridesParameterTest {
 
   private final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
-  ;
+ 
 
   @Test
   public void shouldDeserializeBlockOverridesParameter() throws Exception {
