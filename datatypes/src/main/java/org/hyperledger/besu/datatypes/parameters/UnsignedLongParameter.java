@@ -35,7 +35,7 @@ public class UnsignedLongParameter {
     if (value.startsWith("0x")) {
       this.value = Long.parseUnsignedLong(value.substring(2), 16);
     } else {
-      this.value = Long.parseUnsignedLong(value, 16);
+      this.value = Long.parseUnsignedLong(value, 10);
     }
   }
 
