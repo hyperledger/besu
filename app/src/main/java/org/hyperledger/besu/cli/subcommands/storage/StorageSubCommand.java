@@ -189,7 +189,7 @@ public class StorageSubCommand implements Runnable {
       description = "Resets backward sync state.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
-  public static class BackwardSyncSubCommand implements Runnable {
+  static class BackwardSyncSubCommand implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncSubCommand.class);
 
     @SuppressWarnings("unused")
