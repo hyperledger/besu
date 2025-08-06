@@ -20,6 +20,8 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
 /**
  * An operand stack for the Ethereum Virtual machine (EVM). The stack grows 32 entries at a time if
  * it expands past the top of the allocated stack, up to maxSize.
@@ -36,7 +38,8 @@ public class FlexStack<T> {
    * growth rate of 50%. Currently, for mainnet y=1024 and, if considering n=6 in the worst case,
    * the start size is 91 which is reasonable for mainnet.
    */
-  private static final double INITIAL_SIZE_COEFICIENT = 1 / Math.pow(1.5D, 6D);
+  private static final int INITIAL_SIZE =
+    (int) Math.round(MessageFrame.DEFAULT_MAX_STACK_SIZE / Math.pow(1.5D, 6D)) + 1;
 
   /**
    * Soft limit imposed for growing arrays. JVMs do not allow to allocate arrays above certain
@@ -67,8 +70,7 @@ public class FlexStack<T> {
     checkArgument(maxSize > 0, "max size must be positive");
     checkArgument(maxSize <= MAX_ARRAY_LENGTH, "max size is too large");
 
-    int initialSize = (int) Math.round(maxSize * INITIAL_SIZE_COEFICIENT) + 1;
-    this.currentCapacity = Math.min(initialSize, maxSize);
+    this.currentCapacity = Math.min(INITIAL_SIZE, maxSize);
     this.entries = (T[]) Array.newInstance(klass, currentCapacity);
     this.maxSize = maxSize;
     this.top = -1;
