@@ -932,9 +932,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         new CodeDelegation(BigInteger.ONE, Address.fromHexString("0x1"), 42L, FAKE_SIGNATURE);
 
     final CallParameter callParameter =
-        legacyTransactionCallParameterBuilder()
-            .codeDelegationAuthorizations(List.of(delegation))
-            .build();
+        codeDelegationTransactionCallParamterBuilder(List.of(delegation)).build();
 
     final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
 
@@ -1099,6 +1097,11 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         .gasPrice(Optional.empty())
         .maxFeePerGas(Wei.ZERO)
         .maxPriorityFeePerGas(Wei.ZERO);
+  }
+
+  private ImmutableCallParameter.Builder codeDelegationTransactionCallParamterBuilder(
+      final List<CodeDelegation> delegations) {
+    return legacyTransactionCallParameterBuilder().codeDelegationAuthorizations(delegations);
   }
 
   private CallParameter blobTransactionCallParameter() {
