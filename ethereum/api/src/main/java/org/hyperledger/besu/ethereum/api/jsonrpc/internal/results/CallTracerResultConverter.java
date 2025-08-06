@@ -32,9 +32,34 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Converts Ethereum transaction traces into a hierarchical call tracer format.
+ *
+ * <p>This class transforms the flat sequence of trace frames produced during transaction execution
+ * into a structured call tree similar to Geth's callTracer output. It captures the relationships
+ * between calls, their inputs, outputs, gas usage, and error states.
+ *
+ * <p>The converter handles various EVM operations including:
+ *
+ * <ul>
+ *   <li>Contract calls (CALL, STATICCALL, DELEGATECALL, CALLCODE)
+ *   <li>Contract creation (CREATE, CREATE2)
+ *   <li>Return operations (RETURN, REVERT, STOP, SELFDESTRUCT)
+ * </ul>
+ *
+ * <p>For each call, it extracts relevant information such as addresses, values transferred, input
+ * data, output data, gas usage, and error states.
+ */
 public class CallTracerResultConverter {
   private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
+  /**
+   * Converts a transaction trace to a call tracer result.
+   *
+   * @param transactionTrace The transaction trace to convert
+   * @return A call tracer result representing the transaction's call hierarchy
+   * @throws NullPointerException if transactionTrace or its components are null
+   */
   public static CallTracerResult convert(final TransactionTrace transactionTrace) {
     checkNotNull(
         transactionTrace, "CallTracerResultConverter requires a non-null TransactionTrace");
@@ -45,8 +70,11 @@ public class CallTracerResultConverter {
         transactionTrace.getResult(), "CallTracerResultConverter requires non-null Result");
 
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
+      LOG.trace("No trace frames available, creating root call from transaction");
       return createRootCallFromTransaction(transactionTrace);
     }
+    LOG.trace(
+        "Building call hierarchy from {} trace frames", transactionTrace.getTraceFrames().size());
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
