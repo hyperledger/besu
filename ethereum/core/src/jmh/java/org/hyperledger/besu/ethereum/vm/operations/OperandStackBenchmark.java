@@ -9,6 +9,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OperationsPerInvocation;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -16,11 +17,12 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 @State(Scope.Thread)
-@Warmup(iterations = 8, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 6, time = 2, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 @BenchmarkMode(Mode.AverageTime)
 public class OperandStackBenchmark {
+  private static final int OPERATIONS_PER_INVOCATION = 1000;
   @Param({
     "6",
     "15",
@@ -37,10 +39,13 @@ public class OperandStackBenchmark {
     Bytes.fromHexString("0x3232323232323232323232323232323232323232323232323232323232323232");
 
   @Benchmark
+  @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void fillUp() {
-    OperandStack stack = new OperandStack(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    for (int i = 0; i < stackDepth; i++) {
-      stack.push(BYTES);
+    for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
+      OperandStack stack = new OperandStack(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+      for (int j = 0; j < stackDepth; j++) {
+        stack.push(BYTES);
+      }
     }
   }
 }
