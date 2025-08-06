@@ -20,11 +20,13 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.nativelib.boringssl.BoringSSLPrecompiles;
 
 import java.math.BigInteger;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
@@ -42,6 +44,45 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
   private static final BigInteger N = R1_PARAMS.getN();
   private static final BigInteger P = R1_PARAMS.getCurve().getField().getCharacteristic();
+
+  /** The constant useNative. */
+  // use the BoringSSL native library implementation, if it is available
+  private static boolean useNativeBoringSSL;
+
+  static {
+    maybeEnableNativeBoringSSL();
+  }
+
+  /**
+   * Attempt to enable the BoringSSL native library for P256Verify contract Note, if BoringSSL is
+   * disabled, then native SECP256R1 may still be enabled
+   *
+   * @return true if the native library was enabled.
+   */
+  public static boolean maybeEnableNativeBoringSSL() {
+    try {
+      useNativeBoringSSL = BoringSSLPrecompiles.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
+      LOG.info(
+          "BoringSSL secp256r1 p256verify native precompile not available: {}", ule.getMessage());
+      useNativeBoringSSL = false;
+    }
+    return useNativeBoringSSL;
+  }
+
+  /** Disable native. Note SECP256R1 must additionally be disabled to fully disable native */
+  public static void disableNativeBoringSSL() {
+    useNativeBoringSSL = false;
+  }
+
+  /**
+   * Is native boolean.
+   *
+   * @return the boolean
+   */
+  public static boolean isNativeBoringSSL() {
+    return useNativeBoringSSL;
+  }
 
   private final GasCalculator gasCalculator;
   private final SignatureAlgorithm signatureAlgorithm;
@@ -109,57 +150,11 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       }
     }
 
-    final Bytes messageHash = input.slice(0, 32);
-    final Bytes rBytes = input.slice(32, 32);
-    final Bytes sBytes = input.slice(64, 32);
-    final Bytes pubKeyBytes = input.slice(96, 64);
-    final BigInteger qx = pubKeyBytes.slice(0, 32).toUnsignedBigInteger();
-    final BigInteger qy = pubKeyBytes.slice(32, 32).toUnsignedBigInteger();
-
     try {
-      // Convert r and s to BigIntegers (unsigned)
-      final BigInteger r = rBytes.toUnsignedBigInteger();
-      final BigInteger s = sBytes.toUnsignedBigInteger();
-
-      // Check r, s in (0, n)
-      if (r.signum() <= 0 || r.compareTo(N) >= 0 || s.signum() <= 0 || s.compareTo(N) >= 0) {
-        LOG.trace("Invalid r or s: must satisfy 0 < r,s < n");
-        res =
-            new PrecompileInputResultTuple(
-                enableResultCaching ? input.copy() : input,
-                PrecompileContractResult.success(INVALID));
-      }
-
-      // Check qx, qy in [0, p)
-      if (qx.signum() < 0 || qx.compareTo(P) >= 0 || qy.signum() < 0 || qy.compareTo(P) >= 0) {
-        LOG.trace("Invalid qx or qy: must satisfy 0 <= qx,qy < p");
-        res =
-            new PrecompileInputResultTuple(
-                enableResultCaching ? input.copy() : input,
-                PrecompileContractResult.success(INVALID));
-      }
-
-      // Check point not at infinity (qx, qy ≠ 0,0), and non-trivial infinity encoding
-      if ((qx.signum() == 0 && qy.signum() == 0)) {
-        LOG.trace("Invalid public key: point at infinity");
-        res =
-            new PrecompileInputResultTuple(
-                enableResultCaching ? input.copy() : input,
-                PrecompileContractResult.success(INVALID));
-      }
-
-      if (res == null) {
-        // Create the signature; recID is not used in verification - use 0
-        final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
-        final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);
-
-        final boolean isValid =
-            signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
-
-        res =
-            new PrecompileInputResultTuple(
-                enableResultCaching ? input.copy() : input,
-                PrecompileContractResult.success(isValid ? VALID : INVALID));
+      if (useNativeBoringSSL) {
+        res = computeNative(input);
+      } else {
+        res = computeDefault(input);
       }
 
       if (enableResultCaching) {
@@ -172,5 +167,67 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       System.err.println("P256VERIFY verification failed: " + e.getMessage());
       return PrecompileContractResult.success(INVALID);
     }
+  }
+
+  @NotNull
+  private static PrecompileInputResultTuple computeNative(final Bytes input) {
+    PrecompileInputResultTuple res;
+    BoringSSLPrecompiles.P256VerifyResult result =
+        BoringSSLPrecompiles.p256Verify(input.toArrayUnsafe(), input.size());
+
+    if (result.status != 0) {
+      LOG.atTrace().setMessage("Verify failed: {}").addArgument(result.error).log();
+    }
+    res =
+        new PrecompileInputResultTuple(
+            enableResultCaching ? input.copy() : input,
+            PrecompileContractResult.success(result.status == 0 ? VALID : INVALID));
+    return res;
+  }
+
+  // This may still use native SECP256R1 depending on how SignatureAlgorithm is configured
+  @NotNull
+  private PrecompileInputResultTuple computeDefault(final Bytes input) {
+    final Bytes messageHash = input.slice(0, 32);
+    final Bytes rBytes = input.slice(32, 32);
+    final Bytes sBytes = input.slice(64, 32);
+    final Bytes pubKeyBytes = input.slice(96, 64);
+    final BigInteger qx = pubKeyBytes.slice(0, 32).toUnsignedBigInteger();
+    final BigInteger qy = pubKeyBytes.slice(32, 32).toUnsignedBigInteger();
+
+    // Convert r and s to BigIntegers (unsigned)
+    final BigInteger r = rBytes.toUnsignedBigInteger();
+    final BigInteger s = sBytes.toUnsignedBigInteger();
+
+    // Check r, s in (0, n)
+    if (r.signum() <= 0 || r.compareTo(N) >= 0 || s.signum() <= 0 || s.compareTo(N) >= 0) {
+      LOG.trace("Invalid r or s: must satisfy 0 < r,s < n");
+      return new PrecompileInputResultTuple(
+          enableResultCaching ? input.copy() : input, PrecompileContractResult.success(INVALID));
+    }
+
+    // Check qx, qy in [0, p)
+    if (qx.signum() < 0 || qx.compareTo(P) >= 0 || qy.signum() < 0 || qy.compareTo(P) >= 0) {
+      LOG.trace("Invalid qx or qy: must satisfy 0 <= qx,qy < p");
+      return new PrecompileInputResultTuple(
+          enableResultCaching ? input.copy() : input, PrecompileContractResult.success(INVALID));
+    }
+
+    // Check point not at infinity (qx, qy ≠ 0,0), and non-trivial infinity encoding
+    if ((qx.signum() == 0 && qy.signum() == 0)) {
+      LOG.trace("Invalid public key: point at infinity");
+      return new PrecompileInputResultTuple(
+          enableResultCaching ? input.copy() : input, PrecompileContractResult.success(INVALID));
+    }
+
+    // Create the signature; recID is not used in verification - use 0
+    final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
+    final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);
+
+    final boolean isValid = signatureAlgorithm.verifyMalleable(messageHash, signature, publicKey);
+
+    return new PrecompileInputResultTuple(
+        enableResultCaching ? input.copy() : input,
+        PrecompileContractResult.success(isValid ? VALID : INVALID));
   }
 }
