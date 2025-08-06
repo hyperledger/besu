@@ -51,4 +51,9 @@ public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidati
     }
     return true;
   }
+
+  @Override
+  public String getName() {
+    return "CoinbaseHeaderValidationRule";
+  }
 }

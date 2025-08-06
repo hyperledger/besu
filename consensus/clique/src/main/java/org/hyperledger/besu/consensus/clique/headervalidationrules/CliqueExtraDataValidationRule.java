@@ -113,4 +113,9 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
   public boolean includeInLightValidation() {
     return false;
   }
+
+  @Override
+  public String getName() {
+    return "CliqueExtraDataValidationRule";
+  }
 }

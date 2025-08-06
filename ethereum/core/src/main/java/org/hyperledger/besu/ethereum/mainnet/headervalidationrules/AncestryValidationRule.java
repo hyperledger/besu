@@ -47,4 +47,9 @@ public class AncestryValidationRule implements DetachedBlockHeaderValidationRule
 
     return true;
   }
+
+  @Override
+  public String getName() {
+    return "AncestryValidationRule";
+  }
 }

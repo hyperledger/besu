@@ -49,4 +49,9 @@ public class NoDifficultyRule extends MergeConsensusRule {
       return true;
     }
   }
+
+  @Override
+  public String getName() {
+    return "MergeNoDifficultyRule";
+  }
 }

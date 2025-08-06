@@ -39,6 +39,11 @@ public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderVali
     return validateExtraData(header.getExtraData());
   }
 
+  @Override
+  public String getName() {
+    return "ExtraDataMaxLengthValidationRule{" + "maxExtraDataBytes=" + maxExtraDataBytes + '}';
+  }
+
   private boolean validateExtraData(final Bytes extraData) {
     if (extraData.size() > maxExtraDataBytes) {
       LOG.info(

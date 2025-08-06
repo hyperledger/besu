@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,10 +87,7 @@ public class BlockHeaderValidator {
             rule -> {
               boolean worked = rule.validate(header, parent, protocolContext);
               if (!worked) {
-                String canonicalName = rule.innerRuleClass().getCanonicalName();
-                LOG.debug(
-                    "{} rule failed",
-                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName);
+                LOG.debug("{} rule failed", rule.getName());
               }
               return worked;
             });
@@ -108,14 +106,17 @@ public class BlockHeaderValidator {
     private final boolean detachedSupported;
     private final AttachedBlockHeaderValidationRule wrappedRule;
     private final boolean includeInLightValidation;
+    private final String name;
 
     private Rule(
         final boolean detachedSupported,
         final AttachedBlockHeaderValidationRule toWrap,
-        final boolean includeInLightValidation) {
+        final boolean includeInLightValidation,
+        final String name) {
       this.detachedSupported = detachedSupported;
       this.wrappedRule = toWrap;
       this.includeInLightValidation = includeInLightValidation;
+      this.name = name;
     }
 
     boolean isDetachedSupported() {
@@ -131,8 +132,8 @@ public class BlockHeaderValidator {
       return includeInLightValidation;
     }
 
-    public Class<? extends AttachedBlockHeaderValidationRule> innerRuleClass() {
-      return wrappedRule.getClass();
+    String getName() {
+      return name;
     }
   }
 
@@ -145,13 +146,14 @@ public class BlockHeaderValidator {
       this.rulesBuilder.add(
           applyMe -> {
             final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(applyMe);
-            return new Rule(false, rule, rule.includeInLightValidation());
+            return new Rule(false, rule, rule.includeInLightValidation(), rule.getName());
           });
       return this;
     }
 
     public Builder addRule(final AttachedBlockHeaderValidationRule rule) {
-      this.rulesBuilder.add(ignored -> new Rule(false, rule, rule.includeInLightValidation()));
+      this.rulesBuilder.add(
+          ignored -> new Rule(false, rule, rule.includeInLightValidation(), rule.getName()));
       return this;
     }
 
@@ -160,8 +162,9 @@ public class BlockHeaderValidator {
           ignored ->
               new Rule(
                   true,
-                  (header, parent, protocolContext) -> rule.validate(header, parent),
-                  rule.includeInLightValidation()));
+                  new AttachedComposedFromDetachedRule(rule),
+                  rule.includeInLightValidation(),
+                  rule.getName()));
       return this;
     }
 

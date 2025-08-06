@@ -47,4 +47,9 @@ public class CliqueNoEmptyBlockValidationRule implements DetachedBlockHeaderVali
     }
     return hasTransactions;
   }
+
+  @Override
+  public String getName() {
+    return "CliqueNoEmptyBlockValidationRule";
+  }
 }

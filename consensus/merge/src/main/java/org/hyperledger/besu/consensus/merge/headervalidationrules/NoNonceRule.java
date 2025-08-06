@@ -49,4 +49,9 @@ public class NoNonceRule extends MergeConsensusRule {
       return true;
     }
   }
+
+  @Override
+  public String getName() {
+    return "MergeNoNonceRule";
+  }
 }
