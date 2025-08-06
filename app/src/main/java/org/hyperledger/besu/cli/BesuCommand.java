@@ -87,6 +87,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -160,6 +161,7 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.TransactionValidatorService;
+import org.hyperledger.besu.plugin.services.WorldStateService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
@@ -190,6 +192,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
+import org.hyperledger.besu.services.WorldStateServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
@@ -1243,7 +1246,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
-    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+    besuPluginContext.addService(
+        WorldStateService.class,
+        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
 
     besuPluginContext.addService(
         SynchronizationService.class,
@@ -2598,6 +2603,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
             .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
+    }
+
+    if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
+      builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
+    } else {
+      builder.setTargetGasLimit(
+          MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId())));
     }
 
     builder

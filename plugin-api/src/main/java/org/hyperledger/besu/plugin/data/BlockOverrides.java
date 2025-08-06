@@ -67,7 +67,7 @@ public class BlockOverrides {
       final Optional<Hash> stateRoot,
       final Optional<BigInteger> difficulty,
       final Optional<Bytes> extraData,
-      final Optional<Bytes32> mixHashOrPrevRandao) {
+      final Optional<String> mixHashOrPrevRandao) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.blockHash = blockHash;
@@ -78,7 +78,7 @@ public class BlockOverrides {
     this.stateRoot = stateRoot;
     this.difficulty = difficulty;
     this.extraData = extraData;
-    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
+    this.mixHashOrPrevRandao = mixHashOrPrevRandao.map(Bytes32::fromHexString);
     this.blockHashLookup = Optional.empty();
   }
 
