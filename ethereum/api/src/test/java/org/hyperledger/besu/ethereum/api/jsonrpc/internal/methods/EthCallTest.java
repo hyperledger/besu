@@ -54,6 +54,10 @@ import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Map;
 import java.util.Optional;
@@ -81,13 +85,23 @@ public class EthCallTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private BlockHeader blockHeader;
+  @Mock private MetricsSystem metricsSystem;
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
   @Captor ArgumentCaptor<CallParameter> callParameterCaptor;
 
   @BeforeEach
   public void setUp() {
-    method = new EthCall(blockchainQueries, transactionSimulator);
+    @SuppressWarnings("unchecked")
+    LabelledMetric<Counter> mockGasUsedCounter = mock(LabelledMetric.class);
+    Counter mockCounter = mock(Counter.class);
+    when(mockGasUsedCounter.labels(any(String[].class))).thenReturn(mockCounter);
+
+    when(metricsSystem.createLabelledCounter(
+            any(BesuMetricCategory.class), any(String.class), any(String.class), any(String.class)))
+        .thenReturn(mockGasUsedCounter);
+
+    method = new EthCall(blockchainQueries, transactionSimulator, metricsSystem);
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
