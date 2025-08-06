@@ -334,7 +334,7 @@ public class CallTracerResultConverter {
         .to(toAddress)
         .value(getCallValue(frame, opcode))
         .gas(gasProvided) // Use the calculated gas value
-        .input(inputData.toHexString());
+        .input(inputData.toQuantityHexString());
   }
 
   private static CallTracerResult.Builder initializeRootBuilder(final Transaction tx) {
