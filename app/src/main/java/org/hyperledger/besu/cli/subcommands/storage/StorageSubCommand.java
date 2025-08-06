@@ -25,6 +25,8 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_S
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -51,7 +53,8 @@ import picocli.CommandLine.Spec;
       RocksDbSubCommand.class,
       TrieLogSubCommand.class,
       RevertMetadataSubCommand.class,
-      PrunePreMergeBlockDataSubCommand.class
+      PrunePreMergeBlockDataSubCommand.class,
+      StorageSubCommand.BackwardSyncSubCommand.class
     })
 public class StorageSubCommand implements Runnable {
 
@@ -82,10 +85,10 @@ public class StorageSubCommand implements Runnable {
     spec.commandLine().usage(out);
   }
 
-  /** The Hash sub command for password. */
+  /** The Revert variables sub command for storage. */
   @Command(
       name = "revert-variables",
-      description = "This command revert the modifications done by the variables storage feature.",
+      description = "This command reverts the modifications done by the variables storage feature.",
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class RevertVariablesStorage implements Runnable {
@@ -174,6 +177,43 @@ public class StorageSubCommand implements Runnable {
         final Bytes value) {
       blockchainTransaction.put(
           Bytes.concatenate(prefix, key).toArrayUnsafe(), value.toArrayUnsafe());
+    }
+  }
+
+  /**
+   * This class represents the BackwardSyncSubCommand. It is responsible for backward sync commands
+   * Test.
+   */
+  @Command(
+      name = "x-reset-backward-sync",
+      description = "Resets backward sync state.",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  public static class BackwardSyncSubCommand implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncSubCommand.class);
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private StorageSubCommand parentCommand; // Picocli injects reference to parent command
+
+    @SuppressWarnings("unused")
+    @Spec
+    private CommandSpec spec;
+
+    @Override
+    public void run() {
+      checkNotNull(parentCommand);
+      LOG.info("BWS subcommand deleting backward sync state");
+
+      try (BesuController besuController = parentCommand.besuCommand.buildController()) {
+
+        BackwardChain backwardChain =
+            BackwardChain.from(
+                besuController.getStorageProvider(),
+                ScheduleBasedBlockHeaderFunctions.create(besuController.getProtocolSchedule()));
+        backwardChain.clear();
+      }
+      LOG.info("BWS subcommand complete");
     }
   }
 }

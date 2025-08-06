@@ -70,7 +70,6 @@ import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.QBFTOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
-import org.hyperledger.besu.cli.subcommands.BackwardSyncSubCommand;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.TxParseSubCommand;
@@ -1111,8 +1110,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new ValidateConfigSubCommand(commandLine, commandLine.getOut()));
     commandLine.addSubcommand(
         StorageSubCommand.COMMAND_NAME, new StorageSubCommand(commandLine.getOut()));
-    commandLine.addSubcommand(
-        BackwardSyncSubCommand.COMMAND_NAME, new BackwardSyncSubCommand(commandLine.getOut()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
