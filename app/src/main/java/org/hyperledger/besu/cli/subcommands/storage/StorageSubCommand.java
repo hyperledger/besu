@@ -203,7 +203,7 @@ public class StorageSubCommand implements Runnable {
     @Override
     public void run() {
       checkNotNull(parentCommand);
-      LOG.info("BWS subcommand deleting backward sync state");
+      LOG.info("BWS subcommand resetting backward sync state");
 
       try (BesuController besuController = parentCommand.besuCommand.buildController()) {
 
