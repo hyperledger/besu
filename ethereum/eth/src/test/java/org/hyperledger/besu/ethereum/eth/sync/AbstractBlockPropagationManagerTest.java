@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
@@ -50,6 +51,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
@@ -68,12 +73,15 @@ import org.hyperledger.besu.util.number.ByteUnits;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 public abstract class AbstractBlockPropagationManagerTest {
@@ -95,11 +103,14 @@ public abstract class AbstractBlockPropagationManagerTest {
   protected final ProcessingBlocksManager processingBlocksManager =
       spy(new ProcessingBlocksManager());
   protected SyncState syncState;
+  protected PeerTaskExecutor peerTaskExecutor;
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Hash finalizedHash = Hash.fromHexStringLenient("0x1337");
   private final int maxMessageSize = 10 * ByteUnits.MEGABYTE;
 
   protected void setup(final DataStorageFormat dataStorageFormat) {
+    peerTaskExecutor =
+        Mockito.mock(PeerTaskExecutor.class, Mockito.withSettings().strictness(Strictness.LENIENT));
     blockchainUtil = BlockchainSetupUtil.forTesting(dataStorageFormat);
     blockchain = blockchainUtil.getBlockchain();
     protocolSchedule = blockchainUtil.getProtocolSchedule();
@@ -117,6 +128,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             .setWorldStateArchive(blockchainUtil.getWorldArchive())
             .setTransactionPool(blockchainUtil.getTransactionPool())
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
@@ -143,6 +155,38 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
     assertThat(blockchain.contains(nextNextBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == nextNextBlock.getHeader().getNumber()
+                  || nextNextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextNextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -183,6 +227,38 @@ public abstract class AbstractBlockPropagationManagerTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
     assertThat(blockchain.contains(nextNextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == nextNextBlock.getHeader().getNumber()
+                  || nextNextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextNextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -220,6 +296,38 @@ public abstract class AbstractBlockPropagationManagerTest {
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
     assertThat(blockchain.contains(nextNextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == nextNextBlock.getHeader().getNumber()
+                  || nextNextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextNextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -256,6 +364,38 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
     assertThat(blockchain.contains(nextNextBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == nextNextBlock.getHeader().getNumber()
+                  || nextNextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextNextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -297,6 +437,52 @@ public abstract class AbstractBlockPropagationManagerTest {
     assertThat(blockchain.contains(block2.getHash())).isFalse();
     assertThat(blockchain.contains(block3.getHash())).isFalse();
     assertThat(blockchain.contains(block4.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == block1.getHeader().getNumber()
+                  || block1.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(block1.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == block2.getHeader().getNumber()
+                  || block2.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(block2.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == block3.getHeader().getNumber()
+                  || block3.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(block3.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == block4.getHeader().getNumber()
+                  || block4.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(block4.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -365,6 +551,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -418,6 +629,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -452,7 +688,30 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(futureBlock.getHash())).isFalse();
-
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == futureBlock.getHeader().getNumber()
+                  || futureBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(futureBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -478,6 +737,31 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(futureBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == futureBlock.getHeader().getNumber()
+                  || futureBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(futureBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -506,6 +790,31 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == oldBlock.getHeader().getNumber()
+                  || oldBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(oldBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
@@ -536,6 +845,31 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(oldBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == oldBlock.getHeader().getNumber()
+                  || oldBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(oldBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     final BlockPropagationManager propManager = spy(blockPropagationManager);
     propManager.start();
@@ -610,6 +944,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -671,6 +1030,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
     blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
 
@@ -683,6 +1067,37 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     blockchainUtil.importFirstBlocks(2);
     final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 4);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == 2
+                  || blocks.get(0).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(0).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == 3
+                  || blocks.get(1).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(1).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -713,6 +1128,51 @@ public abstract class AbstractBlockPropagationManagerTest {
     // test if block propagation manager can recover if one block is missed
     blockchainUtil.importFirstBlocks(2);
     final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 6);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == 2
+                  || blocks.get(0).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(0).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == 3
+                  || blocks.get(1).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(1).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == 4
+                  || blocks.get(2).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(2).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else if (task.getBlockNumber() == 5
+                  || blocks.get(3).getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(blocks.get(3).getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -736,13 +1196,6 @@ public abstract class AbstractBlockPropagationManagerTest {
         block -> {
           assertThat(blockchain.contains(block.getHash())).isTrue();
         });
-  }
-
-  private NewBlockHashesMessage createNewBlockHashMessage(final Block block) {
-    return NewBlockHashesMessage.create(
-        Collections.singletonList(
-            new NewBlockHashesMessage.NewBlockHash(
-                block.getHash(), block.getHeader().getNumber())));
   }
 
   @Test
@@ -835,6 +1288,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     // Setup peer and messages
@@ -868,6 +1346,15 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(Collections.emptyList()),
+                PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE,
+                Collections.emptyList()));
 
     blockPropagationManager.start();
 
@@ -920,6 +1407,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     blockPropagationManager.start();
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
@@ -948,6 +1460,31 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
 
     blockPropagationManager.start();
 
@@ -990,6 +1527,31 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetHeadersFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+              PeerTaskExecutorResult<List<BlockHeader>> result;
+              if (task.getBlockNumber() == nextBlock.getHeader().getNumber()
+                  || nextBlock.getHash().equals(task.getBlockHash())) {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(List.of(nextBlock.getHeader())),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              } else {
+                result =
+                    new PeerTaskExecutorResult<>(
+                        Optional.of(Collections.emptyList()),
+                        PeerTaskExecutorResponseCode.SUCCESS,
+                        Collections.emptyList());
+              }
+              return result;
+            });
+
     // Sanity check
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
@@ -1027,5 +1589,12 @@ public abstract class AbstractBlockPropagationManagerTest {
 
   private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
+  }
+
+  private NewBlockHashesMessage createNewBlockHashMessage(final Block block) {
+    return NewBlockHashesMessage.create(
+        Collections.singletonList(
+            new NewBlockHashesMessage.NewBlockHash(
+                block.getHash(), block.getHeader().getNumber())));
   }
 }
