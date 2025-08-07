@@ -31,7 +31,6 @@ import static org.hyperledger.besu.ethstats.request.EthStatsRequest.Type.STATS;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -55,6 +54,7 @@ import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.ethstats.util.PrimusHeartBeatsHelper;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.math.BigInteger;

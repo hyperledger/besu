@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.Closeable;
 import java.util.Collection;

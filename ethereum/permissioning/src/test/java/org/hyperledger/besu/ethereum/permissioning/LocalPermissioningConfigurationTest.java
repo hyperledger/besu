@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 

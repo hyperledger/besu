@@ -15,7 +15,6 @@
 package org.hyperledger.besu;
 
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.ethstats.util.ImmutableEthStatsConnectOptions;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.time.Duration;

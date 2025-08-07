@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Optional;
 

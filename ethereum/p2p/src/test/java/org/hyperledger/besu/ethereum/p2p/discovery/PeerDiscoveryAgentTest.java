@@ -29,7 +29,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -46,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

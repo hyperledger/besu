@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 
