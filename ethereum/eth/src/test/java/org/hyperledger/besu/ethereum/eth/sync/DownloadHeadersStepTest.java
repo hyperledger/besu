@@ -95,8 +95,7 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem(),
-            true);
+            new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final CompletableFuture<RangeHeaders> result = downloader.apply(checkpointRange);
 
@@ -117,8 +116,7 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem(),
-            true);
+            new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
@@ -142,8 +140,7 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem(),
-            true);
+            new NoOpMetricsSystem());
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(
             syncTarget, blockchain.getBlockHeader(3).get(), blockchain.getBlockHeader(4).get());
@@ -164,8 +161,7 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem(),
-            true);
+            new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
@@ -188,8 +184,7 @@ public class DownloadHeadersStepTest {
             () -> HeaderValidationMode.DETACHED_ONLY,
             SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             HEADER_REQUEST_SIZE,
-            new NoOpMetricsSystem(),
-            true);
+            new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
