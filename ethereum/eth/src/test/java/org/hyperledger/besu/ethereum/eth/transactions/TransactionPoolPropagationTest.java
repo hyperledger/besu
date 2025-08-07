@@ -31,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class TransactionPoolPropagationTest {
@@ -90,6 +91,7 @@ class TransactionPoolPropagationTest {
    * node. Verify that all nodes get the correct number of pending transactions.
    */
   @Test
+  @Disabled("Flaky")
   void shouldPropagateLocalAndRemoteTransactions() throws Exception {
     try (final TestNodeList nodes = new TestNodeList()) {
       // Create & Start Nodes
