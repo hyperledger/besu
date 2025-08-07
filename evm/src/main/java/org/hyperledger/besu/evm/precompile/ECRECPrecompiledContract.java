@@ -76,13 +76,14 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   public PrecompileContractResult computePrecompile(
       final Bytes input, @NotNull final MessageFrame messageFrame) {
     final int size = input.size();
-    final Bytes d = size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
-    final Bytes32 h = Bytes32.wrap(d, 0);
+    final Bytes safeInput =
+        size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
+    final Bytes32 messageHash = Bytes32.wrap(safeInput, 0);
     // Note that the Yellow Paper defines v as the next 32 bytes (so 32..63). Yet, v is a simple
     // byte in ECDSARECOVER and the Yellow Paper is not very clear on this mismatch, but it appears
     // it is simply the last byte of those 32 bytes that needs to be used. It does appear we need
     // to check the rest of the bytes are zero though.
-    if (!d.slice(32, 31).isZero()) {
+    if (!safeInput.slice(32, 31).isZero()) {
       return PrecompileContractResult.success(Bytes.EMPTY);
     }
 
@@ -110,47 +111,44 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       }
     }
 
-    final int recId = d.get(63) - V_BASE;
-    final BigInteger r = d.slice(64, 32).toUnsignedBigInteger();
-    final BigInteger s = d.slice(96, 32).toUnsignedBigInteger();
+    Bytes resultBytes = computeDefault(safeInput, messageHash);
+    res =
+        new PrecompileInputResultTuple(
+            enableResultCaching ? input.copy() : input,
+            PrecompileContractResult.success(resultBytes));
 
-    final SECPSignature signature;
-    try {
-      signature = signatureAlgorithm.createSignature(r, s, (byte) recId);
-    } catch (final IllegalArgumentException e) {
-      return PrecompileContractResult.success(Bytes.EMPTY);
+    if (enableResultCaching) {
+      ecrecCache.put(cacheKey, res);
     }
+    return res.cachedResult();
+  }
 
-    // SECP256K1#PublicKey#recoverFromSignature throws an Illegal argument exception
-    // when it is unable to recover the key. There is not a straightforward way to
-    // check the arguments ahead of time to determine if the fail will happen and
-    // the library needs to be updated.
+  @NotNull
+  private Bytes computeDefault(final Bytes safeInput, final Bytes32 messageHash) {
     try {
-      final Optional<SECPPublicKey> recovered =
-          signatureAlgorithm.recoverPublicKeyFromSignature(h, signature);
-      if (recovered.isEmpty()) {
-        res =
-            new PrecompileInputResultTuple(
-                enableResultCaching ? input.copy() : input,
-                PrecompileContractResult.success(Bytes.EMPTY));
-        if (cacheKey != null) {
-          ecrecCache.put(cacheKey, res);
-        }
-        return res.cachedResult();
-      }
+      final int recId = safeInput.get(63) - V_BASE;
+      final BigInteger r = safeInput.slice(64, 32).toUnsignedBigInteger();
+      final BigInteger s = safeInput.slice(96, 32).toUnsignedBigInteger();
 
-      final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
-      final MutableBytes32 result = MutableBytes32.create();
-      hashed.slice(12).copyTo(result, 12);
-      res =
-          new PrecompileInputResultTuple(
-              enableResultCaching ? input.copy() : input, PrecompileContractResult.success(result));
-      if (enableResultCaching) {
-        ecrecCache.put(cacheKey, res);
+      final SECPSignature signature;
+      signature = signatureAlgorithm.createSignature(r, s, (byte) recId);
+
+      // SECP256K1#PublicKey#recoverFromSignature throws an Illegal argument exception
+      // when it is unable to recover the key. There is not a straightforward way to
+      // check the arguments ahead of time to determine if the fail will happen and
+      // the library needs to be updated.
+      final Optional<SECPPublicKey> recovered =
+          signatureAlgorithm.recoverPublicKeyFromSignature(messageHash, signature);
+      if (recovered.isEmpty()) {
+        return Bytes.EMPTY;
+      } else {
+        final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
+        final MutableBytes32 result = MutableBytes32.create();
+        hashed.slice(12).copyTo(result, 12);
+        return result;
       }
-      return res.cachedResult();
     } catch (final IllegalArgumentException e) {
-      return PrecompileContractResult.success(Bytes.EMPTY);
+      return Bytes.EMPTY;
     }
   }
 }
