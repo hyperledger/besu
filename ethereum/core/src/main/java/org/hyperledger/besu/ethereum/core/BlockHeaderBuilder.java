@@ -224,9 +224,13 @@ public class BlockHeaderBuilder {
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
     final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
 
+    // For PoS, coinbase is always configured, but for PoA it is not configured,
+    // rather generated for each block via MiningBeneficiaryCalculator.
+    // For simulation, if not configured, we use a dummy address 0x00.
+    // We don't throw an exception if coinbase is not configured.
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
+        .coinbase(miningConfiguration.getCoinbase().orElse(Address.ZERO))
         .difficulty(difficulty)
         .number(newBlockNumber)
         .gasLimit(gasLimit)
