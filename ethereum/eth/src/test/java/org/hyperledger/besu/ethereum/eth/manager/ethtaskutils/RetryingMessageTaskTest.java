@@ -21,13 +21,19 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * Tests ethTasks that request data from the network, and retry until all of the data is received.
@@ -194,9 +200,23 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   @Test
   public void failsWhenPeersSendEmptyResponses() {
     // Setup a unresponsive peer
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
-    final RespondingEthPeer respondingPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    Mockito.reset(peerTaskExecutor);
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(Collections.emptyList()),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                Collections.emptyList()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(Collections.emptyList()),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                Collections.emptyList()));
 
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
@@ -205,14 +225,6 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     final EthTask<T> task = createTask(requestedData);
     final CompletableFuture<T> future = task.run();
 
-    assertThat(future.isDone()).isFalse();
-
-    // Respond max times - 1
-    respondingPeer.respondTimes(responder, maxRetries - 1);
-    assertThat(future).isNotDone();
-
-    // Next retry should fail
-    respondingPeer.respond(responder);
     assertThat(future).isDone();
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);

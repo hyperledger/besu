@@ -24,9 +24,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.AbstractMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.util.ExceptionUtils;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -49,7 +52,6 @@ public class GetBlockFromPeerTaskTest
 
   @Override
   protected EthTask<AbstractPeerTask.PeerTaskResult<Block>> createTask(final Block requestedData) {
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     return GetBlockFromPeerTask.create(
         protocolSchedule,
         ethContext,
@@ -72,6 +74,22 @@ public class GetBlockFromPeerTaskTest
     // Setup data to be requested
     final Block requestedData = generateDataToBeRequested();
 
+    Mockito.reset(peerTaskExecutor);
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE,
+                Collections.emptyList()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE,
+                Collections.emptyList()));
+
     // Execute task
     final EthTask<AbstractPeerTask.PeerTaskResult<Block>> task = createTask(requestedData);
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<Block>> future = task.run();
@@ -85,9 +103,11 @@ public class GetBlockFromPeerTaskTest
     assertThat(failure.get()).isNotNull();
     // Check wrapped failure
     final Throwable error = ExceptionUtils.rootCause(failure.get());
-    assertThat(error).isInstanceOf(EthTaskException.class);
-    final EthTaskException ethException = (EthTaskException) error;
-    assertThat(ethException.reason()).isEqualTo(EthTaskException.FailureReason.NO_AVAILABLE_PEERS);
+    assertThat(error).isInstanceOf(RuntimeException.class);
+    final RuntimeException exception = (RuntimeException) error;
+    assertThat(exception.getMessage())
+        .isEqualTo(
+            "Peer UNKNOWN failed to successfully return requested block headers. Response code was NO_PEER_AVAILABLE");
 
     assertThat(task.run().isCompletedExceptionally()).isTrue();
     task.cancel();

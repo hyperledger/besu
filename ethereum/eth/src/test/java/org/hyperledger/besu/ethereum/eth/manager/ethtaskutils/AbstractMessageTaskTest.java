@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.withSettings;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -38,6 +39,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -66,6 +69,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.quality.Strictness;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -133,7 +137,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
             () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
-    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+    peerTaskExecutor =
+        Mockito.mock(PeerTaskExecutor.class, withSettings().strictness(Strictness.LENIENT));
     ethContext = new EthContext(ethPeers, ethMessages, ethScheduler, peerTaskExecutor);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
@@ -159,7 +164,15 @@ public abstract class AbstractMessageTaskTest<T, R> {
             .setEthPeers(ethPeers)
             .setEthMessages(ethMessages)
             .setEthContext(ethContext)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
+
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(new GetHeadersFromPeerTaskExecutorAnswer(blockchain, ethPeers));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(new GetHeadersFromPeerTaskExecutorAnswer(blockchain, ethPeers));
   }
 
   protected abstract T generateDataToBeRequested();
