@@ -45,7 +45,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -274,11 +273,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     BlockHeader child = null;
     boolean firstSkipped = false;
     final int previousHeaderIndex = lastFilledHeaderIndex;
-    // Headers must be sorted so we can calculate the total difficulty and use the correct header
-    // validation
-    final List<BlockHeader> sortedBlockHeaders =
-        blockHeaders.stream().sorted(Comparator.comparing(BlockHeader::getNumber)).toList();
-    for (final BlockHeader header : sortedBlockHeaders) {
+    for (final BlockHeader header : blockHeaders) {
       final int headerIndex =
           Ints.checkedCast(segmentLength - (referenceHeader.getNumber() - header.getNumber()));
       if (!firstSkipped) {
