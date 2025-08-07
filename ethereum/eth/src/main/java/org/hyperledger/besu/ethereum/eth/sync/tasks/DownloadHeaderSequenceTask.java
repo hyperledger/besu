@@ -73,7 +73,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   private final long startingBlockNumber;
   private final ValidationPolicy validationPolicy;
   private final MetricsSystem metricsSystem;
-  private final boolean shouldValidateHeaders;
 
   private int lastFilledHeaderIndex;
 
@@ -86,8 +85,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem,
-      final boolean shouldValidateHeaders) {
+      final MetricsSystem metricsSystem) {
     super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -97,7 +95,6 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     this.segmentLength = segmentLength;
     this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
-    this.shouldValidateHeaders = shouldValidateHeaders;
 
     checkArgument(segmentLength > 0, "Segment length must not be 0");
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
@@ -114,8 +111,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem,
-      final boolean shouldValidateHeaders) {
+      final MetricsSystem metricsSystem) {
     return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
@@ -125,8 +121,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         segmentLength,
         maxRetries,
         validationPolicy,
-        metricsSystem,
-        shouldValidateHeaders);
+        metricsSystem);
   }
 
   public static DownloadHeaderSequenceTask endingAtHeader(
@@ -137,8 +132,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final BlockHeader referenceHeader,
       final int segmentLength,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem,
-      final boolean shouldValidateHeaders) {
+      final MetricsSystem metricsSystem) {
     return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
@@ -148,8 +142,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         segmentLength,
         DEFAULT_RETRIES,
         validationPolicy,
-        metricsSystem,
-        shouldValidateHeaders);
+        metricsSystem);
   }
 
   @Override
@@ -287,8 +280,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
 
       final boolean foundChild = child != null;
       final boolean headerInRange = checkHeaderInRange(header);
-      final boolean headerInvalid =
-          foundChild && shouldValidateHeaders && !validateHeader(child, header);
+      final boolean headerInvalid = foundChild && !validateHeader(child, header);
       if (!headerInRange || !foundChild || headerInvalid) {
         final BlockHeader invalidHeader = child;
         final CompletableFuture<?> badBlockHandled =
