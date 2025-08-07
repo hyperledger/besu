@@ -262,14 +262,16 @@ public class MainnetTransactionProcessor {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
+        final WorldUpdater delegationUpdater = worldState.updater();
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor.get().process(worldState, transaction, eip7928AccessList);
+            maybeCodeDelegationProcessor
+                .get()
+                .process(delegationUpdater, transaction, eip7928AccessList);
         eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
-
-        // worldState.commit();
+        delegationUpdater.commit();
       }
 
       final List<AccessListEntry> eip2930AccessListEntries =
