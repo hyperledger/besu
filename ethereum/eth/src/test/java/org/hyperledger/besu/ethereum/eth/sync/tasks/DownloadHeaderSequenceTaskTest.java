@@ -87,7 +87,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         requestedData.size(),
         maxRetries,
         validationPolicy,
-        metricsSystem);
+        metricsSystem,
+        false);
   }
 
   @Test
@@ -107,7 +108,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             10,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Respond with only the reference header
@@ -144,7 +146,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             10,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     assertThat(future.isDone()).isTrue();
@@ -170,7 +173,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             10,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Filter response to include only reference header and previous header
@@ -226,7 +230,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             10,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     assertThat(future.isDone()).isTrue();
@@ -258,7 +263,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             blockCount - 1, // The reference header is not included in this count
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
     respondingPeer.respondWhile(fullResponder, () -> !future.isDone());
@@ -338,7 +344,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             blockCount - 1, // The reference header is not included in this count
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
@@ -377,7 +384,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             blockCount - 1, // The reference header is not included in this count
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
 
     // Run
     final List<BlockHeader> responseHeaders =
@@ -423,7 +431,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             blockCount - 1, // The reference header is not included in this count
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
 
     // Run
     final List<BlockHeader> responseHeaders =
@@ -468,7 +477,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             segmentLength,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
 
     // Run
     final Block outOfRangeBlock = blockchain.getBlockByNumber(startBlock - 1).get();
@@ -515,7 +525,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             segmentLength,
             maxRetries,
             validationPolicy,
-            metricsSystem);
+            metricsSystem,
+            false);
 
     // Return blocks in ascending order
     final List<BlockHeader> responseHeaders = chain.stream().map(Block::getHeader).toList();

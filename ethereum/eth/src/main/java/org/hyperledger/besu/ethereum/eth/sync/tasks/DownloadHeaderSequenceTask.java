@@ -45,6 +45,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -73,6 +74,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   private final long startingBlockNumber;
   private final ValidationPolicy validationPolicy;
   private final MetricsSystem metricsSystem;
+  private final boolean isPos;
 
   private int lastFilledHeaderIndex;
 
@@ -85,7 +87,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final boolean isPos) {
     super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -95,6 +98,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     this.segmentLength = segmentLength;
     this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
+    this.isPos = isPos;
 
     checkArgument(segmentLength > 0, "Segment length must not be 0");
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
@@ -111,7 +115,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final boolean isPos) {
     return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
@@ -121,7 +126,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         segmentLength,
         maxRetries,
         validationPolicy,
-        metricsSystem);
+        metricsSystem,
+        isPos);
   }
 
   public static DownloadHeaderSequenceTask endingAtHeader(
@@ -132,7 +138,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final BlockHeader referenceHeader,
       final int segmentLength,
       final ValidationPolicy validationPolicy,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final boolean isPos) {
     return new DownloadHeaderSequenceTask(
         protocolSchedule,
         protocolContext,
@@ -142,7 +149,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         segmentLength,
         DEFAULT_RETRIES,
         validationPolicy,
-        metricsSystem);
+        metricsSystem,
+        isPos);
   }
 
   @Override
@@ -266,7 +274,11 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     BlockHeader child = null;
     boolean firstSkipped = false;
     final int previousHeaderIndex = lastFilledHeaderIndex;
-    for (final BlockHeader header : blockHeaders) {
+    // Headers must be sorted so we can calculate the total difficulty and use the correct header
+    // validation
+    final List<BlockHeader> sortedBlockHeaders =
+        blockHeaders.stream().sorted(Comparator.comparing(BlockHeader::getNumber)).toList();
+    for (final BlockHeader header : sortedBlockHeaders) {
       final int headerIndex =
           Ints.checkedCast(segmentLength - (referenceHeader.getNumber() - header.getNumber()));
       if (!firstSkipped) {
@@ -369,6 +381,10 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   }
 
   private boolean validateHeader(final BlockHeader header, final BlockHeader parent) {
+    if (isPos) {
+      return true;
+    }
+
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(

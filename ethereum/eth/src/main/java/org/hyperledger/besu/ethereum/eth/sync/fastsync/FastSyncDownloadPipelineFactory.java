@@ -131,6 +131,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             getCommonAncestor(target),
             syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
+    boolean isPoS = protocolSchedule.anyMatch(s -> s.spec().isPoS());
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
@@ -139,13 +140,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             detachedValidationPolicy,
             syncConfig,
             headerRequestSize,
-            metricsSystem);
+            metricsSystem,
+            isPoS);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
         new SavePreMergeHeadersStep(
             protocolContext.getBlockchain(),
-            protocolSchedule.anyMatch(s -> s.spec().isPoS()),
+            isPoS,
             getCheckpointBlockNumber(syncState),
             protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadSyncBodiesStep downloadSyncBodiesStep =

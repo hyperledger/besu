@@ -103,7 +103,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             detachedValidationPolicy,
             syncConfig,
             headerRequestSize,
-            metricsSystem);
+            metricsSystem,
+            false);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
