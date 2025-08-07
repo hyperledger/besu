@@ -14,28 +14,46 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
+
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Processes the beacon block storage if it is present in the block header. */
 public class CancunPreExecutionProcessor extends FrontierPreExecutionProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(CancunPreExecutionProcessor.class);
+  Address BEACON_ROOTS_ADDRESS =
+      Address.fromHexString("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02");
 
   @Override
   public Void process(final BlockProcessingContext context) {
     ProcessableBlockHeader currentBlockHeader = context.getBlockHeader();
     currentBlockHeader
         .getParentBeaconBlockRoot()
-        .ifPresent(
-            beaconBlockRoot -> {
-              if (!beaconBlockRoot.isEmpty()) {
-                WorldUpdater worldUpdater = context.getWorldState().updater();
-                ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                    worldUpdater, currentBlockHeader.getTimestamp(), beaconBlockRoot);
-                worldUpdater.commit();
-              }
-            });
+        .ifPresent(beaconRoot -> process(context, beaconRoot));
     return null;
+  }
+
+  private void process(final BlockProcessingContext context, final Bytes32 beaconRootsAddress) {
+    SystemCallProcessor processor =
+        new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
+    try {
+      processor.process(BEACON_ROOTS_ADDRESS, context, beaconRootsAddress);
+    } catch (InvalidSystemCallAddressException e) {
+      // According to EIP-4788, fail silently if no code exists
+      LOG.warn("Invalid system call address: {}", BEACON_ROOTS_ADDRESS);
+    }
+  }
+
+  @Override
+  public Optional<Address> getBeaconRootsContract() {
+    return Optional.of(BEACON_ROOTS_ADDRESS);
   }
 }
