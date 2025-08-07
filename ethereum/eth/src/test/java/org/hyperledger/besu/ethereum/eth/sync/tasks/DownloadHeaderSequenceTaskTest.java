@@ -545,6 +545,54 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     assertNoBadBlocks();
   }
 
+  @Test
+  public void downloadsHeadersSuccessfullyWithoutValidation() {
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Set up a chain with an invalid block
+    final int blockCount = 5;
+    final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
+    final List<Block> chain = getBlockSequence(startBlock, blockCount);
+    final Block badBlock = chain.get(2);
+    ProtocolSchedule protocolScheduleSpy = setupHeaderValidationToFail(badBlock.getHeader());
+
+    // Create task with Proof of Stake (isPos = true) to skip validation
+    final BlockHeader referenceHeader = chain.get(blockCount - 1).getHeader();
+    final EthTask<List<BlockHeader>> task =
+        DownloadHeaderSequenceTask.endingAtHeader(
+            protocolScheduleSpy,
+            protocolContext,
+            ethContext,
+            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
+            referenceHeader,
+            blockCount - 1, // The reference header is not included in this count
+            maxRetries,
+            validationPolicy,
+            metricsSystem,
+            true); // isPos = true disables validation
+
+    final CompletableFuture<List<BlockHeader>> future = task.run();
+    final RespondingEthPeer.Responder fullResponder = getFullResponder();
+    respondingPeer.respondWhile(fullResponder, () -> !future.isDone());
+
+    // Should complete successfully without validation
+    assertThat(future.isCompletedExceptionally()).isFalse();
+
+    final List<BlockHeader> result = future.join();
+    assertThat(result).hasSize(blockCount - 1);
+
+    // Verify we got the expected headers
+    final List<BlockHeader> expectedHeaders =
+        chain.subList(0, blockCount - 1).stream()
+            .map(Block::getHeader)
+            .sorted(Comparator.comparing(BlockHeader::getNumber))
+            .collect(Collectors.toList());
+    assertThat(result).containsExactlyElementsOf(expectedHeaders);
+
+    assertNoBadBlocks();
+  }
+
   private List<Block> getBlockSequence(final long firstBlockNumber, final int blockCount) {
     final List<Block> blocks = new ArrayList<>(blockCount);
     for (int i = 0; i < blockCount; i++) {
