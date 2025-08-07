@@ -132,6 +132,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
     boolean isPoS = protocolSchedule.anyMatch(s -> s.spec().isPoS());
+    LOG.debug("Syncing with PoS: {}", isPoS);
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
