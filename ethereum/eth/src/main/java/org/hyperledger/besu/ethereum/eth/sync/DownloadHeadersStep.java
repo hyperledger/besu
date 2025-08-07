@@ -50,7 +50,7 @@ public class DownloadHeadersStep
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
-  private final boolean validateHeaders;
+  private final boolean shouldValidateHeaders;
 
   public DownloadHeadersStep(
       final ProtocolSchedule protocolSchedule,
@@ -60,7 +60,7 @@ public class DownloadHeadersStep
       final SynchronizerConfiguration synchronizerConfiguration,
       final int headerRequestSize,
       final MetricsSystem metricsSystem,
-      final boolean validateHeaders) {
+      final boolean shouldValidateHeaders) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -68,7 +68,7 @@ public class DownloadHeadersStep
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
-    this.validateHeaders = validateHeaders;
+    this.shouldValidateHeaders = shouldValidateHeaders;
   }
 
   @Override
@@ -99,7 +99,7 @@ public class DownloadHeadersStep
               range.getSegmentLengthExclusive(),
               validationPolicy,
               metricsSystem,
-              validateHeaders)
+              shouldValidateHeaders)
           .run();
     } else {
       LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());

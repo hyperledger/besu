@@ -132,6 +132,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
     final boolean isPoS = protocolSchedule.anyMatch(s -> s.spec().isPoS());
+    final boolean shouldValidateHeaders = !isPoS; // No need to validate headers in PoS
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
@@ -141,7 +142,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig,
             headerRequestSize,
             metricsSystem,
-            isPoS);
+            shouldValidateHeaders);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final SavePreMergeHeadersStep savePreMergeHeadersStep =

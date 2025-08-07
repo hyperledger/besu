@@ -88,7 +88,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         maxRetries,
         validationPolicy,
         metricsSystem,
-        false);
+        true);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Respond with only the reference header
@@ -147,7 +147,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     assertThat(future.isDone()).isTrue();
@@ -174,7 +174,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Filter response to include only reference header and previous header
@@ -231,7 +231,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     assertThat(future.isDone()).isTrue();
@@ -264,7 +264,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
     respondingPeer.respondWhile(fullResponder, () -> !future.isDone());
@@ -345,7 +345,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
@@ -385,7 +385,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
 
     // Run
     final List<BlockHeader> responseHeaders =
@@ -432,7 +432,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
 
     // Run
     final List<BlockHeader> responseHeaders =
@@ -478,7 +478,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
 
     // Run
     final Block outOfRangeBlock = blockchain.getBlockByNumber(startBlock - 1).get();
@@ -526,7 +526,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            false);
+            true);
 
     // Return blocks in ascending order
     final List<BlockHeader> responseHeaders = chain.stream().map(Block::getHeader).toList();
@@ -570,7 +570,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             maxRetries,
             validationPolicy,
             metricsSystem,
-            true); // isPos = true disables validation
+            false); // isPos = true disables validation
 
     final CompletableFuture<List<BlockHeader>> future = task.run();
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
