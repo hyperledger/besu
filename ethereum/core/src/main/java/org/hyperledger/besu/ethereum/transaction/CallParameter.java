@@ -140,6 +140,8 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
 
     tx.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
     tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    tx.getCodeDelegationList()
+        .ifPresent(list -> list.forEach(builder::addCodeDelegationAuthorizations));
     return builder.build();
   }
 
@@ -162,6 +164,8 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
     tx.getAccessList().ifPresent(builder::accessList);
     tx.getMaxFeePerBlobGas().map(Wei::fromQuantity).ifPresent(builder::maxFeePerBlobGas);
     tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    tx.getCodeDelegationList()
+        .ifPresent(list -> list.forEach(builder::addCodeDelegationAuthorizations));
     return builder.build();
   }
 }
