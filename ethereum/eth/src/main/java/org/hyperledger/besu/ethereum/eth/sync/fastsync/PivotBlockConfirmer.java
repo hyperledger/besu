@@ -16,18 +16,23 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -55,6 +60,7 @@ class PivotBlockConfirmer {
   private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
   private final Collection<CompletableFuture<?>> runningQueries = new ConcurrentLinkedQueue<>();
   private final Map<BlockHeader, AtomicInteger> pivotBlockVotes = new ConcurrentHashMap<>();
+  private final Set<EthPeer> peersUsed = Collections.synchronizedSet(new HashSet<>());
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
@@ -82,10 +88,12 @@ class PivotBlockConfirmer {
 
   private void queryPeers(final long blockNumber) {
     synchronized (runningQueries) {
-      for (int i = 0; i < numberOfPeersToQuery; i++) {
+      for (EthPeer ethPeer :
+          ethContext.getEthPeers().streamBestPeers().toList().subList(0, numberOfPeersToQuery)) {
+        peersUsed.add(ethPeer);
         final CompletableFuture<?> query;
         query =
-            executePivotQueryWithPeerTaskSystem(blockNumber)
+            executePivotQueryWithPeerTaskSystem(blockNumber, ethPeer)
                 .whenComplete(this::processReceivedHeader);
         runningQueries.add(query);
       }
@@ -140,7 +148,7 @@ class PivotBlockConfirmer {
   }
 
   private CompletableFuture<BlockHeader> executePivotQueryWithPeerTaskSystem(
-      final long blockNumber) {
+      final long blockNumber, final EthPeer ethPeer) {
     GetHeadersFromPeerTask task =
         new GetHeadersFromPeerTask(
             blockNumber,
@@ -159,7 +167,7 @@ class PivotBlockConfirmer {
         .scheduleServiceTask(
             () -> {
               PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().execute(task);
+                  ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer);
               if (taskResult.responseCode() == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
                 // something is probably wrong with the request, so we won't retry as below
                 return CompletableFuture.failedFuture(
@@ -168,10 +176,13 @@ class PivotBlockConfirmer {
                   || taskResult.result().isEmpty()) {
                 // recursively call executePivotQueryWithPeerTaskSystem to retry with a different
                 // peer.
-                ethContext
-                    .getEthPeers()
-                    .waitForPeer((ethPeer) -> !taskResult.ethPeers().contains(ethPeer));
-                return executePivotQueryWithPeerTaskSystem(blockNumber);
+                try {
+                  return executePivotQueryWithPeerTaskSystem(
+                      blockNumber,
+                      ethContext.getEthPeers().waitForPeer((p) -> !peersUsed.contains(p)).get());
+                } catch (InterruptedException | ExecutionException e) {
+                  return CompletableFuture.failedFuture(e);
+                }
               }
               return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
             });
