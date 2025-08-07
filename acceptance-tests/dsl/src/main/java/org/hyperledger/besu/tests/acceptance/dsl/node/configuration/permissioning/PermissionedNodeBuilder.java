@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioni
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.datatypes.p2p.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;

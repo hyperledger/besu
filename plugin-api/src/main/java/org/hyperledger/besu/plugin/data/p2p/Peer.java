@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.datatypes.p2p.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import org.apache.tuweni.bytes.Bytes;
 

@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.config;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.p2p.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 
 import java.io.IOException;

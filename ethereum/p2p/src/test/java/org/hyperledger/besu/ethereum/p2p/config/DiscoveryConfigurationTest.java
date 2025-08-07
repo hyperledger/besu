@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.config;
 
 import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.datatypes.p2p.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 

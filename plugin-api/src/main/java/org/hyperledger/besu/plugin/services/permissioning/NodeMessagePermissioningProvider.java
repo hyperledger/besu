@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.permissioning;
 
-import org.hyperledger.besu.datatypes.p2p.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 /**
  * Allows you to register a provider that will decide if a devp2p message is permitted. <br>

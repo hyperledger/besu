@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes.p2p;
+package org.hyperledger.besu.plugin.data;
 
 import java.net.InetAddress;
 import java.net.URI;
