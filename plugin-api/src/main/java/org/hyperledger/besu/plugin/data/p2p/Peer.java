@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,24 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.peers;
+package org.hyperledger.besu.plugin.data.p2p;
 
 import org.hyperledger.besu.datatypes.p2p.EnodeURL;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
-import java.util.List;
+import org.apache.tuweni.bytes.Bytes;
 
-public interface MutableLocalNode extends LocalNode {
-  static MutableLocalNode create(
-      final String clientId, final int p2pVersion, final List<Capability> supportedCapabilities) {
-    return DefaultLocalNode.create(clientId, p2pVersion, supportedCapabilities);
-  }
+/** A P2P peer for plugin use. */
+public interface Peer {
 
-  void setEnode(EnodeURL enode) throws NodeAlreadySetException;
+  /**
+   * Get the peer's ID.
+   *
+   * @return peer ID
+   */
+  Bytes getId();
 
-  class NodeAlreadySetException extends RuntimeException {
-    public NodeAlreadySetException(final String message) {
-      super(message);
-    }
-  }
+  /**
+   * Get the enode URL of this peer.
+   *
+   * @return enode URL
+   */
+  EnodeURL getEnodeURL();
 }

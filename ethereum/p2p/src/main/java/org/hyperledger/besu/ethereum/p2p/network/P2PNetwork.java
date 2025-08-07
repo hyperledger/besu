@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
+import org.hyperledger.besu.datatypes.p2p.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -117,6 +117,9 @@ public interface P2PNetwork extends Closeable {
    */
   boolean removeMaintainedConnectionPeer(final Peer peer);
 
+  /** Returns a collection of peers that are maintained connections. */
+  Collection<Peer> getMaintainedConnectionPeers();
+
   /** Stops the P2P network layer. */
   void stop();
 
@@ -164,5 +167,4 @@ public interface P2PNetwork extends Closeable {
   default RlpxAgent getRlpxAgent() {
     return null;
   }
-  ;
 }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.testing;
 
+import org.hyperledger.besu.datatypes.p2p.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
@@ -190,6 +190,11 @@ public final class MockNetwork {
     @Override
     public boolean removeMaintainedConnectionPeer(final Peer peer) {
       return true;
+    }
+
+    @Override
+    public Collection<Peer> getMaintainedConnectionPeers() {
+      return List.of();
     }
 
     @Override

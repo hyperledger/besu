@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,26 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
+package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-
-/** A P2P network message received from another peer. */
-public interface Message extends org.hyperledger.besu.plugin.data.p2p.Message {
+/** A P2P protocol capability for plugin use. */
+public interface Capability {
 
   /**
-   * Returns the {@link MessageData} contained in the message.
+   * Get the name of the protocol.
    *
-   * @return Data in the message
+   * @return protocol name
    */
-  @Override
-  MessageData getData();
+  String getName();
 
   /**
-   * {@link PeerConnection} this message was sent from.
+   * Get the version of the protocol.
    *
-   * @return PeerConnection this message was sent from.
+   * @return protocol version
    */
-  @Override
-  PeerConnection getConnection();
+  int getVersion();
 }

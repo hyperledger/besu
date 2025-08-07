@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.datatypes.p2p.EnodeURL;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
