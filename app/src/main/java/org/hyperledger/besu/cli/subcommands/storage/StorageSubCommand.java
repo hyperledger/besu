@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -203,17 +205,25 @@ public class StorageSubCommand implements Runnable {
     @Override
     public void run() {
       checkNotNull(parentCommand);
-      LOG.info("BWS subcommand resetting backward sync state");
+      Path dataDir = parentCommand.besuCommand.dataDir();
+      if (!Files.exists(dataDir)) {
+        LOG.info("Exiting with no action: Data directory does not exist: {}", dataDir);
+      } else {
 
-      try (BesuController besuController = parentCommand.besuCommand.buildController()) {
+        LOG.info("Resetting backward sync state for data path {}", dataDir);
 
-        BackwardChain backwardChain =
-            BackwardChain.from(
-                besuController.getStorageProvider(),
-                ScheduleBasedBlockHeaderFunctions.create(besuController.getProtocolSchedule()));
-        backwardChain.clear();
+        try (BesuController besuController = parentCommand.besuCommand.buildController()) {
+
+          BackwardChain backwardChain =
+              BackwardChain.from(
+                  besuController.getStorageProvider(),
+                  ScheduleBasedBlockHeaderFunctions.create(besuController.getProtocolSchedule()));
+          backwardChain.clear();
+        }
+        LOG.info(
+            "Completed resetting backward sync state for data path {}",
+            parentCommand.besuCommand.dataDir());
       }
-      LOG.info("BWS subcommand complete");
     }
   }
 }
