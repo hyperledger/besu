@@ -16,11 +16,11 @@ package org.hyperledger.besu.evm.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Objects;
-
-import org.hyperledger.besu.evm.frame.MessageFrame;
 
 /**
  * An operand stack for the Ethereum Virtual machine (EVM). The stack grows 32 entries at a time if
@@ -39,7 +39,7 @@ public class FlexStack<T> {
    * the start size is 91 which is reasonable for mainnet.
    */
   private static final int INITIAL_SIZE =
-    (int) Math.round(MessageFrame.DEFAULT_MAX_STACK_SIZE / Math.pow(1.5D, 6D)) + 1;
+      (int) Math.round(MessageFrame.DEFAULT_MAX_STACK_SIZE / Math.pow(1.5D, 6D)) + 1;
 
   /**
    * Soft limit imposed for growing arrays. JVMs do not allow to allocate arrays above certain
