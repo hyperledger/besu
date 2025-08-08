@@ -75,7 +75,7 @@ import org.mockito.stubbing.Answer;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final int defaultHeaderRequestSize = 10;

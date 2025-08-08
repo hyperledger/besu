@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -98,7 +99,7 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
     when(natService.queryExternalIPAddress(anyString())).thenReturn("1.2.3.4");
-    when(protocolSpec.getName()).thenReturn("London");
+    when(protocolSpec.getHardforkId()).thenReturn(LONDON);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     method =
         new AdminNodeInfo(

@@ -47,7 +47,7 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       final List<BlockHeader> blocks = new ArrayList<>();
-      BlockHeader blockPtr = event.getBlock().getHeader();
+      BlockHeader blockPtr = event.getHeader();
 
       while (!blockPtr.getHash().equals(event.getCommonAncestorHash())) {
         blocks.add(blockPtr);
@@ -56,7 +56,8 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
             blockchainQueries
                 .getBlockchain()
                 .getBlockHeader(blockPtr.getParentHash())
-                .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
+                .orElseThrow(
+                    () -> new IllegalStateException("The block was on an orphaned chain."));
       }
 
       Collections.reverse(blocks);

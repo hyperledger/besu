@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
 
+import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -52,7 +56,35 @@ public interface TransactionTraceParams {
     return false;
   }
 
+  @JsonProperty("tracer")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Nullable
+  String tracer();
+
+  @JsonProperty("tracerConfig")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  // The Immutable annotation generates a Guava map for which Jackson deserialization fails. We are
+  // explicitly using LinkedHashMap to overcome this issue. The suppression is to avoid warnings
+  // about using a non-API type.
+  @SuppressWarnings("NonApiType")
+  LinkedHashMap<String, Object> tracerConfig();
+
+  /**
+   * Convert JSON-RPC parameters to a {@link TraceOptions} object.
+   *
+   * @return TraceOptions object containing the tracer type and configuration.
+   */
   default TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
+    var defaultTracerConfig =
+        new OpCodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+
+    // Convert string tracer to TracerType enum, handling null case
+    TracerType tracerType =
+        tracer() != null
+            ? TracerType.fromString(tracer())
+            : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
+
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig());
   }
 }

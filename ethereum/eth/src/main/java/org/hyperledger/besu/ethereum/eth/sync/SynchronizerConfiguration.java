@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
@@ -42,7 +43,7 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
-  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 4;
+  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 8;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 4;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
@@ -51,6 +52,10 @@ public class SynchronizerConfiguration {
       TimeUnit.SECONDS.toMillis(60);
 
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
+
+  public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
+  public static final URI DEFAULT_ERA1_DATA_URI = URI.create("https://mainnet.era1.nimbus.team/");
+  public static final Integer DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY = 1;
 
   // Fast sync config
   private final int syncPivotDistance;
@@ -86,7 +91,12 @@ public class SynchronizerConfiguration {
   private final long worldStateMinMillisBeforeStalling;
   private final long propagationManagerGetBlockTimeoutMillis;
   private final boolean isPeerTaskSystemEnabled;
-  private final boolean snapSyncSavePreMergeHeadersOnlyEnabled;
+  private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
+
+  // ERA1 import prepipeline config
+  private final boolean era1ImportPrepipelineEnabled;
+  private final URI era1DataUri;
+  private final int era1ImportPrepipelineConcurrency;
 
   private SynchronizerConfiguration(
       final int syncPivotDistance,
@@ -112,7 +122,10 @@ public class SynchronizerConfiguration {
       final long propagationManagerGetBlockTimeoutMillis,
       final boolean checkpointPostMergeEnabled,
       final boolean isPeerTaskSystemEnabled,
-      final boolean snapSyncSavePreMergeHeadersOnlyEnabled) {
+      final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled,
+      final boolean era1ImportPrepipelineEnabled,
+      final URI era1DataUri,
+      final int era1ImportPrepipelineConcurrency) {
     this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
@@ -136,7 +149,10 @@ public class SynchronizerConfiguration {
     this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
     this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
-    this.snapSyncSavePreMergeHeadersOnlyEnabled = snapSyncSavePreMergeHeadersOnlyEnabled;
+    this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
+    this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
+    this.era1DataUri = era1DataUri;
+    this.era1ImportPrepipelineConcurrency = era1ImportPrepipelineConcurrency;
   }
 
   public static Builder builder() {
@@ -266,8 +282,20 @@ public class SynchronizerConfiguration {
     return isPeerTaskSystemEnabled;
   }
 
-  public boolean isSnapSyncSavePreMergeHeadersOnlyEnabled() {
-    return snapSyncSavePreMergeHeadersOnlyEnabled;
+  public boolean isSnapSyncSavePreCheckpointHeadersOnlyEnabled() {
+    return snapSyncSavePreCheckpointHeadersOnlyEnabled;
+  }
+
+  public boolean era1ImportPrepipelineEnabled() {
+    return era1ImportPrepipelineEnabled;
+  }
+
+  public URI era1DataUri() {
+    return era1DataUri;
+  }
+
+  public int era1ImportPrepipelineConcurrency() {
+    return era1ImportPrepipelineConcurrency;
   }
 
   public static class Builder {
@@ -295,7 +323,10 @@ public class SynchronizerConfiguration {
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
     private boolean isPeerTaskSystemEnabled = false;
-    private boolean snapSyncSavePreMergeHeadersOnlyEnabled = false;
+    private boolean snapSyncSavePreCheckpointHeadersOnlyEnabled = true;
+    private boolean era1ImportPrepipelineEnabled = DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
+    private URI era1DataUri = DEFAULT_ERA1_DATA_URI;
+    private int era1ImportPrepipelineConcurrency = DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
 
     private long propagationManagerGetBlockTimeoutMillis =
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
@@ -427,9 +458,25 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder snapSyncSavePreMergeHeadersOnlyEnabled(
-        final boolean snapSyncSavePreMergeHeadersOnlyEnabled) {
-      this.snapSyncSavePreMergeHeadersOnlyEnabled = snapSyncSavePreMergeHeadersOnlyEnabled;
+    public Builder snapSyncSavePreCheckpointHeadersOnlyEnabled(
+        final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled) {
+      this.snapSyncSavePreCheckpointHeadersOnlyEnabled =
+          snapSyncSavePreCheckpointHeadersOnlyEnabled;
+      return this;
+    }
+
+    public Builder era1ImportPrepipelineEnabled(final boolean era1ImportPrepipelineEnabled) {
+      this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
+      return this;
+    }
+
+    public Builder era1DataUri(final URI era1DataUri) {
+      this.era1DataUri = era1DataUri;
+      return this;
+    }
+
+    public Builder era1ImportPrepipelineConcurrency(final int era1ImportPrepipelineConcurrency) {
+      this.era1ImportPrepipelineConcurrency = era1ImportPrepipelineConcurrency;
       return this;
     }
 
@@ -458,7 +505,10 @@ public class SynchronizerConfiguration {
           propagationManagerGetBlockTimeoutMillis,
           checkpointPostMergeEnabled,
           isPeerTaskSystemEnabled,
-          snapSyncSavePreMergeHeadersOnlyEnabled);
+          snapSyncSavePreCheckpointHeadersOnlyEnabled,
+          era1ImportPrepipelineEnabled,
+          era1DataUri,
+          era1ImportPrepipelineConcurrency);
     }
   }
 }

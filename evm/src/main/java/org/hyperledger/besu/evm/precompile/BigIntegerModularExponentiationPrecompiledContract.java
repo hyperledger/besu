@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class BigIntegerModularExponentiationPrecompiledContract
     extends AbstractPrecompiledContract {
 
-  private static final String PRECOMPILE_NAME = "BigIntModExp";
+  private static final String PRECOMPILE_NAME = "MODEXP";
   private static final Logger LOG =
       LoggerFactory.getLogger(BigIntegerModularExponentiationPrecompiledContract.class);
 
@@ -109,19 +109,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @NotNull final MessageFrame messageFrame) {
-    // https://eips.ethereum.org/EIPS/eip-7823
-    // We introduce an upper bound to the inputs of the precompile,
-    // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
-    // MUST be less than or equal to 1024 bytes
-    final long length_of_BASE = baseLength(input);
-    final long length_of_EXPONENT = exponentLength(input);
-    final long length_of_MODULUS = modulusLength(input);
-    if (length_of_BASE > upperBound
-        || length_of_EXPONENT > upperBound
-        || length_of_MODULUS > upperBound) {
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
-    }
 
     Integer cacheKey = null;
     if (enableResultCaching) {
@@ -148,6 +135,25 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
     final PrecompileContractResult precompileContractResult;
 
+    // https://eips.ethereum.org/EIPS/eip-7823
+    // We introduce an upper bound to the inputs of the precompile,
+    // each of the length inputs (length_of_BASE, length_of_EXPONENT and length_of_MODULUS)
+    // MUST be less than or equal to 1024 bytes
+    final long length_of_BASE = baseLength(input);
+    final long length_of_EXPONENT = exponentLength(input);
+    final long length_of_MODULUS = modulusLength(input);
+    if (length_of_BASE > upperBound
+        || length_of_EXPONENT > upperBound
+        || length_of_MODULUS > upperBound) {
+      precompileContractResult =
+          PrecompileContractResult.halt(null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      if (enableResultCaching) {
+        modexpCache.put(
+            cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
+      }
+      return precompileContractResult;
+    }
+
     // OPTIMIZATION: overwrite native setting for this case
     if (LibArithmetic.ENABLED) {
       final int baseOffset = clampedToInt(BASE_OFFSET);
@@ -156,7 +162,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
       final int modulusLength = clampedToInt(length_of_MODULUS);
       if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
           && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
-        precompileContractResult = computeNative(input, length_of_MODULUS);
+        precompileContractResult = computeNative(input, modulusLength);
         if (enableResultCaching) {
           modexpCache.put(
               cacheKey, new PrecompileInputResultTuple(input.copy(), precompileContractResult));
@@ -166,10 +172,13 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
 
     if (useNative) {
-      precompileContractResult = computeNative(input, length_of_MODULUS);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      precompileContractResult = computeNative(input, modulusLength);
     } else {
-      precompileContractResult =
-          computeDefault(input, length_of_BASE, length_of_EXPONENT, length_of_MODULUS);
+      final int baseLength = clampedToInt(length_of_BASE);
+      final int exponentLength = clampedToInt(length_of_EXPONENT);
+      final int modulusLength = clampedToInt(length_of_MODULUS);
+      precompileContractResult = computeDefault(input, baseLength, exponentLength, modulusLength);
     }
     if (enableResultCaching) {
       modexpCache.put(
@@ -180,13 +189,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
 
   @NotNull
   private PrecompileContractResult computeDefault(
-      final Bytes input,
-      final long length_of_BASE,
-      final long length_of_EXPONENT,
-      final long length_of_MODULUS) {
-    final int baseLength = clampedToInt(length_of_BASE);
-    final int exponentLength = clampedToInt(length_of_EXPONENT);
-    final int modulusLength = clampedToInt(length_of_MODULUS);
+      final Bytes input, final int baseLength, final int exponentLength, final int modulusLength) {
     // If baseLength and modulusLength are zero
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
@@ -322,8 +325,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   private PrecompileContractResult computeNative(
-      final @NotNull Bytes input, final long length_of_MODULUS) {
-    final int modulusLength = clampedToInt(length_of_MODULUS);
+      final @NotNull Bytes input, final int modulusLength) {
     final IntByReference o_len = new IntByReference(modulusLength);
 
     final byte[] result = new byte[modulusLength];

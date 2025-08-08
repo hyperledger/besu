@@ -38,9 +38,15 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import one.profiler.AsyncProfiler;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,14 +58,13 @@ public abstract class BenchmarkExecutor {
   private static final int MAX_WARMUP_TIME_IN_SECONDS = 3;
   private static final long GAS_PER_SECOND_STANDARD = 100_000_000L;
 
-  static final int MATH_WARMUP = 100_000;
-  static final int MATH_ITERATIONS = 100_000;
+  static final int MATH_WARMUP = 20_000;
+  static final int MATH_ITERATIONS = 1_000;
 
   /** Where to write the output of the benchmarks. */
   protected final PrintStream output;
 
-  /** Config for running benchmarks. * */
-  protected final BenchmarkConfig config;
+  private final BenchmarkConfig config;
 
   private Runnable precompileTableHeader;
   int warmIterations;
@@ -128,13 +133,110 @@ public abstract class BenchmarkExecutor {
                             : Integer.MAX_VALUE));
     this.output = output;
     this.precompileTableHeader =
-        () ->
-            output.printf(
-                "%-30s | %12s | %12s | %15s | %15s%n",
-                "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+        () -> {
+          if (benchmarkConfig.attemptCacheBust())
+            output.println("--attempt-cache-bust=true (--warm-time and --exec-time ignored)");
+          output.printf("--warm-iterations=%d%n", warmIterations);
+          if (!benchmarkConfig.attemptCacheBust())
+            output.printf("--warm-time=%ss%n", warmTimeInNano / 1.0e9D);
+          output.printf("--exec-iterations=%d%n", execIterations);
+          if (!benchmarkConfig.attemptCacheBust())
+            output.printf("--exec-time=%ss%n", execTimeInNano / 1.0e9D);
+          output.printf(
+              "%-30s | %12s | %12s | %15s | %15s%n",
+              "", "Actual cost", "Derived Cost", "Iteration time", "Throughput");
+        };
     this.config = benchmarkConfig;
     assert warmIterations <= 0;
     assert execIterations <= 0;
+  }
+
+  /**
+   * Benchmarks the given precompile with all the test cases provided. This method selectively runs
+   * the benchmark and/or particular test cases accordingly with the CLI options that were provided.
+   *
+   * @param testCases all test cases to run against the precompile.
+   * @param contract precompile contract to execute.
+   * @param evmSpecVersion EVM specification version to run the precompile for.
+   */
+  public void precompile(
+      final SequencedMap<String, Bytes> testCases,
+      final PrecompiledContract contract,
+      final EvmSpecVersion evmSpecVersion) {
+
+    if (contract == null) {
+      throw new UnsupportedOperationException(
+          "contract is unsupported on " + evmSpecVersion + " fork");
+    }
+
+    Optional<Pattern> maybePattern = config.testCasePattern().map(Pattern::compile);
+    LinkedHashMap<String, Bytes> filteredTestCases = new LinkedHashMap<>();
+    testCases.forEach(
+        (k, v) -> {
+          if (maybePattern.map(p -> p.matcher(k).find()).orElse(true)) {
+            filteredTestCases.put(k, v);
+          }
+        });
+
+    if (config.attemptCacheBust()) {
+      runPrecompileAttemptCacheBust(filteredTestCases, contract);
+    } else {
+      runPrecompile(filteredTestCases, contract);
+    }
+  }
+
+  private void runPrecompileAttemptCacheBust(
+      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+
+    // Warmup all test cases in serial inside one warmup iteration
+    // avoid using warmTime as it is now dependent on the number of test cases
+    for (int i = 0; i < warmIterations; i++) {
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        contract.computePrecompile(testCase.getValue(), fakeFrame);
+      }
+    }
+
+    // Also run all test cases in serial inside one iteration
+    Map<String, Long> totalElapsedByTestName = new HashMap<>();
+    int executions = 0;
+    while (executions < execIterations) {
+      for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+        final long iterationStart = System.nanoTime();
+        final var result = contract.computePrecompile(testCase.getValue(), fakeFrame);
+        final long iterationElapsed = System.nanoTime() - iterationStart;
+        if (result.output() != null) {
+          // adds iterationElapsed if absent, or sums with existing value
+          totalElapsedByTestName.merge(testCase.getKey(), iterationElapsed, Long::sum);
+        } else {
+          throw new IllegalArgumentException("Input is Invalid for " + testCase.getValue());
+        }
+      }
+      executions++;
+    }
+
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      if (totalElapsedByTestName.containsKey(testCase.getKey())) {
+        final double execTime =
+            totalElapsedByTestName.get(testCase.getKey()) / 1.0e9D / execIterations;
+        // log the performance of the precompile
+        long gasCost = contract.gasRequirement(testCases.get(testCase.getKey()));
+        logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+      } else {
+        output.printf("%s Test case missing from results%n", testCase.getKey());
+      }
+    }
+  }
+
+  private void runPrecompile(
+      final Map<String, Bytes> testCases, final PrecompiledContract contract) {
+
+    // Fully warmup and execute, test case by test case
+    for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
+      final double execTime =
+          runPrecompileBenchmark(testCase.getKey(), testCase.getValue(), contract);
+      long gasCost = contract.gasRequirement(testCase.getValue());
+      logPrecompilePerformance(testCase.getKey(), gasCost, execTime);
+    }
   }
 
   /**
@@ -148,14 +250,18 @@ public abstract class BenchmarkExecutor {
   protected double runPrecompileBenchmark(
       final String testName, final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).output() == null) {
-      throw new RuntimeException("Input is Invalid");
+      throw new IllegalArgumentException("Input is Invalid for " + testName);
     }
 
-    long startNanoTime = System.nanoTime();
-    for (int i = 0; i < warmIterations && System.nanoTime() - startNanoTime < warmTimeInNano; i++) {
+    // Warmup individual test case fully, which may have side effect of warming cpu caches
+    long startWarmNanoTime = System.nanoTime();
+    for (int i = 0;
+        i < warmIterations && System.nanoTime() - startWarmNanoTime < warmTimeInNano;
+        i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
 
+    // Iterations
     final AtomicReference<AsyncProfiler> asyncProfiler = new AtomicReference<>();
     config
         .asyncProfilerOptions()
@@ -172,12 +278,14 @@ public abstract class BenchmarkExecutor {
             });
 
     int executions = 0;
-    long elapsed = 0;
-    startNanoTime = System.nanoTime();
-    while (executions < execIterations && elapsed < execTimeInNano) {
+    long totalElapsed = 0;
+    while (executions < execIterations && totalElapsed < execTimeInNano) {
+      long iterationStart = System.nanoTime();
       contract.computePrecompile(arg, fakeFrame);
+      long iterationElapsed = System.nanoTime() - iterationStart;
+
+      totalElapsed += iterationElapsed;
       executions++;
-      elapsed = System.nanoTime() - startNanoTime;
     }
 
     if (asyncProfiler.get() != null) {
@@ -188,15 +296,16 @@ public abstract class BenchmarkExecutor {
       }
     }
 
-    return elapsed / 1.0e9D / executions;
+    return totalElapsed / 1.0e9D / executions;
   }
 
   /**
-   * Logging after a Precompile run with all the normalized and required stats.
+   * Logs performance numbers of precompiles. Should not be called outside of this class unless a
+   * custom precompile run is preferred.
    *
-   * @param testCase name of the running test case.
-   * @param gasCost actual gas cost of the Precompile contract.
-   * @param execTime time that took for an iteration to complete.
+   * @param testCase name of the test case
+   * @param gasCost cost it takes for the given test case to run with the given precompile
+   * @param execTime elapsed time of a single iteration
    */
   protected void logPrecompilePerformance(
       final String testCase, final long gasCost, final double execTime) {
@@ -243,6 +352,7 @@ public abstract class BenchmarkExecutor {
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.
    */
+  // TODO: remove attemptNative since it's already available from BenchmarkConfig here
   public abstract void runBenchmark(final Boolean attemptNative, final String fork);
 
   /**

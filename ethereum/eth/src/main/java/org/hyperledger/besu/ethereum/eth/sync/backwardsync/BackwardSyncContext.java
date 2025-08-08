@@ -297,12 +297,16 @@ public class BackwardSyncContext {
   }
 
   public boolean isReady() {
+    // we aren't ready if we have 0 peers
+    int peerCount = getEthContext().getEthPeers().peerCount();
     LOG.debug(
-        "checking if BWS is ready: ttd reached {}, initial sync done {}",
+        "checking if BWS is ready: ttd reached {}, initial sync done {}, peerCount {}",
         syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE),
-        syncState.isInitialSyncPhaseDone());
+        syncState.isInitialSyncPhaseDone(),
+        peerCount);
     return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
-        && syncState.isInitialSyncPhaseDone();
+        && syncState.isInitialSyncPhaseDone()
+        && peerCount > 0;
   }
 
   public void subscribeBadChainListener(final BadChainListener badChainListener) {

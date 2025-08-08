@@ -19,8 +19,8 @@ import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.BlockMiner;
+import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -57,7 +57,7 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
-      final AbstractBlockScheduler scheduler,
+      final DefaultBlockScheduler scheduler,
       final BlockHeader parentHeader,
       final Address localAddress,
       final ForksSchedule<CliqueConfigOptions> forksSchedule) {

@@ -135,7 +135,9 @@ public class JsonRpcMethodsFactory {
                   miningConfiguration,
                   supportedCapabilities,
                   apiConfiguration,
-                  transactionSimulator),
+                  genesisConfigOptions,
+                  transactionSimulator,
+                  metricsSystem),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,

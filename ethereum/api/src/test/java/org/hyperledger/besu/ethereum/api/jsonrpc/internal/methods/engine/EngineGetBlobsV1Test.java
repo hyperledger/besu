@@ -215,9 +215,9 @@ public class EngineGetBlobsV1Test extends TrustedSetupClassLoaderExtension {
     final JsonRpcResponse jsonRpcResponse = resp(versionedHashes);
 
     assertThat(fromErrorResp(jsonRpcResponse).getCode())
-        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST.getCode());
+        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getCode());
     assertThat(fromErrorResp(jsonRpcResponse).getMessage())
-        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST.getMessage());
+        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getMessage());
   }
 
   Transaction createBlobTransaction() {
