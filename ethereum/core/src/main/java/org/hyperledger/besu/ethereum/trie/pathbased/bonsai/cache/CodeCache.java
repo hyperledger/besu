@@ -21,6 +21,8 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.util.cache.MemoryBoundCache;
 
+import java.util.Map;
+
 /** The Code cache. */
 public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
 
@@ -104,5 +106,15 @@ public class CodeCache implements org.hyperledger.besu.evm.internal.CodeCache {
   @Override
   public void put(final Hash codeHash, final Code code) {
     cache.put(codeHash, code);
+  }
+
+  @Override
+  public Map<Hash, Code> asMap() {
+    return cache.asMap();
+  }
+
+  @Override
+  public void putAll(final Map<Hash, Code> map) {
+    cache.putAll(map);
   }
 }
