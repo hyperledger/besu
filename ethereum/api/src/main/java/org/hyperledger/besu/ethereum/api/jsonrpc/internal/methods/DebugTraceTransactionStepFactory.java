@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResultConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.debug.TracerType;
@@ -33,6 +34,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
  * the {@code create} and {@code createAsync} methods respectively.
  */
 public class DebugTraceTransactionStepFactory {
+  // feature flag to enable non-default tracers
+  public static boolean enableExtraTracers = false;
 
   /**
    * Creates a function that processes a {@link TransactionTrace} and returns a {@link
@@ -54,9 +57,12 @@ public class DebugTraceTransactionStepFactory {
           };
       case CALL_TRACER ->
           transactionTrace -> {
-            // TODO: Implement callTracer logic and wire it here
-            var result = new UnimplementedTracerResult();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+            if (enableExtraTracers) {
+              var result = CallTracerResultConverter.convert(transactionTrace);
+              return new DebugTraceTransactionResult(transactionTrace, result);
+            }
+            return new DebugTraceTransactionResult(
+                transactionTrace, new UnimplementedTracerResult());
           };
       case FLAT_CALL_TRACER ->
           transactionTrace -> {
