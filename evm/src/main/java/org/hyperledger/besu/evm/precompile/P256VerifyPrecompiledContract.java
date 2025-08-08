@@ -78,7 +78,8 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   /**
    * Is native BoringSSL boolean.
    *
-   * @return the boolean indicating whether to use the BoringSSL native library implementation, if it is available
+   * @return the boolean indicating whether to use the BoringSSL native library implementation, if
+   *     it is available
    */
   public static boolean isNativeBoringSSL() {
     return useNativeBoringSSL;
