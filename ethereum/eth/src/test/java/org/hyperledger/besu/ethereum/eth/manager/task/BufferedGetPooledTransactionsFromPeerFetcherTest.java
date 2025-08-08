@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -31,14 +32,19 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,13 +61,14 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
-  @Mock EthPeer ethPeer;
-  @Mock TransactionPool transactionPool;
-  @Mock EthContext ethContext;
-  @Mock EthScheduler ethScheduler;
-  @Mock EthPeers ethPeers;
+  private @Mock EthPeer ethPeer;
+  private @Mock TransactionPool transactionPool;
+  private @Mock EthContext ethContext;
+  private @Mock EthPeers ethPeers;
+  private @Mock PeerTaskExecutor peerTaskExecutor;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   private BufferedGetPooledTransactionsFromPeerFetcher fetcher;
   private StubMetricsSystem metricsSystem;
@@ -73,6 +80,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     transactionTracker = new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);
     fetcher =
         new BufferedGetPooledTransactionsFromPeerFetcher(
@@ -82,48 +90,78 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
             transactionPool,
             transactionTracker,
             new TransactionPoolMetrics(metricsSystem),
-            "new_pooled_transaction_hashes",
-            false);
+            "new_pooled_transaction_hashes");
   }
 
   @Test
   public void requestTransactionShouldStartTaskWhenUnknownTransaction() {
-
     final Transaction transaction = generator.transaction();
-    final Hash hash = transaction.getHash();
     final List<Transaction> taskResult = List.of(transaction);
-    final AbstractPeerTask.PeerTaskResult<List<Transaction>> peerTaskResult =
-        new AbstractPeerTask.PeerTaskResult<>(ethPeer, taskResult);
-    when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
-        .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
+    final PeerTaskExecutorResult<List<Transaction>> peerTaskResult =
+        new PeerTaskExecutorResult<List<Transaction>>(
+            Optional.of(taskResult), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer));
 
-    fetcher.addHashes(List.of(hash));
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer)))
+        .thenReturn(peerTaskResult);
+
+    fetcher.addHashes(List.of(transaction.getHash()));
     fetcher.requestTransactions();
 
-    verify(ethScheduler).scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
-    verifyNoMoreInteractions(ethScheduler);
-
+    verify(peerTaskExecutor)
+        .executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
     verify(transactionPool, times(1)).addRemoteTransactions(taskResult);
-    assertThat(transactionTracker.hasSeenTransaction(hash)).isTrue();
+
+    assertThat(transactionTracker.hasSeenTransaction(transaction.getHash())).isTrue();
   }
 
   @Test
   public void requestTransactionShouldSplitRequestIntoSeveralTasks() {
-    fetcher.addHashes(
+    final Map<Hash, Transaction> transactionsByHash =
         IntStream.range(0, 257)
-            .mapToObj(unused -> generator.transaction().getHash())
-            .collect(Collectors.toList()));
+            .mapToObj(unused -> generator.transaction())
+            .collect(Collectors.toMap((t) -> t.getHash(), (t) -> t));
+    fetcher.addHashes(transactionsByHash.keySet());
 
-    final AbstractPeerTask.PeerTaskResult<List<Transaction>> peerTaskResult =
-        new AbstractPeerTask.PeerTaskResult<>(ethPeer, List.of());
-    when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
-        .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                      .GetPooledTransactionsFromPeerTask
+                  task =
+                      invocationOnMock.getArgument(
+                          0,
+                          org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                              .GetPooledTransactionsFromPeerTask.class);
+              List<Transaction> resultTransactions =
+                  task.getHashes().stream().map(transactionsByHash::get).toList();
+              return new PeerTaskExecutorResult<List<Transaction>>(
+                  Optional.of(resultTransactions),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  List.of(ethPeer));
+            });
 
     fetcher.requestTransactions();
 
-    verify(ethScheduler, times(2))
-        .scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
-    verifyNoMoreInteractions(ethScheduler);
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
   }
 
   @Test
@@ -136,7 +174,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     fetcher.addHashes(List.of(hash));
     fetcher.requestTransactions();
 
-    verifyNoInteractions(ethScheduler);
+    verifyNoInteractions(peerTaskExecutor);
     verify(transactionPool, never()).addRemoteTransactions(List.of(transaction));
     assertThat(
             metricsSystem.getCounterValue(

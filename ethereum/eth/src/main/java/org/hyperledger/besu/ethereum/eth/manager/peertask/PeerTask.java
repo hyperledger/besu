@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.time.Duration;
 import java.util.function.Predicate;
 
 /**
@@ -65,6 +66,15 @@ public interface PeerTask<T> {
    */
   default int getRetriesWithSamePeer() {
     return 5;
+  }
+
+  /**
+   * Gets the delay between retries against the same peer
+   *
+   * @return the delay between retries against the same peer
+   */
+  default Duration getDelayBetweenSamePeerRetries() {
+    return Duration.ofSeconds(1);
   }
 
   /**

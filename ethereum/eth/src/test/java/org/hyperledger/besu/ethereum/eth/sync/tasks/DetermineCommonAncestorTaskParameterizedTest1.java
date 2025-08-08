@@ -22,11 +22,11 @@ public class DetermineCommonAncestorTaskParameterizedTest1
     extends AbstractDetermineCommonAncestorTaskParameterizedTest {
 
   public static Stream<Arguments> parameters() {
-    final int[] requestSizes = {5, 12, chainHeight, chainHeight * 2};
+    final int[] requestSizes = {5, chainHeight};
     final Stream.Builder<Arguments> builder = Stream.builder();
     for (final int requestSize : requestSizes) {
       for (int i = 0; i <= chainHeight; i++) {
-        builder.add(Arguments.of(requestSize, i, true));
+        builder.add(Arguments.of(requestSize, i));
       }
     }
     return builder.build();

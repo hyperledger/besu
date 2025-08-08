@@ -537,7 +537,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         RetryingGetBlockFromPeersTask.create(
             protocolSchedule,
             ethContext,
-            config,
             metricsSystem,
             Math.max(1, ethContext.getEthPeers().peerCount()),
             maybeBlockHash,

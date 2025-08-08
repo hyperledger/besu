@@ -17,30 +17,22 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockConfirmer.ContestedPivotBlockException;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -63,9 +55,6 @@ public class PivotBlockConfirmerTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
 
-  private ProtocolContext protocolContext;
-
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
@@ -87,7 +76,6 @@ public class PivotBlockConfirmerTest {
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
-    protocolContext = blockchainSetupUtil.getProtocolContext();
     peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
@@ -101,57 +89,17 @@ public class PivotBlockConfirmerTest {
             .build();
   }
 
-  private PivotBlockConfirmer createPivotBlockConfirmer(
-      final int peersToQuery, final int maxRetries, final boolean isPeerTaskSystemEnabled) {
+  private PivotBlockConfirmer createPivotBlockConfirmer(final int peersToQuery) {
     return spy(
         new PivotBlockConfirmer(
-            protocolSchedule,
-            ethProtocolManager.ethContext(),
-            metricsSystem,
-            SynchronizerConfiguration.builder()
-                .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
-                .build(),
-            PIVOT_BLOCK_NUMBER,
-            peersToQuery,
-            maxRetries));
+            protocolSchedule, ethProtocolManager.ethContext(), PIVOT_BLOCK_NUMBER, peersToQuery));
   }
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
   public void completeSuccessfully(final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, false);
-
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    // First peer responds
-    respondingPeerA.respond(responder);
-
-    assertThat(future).isNotDone();
-
-    // Second peer responds
-    respondingPeerB.respond(responder);
-
-    assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void completeSuccessfullyWithPeerTask(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, true);
+    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -167,7 +115,7 @@ public class PivotBlockConfirmerTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingPeerA.getEthPeer())));
+                List.of(respondingPeerA.getEthPeer())));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -176,7 +124,7 @@ public class PivotBlockConfirmerTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingPeerB.getEthPeer())));
+                List.of(respondingPeerB.getEthPeer())));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
@@ -189,195 +137,47 @@ public class PivotBlockConfirmerTest {
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void delayedResponse(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, false);
-
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    // First peer is responsive
-    respondingPeerA.respond(responder);
-
-    // Extra peer joins - it shouldn't be queried while other peer has outstanding request
-    final RespondingEthPeer extraPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Slow peer responds
-    respondingPeerB.respond(responder);
-
-    assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void peerTimesOutThenIsUnresponsive(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, false);
-
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
-
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    // First peer is responsive
-    respondingPeerA.respond(responder);
-
-    // Extra peer joins - it shouldn't be queried while other peer has outstanding request
-    final RespondingEthPeer extraPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Peer request times out
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Peer responds with nothing
-    respondingPeerB.respond(RespondingEthPeer.emptyResponder());
-    // Now our extra peer should be queried
-    assertThat(extraPeer.hasOutstandingRequests()).isTrue();
-    extraPeer.respond(responder);
-
-    assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
   public void peerTimesOut(final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, false);
-
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
+    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    // First peer is responsive
-    respondingPeerA.respond(responder);
-
-    // Extra peer joins - it shouldn't be queried while other peer has outstanding request
-    final RespondingEthPeer extraPeer =
+    final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
 
-    // Peer responds with nothing
-    respondingPeerB.respond(RespondingEthPeer.emptyResponder());
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Peer responds with nothing
-    respondingPeerB.respond(RespondingEthPeer.emptyResponder());
-    // Now our extra peer should be queried
-    assertThat(extraPeer.hasOutstandingRequests()).isTrue();
-    extraPeer.respond(responder);
-
-    assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void peerTimesOutUsingPeerTaskSystem(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, true);
-
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    when(peerTaskExecutor.executeAgainstPeer(
-            Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerA.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()))
+                List.of(respondingPeerA.getEthPeer())));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerB.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Optional.empty()))
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.TIMEOUT,
+                List.of(respondingPeerB.getEthPeer())));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerC.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()));
+                List.of(respondingPeerC.getEthPeer())));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void peerUnresponsive(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2, 2, false);
-
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
-
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-
-    // First peer is responsive
-    respondingPeerA.respond(responder);
-
-    // Extra peer joins - it shouldn't be queried while other peer has outstanding request
-    final RespondingEthPeer extraPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Peer request times out
-    assertThat(respondingPeerB.hasOutstandingRequests()).isTrue();
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-
-    // Peer request times out
-    assertThat(respondingPeerB.hasOutstandingRequests()).isTrue();
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
-    // Now our extra peer should be queried
-    assertThat(extraPeer.hasOutstandingRequests()).isTrue();
-    extraPeer.respond(responder);
 
     assertThat(future)
         .isCompletedWithValue(
@@ -388,39 +188,7 @@ public class PivotBlockConfirmerTest {
   @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
   public void headerMismatch(final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(3, 2, false);
-
-    final Responder responderA =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
-    final RespondingEthPeer respondingPeerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final Responder responderB = responderForFakeBlocks(PIVOT_BLOCK_NUMBER);
-    final RespondingEthPeer respondingPeerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
-    respondingPeerA.respond(responderA);
-    assertThat(future).isNotDone();
-    respondingPeerB.respond(responderB);
-
-    assertThat(future).isCompletedExceptionally();
-    assertThatThrownBy(future::get).hasRootCauseInstanceOf(ContestedPivotBlockException.class);
-
-    // Create extra peer and make sure that it isn't queried
-    final RespondingEthPeer extraPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.expirePendingTimeouts(ethProtocolManager);
-    assertThat(extraPeer.hasOutstandingRequests()).isFalse();
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
-  public void headerMismatchUsingPeerTaskSystem(final DataStorageFormat storageFormat) {
-    setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(3, 2, true);
+    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -436,7 +204,7 @@ public class PivotBlockConfirmerTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingPeerA.getEthPeer())));
+                List.of(respondingPeerA.getEthPeer())));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -450,28 +218,13 @@ public class PivotBlockConfirmerTest {
                             .extraData(Bytes.of(1))
                             .buildHeader())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingPeerB.getEthPeer())));
+                List.of(respondingPeerB.getEthPeer())));
 
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
 
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get).hasRootCauseInstanceOf(ContestedPivotBlockException.class);
-  }
-
-  private Responder responderForFakeBlocks(final long... blockNumbers) {
-    final Blockchain mockBlockchain = spy(blockchain);
-    for (long blockNumber : blockNumbers) {
-      when(mockBlockchain.getBlockHeader(blockNumber))
-          .thenReturn(
-              Optional.of(
-                  new BlockHeaderTestFixture()
-                      .number(blockNumber)
-                      .extraData(Bytes.of(1))
-                      .buildHeader()));
-    }
-
-    return RespondingEthPeer.blockchainResponder(mockBlockchain);
   }
 
   @Test
