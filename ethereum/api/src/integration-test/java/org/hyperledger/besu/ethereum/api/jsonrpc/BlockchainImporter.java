@@ -50,6 +50,7 @@ public class BlockchainImporter {
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);

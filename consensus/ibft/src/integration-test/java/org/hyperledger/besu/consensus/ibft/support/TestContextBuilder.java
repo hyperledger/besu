@@ -338,6 +338,7 @@ public class TestContextBuilder {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     /////////////////////////////////////////////////////////////////////////////////////

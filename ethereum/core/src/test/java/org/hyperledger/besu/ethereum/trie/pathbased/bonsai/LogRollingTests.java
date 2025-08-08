@@ -95,8 +95,9 @@ class LogRollingTests {
           Wei.ZERO,
           Hash.ZERO,
           0,
-          null,
+          Hash.EMPTY_LIST_HASH,
           null, // blobGasUSed
+          null,
           null,
           null,
           null,
@@ -121,6 +122,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,

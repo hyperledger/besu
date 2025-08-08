@@ -153,6 +153,7 @@ public class ArchiverTests {
             null,
             null,
             null,
+            null,
             new MainnetBlockHeaderFunctions());
     return Optional.of(new Block(header, BlockBody.empty()));
   }

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -185,6 +186,8 @@ public class MainnetBlockValidator implements BlockValidator {
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         Optional<List<Request>> maybeRequests =
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
+        Optional<BlockAccessList> blockAccessList =
+            result.getYield().flatMap(BlockProcessingOutputs::getBlockAccessList);
         if (!blockBodyValidator.validateBody(
             context,
             block,
@@ -198,7 +201,8 @@ public class MainnetBlockValidator implements BlockValidator {
         }
 
         return new BlockProcessingResult(
-            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
+            Optional.of(
+                new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
             result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {

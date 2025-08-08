@@ -85,6 +85,7 @@ public class BackwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();

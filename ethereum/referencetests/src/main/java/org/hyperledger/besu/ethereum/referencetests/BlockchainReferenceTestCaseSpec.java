@@ -199,6 +199,7 @@ public class BlockchainReferenceTestCaseSpec {
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
+          null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
