@@ -90,6 +90,10 @@ public class TrieLogManager {
     }
   }
 
+  public TrieLogFactory getTrieLogFactory() {
+    return trieLogFactory;
+  }
+
   private TrieLog prepareTrieLog(
       final BlockHeader blockHeader, final PathBasedWorldStateUpdateAccumulator<?> localUpdater) {
     LOG.atDebug()
