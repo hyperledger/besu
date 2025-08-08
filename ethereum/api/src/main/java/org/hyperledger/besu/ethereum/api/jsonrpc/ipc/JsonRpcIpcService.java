@@ -87,17 +87,14 @@ public class JsonRpcIpcService {
                         final JsonObject jsonRpcRequest = buffer.toJsonObject();
                         vertx
                             .<JsonRpcResponse>executeBlocking(
-                                promise -> {
-                                  final JsonRpcResponse jsonRpcResponse =
-                                      jsonRpcExecutor.execute(
-                                          Optional.empty(),
-                                          null,
-                                          null,
-                                          closedSocket::get,
-                                          jsonRpcRequest,
-                                          req -> req.mapTo(JsonRpcRequest.class));
-                                  promise.complete(jsonRpcResponse);
-                                })
+                                () ->
+                                    jsonRpcExecutor.execute(
+                                        Optional.empty(),
+                                        null,
+                                        null,
+                                        closedSocket::get,
+                                        jsonRpcRequest,
+                                        req -> req.mapTo(JsonRpcRequest.class)))
                             .onSuccess(
                                 jsonRpcResponse -> {
                                   try {
@@ -125,7 +122,7 @@ public class JsonRpcIpcService {
                           } else {
                             vertx
                                 .<List<JsonRpcResponse>>executeBlocking(
-                                    promise -> {
+                                    () -> {
                                       List<JsonRpcResponse> responses = new ArrayList<>();
                                       for (int i = 0; i < batchJsonRpcRequest.size(); i++) {
                                         final JsonObject jsonRequest;
@@ -145,7 +142,7 @@ public class JsonRpcIpcService {
                                                 jsonRequest,
                                                 req -> req.mapTo(JsonRpcRequest.class)));
                                       }
-                                      promise.complete(responses);
+                                      return responses;
                                     })
                                 .onSuccess(
                                     jsonRpcBatchResponse -> {
