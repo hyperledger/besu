@@ -88,7 +88,6 @@ public class TransactionPoolFactoryTest {
   @Mock EthMessages ethMessages;
   @Mock EthScheduler ethScheduler;
   @Mock PeerTransactionTracker peerTransactionTracker;
-  @Mock TransactionsMessageSender transactionsMessageSender;
   @Mock NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
   TransactionPool pool;
@@ -408,7 +407,6 @@ public class TransactionPoolFactoryTest {
                     .build())
             .build(),
         peerTransactionTracker,
-        transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
         MiningConfiguration.newDefault(),
