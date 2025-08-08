@@ -85,8 +85,8 @@ public class FastSyncState {
 
   /**
    * Returns true if the source of the pivot block is fully trusted. In practice this means that it
-   * comes from the Consensus client through the engine API and the @PivotSelectorFromSafeBlock is
-   * used for the pivot.
+   * comes from the Consensus client through the engine API and the {@link
+   * PivotSelectorFromSafeBlock} is used for the pivot.
    *
    * @return true if the source is fully trusted, false otherwise
    */
