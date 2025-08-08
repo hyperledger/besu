@@ -36,20 +36,20 @@ public class FastSyncState {
     pivotBlockHeader = Optional.empty();
   }
 
-  public FastSyncState(final long pivotBlockNumber) {
-    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty(), false);
+  public FastSyncState(final long pivotBlockNumber, final boolean sourceIsTrusted) {
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty(), sourceIsTrusted);
   }
 
   public FastSyncState(final Hash pivotBlockHash, final boolean sourceIsTrusted) {
     this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty(), sourceIsTrusted);
   }
 
-  public FastSyncState(final BlockHeader pivotBlockHeader) {
+  public FastSyncState(final BlockHeader pivotBlockHeader, final boolean sourceIsTrusted) {
     this(
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
         Optional.of(pivotBlockHeader),
-        false);
+            sourceIsTrusted);
   }
 
   protected FastSyncState(

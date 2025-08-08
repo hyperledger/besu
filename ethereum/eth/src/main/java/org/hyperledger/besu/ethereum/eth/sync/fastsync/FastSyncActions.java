@@ -240,7 +240,7 @@ public class FastSyncActions {
                     .log();
               }
             })
-        .thenApply(FastSyncState::new);
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, false));
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {
