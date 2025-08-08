@@ -229,7 +229,7 @@ public class EVM {
                 .touchCodeChunks(
                     contractAddress,
                     frame.wasCreatedInTransaction(contractAddress),
-                    frame.getPC(),
+                    pc,
                     1,
                     code.length,
                     frame.getRemainingGas());
