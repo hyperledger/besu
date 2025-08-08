@@ -353,6 +353,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return wasRemoved;
   }
 
+  @Override
+  public Collection<Peer> getMaintainedConnectionPeers() {
+    return maintainedPeers.streamPeers().toList();
+  }
+
   @VisibleForTesting
   Optional<DNSDaemon> getDnsDaemon() {
     return dnsDaemonRef.get();

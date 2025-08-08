@@ -193,6 +193,11 @@ public final class MockNetwork {
     }
 
     @Override
+    public Collection<Peer> getMaintainedConnectionPeers() {
+      return List.of();
+    }
+
+    @Override
     public void stop() {}
 
     @Override
