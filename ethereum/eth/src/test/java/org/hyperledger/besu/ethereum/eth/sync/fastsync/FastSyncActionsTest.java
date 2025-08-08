@@ -435,7 +435,7 @@ public class FastSyncActionsTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.downloadPivotBlockHeader(
-            new FastSyncState(finalizedEvent.get().getSafeBlockHash()));
+            new FastSyncState(finalizedEvent.get().getSafeBlockHash(), false));
     assertThat(result).isNotCompleted();
 
     final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);

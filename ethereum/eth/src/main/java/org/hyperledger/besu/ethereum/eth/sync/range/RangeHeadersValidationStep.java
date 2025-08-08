@@ -14,31 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.range;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream<BlockHeader>> {
 
-  private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
-  private final ValidationPolicy validationPolicy;
-
-  public RangeHeadersValidationStep(
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final ValidationPolicy validationPolicy) {
-    this.protocolSchedule = protocolSchedule;
-    this.protocolContext = protocolContext;
-    this.validationPolicy = validationPolicy;
-  }
+  public RangeHeadersValidationStep() {}
 
   @Override
   public Stream<BlockHeader> apply(final RangeHeaders rangeHeaders) {
@@ -48,7 +32,7 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
         .getFirstHeaderToImport()
         .map(
             firstHeader -> {
-              if (isValid(rangeStart, firstHeader)) {
+              if (isConnectedToParentBlock(rangeStart, firstHeader)) {
                 return rangeHeaders.getHeadersToImport().stream();
               } else {
                 final String rangeEndDescription;
@@ -73,13 +57,8 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
         .orElse(Stream.empty());
   }
 
-  private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(firstHeaderToImport);
-    final BlockHeaderValidator validator = protocolSpec.getBlockHeaderValidator();
-    return validator.validateHeader(
-        firstHeaderToImport,
-        expectedParent,
-        protocolContext,
-        validationPolicy.getValidationModeForNextBlock());
+  private boolean isConnectedToParentBlock(
+      final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
+    return firstHeaderToImport.getParentHash().equals(expectedParent.getHash());
   }
 }
