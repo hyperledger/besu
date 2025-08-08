@@ -28,6 +28,7 @@ public class FastSyncState {
   private OptionalLong pivotBlockNumber;
   private Optional<Hash> pivotBlockHash;
   private Optional<BlockHeader> pivotBlockHeader;
+  private boolean sourceIsTrusted = false;
 
   public FastSyncState() {
     pivotBlockNumber = OptionalLong.empty();
@@ -36,27 +37,30 @@ public class FastSyncState {
   }
 
   public FastSyncState(final long pivotBlockNumber) {
-    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty());
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty(), false);
   }
 
-  public FastSyncState(final Hash pivotBlockHash) {
-    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty());
+  public FastSyncState(final Hash pivotBlockHash, final boolean sourceIsTrusted) {
+    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty(), sourceIsTrusted);
   }
 
   public FastSyncState(final BlockHeader pivotBlockHeader) {
     this(
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
-        Optional.of(pivotBlockHeader));
+        Optional.of(pivotBlockHeader),
+        false);
   }
 
   protected FastSyncState(
       final OptionalLong pivotBlockNumber,
       final Optional<Hash> pivotBlockHash,
-      final Optional<BlockHeader> pivotBlockHeader) {
+      final Optional<BlockHeader> pivotBlockHeader,
+      final boolean sourceIsTrusted) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.pivotBlockHash = pivotBlockHash;
     this.pivotBlockHeader = pivotBlockHeader;
+    this.sourceIsTrusted = sourceIsTrusted;
   }
 
   public OptionalLong getPivotBlockNumber() {
@@ -77,6 +81,17 @@ public class FastSyncState {
 
   public boolean hasPivotBlockHash() {
     return pivotBlockHash.isPresent();
+  }
+
+  /**
+   * Returns true if the source of the pivot block is fully trusted. In practice this means that it
+   * comes from the Consensus client through the engine API and the @PivotSelectorFromSafeBlock is
+   * used for the pivot.
+   *
+   * @return true if the source is fully trusted, false otherwise
+   */
+  public boolean isSourceTrusted() {
+    return sourceIsTrusted;
   }
 
   public void setCurrentHeader(final BlockHeader header) {
