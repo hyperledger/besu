@@ -31,7 +31,7 @@ public class FastSyncStateStorageTest {
 
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
-  private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
+  private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader, false);
 
   @BeforeEach
   public void setUp() throws Exception {
