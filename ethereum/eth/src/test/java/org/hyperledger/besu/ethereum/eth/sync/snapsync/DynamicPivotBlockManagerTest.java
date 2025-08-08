@@ -66,9 +66,9 @@ public class DynamicPivotBlockManagerTest {
 
   @Test
   public void shouldSearchNewPivotBlockWhenNotCloseToTheHead() {
-    final FastSyncState selectPivotBlockState = new FastSyncState(1090);
+    final FastSyncState selectPivotBlockState = new FastSyncState(1090, false);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1090).buildHeader();
-    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader, false);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
@@ -83,9 +83,9 @@ public class DynamicPivotBlockManagerTest {
 
   @Test
   public void shouldSwitchToNewPivotBlockWhenNeeded() {
-    final FastSyncState selectPivotBlockState = new FastSyncState(1060);
+    final FastSyncState selectPivotBlockState = new FastSyncState(1060, false);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
-    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader, false);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
@@ -112,9 +112,9 @@ public class DynamicPivotBlockManagerTest {
 
   @Test
   public void shouldSwitchToNewPivotOnlyOnce() {
-    final FastSyncState selectPivotBlockState = new FastSyncState(1060);
+    final FastSyncState selectPivotBlockState = new FastSyncState(1060, false);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
-    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader, false);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))

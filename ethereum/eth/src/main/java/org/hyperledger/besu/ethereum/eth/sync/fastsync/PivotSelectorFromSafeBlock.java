@@ -131,7 +131,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return new FastSyncState(safeHash);
+    return new FastSyncState(safeHash, true);
   }
 
   private FastSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
@@ -139,7 +139,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return new FastSyncState(fallbackBlockHash);
+    return new FastSyncState(fallbackBlockHash, true);
   }
 
   @Override

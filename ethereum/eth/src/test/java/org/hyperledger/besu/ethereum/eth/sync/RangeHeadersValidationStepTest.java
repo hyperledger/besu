@@ -17,13 +17,9 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -31,9 +27,6 @@ import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
 import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -45,60 +38,49 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RangeHeadersValidationStepTest {
-  @Mock private ProtocolSchedule protocolSchedule;
-  @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolContext protocolContext;
-  @Mock private BlockHeaderValidator headerValidator;
-  @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private RangeHeadersValidationStep validationStep;
-
-  private final BlockHeader rangeStart = gen.header(10);
-  private final BlockHeader rangeEnd = gen.header(13);
-  private final BlockHeader firstHeader = gen.header(11);
+  private final List<Block> blocks = gen.blockSequence(14);
+  private final BlockHeader rangeStart = blocks.get(10).getHeader();
+  private final BlockHeader rangeEnd = blocks.get(13).getHeader();
+  private final BlockHeader firstHeader = blocks.get(11).getHeader();
   private final RangeHeaders rangeHeaders =
       new RangeHeaders(
           new SyncTargetRange(syncTarget, rangeStart, rangeEnd),
-          asList(firstHeader, gen.header(12), rangeEnd));
+          asList(firstHeader, blocks.get(12).getHeader(), rangeEnd));
 
   public void setUp() {
-    when(protocolSchedule.getByBlockHeader(any(BlockHeader.class))).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockHeaderValidator()).thenReturn(headerValidator);
-    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
-
-    validationStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
+    validationStep = new RangeHeadersValidationStep();
   }
 
   @Test
   public void shouldValidateFirstHeaderAgainstRangeStartHeader() {
     setUp();
-    when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
-        .thenReturn(true);
+
     final Stream<BlockHeader> result = validationStep.apply(rangeHeaders);
-
-    verify(protocolSchedule).getByBlockHeader(firstHeader);
-    verify(validationPolicy).getValidationModeForNextBlock();
-    verify(headerValidator).validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY);
-    verifyNoMoreInteractions(headerValidator, validationPolicy);
-
     assertThat(result).containsExactlyElementsOf(rangeHeaders.getHeadersToImport());
   }
 
   @Test
-  public void shouldThrowExceptionWhenValidationFails() {
+  public void shouldThrowExceptionWhenHeadersDontConnect() {
     setUp();
-    when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
-        .thenReturn(false);
-    assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
+
+    // create an invalid range that does not connect to the first header
+    BlockHeader invalidRangeStart = gen.header(10);
+    RangeHeaders invalidRangeHeaders =
+        new RangeHeaders(
+            new SyncTargetRange(syncTarget, invalidRangeStart, rangeEnd),
+            asList(firstHeader, blocks.get(12).getHeader(), rangeEnd));
+
+    assertThatThrownBy(() -> validationStep.apply(invalidRangeHeaders))
         .isInstanceOf(InvalidBlockException.class)
         .hasMessageContaining(
             "Invalid range headers.  Headers downloaded between #"
-                + rangeStart.getNumber()
+                + invalidRangeStart.getNumber()
                 + " ("
-                + rangeStart.getHash()
+                + invalidRangeStart.getHash()
                 + ") and #"
                 + rangeEnd.getNumber()
                 + " ("
@@ -113,20 +95,13 @@ public class RangeHeadersValidationStepTest {
   @Test
   public void acceptResponseWithNoHeadersAndNoSetUp() {
     // don't run the setUp
-    validationStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
+    validationStep = new RangeHeadersValidationStep();
     var emptyRangeHeaders =
         new RangeHeaders(new SyncTargetRange(syncTarget, rangeStart, rangeEnd), List.of());
 
     final Stream<BlockHeader> result = validationStep.apply(emptyRangeHeaders);
     assertThat(result).isEmpty();
 
-    verifyNoMoreInteractions(
-        protocolSchedule,
-        protocolSpec,
-        protocolContext,
-        headerValidator,
-        validationPolicy,
-        syncTarget);
+    verifyNoMoreInteractions(syncTarget);
   }
 }

@@ -330,7 +330,7 @@ public class RangeHeadersFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        new FastSyncState(targetHeader),
+        new FastSyncState(targetHeader, false),
         metricsSystem);
   }
 

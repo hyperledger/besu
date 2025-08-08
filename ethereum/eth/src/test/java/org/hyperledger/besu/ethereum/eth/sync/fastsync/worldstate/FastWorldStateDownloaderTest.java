@@ -171,7 +171,7 @@ class FastWorldStateDownloaderTest {
             .block(BlockOptions.create().setStateRoot(EMPTY_TRIE_ROOT).setBlockNumber(10))
             .getHeader();
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     // Create some peers
     final List<RespondingEthPeer> peers =
@@ -225,7 +225,7 @@ class FastWorldStateDownloaderTest {
             worldStateArchive.getWorldStateStorage(),
             taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> future = downloader.run(null, fastSyncState);
     assertThat(future).isDone();
@@ -275,7 +275,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> result = downloader.run(null, fastSyncState);
 
@@ -340,7 +340,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> result = downloader.run(null, fastSyncState);
 
@@ -420,7 +420,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> result = downloader.run(null, fastSyncState);
 
@@ -518,7 +518,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> result = downloader.run(null, fastSyncState);
 
@@ -624,7 +624,7 @@ class FastWorldStateDownloaderTest {
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
-    final FastSyncState fastSyncState = new FastSyncState(header);
+    final FastSyncState fastSyncState = new FastSyncState(header, false);
 
     final CompletableFuture<Void> result = downloader.run(null, fastSyncState);
 
@@ -709,10 +709,12 @@ class FastWorldStateDownloaderTest {
             new FastSyncState(
                 new BlockHeaderTestFixture()
                     .stateRoot(Hash.hash(Bytes.of(1, 2, 3, 4)))
-                    .buildHeader()));
+                    .buildHeader(),
+                false));
 
     // A second run should return an error without impacting the first result
-    final CompletableFuture<?> secondResult = downloader.run(null, new FastSyncState(header));
+    final CompletableFuture<?> secondResult =
+        downloader.run(null, new FastSyncState(header, false));
     assertThat(secondResult).isCompletedExceptionally();
     assertThat(result).isNotCompletedExceptionally();
 
@@ -724,7 +726,8 @@ class FastWorldStateDownloaderTest {
 
     // Finally, check that when we restart the download with state that is available it works
 
-    final CompletableFuture<Void> retryResult = downloader.run(null, new FastSyncState(header));
+    final CompletableFuture<Void> retryResult =
+        downloader.run(null, new FastSyncState(header, false));
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
@@ -784,7 +787,7 @@ class FastWorldStateDownloaderTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.wrapResponderWithCollector(blockChainResponder, sentMessages);
 
-    CompletableFuture<Void> result = downloader.run(null, new FastSyncState(header));
+    CompletableFuture<Void> result = downloader.run(null, new FastSyncState(header, false));
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
     assertThat(localStorage.isWorldStateAvailable(stateRoot)).isTrue();
 
@@ -937,9 +940,10 @@ class FastWorldStateDownloaderTest {
             .toList();
 
     // Start downloader
-    final CompletableFuture<?> result = downloader.run(null, new FastSyncState(header));
+    final CompletableFuture<?> result = downloader.run(null, new FastSyncState(header, false));
     // A second run should return an error without impacting the first result
-    final CompletableFuture<?> secondResult = downloader.run(null, new FastSyncState(header));
+    final CompletableFuture<?> secondResult =
+        downloader.run(null, new FastSyncState(header, false));
     assertThat(secondResult).isCompletedExceptionally();
     assertThat(result).isNotCompletedExceptionally();
 

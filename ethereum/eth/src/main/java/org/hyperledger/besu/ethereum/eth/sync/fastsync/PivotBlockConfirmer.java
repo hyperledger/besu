@@ -145,7 +145,7 @@ class PivotBlockConfirmer {
     } else if (votes >= numberOfPeersToQuery) {
       // We've received the required number of votes and have selected our pivot block
       LOG.info("Confirmed pivot block at {}: {}", pivotBlockNumber, blockHeader.getHash());
-      result.complete(new FastSyncState(blockHeader));
+      result.complete(new FastSyncState(blockHeader, false));
     } else {
       LOG.info(
           "Received {} confirmation(s) for pivot block header {}: {}",
