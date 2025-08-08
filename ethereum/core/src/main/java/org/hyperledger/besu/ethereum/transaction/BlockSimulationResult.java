@@ -21,15 +21,29 @@ import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockSimulationResult {
   final Block block;
   final BlockStateCallSimulationResult blockStateCallSimulationResult;
+  final Optional<Bytes> serializedTrieLog;
 
   public BlockSimulationResult(
       final Block block, final BlockStateCallSimulationResult blockStateCallSimulationResult) {
     this.block = block;
     this.blockStateCallSimulationResult = blockStateCallSimulationResult;
+    this.serializedTrieLog = Optional.empty();
+  }
+
+  public BlockSimulationResult(
+      final Block block,
+      final BlockStateCallSimulationResult blockStateCallSimulationResult,
+      final Bytes serializedTrieLog) {
+    this.block = block;
+    this.blockStateCallSimulationResult = blockStateCallSimulationResult;
+    this.serializedTrieLog = Optional.ofNullable(serializedTrieLog);
   }
 
   public BlockHeader getBlockHeader() {
@@ -69,5 +83,9 @@ public class BlockSimulationResult {
                     false)
                     .stream())
         .toList();
+  }
+
+  public Optional<Bytes> getSerializedTrieLog() {
+    return serializedTrieLog;
   }
 }
