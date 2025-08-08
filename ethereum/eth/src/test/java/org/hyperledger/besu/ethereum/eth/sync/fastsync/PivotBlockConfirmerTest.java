@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -37,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -109,13 +107,19 @@ public class PivotBlockConfirmerTest {
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerA.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
                 List.of(respondingPeerA.getEthPeer())));
-    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerB.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
@@ -137,24 +141,40 @@ public class PivotBlockConfirmerTest {
     setUp(storageFormat);
     PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2);
 
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final RespondingEthPeer respondingPeerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final RespondingEthPeer respondingPeerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final RespondingEthPeer respondingPeerC =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerA.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Collections.emptyList()))
+                List.of(respondingPeerA.getEthPeer())));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerB.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Collections.emptyList()))
+                Optional.empty(),
+                PeerTaskExecutorResponseCode.TIMEOUT,
+                List.of(respondingPeerB.getEthPeer())));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerC.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Collections.emptyList()));
+                List.of(respondingPeerC.getEthPeer())));
 
     // Execute task
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
@@ -168,7 +188,7 @@ public class PivotBlockConfirmerTest {
   @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
   public void headerMismatch(final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(3);
+    PivotBlockConfirmer pivotBlockConfirmer = createPivotBlockConfirmer(2);
 
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -176,12 +196,19 @@ public class PivotBlockConfirmerTest {
     final RespondingEthPeer respondingPeerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerA.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                List.of(respondingPeerA.getEthPeer())))
+                List.of(respondingPeerA.getEthPeer())));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingPeerB.getEthPeer())))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(
