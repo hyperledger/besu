@@ -48,7 +48,7 @@ public class P256VerifyBenchmark extends BenchmarkExecutor {
       ;
     }
     output.println(
-        P256VerifyPrecompiledContract.isNativeBoringSSL() ? "Native secp256r1" : "Java secp256r1");
+        P256VerifyPrecompiledContract.isNativeBoringSSL() ? "Native BoringSSL" : "Java secp256r1");
 
     final P256VerifyPrecompiledContract contract =
         new P256VerifyPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
