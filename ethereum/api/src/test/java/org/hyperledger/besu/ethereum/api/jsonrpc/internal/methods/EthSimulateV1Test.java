@@ -88,7 +88,7 @@ public class EthSimulateV1Test {
   }
 
   private SimulateV1Parameter simulateParameter() {
-    return new SimulateV1Parameter(List.of(), false, false, false);
+    return new SimulateV1Parameter(List.of(), false, false, false, false);
   }
 
   private JsonRpcRequestContext ethSimulateV1Request(
