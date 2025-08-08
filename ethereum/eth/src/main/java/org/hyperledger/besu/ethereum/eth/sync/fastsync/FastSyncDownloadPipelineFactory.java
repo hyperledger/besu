@@ -15,11 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.FULL;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -64,10 +60,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final EthContext ethContext;
   protected final FastSyncState fastSyncState;
   protected final MetricsSystem metricsSystem;
-  protected final FastSyncValidationPolicy attachedValidationPolicy;
   protected final FastSyncValidationPolicy detachedValidationPolicy;
-  protected final FastSyncValidationPolicy ommerValidationPolicy;
-  private final ValidationPolicy noneValidationPolicy;
+  protected final ValidationPolicy downloadHeaderValidation;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -88,25 +82,15 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             "fast_sync_validation_mode",
             "Number of blocks validated using light vs full validation during fast sync",
             "validationMode");
-    attachedValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(),
-            LIGHT_SKIP_DETACHED,
-            SKIP_DETACHED,
-            fastSyncValidationCounter);
-    ommerValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(),
-            LIGHT,
-            FULL,
-            fastSyncValidationCounter);
     detachedValidationPolicy =
         new FastSyncValidationPolicy(
             this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT_DETACHED_ONLY,
             DETACHED_ONLY,
             fastSyncValidationCounter);
-    noneValidationPolicy = () -> HeaderValidationMode.NONE;
+    final ValidationPolicy noneValidationPolicy = () -> HeaderValidationMode.NONE;
+    downloadHeaderValidation =
+        fastSyncState.isSourceTrusted() ? noneValidationPolicy : detachedValidationPolicy;
   }
 
   @Override
@@ -135,8 +119,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             getCommonAncestor(target),
             syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
-    final ValidationPolicy downloadHeaderValidation =
-        fastSyncState.isSourceTrusted() ? noneValidationPolicy : detachedValidationPolicy;
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
@@ -146,8 +128,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             syncConfig,
             headerRequestSize,
             metricsSystem);
-    final RangeHeadersValidationStep validateHeadersJoinUpStep =
-        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
+    final RangeHeadersValidationStep validateHeadersJoinUpStep = new RangeHeadersValidationStep();
     final SavePreMergeHeadersStep savePreMergeHeadersStep =
         new SavePreMergeHeadersStep(
             protocolContext.getBlockchain(),
