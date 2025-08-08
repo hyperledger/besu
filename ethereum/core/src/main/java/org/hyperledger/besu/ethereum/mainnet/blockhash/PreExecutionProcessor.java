@@ -37,4 +37,8 @@ public interface PreExecutionProcessor extends BlockContextProcessor<Void, Block
   default Optional<Address> getHistoryContract() {
     return Optional.empty();
   }
+
+  default Optional<Address> getBeaconRootsContract() {
+    return Optional.empty();
+  }
 }
