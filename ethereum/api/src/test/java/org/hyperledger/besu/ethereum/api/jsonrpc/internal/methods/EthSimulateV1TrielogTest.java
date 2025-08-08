@@ -14,19 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+
 import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockOverridesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonBlockStateCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1Parameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -44,16 +42,12 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSimulateV1TrielogTest {
 
@@ -79,7 +73,8 @@ public class EthSimulateV1TrielogTest {
       GenesisConfig.fromResource("/dev.json")
           .streamAllocations()
           .filter(ga -> ga.privateKey() != null)
-          .findFirst().orElseThrow();
+          .findFirst()
+          .orElseThrow();
 
   @BeforeEach
   public void createStorage() {
@@ -87,11 +82,9 @@ public class EthSimulateV1TrielogTest {
     var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
 
-    blockchainQueries = new BlockchainQueries(
-        protocolSchedule,
-        blockchain,
-        archive,
-        MiningConfiguration.MINING_DISABLED);
+    blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, archive, MiningConfiguration.MINING_DISABLED);
 
     method =
         new EthSimulateV1(
@@ -125,9 +118,7 @@ public class EthSimulateV1TrielogTest {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", 
-                "eth_simulateV1", 
-                new Object[] {simulateV1Parameter, "latest"}));
+                "2.0", "eth_simulateV1", new Object[] {simulateV1Parameter, "latest"}));
 
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -148,10 +139,12 @@ public class EthSimulateV1TrielogTest {
     assertThat(trieLogData.size()).isGreaterThan(0);
 
     // verify trielog contents:
-    var trieLogAccountChanges = archive.getTrieLogManager()
-        .getTrieLogFactory()
-        .deserialize(trieLogData.toArrayUnsafe())
-        .getAccountChanges();
+    var trieLogAccountChanges =
+        archive
+            .getTrieLogManager()
+            .getTrieLogFactory()
+            .deserialize(trieLogData.toArrayUnsafe())
+            .getAccountChanges();
 
     var senderPrior = trieLogAccountChanges.get(senderAccount.address()).getPrior();
     var senderPost = trieLogAccountChanges.get(senderAccount.address()).getUpdated();
@@ -176,9 +169,7 @@ public class EthSimulateV1TrielogTest {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0",
-                "eth_simulateV1",
-                new Object[] {simulateV1Parameter, "latest"}));
+                "2.0", "eth_simulateV1", new Object[] {simulateV1Parameter, "latest"}));
 
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -211,9 +202,7 @@ public class EthSimulateV1TrielogTest {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", 
-                "eth_simulateV1", 
-                new Object[] {simulateV1Parameter, "latest"}));
+                "2.0", "eth_simulateV1", new Object[] {simulateV1Parameter, "latest"}));
 
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -234,12 +223,13 @@ public class EthSimulateV1TrielogTest {
     assertThat(result.getTransactionProcessingResults().get(0).getStatus()).isEqualTo("0x1");
     assertThat(result.getTransactionProcessingResults().get(1).getStatus()).isEqualTo("0x1");
 
-
     // verify trielog contents:
-    var trieLogAccountChanges = archive.getTrieLogManager()
-        .getTrieLogFactory()
-        .deserialize(trieLogData.toArrayUnsafe())
-        .getAccountChanges();
+    var trieLogAccountChanges =
+        archive
+            .getTrieLogManager()
+            .getTrieLogFactory()
+            .deserialize(trieLogData.toArrayUnsafe())
+            .getAccountChanges();
 
     var senderPrior = trieLogAccountChanges.get(senderAccount.address()).getPrior();
     var senderPost = trieLogAccountChanges.get(senderAccount.address()).getUpdated();
@@ -250,7 +240,6 @@ public class EthSimulateV1TrielogTest {
     assertThat(trieLogAccountChanges.get(testAddress2).getUpdated().getBalance())
         .isEqualTo(Wei.of(420L));
   }
-
 
   private CallParameter simpleSend(final Address toAddress, final Wei value) {
     return ImmutableCallParameter.builder()
