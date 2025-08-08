@@ -49,7 +49,7 @@ public class FastSyncState {
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
         Optional.of(pivotBlockHeader),
-            sourceIsTrusted);
+        sourceIsTrusted);
   }
 
   protected FastSyncState(
