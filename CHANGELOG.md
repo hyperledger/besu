@@ -33,6 +33,7 @@
 - Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
 - Add `--attempt-cache-bust` to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
 - Add gas usage metric to eth_call [#9019](https://github.com/hyperledger/besu/pull/9019)
+- Improve P256Verify precompile performance [#9035](https://github.com/hyperledger/besu/pull/9035)
 
 #### Fusaka devnets
 - EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946), [#9015](https://github.com/hyperledger/besu/pull/9015)
