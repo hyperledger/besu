@@ -130,8 +130,7 @@ public class FullSyncChainDownloaderForkTest {
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        peerTaskExecutor);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private ChainDownloader downloader() {

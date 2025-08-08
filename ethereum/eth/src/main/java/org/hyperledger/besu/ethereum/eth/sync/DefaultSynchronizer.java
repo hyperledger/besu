@@ -135,7 +135,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                     syncState,
                     metricsSystem,
                     terminationCondition,
-                    peerTaskExecutor,
                     syncDurationMetrics));
 
     this.fastSyncFactory =
