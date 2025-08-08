@@ -76,7 +76,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   /**
-   * Is native boolean.
+   * Is native BoringSSL boolean.
    *
    * @return the boolean
    */
