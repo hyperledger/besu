@@ -80,19 +80,21 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     mergeMiningCoordinator.finalizeProposalById(payloadId);
     final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
     if (maybePayload.isPresent()) {
-      final BlockWithReceipts proposal = maybePayload.get().blockWithReceipts();
+      final PayloadWrapper payload = maybePayload.get();
+      final BlockWithReceipts proposal = payload.blockWithReceipts();
       LOG.atInfo()
           .setMessage("assembledBlock for payloadId {}: {}")
           .addArgument(() -> payloadId)
           .addArgument(() -> proposal.getBlock().toLogString())
           .log();
-      LOG.atTrace().setMessage("assembledBlock with receipts {}").addArgument(() -> proposal).log();
+      LOG.trace("assembledBlock with receipts {}", proposal);
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
-      return createResponse(request, maybePayload.get());
+      logProposal(payload);
+      return createResponse(request, payload);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }

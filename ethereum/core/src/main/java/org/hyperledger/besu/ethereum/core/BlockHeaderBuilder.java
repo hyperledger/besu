@@ -133,6 +133,33 @@ public class BlockHeaderBuilder {
         .requestsHash(header.getRequestsHash().orElse(null));
   }
 
+  public static BlockHeaderBuilder fromHeader(
+      final org.hyperledger.besu.plugin.data.BlockHeader header) {
+    return create()
+        .parentHash(header.getParentHash())
+        .ommersHash(header.getOmmersHash())
+        .coinbase(header.getCoinbase())
+        .stateRoot(header.getStateRoot())
+        .transactionsRoot(header.getTransactionsRoot())
+        .receiptsRoot(header.getReceiptsRoot())
+        .logsBloom(new LogsBloomFilter(header.getLogsBloom()))
+        .difficulty(Difficulty.of(header.getDifficulty().getAsBigInteger()))
+        .number(header.getNumber())
+        .gasLimit(header.getGasLimit())
+        .gasUsed(header.getGasUsed())
+        .timestamp(header.getTimestamp())
+        .extraData(header.getExtraData())
+        .baseFee(header.getBaseFee().map(Wei::fromQuantity).orElse(null))
+        .mixHash(header.getMixHash())
+        .nonce(header.getNonce())
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .blobGasUsed(header.getBlobGasUsed().orElse(null))
+        .excessBlobGas(header.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null))
+        .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
+        .requestsHash(header.getRequestsHash().orElse(null));
+  }
+
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
     final BlockHeaderBuilder toBuilder =
         create()
@@ -197,9 +224,13 @@ public class BlockHeaderBuilder {
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
     final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
 
+    // For PoS, coinbase is always configured, but for PoA it is not configured,
+    // rather generated for each block via MiningBeneficiaryCalculator.
+    // For simulation, if not configured, we use a dummy address 0x00.
+    // We don't throw an exception if coinbase is not configured.
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
+        .coinbase(miningConfiguration.getCoinbase().orElse(Address.ZERO))
         .difficulty(difficulty)
         .number(newBlockNumber)
         .gasLimit(gasLimit)

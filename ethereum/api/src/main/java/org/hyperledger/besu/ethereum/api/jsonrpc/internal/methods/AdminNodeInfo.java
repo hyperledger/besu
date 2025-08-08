@@ -131,7 +131,11 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 networkId)));
 
     response.put(
-        "activeFork", protocolSchedule.getByBlockHeader(chainHead.getBlockHeader()).getName());
+        "activeFork",
+        protocolSchedule
+            .getByBlockHeader(chainHead.getBlockHeader())
+            .getHardforkId()
+            .description());
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }

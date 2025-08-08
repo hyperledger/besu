@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
-import java.util.Arrays;
+import java.net.URI;
 import java.util.List;
 
 import com.google.common.collect.Range;
@@ -80,8 +80,10 @@ public class SynchronizerOptionsTest
                 .isSnapServerEnabled(Boolean.TRUE)
                 .isSnapSyncTransactionIndexingEnabled(Boolean.TRUE)
                 .build())
-        .snapSyncSavePreMergeHeadersOnlyEnabled(
-            SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED);
+        .snapSyncSavePreCheckpointHeadersOnlyEnabled(
+            SnapSyncConfiguration.DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED)
+        .era1ImportPrepipelineEnabled(true)
+        .era1DataUri(URI.create("sepolia.era1.nimbus.team/"));
   }
 
   @Override
@@ -96,7 +98,7 @@ public class SynchronizerOptionsTest
 
   @Override
   protected List<String> getFieldsToIgnore() {
-    return Arrays.asList("syncMinimumPeerCount");
+    return List.of("syncMinimumPeerCount");
   }
 
   @Override

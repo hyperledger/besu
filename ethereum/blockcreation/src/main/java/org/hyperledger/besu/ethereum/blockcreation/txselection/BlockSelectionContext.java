@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -45,8 +45,8 @@ public record BlockSelectionContext(
     return protocolSpec.getGasLimitCalculator();
   }
 
-  public BlockHashProcessor blockHashProcessor() {
-    return protocolSpec.getBlockHashProcessor();
+  public PreExecutionProcessor preExecutionProcessor() {
+    return protocolSpec.getPreExecutionProcessor();
   }
 
   public int maxRlpBlockSize() {

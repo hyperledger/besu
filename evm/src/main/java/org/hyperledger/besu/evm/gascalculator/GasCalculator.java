@@ -77,6 +77,13 @@ public interface GasCalculator {
   long getEcrecPrecompiledContractGasCost();
 
   /**
+   * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
+   *
+   * @return the gas cost to execute the P256Verify precompiled contract
+   */
+  long getP256VerifyPrecompiledContractGasCost();
+
+  /**
    * Returns the gas cost to execute the {@link SHA256PrecompiledContract}.
    *
    * @param input The input to the SHA256 precompiled contract
