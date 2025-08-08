@@ -216,6 +216,7 @@ public class BackwardChain {
   }
 
   public synchronized void clear() {
+    LOG.info("Clearing backward chain");
     blocks.clear();
     headers.clear();
     chainStorage.clear();
@@ -249,8 +250,6 @@ public class BackwardChain {
   }
 
   public synchronized void removeFromHashToAppend(final Hash hashToRemove) {
-    if (hashesToAppend.contains(hashToRemove)) {
-      hashesToAppend.remove(hashToRemove);
-    }
+    hashesToAppend.remove(hashToRemove);
   }
 }
