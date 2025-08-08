@@ -43,7 +43,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -1420,6 +1419,101 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--bonsai-maximum-back-layers-to-load': 'ten' is not a long");
+  }
+
+  @Test
+  public void parsesValidBonsaiTrieLogRetentionLimitOption() {
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=false",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-trie-logs-retention-limit",
+        "1000");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(
+            dataStorageConfiguration
+                .getPathBasedExtraStorageConfiguration()
+                .getTrieLogRetentionLimit())
+        .isEqualTo(1000);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesIndependentBonsaiHistoricalBlockLimitAndTrieLogRetentionLimit() {
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=false",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-historical-block-limit",
+        "500",
+        "--bonsai-trie-logs-retention-limit",
+        "2000");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration().getMaxLayersToLoad())
+        .isEqualTo(500);
+    assertThat(
+            dataStorageConfiguration
+                .getPathBasedExtraStorageConfiguration()
+                .getTrieLogRetentionLimit())
+        .isEqualTo(2000);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidBonsaiTrieLogRetentionLimitBelowMinimum() {
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=true",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-trie-logs-retention-limit",
+        "1");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--bonsai-trie-logs-retention-limit minimum value is");
+  }
+
+  @Test
+  public void parsesValidBonsaiTrieLogPruningWindowSizeVsRetentionLimit() {
+    // This configuration is now valid: pruning batch size and retention limit are independent
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=true",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-trie-logs-retention-limit",
+        "1000",
+        "--bonsai-trie-logs-pruning-batch-size",
+        "500");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(
+            dataStorageConfiguration
+                .getPathBasedExtraStorageConfiguration()
+                .getTrieLogRetentionLimit())
+        .isEqualTo(1000);
+    assertThat(
+            dataStorageConfiguration
+                .getPathBasedExtraStorageConfiguration()
+                .getTrieLogPruningBatchSize())
+        .isEqualTo(500);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2805,13 +2899,21 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_MAINNET_CONFIG_LOG))))
+        .isTrue();
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .isTrue();
   }
 
   @Test
@@ -2830,13 +2932,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_MAINNET_CONFIG_LOG))))
+        .isTrue();
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .isTrue();
   }
 
   @Test
@@ -2853,13 +2964,24 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_HOODI_CONFIG_LOG))))
+        .as("Network: Hoodi")
+        .isTrue();
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .as("Target Gas Limit: 60M")
+        .isTrue();
   }
 
   @Test
@@ -2879,13 +3001,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_HOODI_CONFIG_LOG))))
+        .isTrue();
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .isTrue();
   }
 
   @Test
@@ -2902,13 +3033,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_DEV_CONFIG_LOG))))
+        .isTrue();
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .isTrue();
   }
 
   @Test
@@ -2927,13 +3067,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final List<String> logs = stringArgumentCaptor.getAllValues();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
-    assertThat(startupConfigLog)
-        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log -> log.contains(String.format("Network: %s", NETWORK_DEV_CONFIG_LOG))))
+        .isTrue();
+
+    assertThat(
+            logs.stream()
+                .anyMatch(
+                    log ->
+                        log.contains(String.format("Target Gas Limit: %s", targetGasLimitOutput))))
+        .isTrue();
   }
 
   @Test

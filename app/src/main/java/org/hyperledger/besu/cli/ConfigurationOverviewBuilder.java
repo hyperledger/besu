@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -58,7 +59,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isHighSpec = false;
   private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
-  private Integer trieLogsPruningWindowSize = null;
+  private Integer trieLogsPruningBatchSize = null;
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
@@ -258,8 +259,8 @@ public class ConfigurationOverviewBuilder {
    * @param size the max number of blocks to load and prune trie logs for at startup
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setTrieLogsPruningWindowSize(final int size) {
-    trieLogsPruningWindowSize = size;
+  public ConfigurationOverviewBuilder setTrieLogsPruningBatchSize(final int size) {
+    trieLogsPruningBatchSize = size;
     return this;
   }
 
@@ -443,8 +444,10 @@ public class ConfigurationOverviewBuilder {
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")
           .append(trieLogRetentionLimit);
-      if (trieLogsPruningWindowSize != null) {
-        trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
+      if (trieLogsPruningBatchSize != null
+          && !trieLogsPruningBatchSize.equals(
+              PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE)) {
+        trieLogPruningString.append("; batch size: ").append(trieLogsPruningBatchSize);
       }
       lines.add(trieLogPruningString.toString());
     }
