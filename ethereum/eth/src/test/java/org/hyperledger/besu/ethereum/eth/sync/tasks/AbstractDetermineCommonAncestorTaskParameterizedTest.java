@@ -189,7 +189,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
               return new PeerTaskExecutorResult<>(
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(respondingEthPeer.getEthPeer()));
+                  List.of(respondingEthPeer.getEthPeer()));
             });
 
     final CompletableFuture<BlockHeader> future = task.run();
