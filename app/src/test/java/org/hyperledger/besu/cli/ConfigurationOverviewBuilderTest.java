@@ -172,11 +172,11 @@ class ConfigurationOverviewBuilderTest {
     assertThat(trieLogRetentionLimitSet)
         .contains("Limit trie logs enabled")
         .contains("retention: 42");
-    assertThat(trieLogRetentionLimitSet).doesNotContain("prune window");
+    assertThat(trieLogRetentionLimitSet).doesNotContain("batch size");
 
-    builder.setTrieLogsPruningWindowSize(1000);
+    builder.setTrieLogsPruningBatchSize(1000);
     trieLogRetentionLimitSet = builder.build();
-    assertThat(trieLogRetentionLimitSet).contains("prune window: 1000");
+    assertThat(trieLogRetentionLimitSet).contains("batch size: 1000");
   }
 
   @Test

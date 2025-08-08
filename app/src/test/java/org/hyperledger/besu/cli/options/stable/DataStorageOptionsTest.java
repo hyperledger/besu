@@ -36,10 +36,10 @@ public class DataStorageOptionsTest
             assertThat(
                     dataStorageConfiguration
                         .getPathBasedExtraStorageConfiguration()
-                        .getTrieLogPruningWindowSize())
+                        .getTrieLogPruningBatchSize())
                 .isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-batch-size",
         "600");
   }
 
@@ -56,20 +56,20 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void pathbasedTrieLogPruningWindowSizeShouldBePositive() {
+  public void pathbasedTrieLogPruningBatchSizeShouldBePositive() {
     internalTestFailure(
-        "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
+        "--bonsai-trie-logs-pruning-batch-size=0 must be greater than 0",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-batch-size",
         "0");
   }
 
   @Test
-  public void pathbasedTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+  public void pathbasedTrieLogPruningBatchSizeShouldBeAboveRetentionLimit() {
     internalTestFailure(
-        "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
+        "--bonsai-trie-logs-pruning-batch-size=512 must be greater than --bonsai-historical-block-limit=512",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-batch-size",
         "512");
   }
 
@@ -175,7 +175,7 @@ public class DataStorageOptionsTest
             ImmutablePathBasedExtraStorageConfiguration.builder()
                 .maxLayersToLoad(513L)
                 .limitTrieLogsEnabled(true)
-                .trieLogPruningWindowSize(514)
+                .trieLogPruningBatchSize(514)
                 .build())
         .build();
   }
@@ -189,5 +189,14 @@ public class DataStorageOptionsTest
   @Override
   protected DataStorageOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getDataStorageOptions();
+  }
+
+  @Override
+  protected String[] getFieldsWithComputedDefaults() {
+    // trieLogRetentionLimit has special backward compatibility behavior:
+    // - CLI defaults to null (for backward compatibility)
+    // - Domain object defaults to DEFAULT_TRIE_LOG_RETENTION_LIMIT (14400)
+    // - During toDomainObject(), null gets converted to maxLayersToLoad for backward compatibility
+    return new String[] {"pathBasedExtraStorageOptions.trieLogRetentionLimit"};
   }
 }
