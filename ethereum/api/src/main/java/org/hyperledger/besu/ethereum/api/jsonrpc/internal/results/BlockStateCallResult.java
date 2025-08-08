@@ -25,19 +25,23 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder(alphabetic = true)
 public class BlockStateCallResult extends BlockResult {
   private final List<CallProcessingResult> callProcessingResults;
+  private final Optional<Bytes> trieLog;
 
   private BlockStateCallResult(
       final Block block,
       final List<TransactionResult> transactions,
-      final List<CallProcessingResult> callProcessingResults) {
+      final List<CallProcessingResult> callProcessingResults,
+      final Optional<Bytes> trieLog) {
     super(
         block.getHeader(),
         transactions,
@@ -48,6 +52,7 @@ public class BlockStateCallResult extends BlockResult {
         block.getBody().getWithdrawals(),
         block.getBody().getBlockAccessList());
     this.callProcessingResults = callProcessingResults;
+    this.trieLog = trieLog;
   }
 
   @JsonGetter(value = "calls")
@@ -59,6 +64,11 @@ public class BlockStateCallResult extends BlockResult {
   @Override
   public String getTotalDifficulty() {
     return null; // Not applicable for this result type.
+  }
+
+  @JsonGetter(value = "trieLog")
+  public Optional<Bytes> getTrieLog() {
+    return trieLog;
   }
 
   public static BlockStateCallResult create(
@@ -76,7 +86,8 @@ public class BlockStateCallResult extends BlockResult {
             .map(simulatorResult -> createTransactionProcessingResult(simulatorResult, logs))
             .collect(Collectors.toList());
 
-    return new BlockStateCallResult(block, transactionResults, callProcessingResults);
+    return new BlockStateCallResult(
+        block, transactionResults, callProcessingResults, simulationResult.getSerializedTrieLog());
   }
 
   /**
