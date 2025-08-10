@@ -44,6 +44,10 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
+  boolean isInSync();
+
+  Optional<Long> getHighestPeerBlockHeight();
+
   boolean resyncWorldState();
 
   boolean healWorldState(final Optional<Address> maybeAccountToRepair, final Bytes location);

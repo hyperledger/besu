@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
@@ -308,6 +309,16 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       return Optional.empty();
     }
     return syncState.syncStatus();
+  }
+
+  @Override
+  public boolean isInSync() {
+    return syncState.isInSync();
+  }
+
+  @Override
+  public Optional<Long> getHighestPeerBlockHeight() {
+    return syncState.getBestPeerChainHead().map(ChainHeadEstimate::getEstimatedHeight);
   }
 
   @Override
