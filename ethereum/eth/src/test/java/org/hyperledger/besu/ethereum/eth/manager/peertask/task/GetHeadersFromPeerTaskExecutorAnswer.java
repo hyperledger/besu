@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
@@ -42,6 +43,10 @@ public class GetHeadersFromPeerTaskExecutorAnswer
   public PeerTaskExecutorResult<List<BlockHeader>> answer(final InvocationOnMock invocationOnMock)
       throws Throwable {
     GetHeadersFromPeerTask task = invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
+    EthPeer ethPeer =
+        invocationOnMock.getArguments().length == 2
+            ? invocationOnMock.getArgument(1, EthPeer.class)
+            : ethPeers.bestPeer().get();
     List<BlockHeader> getHeadersFromPeerTaskResult = new ArrayList<>();
     BlockHeader initialHeader;
     if (task.getBlockHash() != null) {
@@ -83,6 +88,6 @@ public class GetHeadersFromPeerTaskExecutorAnswer
     return new PeerTaskExecutorResult<>(
         Optional.of(getHeadersFromPeerTaskResult),
         PeerTaskExecutorResponseCode.SUCCESS,
-        List.of(ethPeers.bestPeer().get()));
+        List.of(ethPeer));
   }
 }
