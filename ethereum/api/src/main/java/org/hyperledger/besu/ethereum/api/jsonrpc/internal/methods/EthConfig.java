@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper.BEACON_ROOTS_ADDRESS;
-
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -29,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Map;
@@ -137,9 +134,9 @@ public class EthConfig implements JsonRpcMethod {
     spec.getPreExecutionProcessor()
         .getHistoryContract()
         .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.toHexString()));
-    if (spec.getEvm().getEvmVersion().compareTo(EvmSpecVersion.CANCUN) >= 0) {
-      systemContracts.put("BEACON_ROOTS_ADDRESS", BEACON_ROOTS_ADDRESS.toHexString());
-    }
+    spec.getPreExecutionProcessor()
+        .getBeaconRootsContract()
+        .ifPresent(a -> systemContracts.put("BEACON_ROOTS_ADDRESS", a.toHexString()));
     if (!systemContracts.isEmpty()) {
       ObjectNode jsonContracts = result.putObject("systemContracts");
       systemContracts.forEach(jsonContracts::put);
