@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.CallParameter;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.datatypes.StateOverrideMap;
@@ -50,6 +51,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
@@ -614,6 +616,11 @@ public class TransactionSimulator {
 
     if (shouldSetBlobGasPrice(callParams)) {
       transactionBuilder.maxFeePerBlobGas(maxFeePerBlobGas);
+    }
+
+    final List<CodeDelegation> authorizations = callParams.getCodeDelegationAuthorizations();
+    if (!authorizations.isEmpty()) {
+      transactionBuilder.codeDelegations(authorizations);
     }
 
     transactionBuilder.guessType();
