@@ -89,7 +89,7 @@ public class BonsaiArchiveWorldState extends BonsaiWorldState {
    *
    * @param checkpointBlock the checkpoint block to use as the basis for rolling back the state trie
    */
-  public void createCheckpointState(final BlockHeader checkpointBlock) {
+  public void resetWorldStateToCheckpoint(final BlockHeader checkpointBlock) {
     this.resetWorldStateTo(checkpointBlock);
     SegmentedKeyValueStorageTransaction tx =
         this.getWorldStateStorage().getComposedWorldStateStorage().startTransaction();
