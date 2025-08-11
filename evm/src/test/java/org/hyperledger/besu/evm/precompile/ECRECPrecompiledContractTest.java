@@ -349,7 +349,18 @@ class ECRECPrecompiledContractTest {
 
   @ParameterizedTest
   @MethodSource("parameters")
+  void shouldRecoverAddressNativePrecompile(final String inputString, final String expectedResult) {
+    ECRECPrecompiledContract.maybeEnableNative();
+    final Bytes input = Bytes.fromHexString(inputString);
+    final Bytes expected =
+        expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
+    assertThat(contract.computePrecompile(input, messageFrame).output()).isEqualTo(expected);
+  }
+
+  @ParameterizedTest
+  @MethodSource("parameters")
   void shouldRecoverAddressNative(final String inputString, final String expectedResult) {
+    ECRECPrecompiledContract.disableNative();
     contract.signatureAlgorithm.maybeEnableNative();
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
