@@ -60,9 +60,18 @@ public class NativeLibraryOptions {
       names = {"--Xp256verify-native-enabled"},
       description =
           "Per default a BoringSSL native library is used for p256verify. "
-              + "If the secp256r1 native implementation should be used instead, this option must be set to false",
+              + "If the secp256r1 native signature algorithm implementation should be used instead, this option must be set to false",
       arity = "1")
   private final Boolean nativeP256Verify = Boolean.TRUE;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xecrecover-precompile-native-enabled"},
+      description =
+          "Per default a native library is used for ecrecover precompile. "
+              + "If the secp256k1 native signature algorithm implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeEcRecoverPrecompile = Boolean.TRUE;
 
   /** Default constructor. */
   NativeLibraryOptions() {}
@@ -119,5 +128,14 @@ public class NativeLibraryOptions {
    */
   public Boolean getNativeP256Verify() {
     return nativeP256Verify;
+  }
+
+  /**
+   * Whether native ecrecover precompile is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeEcRecoverPrecompile() {
+    return nativeEcRecoverPrecompile;
   }
 }
