@@ -40,6 +40,7 @@
 
 ### Bug fixes
 - Fix bug with `eth_estimateGas` on QBFT - use zero address when doing simulation against `pending` block [#9031](https://github.com/hyperledger/besu/pull/9031)
+- Fix bug with handling of invalid requests for `engine_newPayloadV4` [#8729](https://github.com/hyperledger/besu/pull/8729)
 
 ## 25.7.0
 ### Breaking Changes
