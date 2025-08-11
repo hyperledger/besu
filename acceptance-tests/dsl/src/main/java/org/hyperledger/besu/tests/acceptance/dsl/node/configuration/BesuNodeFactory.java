@@ -558,14 +558,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : storageFormat == DataStorageFormat.X_BONSAI_ARCHIVE
-                        ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG
-                        : storageFormat == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS
-                            ? DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG
-                            : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
@@ -854,5 +847,20 @@ public class BesuNodeFactory {
 
   public BesuNode runCommand(final String command) throws IOException {
     return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
+  }
+
+  private DataStorageConfiguration getDefaultStorageConfiguration(
+      final DataStorageFormat storageFormat) {
+    switch (storageFormat) {
+      case DataStorageFormat.FOREST:
+        return DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
+      case DataStorageFormat.BONSAI:
+        return DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
+      case DataStorageFormat.X_BONSAI_ARCHIVE:
+        return DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG;
+      case DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS:
+        return DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG;
+    }
+    throw new IllegalArgumentException();
   }
 }
