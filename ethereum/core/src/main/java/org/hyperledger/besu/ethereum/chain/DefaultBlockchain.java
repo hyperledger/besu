@@ -400,11 +400,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized Optional<Hash> getBlockHashByNumberSafe(final long number) {
-    return blockchainStorage.getBlockHash(number);
-  }
-
-  @Override
   public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
     return totalDifficultyCache
         .map(

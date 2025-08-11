@@ -210,15 +210,6 @@ public interface Blockchain {
   Optional<Hash> getBlockHashByNumber(long number);
 
   /**
-   * Safe version of {@code getBlockHashByNumber} (it should take any locks necessary to ensure any
-   * block updates that might be taking place have been completed first)
-   *
-   * @param number The height of the block whose hash should be retrieved.
-   * @return The hash of the block at the given height.
-   */
-  Optional<Hash> getBlockHashByNumberSafe(long number);
-
-  /**
    * Returns the total difficulty (cumulative difficulty up to and including the target block) of
    * the block corresponding to the given hash. Associated block is not necessarily on the canonical
    * chain.

@@ -92,11 +92,6 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public synchronized Optional<Hash> getBlockHashByNumberSafe(final long number) {
-    throw new NonDeterministicOperationException(NUMBER_LOOKUP_ERROR);
-  }
-
-  @Override
   public ChainHead getChainHead() {
     throw new NonDeterministicOperationException(CHAIN_HEAD_ERROR);
   }
