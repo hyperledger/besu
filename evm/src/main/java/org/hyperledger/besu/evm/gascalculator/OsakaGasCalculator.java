@@ -106,13 +106,6 @@ public class OsakaGasCalculator extends PragueGasCalculator {
       multiplicationComplexity = words * 2;
     }
 
-    if (multiplicationComplexity > 0) {
-      long maxExponentLength = Long.MAX_VALUE / multiplicationComplexity * 3 / 8;
-      if (exponentLength > maxExponentLength) {
-        return Long.MAX_VALUE;
-      }
-    }
-
     final long firstExponentBytesCap =
         Math.min(exponentLength, ByzantiumGasCalculator.MAX_FIRST_EXPONENT_BYTES);
     final BigInteger firstExpBytes =
