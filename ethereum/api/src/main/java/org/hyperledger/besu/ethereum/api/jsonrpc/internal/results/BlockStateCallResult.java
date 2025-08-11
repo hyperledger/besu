@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -67,6 +68,7 @@ public class BlockStateCallResult extends BlockResult {
   }
 
   @JsonGetter(value = "trieLog")
+  @JsonInclude(JsonInclude.Include.NON_ABSENT)
   public Optional<Bytes> getTrieLog() {
     return trieLog;
   }
