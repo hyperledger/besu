@@ -2952,21 +2952,4 @@ public class BesuCommandTest extends CommandTestAbstract {
     // Verify that the logger does NOT warn about duplication
     verify(mockLogger, never()).warn(contains("bootnodes"));
   }
-
-  @Test
-  public void shouldLogErrorIfDuplicateBooleanOptionUsed() {
-    parseCommand("--p2p-enabled=true", "--p2p-enabled=false");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Option '--p2p-enabled' should be specified only once");
-  }
-
-  @Test
-  public void shouldNotWarnForRepeatableOptionBootnodes() {
-    parseCommand(
-        "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-        "enode://" + VALID_NODE_ID + "@192.168.0.2:4567");
-
-    // Verify that the logger does NOT warn about duplication
-    verify(mockLogger, never()).warn(contains("bootnodes"));
-  }
 }
