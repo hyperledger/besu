@@ -882,6 +882,12 @@ public class SnapServerTest {
     }
     storageTrie.commit(updater::putAccountStateTrieNode);
     updater.commit();
+    inMemoryStorage
+        .getWorldStateBlockNumber()
+        .ifPresent(
+            currentBlock ->
+                updateStorageArchiveBlock(
+                    inMemoryStorage.getComposedWorldStateStorage(), currentBlock + 1));
   }
 
   boolean assertIsValidAccountRangeProof(

@@ -99,19 +99,11 @@ public class OsakaGasCalculator extends PragueGasCalculator {
         clampedAdd(BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET, baseLength);
 
     final long maxLength = Math.max(modulusLength, baseLength);
-    if (maxLength <= 0) {
-      return 500L;
-    }
     long multiplicationComplexity = 16;
     long words = (maxLength + 7L) / 8L;
     words = Words.clampedMultiply(words, words);
     if (maxLength > 32) {
       multiplicationComplexity = words * 2;
-    }
-
-    long maxExponentLength = Long.MAX_VALUE / words * 3 / 8;
-    if (exponentLength > maxExponentLength) {
-      return Long.MAX_VALUE;
     }
 
     final long firstExponentBytesCap =
