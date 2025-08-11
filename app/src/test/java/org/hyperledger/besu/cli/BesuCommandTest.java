@@ -39,11 +39,13 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -93,6 +95,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -154,6 +157,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
+
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
+  private static final long CUSTOM_TARGET_GAS_LIMIT = 50_000_000L;
+  private static final String NETWORK_MAINNET_CONFIG_LOG =
+      String.format(
+          "%s%s",
+          MAINNET.name().charAt(0), MAINNET.name().substring(1).toLowerCase(Locale.getDefault()));
+  private static final String NETWORK_HOODI_CONFIG_LOG =
+      String.format(
+          "%s%s",
+          HOODI.name().charAt(0), HOODI.name().substring(1).toLowerCase(Locale.getDefault()));
+  ;
+  private static final String NETWORK_DEV_CONFIG_LOG =
+      String.format(
+          "%s%s", DEV.name().charAt(0), DEV.name().substring(1).toLowerCase(Locale.getDefault()));
+  ;
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -417,7 +437,7 @@ public class BesuCommandTest extends CommandTestAbstract {
       // Verify TOML stores it by the appropriate type
       if (optionSpec.type().equals(Boolean.class)) {
         tomlResult.getBoolean(tomlKey);
-      } else if (optionSpec.isMultiValue() || optionSpec.arity().max > 1) {
+      } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
@@ -2769,5 +2789,167 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-blocks-retained=10000",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  void shouldShowCorrectFormatForMainnetDefaultTargetGasLimit() {
+    parseCommand();
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForMainnetCustomTargetGasLimit() {
+    parseCommand("--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_MAINNET_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForTestnetDefaultTargetGasLimit() {
+    parseCommand("--network", "hoodi");
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForTestnetCustomTargetGasLimit() {
+    parseCommand(
+        "--network", "hoodi", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_HOODI_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForCustomNetworkDefaultTargetGasLimit() {
+    parseCommand("--network", "dev");
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  void shouldShowCorrectFormatForCustomNetworkCustomTargetGasLimit() {
+    parseCommand("--network", "dev", "--target-gas-limit", String.valueOf(CUSTOM_TARGET_GAS_LIMIT));
+
+    final ArgumentCaptor<MiningConfiguration> miningArg =
+        ArgumentCaptor.forClass(MiningConfiguration.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+    verify(mockLogger, atLeastOnce()).info(stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
+        .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
+
+    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String targetGasLimitOutput =
+        ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
+    assertThat(startupConfigLog)
+        .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  @Test
+  public void shouldLogErrorIfDuplicateBooleanOptionUsed() {
+    parseCommand("--p2p-enabled=true", "--p2p-enabled=false");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Option '--p2p-enabled' should be specified only once");
+  }
+
+  @Test
+  public void shouldNotWarnForRepeatableOptionBootnodes() {
+    parseCommand(
+        "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
+        "enode://" + VALID_NODE_ID + "@192.168.0.2:4567");
+
+    // Verify that the logger does NOT warn about duplication
+    verify(mockLogger, never()).warn(contains("bootnodes"));
   }
 }
