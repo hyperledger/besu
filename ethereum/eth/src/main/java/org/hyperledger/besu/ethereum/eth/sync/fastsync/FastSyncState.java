@@ -105,14 +105,15 @@ public class FastSyncState {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FastSyncState that = (FastSyncState) o;
-    return Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
+    return sourceIsTrusted == that.sourceIsTrusted
+        && Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHash, that.pivotBlockHash)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader);
+    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader, sourceIsTrusted);
   }
 
   @Override
@@ -124,6 +125,8 @@ public class FastSyncState {
         + pivotBlockHash
         + ", pivotBlockHeader="
         + pivotBlockHeader
+        + ", sourceIsTrusted="
+        + sourceIsTrusted
         + '}';
   }
 }

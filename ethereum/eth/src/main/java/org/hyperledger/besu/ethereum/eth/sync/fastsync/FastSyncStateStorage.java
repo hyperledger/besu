@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public class FastSyncStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
+  private static final byte FORMAT_VERSION = 1;
   private final File pivotBlockHeaderFile;
 
   public FastSyncStateStorage(final Path fastSyncDataDir) {
@@ -55,8 +56,23 @@ public class FastSyncStateStorage {
         return FastSyncState.EMPTY_SYNC_STATE;
       }
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
-      return new FastSyncState(
-          BlockHeader.readFrom(new BytesValueRLPInput(rlp, false), blockHeaderFunctions), false);
+      final BytesValueRLPInput input = new BytesValueRLPInput(rlp, false);
+
+      if (isNewFormat(input)) {
+        // New format: list containing [version, header, sourceIsTrusted]
+        input.enterList();
+        final byte version = input.readByte();
+        if (version != FORMAT_VERSION) {
+          throw new IllegalStateException("Unsupported fast sync state format version: " + version);
+        }
+        final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
+        final boolean sourceIsTrusted = input.readByte() != 0;
+        input.leaveList();
+        return new FastSyncState(header, sourceIsTrusted);
+      } else {
+        // Old format: just the header itself
+        return new FastSyncState(BlockHeader.readFrom(input, blockHeaderFunctions), false);
+      }
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to read fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
@@ -73,11 +89,28 @@ public class FastSyncStateStorage {
     }
     try {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
+      output.startList();
+      output.writeByte(FORMAT_VERSION);
       state.getPivotBlockHeader().get().writeTo(output);
+      output.writeByte((byte) (state.isSourceTrusted() ? 1 : 0));
+      output.endList();
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to store fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
     }
+  }
+
+  /**
+   * Determines whether the RLP input follows the new format.
+   *
+   * @param input The RLP input to check
+   * @return true if the input is in the new format, false if it's in the old/legacy format
+   */
+  private boolean isNewFormat(final BytesValueRLPInput input) {
+    input.enterList();
+    boolean isNewFormat = input.nextSize() == 1 && !input.nextIsList();
+    input.reset();
+    return isNewFormat;
   }
 }
