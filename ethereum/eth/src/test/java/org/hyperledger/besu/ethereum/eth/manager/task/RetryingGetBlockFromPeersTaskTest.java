@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingSwitchingPeerMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -52,7 +51,6 @@ public class RetryingGetBlockFromPeersTaskTest
     return RetryingGetBlockFromPeersTask.create(
         protocolSchedule,
         ethContext,
-        SynchronizerConfiguration.builder().build(),
         metricsSystem,
         maxRetries,
         Optional.of(requestedData.getResult().getHash()),

@@ -21,10 +21,8 @@ import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -38,11 +36,8 @@ public class DownloadSyncReceiptsStep
   private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
 
   public DownloadSyncReceiptsStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, synchronizerConfiguration, metricsSystem);
+      final ProtocolSchedule protocolSchedule, final EthContext ethContext) {
+    super(protocolSchedule, ethContext);
   }
 
   @Override

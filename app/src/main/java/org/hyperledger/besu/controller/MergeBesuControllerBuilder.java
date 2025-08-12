@@ -247,8 +247,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),
               0));

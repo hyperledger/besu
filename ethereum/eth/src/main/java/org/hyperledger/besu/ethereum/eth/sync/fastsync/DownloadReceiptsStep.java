@@ -21,9 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -31,11 +29,8 @@ import java.util.Map;
 public class DownloadReceiptsStep extends AbstractDownloadReceiptsStep<Block, BlockWithReceipts> {
 
   public DownloadReceiptsStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, synchronizerConfiguration, metricsSystem);
+      final ProtocolSchedule protocolSchedule, final EthContext ethContext) {
+    super(protocolSchedule, ethContext);
   }
 
   @Override

@@ -323,13 +323,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
   @CommandLine.Option(
-      names = {"--Xpeertask-system-enabled"},
-      hidden = true,
-      description =
-          "Temporary feature toggle to enable using the new peertask system (default: ${DEFAULT-VALUE})")
-  private final Boolean isPeerTaskSystemEnabled = false;
-
-  @CommandLine.Option(
       names = SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
       paramLabel = "<Boolean>",
       arity = "0..1",
@@ -388,15 +381,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
-  }
-
-  /**
-   * Flag to indicate whether the peer task system should be used where available
-   *
-   * @return true if the peer task system should be used where available
-   */
-  public boolean isPeerTaskSystemEnabled() {
-    return isPeerTaskSystemEnabled;
   }
 
   /**
@@ -491,7 +475,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
-    builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
     builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);

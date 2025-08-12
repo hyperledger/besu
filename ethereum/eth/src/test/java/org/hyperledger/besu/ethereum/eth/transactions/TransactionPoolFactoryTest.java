@@ -411,8 +411,7 @@ public class TransactionPoolFactoryTest {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
-        MiningConfiguration.newDefault(),
-        false);
+        MiningConfiguration.newDefault());
   }
 
   private TransactionPool createAndEnableTransactionPool(

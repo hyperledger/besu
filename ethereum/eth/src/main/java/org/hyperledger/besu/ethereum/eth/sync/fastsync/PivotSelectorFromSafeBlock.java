@@ -24,10 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.List;
@@ -48,9 +45,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  private final MetricsSystem metricsSystem;
   private final GenesisConfigOptions genesisConfig;
-  private final SynchronizerConfiguration synchronizerConfiguration;
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
@@ -66,17 +61,13 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem,
       final GenesisConfigOptions genesisConfig,
-      final SynchronizerConfiguration synchronizerConfiguration,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
     this.genesisConfig = genesisConfig;
-    this.synchronizerConfiguration = synchronizerConfiguration;
     this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
   }
@@ -194,47 +185,38 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   }
 
   private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
-    CompletableFuture<BlockHeader> resultFuture;
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      resultFuture =
-          ethContext
-              .getScheduler()
-              .scheduleServiceTask(
-                  () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            hash,
-                            0,
-                            1,
-                            0,
-                            GetHeadersFromPeerTask.Direction.FORWARD,
-                            ethContext.getEthPeers().peerCount(),
-                            protocolSchedule);
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        ethContext.getPeerTaskExecutor().execute(task);
-                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      return CompletableFuture.failedFuture(
-                          new RuntimeException("Unable to retrieve header"));
-                    }
-                    return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
-                  });
-    } else {
-      resultFuture =
-          RetryingGetHeaderFromPeerByHashTask.byHash(
-                  protocolSchedule, ethContext, hash, 0, metricsSystem)
-              .getHeader();
-    }
-    return resultFuture.whenComplete(
-        (blockHeader, throwable) -> {
-          if (throwable != null) {
-            LOG.debug("Error downloading block header by hash {}", hash);
-          } else {
-            LOG.atDebug()
-                .setMessage("Successfully downloaded block header by hash {}")
-                .addArgument(blockHeader::toLogString)
-                .log();
-          }
-        });
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              GetHeadersFromPeerTask task =
+                  new GetHeadersFromPeerTask(
+                      hash,
+                      0,
+                      1,
+                      0,
+                      GetHeadersFromPeerTask.Direction.FORWARD,
+                      ethContext.getEthPeers().peerCount(),
+                      protocolSchedule);
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                  ethContext.getPeerTaskExecutor().execute(task);
+              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                return CompletableFuture.failedFuture(
+                    new RuntimeException("Unable to retrieve header"));
+              }
+              return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
+            })
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
+              }
+            });
   }
 }

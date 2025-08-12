@@ -100,7 +100,6 @@ public class FullSyncDownloaderTest {
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),
-        null,
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
