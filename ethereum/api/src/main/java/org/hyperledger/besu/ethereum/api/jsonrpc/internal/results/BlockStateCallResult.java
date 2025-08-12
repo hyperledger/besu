@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
 @JsonPropertyOrder(alphabetic = true)
 public class BlockStateCallResult extends BlockResult {
   private final List<CallProcessingResult> callProcessingResults;
-  private final Optional<Bytes> trieLog;
+  private final Optional<String> trieLog;
 
   private BlockStateCallResult(
       final Block block,
@@ -52,7 +52,7 @@ public class BlockStateCallResult extends BlockResult {
         false,
         block.getBody().getWithdrawals());
     this.callProcessingResults = callProcessingResults;
-    this.trieLog = trieLog;
+    this.trieLog = trieLog.map(Bytes::toHexString);
   }
 
   @JsonGetter(value = "calls")
@@ -68,7 +68,7 @@ public class BlockStateCallResult extends BlockResult {
 
   @JsonGetter(value = "trieLog")
   @JsonInclude(JsonInclude.Include.NON_ABSENT)
-  public Optional<Bytes> getTrieLog() {
+  public Optional<String> getTrieLog() {
     return trieLog;
   }
 
