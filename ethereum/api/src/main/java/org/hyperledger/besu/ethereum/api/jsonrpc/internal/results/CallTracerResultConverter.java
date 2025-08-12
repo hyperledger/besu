@@ -112,13 +112,22 @@ public class CallTracerResultConverter {
         // Get parent call info
         final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth);
 
-        // Create new call for the next depth level
+        // Build the prospective child
         final CallTracerResult.Builder childBuilder =
             createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
-        final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
 
-        // Store call info for this depth
+        // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
+        if (isCallOp(opcode) && isPrecompileAddress(childBuilder.getTo())) {
+          finalizePrecompileChild(frame, nextTrace, childBuilder, parentCallInfo);
+          // Do not store this child in depth tracking; it's already attached
+          continue;
+        }
+
+        // Normal call path: track child until its RETURN/REVERT/HALT
+        final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
+        // Keep maxDepth correct even if a callee frame never appears
+        maxDepth = Math.max(maxDepth, currentDepth + 1);
       }
       // Process return operations that exit a context
       else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
@@ -167,6 +176,56 @@ public class CallTracerResultConverter {
     finalizeRoot(rootInfo.builder, trace);
 
     return rootInfo.builder.build();
+  }
+
+  private static boolean isPrecompileAddress(final String to) {
+    if (to == null) return false;
+    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
+    if (s.length() != 40) return false;
+
+    // Ensure high 19 bytes are zero
+    for (int i = 0; i < 38; i++) if (s.charAt(i) != '0') return false;
+
+    // Parse the last byte and check 1..9
+    final int lastByte;
+    try {
+      lastByte = Integer.parseInt(s.substring(38, 40), 16);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+    return lastByte >= 0x01 && lastByte <= 0x09;
+  }
+
+  private static void finalizePrecompileChild(
+      final TraceFrame entryFrame,
+      final TraceFrame nextTrace,
+      final CallTracerResult.Builder childBuilder,
+      final CallInfo parentCallInfo) {
+
+    // Gas used is provided by Besu on the entry frame for precompiles
+    entryFrame.getPrecompiledGasCost().ifPresent(childBuilder::gasUsed);
+
+    // Output: slice from caller memory AFTER the call using outOffset/outSize
+    // For CALL/CALLCODE/DELEGATECALL/STATICCALL: outOffset = -2, outSize = -1 (from TOS)
+    entryFrame
+        .getStack()
+        .ifPresent(
+            stack -> {
+              if (stack.length >= 2 && nextTrace != null && nextTrace.getMemory().isPresent()) {
+                final int outOffset = bytesToInt(stack[stack.length - 2]);
+                final int outSize = bytesToInt(stack[stack.length - 1]);
+                final Bytes out =
+                    extractCallDataFromMemory(nextTrace.getMemory().get(), outOffset, outSize);
+                if (!out.isEmpty()) {
+                  childBuilder.output(out.toHexString());
+                }
+              }
+            });
+
+    // Attach to parent immediately
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childBuilder.build());
+    }
   }
 
   private static void setOutputAndErrorStatus(
