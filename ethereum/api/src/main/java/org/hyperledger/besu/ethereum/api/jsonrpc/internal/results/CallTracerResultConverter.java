@@ -324,7 +324,7 @@ public class CallTracerResultConverter {
     }
 
     final String toAddress = resolveToAddress(frame, opcode);
-    final Bytes inputData = resolveInputData(frame, opcode);
+    final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
 
     final long gasProvided = nextTrace != null ? nextTrace.getGasRemaining() : 0;
 
@@ -353,7 +353,7 @@ public class CallTracerResultConverter {
   private static String getCallValue(final TraceFrame frame, final String opcode) {
     // STATICCALL and DELEGATECALL don't transfer value
     if ("STATICCALL".equals(opcode) || "DELEGATECALL".equals(opcode)) {
-      return "0x0";
+      return null; // omit field to match Geth
     }
     return frame.getValue().toShortHexString();
   }
@@ -402,52 +402,94 @@ public class CallTracerResultConverter {
     return null;
   }
 
-  private static Bytes resolveInputData(final TraceFrame frame, final String opcode) {
+  /**
+   * Returns the callee's calldata (for CALL/DELEGATECALL/STATICCALL) or the init code (for
+   * CREATE/CREATE2), matching geth's callTracer behavior.
+   *
+   * <p>Strategy: 1) Prefer the immediate callee frame's inputData when the very next trace frame is
+   * at depth+1. This is the authoritative view of what the callee actually received.
+   *
+   * <p>2) Otherwise, reconstruct from the caller's memory using the op-specific stack operands
+   * (inOffset, inSize / offset, size). Indices below are counted from the top-of-stack (TOS), i.e.
+   * stack[stack.length - 1] is TOS.
+   *
+   * <p>Notes: - Precompiles (and some edge cases) may not emit a depth+1 frame; hence the
+   * memory-slice fallback. - For CREATE/CREATE2, "input" here refers to the init code (which runs
+   * once to produce the deployed runtime code), not any constructor arguments encoding semantics.
+   *
+   * <p>Stack layouts (TOS on the right): CALL/CALLCODE: gas, to, value, inOffset, inSize,
+   * outOffset, outSize DELEGATECALL: gas, to, inOffset, inSize, outOffset, outSize STATICCALL: gas,
+   * to, inOffset, inSize, outOffset, outSize CREATE: value, offset, size CREATE2: value, offset,
+   * size, salt
+   *
+   * <p>Therefore: CALL/DELEGATECALL/STATICCALL -> inOffset = -4, inSize = -3 CREATE -> offset = -2,
+   * size = -1 CREATE2 -> offset = -3, size = -2
+   */
+  private static Bytes resolveInputData(
+      final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
+
+    // 1) Prefer the callee frame's inputData when the next frame is the callee at depth+1.
+    if (nextTrace != null
+        && nextTrace.getDepth() == frame.getDepth() + 1
+        && nextTrace.getInputData() != null
+        && !nextTrace.getInputData().isEmpty()) {
+      return nextTrace.getInputData();
+    }
+
     if (isCallOp(opcode)) {
-
-      // Check if stack is present
-      if (frame.getStack().isEmpty()) {
-        return frame.getInputData();
-      }
-
-      // Try to extract call data from stack and memory
+      // 2) Fallback: reconstruct calldata from caller memory using inOffset/inSize from the stack.
       return frame
           .getStack()
-          .filter(stack -> stack.length >= 5)
           .map(
               stack -> {
-                // For CALL operations, extract offset and length from stack
-                final int offset = bytesToInt(stack[stack.length - 4]);
-                final int length = bytesToInt(stack[stack.length - 5]);
-
-                // Check if memory is present
-                if (frame.getMemory().isEmpty()) {
+                // CALL/CALLCODE/DELEGATECALL/STATICCALL all use: inOffset = -4, inSize = -3 (from
+                // TOS).
+                if (stack.length < 4) {
                   return frame.getInputData();
                 }
-
+                final int inOffset = bytesToInt(stack[stack.length - 4]);
+                final int inSize = bytesToInt(stack[stack.length - 3]);
                 return frame
                     .getMemory()
-                    .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                    .orElseGet(frame::getInputData);
+                    .map(memory -> extractCallDataFromMemory(memory, inOffset, inSize))
+                    .orElse(frame.getInputData());
               })
-          .orElseGet(frame::getInputData);
+          .orElse(frame.getInputData());
+
     } else if (isCreateOp(opcode)) {
-      // For create operations, extract initialization code from memory
+      // For CREATE/CREATE2, "input" is the init code slice from memory (not constructor args).
       return frame
           .getStack()
-          .filter(stack -> stack.length >= 3)
           .map(
               stack -> {
-                final int offset = bytesToInt(stack[stack.length - 2]);
-                final int length = bytesToInt(stack[stack.length - 3]);
-                return frame
-                    .getMemory()
-                    .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                    .orElse(frame.getInputData());
+                if ("CREATE".equals(opcode)) {
+                  // CREATE stack: ..., value, offset, size  -> offset = -2, size = -1
+                  if (stack.length < 2) {
+                    return frame.getInputData();
+                  }
+                  final int offset = bytesToInt(stack[stack.length - 2]);
+                  final int length = bytesToInt(stack[stack.length - 1]);
+                  return frame
+                      .getMemory()
+                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
+                      .orElse(frame.getInputData());
+                } else {
+                  // CREATE2 stack: ..., value, offset, size, salt -> offset = -3, size = -2
+                  if (stack.length < 3) {
+                    return frame.getInputData();
+                  }
+                  final int offset = bytesToInt(stack[stack.length - 3]);
+                  final int length = bytesToInt(stack[stack.length - 2]);
+                  return frame
+                      .getMemory()
+                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
+                      .orElse(frame.getInputData());
+                }
               })
           .orElse(frame.getInputData());
     }
 
+    // Default: preserve the current frame's input as a last resort.
     return frame.getInputData();
   }
 
