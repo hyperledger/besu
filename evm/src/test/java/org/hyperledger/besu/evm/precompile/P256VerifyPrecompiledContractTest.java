@@ -80,7 +80,6 @@ class P256VerifyPrecompiledContractTest {
     PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(input, messageFrame);
     Bytes actual = result.output();
-
     assertEquals(expected, actual, "Test failed: " + testCase.Name);
   }
 

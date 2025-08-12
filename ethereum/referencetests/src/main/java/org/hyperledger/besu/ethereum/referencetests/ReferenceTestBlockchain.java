@@ -46,8 +46,7 @@ import org.apache.tuweni.bytes.Bytes;
  * that must not affect the execution of its transactions.
  *
  * <p>The Ethereum reference tests for VM execution (VMTests) and transaction processing
- * (GeneralStateTests) require a block's hash to be to be the hash of the string of it's block
- * number.
+ * (GeneralStateTests) require a block's hash to be the hash of the string of its block number.
  */
 public class ReferenceTestBlockchain implements Blockchain {
 
