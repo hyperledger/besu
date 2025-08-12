@@ -33,7 +33,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -59,7 +58,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
   private final PathBasedWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash;
 
-  private PathBasedCachedWorldStorageManager(
+  public PathBasedCachedWorldStorageManager(
       final PathBasedWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash,
@@ -71,18 +70,6 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
     this.archive = archive;
     this.evmConfiguration = evmConfiguration;
     this.worldStateConfig = worldStateConfig;
-  }
-
-  public PathBasedCachedWorldStorageManager(
-      final PathBasedWorldStateProvider archive,
-      final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final WorldStateConfig worldStateConfig) {
-    this(
-        archive,
-        worldStateKeyValueStorage,
-        new ConcurrentHashMap<>(),
-        EvmConfiguration.DEFAULT,
-        worldStateConfig);
   }
 
   public synchronized void addCachedLayer(
