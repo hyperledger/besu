@@ -636,6 +636,7 @@ subprojects {
       description = "Usage: gradle jmh -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
         "\t-Pincludes=<includePattern>\tInclude pattern (regular expression) for benchmarks to be executed. Defaults to including all benchmarks.\n" +
+        "\t-Pexcludes=<excludePattern>\tComma-separated exclude pattern (regular expression) for benchmarks to not be executed. Defaults to including all benchmarks.\n" +
         "\t-PasyncProfiler=<libPath>\tLibrary path to fetch the Async profiler from. Default is to disable profiling.\n" +
         "\t-PasyncProfilerOptions=<asyncProfilerOptions>\tOptions to pass on to the Async profiler separated by ';'. Default is to produce a flamegraph with all other default profiler options.\n"
     }
@@ -644,6 +645,7 @@ subprojects {
       jmhVersion = '1.37'
       fork = 3
       includes = _strListCmdArg('includes', [''])
+      excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
       if (asyncProfiler != null) {
@@ -651,7 +653,7 @@ subprojects {
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
       }
-      duplicateClassesStrategy = DuplicatesStrategy.WARN
+      duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
       jvmArgs = [
         '-XX:+EnableDynamicAgentLoading'
       ]
