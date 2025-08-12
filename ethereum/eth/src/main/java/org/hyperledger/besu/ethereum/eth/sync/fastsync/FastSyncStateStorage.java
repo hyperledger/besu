@@ -64,9 +64,9 @@ public class FastSyncStateStorage {
   }
 
   public void storeState(final FastSyncState state) {
-    // If the source is trusted i.e. a POS header from engine API then it is better not to store as
-    // we will get
-    // a more up to date header from the engine API quickly on restart.
+    // Don't store state for trusted source i.e. POS as we will get a more up to date header from
+    // the engine API quickly on restart. Also allows syncing to know source is trusted on restart
+    // and use performance optimizations for trusted sources.
     if (state.isSourceTrusted()) {
       return;
     }
