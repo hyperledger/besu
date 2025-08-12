@@ -77,4 +77,14 @@ public class FastSyncStateStorageTest {
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
         .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
   }
+
+  @Test
+  public void shouldNotStoreStateWhenSourceIsTrusted() {
+    final FastSyncState trustedSyncState = new FastSyncState(pivotBlockHeader, true);
+
+    storage.storeState(trustedSyncState);
+    assertThat(storage.isFastSyncInProgress()).isFalse();
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
+        .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
+  }
 }
