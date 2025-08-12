@@ -58,7 +58,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
   private final PathBasedWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash;
 
-  public PathBasedCachedWorldStorageManager(
+  protected PathBasedCachedWorldStorageManager(
       final PathBasedWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash,
