@@ -135,15 +135,15 @@ public class EthSimulateV1TrielogTest {
 
     // Verify trielog
     assertThat(result.getTrieLog()).isPresent();
-    Bytes trieLogData = result.getTrieLog().get();
-    assertThat(trieLogData.size()).isGreaterThan(0);
+    String trieLogData = result.getTrieLog().get();
+    assertThat(trieLogData.length()).isGreaterThan(0);
 
     // verify trielog contents:
     var trieLogAccountChanges =
         archive
             .getTrieLogManager()
             .getTrieLogFactory()
-            .deserialize(trieLogData.toArrayUnsafe())
+            .deserialize(Bytes.fromHexString(trieLogData).toArrayUnsafe())
             .getAccountChanges();
 
     var senderPrior = trieLogAccountChanges.get(senderAccount.address()).getPrior();
@@ -215,8 +215,8 @@ public class EthSimulateV1TrielogTest {
 
     // Verify trielog is present and not empty for multiple transactions
     assertThat(result.getTrieLog()).isPresent();
-    Bytes trieLogData = result.getTrieLog().get();
-    assertThat(trieLogData.size()).isGreaterThan(0);
+    String trieLogData = result.getTrieLog().get();
+    assertThat(trieLogData.length()).isGreaterThan(0);
 
     // Verify both transactions were processed
     assertThat(result.getTransactionProcessingResults()).hasSize(2);
@@ -228,7 +228,7 @@ public class EthSimulateV1TrielogTest {
         archive
             .getTrieLogManager()
             .getTrieLogFactory()
-            .deserialize(trieLogData.toArrayUnsafe())
+            .deserialize(Bytes.fromHexString(trieLogData).toArrayUnsafe())
             .getAccountChanges();
 
     var senderPrior = trieLogAccountChanges.get(senderAccount.address()).getPrior();
