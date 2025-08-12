@@ -359,33 +359,11 @@ public class CallTracerResult {
     /**
      * Sets the amount of gas allocated for the call.
      *
-     * @param gas the gas limit as a BigInteger
-     * @return this builder instance for method chaining
-     */
-    public Builder gas(final BigInteger gas) {
-      this.gas = gas;
-      return this;
-    }
-
-    /**
-     * Sets the amount of gas allocated for the call.
-     *
      * @param gas the gas limit as a long value
      * @return this builder instance for method chaining
      */
     public Builder gas(final long gas) {
       this.gas = BigInteger.valueOf(gas);
-      return this;
-    }
-
-    /**
-     * Sets the amount of gas actually consumed by the call.
-     *
-     * @param gasUsed the gas used as a BigInteger
-     * @return this builder instance for method chaining
-     */
-    public Builder gasUsed(final BigInteger gasUsed) {
-      this.gasUsed = gasUsed;
       return this;
     }
 
@@ -471,24 +449,6 @@ public class CallTracerResult {
       return this;
     }
 
-    /**
-     * Adds multiple nested calls to the list of calls.
-     *
-     * <p>If the calls list is null, it will be initialized as an empty ArrayList.
-     *
-     * @param calls the nested CallTracerResult objects to add
-     * @return this builder instance for method chaining
-     */
-    public Builder addCalls(final CallTracerResult... calls) {
-      if (this.calls == null) {
-        this.calls = new ArrayList<>();
-      }
-      for (CallTracerResult call : calls) {
-        this.calls.add(call);
-      }
-      return this;
-    }
-
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
@@ -515,14 +475,29 @@ public class CallTracerResult {
       return new CallTracerResult(this);
     }
 
+    /**
+     * Return Gas value
+     *
+     * @return Gas value
+     */
     public BigInteger getGas() {
       return this.gas;
     }
 
+    /**
+     * Return call type
+     *
+     * @return call type
+     */
     public String getType() {
       return this.type;
     }
 
+    /**
+     * Gas Used
+     *
+     * @return Gas Used
+     */
     public BigInteger getGasUsed() {
       return this.gasUsed;
     }
