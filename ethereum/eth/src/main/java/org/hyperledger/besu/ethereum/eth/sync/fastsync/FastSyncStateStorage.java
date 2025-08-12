@@ -64,13 +64,6 @@ public class FastSyncStateStorage {
   }
 
   public void storeState(final FastSyncState state) {
-    // Don't store state for trusted source i.e. POS as we will get a more up to date header from
-    // the engine API quickly on restart. Also allows syncing to know source is trusted on restart
-    // and use performance optimizations for trusted sources.
-    if (state.isSourceTrusted()) {
-      return;
-    }
-
     if (!state.hasPivotBlockHeader()) {
       if (!pivotBlockHeaderFile.delete() && pivotBlockHeaderFile.exists()) {
         LOG.error(
