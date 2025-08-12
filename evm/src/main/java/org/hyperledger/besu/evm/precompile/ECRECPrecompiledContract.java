@@ -25,6 +25,7 @@ import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1JNI;
 
 import java.math.BigInteger;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -183,12 +184,11 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
         return Bytes.EMPTY;
       }
 
-      // TODO SLD how to handle empty public key?
       final Bytes32 hashed = Hash.keccak256(Bytes.wrap(ecres.publicKey().orElseThrow()));
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
       return result;
-    } catch (final IllegalArgumentException e) {
+    } catch (final IllegalArgumentException | NoSuchElementException e) {
       return Bytes.EMPTY;
     }
   }

@@ -52,9 +52,6 @@ public class P256VerifyBenchmark extends BenchmarkExecutor {
     final P256VerifyPrecompiledContract contract =
         new P256VerifyPrecompiledContract(gasCalculatorForFork(fork), signatureAlgorithm);
 
-    // TODO SLD
-    //    warmIterations = warmIterations / testCases.size();
-    //    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {

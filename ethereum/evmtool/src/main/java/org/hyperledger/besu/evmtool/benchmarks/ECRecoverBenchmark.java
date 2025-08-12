@@ -464,9 +464,6 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     final PrecompiledContract contract =
         EvmSpec.evmSpec(evmSpecVersion).getPrecompileContractRegistry().get(Address.ECREC);
 
-    // TODO SLD
-    // warmIterations = warmIterations / testCases.size();
-    // execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
