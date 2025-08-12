@@ -353,11 +353,14 @@ public class CallTracerResultConverter {
   }
 
   private static String getCallValue(final TraceFrame frame, final String opcode) {
-    // STATICCALL and DELEGATECALL don't transfer value
-    if ("STATICCALL".equals(opcode) || "DELEGATECALL".equals(opcode)) {
+    if ("STATICCALL".equals(opcode)) {
       return null; // omit field to match Geth
     }
-    return frame.getValue().toShortHexString();
+    // For DELEGATECALL, value is always 0, but Geth includes the field
+    if ("DELEGATECALL".equals(opcode)) {
+      return "0x0";
+    }
+    return frame.getValue().toShortHexString(); // CALL, CALLCODE, CREATE, CREATE2
   }
 
   private static long calculateGasUsed(
@@ -388,19 +391,39 @@ public class CallTracerResultConverter {
   }
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
+    /*
+     * Stack layouts (TOS on the right):
+     *   CALL/CALLCODE:     gas, to, value, inOffset, inSize, outOffset, outSize
+     *   DELEGATECALL:      gas, to, inOffset, inSize, outOffset, outSize
+     *   STATICCALL:        gas, to, inOffset, inSize, outOffset, outSize
+     *
+     * For all of the above, the callee "to" address is the same stack position: -2 from TOS.
+     * (i.e., stack[stack.length - 2]).
+     *
+     * Note:
+     * - For DELEGATECALL, do NOT use frame.getRecipient() — that is the *current* contract (proxy).
+     *   Geth’s callTracer reports the *target implementation* taken from the stack.
+     * - For CREATE/CREATE2, the "to" is not known at call-site (computed later), so we return null.
+     */
+
     if ("CREATE".equals(opcode) || "CREATE2".equals(opcode)) {
-      // For contract creation, we'd need to compute the new contract address
-      // This is typically available in a later frame when the creation completes
+      // Contract address is determined on successful creation; not available at the call site.
       return null;
-    } else if ("CALL".equals(opcode) || "STATICCALL".equals(opcode) || "CALLCODE".equals(opcode)) {
+    }
+
+    if ("CALL".equals(opcode)
+        || "CALLCODE".equals(opcode)
+        || "STATICCALL".equals(opcode)
+        || "DELEGATECALL".equals(opcode)) {
+
       return frame
           .getStack()
-          .filter(s -> s.length > 1)
-          .map(s -> toAddress(s[s.length - 2]).toHexString())
-          .orElse(null);
-    } else if ("DELEGATECALL".equals(opcode)) {
-      return frame.getRecipient().toHexString();
+          .filter(stack -> stack.length > 1) // need at least two items to read stack[-2]
+          .map(stack -> toAddress(stack[stack.length - 2]).toHexString())
+          .orElse(null); // defensive: missing stack info
     }
+
+    // Unknown/other opcodes: no callee address.
     return null;
   }
 
