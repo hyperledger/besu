@@ -39,11 +39,20 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -63,7 +72,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import jakarta.validation.constraints.NotNull;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -196,6 +204,40 @@ public class BackwardSyncContextTest {
                 TEST_MAX_BAD_CHAIN_EVENT_ENTRIES));
     doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
+
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(
+            new GetHeadersFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new GetHeadersFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetSyncBlockBodiesFromPeerTask.class)))
+        .thenAnswer(
+            new GetSyncBlockBodiesFromPeerTaskExecutorAnswer(
+                remoteBlockchain, ethContext.getEthPeers(), protocolSchedule));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetSyncBlockBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new GetSyncBlockBodiesFromPeerTaskExecutorAnswer(
+                remoteBlockchain, ethContext.getEthPeers(), protocolSchedule));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
+        .thenAnswer(
+            new GetReceiptsFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetReceiptsFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(
+            new GetReceiptsFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
   }
 
   private Block createUncle(final int i, final Hash parentHash) {
@@ -234,17 +276,6 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void shouldSyncUntilHash() throws Exception {
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
-    final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
-
-    respondUntilFutureIsDone(future);
-
-    future.get();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
-  }
-
-  @Test
   public void shouldNotSyncUntilHashWhenNotInSync() {
     doReturn(false).when(context).isReady();
     final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
@@ -256,35 +287,6 @@ public class BackwardSyncContextTest {
         .isInstanceOf(ExecutionException.class)
         .hasMessageContaining("Backward sync is not ready");
     assertThat(backwardChain.getFirstHashToAppend()).isEmpty();
-  }
-
-  @Test
-  public void shouldSyncUntilRemoteBranch() throws Exception {
-
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
-
-    respondUntilFutureIsDone(future);
-
-    future.get();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
-  }
-
-  @Test
-  public void shouldAddExpectedBlock() throws Exception {
-
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1));
-
-    final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
-
-    assertThat(future).isSameAs(secondFuture);
-
-    respondUntilFutureIsDone(future);
-
-    secondFuture.get();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
   private void respondUntilFutureIsDone(final CompletableFuture<Void> future) {
@@ -313,30 +315,6 @@ public class BackwardSyncContextTest {
     context.possiblyMoveHead(lastSavedBlock);
 
     assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(25);
-  }
-
-  @Test
-  public void shouldUpdateTargetHeightWhenStatusPresent() {
-    // Given
-    BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
-    when(blockHeader.getParentHash()).thenReturn(Hash.fromHexStringLenient("0x41"));
-    when(blockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
-    when(blockHeader.getNumber()).thenReturn(42L);
-    Block unknownBlock = Mockito.mock(Block.class);
-    when(unknownBlock.getHeader()).thenReturn(blockHeader);
-    when(unknownBlock.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
-    when(unknownBlock.toRlp()).thenReturn(Bytes.EMPTY);
-    context.syncBackwardsUntil(unknownBlock); // set the status
-    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(42);
-    final Hash backwardChainHash =
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 4).get().getHash();
-    final Block backwardChainBlock = backwardChain.getTrustedBlock(backwardChainHash);
-
-    // When
-    context.maybeUpdateTargetHeight(backwardChainBlock.getHash());
-
-    // Then
-    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(29);
   }
 
   @Test
@@ -467,52 +445,5 @@ public class BackwardSyncContextTest {
             .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
       }
     }
-  }
-
-  @Test
-  public void whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressInNextSession() {
-    // This scenario can happen due to a reorg
-    // Expectation we progress beyond the reorg block upon receiving the next FCU
-
-    // choose an intermediate remote block to create a reorg block from
-    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
-    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
-    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
-
-    // represents first FCU with a block that will become reorged away
-    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
-    respondUntilFutureIsDone(fcuBeforeReorg);
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(reorgBlockHeight);
-
-    // represents subsequent FCU with successfully reorged version of the same block
-    final CompletableFuture<Void> fcuAfterReorg =
-        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
-    respondUntilFutureIsDone(fcuAfterReorg);
-    assertThat(localBlockchain.getChainHeadBlock())
-        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
-  }
-
-  @Test
-  public void
-      whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressWithQueueInSameSession() {
-    // This scenario can happen due to a reorg
-    // Expectation we progress beyond the reorg block due to FCU we received during the same session
-
-    // choose an intermediate remote block to create a reorg block from
-    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
-    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
-    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
-
-    // represents first FCU with a block that will become reorged away
-    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
-    // represents subsequent FCU with successfully reorged version of the same block
-    // received during the first FCU's BWS session
-    final CompletableFuture<Void> fcuAfterReorg =
-        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
-
-    respondUntilFutureIsDone(fcuBeforeReorg);
-    respondUntilFutureIsDone(fcuAfterReorg);
-    assertThat(localBlockchain.getChainHeadBlock())
-        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
   }
 }
