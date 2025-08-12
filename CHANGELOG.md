@@ -11,6 +11,14 @@
 - Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
 
 ### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
 
 ### Additions and Improvements
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
@@ -18,17 +26,21 @@
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
+- Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 
 #### Performance
-- Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959]
+- Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
 - Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
-- Add --attempt-cache-bust to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
+- Add `--attempt-cache-bust` to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
+- Add gas usage metric to eth_call [#9019](https://github.com/hyperledger/besu/pull/9019)
+- Improve P256Verify precompile performance [#9035](https://github.com/hyperledger/besu/pull/9035)
 
 #### Fusaka devnets
-- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946)
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946), [#9015](https://github.com/hyperledger/besu/pull/9015)
 
 ### Bug fixes
-
+- Fix bug with `eth_estimateGas` on QBFT - use zero address when doing simulation against `pending` block [#9031](https://github.com/hyperledger/besu/pull/9031)
+- Fix bug with handling of invalid requests for `engine_newPayloadV4` [#8729](https://github.com/hyperledger/besu/pull/8729)
 
 ## 25.7.0
 ### Breaking Changes

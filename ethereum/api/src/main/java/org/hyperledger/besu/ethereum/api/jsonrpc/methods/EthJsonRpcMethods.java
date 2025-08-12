@@ -73,6 +73,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +94,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ApiConfiguration apiConfiguration;
   private final GenesisConfigOptions genesisConfigOptions;
   private final TransactionSimulator transactionSimulator;
+  private final MetricsSystem metricsSystem;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -105,7 +107,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
       final GenesisConfigOptions genesisConfigOptions,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final MetricsSystem metricsSystem) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -117,6 +120,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.apiConfiguration = apiConfiguration;
     this.genesisConfigOptions = genesisConfigOptions;
     this.transactionSimulator = transactionSimulator;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -135,7 +139,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetBlockReceipts(blockchainQueries, protocolSchedule),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
-        new EthCall(blockchainQueries, transactionSimulator),
+        new EthCall(blockchainQueries, transactionSimulator, metricsSystem),
         new EthFeeHistory(protocolSchedule, blockchainQueries, miningCoordinator, apiConfiguration),
         new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, apiConfiguration.getMaxLogsRange()),
