@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -495,31 +497,35 @@ public class CallTracerResultConverter {
 
   private static Bytes extractCallDataFromMemory(
       final Bytes[] memory, final int offset, final int length) {
-    // Ensure parameters are valid
-    if (offset < 0 || length < 0 || memory == null || memory.length == 0) {
-      return Bytes.EMPTY;
+    if (offset < 0 || length <= 0) return Bytes.EMPTY;
+
+    // Compute word window covering [offset, offset+length)
+    final int startWord = offset >>> 5; // offset / 32
+    final int endWord = (offset + length + 31) >>> 5; // ceil((off+len)/32)
+    final int wordCount = Math.max(0, endWord - startWord);
+    if (wordCount == 0) return Bytes.EMPTY;
+
+    // Build a contiguous buffer of whole words, zero-padding missing words.
+    final MutableBytes acc = MutableBytes.create(wordCount * 32);
+    for (int w = 0; w < wordCount; w++) {
+      final int i = startWord + w;
+      final Bytes word = (memory != null && i < memory.length) ? memory[i] : Bytes32.ZERO;
+      // word is 32 bytes (Bytes32 or zero); copy into place
+      word.copyTo(acc, w * 32);
     }
 
-    // Calculate memory word indices
-    final int startWord = offset / 32;
-    final int endWord = (offset + length + 31) / 32; // Ceiling division
-
-    // Check if within bounds
-    if (startWord >= memory.length) {
-      return Bytes.EMPTY;
+    // Slice to exact [offset % 32, length]
+    final int startByteInWord = offset & 31; // offset % 32
+    if (startByteInWord + length <= acc.size()) {
+      return acc.slice(startByteInWord, length);
     }
 
-    final int boundedEndWord = Math.min(endWord, memory.length);
-
-    // Extract and concatenate memory words
-    Bytes result = Bytes.EMPTY;
-    for (int i = startWord; i < boundedEndWord; i++) {
-      result = Bytes.concatenate(result, memory[i]);
-    }
-
-    // Trim to exact offset and length
-    final int startByteInWord = offset % 32;
-    return result.slice(startByteInWord, Math.min(length, result.size() - startByteInWord));
+    // Belt & suspenders: if somehow short, pad with zeros to requested length.
+    final Bytes slice =
+        acc.slice(startByteInWord, Math.max(0, Math.min(length, acc.size() - startByteInWord)));
+    final int missing = length - slice.size();
+    if (missing <= 0) return slice;
+    return Bytes.concatenate(slice, MutableBytes.create(missing)); // zero padding
   }
 
   private static boolean isCallOp(final String opcode) {
