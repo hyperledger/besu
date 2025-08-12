@@ -91,6 +91,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final ValidationPolicy noneValidationPolicy = () -> HeaderValidationMode.NONE;
     downloadHeaderValidation =
         fastSyncState.isSourceTrusted() ? noneValidationPolicy : detachedValidationPolicy;
+    if (fastSyncState.isSourceTrusted()) {
+      LOG.trace("Pivot block is from trusted source, skipping header validation");
+    }
   }
 
   @Override
