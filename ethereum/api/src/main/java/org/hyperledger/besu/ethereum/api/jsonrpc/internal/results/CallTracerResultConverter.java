@@ -208,33 +208,66 @@ public class CallTracerResultConverter {
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
 
-    // Gas used: prefer explicit precompile cost; fallback to opcode cost if needed
+    // 1) gasUsed: take the explicit precompile cost; fall back to opcode cost.
     if (entryFrame.getPrecompiledGasCost().isPresent()) {
       childBuilder.gasUsed(entryFrame.getPrecompiledGasCost().getAsLong());
     } else if (entryFrame.getGasCost().isPresent()) {
       childBuilder.gasUsed(entryFrame.getGasCost().getAsLong());
     }
 
-    // Output from caller memory AFTER the call.
-    // Stack at callsite (TOS on right):
-    //   ... , to(-5), gas(-6) ... ; inOffset(-4), inSize(-3), outOffset(-2), outSize(-1)
     entryFrame
         .getStack()
         .ifPresent(
             stack -> {
-              if (stack.length >= 4 && nextTrace != null && nextTrace.getMemory().isPresent()) {
-                final int inSize = bytesToInt(stack[stack.length - 3]);
-                final int outOffset = bytesToInt(stack[stack.length - 2]);
-                final int outSize = bytesToInt(stack[stack.length - 1]);
+              // For CALL/CALLCODE there are 7 stack args; for STATICCALL/DELEGATECALL there are 6.
+              final String op = childBuilder.getType();
+              final boolean isCallOrCallCode = "CALL".equals(op) || "CALLCODE".equals(op);
 
-                final int effectiveLen = Math.max(0, Math.min(inSize, outSize));
+              // gas argument position from TOS
+              final int gasIdx = isCallOrCallCode ? stack.length - 7 : stack.length - 6;
+
+              // Common positions for all call-like ops (from TOS):
+              //   inOffset = -4, inSize = -3, outOffset = -2, outSize = -1
+              final int inOffIdx = stack.length - 4;
+              final int inLenIdx = stack.length - 3;
+              final int outOffIdx = stack.length - 2;
+              final int outLenIdx = stack.length - 1;
+
+              // 2) gas provided: from the stack arg (not nextTrace)
+              if (gasIdx >= 0 && gasIdx < stack.length) {
+                try {
+                  final long callGas = stack[gasIdx].toBigInteger().longValue();
+                  childBuilder.gas(callGas);
+                } catch (Exception ignore) {
+                  // leave the existing gas value if parsing fails
+                }
+              }
+
+              // 3) input: slice from PRE-call memory using inOffset/inSize
+              if (inOffIdx >= 0 && inLenIdx >= 0 && entryFrame.getMemory().isPresent()) {
+                final int inOffset = bytesToInt(stack[inOffIdx]);
+                final int inSize = bytesToInt(stack[inLenIdx]);
+                final Bytes in =
+                    extractCallDataFromMemory(entryFrame.getMemory().get(), inOffset, inSize);
+                childBuilder.input(in.toHexString()); // even if empty -> "0x"
+              }
+
+              // 4) output: slice from POST-call memory, clamped to min(inSize, outSize)
+              if (outOffIdx >= 0
+                  && outLenIdx >= 0
+                  && nextTrace != null
+                  && nextTrace.getMemory().isPresent()) {
+                final int inSize = bytesToInt(stack[inLenIdx]);
+                final int outOffset = bytesToInt(stack[outOffIdx]);
+                final int outSize = bytesToInt(stack[outLenIdx]);
+                final int effLen = Math.max(0, Math.min(inSize, outSize));
                 final Bytes out =
-                    extractCallDataFromMemory(nextTrace.getMemory().get(), outOffset, effectiveLen);
-                childBuilder.output(out.isEmpty() ? Bytes.EMPTY.toHexString() : out.toHexString());
+                    extractCallDataFromMemory(nextTrace.getMemory().get(), outOffset, effLen);
+                childBuilder.output(out.toHexString());
               }
             });
 
-    // Attach immediately
+    // 5) Attach immediately to the parent; no depth+1 frame will arrive.
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
