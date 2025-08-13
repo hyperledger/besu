@@ -48,4 +48,9 @@ public class ConstantFieldValidationRule<T> implements DetachedBlockHeaderValida
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "ConstantFieldValidation{" + fieldName + "=" + expectedValue + "}";
+  }
 }
