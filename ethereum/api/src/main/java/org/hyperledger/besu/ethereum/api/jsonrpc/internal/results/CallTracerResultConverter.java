@@ -56,6 +56,10 @@ import org.slf4j.LoggerFactory;
 public class CallTracerResultConverter {
   private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
+  static {
+    LOG.trace("CallTracerResultConverter TRACE canary — if you see me, the logger is wired.");
+  }
+
   /**
    * Converts a transaction trace to a call tracer result.
    *
