@@ -41,7 +41,7 @@ public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderVali
 
   @Override
   public String getName() {
-    return "ExtraDataMaxLengthValidationRule{" + "maxExtraDataBytes=" + maxExtraDataBytes + '}';
+    return "ExtraDataMaxLengthValidation{" + "maxExtraDataBytes=" + maxExtraDataBytes + '}';
   }
 
   private boolean validateExtraData(final Bytes extraData) {

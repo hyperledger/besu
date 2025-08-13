@@ -60,6 +60,6 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
 
   @Override
   public String getName() {
-    return "BftCoinbaseValidationRule";
+    return "BftCoinbaseValidation";
   }
 }

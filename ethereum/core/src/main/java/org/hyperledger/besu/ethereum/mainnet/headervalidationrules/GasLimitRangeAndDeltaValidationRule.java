@@ -89,6 +89,6 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
   @Override
   public String getName() {
-    return "GasLimitRangeAndDeltaValidationRule";
+    return "GasLimitRangeAndDeltaValidation";
   }
 }

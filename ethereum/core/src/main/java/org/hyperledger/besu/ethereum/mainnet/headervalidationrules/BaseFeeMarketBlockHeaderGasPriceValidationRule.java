@@ -77,6 +77,6 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
 
   @Override
   public String getName() {
-    return "BaseFeeMarketBlockHeaderGasPriceValidationRule";
+    return "BaseFeeMarketBlockHeaderGasPriceValidation";
   }
 }

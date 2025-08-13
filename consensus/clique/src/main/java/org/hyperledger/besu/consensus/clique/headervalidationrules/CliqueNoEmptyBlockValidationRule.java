@@ -50,6 +50,6 @@ public class CliqueNoEmptyBlockValidationRule implements DetachedBlockHeaderVali
 
   @Override
   public String getName() {
-    return "CliqueNoEmptyBlockValidationRule";
+    return "CliqueNoEmptyBlockValidation";
   }
 }

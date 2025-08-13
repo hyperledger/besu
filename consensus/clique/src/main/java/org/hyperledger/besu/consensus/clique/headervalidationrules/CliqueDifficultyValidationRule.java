@@ -62,6 +62,6 @@ public class CliqueDifficultyValidationRule implements AttachedBlockHeaderValida
 
   @Override
   public String getName() {
-    return "CliqueDifficultyValidationRule";
+    return "CliqueDifficultyValidation";
   }
 }

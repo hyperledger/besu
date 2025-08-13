@@ -52,6 +52,6 @@ public class NoNonceRule extends MergeConsensusRule {
 
   @Override
   public String getName() {
-    return "MergeNoNonceRule";
+    return "MergeNoNonce";
   }
 }

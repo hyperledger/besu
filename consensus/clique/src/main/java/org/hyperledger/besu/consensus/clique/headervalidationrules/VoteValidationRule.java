@@ -48,6 +48,6 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
 
   @Override
   public String getName() {
-    return "CliqueVoteValidationRule";
+    return "CliqueVoteValidation";
   }
 }

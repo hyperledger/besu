@@ -47,6 +47,6 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
 
   @Override
   public String getName() {
-    return "BftVanityDataValidationRule";
+    return "BftVanityDataValidation";
   }
 }

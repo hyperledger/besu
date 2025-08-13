@@ -28,6 +28,6 @@ public class NoBlobRule implements AttachedBlockHeaderValidationRule {
 
   @Override
   public String getName() {
-    return "NoBlobRule";
+    return "NoBlob";
   }
 }

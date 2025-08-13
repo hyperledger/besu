@@ -36,6 +36,6 @@ public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule
 
   @Override
   public String getName() {
-    return "ConstantOmmersHashRule";
+    return "ConstantOmmersHash";
   }
 }

@@ -28,6 +28,6 @@ public class NoNonceRule implements AttachedBlockHeaderValidationRule {
 
   @Override
   public String getName() {
-    return "NoNonceRule";
+    return "NoNonce";
   }
 }

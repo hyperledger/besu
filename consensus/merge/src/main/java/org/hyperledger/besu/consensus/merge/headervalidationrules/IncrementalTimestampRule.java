@@ -54,6 +54,6 @@ public class IncrementalTimestampRule extends MergeConsensusRule {
 
   @Override
   public String getName() {
-    return "MergeIncrementalTimestampRule";
+    return "MergeIncrementalTimestamp";
   }
 }
