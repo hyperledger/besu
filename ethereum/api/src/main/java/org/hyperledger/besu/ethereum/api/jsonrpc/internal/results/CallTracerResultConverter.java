@@ -91,8 +91,6 @@ public class CallTracerResultConverter {
     // Initialize the root call
     final CallTracerResult.Builder rootBuilder = initializeRootBuilder(tx);
 
-    // Initialize depth-based tracking
-    int maxDepth = 0;
     int currentDepth = 0;
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
@@ -113,9 +111,6 @@ public class CallTracerResultConverter {
             (nextTrace == null ? "-" : nextTrace.getDepth()));
       }
 
-      // Update max depth encountered
-      maxDepth = Math.max(maxDepth, frameDepth);
-
       // Process call operations that create a new context (or a precompile effect)
       if (isCallOp(opcode) || isCreateOp(opcode)) {
         currentDepth = frameDepth;
@@ -128,35 +123,47 @@ public class CallTracerResultConverter {
             createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
 
         if (LOG.isTraceEnabled()) {
+          final Bytes fIn = frame.getInputData();
           LOG.trace(
               " child draft: type={} from={} to={} gas(provided)={} input[{}]={}",
               childBuilder.getType(),
               childBuilder.getFrom(),
               childBuilder.getTo(),
-              (childBuilder.getGas() == null
-                  ? "null"
-                  : Long.toHexString(childBuilder.getGas().longValue())),
-              (frame.getInputData() == null ? 0 : frame.getInputData().size()),
-              frame.getInputData().toShortHexString());
+              (childBuilder.getGas() == null ? "null" : hexN(childBuilder.getGas().longValue())),
+              (fIn == null ? 0 : fIn.size()),
+              (fIn == null ? "null" : fIn.toShortHexString()));
+        }
+
+        // Derive 'to' if missing and we have a stack
+        String toForCheck = childBuilder.getTo();
+        if (toForCheck == null) {
+          frame
+              .getStack()
+              .ifPresent(
+                  stack -> {
+                    if (stack.length > 1) {
+                      String derived = toAddress(stack[stack.length - 2]).toHexString();
+                      childBuilder.to(derived);
+                    }
+                  });
+          toForCheck = childBuilder.getTo();
         }
 
         // Robust precompile detection – show which signal fired
-        final boolean byTo =
-            (childBuilder.getTo() != null && isPrecompileAddress(childBuilder.getTo()));
+        final boolean byTo = toForCheck != null && isPrecompileAddress(toForCheck);
         final boolean byCost = frame.getPrecompiledGasCost().isPresent();
         if (LOG.isTraceEnabled() && isCallOp(opcode)) {
           LOG.trace(
               " precompile? byTo={} byCost={} to={} precompileGasCost={}",
               byTo,
               byCost,
-              childBuilder.getTo(),
-              frame.getPrecompiledGasCost().isPresent()
-                  ? frame.getPrecompiledGasCost().getAsLong()
-                  : "-");
+              toForCheck,
+              byCost ? frame.getPrecompiledGasCost().getAsLong() : "-");
         }
+
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
-        if (isCallOp(opcode) && isPrecompileAddress(childBuilder.getTo())) {
-          LOG.trace("Precompile fast-path for to={}", childBuilder.getTo());
+        if (isCallOp(opcode) && (byTo || byCost)) {
+          LOG.trace("Precompile fast-path for to={}", toForCheck);
           finalizePrecompileChild(frame, nextTrace, childBuilder, parentCallInfo);
           // Do not store this child in depth tracking; it's already attached
           continue;
@@ -165,6 +172,12 @@ public class CallTracerResultConverter {
         // If we did not enter a callee (no depth+1) and it's not a precompile, skip creating a
         // phantom child.
         if (nextTrace == null || nextTrace.getDepth() <= frameDepth) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(
+                " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
+                (nextTrace == null ? null : nextTrace.getDepth()),
+                frameDepth);
+          }
           // Mirrors geth callTracer behavior: do not emit children for non-executed calls.
           continue;
         }
@@ -175,8 +188,6 @@ public class CallTracerResultConverter {
         // Normal call path: track child until its RETURN/REVERT/HALT
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
-        // Keep maxDepth correct even if a callee frame never appears
-        maxDepth = Math.max(maxDepth, currentDepth + 1);
       }
       // Process return operations that exit a context
       else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
@@ -203,6 +214,13 @@ public class CallTracerResultConverter {
           // Calculate gas used
           final long gasUsed = calculateGasUsed(childCallInfo, entryFrame, frame);
           childCallInfo.builder.gasUsed(gasUsed);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(
+                " gasUsed={} (provided={} - exitGasRem={})",
+                gasUsed,
+                (childCallInfo.builder.getGas() == null ? "null" : childCallInfo.builder.getGas()),
+                frame.getGasRemaining());
+          }
 
           // Find parent and add this call to parent's calls
           final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth - 1);
@@ -387,6 +405,18 @@ public class CallTracerResultConverter {
     // precompiles)
     final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
 
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "createCallBuilder: op={} from={} to={} depth={} nextDepth={} gas(prov)={} stackPresent={}",
+          opcode,
+          fromAddress,
+          toAddress,
+          frame.getDepth(),
+          (nextTrace == null ? "-" : nextTrace.getDepth()),
+          hexN(gasProvided),
+          frame.getStack().isPresent());
+    }
+
     return CallTracerResult.builder()
         .type(opcode)
         .from(fromAddress)
@@ -422,6 +452,18 @@ public class CallTracerResultConverter {
 
   private static long calculateGasUsed(
       final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "calculateGasUsed: exitDepth={} entryGasRem={} exitGasRem={} precompileCost={} gasCost={}",
+          exitFrame.getDepth(),
+          entryFrame.getGasRemaining(),
+          exitFrame.getGasRemaining(),
+          entryFrame.getPrecompiledGasCost().isPresent()
+              ? entryFrame.getPrecompiledGasCost().getAsLong()
+              : "-",
+          entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
+    }
+
     // For root transaction
     if (exitFrame.getDepth() == 0) {
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
@@ -508,11 +550,25 @@ public class CallTracerResultConverter {
   private static Bytes resolveInputData(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "resolveInputData: op={} depth={} hasNextCalleeFrame={}",
+          opcode,
+          frame.getDepth(),
+          (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
+    }
+
     // Prefer the callee frame's inputData when the next frame is the callee at depth+1.
     if (nextTrace != null
         && nextTrace.getDepth() == frame.getDepth() + 1
         && nextTrace.getInputData() != null
         && !nextTrace.getInputData().isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "  using callee-frame input (authoritative) [{}]={}",
+            nextTrace.getInputData().size(),
+            shortHex(nextTrace.getInputData(), 16));
+      }
       return nextTrace.getInputData();
     }
 
@@ -528,6 +584,13 @@ public class CallTracerResultConverter {
                 }
                 final int inOffset = bytesToInt(stack[stack.length - 4]);
                 final int inSize = bytesToInt(stack[stack.length - 3]);
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace(
+                      "  fallback memory slice: inOffset={} inSize={} memPresent={}",
+                      inOffset,
+                      inSize,
+                      frame.getMemory().isPresent());
+                }
                 return frame
                     .getMemory()
                     .map(memory -> extractCallDataFromMemory(memory, inOffset, inSize))
@@ -548,6 +611,13 @@ public class CallTracerResultConverter {
                   }
                   final int offset = bytesToInt(stack[stack.length - 2]);
                   final int length = bytesToInt(stack[stack.length - 1]);
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace(
+                        "  CREATE-init slice: offset={} length={} memPresent={}",
+                        offset,
+                        length,
+                        frame.getMemory().isPresent());
+                  }
                   return frame
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
@@ -559,6 +629,13 @@ public class CallTracerResultConverter {
                   }
                   final int offset = bytesToInt(stack[stack.length - 3]);
                   final int length = bytesToInt(stack[stack.length - 2]);
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace(
+                        "  CREATE2-init slice: offset={} length={} memPresent={}",
+                        offset,
+                        length,
+                        frame.getMemory().isPresent());
+                  }
                   return frame
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
@@ -574,6 +651,15 @@ public class CallTracerResultConverter {
 
   private static Bytes extractCallDataFromMemory(
       final Bytes[] memory, final int offset, final int length) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "memSlice: offset={} length={} memWords={} startWord={} endWord={}",
+          offset,
+          length,
+          (memory == null ? -1 : memory.length),
+          (offset >>> 5),
+          ((offset + length + 31) >>> 5));
+    }
     if (offset < 0 || length <= 0) return Bytes.EMPTY;
 
     // Compute word window covering [offset, offset+length)
@@ -656,8 +742,22 @@ public class CallTracerResultConverter {
   private static long computeGasProvided(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
+    final boolean hasCalleeStart =
+        (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1);
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "computeGasProvided: op={} depth={} nextDepth={} -> {}",
+          opcode,
+          frame.getDepth(),
+          (nextTrace == null ? "-" : nextTrace.getDepth()),
+          (hasCalleeStart
+              ? "using callee start gas=" + hexN(Math.max(0L, nextTrace.getGasRemaining()))
+              : "using stack gas (precompile/non-entered)"));
+    }
+
     // If we actually enter the callee (depth+1), that frame's starting gas is authoritative.
-    if (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1) {
+    if (hasCalleeStart) {
       final long g = nextTrace.getGasRemaining();
       return (g >= 0) ? g : 0L;
     }
@@ -683,15 +783,35 @@ public class CallTracerResultConverter {
               final int required = callOrCallCode ? 7 : 6;
               if (stack.length < required) return null;
 
-              // gas is the leftmost of the N args, i.e. at index length - required
+              // gas is the leftmost of the N args
               final int gasIdx = stack.length - required;
 
               try {
                 final java.math.BigInteger bi = stack[gasIdx].toUnsignedBigInteger();
+                final String biLog;
+                if (bi.signum() <= 0) {
+                  biLog = "0x0";
+                } else if (bi.compareTo(java.math.BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+                  biLog = "clamped";
+                } else {
+                  biLog = "ok";
+                }
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace(
+                      "gasFromStack: op={} required={} stackLen={} gasIdx={} -> {}",
+                      opcode,
+                      required,
+                      stack.length,
+                      gasIdx,
+                      biLog);
+                }
                 if (bi.signum() <= 0) return 0L;
                 final java.math.BigInteger cap = java.math.BigInteger.valueOf(Long.MAX_VALUE);
                 return (bi.compareTo(cap) > 0) ? Long.MAX_VALUE : bi.longValue();
               } catch (Exception ignore) {
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace("gasFromStack: op={} failed to read gas from stack", opcode);
+                }
                 return null;
               }
             })
@@ -722,6 +842,11 @@ public class CallTracerResultConverter {
   /**
    * Finalize a precompile "child" call: set gas/gasUsed, compute input/output from memory, and
    * attach immediately to the parent (no depth+1 callee frame will arrive).
+   *
+   * <p>Precompiles execute inline; there is no callee frame. gas: from stack arg (if not already
+   * set). gasUsed: entryFrame.getPrecompiledGasCost() (fallback: opcode gasCost). input: pre-call
+   * memory slice (inOffset,inSize). output: post-call memory slice (identity= min(inSize,outSize);
+   * fixed-size=min(expected,outSize); modexp=header len).
    */
   private static void finalizePrecompileChild(
       final TraceFrame entryFrame,
@@ -729,24 +854,41 @@ public class CallTracerResultConverter {
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
 
-    // Ensure 'gas' (provided) present for the child; for precompiles read from stack if needed.
-    if (childBuilder.getGas() == null || childBuilder.getGas().longValue() == 0L) {
-      final Long g = gasFromStack(entryFrame, childBuilder.getType());
-      if (g != null && g > 0L) childBuilder.gas(g);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}",
+          childBuilder.getTo(),
+          childBuilder.getType(),
+          entryFrame.getPrecompiledGasCost().isPresent()
+              ? entryFrame.getPrecompiledGasCost().getAsLong()
+              : "-",
+          entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
     }
 
-    // gasUsed: use explicit precompile cost; fallback to opcode cost
-    if (entryFrame.getPrecompiledGasCost().isPresent()) {
-      childBuilder.gasUsed(entryFrame.getPrecompiledGasCost().getAsLong());
-    } else if (entryFrame.getGasCost().isPresent()) {
-      childBuilder.gasUsed(entryFrame.getGasCost().getAsLong());
+    // gas (provided): for precompiles always take it from the stack argument
+    final Long gasFromArg = gasFromStack(entryFrame, childBuilder.getType());
+    if (gasFromArg != null && gasFromArg > 0L) {
+      childBuilder.gas(gasFromArg);
+    } else {
+      childBuilder.gas(childBuilder.getGas() == null ? 0L : childBuilder.getGas().longValue());
+    }
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "  precompile gas(provided) from stack = {}",
+          gasFromArg == null ? "null" : hexN(gasFromArg));
     }
 
-    // Parse precompile id from the child "to" address (last byte).
+    // gasUsed: prefer explicit precompile cost; fallback to opcode cost
+    entryFrame
+        .getPrecompiledGasCost()
+        .ifPresentOrElse(
+            childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
+
+    // Parse precompile id from the child "to" address (last byte)
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
 
     // Stack at callsite (TOS on right):
-    //   inOffset = -4, inSize = -3, outOffset = -2, outSize = -1
+    //   ... inOffset = -4, inSize = -3, outOffset = -2, outSize = -1
     entryFrame
         .getStack()
         .ifPresent(
@@ -758,8 +900,16 @@ public class CallTracerResultConverter {
               final int outOffset = bytesToInt(stack[stack.length - 2]);
               final int outSize = bytesToInt(stack[stack.length - 1]);
 
-              // INPUT: authoritative pre-call slice (precompiles execute inline, so entry frame
-              // memory is before the call)
+              if (LOG.isTraceEnabled()) {
+                LOG.trace(
+                    "  IO coords: inOffset={} inSize={} outOffset={} outSize={}",
+                    inOffset,
+                    inSize,
+                    outOffset,
+                    outSize);
+              }
+
+              // INPUT: authoritative pre-call slice
               entryFrame
                   .getMemory()
                   .ifPresent(
@@ -768,12 +918,7 @@ public class CallTracerResultConverter {
                         childBuilder.input(in.toHexString());
                       });
 
-              // OUTPUT: authoritative post-call slice.
-              // For identity (0x04): len = min(inSize, outSize)
-              // For fixed-size precompiles (e.g., ecrecover/sha256/ripemd160/pairing/blake2f/kzg):
-              // len = min(expected, outSize)
-              // For modexp (0x05): expected = modulusLen from header; len = min(expected, outSize)
-              // Fallback: conservative min(outSize, inSize)
+              // OUTPUT: authoritative post-call slice
               if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
                 final Bytes[] preMem = entryFrame.getMemory().orElse(null);
@@ -785,12 +930,44 @@ public class CallTracerResultConverter {
                         ? Math.max(0, Math.min(expected, outSize))
                         : Math.max(0, Math.min(inSize, outSize)); // conservative fallback
 
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace(
+                      "  precompile output len: expected={} outSize={} chosen={} (id=0x{})",
+                      expected,
+                      outSize,
+                      len,
+                      Integer.toHexString(precompileId));
+                }
+
                 final Bytes out = extractCallDataFromMemory(postMem, outOffset, len);
                 childBuilder.output(out.toHexString());
+
+                if (LOG.isTraceEnabled()) {
+                  final String inHex =
+                      childBuilder.build().getInput() == null
+                          ? "null"
+                          : shortHex(Bytes.fromHexString(childBuilder.build().getInput()), 16);
+                  final String outHex =
+                      childBuilder.build().getOutput() == null
+                          ? "null"
+                          : shortHex(Bytes.fromHexString(childBuilder.build().getOutput()), 16);
+                  LOG.trace(
+                      "  input  [{}]={}",
+                      childBuilder.build().getInput() == null
+                          ? 0
+                          : (childBuilder.build().getInput().length() - 2) / 2,
+                      inHex);
+                  LOG.trace(
+                      "  output [{}]={}",
+                      childBuilder.build().getOutput() == null
+                          ? 0
+                          : (childBuilder.build().getOutput().length() - 2) / 2,
+                      outHex);
+                }
               }
             });
 
-    // Attach immediately — there will be no callee frame at depth+1 for precompiles.
+    // Attach immediately — precompiles have no callee frame to wait for
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
@@ -809,43 +986,44 @@ public class CallTracerResultConverter {
   }
 
   /**
-   * Expected returndata size for a given precompile. - Identity (0x04): inSize - ModExp (0x05):
-   * modulusLen from header (third 32-byte length field at inOffset+64) - Fixed-size returns: 32 or
-   * 64 depending on precompile Returns -1 if unknown (use a conservative fallback).
+   * Expected returndata size by precompile. -1 if unknown. - Identity (0x04): inSize - ModExp
+   * (0x05): modulusLen from header (third 32-byte length field at inOffset+64) - Fixed-size
+   * returns: 32 bytes: ecrecover(0x01), sha256(0x02), ripemd160(0x03 padded), pairing(0x08),
+   * kzg(0x0a) 64 bytes: bn128 add(0x06), bn128 mul(0x07), blake2f(0x09)
    */
   private static int expectedReturndataLenForPrecompile(
       final int precompileId, final Bytes[] preCallMemory, final int inOffset, final int inSize) {
 
     switch (precompileId) {
+      // 32-byte returns
       case 0x01: // ecrecover
       case 0x02: // sha256
-      case 0x03: // ripemd160 (20 bytes but padded to 32 in returndata)
+      case 0x03: // ripemd160 (padded to 32)
       case 0x08: // bn128 pairing
       case 0x0a: // kzg point evaluation
         return 32;
 
+      // 64-byte returns
       case 0x06: // bn128 add
       case 0x07: // bn128 mul
       case 0x09: // blake2f compression
         return 64;
 
-      case 0x04: // identity
+      // identity: echo input
+      case 0x04:
         return Math.max(0, inSize);
 
+      // modexp: output len = modulusLen (third 32-byte length field)
       case 0x05:
-        { // modexp: output length = modulusLen (third 32-byte length field)
-          if (preCallMemory == null) return -1;
-          // Need at least 96 bytes header; also guard against negative offset.
-          if (inSize < 96 || inOffset < 0) return -1;
-          try {
-            final Bytes aLenWord = extractCallDataFromMemory(preCallMemory, inOffset + 64, 32);
-            final java.math.BigInteger bi = aLenWord.toUnsignedBigInteger();
-            if (bi.signum() < 0) return 0;
-            final java.math.BigInteger cap = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
-            return (bi.compareTo(cap) > 0) ? Integer.MAX_VALUE : bi.intValue();
-          } catch (Exception ignored) {
-            return -1;
-          }
+        if (preCallMemory == null || inSize < 96 || inOffset < 0) return -1;
+        try {
+          final Bytes aLenWord = extractCallDataFromMemory(preCallMemory, inOffset + 64, 32);
+          final java.math.BigInteger bi = aLenWord.toUnsignedBigInteger();
+          if (bi.signum() < 0) return 0;
+          final java.math.BigInteger cap = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
+          return (bi.compareTo(cap) > 0) ? Integer.MAX_VALUE : bi.intValue();
+        } catch (Exception ignored) {
+          return -1;
         }
 
       default:
@@ -862,5 +1040,18 @@ public class CallTracerResultConverter {
     } catch (final Exception e) {
       return 0;
     }
+  }
+
+  // ---------- small helpers for logging ----------
+
+  private static String shortHex(final Bytes b, final int maxBytes) {
+    if (b == null) return "null";
+    final int n = Math.min(b.size(), Math.max(0, maxBytes));
+    final String hex = b.slice(0, n).toHexString();
+    return b.size() > n ? hex + "...(" + b.size() + "B)" : hex;
+  }
+
+  private static String hexN(final long v) {
+    return "0x" + Long.toHexString(v);
   }
 }
