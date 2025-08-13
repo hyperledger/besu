@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+
 import java.util.List;
+import java.util.Optional;
 
 /** This class represents the result of simulating the processing of a block. */
 public class PluginBlockSimulationResult {
@@ -22,6 +25,7 @@ public class PluginBlockSimulationResult {
   final BlockBody blockBody;
   final List<? extends TransactionReceipt> receipts;
   final List<TransactionSimulationResult> transactionSimulationResults;
+  final Optional<TrieLog> trieLog;
 
   /**
    * Constructs a new BlockSimulationResult instance.
@@ -40,6 +44,29 @@ public class PluginBlockSimulationResult {
     this.blockBody = blockBody;
     this.receipts = receipts;
     this.transactionSimulationResults = transactionSimulationResults;
+    this.trieLog = Optional.empty();
+  }
+
+  /**
+   * Constructs a new BlockSimulationResult instance with trielog.
+   *
+   * @param blockHeader the block header
+   * @param blockBody the block body
+   * @param receipts the list of transaction receipts
+   * @param transactionSimulationResults the list of transaction simulation results
+   * @param trieLog the optional trielog
+   */
+  public PluginBlockSimulationResult(
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<? extends TransactionReceipt> receipts,
+      final List<TransactionSimulationResult> transactionSimulationResults,
+      final Optional<TrieLog> trieLog) {
+    this.blockHeader = blockHeader;
+    this.blockBody = blockBody;
+    this.receipts = receipts;
+    this.transactionSimulationResults = transactionSimulationResults;
+    this.trieLog = trieLog;
   }
 
   /**
@@ -76,5 +103,14 @@ public class PluginBlockSimulationResult {
    */
   public List<TransactionSimulationResult> getTransactionSimulationResults() {
     return transactionSimulationResults;
+  }
+
+  /**
+   * Gets the trielog.
+   *
+   * @return the trielog
+   */
+  public Optional<TrieLog> getTrieLog() {
+    return trieLog;
   }
 }

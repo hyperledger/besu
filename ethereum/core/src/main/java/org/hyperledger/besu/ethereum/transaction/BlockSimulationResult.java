@@ -19,31 +19,37 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class BlockSimulationResult {
   final Block block;
   final BlockStateCallSimulationResult blockStateCallSimulationResult;
-  final Optional<Bytes> serializedTrieLog;
+  final Optional<TrieLog> trieLog;
+  final Optional<Function<TrieLog, Bytes>> trieLogSerializer;
 
   public BlockSimulationResult(
       final Block block, final BlockStateCallSimulationResult blockStateCallSimulationResult) {
     this.block = block;
     this.blockStateCallSimulationResult = blockStateCallSimulationResult;
-    this.serializedTrieLog = Optional.empty();
+    this.trieLog = Optional.empty();
+    this.trieLogSerializer = Optional.empty();
   }
 
   public BlockSimulationResult(
       final Block block,
       final BlockStateCallSimulationResult blockStateCallSimulationResult,
-      final Bytes serializedTrieLog) {
+      final TrieLog trieLog,
+      final Function<TrieLog, Bytes> trieLogSerializer) {
     this.block = block;
     this.blockStateCallSimulationResult = blockStateCallSimulationResult;
-    this.serializedTrieLog = Optional.ofNullable(serializedTrieLog);
+    this.trieLog = Optional.ofNullable(trieLog);
+    this.trieLogSerializer = Optional.ofNullable(trieLogSerializer);
   }
 
   public BlockHeader getBlockHeader() {
@@ -85,7 +91,11 @@ public class BlockSimulationResult {
         .toList();
   }
 
+  public Optional<TrieLog> getTrieLog() {
+    return trieLog;
+  }
+
   public Optional<Bytes> getSerializedTrieLog() {
-    return serializedTrieLog;
+    return trieLogSerializer.flatMap(trieLog::map);
   }
 }
