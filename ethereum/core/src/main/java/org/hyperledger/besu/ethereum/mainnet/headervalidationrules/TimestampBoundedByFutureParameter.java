@@ -41,6 +41,14 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
     return validateTimestamp(header.getTimestamp());
   }
 
+  @Override
+  public String toString() {
+    return "TimestampBoundedByFutureParameter{"
+        + "acceptableClockDriftSeconds="
+        + acceptableClockDriftSeconds
+        + '}';
+  }
+
   private boolean validateTimestamp(final long timestamp) {
     return validateHeaderNotAheadOfCurrentSystemTime(timestamp);
   }

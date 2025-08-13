@@ -44,4 +44,9 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "BftVanityDataValidation";
+  }
 }
