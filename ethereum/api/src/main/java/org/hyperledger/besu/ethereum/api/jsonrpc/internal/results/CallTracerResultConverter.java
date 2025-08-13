@@ -57,7 +57,7 @@ public class CallTracerResultConverter {
   private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
   static {
-    LOG.trace("CallTracerResultConverter TRACE canary — if you see me, the logger is wired.");
+    LOG.warn("*** CallTracerResultConverter WARN canary — if you see me, the logger is wired.");
   }
 
   /**
