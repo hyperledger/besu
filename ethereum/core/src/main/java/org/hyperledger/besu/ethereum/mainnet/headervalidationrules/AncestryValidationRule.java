@@ -50,6 +50,6 @@ public class AncestryValidationRule implements DetachedBlockHeaderValidationRule
 
   @Override
   public String getName() {
-    return "AncestryValidationRule";
+    return "AncestryValidation";
   }
 }
