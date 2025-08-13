@@ -126,11 +126,6 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     return true;
   }
 
-  @Override
-  public String getName() {
-    return "IbftLegacyExtraData";
-  }
-
   private boolean validateCommitters(
       final Collection<Address> committers,
       final Collection<Address> storedValidators,
@@ -150,5 +145,10 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     }
 
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "IbftLegacyExtraData";
   }
 }

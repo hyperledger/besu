@@ -31,7 +31,7 @@ public class IncrementalTimestampRule implements AttachedBlockHeaderValidationRu
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "IncrementalTimestamp";
   }
 }

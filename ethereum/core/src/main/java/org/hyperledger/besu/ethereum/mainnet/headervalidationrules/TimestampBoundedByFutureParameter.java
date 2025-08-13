@@ -42,7 +42,7 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "TimestampBoundedByFutureParameter{"
         + "acceptableClockDriftSeconds="
         + acceptableClockDriftSeconds

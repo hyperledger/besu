@@ -50,7 +50,7 @@ public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidat
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "CliqueSignerRateLimitValidation";
   }
 }

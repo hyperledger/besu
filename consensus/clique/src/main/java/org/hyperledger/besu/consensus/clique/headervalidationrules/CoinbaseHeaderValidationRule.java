@@ -53,7 +53,7 @@ public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidati
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "CliqueCoinbaseHeaderValidation";
   }
 }

@@ -83,7 +83,7 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "BftValidatorsValidation";
   }
 }

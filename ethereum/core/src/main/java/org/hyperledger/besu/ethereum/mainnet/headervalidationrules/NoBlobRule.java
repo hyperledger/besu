@@ -27,7 +27,7 @@ public class NoBlobRule implements AttachedBlockHeaderValidationRule {
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "NoBlob";
   }
 }

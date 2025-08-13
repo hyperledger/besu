@@ -49,7 +49,7 @@ public class AncestryValidationRule implements DetachedBlockHeaderValidationRule
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "AncestryValidation";
   }
 }

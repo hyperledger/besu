@@ -38,7 +38,7 @@ public class AttachedComposedFromDetachedRule implements AttachedBlockHeaderVali
   }
 
   @Override
-  public String getName() {
-    return detachedRule.getName();
+  public String toString() {
+    return detachedRule.toString();
   }
 }

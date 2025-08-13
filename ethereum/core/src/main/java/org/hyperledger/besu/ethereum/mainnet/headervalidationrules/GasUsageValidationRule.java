@@ -43,7 +43,7 @@ public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "GasUsageValidation";
   }
 }

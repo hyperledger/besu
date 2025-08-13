@@ -90,7 +90,7 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "BftCommitSealsValidation";
   }
 }

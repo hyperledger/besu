@@ -61,7 +61,7 @@ public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "MergeConstantOmmersHash";
   }
 }

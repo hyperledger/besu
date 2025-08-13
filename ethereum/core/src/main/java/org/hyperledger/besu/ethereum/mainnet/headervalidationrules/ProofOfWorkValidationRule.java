@@ -139,7 +139,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "ProofOfWork";
   }
 

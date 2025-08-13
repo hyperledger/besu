@@ -39,7 +39,7 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "TimestampMoreRecentThanParent{"
         + "minimumSecondsSinceParent="
         + minimumSecondsSinceParent

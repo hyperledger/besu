@@ -115,7 +115,7 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "CliqueExtraDataValidation";
   }
 }

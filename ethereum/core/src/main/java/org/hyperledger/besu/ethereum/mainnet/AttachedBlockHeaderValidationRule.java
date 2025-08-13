@@ -32,11 +32,4 @@ public interface AttachedBlockHeaderValidationRule {
   default boolean includeInLightValidation() {
     return true;
   }
-
-  /**
-   * Returns the name of the validation rule.
-   *
-   * @return the name of the validation rule
-   */
-  String getName();
 }

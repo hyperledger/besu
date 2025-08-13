@@ -28,7 +28,7 @@ public class NoDifficultyRule implements AttachedBlockHeaderValidationRule {
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "NoDifficulty";
   }
 }

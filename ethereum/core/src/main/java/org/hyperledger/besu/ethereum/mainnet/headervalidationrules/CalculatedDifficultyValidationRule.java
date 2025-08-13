@@ -53,7 +53,7 @@ public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderVa
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "CalculatedDifficultyValidation";
   }
 }

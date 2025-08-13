@@ -49,7 +49,7 @@ public class CliqueNoEmptyBlockValidationRule implements DetachedBlockHeaderVali
   }
 
   @Override
-  public String getName() {
+  public String toString() {
     return "CliqueNoEmptyBlockValidation";
   }
 }
