@@ -30,15 +30,30 @@ import java.util.concurrent.TimeUnit;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OperationsPerInvocation;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
 
 @State(Scope.Thread)
-@OutputTimeUnit(value = TimeUnit.MILLISECONDS)
-public class OneMillionCountLeadingZerosOperationBenchmark {
+@Warmup(iterations = 2, time = 1, timeUnit = TimeUnit.SECONDS)
+@OutputTimeUnit(value = TimeUnit.NANOSECONDS)
+@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+@BenchmarkMode(Mode.AverageTime)
+public class CountLeadingZerosOperationBenchmark {
+  // variable used to run inner loop of invocations because CLZ runs in under 15 nanoseconds so
+  // overhead from framework
+  // taking measurements is high. There are variable and offset errors either in baseline and the
+  // operation benchmarks that
+  // can't be ignored.
+  private static final int OPERATIONS_PER_INVOCATION = 1_000_000;
+
   @Param({
     "0x23",
     "0x2323232323232323232323232323232323232323232323232323232323232323",
@@ -78,10 +93,20 @@ public class OneMillionCountLeadingZerosOperationBenchmark {
   }
 
   @Benchmark
+  @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void executeOperation() {
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       frame.pushStackItem(bytes);
       CountLeadingZerosOperation.staticOperation(frame);
+      frame.popStackItem();
+    }
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
+  public void baseline() {
+    for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
+      frame.pushStackItem(bytes);
       frame.popStackItem();
     }
   }
