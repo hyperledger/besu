@@ -141,7 +141,7 @@ public class FastSyncActions {
             unused ->
                 currentState
                     .getPivotBlockHash()
-                    .map(this::downloadPivotBlockHeader)
+                    .map(hash -> downloadPivotBlockHeader(hash, currentState.isSourceTrusted()))
                     .orElseGet(
                         () ->
                             new PivotBlockRetriever(
@@ -177,7 +177,8 @@ public class FastSyncActions {
         syncDurationMetrics);
   }
 
-  private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
+  private CompletableFuture<FastSyncState> downloadPivotBlockHeader(
+      final Hash hash, final boolean sourceIsTrusted) {
     LOG.debug("Downloading pivot block header by hash {}", hash);
     CompletableFuture<BlockHeader> blockHeaderFuture;
     if (syncConfig.isPeerTaskSystemEnabled()) {
@@ -240,7 +241,7 @@ public class FastSyncActions {
                     .log();
               }
             })
-        .thenApply(FastSyncState::new);
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, sourceIsTrusted));
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {
