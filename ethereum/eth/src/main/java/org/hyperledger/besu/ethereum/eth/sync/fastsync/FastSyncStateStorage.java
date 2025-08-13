@@ -58,8 +58,8 @@ public class FastSyncStateStorage {
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
       final BytesValueRLPInput input = new BytesValueRLPInput(rlp, false);
 
-      if (isNewFormat(input)) {
-        // New format: list containing [version, header, sourceIsTrusted]
+      if (isVersionedFormat(input)) {
+        // Versioned format: list containing [version, header, sourceIsTrusted]
         input.enterList();
         final byte version = input.readByte();
         if (version != FORMAT_VERSION) {
@@ -70,7 +70,7 @@ public class FastSyncStateStorage {
         input.leaveList();
         return new FastSyncState(header, sourceIsTrusted);
       } else {
-        // Old format: just the header itself
+        // Legacy format: just the header itself
         return new FastSyncState(BlockHeader.readFrom(input, blockHeaderFunctions), false);
       }
     } catch (final IOException e) {
@@ -102,15 +102,16 @@ public class FastSyncStateStorage {
   }
 
   /**
-   * Determines whether the RLP input follows the new format.
+   * Determines whether the RLP input follows the versioned format.
    *
    * @param input The RLP input to check
-   * @return true if the input is in the new format, false if it's in the old/legacy format
+   * @return true if the input is in the new format, false if it's in the legacy format
    */
-  private boolean isNewFormat(final BytesValueRLPInput input) {
-    input.enterList();
-    boolean isNewFormat = input.nextSize() == 1 && !input.nextIsList();
+  private boolean isVersionedFormat(final BytesValueRLPInput input) {
+    int listSize = input.enterList();
+    // Versioned format has 3 items: version, header, sourceIsTrusted
+    boolean isVersionedFormat = listSize == 3;
     input.reset();
-    return isNewFormat;
+    return isVersionedFormat;
   }
 }
