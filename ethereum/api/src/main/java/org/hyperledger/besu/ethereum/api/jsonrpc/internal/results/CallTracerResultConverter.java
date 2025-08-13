@@ -187,6 +187,8 @@ public class CallTracerResultConverter {
         }
         // Normal call path: track child until its RETURN/REVERT/HALT
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
+
+        // Store call info for this depth
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
       }
       // Process return operations that exit a context
@@ -288,6 +290,7 @@ public class CallTracerResultConverter {
           && reason.get(3) == (byte) 0xa0) {
 
         // Reason has format: 0x08c379a0 + 32 bytes offset + 32 bytes length + string data
+        // The offset is usually 0x20 (32) from the selector
         int strLenOffset = 4 + 32; // Skip selector and offset word
 
         if (reason.size() >= strLenOffset + 32) { // Must have at least the length word
@@ -466,6 +469,7 @@ public class CallTracerResultConverter {
 
     // For root transaction
     if (exitFrame.getDepth() == 0) {
+      // Root transaction: simply calculate difference and account for refunds
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
       return Math.max(0, gasUsed - gasRefund);
@@ -473,6 +477,7 @@ public class CallTracerResultConverter {
 
     // For nested calls with a real callee frame
     if (exitFrame.getGasRemaining() >= 0) {
+      // Normal case: gas before call - gas after call = gas used
       return callInfo.builder.getGas().longValue() - exitFrame.getGasRemaining();
     }
     // For precompiled contracts (no callee frame => use precompiled cost if present)
@@ -605,7 +610,7 @@ public class CallTracerResultConverter {
           .map(
               stack -> {
                 if ("CREATE".equals(opcode)) {
-                  // CREATE: ..., value, offset, size  -> offset = -2, size = -1
+                  // CREATE stack: ..., value, offset, size  -> offset = -2, size = -1
                   if (stack.length < 2) {
                     return frame.getInputData();
                   }
@@ -623,7 +628,7 @@ public class CallTracerResultConverter {
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
                       .orElse(frame.getInputData());
                 } else {
-                  // CREATE2: ..., value, offset, size, salt -> offset = -3, size = -2
+                  // CREATE2 stack: ..., value, offset, size, salt -> offset = -3, size = -2
                   if (stack.length < 3) {
                     return frame.getInputData();
                   }
