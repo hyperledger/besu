@@ -104,6 +104,15 @@ public class CallTracerResultConverter {
       final String opcode = frame.getOpcode();
       final int frameDepth = frame.getDepth();
 
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "frame[{}]: op={} depth={} nextDepth={}",
+            i,
+            opcode,
+            frameDepth,
+            (nextTrace == null ? "-" : nextTrace.getDepth()));
+      }
+
       // Update max depth encountered
       maxDepth = Math.max(maxDepth, frameDepth);
 
@@ -118,6 +127,33 @@ public class CallTracerResultConverter {
         final CallTracerResult.Builder childBuilder =
             createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
 
+        if (LOG.isTraceEnabled()) {
+          LOG.trace(
+              " child draft: type={} from={} to={} gas(provided)={} input[{}]={}",
+              childBuilder.getType(),
+              childBuilder.getFrom(),
+              childBuilder.getTo(),
+              (childBuilder.getGas() == null
+                  ? "null"
+                  : Long.toHexString(childBuilder.getGas().longValue())),
+              (frame.getInputData() == null ? 0 : frame.getInputData().size()),
+              frame.getInputData().toShortHexString());
+        }
+
+        // Robust precompile detection – show which signal fired
+        final boolean byTo =
+            (childBuilder.getTo() != null && isPrecompileAddress(childBuilder.getTo()));
+        final boolean byCost = frame.getPrecompiledGasCost().isPresent();
+        if (LOG.isTraceEnabled() && isCallOp(opcode)) {
+          LOG.trace(
+              " precompile? byTo={} byCost={} to={} precompileGasCost={}",
+              byTo,
+              byCost,
+              childBuilder.getTo(),
+              frame.getPrecompiledGasCost().isPresent()
+                  ? frame.getPrecompiledGasCost().getAsLong()
+                  : "-");
+        }
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
         if (isCallOp(opcode) && isPrecompileAddress(childBuilder.getTo())) {
           LOG.trace("Precompile fast-path for to={}", childBuilder.getTo());
@@ -133,6 +169,9 @@ public class CallTracerResultConverter {
           continue;
         }
 
+        if (LOG.isTraceEnabled()) {
+          LOG.trace(" enqueue child: depth={} (waiting for RETURN/REVERT/STOP)", currentDepth + 1);
+        }
         // Normal call path: track child until its RETURN/REVERT/HALT
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
@@ -145,6 +184,12 @@ public class CallTracerResultConverter {
 
         // Get child call info
         final CallInfo childCallInfo = depthToCallInfo.get(currentDepth);
+        if (LOG.isTraceEnabled() && childCallInfo != null) {
+          LOG.trace(
+              " return: depth={} type={} -> computing gasUsed",
+              currentDepth,
+              childCallInfo.builder.getType());
+        }
         if (childCallInfo == null) {
           continue;
         }

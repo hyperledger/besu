@@ -510,5 +510,9 @@ public class CallTracerResult {
     public String getTo() {
       return this.to;
     }
+
+    public String getFrom() {
+      return this.from;
+    }
   }
 }
