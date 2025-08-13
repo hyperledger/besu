@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -95,6 +96,7 @@ public class CallTracerResultConverter {
     int currentDepth = 0;
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
+
     // Process all frames
     for (int i = 0; i < frames.size(); i++) {
       final TraceFrame nextTrace = i < frames.size() - 1 ? frames.get(i + 1) : null;
@@ -105,7 +107,7 @@ public class CallTracerResultConverter {
       // Update max depth encountered
       maxDepth = Math.max(maxDepth, frameDepth);
 
-      // Process call operations that create a new context
+      // Process call operations that create a new context (or a precompile effect)
       if (isCallOp(opcode) || isCreateOp(opcode)) {
         currentDepth = frameDepth;
 
@@ -117,13 +119,17 @@ public class CallTracerResultConverter {
             createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
 
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
-        LOG.trace("*** ChildBuilder.To: {}", childBuilder.getTo());
-        LOG.trace(
-            " *** Precompile Short-cut: {}",
-            isCallOp(opcode) && isPrecompileAddress(childBuilder.getTo()));
         if (isCallOp(opcode) && isPrecompileAddress(childBuilder.getTo())) {
+          LOG.trace("Precompile fast-path for to={}", childBuilder.getTo());
           finalizePrecompileChild(frame, nextTrace, childBuilder, parentCallInfo);
           // Do not store this child in depth tracking; it's already attached
+          continue;
+        }
+
+        // If we did not enter a callee (no depth+1) and it's not a precompile, skip creating a
+        // phantom child.
+        if (nextTrace == null || nextTrace.getDepth() <= frameDepth) {
+          // Mirrors geth callTracer behavior: do not emit children for non-executed calls.
           continue;
         }
 
@@ -153,13 +159,6 @@ public class CallTracerResultConverter {
           final long gasUsed = calculateGasUsed(childCallInfo, entryFrame, frame);
           childCallInfo.builder.gasUsed(gasUsed);
 
-          // Add code deposit cost for CREATE operations
-          if (isCreateOp(childCallInfo.builder.getType()) && frame.getOutputData() != null) {
-            // 200 gas per byte of deployed code
-            long codeDepositCost = frame.getOutputData().size() * 200L;
-            childCallInfo.incGasUsed(codeDepositCost);
-          }
-
           // Find parent and add this call to parent's calls
           final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth - 1);
           if (parentCallInfo != null) {
@@ -174,103 +173,12 @@ public class CallTracerResultConverter {
     }
 
     // Process any remaining calls that didn't have explicit return frames
-    processRemainingCalls(depthToCallInfo, maxDepth);
+    processRemainingCalls(depthToCallInfo);
 
     // Add transaction result information to root
     finalizeRoot(rootInfo.builder, trace);
 
     return rootInfo.builder.build();
-  }
-
-  private static boolean isPrecompileAddress(final String to) {
-    if (to == null) return false;
-    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
-    if (s.length() != 40) return false;
-
-    // First 19 bytes must be zero
-    for (int i = 0; i < 38; i++) {
-      if (s.charAt(i) != '0') return false;
-    }
-
-    // Last byte: 0x01..0x0a (0x0a = KZG point evaluation precompile)
-    final int lastByte;
-    try {
-      lastByte = Integer.parseInt(s.substring(38, 40), 16);
-    } catch (NumberFormatException e) {
-      return false;
-    }
-    return lastByte >= 0x01 && lastByte <= 0x0a;
-  }
-
-  private static void finalizePrecompileChild(
-      final TraceFrame entryFrame,
-      final TraceFrame nextTrace,
-      final CallTracerResult.Builder childBuilder,
-      final CallInfo parentCallInfo) {
-
-    // 1) gasUsed: take the explicit precompile cost; fall back to opcode cost.
-    if (entryFrame.getPrecompiledGasCost().isPresent()) {
-      childBuilder.gasUsed(entryFrame.getPrecompiledGasCost().getAsLong());
-    } else if (entryFrame.getGasCost().isPresent()) {
-      childBuilder.gasUsed(entryFrame.getGasCost().getAsLong());
-    }
-
-    entryFrame
-        .getStack()
-        .ifPresent(
-            stack -> {
-              // For CALL/CALLCODE there are 7 stack args; for STATICCALL/DELEGATECALL there are 6.
-              final String op = childBuilder.getType();
-              final boolean isCallOrCallCode = "CALL".equals(op) || "CALLCODE".equals(op);
-
-              // gas argument position from TOS
-              final int gasIdx = isCallOrCallCode ? stack.length - 7 : stack.length - 6;
-
-              // Common positions for all call-like ops (from TOS):
-              //   inOffset = -4, inSize = -3, outOffset = -2, outSize = -1
-              final int inOffIdx = stack.length - 4;
-              final int inLenIdx = stack.length - 3;
-              final int outOffIdx = stack.length - 2;
-              final int outLenIdx = stack.length - 1;
-
-              // 2) gas provided: from the stack arg (not nextTrace)
-              if (gasIdx >= 0 && gasIdx < stack.length) {
-                try {
-                  final long callGas = stack[gasIdx].toBigInteger().longValue();
-                  childBuilder.gas(callGas);
-                } catch (Exception ignore) {
-                  // leave the existing gas value if parsing fails
-                }
-              }
-
-              // 3) input: slice from PRE-call memory using inOffset/inSize
-              if (inOffIdx >= 0 && inLenIdx >= 0 && entryFrame.getMemory().isPresent()) {
-                final int inOffset = bytesToInt(stack[inOffIdx]);
-                final int inSize = bytesToInt(stack[inLenIdx]);
-                final Bytes in =
-                    extractCallDataFromMemory(entryFrame.getMemory().get(), inOffset, inSize);
-                childBuilder.input(in.toHexString()); // even if empty -> "0x"
-              }
-
-              // 4) output: slice from POST-call memory, clamped to min(inSize, outSize)
-              if (outOffIdx >= 0
-                  && outLenIdx >= 0
-                  && nextTrace != null
-                  && nextTrace.getMemory().isPresent()) {
-                final int inSize = bytesToInt(stack[inLenIdx]);
-                final int outOffset = bytesToInt(stack[outOffIdx]);
-                final int outSize = bytesToInt(stack[outLenIdx]);
-                final int effLen = Math.max(0, Math.min(inSize, outSize));
-                final Bytes out =
-                    extractCallDataFromMemory(nextTrace.getMemory().get(), outOffset, effLen);
-                childBuilder.output(out.toHexString());
-              }
-            });
-
-    // 5) Attach immediately to the parent; no depth+1 frame will arrive.
-    if (parentCallInfo != null) {
-      parentCallInfo.builder.addCall(childBuilder.build());
-    }
   }
 
   private static void setOutputAndErrorStatus(
@@ -317,7 +225,6 @@ public class CallTracerResultConverter {
           && reason.get(3) == (byte) 0xa0) {
 
         // Reason has format: 0x08c379a0 + 32 bytes offset + 32 bytes length + string data
-        // The offset is usually 0x20 (32) from the selector
         int strLenOffset = 4 + 32; // Skip selector and offset word
 
         if (reason.size() >= strLenOffset + 32) { // Must have at least the length word
@@ -381,11 +288,9 @@ public class CallTracerResultConverter {
     return result.toString();
   }
 
-  @SuppressWarnings("UnusedVariable")
-  private static void processRemainingCalls(
-      final Map<Integer, CallInfo> depthToCallInfo, final int _ignoredMaxDepth) {
+  private static void processRemainingCalls(final Map<Integer, CallInfo> depthToCallInfo) {
     // Walk whatever depths we actually stored, deepest first
-    final java.util.TreeSet<Integer> depths = new java.util.TreeSet<>(depthToCallInfo.keySet());
+    final TreeSet<Integer> depths = new TreeSet<>(depthToCallInfo.keySet());
     for (final Integer depth : depths.descendingSet()) {
       if (depth == 0) continue; // skip root
       final CallInfo child = depthToCallInfo.get(depth);
@@ -433,14 +338,16 @@ public class CallTracerResultConverter {
     final String toAddress = resolveToAddress(frame, opcode);
     final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
 
-    final long gasProvided = nextTrace != null ? nextTrace.getGasRemaining() : 0;
+    // Authoritative gas (provided): callee frame start if depth+1, else derive from stack (covers
+    // precompiles)
+    final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
 
     return CallTracerResult.builder()
         .type(opcode)
         .from(fromAddress)
         .to(toAddress)
         .value(getCallValue(frame, opcode))
-        .gas(gasProvided) // Use the calculated gas value
+        .gas(gasProvided)
         .input(inputData.toHexString());
   }
 
@@ -461,7 +368,7 @@ public class CallTracerResultConverter {
     if ("STATICCALL".equals(opcode)) {
       return null; // omit field to match Geth
     }
-    // For DELEGATECALL, value is always 0, but Geth includes the field
+    // For DELEGATECALL, value is always 0, and geth includes the field
     if ("DELEGATECALL".equals(opcode)) {
       return "0x0";
     }
@@ -472,18 +379,16 @@ public class CallTracerResultConverter {
       final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
     // For root transaction
     if (exitFrame.getDepth() == 0) {
-      // Root transaction: simply calculate difference and account for refunds
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
       return Math.max(0, gasUsed - gasRefund);
     }
 
-    // For nested calls
+    // For nested calls with a real callee frame
     if (exitFrame.getGasRemaining() >= 0) {
-      // Normal case: gas before call - gas after call = gas used
       return callInfo.builder.getGas().longValue() - exitFrame.getGasRemaining();
     }
-    // For precompiled contracts
+    // For precompiled contracts (no callee frame => use precompiled cost if present)
     else if (entryFrame.getPrecompiledGasCost().isPresent()) {
       return entryFrame.getPrecompiledGasCost().getAsLong();
     }
@@ -558,7 +463,7 @@ public class CallTracerResultConverter {
   private static Bytes resolveInputData(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
-    // 1) Prefer the callee frame's inputData when the next frame is the callee at depth+1.
+    // Prefer the callee frame's inputData when the next frame is the callee at depth+1.
     if (nextTrace != null
         && nextTrace.getDepth() == frame.getDepth() + 1
         && nextTrace.getInputData() != null
@@ -567,13 +472,12 @@ public class CallTracerResultConverter {
     }
 
     if (isCallOp(opcode)) {
-      // 2) Fallback: reconstruct calldata from caller memory using inOffset/inSize from the stack.
+      // Reconstruct calldata from caller memory using inOffset/inSize from the stack.
       return frame
           .getStack()
           .map(
               stack -> {
-                // CALL/CALLCODE/DELEGATECALL/STATICCALL all use: inOffset = -4, inSize = -3 (from
-                // TOS).
+                // CALL/CALLCODE/DELEGATECALL/STATICCALL: inOffset = -4, inSize = -3
                 if (stack.length < 4) {
                   return frame.getInputData();
                 }
@@ -593,7 +497,7 @@ public class CallTracerResultConverter {
           .map(
               stack -> {
                 if ("CREATE".equals(opcode)) {
-                  // CREATE stack: ..., value, offset, size  -> offset = -2, size = -1
+                  // CREATE: ..., value, offset, size  -> offset = -2, size = -1
                   if (stack.length < 2) {
                     return frame.getInputData();
                   }
@@ -604,7 +508,7 @@ public class CallTracerResultConverter {
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
                       .orElse(frame.getInputData());
                 } else {
-                  // CREATE2 stack: ..., value, offset, size, salt -> offset = -3, size = -2
+                  // CREATE2: ..., value, offset, size, salt -> offset = -3, size = -2
                   if (stack.length < 3) {
                     return frame.getInputData();
                   }
@@ -637,8 +541,7 @@ public class CallTracerResultConverter {
     final MutableBytes acc = MutableBytes.create(wordCount * 32);
     for (int w = 0; w < wordCount; w++) {
       final int i = startWord + w;
-      final Bytes word = (memory != null && i < memory.length) ? memory[i] : Bytes32.ZERO;
-      // word is 32 bytes (Bytes32 or zero); copy into place
+      final Bytes word = (memory != null && i >= 0 && i < memory.length) ? memory[i] : Bytes32.ZERO;
       word.copyTo(acc, w * 32);
     }
 
@@ -648,7 +551,7 @@ public class CallTracerResultConverter {
       return acc.slice(startByteInWord, length);
     }
 
-    // Belt & suspenders: if somehow short, pad with zeros to requested length.
+    // If somehow short, pad with zeros to the requested length.
     final Bytes slice =
         acc.slice(startByteInWord, Math.max(0, Math.min(length, acc.size() - startByteInWord)));
     final int missing = length - slice.size();
@@ -702,19 +605,215 @@ public class CallTracerResultConverter {
   }
 
   /** Helper class to track call information during trace processing. */
-  private record CallInfo(CallTracerResult.Builder builder, TraceFrame entryFrame) {
+  private record CallInfo(CallTracerResult.Builder builder, TraceFrame entryFrame) {}
 
-    void incGasUsed(final long gas) {
-      long currentGasUsed = builder.getGasUsed().longValueExact();
-      builder.gasUsed(currentGasUsed + gas);
+  /** Compute the gas provided to the child call. */
+  private static long computeGasProvided(
+      final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
+
+    // If we actually enter the callee (depth+1), that frame's starting gas is authoritative.
+    if (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1) {
+      final long g = nextTrace.getGasRemaining();
+      return (g >= 0) ? g : 0L;
+    }
+
+    // Otherwise (precompiles / non-executed call), pull the call gas from the stack.
+    if (isCallOp(opcode)) {
+      final Long fromStack = gasFromStack(frame, opcode);
+      return (fromStack != null && fromStack > 0L) ? fromStack : 0L;
+    }
+
+    // CREATE/CREATE2 normally have a callee frame; if not, we have no better signal.
+    return 0L;
+  }
+
+  /** Read gas argument for a call-like op from the stack. */
+  private static Long gasFromStack(final TraceFrame frame, final String opcode) {
+    return frame
+        .getStack()
+        .map(
+            stack -> {
+              // CALL/CALLCODE: 7 args; STATICCALL/DELEGATECALL: 6 args
+              final boolean callOrCallCode = "CALL".equals(opcode) || "CALLCODE".equals(opcode);
+              final int required = callOrCallCode ? 7 : 6;
+              if (stack.length < required) return null;
+
+              // gas is the leftmost of the N args, i.e. at index length - required
+              final int gasIdx = stack.length - required;
+
+              try {
+                final java.math.BigInteger bi = stack[gasIdx].toUnsignedBigInteger();
+                if (bi.signum() <= 0) return 0L;
+                final java.math.BigInteger cap = java.math.BigInteger.valueOf(Long.MAX_VALUE);
+                return (bi.compareTo(cap) > 0) ? Long.MAX_VALUE : bi.longValue();
+              } catch (Exception ignore) {
+                return null;
+              }
+            })
+        .orElse(null);
+  }
+
+  /** Detect precompile addresses: 0x000...0001 through 0x000...000a (inclusive). */
+  private static boolean isPrecompileAddress(final String to) {
+    if (to == null) return false;
+    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
+    if (s.length() != 40) return false;
+
+    // First 19 bytes must be zero
+    for (int i = 0; i < 38; i++) {
+      if (s.charAt(i) != '0') return false;
+    }
+
+    // Last byte: 0x01..0x0a (0x0a = KZG point evaluation precompile)
+    final int lastByte;
+    try {
+      lastByte = Integer.parseInt(s.substring(38, 40), 16);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+    return lastByte >= 0x01 && lastByte <= 0x0a;
+  }
+
+  /**
+   * Finalize a precompile "child" call: set gas/gasUsed, compute input/output from memory, and
+   * attach immediately to the parent (no depth+1 callee frame will arrive).
+   */
+  private static void finalizePrecompileChild(
+      final TraceFrame entryFrame,
+      final TraceFrame nextTrace,
+      final CallTracerResult.Builder childBuilder,
+      final CallInfo parentCallInfo) {
+
+    // Ensure 'gas' (provided) present for the child; for precompiles read from stack if needed.
+    if (childBuilder.getGas() == null || childBuilder.getGas().longValue() == 0L) {
+      final Long g = gasFromStack(entryFrame, childBuilder.getType());
+      if (g != null && g > 0L) childBuilder.gas(g);
+    }
+
+    // gasUsed: use explicit precompile cost; fallback to opcode cost
+    if (entryFrame.getPrecompiledGasCost().isPresent()) {
+      childBuilder.gasUsed(entryFrame.getPrecompiledGasCost().getAsLong());
+    } else if (entryFrame.getGasCost().isPresent()) {
+      childBuilder.gasUsed(entryFrame.getGasCost().getAsLong());
+    }
+
+    // Parse precompile id from the child "to" address (last byte).
+    final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
+
+    // Stack at callsite (TOS on right):
+    //   inOffset = -4, inSize = -3, outOffset = -2, outSize = -1
+    entryFrame
+        .getStack()
+        .ifPresent(
+            stack -> {
+              if (stack.length < 4) return;
+
+              final int inOffset = bytesToInt(stack[stack.length - 4]);
+              final int inSize = bytesToInt(stack[stack.length - 3]);
+              final int outOffset = bytesToInt(stack[stack.length - 2]);
+              final int outSize = bytesToInt(stack[stack.length - 1]);
+
+              // INPUT: authoritative pre-call slice (precompiles execute inline, so entry frame
+              // memory is before the call)
+              entryFrame
+                  .getMemory()
+                  .ifPresent(
+                      preMem -> {
+                        final Bytes in = extractCallDataFromMemory(preMem, inOffset, inSize);
+                        childBuilder.input(in.toHexString());
+                      });
+
+              // OUTPUT: authoritative post-call slice.
+              // For identity (0x04): len = min(inSize, outSize)
+              // For fixed-size precompiles (e.g., ecrecover/sha256/ripemd160/pairing/blake2f/kzg):
+              // len = min(expected, outSize)
+              // For modexp (0x05): expected = modulusLen from header; len = min(expected, outSize)
+              // Fallback: conservative min(outSize, inSize)
+              if (nextTrace != null && nextTrace.getMemory().isPresent()) {
+                final Bytes[] postMem = nextTrace.getMemory().get();
+                final Bytes[] preMem = entryFrame.getMemory().orElse(null);
+
+                final int expected =
+                    expectedReturndataLenForPrecompile(precompileId, preMem, inOffset, inSize);
+                final int len =
+                    (expected >= 0)
+                        ? Math.max(0, Math.min(expected, outSize))
+                        : Math.max(0, Math.min(inSize, outSize)); // conservative fallback
+
+                final Bytes out = extractCallDataFromMemory(postMem, outOffset, len);
+                childBuilder.output(out.toHexString());
+              }
+            });
+
+    // Attach immediately — there will be no callee frame at depth+1 for precompiles.
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childBuilder.build());
     }
   }
 
-  /** Converts Bytes to integer safely using the built-in toBigInteger method */
+  /** Parse the precompile ID (last byte) from a hex 'to' address; returns -1 if unknown. */
+  private static int parsePrecompileIdFromTo(final String to) {
+    if (to == null) return -1;
+    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
+    if (s.length() != 40) return -1;
+    try {
+      return Integer.parseInt(s.substring(38, 40), 16);
+    } catch (Exception ignored) {
+      return -1;
+    }
+  }
+
+  /**
+   * Expected returndata size for a given precompile. - Identity (0x04): inSize - ModExp (0x05):
+   * modulusLen from header (third 32-byte length field at inOffset+64) - Fixed-size returns: 32 or
+   * 64 depending on precompile Returns -1 if unknown (use a conservative fallback).
+   */
+  private static int expectedReturndataLenForPrecompile(
+      final int precompileId, final Bytes[] preCallMemory, final int inOffset, final int inSize) {
+
+    switch (precompileId) {
+      case 0x01: // ecrecover
+      case 0x02: // sha256
+      case 0x03: // ripemd160 (20 bytes but padded to 32 in returndata)
+      case 0x08: // bn128 pairing
+      case 0x0a: // kzg point evaluation
+        return 32;
+
+      case 0x06: // bn128 add
+      case 0x07: // bn128 mul
+      case 0x09: // blake2f compression
+        return 64;
+
+      case 0x04: // identity
+        return Math.max(0, inSize);
+
+      case 0x05:
+        { // modexp: output length = modulusLen (third 32-byte length field)
+          if (preCallMemory == null) return -1;
+          // Need at least 96 bytes header; also guard against negative offset.
+          if (inSize < 96 || inOffset < 0) return -1;
+          try {
+            final Bytes aLenWord = extractCallDataFromMemory(preCallMemory, inOffset + 64, 32);
+            final java.math.BigInteger bi = aLenWord.toUnsignedBigInteger();
+            if (bi.signum() < 0) return 0;
+            final java.math.BigInteger cap = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
+            return (bi.compareTo(cap) > 0) ? Integer.MAX_VALUE : bi.intValue();
+          } catch (Exception ignored) {
+            return -1;
+          }
+        }
+
+      default:
+        return -1;
+    }
+  }
+
+  /** Converts Bytes to integer safely (unsigned) and clamps to Integer.MAX_VALUE. */
   private static int bytesToInt(final Bytes bytes) {
     try {
-      // Use the built-in toBigInteger method and convert to int
-      return bytes.toBigInteger().intValue();
+      final java.math.BigInteger bi = bytes.toUnsignedBigInteger();
+      final java.math.BigInteger max = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
+      return bi.compareTo(max) > 0 ? Integer.MAX_VALUE : bi.intValue();
     } catch (final Exception e) {
       return 0;
     }
