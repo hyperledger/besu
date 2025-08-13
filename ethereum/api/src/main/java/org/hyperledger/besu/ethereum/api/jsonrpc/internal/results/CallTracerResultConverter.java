@@ -58,6 +58,8 @@ public class CallTracerResultConverter {
 
   static {
     LOG.warn("*** CallTracerResultConverter WARN canary — if you see me, the logger is wired.");
+    LOG.warn("TRACE enabled? {}", LOG.isTraceEnabled()); // should print true after the line above
+    LOG.trace("*** CallTracerResultConverter TRACE canary — TRACE is now enabled.");
   }
 
   /**
