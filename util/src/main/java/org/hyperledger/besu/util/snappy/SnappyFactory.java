@@ -39,6 +39,13 @@ public class SnappyFactory {
     return new SnappyFramedInputStream(new ByteArrayInputStream(compressedData));
   }
 
+  /**
+   * Creates a SnappyFramedOutputStream writing to the supplied OutputStream
+   *
+   * @param outputStream The OutputStream to be written to
+   * @return a SnappyFramedOutputStream writing to the supplied OutputStream
+   * @throws IOException if the SnappyFramedOutputStream is unable to be created
+   */
   public SnappyFramedOutputStream createFramedOutputStream(final OutputStream outputStream)
       throws IOException {
     return new SnappyFramedOutputStream(outputStream);
