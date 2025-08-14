@@ -28,7 +28,7 @@ public class OutputStreamFactory {
    *
    * @param filename The name of the file to open a FileOutputStream for
    * @return a FileOutputStream to write to the file with the specified filename
-   * @throws FileNotFoundException
+   * @throws FileNotFoundException File not found exception
    */
   public FileOutputStream createFileOutputStream(final String filename)
       throws FileNotFoundException {
