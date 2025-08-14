@@ -184,6 +184,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                false,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =

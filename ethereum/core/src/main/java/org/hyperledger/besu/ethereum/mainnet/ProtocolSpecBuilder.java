@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
@@ -82,7 +83,9 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+  private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
+  private BlockAccessListFactory blockAccessListFactory;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -280,6 +283,17 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    return this;
+  }
+
+  public ProtocolSpecBuilder blockAccessListFactory(
+      final BlockAccessListFactory blockAccessListFactory) {
+    this.blockAccessListFactory = blockAccessListFactory;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -344,6 +358,16 @@ public class ProtocolSpecBuilder {
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
+
+    BlockAccessListFactory finalBalManager = blockAccessListFactory;
+    if (finalBalManager == null && isBlockAccessListEnabled) {
+      finalBalManager = new BlockAccessListFactory(true, false);
+    } else if (finalBalManager != null
+        && isBlockAccessListEnabled
+        && !finalBalManager.isCliActivated()) {
+      finalBalManager = new BlockAccessListFactory(true, finalBalManager.isForkActivated());
+    }
+
     return new ProtocolSpec(
         hardforkId,
         evm,
@@ -373,7 +397,8 @@ public class ProtocolSpecBuilder {
         preExecutionProcessor,
         isPoS,
         isReplayProtectionSupported,
-        Optional.ofNullable(transactionPoolPreProcessor));
+        Optional.ofNullable(transactionPoolPreProcessor),
+        Optional.ofNullable(finalBalManager));
   }
 
   private BlockProcessor createBlockProcessor(

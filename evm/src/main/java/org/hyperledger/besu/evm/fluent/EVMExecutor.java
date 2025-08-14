@@ -158,8 +158,8 @@ public class EVMExecutor {
             .blockValues(blockValues)
             .miningBeneficiary(coinbase)
             .blockHashLookup(blockHashLookup)
-            .accessListWarmAddresses(accessListWarmAddresses)
-            .accessListWarmStorage(accessListWarmStorage)
+            .eip2930AccessListWarmAddresses(accessListWarmAddresses)
+            .eip2930AccessListWarmStorage(accessListWarmStorage)
             .versionedHashes(versionedHashes)
             .completer(c -> {})
             .build();

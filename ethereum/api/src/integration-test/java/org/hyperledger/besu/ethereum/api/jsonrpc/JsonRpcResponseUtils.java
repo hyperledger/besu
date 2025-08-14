@@ -131,6 +131,7 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             requestsHash,
+            null,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

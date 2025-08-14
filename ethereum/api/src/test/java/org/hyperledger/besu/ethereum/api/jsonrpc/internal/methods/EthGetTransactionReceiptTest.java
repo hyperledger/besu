@@ -169,6 +169,7 @@ public class EthGetTransactionReceiptTest {
           new FrontierPreExecutionProcessor(),
           true,
           true,
+          Optional.empty(),
           Optional.empty());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
@@ -200,6 +201,7 @@ public class EthGetTransactionReceiptTest {
           new FrontierPreExecutionProcessor(),
           true,
           true,
+          Optional.empty(),
           Optional.empty());
 
   @SuppressWarnings("unchecked")

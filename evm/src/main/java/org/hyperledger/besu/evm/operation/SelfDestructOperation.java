@@ -62,12 +62,12 @@ public class SelfDestructOperation extends AbstractOperation {
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
     // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
-    final Account beneficiaryNullable = frame.getWorldUpdater().get(beneficiaryAddress);
+    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
 
     final Address originatorAddress = frame.getRecipientAddress();
-    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
+    final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
@@ -80,8 +80,7 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     // We passed preliminary checks, get mutable accounts.
-    final MutableAccount beneficiaryAccount =
-        frame.getWorldUpdater().getOrCreate(beneficiaryAddress);
+    final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);

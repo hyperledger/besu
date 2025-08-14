@@ -92,7 +92,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Account account = frame.getWorldUpdater().get(address);
+    final Account account = getAccount(address, frame);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (enableEIP3540
