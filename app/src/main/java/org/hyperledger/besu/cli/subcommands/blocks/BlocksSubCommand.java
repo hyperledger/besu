@@ -427,7 +427,7 @@ public class BlocksSubCommand implements Runnable {
           .export(startFile, endFile);
     }
 
-    private long convertBlockNumberToFileNumber(long blockNumber) {
+    private long convertBlockNumberToFileNumber(final long blockNumber) {
       return (blockNumber + 1) / ERA1_FILE_BLOCKS;
     }
 

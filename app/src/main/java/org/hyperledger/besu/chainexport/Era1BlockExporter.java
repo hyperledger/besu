@@ -60,7 +60,7 @@ public class Era1BlockExporter {
     this.snappyFactory = snappyFactory;
   }
 
-  public void export(long startFile, long endFile) {
+  public void export(final long startFile, final long endFile) {
     for (long fileNumber = startFile; fileNumber <= endFile; fileNumber++) {
       long startBlock = fileNumber * ERA1_FILE_BLOCKS;
       long endBlock = startBlock + ERA1_FILE_BLOCKS - 1;
