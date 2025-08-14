@@ -80,7 +80,8 @@ public class GenesisWorldStateProvider {
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage, codeCache),
+        new NoOpBonsaiCachedWorldStorageManager(
+            bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, codeCache),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
         createStatefulConfigWithTrie(),
