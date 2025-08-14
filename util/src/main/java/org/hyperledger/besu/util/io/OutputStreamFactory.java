@@ -17,11 +17,21 @@ package org.hyperledger.besu.util.io;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+/** Factory for creating OutputStreams */
 public class OutputStreamFactory {
 
+  /** Constructs an OutputStreamFactory */
   public OutputStreamFactory() {}
 
-  public FileOutputStream createFileOutputStream(String filename) throws FileNotFoundException {
+  /**
+   * Create a FileOutputStream to write to the file with the specified filename
+   *
+   * @param filename The name of the file to open a FileOutputStream for
+   * @return a FileOutputStream to write to the file with the specified filename
+   * @throws FileNotFoundException
+   */
+  public FileOutputStream createFileOutputStream(final String filename)
+      throws FileNotFoundException {
     return new FileOutputStream(filename);
   }
 }
