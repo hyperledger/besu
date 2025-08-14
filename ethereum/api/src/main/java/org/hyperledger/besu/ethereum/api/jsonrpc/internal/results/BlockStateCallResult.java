@@ -25,19 +25,24 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder(alphabetic = true)
 public class BlockStateCallResult extends BlockResult {
   private final List<CallProcessingResult> callProcessingResults;
+  private final Optional<String> trieLog;
 
   private BlockStateCallResult(
       final Block block,
       final List<TransactionResult> transactions,
-      final List<CallProcessingResult> callProcessingResults) {
+      final List<CallProcessingResult> callProcessingResults,
+      final Optional<Bytes> trieLog) {
     super(
         block.getHeader(),
         transactions,
@@ -47,6 +52,7 @@ public class BlockStateCallResult extends BlockResult {
         false,
         block.getBody().getWithdrawals());
     this.callProcessingResults = callProcessingResults;
+    this.trieLog = trieLog.map(Bytes::toHexString);
   }
 
   @JsonGetter(value = "calls")
@@ -58,6 +64,12 @@ public class BlockStateCallResult extends BlockResult {
   @Override
   public String getTotalDifficulty() {
     return null; // Not applicable for this result type.
+  }
+
+  @JsonGetter(value = "trieLog")
+  @JsonInclude(JsonInclude.Include.NON_ABSENT)
+  public Optional<String> getTrieLog() {
+    return trieLog;
   }
 
   public static BlockStateCallResult create(
@@ -75,7 +87,8 @@ public class BlockStateCallResult extends BlockResult {
             .map(simulatorResult -> createTransactionProcessingResult(simulatorResult, logs))
             .collect(Collectors.toList());
 
-    return new BlockStateCallResult(block, transactionResults, callProcessingResults);
+    return new BlockStateCallResult(
+        block, transactionResults, callProcessingResults, simulationResult.getSerializedTrieLog());
   }
 
   /**
