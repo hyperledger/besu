@@ -44,7 +44,7 @@ public class DefaultBlockSchedulerTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
-    final AbstractBlockScheduler.BlockCreationTimeResult result =
+    final DefaultBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
     assertThat(result.timestampForHeader()).isEqualTo(parentTimeStamp + interBlockSeconds);
@@ -61,7 +61,7 @@ public class DefaultBlockSchedulerTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
-    final AbstractBlockScheduler.BlockCreationTimeResult result =
+    final DefaultBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
     assertThat(result.millisecondsUntilValid()).isEqualTo(0);
@@ -78,7 +78,7 @@ public class DefaultBlockSchedulerTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
-    final AbstractBlockScheduler.BlockCreationTimeResult result =
+    final DefaultBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
     assertThat(result.millisecondsUntilValid()).isEqualTo(interBlockSeconds * 1000);
@@ -96,7 +96,7 @@ public class DefaultBlockSchedulerTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
-    final AbstractBlockScheduler.BlockCreationTimeResult result =
+    final DefaultBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
     assertThat(result.timestampForHeader()).isEqualTo(secondsSinceEpoch);

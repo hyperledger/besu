@@ -144,7 +144,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -184,7 +184,7 @@ public class PivotBlockConfirmerTest {
     future.join();
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -219,7 +219,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -261,7 +261,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -303,7 +303,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -341,7 +341,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest
@@ -385,7 +385,7 @@ public class PivotBlockConfirmerTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get(), false));
   }
 
   @ParameterizedTest

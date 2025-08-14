@@ -41,6 +41,10 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Optional;
 
@@ -48,11 +52,20 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
+  private final LabelledMetric<Counter> gasUsedCounter;
 
   public EthCall(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+      final BlockchainQueries blockchainQueries,
+      final TransactionSimulator transactionSimulator,
+      final MetricsSystem metricsSystem) {
     super(blockchainQueries);
     this.transactionSimulator = transactionSimulator;
+    this.gasUsedCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.RPC,
+            "eth_call_gas_used_total",
+            "Total gas used by eth_call requests",
+            "status");
   }
 
   @Override
@@ -94,22 +107,25 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
             maybeStateOverrides,
             buildTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
-            (mutableWorldState, transactionSimulatorResult) -> {
-              return transactionSimulatorResult.map(
-                  result ->
-                      result
-                          .getValidationResult()
-                          .either(
-                              (() ->
-                                  result.isSuccessful()
-                                      ? new JsonRpcSuccessResponse(
-                                          request.getRequest().getId(),
-                                          result.getOutput().toString())
-                                      : errorResponse(request, result)),
-                              reason -> errorResponse(request, result)));
-            },
+            (mutableWorldState, transactionSimulatorResult) ->
+                transactionSimulatorResult.map(
+                    result -> {
+                      long gasUsed = result.getGasEstimate();
+                      if (result.isSuccessful()) {
+                        gasUsedCounter.labels("success").inc(gasUsed);
+                        return new JsonRpcSuccessResponse(
+                            request.getRequest().getId(), result.getOutput().toString());
+                      } else {
+                        gasUsedCounter.labels("error").inc(gasUsed);
+                        return errorResponse(request, result);
+                      }
+                    }),
             header)
-        .orElse(errorResponse(request, INTERNAL_ERROR));
+        .orElseGet(
+            () -> {
+              gasUsedCounter.labels("internal_error").inc(0);
+              return errorResponse(request, INTERNAL_ERROR);
+            });
   }
 
   @VisibleForTesting

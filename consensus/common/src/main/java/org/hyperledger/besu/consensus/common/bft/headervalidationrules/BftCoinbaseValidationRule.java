@@ -57,4 +57,9 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "BftCoinbaseValidation";
+  }
 }
