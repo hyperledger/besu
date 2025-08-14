@@ -38,6 +38,14 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
     return validateTimestamp(header.getTimestamp(), parent.getTimestamp());
   }
 
+  @Override
+  public String toString() {
+    return "TimestampMoreRecentThanParent{"
+        + "minimumSecondsSinceParent="
+        + minimumSecondsSinceParent
+        + "}";
+  }
+
   private boolean validateTimestamp(final long timestamp, final long parentTimestamp) {
     return validateHeaderSufficientlyAheadOfParent(timestamp, parentTimestamp);
   }

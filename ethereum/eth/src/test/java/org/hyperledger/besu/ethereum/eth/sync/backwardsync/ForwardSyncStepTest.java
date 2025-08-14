@@ -179,7 +179,7 @@ public class ForwardSyncStepTest {
               return new PeerTaskExecutorResult<List<Block>>(
                   Optional.of(blocks),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(peer.getEthPeer()));
+                  List.of(peer.getEthPeer()));
             });
   }
 

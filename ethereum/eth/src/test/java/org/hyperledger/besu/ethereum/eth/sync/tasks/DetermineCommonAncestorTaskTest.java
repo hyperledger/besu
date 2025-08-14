@@ -165,7 +165,7 @@ public class DetermineCommonAncestorTaskTest {
         new PeerTaskExecutorResult<>(
             Optional.of(Collections.emptyList()),
             PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
-            Optional.of(respondingEthPeer.getEthPeer()));
+            List.of(respondingEthPeer.getEthPeer()));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -524,7 +524,7 @@ public class DetermineCommonAncestorTaskTest {
         }
 
         return new PeerTaskExecutorResult<List<BlockHeader>>(
-            Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+            Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
       }
     };
   }
