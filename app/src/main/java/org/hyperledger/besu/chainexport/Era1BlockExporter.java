@@ -35,11 +35,12 @@ import java.util.Map;
 
 import org.xerial.snappy.SnappyFramedOutputStream;
 
+/** A class to export ERA1 files */
 public class Era1BlockExporter {
   private static final long ERA1_FILE_BLOCKS = 8192;
-  public static final String MAINNET_GENESIS_HASH =
+  private static final String MAINNET_GENESIS_HASH =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
-  public static final String SEPOLIA_GENESIS_HASH =
+  private static final String SEPOLIA_GENESIS_HASH =
       "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
 
   private final Blockchain blockchain;
@@ -50,6 +51,8 @@ public class Era1BlockExporter {
    * Instantiates a new ERA1 block exporter.
    *
    * @param blockchain the blockchain
+   * @param outputStreamFactory an OutputStreamFactory
+   * @param snappyFactory a SnappyFactory
    */
   public Era1BlockExporter(
       final Blockchain blockchain,
@@ -60,7 +63,16 @@ public class Era1BlockExporter {
     this.snappyFactory = snappyFactory;
   }
 
+  /**
+   * Exports ERA1 files starting from file startFile and ending at EndFile
+   *
+   * @param startFile The first ERA1 file to be exported
+   * @param endFile The last ERA1 file to be exported
+   */
   public void export(final long startFile, final long endFile) {
+    if (endFile < startFile) {
+      throw new IllegalArgumentException("End of export range must be after start of export range");
+    }
     for (long fileNumber = startFile; fileNumber <= endFile; fileNumber++) {
       long startBlock = fileNumber * ERA1_FILE_BLOCKS;
       long endBlock = startBlock + ERA1_FILE_BLOCKS - 1;
