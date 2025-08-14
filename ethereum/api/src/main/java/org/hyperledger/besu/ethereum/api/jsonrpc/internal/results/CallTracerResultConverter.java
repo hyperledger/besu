@@ -796,9 +796,19 @@ public class CallTracerResultConverter {
 
               // gas is the leftmost of the N args
               final int gasIdx = stack.length - required;
-
+              int gasIdxAlt = required - 1; // alternative if stack top is at index 0
               try {
-                final java.math.BigInteger bi = stack[gasIdx].toUnsignedBigInteger();
+                final java.math.BigInteger biCandidate1 = stack[gasIdx].toUnsignedBigInteger();
+                java.math.BigInteger bi = biCandidate1;
+                if ((bi == null || bi.signum() <= 0) && stack.length >= required) {
+                  try {
+                    bi = stack[gasIdxAlt].toUnsignedBigInteger();
+                  } catch (Exception __ignore) {
+                      if (LOG.isTraceEnabled()) {
+                          LOG.trace("Exception during calculation of gasIdx, ignoring: {}", __ignore.getMessage());
+                      }
+                  }
+                }
                 final String biLog;
                 if (bi.signum() <= 0) {
                   biLog = "0x0";
@@ -889,11 +899,23 @@ public class CallTracerResultConverter {
           gasFromArg == null ? "null" : hexN(gasFromArg));
     }
 
-    // gasUsed: prefer explicit precompile cost; fallback to opcode cost
-    entryFrame
-        .getPrecompiledGasCost()
-        .ifPresentOrElse(
-            childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
+    // gasUsed: prefer caller-frame delta when possible; else precompile/opcode cost
+    boolean __gasUsedSet = false;
+    if (nextTrace != null && nextTrace.getDepth() == entryFrame.getDepth()) {
+      final long __before = entryFrame.getGasRemaining();
+      final long __after = nextTrace.getGasRemaining();
+      if (__before >= 0 && __after >= 0) {
+        childBuilder.gasUsed(Math.max(0L, __before - __after));
+        __gasUsedSet = true;
+      }
+    }
+    if (!__gasUsedSet) {
+      entryFrame
+          .getPrecompiledGasCost()
+          .ifPresentOrElse(
+              childBuilder::gasUsed,
+              () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
+    }
 
     // Parse precompile id from the child "to" address (last byte)
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
@@ -906,10 +928,10 @@ public class CallTracerResultConverter {
             stack -> {
               if (stack.length < 4) return;
 
-              final int inOffset = bytesToInt(stack[stack.length - 4]);
-              final int inSize = bytesToInt(stack[stack.length - 3]);
-              final int outOffset = bytesToInt(stack[stack.length - 2]);
-              final int outSize = bytesToInt(stack[stack.length - 1]);
+              final int inOffset = bytesToInt(stack[stack.length - 3]);
+              final int inSize = bytesToInt(stack[stack.length - 4]);
+              final int outOffset = bytesToInt(stack[stack.length - 1]);
+              final int outSize = bytesToInt(stack[stack.length - 2]);
 
               if (LOG.isTraceEnabled()) {
                 LOG.trace(
@@ -930,7 +952,10 @@ public class CallTracerResultConverter {
                       });
 
               // OUTPUT: authoritative post-call slice
-              if (nextTrace != null && nextTrace.getMemory().isPresent()) {
+              if (precompileId == 0x04) {
+                // Identity precompile: return data equals input
+                childBuilder.output(childBuilder.build().getInput());
+              } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
                 final Bytes[] preMem = entryFrame.getMemory().orElse(null);
 
