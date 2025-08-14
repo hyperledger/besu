@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -59,9 +60,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -923,6 +926,45 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     assertThat(result.get().isSuccessful()).isTrue();
   }
 
+  @Test
+  public void shouldGuessDelegateCodeTransactionTypeWhenAuthorizationsPresent() {
+    final CodeDelegation delegation =
+        new CodeDelegation(BigInteger.ONE, Address.fromHexString("0x1"), 42L, FAKE_SIGNATURE);
+
+    final CallParameter callParameter =
+        codeDelegationTransactionCallParamterBuilder(List.of(delegation)).build();
+
+    final BlockHeader blockHeader = mockBlockchainAndWorldState(callParameter);
+
+    mockProtocolSpecForProcessWithWorldUpdater();
+
+    final Transaction expectedTx =
+        Transaction.builder()
+            .chainId(BigInteger.ONE)
+            .nonce(1L)
+            .gasLimit(blockHeader.getGasLimit())
+            .sender(callParameter.getSender().orElseThrow())
+            .to(callParameter.getTo().orElseThrow())
+            .value(callParameter.getValue().orElseThrow())
+            .payload(callParameter.getPayload().orElseThrow())
+            .signature(FAKE_SIGNATURE)
+            .codeDelegations(List.of(delegation))
+            .guessType()
+            .build();
+
+    mockProcessorStatusForTransaction(expectedTx, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        uncappedTransactionSimulator.process(
+            callParameter,
+            TransactionValidationParams.transactionSimulator(),
+            OperationTracer.NO_TRACING,
+            blockHeader);
+
+    assertThat(result).isPresent();
+    assertThat(result.get().transaction().getType()).isEqualTo(TransactionType.DELEGATE_CODE);
+  }
+
   private BlockHeader mockBlockchainAndWorldState(final CallParameter callParameter) {
     final BlockHeader blockHeader =
         mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
@@ -1055,6 +1097,11 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         .gasPrice(Optional.empty())
         .maxFeePerGas(Wei.ZERO)
         .maxPriorityFeePerGas(Wei.ZERO);
+  }
+
+  private ImmutableCallParameter.Builder codeDelegationTransactionCallParamterBuilder(
+      final List<CodeDelegation> delegations) {
+    return legacyTransactionCallParameterBuilder().codeDelegationAuthorizations(delegations);
   }
 
   private CallParameter blobTransactionCallParameter() {

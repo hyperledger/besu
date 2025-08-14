@@ -28,6 +28,7 @@ public class FastSyncState {
   private OptionalLong pivotBlockNumber;
   private Optional<Hash> pivotBlockHash;
   private Optional<BlockHeader> pivotBlockHeader;
+  private boolean sourceIsTrusted = false;
 
   public FastSyncState() {
     pivotBlockNumber = OptionalLong.empty();
@@ -35,28 +36,31 @@ public class FastSyncState {
     pivotBlockHeader = Optional.empty();
   }
 
-  public FastSyncState(final long pivotBlockNumber) {
-    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty());
+  public FastSyncState(final long pivotBlockNumber, final boolean sourceIsTrusted) {
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty(), sourceIsTrusted);
   }
 
-  public FastSyncState(final Hash pivotBlockHash) {
-    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty());
+  public FastSyncState(final Hash pivotBlockHash, final boolean sourceIsTrusted) {
+    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty(), sourceIsTrusted);
   }
 
-  public FastSyncState(final BlockHeader pivotBlockHeader) {
+  public FastSyncState(final BlockHeader pivotBlockHeader, final boolean sourceIsTrusted) {
     this(
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
-        Optional.of(pivotBlockHeader));
+        Optional.of(pivotBlockHeader),
+        sourceIsTrusted);
   }
 
   protected FastSyncState(
       final OptionalLong pivotBlockNumber,
       final Optional<Hash> pivotBlockHash,
-      final Optional<BlockHeader> pivotBlockHeader) {
+      final Optional<BlockHeader> pivotBlockHeader,
+      final boolean sourceIsTrusted) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.pivotBlockHash = pivotBlockHash;
     this.pivotBlockHeader = pivotBlockHeader;
+    this.sourceIsTrusted = sourceIsTrusted;
   }
 
   public OptionalLong getPivotBlockNumber() {
@@ -79,6 +83,17 @@ public class FastSyncState {
     return pivotBlockHash.isPresent();
   }
 
+  /**
+   * Returns true if the source of the pivot block is fully trusted. In practice this means that it
+   * comes from the Consensus client through the engine API and the {@link
+   * PivotSelectorFromSafeBlock} is used for the pivot.
+   *
+   * @return true if the source is fully trusted, false otherwise
+   */
+  public boolean isSourceTrusted() {
+    return sourceIsTrusted;
+  }
+
   public void setCurrentHeader(final BlockHeader header) {
     pivotBlockNumber = OptionalLong.of(header.getNumber());
     pivotBlockHash = Optional.of(header.getHash());
@@ -90,14 +105,15 @@ public class FastSyncState {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FastSyncState that = (FastSyncState) o;
-    return Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
+    return sourceIsTrusted == that.sourceIsTrusted
+        && Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHash, that.pivotBlockHash)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader);
+    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader, sourceIsTrusted);
   }
 
   @Override
@@ -109,6 +125,8 @@ public class FastSyncState {
         + pivotBlockHash
         + ", pivotBlockHeader="
         + pivotBlockHeader
+        + ", sourceIsTrusted="
+        + sourceIsTrusted
         + '}';
   }
 }

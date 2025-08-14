@@ -436,7 +436,7 @@ public class BesuCommandTest extends CommandTestAbstract {
       // Verify TOML stores it by the appropriate type
       if (optionSpec.type().equals(Boolean.class)) {
         tomlResult.getBoolean(tomlKey);
-      } else if (optionSpec.isMultiValue() || optionSpec.arity().max > 1) {
+      } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
