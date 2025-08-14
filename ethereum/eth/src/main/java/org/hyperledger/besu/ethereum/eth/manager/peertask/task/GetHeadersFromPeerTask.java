@@ -39,6 +39,9 @@ import org.slf4j.LoggerFactory;
 
 public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetHeadersFromPeerTask.class);
+
+  private static final int DEFAULT_MAXIMUM_RETRIES_AGAINST_DIFFERENT_PEERS = 5;
+
   private final long blockNumber;
   private final Hash blockHash;
   private final int maxHeaders;
@@ -54,7 +57,14 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int skip,
       final Direction direction,
       final ProtocolSchedule protocolSchedule) {
-    this(null, blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
+    this(
+        null,
+        blockNumber,
+        maxHeaders,
+        skip,
+        direction,
+        DEFAULT_MAXIMUM_RETRIES_AGAINST_DIFFERENT_PEERS,
+        protocolSchedule);
   }
 
   public GetHeadersFromPeerTask(
@@ -64,7 +74,14 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
       final int skip,
       final Direction direction,
       final ProtocolSchedule protocolSchedule) {
-    this(blockHash, blockNumber, maxHeaders, skip, direction, 5, protocolSchedule);
+    this(
+        blockHash,
+        blockNumber,
+        maxHeaders,
+        skip,
+        direction,
+        DEFAULT_MAXIMUM_RETRIES_AGAINST_DIFFERENT_PEERS,
+        protocolSchedule);
   }
 
   public GetHeadersFromPeerTask(
