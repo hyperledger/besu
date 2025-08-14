@@ -138,6 +138,11 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     return false;
   }
 
+  @Override
+  public String toString() {
+    return "ProofOfWork";
+  }
+
   private boolean imlementsBaseFeeMarket() {
     return feeMarket.map(FeeMarket::implementsBaseFee).orElse(FALSE);
   }

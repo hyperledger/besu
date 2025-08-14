@@ -88,4 +88,9 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
   public boolean includeInLightValidation() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "BftCommitSealsValidation";
+  }
 }
