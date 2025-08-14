@@ -16,8 +16,10 @@ package org.hyperledger.besu.util.snappy;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import org.xerial.snappy.SnappyFramedInputStream;
+import org.xerial.snappy.SnappyFramedOutputStream;
 
 /** A Factory for producing objects related to handling snappy compressed data */
 public class SnappyFactory {
@@ -35,5 +37,10 @@ public class SnappyFactory {
   public SnappyFramedInputStream createFramedInputStream(final byte[] compressedData)
       throws IOException {
     return new SnappyFramedInputStream(new ByteArrayInputStream(compressedData));
+  }
+
+  public SnappyFramedOutputStream createFramedOutputStream(final OutputStream outputStream)
+      throws IOException {
+    return new SnappyFramedOutputStream(outputStream);
   }
 }

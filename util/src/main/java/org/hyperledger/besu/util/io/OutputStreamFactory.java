@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.blocks;
+package org.hyperledger.besu.util.io;
 
-/** The enum Block export format. */
-public enum BlockExportFormat {
-  /** Rlp block export format. */
-  RLP,
-  /** ERA1 block export format. */
-  ERA1
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
+public class OutputStreamFactory {
+
+  public OutputStreamFactory() {}
+
+  public FileOutputStream createFileOutputStream(String filename) throws FileNotFoundException {
+    return new FileOutputStream(filename);
+  }
 }
