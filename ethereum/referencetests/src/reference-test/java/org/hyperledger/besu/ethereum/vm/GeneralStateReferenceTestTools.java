@@ -136,8 +136,6 @@ public class GeneralStateReferenceTestTools {
     final Transaction transaction = spec.getTransaction(0);
     ProtocolSpec protocolSpec = protocolSpec(spec.getFork());
 
-    BlockchainReferenceTestTools.verifyJournaledEVMAccountCompatability(initialWorldState, protocolSpec);
-
     // Sometimes the tests ask us assemble an invalid transaction.  If we have
     // no valid transaction then there is no test.  GeneralBlockChain tests
     // will handle the case where we receive the TXs in a serialized form.
