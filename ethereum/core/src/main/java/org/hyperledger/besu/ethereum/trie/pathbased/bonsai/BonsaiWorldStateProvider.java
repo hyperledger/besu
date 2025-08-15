@@ -62,7 +62,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
-            this, worldStateKeyValueStorage, worldStateConfig, codeCache));
+            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
     loadHeadWorldState(
         new BonsaiWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));

@@ -97,7 +97,7 @@ public class CompleteBlocksWithPeerTaskTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(expectedBlocks),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()));
+                Collections.emptyList()));
 
     final CompleteBlocksWithPeerTask task =
         new CompleteBlocksWithPeerTask(
@@ -118,7 +118,7 @@ public class CompleteBlocksWithPeerTaskTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(block)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()));
+                Collections.emptyList()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(
@@ -145,7 +145,7 @@ public class CompleteBlocksWithPeerTaskTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(block1, block3)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()));
+                Collections.emptyList()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(
@@ -181,12 +181,12 @@ public class CompleteBlocksWithPeerTaskTest {
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(block1)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()))
+                Collections.emptyList()))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(block3)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.empty()));
+                Collections.emptyList()));
 
     CompleteBlocksWithPeerTask completeBlocksWithPeerTask =
         new CompleteBlocksWithPeerTask(
