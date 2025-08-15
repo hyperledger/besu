@@ -1,0 +1,78 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.vm.operations;
+
+import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.frame.BlockValues;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
+public class BenchmarkHelper {
+  public static MessageFrame createMessageFrame() {
+    return MessageFrame.builder()
+        .worldUpdater(mock(WorldUpdater.class))
+        .originator(Address.ZERO)
+        .gasPrice(Wei.ONE)
+        .blobGasPrice(Wei.ONE)
+        .blockValues(mock(BlockValues.class))
+        .miningBeneficiary(Address.ZERO)
+        .blockHashLookup((__, ___) -> Hash.ZERO)
+        .type(MessageFrame.Type.MESSAGE_CALL)
+        .initialGas(1_000_000)
+        .address(Address.ZERO)
+        .contract(Address.ZERO)
+        .inputData(Bytes32.ZERO)
+        .sender(Address.ZERO)
+        .value(Wei.ZERO)
+        .apparentValue(Wei.ZERO)
+        .code(CodeV0.EMPTY_CODE)
+        .completer(__ -> {})
+        .build();
+  }
+
+  /**
+   * Fills two arrays with random 32-byte values.
+   *
+   * @param aPool the destination array for first operands
+   * @param bPool the destination array for second operands
+   */
+  public static void fillPools(final Bytes[] aPool, final Bytes[] bPool) {
+    final ThreadLocalRandom random = ThreadLocalRandom.current();
+
+    for (int i = 0; i < aPool.length; i++) {
+      final int aSize = 1 + random.nextInt(32); // [1, 32]
+      final int bSize = 1 + random.nextInt(32);
+
+      final byte[] a = new byte[aSize];
+      final byte[] b = new byte[bSize];
+
+      random.nextBytes(a);
+      random.nextBytes(b);
+
+      aPool[i] = Bytes.wrap(a);
+      bPool[i] = Bytes.wrap(b);
+    }
+  }
+}
