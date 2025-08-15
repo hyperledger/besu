@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
+import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
 import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
 import org.hyperledger.besu.cli.options.EngineRPCOptions;
@@ -93,6 +94,7 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
@@ -137,6 +139,7 @@ import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -304,6 +307,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
   private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
+  private final DebugTracerOptions unstableDebugTracerOptions = DebugTracerOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1153,6 +1157,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
             .put("QBFT Options", unstableQbftOptions)
+            .put("Debug Tracer Options", unstableDebugTracerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1364,6 +1369,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       Blake2bfMessageDigest.Blake2bfDigest.disableNative();
       logger.info("Using the Java implementation of the blake2bf algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeP256Verify()
+        && P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL()) {
+      logger.info("Using the native BoringSSL implementation of p256verify");
+    } else {
+      P256VerifyPrecompiledContract.disableNativeBoringSSL();
+      if (SECP256R1.isNativeAvailable()) {
+        logger.info("Using the native secp256r1 signature algorithm implementation of p256verify");
+      } else {
+        logger.info("Using the Java secp256r1 implementation of p256verify");
+      }
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()

@@ -92,7 +92,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
         futureTransactions =
             ethContext
                 .getScheduler()
-                .scheduleSyncWorkerTask(
+                .scheduleServiceTask(
                     () -> {
                       PeerTaskExecutorResult<List<Transaction>> taskResult =
                           ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);

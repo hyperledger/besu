@@ -61,6 +61,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +167,7 @@ public class CheckPointSyncChainDownloaderTest {
               return new PeerTaskExecutorResult<>(
                   Optional.of(getReceiptsFromPeerTaskResult),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.empty());
+                  Collections.emptyList());
             });
 
     final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
@@ -193,7 +194,9 @@ public class CheckPointSyncChainDownloaderTest {
             syncBlocks.add(new SyncBlock(block.getHeader(), syncBlockBody));
           }
           return new PeerTaskExecutorResult<>(
-              Optional.of(syncBlocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+              Optional.of(syncBlocks),
+              PeerTaskExecutorResponseCode.SUCCESS,
+              Collections.emptyList());
         };
     when(peerTaskExecutor.execute(any(GetSyncBlockBodiesFromPeerTask.class)))
         .thenAnswer(getBlockBodiesAnswer);
@@ -219,7 +222,7 @@ public class CheckPointSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
