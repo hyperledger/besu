@@ -90,7 +90,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             bonsaiWorldStateKeyValueStorage,
             new NoopBonsaiCachedMerkleTrieLoader(),
             new NoOpBonsaiCachedWorldStorageManager(
-                bonsaiWorldStateKeyValueStorage, new CodeCache()),
+                bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie(),

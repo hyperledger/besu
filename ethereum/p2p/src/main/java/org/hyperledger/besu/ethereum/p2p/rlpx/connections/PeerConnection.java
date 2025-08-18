@@ -21,12 +21,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
 
 /** A P2P connection to another node. */
-public interface PeerConnection {
+public interface PeerConnection extends org.hyperledger.besu.plugin.data.p2p.PeerConnection {
 
   /**
    * Send given data to the connected node.
@@ -42,6 +41,7 @@ public interface PeerConnection {
    *
    * @return a list of shared capabilities between this node and the connected peer
    */
+  @Override
   Set<Capability> getAgreedCapabilities();
 
   /**
@@ -51,6 +51,7 @@ public interface PeerConnection {
    * @return the agreed capability corresponding to this protocol, returns null if no matching
    *     capability is supported
    */
+  @Override
   default Capability capability(final String protocol) {
     for (final Capability cap : getAgreedCapabilities()) {
       if (cap.getName().equalsIgnoreCase(protocol)) {
@@ -77,6 +78,7 @@ public interface PeerConnection {
    *
    * @return A representation of the remote peer this node is connected to.
    */
+  @Override
   Peer getPeer();
 
   /**
@@ -84,6 +86,7 @@ public interface PeerConnection {
    *
    * @return Peer Description
    */
+  @Override
   PeerInfo getPeerInfo();
 
   /**
@@ -108,17 +111,21 @@ public interface PeerConnection {
    */
   boolean isDisconnected();
 
+  @Override
   InetSocketAddress getLocalAddress();
 
+  @Override
   InetSocketAddress getRemoteAddress();
 
-  class PeerNotConnected extends IOException {
+  class PeerNotConnected
+      extends org.hyperledger.besu.plugin.data.p2p.PeerConnection.PeerNotConnected {
 
     public PeerNotConnected(final String message) {
       super(message);
     }
   }
 
+  @Override
   default EnodeURL getRemoteEnode() {
     return getPeer().getEnodeURL();
   }
@@ -129,13 +136,16 @@ public interface PeerConnection {
    *
    * @return the time when this connection was initiated.
    */
+  @Override
   long getInitiatedAt();
 
+  @Override
   boolean inboundInitiated();
 
   void setStatusSent();
 
   void setStatusReceived();
 
+  @Override
   boolean getStatusExchanged();
 }

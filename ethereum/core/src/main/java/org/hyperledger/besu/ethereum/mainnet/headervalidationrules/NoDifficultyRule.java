@@ -26,4 +26,9 @@ public class NoDifficultyRule implements AttachedBlockHeaderValidationRule {
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     return (header.getDifficulty() == null || header.getDifficulty().equals(Difficulty.ZERO));
   }
+
+  @Override
+  public String toString() {
+    return "NoDifficulty";
+  }
 }
