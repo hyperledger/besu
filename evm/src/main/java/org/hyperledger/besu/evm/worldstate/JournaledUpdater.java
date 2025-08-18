@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The Journaled updater.
@@ -40,6 +42,8 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
+  final UndoSet<Address> touched;
+  final UndoSet<Address> created;
   final long undoMark;
 
   /**
@@ -56,10 +60,14 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
+      touched = UndoSet.of(new HashSet<>());
+      created = UndoSet.of(new HashSet<>());
       rootWorld = journaledUpdater.rootWorld;
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
+      touched = UndoSet.of(new HashSet<>());
+      created = UndoSet.of(new HashSet<>());
       rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
     } else {
       throw new IllegalArgumentException(
@@ -85,7 +93,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
-    return new ArrayList<>(accounts.values());
+    return touched.stream()
+        .map(accounts::get)
+        .filter(Objects::nonNull)
+        .filter(acc -> !deleted.contains(acc.getAddress()))
+        .filter(acc -> !acc.getDeleted())
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   @Override
@@ -100,6 +113,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);
     deleted.undo(undoMark);
+    touched.undo(undoMark);
+    for (Address addr : created) {
+      accounts.remove(addr);
+    }
+    created.undo(undoMark);
   }
 
   @Override
@@ -109,10 +127,22 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public void commit() {
-    if (!(parentWorld instanceof JournaledUpdater<?>)) {
-      accounts.values().forEach(JournaledAccount::commit);
-      deleted.forEach(parentWorld::deleteAccount);
+    if (parentWorld instanceof JournaledUpdater<?> jw) {
+      jw.touched.addAll(this.touched);
+      jw.created.addAll(this.created);
+      return;
     }
+
+    for (final JournaledAccount a : accounts.values()) {
+      if (a.getDeleted() || deleted.contains(a.getAddress())) continue;
+      if (created.contains(a.getAddress())) {
+        final MutableAccount pa =
+            rootWorld.createAccount(a.getAddress(), a.getNonce(), a.getBalance());
+        a.setWrappedAccount(pa);
+      }
+      a.commit();
+    }
+    deleted.forEach(parentWorld::deleteAccount);
   }
 
   @Override
@@ -128,10 +158,13 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    JournaledAccount journaledAccount =
-        new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
-    accounts.put(address, journaledAccount);
-    return new JournaledAccount(journaledAccount);
+    final JournaledAccount ja = new JournaledAccount(address);
+    ja.setNonce(nonce);
+    ja.setBalance(balance);
+    accounts.put(address, ja);
+    touched.add(address);
+    created.add(address);
+    return ja;
   }
 
   @Override
@@ -139,6 +172,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     // We may have updated it already, so check that first.
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
+      touched.add(address);
       return existing;
     }
     if (deleted.contains(address)) {
@@ -152,6 +186,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     } else {
       var newAccount = new JournaledAccount(origin);
       accounts.put(address, newAccount);
+      touched.add(address);
       return newAccount;
     }
   }
@@ -159,6 +194,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   @Override
   public void deleteAccount(final Address address) {
     deleted.add(address);
+    touched.remove(address); // NOT SURE
     var account = accounts.get(address);
     if (account != null) {
       account.setDeleted(true);
