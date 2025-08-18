@@ -43,8 +43,6 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,9 +51,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockSizeTransactionSelectorTest {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.generateKeyPair();
   private static final long TRANSFER_GAS_LIMIT = 21_000L;
   private static final long BLOCK_GAS_LIMIT = 1_000_000L;
 

@@ -2043,7 +2043,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final boolean hasPriority;
 
     Sender(final boolean hasPriority, final int gasFeeMultiplier) {
-      this.key = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      this.key = SIGNATURE_ALGORITHM.generateKeyPair();
       this.address = Util.publicKeyToAddress(key.getPublicKey());
       this.gasFeeMultiplier = gasFeeMultiplier;
       this.hasPriority = hasPriority;

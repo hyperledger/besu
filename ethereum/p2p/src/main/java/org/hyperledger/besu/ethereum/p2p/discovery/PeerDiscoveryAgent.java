@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -68,8 +67,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
-  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -220,11 +219,9 @@ public abstract class PeerDiscoveryAgent {
                           sequenceNumber,
                           new EnrField(EnrField.ID, IdentitySchema.V4),
                           new EnrField(
-                              SIGNATURE_ALGORITHM.get().getCurveName(),
-                              SIGNATURE_ALGORITHM
-                                  .get()
-                                  .compressPublicKey(
-                                      SIGNATURE_ALGORITHM.get().createPublicKey(id))),
+                              SIGNATURE_ALGORITHM.getCurveName(),
+                              SIGNATURE_ALGORITHM.compressPublicKey(
+                                  SIGNATURE_ALGORITHM.createPublicKey(id))),
                           new EnrField(EnrField.IP_V4, addressBytes),
                           new EnrField(EnrField.TCP, listeningPort),
                           new EnrField(EnrField.UDP, discoveryPort),

@@ -32,14 +32,11 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
 
 public class FrontierTransactionDecoder {
   // Supplier for the signature algorithm
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   public static Transaction decode(final RLPInput input) {
     RLPInput transactionRlp = input.readAsRlp();
@@ -73,7 +70,7 @@ public class FrontierTransactionDecoder {
     }
     final BigInteger r = transactionRlp.readUInt256Scalar().toUnsignedBigInteger();
     final BigInteger s = transactionRlp.readUInt256Scalar().toUnsignedBigInteger();
-    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
+    final SECPSignature signature = SIGNATURE_ALGORITHM.createSignature(r, s, recId);
 
     transactionRlp.leaveList();
 
