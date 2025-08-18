@@ -54,7 +54,7 @@ public class StorageSubCommandTest extends CommandTestAbstract {
     parseCommand("storage", "revert-variables", "--help");
 
     assertThat(commandOutput.toString(UTF_8))
-        .contains("This command revert the modifications done by the variables storage feature");
+        .contains("This command reverts the modifications done by the variables storage feature");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -116,5 +116,13 @@ public class StorageSubCommandTest extends CommandTestAbstract {
 
     assertNoVariablesInStorage(kvVariables);
     assertVariablesPresentInBlockchainStorage(kvBlockchain, variableValues);
+  }
+
+  @Test
+  public void storageBackwardSyncSubCommandExists() {
+    parseCommand("storage", "x-reset-backward-sync", "--help");
+
+    assertThat(commandOutput.toString(UTF_8)).contains("Resets backward sync state");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }
