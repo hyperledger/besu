@@ -76,6 +76,7 @@ public class Era1BlockExporter {
    *
    * @param startFile The first ERA1 file to be exported
    * @param endFile The last ERA1 file to be exported
+   * @param outputDirectory The directory in which to put the exported files
    */
   public void export(final long startFile, final long endFile, final File outputDirectory) {
     if (endFile < startFile) {
