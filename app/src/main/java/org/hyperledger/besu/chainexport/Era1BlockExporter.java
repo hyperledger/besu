@@ -199,7 +199,7 @@ public class Era1BlockExporter {
     writer.write(length);
     writer.write(content);
 
-    return typeCode.length + length.length + content.length;
+    return (long) (typeCode.length + length.length + content.length);
   }
 
   private long writeCompressedSection(
