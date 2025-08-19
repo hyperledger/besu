@@ -110,14 +110,14 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     }
 
     for (final JournaledAccount a : accounts.values()) {
-      if (!deleted.contains(a.getAddress())) {
-        if (a.getWrappedAccount() == null) {
-          final MutableAccount pa =
-              rootWorld.createAccount(a.getAddress(), a.getNonce(), a.getBalance());
-          a.setWrappedAccount(pa);
-        }
-        a.commit();
+      final Address addr = a.getAddress();
+      if (deleted.contains(addr)) {
+        continue;
       }
+      if (a.getWrappedAccount() == null) {
+        a.setWrappedAccount(rootWorld.createAccount(addr, a.getNonce(), a.getBalance()));
+      }
+      a.commit();
     }
     deleted.forEach(parentWorld::deleteAccount);
   }
@@ -172,22 +172,27 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public void deleteAccount(final Address address) {
     deleted.add(address);
     touched.remove(address);
+    // TODO: This is probably not necessary?
+    var account = accounts.get(address);
+    if (account != null) {
+      account.setDeleted(true);
+    }
   }
 
   @Override
   public Account get(final Address address) {
-    final MutableAccount existing = accounts.get(address);
-    if (existing != null && !deleted.contains(address)) {
-      return existing;
-    }
     if (deleted.contains(address)) {
       return null;
+    }
+    final MutableAccount existing = accounts.get(address);
+    if (existing != null) {
+      return existing;
     }
     return rootWorld.get(address);
   }
 
   @Override
   public WorldUpdater updater() {
-    return new JournaledUpdater<W>(this, evmConfiguration);
+    return new JournaledUpdater<>(this, evmConfiguration);
   }
 }
