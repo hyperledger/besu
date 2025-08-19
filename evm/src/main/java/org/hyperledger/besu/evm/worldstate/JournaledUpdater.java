@@ -42,8 +42,8 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
-  final UndoSet<Address> touched;
-  final UndoSet<Address> created;
+  final HashSet<Address> touched;
+  final HashSet<Address> created;
   final long undoMark;
 
   /**
@@ -60,14 +60,14 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
-      touched = UndoSet.of(new HashSet<>());
-      created = UndoSet.of(new HashSet<>());
+      touched = new HashSet<>();
+      created = new HashSet<>();
       rootWorld = journaledUpdater.rootWorld;
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
-      touched = UndoSet.of(new HashSet<>());
-      created = UndoSet.of(new HashSet<>());
+      touched = new HashSet<>();
+      created = new HashSet<>();
       rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
     } else {
       throw new IllegalArgumentException(
@@ -112,11 +112,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);
     deleted.undo(undoMark);
-    touched.undo(undoMark);
     for (Address addr : created) {
       accounts.remove(addr);
     }
-    created.undo(undoMark);
+    created.clear();
+    touched.clear();
   }
 
   @Override
@@ -166,6 +166,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     accounts.put(address, ja);
     touched.add(address);
     created.add(address);
+    deleted.remove(address);
     return ja;
   }
 
