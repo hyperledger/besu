@@ -46,7 +46,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final long undoMark;
 
   /**
-   * Instantiates a new Stacked updater.
+   * Instantiates a new Journaled updater.
    *
    * @param world the world
    * @param evmConfiguration the EVM Configuration parameters
@@ -121,7 +121,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public void commit() {
     if (parentWorld instanceof JournaledUpdater<?> jw) {
       jw.touched.addAll(this.touched);
-      jw.deleted.addAll(this.deleted);
       return;
     }
 
