@@ -7,6 +7,7 @@
       {
         "to": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
         "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        "gasPrice": "0x0",
         "data": "0x123456"
       }
     ]
@@ -14,9 +15,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 3,
-    "error":{
-      "code":-32004,
-      "message":"Upfront cost exceeds account balance (transaction up-front cost 0x1120ed6c5d23b0 exceeds transaction sender account balance 0x140)"}
+    "result": "0x52dd"
   },
   "statusCode": 200
 }
