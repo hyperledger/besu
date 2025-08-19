@@ -28,6 +28,12 @@ public class BftRoundExpiryTimeCalculator implements RoundExpiryTimeCalculator {
     this.baseExpiryPeriod = baseExpiryPeriod;
   }
 
+  /**
+   * Calculates the expiry time for a given round based on an exponential backoff strategy.
+   *
+   * @param round the round identifier for which to calculate the expiry time
+   * @return the duration until the round expires
+   */
   @Override
   public Duration calculateRoundExpiry(final ConsensusRoundIdentifier round) {
     return Duration.ofMillis(
