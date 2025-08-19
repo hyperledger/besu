@@ -15,6 +15,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- improve performance of OperandStack resizes for deep stacks (> 100 elements). Impacts general EVM performance while working with deep stacks [#8869](https://github.com/hyperledger/besu/pull/8869)
 
 #### Fusaka devnets
 
