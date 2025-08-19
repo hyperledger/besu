@@ -59,10 +59,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     if (world instanceof JournaledUpdater<?>) {
       JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
       accounts = journaledUpdater.accounts;
-      deleted = journaledUpdater.deleted;
+      deleted = UndoSet.of(new HashSet<>());
       touched = UndoSet.of(new HashSet<>());
       created = UndoSet.of(new HashSet<>());
       rootWorld = journaledUpdater.rootWorld;
+
+      deleted.addAll(journaledUpdater.deleted);
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
@@ -94,10 +96,9 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
     return touched.stream()
+        .filter(addr -> !deleted.contains(addr))
         .map(accounts::get)
         .filter(Objects::nonNull)
-        .filter(acc -> !deleted.contains(acc.getAddress()))
-        .filter(acc -> !acc.getDeleted())
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
@@ -130,11 +131,14 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     if (parentWorld instanceof JournaledUpdater<?> jw) {
       jw.touched.addAll(this.touched);
       jw.created.addAll(this.created);
+      jw.deleted.addAll(this.deleted);
       return;
     }
 
     for (final JournaledAccount a : accounts.values()) {
-      if (a.getDeleted() || deleted.contains(a.getAddress())) continue;
+      if (deleted.contains(a.getAddress())) {
+        continue;
+      }
       if (created.contains(a.getAddress())) {
         final MutableAccount pa =
             rootWorld.createAccount(a.getAddress(), a.getNonce(), a.getBalance());
@@ -173,6 +177,9 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
       touched.add(address);
+      if (deleted.contains(address)) {
+        return null;
+      }
       return existing;
     }
     if (deleted.contains(address)) {
@@ -194,17 +201,13 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   @Override
   public void deleteAccount(final Address address) {
     deleted.add(address);
-    touched.remove(address); // NOT SURE
-    var account = accounts.get(address);
-    if (account != null) {
-      account.setDeleted(true);
-    }
+    touched.remove(address);
   }
 
   @Override
   public Account get(final Address address) {
     final MutableAccount existing = accounts.get(address);
-    if (existing != null) {
+    if (existing != null && !deleted.contains(address)) {
       return existing;
     }
     if (deleted.contains(address)) {
