@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.chainexport;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -29,11 +31,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.bouncycastle.util.Pack;
 import org.xerial.snappy.SnappyFramedOutputStream;
 
 /** A class to export ERA1 files */
@@ -81,6 +88,7 @@ public class Era1BlockExporter {
       List<Block> blocksForFile = new ArrayList<>();
       Map<Block, List<TransactionReceipt>> transactionReceiptsForFile = new HashMap<>();
       Map<Block, Difficulty> difficultysForFile = new HashMap<>();
+      List<AccumulatorHeaderRecord> accumulatorHeaderRecords = new ArrayList<>();
       for (long blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
         blockchain
             .getBlockByNumber(blockNumber)
@@ -92,7 +100,13 @@ public class Era1BlockExporter {
                       .ifPresent((receipts) -> transactionReceiptsForFile.put(block, receipts));
                   blockchain
                       .getTotalDifficultyByHash(block.getHash())
-                      .ifPresent((difficulty) -> difficultysForFile.put(block, difficulty));
+                      .ifPresent(
+                          (difficulty) -> {
+                            difficultysForFile.put(block, difficulty);
+                            accumulatorHeaderRecords.add(
+                                new AccumulatorHeaderRecord(
+                                    block.getHash(), difficulty.toUInt256()));
+                          });
                 });
       }
       String network =
@@ -111,48 +125,84 @@ public class Era1BlockExporter {
       try (FileOutputStream writer =
           outputStreamFactory.createFileOutputStream(
               outputDirectory.toPath().resolve(filename).toFile())) {
-        writer.write(Era1Type.VERSION.getTypeCode());
+        long position = 0;
+        position += writeSection(writer, Era1Type.VERSION, new byte[] {});
 
+        Map<Block, Long> blockPositions = new HashMap<>();
         for (Block block : blocksForFile) {
-          writeCompressedSection(
-              writer,
-              Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
-              RLP.encode(block.getHeader()::writeTo).toArray());
-          writeCompressedSection(
-              writer,
-              Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
-              RLP.encode(block.getBody()::writeTo).toArray());
-          writeCompressedSection(
-              writer,
-              Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
-              RLP.encode(
-                      (rlpOutput) ->
-                          transactionReceiptsForFile
-                              .get(block)
-                              .forEach(
-                                  (tr) ->
-                                      TransactionReceiptEncoder.writeTo(
-                                          tr,
-                                          rlpOutput,
-                                          TransactionReceiptEncodingConfiguration.DEFAULT)))
-                  .toArray());
-          writeSection(writer, Era1Type.TOTAL_DIFFICULTY, difficultysForFile.get(block).toArray());
+          blockPositions.put(block, position);
+          position +=
+              writeCompressedSection(
+                  writer,
+                  Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
+                  RLP.encode(block.getHeader()::writeTo).toArray());
+          position +=
+              writeCompressedSection(
+                  writer,
+                  Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
+                  RLP.encode(block.getBody()::writeTo).toArray());
+          position +=
+              writeCompressedSection(
+                  writer,
+                  Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
+                  RLP.encode(
+                          (rlpOutput) ->
+                              transactionReceiptsForFile
+                                  .get(block)
+                                  .forEach(
+                                      (tr) ->
+                                          TransactionReceiptEncoder.writeTo(
+                                              tr,
+                                              rlpOutput,
+                                              TransactionReceiptEncodingConfiguration.DEFAULT)))
+                      .toArray());
+          position +=
+              writeSection(
+                  writer, Era1Type.TOTAL_DIFFICULTY, difficultysForFile.get(block).toArray());
         }
+
+        Hash accumulatorHash =
+            Util.getRootFromListOfBytes(
+                accumulatorHeaderRecords.stream()
+                    .map(
+                        (ahr) -> {
+                          ByteBuffer bytes =
+                              ByteBuffer.allocate(
+                                  ahr.blockHash.size() + ahr.totalDifficulty.size());
+                          ahr.blockHash.appendTo(bytes);
+                          ahr.totalDifficulty.appendTo(bytes);
+                          return Bytes.wrapByteBuffer(bytes);
+                        })
+                    .toList());
+        position += writeSection(writer, Era1Type.ACCUMULATOR, accumulatorHash.toArray());
+
+        ByteBuffer blockIndex = ByteBuffer.allocate(16 + blockPositions.size() * 8);
+        blockIndex.put(Pack.longToLittleEndian(startBlock));
+        for (Block block : blocksForFile) {
+          long relativePosition = blockPositions.get(block) - position;
+          blockIndex.put(Pack.longToLittleEndian(relativePosition));
+        }
+        blockIndex.put(Pack.longToLittleEndian(blocksForFile.size()));
+        position += writeSection(writer, Era1Type.BLOCK_INDEX, blockIndex.array());
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
   }
 
-  private void writeSection(
+  private long writeSection(
       final FileOutputStream writer, final Era1Type era1Type, final byte[] content)
       throws IOException {
-    writer.write(era1Type.getTypeCode());
-    writer.write(convertLengthToByteArray(content.length));
+    byte[] typeCode = era1Type.getTypeCode();
+    writer.write(typeCode);
+    byte[] length = convertLengthToLittleEndianByteArray(content.length);
+    writer.write(length);
     writer.write(content);
+
+    return typeCode.length + length.length + content.length;
   }
 
-  private void writeCompressedSection(
+  private long writeCompressedSection(
       final FileOutputStream writer, final Era1Type era1Type, final byte[] content)
       throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -160,10 +210,14 @@ public class Era1BlockExporter {
         snappyFactory.createFramedOutputStream(byteArrayOutputStream);
     snappyOutputStream.write(content);
 
-    writeSection(writer, era1Type, byteArrayOutputStream.toByteArray());
+    return writeSection(writer, era1Type, byteArrayOutputStream.toByteArray());
   }
 
-  private byte[] convertLengthToByteArray(final int length) {
-    return new byte[] {(byte) (length >> 16), (byte) (length >> 8), (byte) (length)};
+  private byte[] convertLengthToLittleEndianByteArray(final int length) {
+    byte[] lengthBytes = Pack.intToLittleEndian(length);
+    return new byte[] {lengthBytes[0], lengthBytes[1], lengthBytes[2]};
   }
+
+  private record AccumulatorHeaderRecord(Bytes32 blockHash, UInt256 totalDifficulty) {}
+  ;
 }
