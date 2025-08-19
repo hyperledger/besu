@@ -361,7 +361,8 @@ public class BlocksSubCommand implements Runnable {
         names = "--to",
         required = true,
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-        description = "File to write the block list to.",
+        description =
+            "File (or directory, in the case of ERA1 format export) to write the block list to.",
         arity = "1..1")
     private final File blocksExportFile = null;
 
@@ -425,7 +426,7 @@ public class BlocksSubCommand implements Runnable {
       parentCommand
           .era1BlockExporterFactory
           .apply(controller.getProtocolContext().getBlockchain())
-          .export(startFile, endFile);
+          .export(startFile, endFile, blocksExportFile);
     }
 
     private long convertBlockNumberToFileNumber(final long blockNumber) {

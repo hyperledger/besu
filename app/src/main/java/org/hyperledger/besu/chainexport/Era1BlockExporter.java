@@ -26,6 +26,7 @@ import org.hyperledger.besu.util.io.OutputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class Era1BlockExporter {
    * @param startFile The first ERA1 file to be exported
    * @param endFile The last ERA1 file to be exported
    */
-  public void export(final long startFile, final long endFile) {
+  public void export(final long startFile, final long endFile, final File outputDirectory) {
     if (endFile < startFile) {
       throw new IllegalArgumentException("End of export range must be after start of export range");
     }
@@ -107,8 +108,9 @@ public class Era1BlockExporter {
               network,
               fileNumber,
               blocksForFile.getLast().getHeader().getStateRoot().toFastHex(false).substring(0, 8));
-      try {
-        FileOutputStream writer = outputStreamFactory.createFileOutputStream(filename);
+      try (FileOutputStream writer =
+          outputStreamFactory.createFileOutputStream(
+              outputDirectory.toPath().resolve(filename).toFile())) {
         writer.write(Era1Type.VERSION.getTypeCode());
 
         for (Block block : blocksForFile) {
