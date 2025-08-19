@@ -59,12 +59,10 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     if (world instanceof JournaledUpdater<?>) {
       JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
       accounts = journaledUpdater.accounts;
-      deleted = UndoSet.of(new HashSet<>());
+      deleted = journaledUpdater.deleted;
       touched = UndoSet.of(new HashSet<>());
       created = UndoSet.of(new HashSet<>());
       rootWorld = journaledUpdater.rootWorld;
-
-      deleted.addAll(journaledUpdater.deleted);
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
@@ -173,17 +171,14 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public MutableAccount getAccount(final Address address) {
+    if (deleted.contains(address)) {
+      return null;
+    }
     // We may have updated it already, so check that first.
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
       touched.add(address);
-      if (deleted.contains(address)) {
-        return null;
-      }
       return existing;
-    }
-    if (deleted.contains(address)) {
-      return null;
     }
 
     // Otherwise, get it from our wrapped view and create a new update tracker.

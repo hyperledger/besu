@@ -89,8 +89,7 @@ class JournaledUpdaterEmptyAccountRevertTest {
 
   static Stream<Arguments> modes() {
     return Stream.of(
-        Arguments.of(WorldUpdaterMode.STACKED),
-        Arguments.of(WorldUpdaterMode.JOURNALED));
+        Arguments.of(WorldUpdaterMode.STACKED), Arguments.of(WorldUpdaterMode.JOURNALED));
   }
 
   @ParameterizedTest
