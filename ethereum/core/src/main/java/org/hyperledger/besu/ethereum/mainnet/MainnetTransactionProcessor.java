@@ -474,11 +474,11 @@ public class MainnetTransactionProcessor {
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
-      if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
-      }
-
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        // EIP-158: Clear empty accounts on state change only
+        if (clearEmptyAccounts) {
+          worldState.clearAccountsThatAreEmpty();
+        }
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction,
