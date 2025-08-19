@@ -37,13 +37,13 @@ import java.util.stream.Collectors;
  */
 public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
-  final EvmConfiguration evmConfiguration;
-  final WorldUpdater parentWorld;
-  final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
-  final UndoMap<Address, JournaledAccount> accounts;
-  final UndoSet<Address> deleted;
-  final HashSet<Address> touched;
-  final long undoMark;
+  private final EvmConfiguration evmConfiguration;
+  private final WorldUpdater parentWorld;
+  private final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
+  private final UndoMap<Address, JournaledAccount> accounts;
+  private final UndoSet<Address> deleted;
+  private final HashSet<Address> touched;
+  private final long undoMark;
 
   /**
    * Instantiates a new Journaled updater.
@@ -79,7 +79,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
         .filter(addr -> !deleted.contains(addr))
         .map(accounts::get)
         .filter(Objects::nonNull)
-        .collect(Collectors.toCollection(ArrayList::new));
+        .collect(Collectors.toCollection(() -> new ArrayList<>(touched.size())));
   }
 
   @Override
@@ -90,7 +90,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   /**
    * Remove all changes done by this layer. Rollback to the state prior to the updater's changes.
    */
-  protected void reset() {
+  private void reset() {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);
     deleted.undo(undoMark);
