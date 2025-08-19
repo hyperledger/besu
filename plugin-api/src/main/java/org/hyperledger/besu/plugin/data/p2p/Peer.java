@@ -12,12 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.util.List;
-import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
 
-public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, List<EthPeer> ethPeers) {}
+/** A P2P peer for plugin use. */
+public interface Peer {
+
+  /**
+   * Get the peer's ID.
+   *
+   * @return peer ID
+   */
+  Bytes getId();
+
+  /**
+   * Get the enode URL of this peer.
+   *
+   * @return enode URL
+   */
+  EnodeURL getEnodeURL();
+}

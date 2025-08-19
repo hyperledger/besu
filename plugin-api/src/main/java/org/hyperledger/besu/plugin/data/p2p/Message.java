@@ -12,12 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.datatypes.p2p.MessageData;
 
-import java.util.List;
-import java.util.Optional;
+/** A P2P network message received from another peer for plugin use. */
+public interface Message {
 
-public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, List<EthPeer> ethPeers) {}
+  /**
+   * Returns the {@link MessageData} contained in the message.
+   *
+   * @return Data in the message
+   */
+  MessageData getData();
+
+  /**
+   * {@link PeerConnection} this message was sent from.
+   *
+   * @return PeerConnection this message was sent from.
+   */
+  PeerConnection getConnection();
+}

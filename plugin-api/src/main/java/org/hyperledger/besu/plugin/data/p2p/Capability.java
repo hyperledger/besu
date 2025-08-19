@@ -12,12 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+/** A P2P protocol capability for plugin use. */
+public interface Capability {
 
-import java.util.List;
-import java.util.Optional;
+  /**
+   * Get the name of the protocol.
+   *
+   * @return protocol name
+   */
+  String getName();
 
-public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, List<EthPeer> ethPeers) {}
+  /**
+   * Get the version of the protocol.
+   *
+   * @return protocol version
+   */
+  int getVersion();
+}

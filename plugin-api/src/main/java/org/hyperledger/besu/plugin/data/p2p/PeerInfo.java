@@ -12,12 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.besu.plugin.data.p2p;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.datatypes.Address;
 
-import java.util.List;
-import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
 
-public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, List<EthPeer> ethPeers) {}
+/** Peer information for plugin use. */
+public interface PeerInfo {
+
+  /**
+   * Get the address of this peer.
+   *
+   * @return peer address
+   */
+  Address getAddress();
+
+  /**
+   * Get the node ID of this peer.
+   *
+   * @return node ID
+   */
+  Bytes getNodeId();
+
+  /**
+   * Get the client ID of this peer.
+   *
+   * @return client ID
+   */
+  String getClientId();
+}

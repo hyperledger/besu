@@ -12,12 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.peertask;
+package org.hyperledger.besu.datatypes.p2p;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.apache.tuweni.bytes.Bytes;
 
-import java.util.List;
-import java.util.Optional;
+/** A P2P Network Message's Data for plugin use. */
+public interface MessageData {
+  /**
+   * Returns the size of the message.
+   *
+   * @return Number of bytes in this data.
+   */
+  int getSize();
 
-public record PeerTaskExecutorResult<T>(
-    Optional<T> result, PeerTaskExecutorResponseCode responseCode, List<EthPeer> ethPeers) {}
+  /**
+   * Returns the message's code.
+   *
+   * @return Message Code
+   */
+  int getCode();
+
+  /**
+   * Get the serialized representation for this message
+   *
+   * @return the serialized representation of this message
+   */
+  Bytes getData();
+}
