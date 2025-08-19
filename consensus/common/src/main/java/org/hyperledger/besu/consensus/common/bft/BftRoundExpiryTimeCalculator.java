@@ -24,6 +24,11 @@ import java.time.Duration;
 public class BftRoundExpiryTimeCalculator implements RoundExpiryTimeCalculator {
   private final Duration baseExpiryPeriod;
 
+  /**
+   * Constructs a BftRoundExpiryTimeCalculator with a specified base expiry period.
+   *
+   * @param baseExpiryPeriod the base duration for round expiry calculations
+   */
   public BftRoundExpiryTimeCalculator(final Duration baseExpiryPeriod) {
     this.baseExpiryPeriod = baseExpiryPeriod;
   }
