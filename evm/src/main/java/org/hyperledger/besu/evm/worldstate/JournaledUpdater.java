@@ -73,21 +73,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     undoMark = accounts.mark();
   }
 
-  /**
-   * Get an account suitable for mutation. Defer to parent if not tracked locally.
-   *
-   * @param address the account at the address, for mutaton.
-   * @return the mutable account
-   */
-  protected MutableAccount getForMutation(final Address address) {
-    final JournaledAccount wrappedTracker = accounts.get(address);
-    if (wrappedTracker != null) {
-      return wrappedTracker;
-    }
-    final MutableAccount account = rootWorld.getForMutation(address);
-    return account == null ? null : new UpdateTrackingAccount<>(account);
-  }
-
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
     return touched.stream()
