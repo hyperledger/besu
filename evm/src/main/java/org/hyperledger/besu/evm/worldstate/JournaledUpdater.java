@@ -43,7 +43,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
   final HashSet<Address> touched;
-  final HashSet<Address> created;
   final long undoMark;
 
   /**
@@ -61,13 +60,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
       touched = new HashSet<>();
-      created = new HashSet<>();
       rootWorld = journaledUpdater.rootWorld;
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
       touched = new HashSet<>();
-      created = new HashSet<>();
       rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
     } else {
       throw new IllegalArgumentException(
@@ -112,10 +109,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);
     deleted.undo(undoMark);
-    for (Address addr : created) {
-      accounts.remove(addr);
-    }
-    created.clear();
     touched.clear();
   }
 
@@ -128,21 +121,19 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public void commit() {
     if (parentWorld instanceof JournaledUpdater<?> jw) {
       jw.touched.addAll(this.touched);
-      jw.created.addAll(this.created);
       jw.deleted.addAll(this.deleted);
       return;
     }
 
     for (final JournaledAccount a : accounts.values()) {
-      if (deleted.contains(a.getAddress())) {
-        continue;
+      if (!deleted.contains(a.getAddress())) {
+        if (a.getWrappedAccount() == null) {
+          final MutableAccount pa =
+              rootWorld.createAccount(a.getAddress(), a.getNonce(), a.getBalance());
+          a.setWrappedAccount(pa);
+        }
+        a.commit();
       }
-      if (created.contains(a.getAddress())) {
-        final MutableAccount pa =
-            rootWorld.createAccount(a.getAddress(), a.getNonce(), a.getBalance());
-        a.setWrappedAccount(pa);
-      }
-      a.commit();
     }
     deleted.forEach(parentWorld::deleteAccount);
   }
@@ -165,7 +156,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     ja.setBalance(balance);
     accounts.put(address, ja);
     touched.add(address);
-    created.add(address);
     deleted.remove(address);
     return ja;
   }
