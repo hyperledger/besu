@@ -855,10 +855,22 @@ public class CallTracerResultConverter {
    * Finalize a precompile "child" call: set gas/gasUsed, compute input/output from memory, and
    * attach immediately to the parent (no depth+1 callee frame will arrive).
    *
-   * <p>Precompiles execute inline; there is no callee frame. gas: from stack arg (if not already
-   * set). gasUsed: entryFrame.getPrecompiledGasCost() (fallback: opcode gasCost). input: pre-call
-   * memory slice (inOffset,inSize). output: post-call memory slice (identity= min(inSize,outSize);
-   * fixed-size=min(expected,outSize); modexp=header len).
+   * <p>Behavior:
+   *
+   * <ul>
+   *   <li><b>Execution model:</b> Precompiles execute inline; no separate callee frame is emitted.
+   *   <li><b>Gas (provided):</b> Forwarded gas per EIP-150: forwarded = min(gasArg, (gasRemaining -
+   *       opCost) * 63/64). If gasArg can’t be read (or is zero), fall back to the cap.
+   *   <li><b>Gas used:</b> Prefer entryFrame.getPrecompiledGasCost(); fallback to opcode gasCost.
+   *   <li><b>Input:</b> Pre-call memory slice using (inOffset, inSize) from the caller’s stack.
+   *   <li><b>Output:</b>
+   *       <ul>
+   *         <li>Identity (0x04): returndata equals input (match Geth callTracer).
+   *         <li>Fixed-size precompiles: use expected length (e.g. 32 or 64) clamped by outSize.
+   *         <li>ModExp (0x05): expected length = modulus length from header (3rd length word).
+   *         <li>Otherwise: conservative fallback min(inSize, outSize).
+   *       </ul>
+   * </ul>
    */
   private static void finalizePrecompileChild(
       final TraceFrame entryFrame,
@@ -877,20 +889,29 @@ public class CallTracerResultConverter {
           entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
     }
 
-    // gas (provided): for precompiles always take it from the stack argument
-    final Long gasFromArg = gasFromStack(entryFrame, childBuilder.getType());
-    if (gasFromArg != null && gasFromArg > 0L) {
-      childBuilder.gas(gasFromArg);
-    } else {
-      childBuilder.gas(childBuilder.getGas() == null ? 0L : childBuilder.getGas().longValue());
-    }
+    // Compute forwarded gas per EIP-150 for precompiles:
+    // forwarded = min(gasArg, (gasRemaining - opCost) * 63/64)
+    // If we can't read a sensible gasArg from the stack, fall back to the cap.
+    final long opCost = entryFrame.getGasCost().orElse(0L);
+    final long available = Math.max(0L, entryFrame.getGasRemaining() - opCost);
+    final long cap = available - (available / 64);
+
+    final Long argMaybe = gasFromStack(entryFrame, childBuilder.getType());
+    final long gasArg = (argMaybe == null) ? 0L : Math.max(0L, argMaybe);
+    final long forwarded = (gasArg == 0L) ? cap : Math.min(gasArg, cap);
+    childBuilder.gas(forwarded);
+
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "  precompile gas(provided) from stack = {}",
-          gasFromArg == null ? "null" : hexN(gasFromArg));
+          "  precompile gas(forwarded): arg={} available={} opCost={} cap={} -> {}",
+          hexN(gasArg),
+          hexN(available),
+          hexN(opCost),
+          hexN(cap),
+          hexN(forwarded));
     }
 
-    // gasUsed: for precompiles, match Geth by using the precompile cost; fallback to opcode cost
+    // gasUsed: prefer precompile cost; fallback to opcode cost
     entryFrame
         .getPrecompiledGasCost()
         .ifPresentOrElse(
@@ -899,16 +920,15 @@ public class CallTracerResultConverter {
     // Parse precompile id from the child "to" address (last byte)
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
 
-    // Stack at callsite (TOS on right):
+    // Stack at callsite (TOS on right / tail indexing):
+    //   ..., gas, to, inOffset, inSize, outOffset, outSize  ^TOS
     entryFrame
         .getStack()
         .ifPresent(
             stack -> {
               if (stack.length < 4) return;
 
-              // Tail (TOS at end) for call-like ops:
-              //   ..., gas, to, inOffset, inSize, outOffset, outSize  ^TOS
-              // Correct mapping:
+              // Tail (TOS at end) mapping for call-like ops:
               final int inSize = bytesToInt(stack[stack.length - 4]);
               final int inOffset = bytesToInt(stack[stack.length - 3]);
               final int outOffset = bytesToInt(stack[stack.length - 2]);
@@ -934,7 +954,7 @@ public class CallTracerResultConverter {
 
               // OUTPUT
               if (precompileId == 0x04) {
-                // Identity: return data equals input
+                // Identity: returndata == input
                 childBuilder.output(childBuilder.build().getInput());
               } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
