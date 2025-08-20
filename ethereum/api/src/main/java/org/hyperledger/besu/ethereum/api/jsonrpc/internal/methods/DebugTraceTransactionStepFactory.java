@@ -18,6 +18,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResultConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffPrestateResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 
 import java.util.concurrent.CompletableFuture;
@@ -72,9 +75,10 @@ public class DebugTraceTransactionStepFactory {
           };
       case PRESTATE_TRACER ->
           transactionTrace -> {
-            // TODO: Implement prestateTracer logic and wire it here
-            var result = new UnimplementedTracerResult();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+            StateDiffTrace trace =
+                new StateDiffGenerator().generateStateDiff(transactionTrace).toList().getFirst();
+            return new DebugTraceTransactionResult(
+                transactionTrace, new StateDiffPrestateResult(trace));
           };
     };
   }

@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
@@ -100,7 +99,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       new StateDiffGenerator()
           .generateStateDiff(transactionTrace)
-          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+          .forEachOrdered(builder::stateDiff);
     }
 
     if (traceTypes.contains(TraceType.TRACE)) {
