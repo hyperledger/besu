@@ -918,27 +918,58 @@ public class CallTracerResultConverter {
             stack -> {
               if (stack.length < 4) return;
 
-              // Tail (TOS at end) mapping for call-like ops:
-              final int inSize = bytesToInt(stack[stack.length - 4]);
-              final int inOffset = bytesToInt(stack[stack.length - 3]);
-              final int outOffset = bytesToInt(stack[stack.length - 2]);
-              final int outSize = bytesToInt(stack[stack.length - 1]);
+              // Prefer TOS-at-index-0 mapping (matches how many Besu TraceFrames expose stacks):
+              // idx0 = outSize, idx1 = outOffset, idx2 = inSize, idx3 = inOffset
+              int outSize = -1, outOffset = -1, inSize = -1, inOffset = -1;
+              boolean usedHead = false;
 
-              if (LOG.isTraceEnabled()) {
-                LOG.trace(
-                    "  IO coords (tail idx): inOffset={} inSize={} outOffset={} outSize={}",
-                    inOffset,
-                    inSize,
-                    outOffset,
-                    outSize);
+              if (stack.length >= 4) {
+                try {
+                  final int hOutSize = bytesToInt(stack[0]);
+                  final int hOutOffset = bytesToInt(stack[1]);
+                  final int hInSize = bytesToInt(stack[2]);
+                  final int hInOffset = bytesToInt(stack[3]);
+
+                  // sanity: positive and not astronomically large
+                  if (hOutSize >= 0
+                      && hInSize >= 0
+                      && hOutSize <= (1 << 24)
+                      && hInSize <= (1 << 24)) {
+                    outSize = hOutSize;
+                    outOffset = hOutOffset;
+                    inSize = hInSize;
+                    inOffset = hInOffset;
+                    usedHead = true;
+                  }
+                } catch (Throwable ignore) {
+                  // ignore
+                }
               }
 
+              if (!usedHead) {
+                // Fallback: tail (TOS at end) mapping
+                outSize = bytesToInt(stack[stack.length - 1]);
+                outOffset = bytesToInt(stack[stack.length - 2]);
+                inSize = bytesToInt(stack[stack.length - 3]);
+                inOffset = bytesToInt(stack[stack.length - 4]);
+              }
+
+              LOG.trace(
+                  "  IO coords ({} mapping): inOffset={} inSize={} outOffset={} outSize={}",
+                  (usedHead ? "TOS idx" : "tail idx"),
+                  inOffset,
+                  inSize,
+                  outOffset,
+                  outSize);
+
               // INPUT: authoritative pre-call slice
+              final int effInOffset = inOffset;
+              final int effInSize = inSize;
               entryFrame
                   .getMemory()
                   .ifPresent(
                       preMem -> {
-                        final Bytes in = extractCallDataFromMemory(preMem, inOffset, inSize);
+                        final Bytes in = extractCallDataFromMemory(preMem, effInOffset, effInSize);
                         childBuilder.input(in.toHexString());
                       });
 
