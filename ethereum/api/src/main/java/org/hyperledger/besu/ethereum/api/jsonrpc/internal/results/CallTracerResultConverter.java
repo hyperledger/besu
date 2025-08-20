@@ -878,33 +878,29 @@ public class CallTracerResultConverter {
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
 
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}",
-          childBuilder.getTo(),
-          childBuilder.getType(),
-          entryFrame.getPrecompiledGasCost().isPresent()
-              ? entryFrame.getPrecompiledGasCost().getAsLong()
-              : "-",
-          entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
-    }
+    LOG.trace(
+        "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}",
+        childBuilder.getTo(),
+        childBuilder.getType(),
+        entryFrame.getPrecompiledGasCost().isPresent()
+            ? entryFrame.getPrecompiledGasCost().getAsLong()
+            : "-",
+        entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
 
-    // Reconstruct pre-op gas and compute EIP-150 cap for what could be forwarded.
-    // TraceFrame.gasRemaining() is post-cost; add the opcode cost back to get pre-op.
-    final long opCost = entryFrame.getGasCost().orElse(0L);
-    final long post = Math.max(0L, entryFrame.getGasRemaining());
-    final long pre = Math.addExact(post, opCost); // or (post + opCost) with overflow guard
-    final long cap = pre - (pre / 64L);
-
-    // Publish the cap as the child's "gas" to match geth's callTracer for precompiles.
+    // Compute forwarded gas per EIP-150 from *after* paying opcode cost,
+    // matching FlatTraceGenerator and geth callTracer for precompiles.
+    final long currentGas = Math.max(0L, entryFrame.getGasRemaining()); // gas at this frame
+    final long opCost = entryFrame.getGasCost().orElse(0L); // opcode gas cost
+    final long afterCost = (currentGas >= opCost) ? (currentGas - opCost) : 0L;
+    final long cap = afterCost - (afterCost / 64L); // floor( afterCost * 63/64 )
     childBuilder.gas(cap);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "  precompile gas(display): pre={} post={} opCost={} cap={}",
-          hexN(pre),
-          hexN(post),
+          "  precompile gas(display): current={} opCost={} afterCost={} cap={}",
+          hexN(currentGas),
           hexN(opCost),
+          hexN(afterCost),
           hexN(cap));
     }
 
