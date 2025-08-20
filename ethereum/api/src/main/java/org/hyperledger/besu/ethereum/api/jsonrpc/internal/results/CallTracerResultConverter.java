@@ -543,48 +543,46 @@ public class CallTracerResultConverter {
   private static Bytes resolveInputData(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "resolveInputData: op={} depth={} hasNextCalleeFrame={}",
-          opcode,
-          frame.getDepth(),
-          (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
-    }
+    LOG.trace(
+        "resolveInputData: op={} depth={} hasNextCalleeFrame={}",
+        opcode,
+        frame.getDepth(),
+        (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
 
-    // Prefer callee frame when we actually enter it.
+    // Prefer the callee frame when we actually enter it (authoritative).
     if (nextTrace != null
         && nextTrace.getDepth() == frame.getDepth() + 1
         && nextTrace.getInputData() != null
         && !nextTrace.getInputData().isEmpty()) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(
-            "  using callee-frame input (authoritative) [{}]={}",
-            nextTrace.getInputData().size(),
-            shortHex(nextTrace.getInputData(), 16));
-      }
+      LOG.trace(
+          "  using callee-frame input (authoritative) [{}]={}",
+          nextTrace.getInputData().size(),
+          shortHex(nextTrace.getInputData(), 16));
       return nextTrace.getInputData();
     }
 
+    // CALL-like ops: [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
+    //    Canonical tail mapping for calldata slice:
+    //      inOffset = stack[-4]
+    //      inSize   = stack[-3]
     if (isCallOp(opcode)) {
-      // Tail (TOS at end): CALL/… stack = [ ..., gas, to, inOffset, inSize, outOffset, outSize
-      // ]^TOS
-      // Correct mapping for calldata slice:
-      //   inSize   = stack[len-4]
-      //   inOffset = stack[len-3]
       return frame
           .getStack()
           .map(
               stack -> {
-                if (stack.length < 4) return frame.getInputData();
-                final int inSize = bytesToInt(stack[stack.length - 4]);
-                final int inOffset = bytesToInt(stack[stack.length - 3]);
-                if (LOG.isTraceEnabled()) {
-                  LOG.trace(
-                      "  fallback memory slice: inOffset={} inSize={} memPresent={}",
-                      inOffset,
-                      inSize,
-                      frame.getMemory().isPresent());
+                if (stack.length < 4) {
+                  return frame.getInputData();
                 }
+
+                final int inOffset = bytesToInt(stack[stack.length - 4]);
+                final int inSize = bytesToInt(stack[stack.length - 3]);
+
+                LOG.trace(
+                    "  CALL-like fallback slice: inOffset={} inSize={} memPresent={}",
+                    inOffset,
+                    inSize,
+                    frame.getMemory().isPresent());
+
                 return frame
                     .getMemory()
                     .map(memory -> extractCallDataFromMemory(memory, inOffset, inSize))
@@ -593,6 +591,7 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
+    // CREATE/CREATE2: different slots for (offset,size)
     if (isCreateOp(opcode)) {
       return frame
           .getStack()
@@ -600,30 +599,32 @@ public class CallTracerResultConverter {
               stack -> {
                 if ("CREATE".equals(opcode)) {
                   if (stack.length < 2) return frame.getInputData();
-                  final int offset = bytesToInt(stack[stack.length - 2]);
-                  final int length = bytesToInt(stack[stack.length - 1]);
-                  if (LOG.isTraceEnabled()) {
-                    LOG.trace(
-                        "  CREATE-init slice: offset={} length={} memPresent={}",
-                        offset,
-                        length,
-                        frame.getMemory().isPresent());
-                  }
+
+                  final int offset = bytesToInt(stack[stack.length - 2]); // [-2]
+                  final int length = bytesToInt(stack[stack.length - 1]); // [-1]
+
+                  LOG.trace(
+                      "  CREATE-init slice: offset={} length={} memPresent={}",
+                      offset,
+                      length,
+                      frame.getMemory().isPresent());
+
                   return frame
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
                       .orElse(frame.getInputData());
                 } else { // CREATE2
                   if (stack.length < 3) return frame.getInputData();
-                  final int offset = bytesToInt(stack[stack.length - 3]);
-                  final int length = bytesToInt(stack[stack.length - 2]);
-                  if (LOG.isTraceEnabled()) {
-                    LOG.trace(
-                        "  CREATE2-init slice: offset={} length={} memPresent={}",
-                        offset,
-                        length,
-                        frame.getMemory().isPresent());
-                  }
+
+                  final int offset = bytesToInt(stack[stack.length - 3]); // [-3]
+                  final int length = bytesToInt(stack[stack.length - 2]); // [-2]
+
+                  LOG.trace(
+                      "  CREATE2-init slice: offset={} length={} memPresent={}",
+                      offset,
+                      length,
+                      frame.getMemory().isPresent());
+
                   return frame
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
@@ -881,17 +882,12 @@ public class CallTracerResultConverter {
             : "-",
         entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
 
-    // --- child "gas" for precompiles (displayed like geth) ---
-    // Use post-cost gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
+    // --- child "gas" (provided) for precompiles, displayed like geth ---
+    // Use post-op gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
     final long post = Math.max(0L, entryFrame.getGasRemaining());
-
-    // Precompiles are warm by definition since Berlin (EIP-2929).
-    // If you ever need pre-Berlin support, gate this (set to 0).
-    final long warmAccess = 100L;
-
+    final long warmAccess = 100L; // set to 0 for pre-Berlin if you ever need it
     final long base = post > warmAccess ? post - warmAccess : 0L;
     final long cap = base - (base / 64L);
-
     childBuilder.gas(cap);
 
     LOG.trace(
@@ -907,93 +903,72 @@ public class CallTracerResultConverter {
         .ifPresentOrElse(
             childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
 
-    // Parse precompile id from the child "to" address (last byte)
+    // precompile id from "to"
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
 
-    // Stack at callsite (TOS on right / tail indexing):
-    //   ..., gas, to, inOffset, inSize, outOffset, outSize  ^TOS
     entryFrame
         .getStack()
         .ifPresent(
             stack -> {
               if (stack.length < 4) return;
 
-              // Prefer TOS-at-index-0 mapping (matches how many Besu TraceFrames expose stacks):
-              // idx0 = outSize, idx1 = outOffset, idx2 = inSize, idx3 = inOffset
-              int outSize = -1, outOffset = -1, inSize = -1, inOffset = -1;
-              boolean usedHead = false;
-
-              if (stack.length >= 4) {
-                try {
-                  final int hOutSize = bytesToInt(stack[0]);
-                  final int hOutOffset = bytesToInt(stack[1]);
-                  final int hInSize = bytesToInt(stack[2]);
-                  final int hInOffset = bytesToInt(stack[3]);
-
-                  // sanity: positive and not astronomically large
-                  if (hOutSize >= 0
-                      && hInSize >= 0
-                      && hOutSize <= (1 << 24)
-                      && hInSize <= (1 << 24)) {
-                    outSize = hOutSize;
-                    outOffset = hOutOffset;
-                    inSize = hInSize;
-                    inOffset = hInOffset;
-                    usedHead = true;
-                  }
-                } catch (Throwable ignore) {
-                  // ignore
-                }
-              }
-
-              if (!usedHead) {
-                // Fallback: tail (TOS at end) mapping
-                outSize = bytesToInt(stack[stack.length - 1]);
-                outOffset = bytesToInt(stack[stack.length - 2]);
-                inSize = bytesToInt(stack[stack.length - 3]);
-                inOffset = bytesToInt(stack[stack.length - 4]);
-              }
+              // Tail (TOS at end) mapping (canonical EVM order):
+              //   ..., gas, to, inOffset, inSize, outOffset, outSize ^TOS
+              final int inOffset = bytesToInt(stack[stack.length - 4]);
+              final int inSize = bytesToInt(stack[stack.length - 3]);
+              final int outOffset = bytesToInt(stack[stack.length - 2]);
+              final int outSize = bytesToInt(stack[stack.length - 1]);
 
               LOG.trace(
-                  "  IO coords ({} mapping): inOffset={} inSize={} outOffset={} outSize={}",
-                  (usedHead ? "TOS idx" : "tail idx"),
+                  "  IO coords (tail idx): inOffset={} inSize={} outOffset={} outSize={}",
                   inOffset,
                   inSize,
                   outOffset,
                   outSize);
 
-              // INPUT: authoritative pre-call slice
-              final int effInOffset = inOffset;
-              final int effInSize = inSize;
-              entryFrame
-                  .getMemory()
-                  .ifPresent(
-                      preMem -> {
-                        final Bytes in = extractCallDataFromMemory(preMem, effInOffset, effInSize);
-                        childBuilder.input(in.toHexString());
-                      });
+              // INPUT: pre-call memory slice
+              String inputHex = "0x";
+              if (entryFrame.getMemory().isPresent()) {
+                final Bytes[] preMem = entryFrame.getMemory().get();
+                final Bytes in = extractCallDataFromMemory(preMem, inOffset, inSize);
+                inputHex = in.toHexString();
+              }
+              childBuilder.input(inputHex);
+
+              // Determine success from post-call stack (0/1 pushed by CALL/STATICCALL)
+              boolean success = true; // default to true if we can't read it
+              if (nextTrace != null && nextTrace.getStack().isPresent()) {
+                final Bytes[] postStack = nextTrace.getStack().get();
+                if (postStack.length >= 1) {
+                  // TOS (tail) holds the success flag
+                  success = bytesToInt(postStack[postStack.length - 1]) != 0;
+                }
+              }
 
               // OUTPUT
               if (precompileId == 0x04) {
-                // Identity: returndata == input
-                childBuilder.output(childBuilder.build().getInput());
+                // Identity: returndata == input (never fails)
+                childBuilder.output(inputHex);
               } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
                 final Bytes[] preMem = entryFrame.getMemory().orElse(null);
 
-                final int expected =
+                int expected =
                     expectedReturndataLenForPrecompile(precompileId, preMem, inOffset, inSize);
-                final int len =
-                    (expected >= 0)
-                        ? Math.max(0, Math.min(expected, outSize))
-                        : Math.max(0, Math.min(inSize, outSize)); // conservative fallback
-
-                final Bytes out = extractCallDataFromMemory(postMem, outOffset, len);
+                if (!success) {
+                  expected = 0; // failed precompile: empty returndata
+                }
+                final int take = Math.max(0, Math.min(outSize, Math.max(0, expected)));
+                final Bytes out =
+                    (take == 0) ? Bytes.EMPTY : extractCallDataFromMemory(postMem, outOffset, take);
                 childBuilder.output(out.toHexString());
+              } else {
+                // No post-call memory visible (should be rare); safest default
+                childBuilder.output("0x");
               }
             });
 
-    // Attach immediately — precompiles have no callee frame to wait for
+    // Attach immediately — precompiles have no callee frame
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
