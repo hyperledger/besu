@@ -561,10 +561,9 @@ public class CallTracerResultConverter {
       return nextTrace.getInputData();
     }
 
-    // CALL-like ops: [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
-    //    Canonical tail mapping for calldata slice:
-    //      inOffset = stack[-4]
-    //      inSize   = stack[-3]
+    // CALL-like: [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
+    // Tail (TOS at end) mapping for calldata:
+    //   inOffset = stack[-4], inSize = stack[-3]
     if (isCallOp(opcode)) {
       return frame
           .getStack()
@@ -591,18 +590,16 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
-    // CREATE/CREATE2: different slots for (offset,size)
+    // CREATE/CREATE2 have different (offset,size) slots.
     if (isCreateOp(opcode)) {
       return frame
           .getStack()
           .map(
               stack -> {
-                if ("CREATE".equals(opcode)) {
+                if ("CREATE".equals(opcode)) { // CREATE(init_offset, init_size)
                   if (stack.length < 2) return frame.getInputData();
-
                   final int offset = bytesToInt(stack[stack.length - 2]); // [-2]
                   final int length = bytesToInt(stack[stack.length - 1]); // [-1]
-
                   LOG.trace(
                       "  CREATE-init slice: offset={} length={} memPresent={}",
                       offset,
@@ -613,18 +610,15 @@ public class CallTracerResultConverter {
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
                       .orElse(frame.getInputData());
-                } else { // CREATE2
+                } else { // CREATE2(init_offset, init_size, salt)
                   if (stack.length < 3) return frame.getInputData();
-
                   final int offset = bytesToInt(stack[stack.length - 3]); // [-3]
                   final int length = bytesToInt(stack[stack.length - 2]); // [-2]
-
                   LOG.trace(
                       "  CREATE2-init slice: offset={} length={} memPresent={}",
                       offset,
                       length,
                       frame.getMemory().isPresent());
-
                   return frame
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
@@ -634,7 +628,7 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
-    // Default
+    // Default (unchanged)
     return frame.getInputData();
   }
 
@@ -882,10 +876,10 @@ public class CallTracerResultConverter {
             : "-",
         entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
 
-    // --- child "gas" (provided) for precompiles, displayed like geth ---
-    // Use post-op gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
+    // Child "gas" (provided) shown like Geth:
+    // use post-op gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
     final long post = Math.max(0L, entryFrame.getGasRemaining());
-    final long warmAccess = 100L; // set to 0 for pre-Berlin if you ever need it
+    final long warmAccess = 100L; // set to 0 for pre-Berlin networks if needed
     final long base = post > warmAccess ? post - warmAccess : 0L;
     final long cap = base - (base / 64L);
     childBuilder.gas(cap);
@@ -897,13 +891,12 @@ public class CallTracerResultConverter {
         hexN(base),
         hexN(cap));
 
-    // gasUsed: prefer precompile cost; fallback to opcode cost
+    // gasUsed: prefer precompiledGasCost; fallback to opcode gasCost
     entryFrame
         .getPrecompiledGasCost()
         .ifPresentOrElse(
             childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
 
-    // precompile id from "to"
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
 
     entryFrame
@@ -912,7 +905,7 @@ public class CallTracerResultConverter {
             stack -> {
               if (stack.length < 4) return;
 
-              // Tail (TOS at end) mapping (canonical EVM order):
+              // Tail mapping (canonical EVM pop order):
               //   ..., gas, to, inOffset, inSize, outOffset, outSize ^TOS
               final int inOffset = bytesToInt(stack[stack.length - 4]);
               final int inSize = bytesToInt(stack[stack.length - 3]);
@@ -926,7 +919,7 @@ public class CallTracerResultConverter {
                   outOffset,
                   outSize);
 
-              // INPUT: pre-call memory slice
+              // INPUT: slice pre-call memory
               String inputHex = "0x";
               if (entryFrame.getMemory().isPresent()) {
                 final Bytes[] preMem = entryFrame.getMemory().get();
@@ -935,19 +928,18 @@ public class CallTracerResultConverter {
               }
               childBuilder.input(inputHex);
 
-              // Determine success from post-call stack (0/1 pushed by CALL/STATICCALL)
-              boolean success = true; // default to true if we can't read it
+              // Success flag from post-call stack (0/1 pushed by CALL/STATICCALL)
+              boolean success = true; // default true if not visible
               if (nextTrace != null && nextTrace.getStack().isPresent()) {
                 final Bytes[] postStack = nextTrace.getStack().get();
                 if (postStack.length >= 1) {
-                  // TOS (tail) holds the success flag
                   success = bytesToInt(postStack[postStack.length - 1]) != 0;
                 }
               }
 
-              // OUTPUT
+              // OUTPUT: Identity echoes input; others read post-call memory and clamp to
+              // expected/outSize.
               if (precompileId == 0x04) {
-                // Identity: returndata == input (never fails)
                 childBuilder.output(inputHex);
               } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
@@ -955,15 +947,13 @@ public class CallTracerResultConverter {
 
                 int expected =
                     expectedReturndataLenForPrecompile(precompileId, preMem, inOffset, inSize);
-                if (!success) {
-                  expected = 0; // failed precompile: empty returndata
-                }
+                if (!success) expected = 0; // failed precompile -> empty returndata
+
                 final int take = Math.max(0, Math.min(outSize, Math.max(0, expected)));
                 final Bytes out =
                     (take == 0) ? Bytes.EMPTY : extractCallDataFromMemory(postMem, outOffset, take);
                 childBuilder.output(out.toHexString());
               } else {
-                // No post-call memory visible (should be rare); safest default
                 childBuilder.output("0x");
               }
             });
