@@ -56,12 +56,6 @@ import org.slf4j.LoggerFactory;
 public class CallTracerResultConverter {
   private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
-  static {
-    LOG.warn("*** CallTracerResultConverter WARN canary — if you see me, the logger is wired.");
-    LOG.warn("TRACE enabled? {}", LOG.isTraceEnabled()); // should print true after the line above
-    LOG.trace("*** CallTracerResultConverter TRACE canary — TRACE is now enabled.");
-  }
-
   /**
    * Converts a transaction trace to a call tracer result.
    *
@@ -887,22 +881,25 @@ public class CallTracerResultConverter {
             : "-",
         entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
 
-    // Compute forwarded gas per EIP-150 from *after* paying opcode cost,
-    // matching FlatTraceGenerator and geth callTracer for precompiles.
-    final long currentGas = Math.max(0L, entryFrame.getGasRemaining()); // gas at this frame
-    final long opCost = entryFrame.getGasCost().orElse(0L); // opcode gas cost
-    final long afterCost = (currentGas >= opCost) ? (currentGas - opCost) : 0L;
-    final long cap = afterCost - (afterCost / 64L); // floor( afterCost * 63/64 )
+    // --- child "gas" for precompiles (displayed like geth) ---
+    // Use post-cost gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
+    final long post = Math.max(0L, entryFrame.getGasRemaining());
+
+    // Precompiles are warm by definition since Berlin (EIP-2929).
+    // If you ever need pre-Berlin support, gate this (set to 0).
+    final long warmAccess = 100L;
+
+    final long base = post > warmAccess ? post - warmAccess : 0L;
+    final long cap = base - (base / 64L);
+
     childBuilder.gas(cap);
 
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "  precompile gas(display): current={} opCost={} afterCost={} cap={}",
-          hexN(currentGas),
-          hexN(opCost),
-          hexN(afterCost),
-          hexN(cap));
-    }
+    LOG.trace(
+        "  precompile gas(display): post={} warmAccess={} base={} cap={}",
+        hexN(post),
+        hexN(warmAccess),
+        hexN(base),
+        hexN(cap));
 
     // gasUsed: prefer precompile cost; fallback to opcode cost
     entryFrame
