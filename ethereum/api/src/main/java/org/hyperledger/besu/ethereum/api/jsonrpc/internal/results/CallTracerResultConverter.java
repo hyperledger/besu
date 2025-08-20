@@ -889,26 +889,23 @@ public class CallTracerResultConverter {
           entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
     }
 
-    // Compute forwarded gas per EIP-150 for precompiles:
-    // forwarded = min(gasArg, (gasRemaining - opCost) * 63/64)
-    // If we can't read a sensible gasArg from the stack, fall back to the cap.
+    // Reconstruct pre-op gas and compute EIP-150 cap for what could be forwarded.
+    // TraceFrame.gasRemaining() is post-cost; add the opcode cost back to get pre-op.
     final long opCost = entryFrame.getGasCost().orElse(0L);
-    final long available = Math.max(0L, entryFrame.getGasRemaining() - opCost);
-    final long cap = available - (available / 64);
+    final long post = Math.max(0L, entryFrame.getGasRemaining());
+    final long pre = Math.addExact(post, opCost); // or (post + opCost) with overflow guard
+    final long cap = pre - (pre / 64L);
 
-    final Long argMaybe = gasFromStack(entryFrame, childBuilder.getType());
-    final long gasArg = (argMaybe == null) ? 0L : Math.max(0L, argMaybe);
-    final long forwarded = (gasArg == 0L) ? cap : Math.min(gasArg, cap);
-    childBuilder.gas(forwarded);
+    // Publish the cap as the child's "gas" to match geth's callTracer for precompiles.
+    childBuilder.gas(cap);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "  precompile gas(forwarded): arg={} available={} opCost={} cap={} -> {}",
-          hexN(gasArg),
-          hexN(available),
+          "  precompile gas(display): pre={} post={} opCost={} cap={}",
+          hexN(pre),
+          hexN(post),
           hexN(opCost),
-          hexN(cap),
-          hexN(forwarded));
+          hexN(cap));
     }
 
     // gasUsed: prefer precompile cost; fallback to opcode cost
