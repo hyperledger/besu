@@ -517,9 +517,14 @@ public class CallTracerResultConverter {
 
       return frame
           .getStack()
-          .filter(stack -> stack.length > 1) // need at least two items to read stack[-2]
-          .map(stack -> toAddress(stack[stack.length - 2]).toHexString())
-          .orElse(null); // defensive: missing stack info
+          .map(
+              stack -> {
+                final boolean callOrCallCode = "CALL".equals(opcode) || "CALLCODE".equals(opcode);
+                final int toIdxFromTos = callOrCallCode ? 5 : 4;
+                if (stack.length <= toIdxFromTos || stack[toIdxFromTos] == null) return null;
+                return toAddress(stack[toIdxFromTos]).toHexString();
+              })
+          .orElse(null);
     }
 
     // Unknown/other opcodes: no callee address.
@@ -560,7 +565,7 @@ public class CallTracerResultConverter {
           (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
     }
 
-    // Prefer the callee frame's inputData when the next frame is the callee at depth+1.
+    // Prefer callee frame when we actually enter it.
     if (nextTrace != null
         && nextTrace.getDepth() == frame.getDepth() + 1
         && nextTrace.getInputData() != null
@@ -575,20 +580,17 @@ public class CallTracerResultConverter {
     }
 
     if (isCallOp(opcode)) {
-      // Reconstruct calldata from caller memory using inOffset/inSize from the stack.
+      // TOS indexing: inSize @ idx2, inOffset @ idx3
       return frame
           .getStack()
           .map(
               stack -> {
-                // CALL/CALLCODE/DELEGATECALL/STATICCALL: inOffset = -4, inSize = -3
-                if (stack.length < 4) {
-                  return frame.getInputData();
-                }
-                final int inOffset = bytesToInt(stack[stack.length - 4]);
-                final int inSize = bytesToInt(stack[stack.length - 3]);
+                if (stack.length < 4) return frame.getInputData();
+                final int inSize = bytesToInt(stack[2]);
+                final int inOffset = bytesToInt(stack[3]);
                 if (LOG.isTraceEnabled()) {
                   LOG.trace(
-                      "  fallback memory slice: inOffset={} inSize={} memPresent={}",
+                      "  fallback memory slice (TOS idx): inOffset={} inSize={} memPresent={}",
                       inOffset,
                       inSize,
                       frame.getMemory().isPresent());
@@ -599,18 +601,16 @@ public class CallTracerResultConverter {
                     .orElse(frame.getInputData());
               })
           .orElse(frame.getInputData());
+    }
 
-    } else if (isCreateOp(opcode)) {
-      // For CREATE/CREATE2, "input" is the init code slice from memory (not constructor args).
+    if (isCreateOp(opcode)) {
+      // unchanged
       return frame
           .getStack()
           .map(
               stack -> {
                 if ("CREATE".equals(opcode)) {
-                  // CREATE stack: ..., value, offset, size  -> offset = -2, size = -1
-                  if (stack.length < 2) {
-                    return frame.getInputData();
-                  }
+                  if (stack.length < 2) return frame.getInputData();
                   final int offset = bytesToInt(stack[stack.length - 2]);
                   final int length = bytesToInt(stack[stack.length - 1]);
                   if (LOG.isTraceEnabled()) {
@@ -624,11 +624,8 @@ public class CallTracerResultConverter {
                       .getMemory()
                       .map(memory -> extractCallDataFromMemory(memory, offset, length))
                       .orElse(frame.getInputData());
-                } else {
-                  // CREATE2 stack: ..., value, offset, size, salt -> offset = -3, size = -2
-                  if (stack.length < 3) {
-                    return frame.getInputData();
-                  }
+                } else { // CREATE2
+                  if (stack.length < 3) return frame.getInputData();
                   final int offset = bytesToInt(stack[stack.length - 3]);
                   final int length = bytesToInt(stack[stack.length - 2]);
                   if (LOG.isTraceEnabled()) {
@@ -647,7 +644,6 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
-    // Default: preserve the current frame's input as a last resort.
     return frame.getInputData();
   }
 
@@ -774,7 +770,7 @@ public class CallTracerResultConverter {
     return 0L;
   }
 
-  /** Read gas argument for a call-like op from the stack. */
+  /** Read gas argument for a call-like op from the stack (TOS at index 0). */
   private static Long gasFromStack(final TraceFrame frame, final String opcode) {
     return frame
         .getStack()
@@ -782,42 +778,17 @@ public class CallTracerResultConverter {
             stack -> {
               final boolean callOrCallCode = "CALL".equals(opcode) || "CALLCODE".equals(opcode);
               final int required = callOrCallCode ? 7 : 6;
-              final int n = stack.length;
-              if (n < required) return null;
+              if (stack.length < required) return null;
 
-              final int gasIdx = n - required; // always in [0, n-1]
-              final int gasIdxAlt = required - 1; // always in [0, n-1]
+              // With TOS @ index 0, gas is always the last of the required args.
+              final int gasIdx = required - 1; // STATIC/DELEGATE: 5, CALL/CALLCODE: 6
 
-              java.math.BigInteger candidate = java.math.BigInteger.ZERO;
-
-              // Primary (no bounds checks needed, but keep null guard)
-              if (stack[gasIdx] != null) {
-                candidate = stack[gasIdx].toUnsignedBigInteger();
-              }
-
-              // Alternate
-              if (candidate.signum() == 0 && stack[gasIdxAlt] != null) {
-                candidate = stack[gasIdxAlt].toUnsignedBigInteger();
-              }
-
-              // Probe (range checks still needed here)
-              if (candidate.signum() == 0) {
-                final int[] probe = new int[] {n - 6, n - 7, n - 5, 5, 6, 7};
-                for (int idx : probe) {
-                  if (idx >= 0 && idx < n && stack[idx] != null) {
-                    final java.math.BigInteger bi = stack[idx].toUnsignedBigInteger();
-                    if (bi.signum() > 0) {
-                      candidate = bi;
-                      break;
-                    }
-                  }
-                }
-              }
-
-              if (candidate.signum() == 0) return null;
-              if (candidate.compareTo(java.math.BigInteger.valueOf(Long.MAX_VALUE)) > 0)
+              if (stack[gasIdx] == null) return null;
+              final java.math.BigInteger bi = stack[gasIdx].toUnsignedBigInteger();
+              if (bi.signum() == 0) return null;
+              if (bi.compareTo(java.math.BigInteger.valueOf(Long.MAX_VALUE)) > 0)
                 return Long.MAX_VALUE;
-              return candidate.longValue();
+              return bi.longValue();
             })
         .orElse(null);
   }
@@ -899,14 +870,16 @@ public class CallTracerResultConverter {
             stack -> {
               if (stack.length < 4) return;
 
-              final int inOffset = bytesToInt(stack[stack.length - 4]);
-              final int inSize = bytesToInt(stack[stack.length - 3]);
-              final int outOffset = bytesToInt(stack[stack.length - 2]);
-              final int outSize = bytesToInt(stack[stack.length - 1]);
+              // TOS indexing for call-like ops:
+              // idx0 = outSize, idx1 = outOffset, idx2 = inSize, idx3 = inOffset
+              final int inSize = bytesToInt(stack[2]);
+              final int inOffset = bytesToInt(stack[3]);
+              final int outSize = bytesToInt(stack[0]);
+              final int outOffset = bytesToInt(stack[1]);
 
               if (LOG.isTraceEnabled()) {
                 LOG.trace(
-                    "  IO coords: inOffset={} inSize={} outOffset={} outSize={}",
+                    "  IO coords (TOS idx): inOffset={} inSize={} outOffset={} outSize={}",
                     inOffset,
                     inSize,
                     outOffset,
@@ -948,29 +921,6 @@ public class CallTracerResultConverter {
 
                 final Bytes out = extractCallDataFromMemory(postMem, outOffset, len);
                 childBuilder.output(out.toHexString());
-
-                if (LOG.isTraceEnabled()) {
-                  final String inHex =
-                      childBuilder.build().getInput() == null
-                          ? "null"
-                          : shortHex(Bytes.fromHexString(childBuilder.build().getInput()), 16);
-                  final String outHex =
-                      childBuilder.build().getOutput() == null
-                          ? "null"
-                          : shortHex(Bytes.fromHexString(childBuilder.build().getOutput()), 16);
-                  LOG.trace(
-                      "  input  [{}]={}",
-                      childBuilder.build().getInput() == null
-                          ? 0
-                          : (childBuilder.build().getInput().length() - 2) / 2,
-                      inHex);
-                  LOG.trace(
-                      "  output [{}]={}",
-                      childBuilder.build().getOutput() == null
-                          ? 0
-                          : (childBuilder.build().getOutput().length() - 2) / 2,
-                      outHex);
-                }
               }
             });
 
