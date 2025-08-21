@@ -713,9 +713,9 @@ public class TransactionSimulator {
 
   private boolean noGasPriceParametersPresent(final CallParameter callParams) {
     // Return true if all gas price parameters are empty
-    return (callParams.getMaxPriorityFeePerGas().isEmpty()
+    return callParams.getMaxPriorityFeePerGas().isEmpty()
         && callParams.getMaxFeePerGas().isEmpty()
-        && callParams.getGasPrice().isEmpty());
+        && callParams.getGasPrice().isEmpty();
   }
 
   private boolean shouldSetBlobGasPrice(final CallParameter callParams) {
