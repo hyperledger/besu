@@ -15,6 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.isPrecompileAddress;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.parsePrecompileIdFromTo;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -30,8 +36,6 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -393,31 +397,47 @@ public class CallTracerResultConverter {
     }
 
     final String toAddress = resolveToAddress(frame, opcode);
-    final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
 
-    // Authoritative gas (provided): callee frame start if depth+1, else derive from stack (covers
-    // precompiles)
+    // Authoritative gas (provided): callee frame start if depth+1, else derive (covers precompiles)
     final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
+
+    // Detect precompile up front so we can defer input/output
+    final boolean looksLikePrecompile =
+        isCallOp(opcode)
+            && (isPrecompileAddress(toAddress) || frame.getPrecompiledGasCost().isPresent());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "createCallBuilder: op={} from={} to={} depth={} nextDepth={} gas(prov)={} stackPresent={}",
+          "createCallBuilder: op={} from={} to={} depth={} nextDepth={} gas(prov)={} stackPresent={} precompile={}",
           opcode,
           fromAddress,
           toAddress,
           frame.getDepth(),
           (nextTrace == null ? "-" : nextTrace.getDepth()),
           hexN(gasProvided),
-          frame.getStack().isPresent());
+          frame.getStack().isPresent(),
+          looksLikePrecompile);
     }
 
-    return CallTracerResult.builder()
-        .type(opcode)
-        .from(fromAddress)
-        .to(toAddress)
-        .value(getCallValue(frame, opcode))
-        .gas(gasProvided)
-        .input(inputData.toHexString());
+    final CallTracerResult.Builder builder =
+        CallTracerResult.builder()
+            .type(opcode)
+            .from(fromAddress)
+            .to(toAddress)
+            .value(getCallValue(frame, opcode))
+            .gas(gasProvided);
+
+    if (!looksLikePrecompile) {
+      // Normal calls/creates: set input now (resolveInputData may use callee frame if we entered)
+      final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
+      builder.input(inputData.toHexString());
+    } else {
+      // Precompiles: defer both input & output — finalizePrecompileChild(...) will set them once
+      LOG.trace("  precompile detected at createCallBuilder -> deferring input/output");
+      builder.input("0x");
+    }
+
+    return builder;
   }
 
   private static CallTracerResult.Builder initializeRootBuilder(final Transaction tx) {
@@ -632,47 +652,6 @@ public class CallTracerResultConverter {
     return frame.getInputData();
   }
 
-  private static Bytes extractCallDataFromMemory(
-      final Bytes[] memory, final int offset, final int length) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "memSlice: offset={} length={} memWords={} startWord={} endWord={}",
-          offset,
-          length,
-          (memory == null ? -1 : memory.length),
-          (offset >>> 5),
-          ((offset + length + 31) >>> 5));
-    }
-    if (offset < 0 || length <= 0) return Bytes.EMPTY;
-
-    // Compute word window covering [offset, offset+length)
-    final int startWord = offset >>> 5; // offset / 32
-    final int endWord = (offset + length + 31) >>> 5; // ceil((off+len)/32)
-    final int wordCount = Math.max(0, endWord - startWord);
-    if (wordCount == 0) return Bytes.EMPTY;
-
-    // Build a contiguous buffer of whole words, zero-padding missing words.
-    final MutableBytes acc = MutableBytes.create(wordCount * 32);
-    for (int w = 0; w < wordCount; w++) {
-      final int i = startWord + w;
-      final Bytes word = (memory != null && i >= 0 && i < memory.length) ? memory[i] : Bytes32.ZERO;
-      word.copyTo(acc, w * 32);
-    }
-
-    // Slice to exact [offset % 32, length]
-    final int startByteInWord = offset & 31; // offset % 32
-    if (startByteInWord + length <= acc.size()) {
-      return acc.slice(startByteInWord, length);
-    }
-
-    // If somehow short, pad with zeros to the requested length.
-    final Bytes slice =
-        acc.slice(startByteInWord, Math.max(0, Math.min(length, acc.size() - startByteInWord)));
-    final int missing = length - slice.size();
-    if (missing <= 0) return slice;
-    return Bytes.concatenate(slice, MutableBytes.create(missing)); // zero padding
-  }
-
   private static boolean isCallOp(final String opcode) {
     return "CALL".equals(opcode)
         || "CALLCODE".equals(opcode)
@@ -819,27 +798,6 @@ public class CallTracerResultConverter {
         .orElse(null);
   }
 
-  /** Detect precompile addresses: 0x000...0001 through 0x000...000a (inclusive). */
-  private static boolean isPrecompileAddress(final String to) {
-    if (to == null) return false;
-    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
-    if (s.length() != 40) return false;
-
-    // First 19 bytes must be zero
-    for (int i = 0; i < 38; i++) {
-      if (s.charAt(i) != '0') return false;
-    }
-
-    // Last byte: 0x01..0x0a (0x0a = KZG point evaluation precompile)
-    final int lastByte;
-    try {
-      lastByte = Integer.parseInt(s.substring(38, 40), 16);
-    } catch (NumberFormatException e) {
-      return false;
-    }
-    return lastByte >= 0x01 && lastByte <= 0x0a;
-  }
-
   /**
    * Finalize a precompile "child" call: set gas/gasUsed, compute input/output from memory, and
    * attach immediately to the parent (no depth+1 callee frame will arrive).
@@ -905,25 +863,24 @@ public class CallTracerResultConverter {
             stack -> {
               if (stack.length < 4) return;
 
-              // Tail mapping (canonical EVM pop order):
-              //   ..., gas, to, inOffset, inSize, outOffset, outSize ^TOS
-              final int inOffset = bytesToInt(stack[stack.length - 4]);
-              final int inSize = bytesToInt(stack[stack.length - 3]);
-              final int outOffset = bytesToInt(stack[stack.length - 2]);
-              final int outSize = bytesToInt(stack[stack.length - 1]);
+              final Bytes[] preMem = entryFrame.getMemory().orElse(null);
+
+              // Choose IO coords robustly (handles head- or tail-oriented stacks)
+              final CallTracerHelper.IoCoords ioCoords =
+                  CallTracerHelper.chooseCallLikeIoCoords(stack, preMem);
 
               LOG.trace(
-                  "  IO coords (tail idx): inOffset={} inSize={} outOffset={} outSize={}",
-                  inOffset,
-                  inSize,
-                  outOffset,
-                  outSize);
+                  "  IO coords (chosen): inOffset={} inSize={} outOffset={} outSize={}",
+                  ioCoords.inOffset(),
+                  ioCoords.inSize(),
+                  ioCoords.outOffset(),
+                  ioCoords.outSize());
 
               // INPUT: slice pre-call memory
               String inputHex = "0x";
-              if (entryFrame.getMemory().isPresent()) {
-                final Bytes[] preMem = entryFrame.getMemory().get();
-                final Bytes in = extractCallDataFromMemory(preMem, inOffset, inSize);
+              if (preMem != null) {
+                final Bytes in =
+                    extractCallDataFromMemory(preMem, ioCoords.inOffset(), ioCoords.inSize());
                 inputHex = in.toHexString();
               }
               childBuilder.input(inputHex);
@@ -933,7 +890,13 @@ public class CallTracerResultConverter {
               if (nextTrace != null && nextTrace.getStack().isPresent()) {
                 final Bytes[] postStack = nextTrace.getStack().get();
                 if (postStack.length >= 1) {
-                  success = bytesToInt(postStack[postStack.length - 1]) != 0;
+                  final int tail = bytesToInt(postStack[postStack.length - 1]);
+                  final int head = bytesToInt(postStack[0]);
+                  if (tail == 0 || tail == 1) {
+                    success = (tail != 0);
+                  } else if (head == 0 || head == 1) {
+                    success = (head != 0);
+                  }
                 }
               }
 
@@ -943,15 +906,18 @@ public class CallTracerResultConverter {
                 childBuilder.output(inputHex);
               } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
                 final Bytes[] postMem = nextTrace.getMemory().get();
-                final Bytes[] preMem = entryFrame.getMemory().orElse(null);
 
                 int expected =
-                    expectedReturndataLenForPrecompile(precompileId, preMem, inOffset, inSize);
-                if (!success) expected = 0; // failed precompile -> empty returndata
+                    success
+                        ? expectedReturndataLenForPrecompile(
+                            precompileId, preMem, ioCoords.inOffset(), ioCoords.inSize())
+                        : 0;
 
-                final int take = Math.max(0, Math.min(outSize, Math.max(0, expected)));
+                final int take = Math.max(0, Math.min(ioCoords.outSize(), Math.max(0, expected)));
                 final Bytes out =
-                    (take == 0) ? Bytes.EMPTY : extractCallDataFromMemory(postMem, outOffset, take);
+                    (take == 0)
+                        ? Bytes.EMPTY
+                        : extractCallDataFromMemory(postMem, ioCoords.outOffset(), take);
                 childBuilder.output(out.toHexString());
               } else {
                 childBuilder.output("0x");
@@ -961,18 +927,6 @@ public class CallTracerResultConverter {
     // Attach immediately — precompiles have no callee frame
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
-    }
-  }
-
-  /** Parse the precompile ID (last byte) from a hex 'to' address; returns -1 if unknown. */
-  private static int parsePrecompileIdFromTo(final String to) {
-    if (to == null) return -1;
-    final String s = (to.startsWith("0x") || to.startsWith("0X")) ? to.substring(2) : to;
-    if (s.length() != 40) return -1;
-    try {
-      return Integer.parseInt(s.substring(38, 40), 16);
-    } catch (Exception ignored) {
-      return -1;
     }
   }
 
@@ -1020,29 +974,5 @@ public class CallTracerResultConverter {
       default:
         return -1;
     }
-  }
-
-  /** Converts Bytes to integer safely (unsigned) and clamps to Integer.MAX_VALUE. */
-  private static int bytesToInt(final Bytes bytes) {
-    try {
-      final java.math.BigInteger bi = bytes.toUnsignedBigInteger();
-      final java.math.BigInteger max = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
-      return bi.compareTo(max) > 0 ? Integer.MAX_VALUE : bi.intValue();
-    } catch (final Exception e) {
-      return 0;
-    }
-  }
-
-  // ---------- small helpers for logging ----------
-
-  private static String shortHex(final Bytes b, final int maxBytes) {
-    if (b == null) return "null";
-    final int n = Math.min(b.size(), Math.max(0, maxBytes));
-    final String hex = b.slice(0, n).toHexString();
-    return b.size() > n ? hex + "...(" + b.size() + "B)" : hex;
-  }
-
-  private static String hexN(final long v) {
-    return "0x" + Long.toHexString(v);
   }
 }
