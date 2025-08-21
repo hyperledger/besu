@@ -883,14 +883,55 @@ public class CallTracerResultConverter {
                 }
               }
 
-              // 3b) Build both IO-candidates without using gas or 'to'
+              // 3b) Build IO coordinates - handle varying stack layouts
               final int n = stack.length;
-              final CallTracerHelper.IoCoords tail =
-                  new CallTracerHelper.IoCoords(
-                      bytesToInt(stack[n - 5]), // inOffset = stack[10] = 0x80
-                      bytesToInt(stack[n - 4]), // inSize = stack[11] = 0x0b (11 - correct!)
-                      bytesToInt(stack[n - 3]), // outOffset = stack[12] = 0x80
-                      bytesToInt(stack[n - 2])); // outSize
+
+              // Find precompile address in stack to use as anchor
+              int precompileAddressPos = -1;
+              for (int i = n - 6; i < n - 1; i++) { // Search in expected range
+                if (i >= 0 && i < n) {
+                  int val = bytesToInt(stack[i]);
+                  if (val == precompileId) {
+                    precompileAddressPos = i;
+                    break; // Use first occurrence in this range
+                  }
+                }
+              }
+
+              // Determine stack layout and extract coordinates
+              final CallTracerHelper.IoCoords tail;
+              if (precompileAddressPos > 0 && precompileAddressPos == n - 2) {
+                // Precompile address found at n-2, actual outSize is at n-1
+                LOG.trace(
+                    "  Stack layout: precompile address at position {}, using n-1 for outSize",
+                    precompileAddressPos);
+                tail =
+                    new CallTracerHelper.IoCoords(
+                        bytesToInt(stack[n - 5]), // inOffset
+                        bytesToInt(stack[n - 4]), // inSize
+                        bytesToInt(stack[n - 3]), // outOffset
+                        bytesToInt(stack[n - 1])); // outSize (skip precompile at n-2)
+
+              } else if (n >= 17) {
+                // Extended stack (like BN128 operations)
+                LOG.trace("  Stack layout: extended stack with {} elements", n);
+                tail =
+                    new CallTracerHelper.IoCoords(
+                        bytesToInt(stack[n - 5]), // inOffset
+                        bytesToInt(stack[n - 4]), // inSize
+                        bytesToInt(stack[n - 3]), // outOffset
+                        bytesToInt(stack[n - 1])); // outSize (likely at n-1 for extended stacks)
+
+              } else {
+                // Standard layout
+                LOG.trace("  Stack layout: standard");
+                tail =
+                    new CallTracerHelper.IoCoords(
+                        bytesToInt(stack[n - 5]), // inOffset
+                        bytesToInt(stack[n - 4]), // inSize
+                        bytesToInt(stack[n - 3]), // outOffset
+                        bytesToInt(stack[n - 2])); // outSize
+              }
 
               final CallTracerHelper.IoCoords head =
                   new CallTracerHelper.IoCoords(
@@ -949,10 +990,75 @@ public class CallTracerResultConverter {
                   io.outOffset(),
                   io.outSize());
 
+              // Validate and potentially override outSize for known fixed-size precompiles
+              final CallTracerHelper.IoCoords validatedIo;
+              if (success) {
+                int correctedOutSize = io.outSize();
+
+                switch (precompileId) {
+                  case 0x01: // ecrecover
+                  case 0x02: // sha256
+                  case 0x03: // ripemd160
+                  case 0x08: // bn128 pairing
+                  case 0x0a: // kzg point evaluation
+                    // These always return 32 bytes
+                    if (correctedOutSize < 32) {
+                      LOG.trace(
+                          "  Overriding outSize for precompile 0x{:02x} from {} to 32",
+                          precompileId,
+                          correctedOutSize);
+                      correctedOutSize = 32;
+                    }
+                    break;
+
+                  case 0x06: // bn128 add
+                  case 0x07: // bn128 mul
+                  case 0x09: // blake2f
+                    // These always return 64 bytes
+                    if (correctedOutSize < 64) {
+                      LOG.trace(
+                          "  Overriding outSize for precompile 0x{:02x} from {} to 64",
+                          precompileId,
+                          correctedOutSize);
+                      correctedOutSize = 64;
+                    }
+                    break;
+
+                  case 0x04: // identity
+                    // Output size should match input size
+                    if (correctedOutSize < io.inSize()) {
+                      LOG.trace(
+                          "  Overriding outSize for identity from {} to {}",
+                          correctedOutSize,
+                          io.inSize());
+                      correctedOutSize = io.inSize();
+                    }
+                    break;
+
+                  case 0x05: // modexp
+                    // Dynamic size - keep the extracted outSize
+                    break;
+                }
+
+                validatedIo =
+                    new CallTracerHelper.IoCoords(
+                        io.inOffset(), io.inSize(), io.outOffset(), correctedOutSize);
+              } else {
+                validatedIo = io;
+              }
+
+              LOG.trace(
+                  "  IO coords (validated): inOffset={} inSize={} outOffset={} outSize={}",
+                  validatedIo.inOffset(),
+                  validatedIo.inSize(),
+                  validatedIo.outOffset(),
+                  validatedIo.outSize());
+
               // 3d) INPUT from pre-call memory
               String inputHex = "0x";
               if (preMem != null) {
-                final Bytes in = extractCallDataFromMemory(preMem, io.inOffset(), io.inSize());
+                final Bytes in =
+                    extractCallDataFromMemory(preMem, validatedIo.inOffset(), validatedIo.inSize());
                 inputHex = in.toHexString();
               }
               childBuilder.input(inputHex);
@@ -965,14 +1071,14 @@ public class CallTracerResultConverter {
                 int expected =
                     success
                         ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, io.inOffset(), io.inSize())
+                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
                         : 0;
-                if (expected < 0) expected = io.inSize(); // conservative fallback
-                final int take = Math.max(0, Math.min(io.outSize(), expected));
+                if (expected < 0) expected = validatedIo.inSize(); // conservative fallback
+                final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
                 final Bytes out =
                     (take == 0)
                         ? Bytes.EMPTY
-                        : extractCallDataFromMemory(postMem, io.outOffset(), take);
+                        : extractCallDataFromMemory(postMem, validatedIo.outOffset(), take);
                 childBuilder.output(out.toHexString());
               } else if (nextTrace != null
                   && nextTrace.getOutputData() != null
@@ -981,10 +1087,10 @@ public class CallTracerResultConverter {
                 int expected =
                     success
                         ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, io.inOffset(), io.inSize())
+                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
                         : 0;
-                if (expected < 0) expected = io.inSize();
-                final int take = Math.max(0, Math.min(io.outSize(), expected));
+                if (expected < 0) expected = validatedIo.inSize();
+                final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
                 final Bytes rd = nextTrace.getOutputData();
                 final Bytes out = rd.slice(0, Math.min(take, rd.size()));
                 childBuilder.output(out.toHexString());
