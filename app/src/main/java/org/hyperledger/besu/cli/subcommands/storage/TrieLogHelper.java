@@ -16,9 +16,9 @@ package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions.MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions.TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.cli.options.storage.PathBasedExtraStorageOptions.TRIE_LOG_PRUNING_BATCH_SIZE;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -103,7 +103,7 @@ public class TrieLogHelper {
     // Should only be layersToRetain left but loading extra just in case of an unforeseen bug
     final long countAfterPrune =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE)
             .count();
     if (countAfterPrune == layersToRetain) {
       if (deleteFiles(batchFileNameBase, numberOfBatches)) {
@@ -229,7 +229,7 @@ public class TrieLogHelper {
     // plus extra threshold to account forks and orphans
     final long clampedCountBeforePruning =
         rootWorldStateStorage
-            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE)
+            .streamTrieLogKeys(layersToRetain + DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE)
             .count();
     if (clampedCountBeforePruning < layersToRetain) {
       throw new IllegalArgumentException(
@@ -301,16 +301,16 @@ public class TrieLogHelper {
             MAX_LAYERS_TO_LOAD + " minimum value is %d",
             PathBasedExtraStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        subStorageConfiguration.getTrieLogPruningWindowSize() > 0,
+        subStorageConfiguration.getTrieLogPruningBatchSize() > 0,
         String.format(
-            TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-            subStorageConfiguration.getTrieLogPruningWindowSize()));
+            TRIE_LOG_PRUNING_BATCH_SIZE + "=%d must be greater than 0",
+            subStorageConfiguration.getTrieLogPruningBatchSize()));
     checkArgument(
-        subStorageConfiguration.getTrieLogPruningWindowSize()
+        subStorageConfiguration.getTrieLogPruningBatchSize()
             > subStorageConfiguration.getMaxLayersToLoad(),
         String.format(
-            TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than " + MAX_LAYERS_TO_LOAD + "=%d",
-            subStorageConfiguration.getTrieLogPruningWindowSize(),
+            TRIE_LOG_PRUNING_BATCH_SIZE + "=%d must be greater than " + MAX_LAYERS_TO_LOAD + "=%d",
+            subStorageConfiguration.getTrieLogPruningBatchSize(),
             subStorageConfiguration.getMaxLayersToLoad()));
   }
 
