@@ -1075,14 +1075,49 @@ public class CallTracerResultConverter {
                         : 0;
                 if (expected < 0) expected = validatedIo.inSize(); // conservative fallback
                 final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
+
+                // DEBUG: Log what we're about to extract
+                LOG.trace(
+                    "  Output extraction: precompile={} outOffset={} take={} expected={}",
+                    precompileId,
+                    validatedIo.outOffset(),
+                    take,
+                    expected);
+
                 final Bytes out =
                     (take == 0)
                         ? Bytes.EMPTY
                         : extractCallDataFromMemory(postMem, validatedIo.outOffset(), take);
+
+                // DEBUG: Log what we extracted
+                LOG.trace("  Extracted output: {}", out.toHexString());
+
+                // DEBUG: For SHA256, also check what's at the memory location
+                if (precompileId == 0x02) {
+                  // Check if the memory content looks like input or hash
+                  Bytes inputCheck =
+                      extractCallDataFromMemory(
+                          preMem, validatedIo.inOffset(), validatedIo.inSize());
+                  LOG.trace("  SHA256 debug - input was: {}", inputCheck.toHexString());
+                  LOG.trace("  SHA256 debug - output is: {}", out.toHexString());
+
+                  // Check if postMem actually changed from preMem
+                  Bytes preMemAtOutOffset =
+                      extractCallDataFromMemory(preMem, validatedIo.outOffset(), 32);
+                  Bytes postMemAtOutOffset =
+                      extractCallDataFromMemory(postMem, validatedIo.outOffset(), 32);
+                  LOG.trace(
+                      "  SHA256 debug - preMem at outOffset: {}", preMemAtOutOffset.toHexString());
+                  LOG.trace(
+                      "  SHA256 debug - postMem at outOffset: {}",
+                      postMemAtOutOffset.toHexString());
+                }
+
                 childBuilder.output(out.toHexString());
               } else if (nextTrace != null
                   && nextTrace.getOutputData() != null
                   && !nextTrace.getOutputData().isEmpty()) {
+                LOG.trace("  Using fallback path for output (no postMem)");
                 // Fallback: clamp raw returndata if post-mem not exposed (rare)
                 int expected =
                     success
@@ -1096,7 +1131,7 @@ public class CallTracerResultConverter {
                 childBuilder.output(out.toHexString());
               } else {
                 childBuilder.output("0x");
-              }
+              } // 3e
             });
 
     // --- 4) Attach immediately — precompiles have no callee frame ---
