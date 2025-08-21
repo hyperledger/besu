@@ -887,10 +887,10 @@ public class CallTracerResultConverter {
               final int n = stack.length;
               final CallTracerHelper.IoCoords tail =
                   new CallTracerHelper.IoCoords(
-                      bytesToInt(stack[n - 4]), // inOffset
-                      bytesToInt(stack[n - 3]), // inSize
-                      bytesToInt(stack[n - 2]), // outOffset
-                      bytesToInt(stack[n - 1])); // outSize
+                      bytesToInt(stack[n - 5]), // inOffset = stack[10] = 0x80
+                      bytesToInt(stack[n - 4]), // inSize = stack[11] = 0x0b (11 - correct!)
+                      bytesToInt(stack[n - 3]), // outOffset = stack[12] = 0x80
+                      bytesToInt(stack[n - 2])); // outSize
 
               final CallTracerHelper.IoCoords head =
                   new CallTracerHelper.IoCoords(
