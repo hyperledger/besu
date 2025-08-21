@@ -29,24 +29,26 @@ public class RoundTimer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RoundTimer.class);
 
+  private final RoundExpiryTimeCalculator roundExpiryTimeCalculator;
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
-  private final Duration baseExpiryPeriod;
 
   /**
    * Construct a RoundTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put round expiry events
-   * @param baseExpiryPeriod The initial round length for round 0
+   * @param roundExpiryTimeCalculator calculator for calculating the expiry time of a round
    * @param bftExecutors executor service that timers can be scheduled with
    */
   public RoundTimer(
-      final BftEventQueue queue, final Duration baseExpiryPeriod, final BftExecutors bftExecutors) {
+      final BftEventQueue queue,
+      final RoundExpiryTimeCalculator roundExpiryTimeCalculator,
+      final BftExecutors bftExecutors) {
     this.queue = queue;
+    this.roundExpiryTimeCalculator = roundExpiryTimeCalculator;
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
-    this.baseExpiryPeriod = baseExpiryPeriod;
   }
 
   /** Cancels the current running round timer if there is one */
@@ -72,20 +74,19 @@ public class RoundTimer {
   public synchronized void startTimer(final ConsensusRoundIdentifier round) {
     cancelTimer();
 
-    final long expiryTime =
-        baseExpiryPeriod.toMillis() * (long) Math.pow(2, round.getRoundNumber());
+    final Duration expiryTime = roundExpiryTimeCalculator.calculateRoundExpiry(round);
 
     final Runnable newTimerRunnable = () -> queue.add(new RoundExpiry(round));
 
     final ScheduledFuture<?> newTimerTask =
-        bftExecutors.scheduleTask(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);
+        bftExecutors.scheduleTask(newTimerRunnable, expiryTime.toMillis(), TimeUnit.MILLISECONDS);
 
     // Once we are up to round 2 start logging round expiries
     if (round.getRoundNumber() >= 2) {
       LOG.info(
           "Moved to round {} which will expire in {} seconds",
           round.getRoundNumber(),
-          (expiryTime / 1000));
+          expiryTime.toSeconds());
     }
 
     currentTimerTask = Optional.of(newTimerTask);
