@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "method": "eth_estimateGas",
+    "params": [
+      {
+        "to": "0x8888f1f195afa192cfee860698584c030f4c9db1",
+        "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "gasPrice": "0x1",
+        "data": "0x123456"
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error":{
+      "code":-32004,
+      "message":"Gas price below current base fee (gasPrice is less than the current BaseFee)"}
+  },
+  "statusCode": 200
+}
