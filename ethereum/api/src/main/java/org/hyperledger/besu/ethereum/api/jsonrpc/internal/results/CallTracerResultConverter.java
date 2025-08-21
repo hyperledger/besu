@@ -30,10 +30,12 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -861,6 +863,7 @@ public class CallTracerResultConverter {
         .ifPresent(
             stack -> {
               if (stack.length < 4) return;
+              logStackDebug(stack);
 
               final Bytes[] preMem = entryFrame.getMemory().orElse(null);
               final Bytes[] postMem =
@@ -993,6 +996,34 @@ public class CallTracerResultConverter {
     // --- 4) Attach immediately — precompiles have no callee frame ---
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
+    }
+  }
+
+  private static void logStackDebug(final Bytes[] stack) {
+    LOG.trace(
+        " . Stack debug - length: {}, contents: {}",
+        stack.length,
+        Arrays.stream(stack).map(Bytes::toHexString).collect(Collectors.toList()));
+    LOG.trace(" . Stack[0] (potential TOS-head): {}", stack[0].toHexString());
+    LOG.trace(" . Stack[length-1] (potential TOS-tail): {}", stack[stack.length - 1].toHexString());
+
+    // For STATICCALL, show the specific indices we're accessing
+    if (stack.length >= 6) {
+      LOG.trace(" . STATICCALL stack positions (if tail-TOS):");
+      LOG.trace(" .   gas [-6]: {}", stack[stack.length - 6].toHexString());
+      LOG.trace(" .   to [-5]: {}", stack[stack.length - 5].toHexString());
+      LOG.trace(" .   inOffset [-4]: {}", stack[stack.length - 4].toHexString());
+      LOG.trace(" .   inSize [-3]: {}", stack[stack.length - 3].toHexString());
+      LOG.trace(" .   outOffset [-2]: {}", stack[stack.length - 2].toHexString());
+      LOG.trace(" .   outSize [-1]: {}", stack[stack.length - 1].toHexString());
+
+      LOG.trace(" . STATICCALL stack positions (if head-TOS):");
+      LOG.trace(" .   gas [5]: {}", stack[5].toHexString());
+      LOG.trace(" .   to [4]: {}", stack[4].toHexString());
+      LOG.trace(" .   inOffset [3]: {}", stack[3].toHexString());
+      LOG.trace(" .   inSize [2]: {}", stack[2].toHexString());
+      LOG.trace(" .   outOffset [1]: {}", stack[1].toHexString());
+      LOG.trace(" .   outSize [0]: {}", stack[0].toHexString());
     }
   }
 
