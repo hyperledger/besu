@@ -834,14 +834,12 @@ public class CallTracerResultConverter {
             : "-",
         entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
 
-    // Child "gas" (provided) shown like Geth:
-    // use post-op gas at the CALL site, subtract warm access (EIP-2929), then 63/64 cap.
+    // --- 1) Child gas (Geth-style display): (post - warm) * 63/64 ---
     final long post = Math.max(0L, entryFrame.getGasRemaining());
-    final long warmAccess = 100L; // set to 0 for pre-Berlin networks if needed
+    final long warmAccess = 100L; // 0 pre-Berlin
     final long base = post > warmAccess ? post - warmAccess : 0L;
     final long cap = base - (base / 64L);
     childBuilder.gas(cap);
-
     LOG.trace(
         "  precompile gas(display): post={} warmAccess={} base={} cap={}",
         hexN(post),
@@ -849,7 +847,7 @@ public class CallTracerResultConverter {
         hexN(base),
         hexN(cap));
 
-    // gasUsed: prefer precompiledGasCost; fallback to opcode gasCost
+    // --- 2) gasUsed: prefer precompiledGasCost, else opcode gasCost ---
     entryFrame
         .getPrecompiledGasCost()
         .ifPresentOrElse(
@@ -857,6 +855,7 @@ public class CallTracerResultConverter {
 
     final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
 
+    // --- 3) I/O computation (no callee frame) ---
     entryFrame
         .getStack()
         .ifPresent(
@@ -864,113 +863,134 @@ public class CallTracerResultConverter {
               if (stack.length < 4) return;
 
               final Bytes[] preMem = entryFrame.getMemory().orElse(null);
+              final Bytes[] postMem =
+                  (nextTrace != null && nextTrace.getMemory().isPresent())
+                      ? nextTrace.getMemory().get()
+                      : null;
 
-              // --- 1) Determine stack orientation by matching 'to' at the callsite ---
-              boolean useTail = false, useHead = false;
-              final String childTo = childBuilder.getTo();
-              try {
-                final String tailTo = toAddress(stack[stack.length - 2]).toHexString();
-                if (childTo != null && childTo.equalsIgnoreCase(tailTo)) useTail = true;
-              } catch (Throwable ignore) {
-                // ignore
-              }
-              if (!useTail) {
-                try {
-                  if (stack.length > 4) {
-                    final String headTo = toAddress(stack[4]).toHexString();
-                    if (childTo != null && childTo.equalsIgnoreCase(headTo)) useHead = true;
-                  }
-                } catch (Throwable ignore) {
-                  // ignore
+              // 3a) Success flag (orientation-agnostic)
+              boolean success = true;
+              if (nextTrace != null && nextTrace.getStack().isPresent()) {
+                final Bytes[] postStack = nextTrace.getStack().get();
+                if (postStack.length >= 1) {
+                  final int tail = bytesToInt(postStack[postStack.length - 1]);
+                  final int head = bytesToInt(postStack[0]);
+                  if (tail == 0 || tail == 1) success = (tail != 0);
+                  else if (head == 0 || head == 1) success = (head != 0);
                 }
               }
 
-              // --- 2) Extract IO coords using the chosen orientation (fallback to chooser) ---
+              // 3b) Build both IO-candidates without using gas or 'to'
               final int n = stack.length;
-              CallTracerHelper.IoCoords ioCoords;
-              if (useTail) {
-                // Tail (TOS at end): [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
-                final int inOffset = bytesToInt(stack[n - 4]);
-                final int inSize = bytesToInt(stack[n - 3]);
-                final int outOffset = bytesToInt(stack[n - 2]);
-                final int outSize = bytesToInt(stack[n - 1]);
-                ioCoords = new CallTracerHelper.IoCoords(inOffset, inSize, outOffset, outSize);
-                LOG.trace(
-                    "  IO coords (tail): inOffset={} inSize={} outOffset={} outSize={}",
-                    inOffset,
-                    inSize,
-                    outOffset,
-                    outSize);
-              } else if (useHead) {
-                // Head (TOS at index 0): [outSize, outOffset, inSize, inOffset, to, gas, ...]
-                final int inOffset = bytesToInt(stack[3]);
-                final int inSize = bytesToInt(stack[2]);
-                final int outOffset = bytesToInt(stack[1]);
-                final int outSize = bytesToInt(stack[0]);
-                ioCoords = new CallTracerHelper.IoCoords(inOffset, inSize, outOffset, outSize);
-                LOG.trace(
-                    "  IO coords (head): inOffset={} inSize={} outOffset={} outSize={}",
-                    inOffset,
-                    inSize,
-                    outOffset,
-                    outSize);
-              } else {
-                // Fallback: heuristic chooser (rare)
-                ioCoords = CallTracerHelper.chooseCallLikeIoCoords(stack, preMem);
-                LOG.trace(
-                    "  IO coords (chosen heuristic): inOffset={} inSize={} outOffset={} outSize={}",
-                    ioCoords.inOffset(),
-                    ioCoords.inSize(),
-                    ioCoords.outOffset(),
-                    ioCoords.outSize());
-              }
+              final CallTracerHelper.IoCoords tail =
+                  new CallTracerHelper.IoCoords(
+                      bytesToInt(stack[n - 4]), // inOffset
+                      bytesToInt(stack[n - 3]), // inSize
+                      bytesToInt(stack[n - 2]), // outOffset
+                      bytesToInt(stack[n - 1])); // outSize
 
-              // --- 3) INPUT: pre-call memory ---
+              final CallTracerHelper.IoCoords head =
+                  new CallTracerHelper.IoCoords(
+                      bytesToInt(stack[3]), // inOffset
+                      bytesToInt(stack[2]), // inSize
+                      bytesToInt(stack[1]), // outOffset
+                      bytesToInt(stack[0])); // outSize
+
+              // 3c) Score by memory+spec (gas-agnostic): input must fit preMem; output must fit
+              // postMem
+              final int preBytes = (preMem == null) ? Integer.MAX_VALUE : preMem.length * 32;
+              final int postBytes = (postMem == null) ? Integer.MAX_VALUE : postMem.length * 32;
+
+              final boolean effSuccess = success;
+              java.util.function.ToIntFunction<CallTracerHelper.IoCoords> score =
+                  c -> {
+                    // input must be sane and fit
+                    if (c.inOffset() < 0 || c.inSize() < 0) return Integer.MIN_VALUE;
+                    long inEnd = (long) c.inOffset() + (long) c.inSize();
+                    if (inEnd > preBytes) return Integer.MIN_VALUE;
+
+                    // expected output length per precompile (identity=inSize, sha256=32, etc.)
+                    int expected =
+                        effSuccess
+                            ? expectedReturndataLenForPrecompile(
+                                precompileId, preMem, c.inOffset(), c.inSize())
+                            : 0;
+                    if (expected < 0) expected = c.inSize(); // conservative fallback when unknown
+                    final int take = Math.max(0, Math.min(c.outSize(), expected));
+
+                    // if we can see post-mem, output slice must also fit
+                    if (postMem != null) {
+                      if (c.outOffset() < 0) return Integer.MIN_VALUE;
+                      long outEnd = (long) c.outOffset() + (long) take;
+                      if (outEnd > postBytes) return Integer.MIN_VALUE;
+                    }
+
+                    // soft preferences
+                    int s = 0;
+                    if ((c.inOffset() & 31) == 0) s += 2;
+                    if ((c.outOffset() & 31) == 0) s += 1;
+                    if (c.inSize() <= 4096) s += 1;
+                    if (postMem != null) s += 3; // we could verify output fits
+                    return s;
+                  };
+
+              final int st = score.applyAsInt(tail);
+              final int sh = score.applyAsInt(head);
+              final CallTracerHelper.IoCoords io =
+                  (sh > st) ? head : (st > sh ? tail : head); // prefer HEAD on tie
+
+              LOG.trace(
+                  "  IO coords (mem+spec): inOffset={} inSize={} outOffset={} outSize={}",
+                  io.inOffset(),
+                  io.inSize(),
+                  io.outOffset(),
+                  io.outSize());
+
+              // 3d) INPUT from pre-call memory
               String inputHex = "0x";
               if (preMem != null) {
-                final Bytes in =
-                    extractCallDataFromMemory(preMem, ioCoords.inOffset(), ioCoords.inSize());
+                final Bytes in = extractCallDataFromMemory(preMem, io.inOffset(), io.inSize());
                 inputHex = in.toHexString();
               }
               childBuilder.input(inputHex);
 
-              // --- 4) Success flag (handle head/tail) ---
-              boolean success = true; // default if not visible
-              if (nextTrace != null && nextTrace.getStack().isPresent()) {
-                final Bytes[] postStack = nextTrace.getStack().get();
-                if (postStack.length >= 1) {
-                  final int tailFlag = bytesToInt(postStack[postStack.length - 1]);
-                  final int headFlag = bytesToInt(postStack[0]);
-                  if (tailFlag == 0 || tailFlag == 1) {
-                    success = (tailFlag != 0);
-                  } else if (headFlag == 0 || headFlag == 1) {
-                    success = (headFlag != 0);
-                  }
-                }
-              }
-
-              // --- 5) OUTPUT: Identity = input; others from post-call memory (clamped) ---
+              // 3e) OUTPUT
               if (precompileId == 0x04) {
+                // Identity: echo input exactly like Geth
                 childBuilder.output(inputHex);
-              } else if (nextTrace != null && nextTrace.getMemory().isPresent()) {
-                final Bytes[] postMem = nextTrace.getMemory().get();
+              } else if (postMem != null) {
                 int expected =
                     success
                         ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, ioCoords.inOffset(), ioCoords.inSize())
+                            precompileId, preMem, io.inOffset(), io.inSize())
                         : 0;
-                final int take = Math.max(0, Math.min(ioCoords.outSize(), Math.max(0, expected)));
+                if (expected < 0) expected = io.inSize(); // conservative fallback
+                final int take = Math.max(0, Math.min(io.outSize(), expected));
                 final Bytes out =
                     (take == 0)
                         ? Bytes.EMPTY
-                        : extractCallDataFromMemory(postMem, ioCoords.outOffset(), take);
+                        : extractCallDataFromMemory(postMem, io.outOffset(), take);
+                childBuilder.output(out.toHexString());
+              } else if (nextTrace != null
+                  && nextTrace.getOutputData() != null
+                  && !nextTrace.getOutputData().isEmpty()) {
+                // Fallback: clamp raw returndata if post-mem not exposed (rare)
+                int expected =
+                    success
+                        ? expectedReturndataLenForPrecompile(
+                            precompileId, preMem, io.inOffset(), io.inSize())
+                        : 0;
+                if (expected < 0) expected = io.inSize();
+                final int take = Math.max(0, Math.min(io.outSize(), expected));
+                final Bytes rd = nextTrace.getOutputData();
+                final Bytes out = rd.slice(0, Math.min(take, rd.size()));
                 childBuilder.output(out.toHexString());
               } else {
                 childBuilder.output("0x");
               }
             });
 
-    // Attach immediately — precompiles have no callee frame
+    // --- 4) Attach immediately — precompiles have no callee frame ---
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
