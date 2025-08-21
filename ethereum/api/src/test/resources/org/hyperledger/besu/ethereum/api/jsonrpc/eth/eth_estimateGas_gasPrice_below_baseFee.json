@@ -16,7 +16,7 @@
     "jsonrpc": "2.0",
     "id": 3,
     "error":{
-      "code":-32004,
+      "code":-32009,
       "message":"Gas price below current base fee (gasPrice is less than the current BaseFee)"}
   },
   "statusCode": 200
