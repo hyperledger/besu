@@ -95,7 +95,6 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   private static final BigInteger HALF_CURVE_ORDER = SIGNATURE_ALGORITHM.get().getHalfCurveOrder();
   private static final SECPSignature FAKE_SIGNATURE =
       SIGNATURE_ALGORITHM.get().createSignature(HALF_CURVE_ORDER, HALF_CURVE_ORDER, (byte) 0);
-  private static final Wei BASE_FEE = Wei.of(BigInteger.TEN);
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
@@ -210,7 +209,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElseThrow())
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -331,7 +330,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   @Test
   public void shouldNotSetGasPriceToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter =
-        legacyTransactionCallParameterBuilder().gasPrice(BASE_FEE).build();
+        legacyTransactionCallParameterBuilder().gasPrice(Wei.ONE).build();
 
     final var blockHeader = mockBlockchainAndWorldState(callParameter);
 
@@ -339,7 +338,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElseThrow())
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -405,7 +404,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(Wei.ZERO)
             .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
@@ -431,7 +430,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(0L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(Wei.ZERO)
             .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
@@ -486,7 +485,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElseThrow())
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -524,7 +523,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElseThrow())
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -551,7 +550,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(Wei.ZERO)
             .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
@@ -577,7 +576,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(0L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(Wei.ZERO)
             .gasLimit(blockHeader.getGasLimit())
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
@@ -602,7 +601,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElseThrow())
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -910,7 +909,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(BASE_FEE)
+            .gasPrice(callParameter.getGasPrice().orElse(Wei.ZERO))
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -968,7 +967,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
 
   private BlockHeader mockBlockchainAndWorldState(final CallParameter callParameter) {
     final BlockHeader blockHeader =
-        mockBlockHeader(Hash.ZERO, 1L, BASE_FEE, DEFAULT_BLOCK_GAS_LIMIT);
+        mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
     mockBlockchainAndWorldState(callParameter, blockHeader);
     return blockHeader;
   }
