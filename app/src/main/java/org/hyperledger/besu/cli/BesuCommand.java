@@ -137,7 +137,6 @@ import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -1357,18 +1356,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       SignatureAlgorithmFactory.getInstance().disableNative();
       logger.info("Using the Java implementation of the signature algorithm");
-    }
-
-    if (unstableNativeLibraryOptions.getNativeEcRecoverPrecompile()
-        && ECRECPrecompiledContract.maybeEnableNative()) {
-      logger.info("Using the native implementation of ecrecover precompile");
-    } else {
-      ECRECPrecompiledContract.disableNative();
-      if (SignatureAlgorithmFactory.getInstance().isNative()) {
-        logger.info("Using the native secp256k1 signature algorithm implementation of ecrecover");
-      } else {
-        logger.info("Using the Java secp256k1 implementation of ecrecover");
-      }
     }
 
     if (unstableNativeLibraryOptions.getNativeBlake2bf()
