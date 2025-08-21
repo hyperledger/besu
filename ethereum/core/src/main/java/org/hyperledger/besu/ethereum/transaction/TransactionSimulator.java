@@ -583,6 +583,8 @@ public class TransactionSimulator {
     callParams.getBlobVersionedHashes().ifPresent(transactionBuilder::versionedHashes);
 
     final boolean noPricingParametersPresent = noGasPriceParametersPresent(callParams);
+    final boolean gasPriceIsZero =
+        callParams.getGasPrice().isPresent() && callParams.getGasPrice().get().equals(Wei.ZERO);
 
     final Wei gasPrice;
     final Wei maxFeePerGas;
@@ -595,7 +597,7 @@ public class TransactionSimulator {
       maxFeePerBlobGas = Wei.ZERO;
     } else {
       if (!transactionValidationParams.allowUnderpriced()
-          && (noPricingParametersPresent || callParams.getGasPrice().get().equals(Wei.ZERO))) {
+          && (noPricingParametersPresent || gasPriceIsZero)) {
         // in case underpriced txs are not allowed,
         // if gas price params are not set, or gasPrice is set to zero,
         // override with the min necessary to process the tx.
