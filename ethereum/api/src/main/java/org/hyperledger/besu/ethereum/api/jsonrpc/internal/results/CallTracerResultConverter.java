@@ -1067,58 +1067,8 @@ public class CallTracerResultConverter {
               if (precompileId == 0x04) {
                 // Identity: echo input exactly like Geth
                 childBuilder.output(inputHex);
-              } else if (postMem != null) {
-                int expected =
-                    success
-                        ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
-                        : 0;
-                if (expected < 0) expected = validatedIo.inSize(); // conservative fallback
-                final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
-
-                // DEBUG: Log what we're about to extract
-                LOG.trace(
-                    "  Output extraction: precompile={} outOffset={} take={} expected={}",
-                    precompileId,
-                    validatedIo.outOffset(),
-                    take,
-                    expected);
-
-                final Bytes out =
-                    (take == 0)
-                        ? Bytes.EMPTY
-                        : extractCallDataFromMemory(postMem, validatedIo.outOffset(), take);
-
-                // DEBUG: Log what we extracted
-                LOG.trace("  Extracted output: {}", out.toHexString());
-
-                // DEBUG: For SHA256, also check what's at the memory location
-                if (precompileId == 0x02) {
-                  // Check if the memory content looks like input or hash
-                  Bytes inputCheck =
-                      extractCallDataFromMemory(
-                          preMem, validatedIo.inOffset(), validatedIo.inSize());
-                  LOG.trace("  SHA256 debug - input was: {}", inputCheck.toHexString());
-                  LOG.trace("  SHA256 debug - output is: {}", out.toHexString());
-
-                  // Check if postMem actually changed from preMem
-                  Bytes preMemAtOutOffset =
-                      extractCallDataFromMemory(preMem, validatedIo.outOffset(), 32);
-                  Bytes postMemAtOutOffset =
-                      extractCallDataFromMemory(postMem, validatedIo.outOffset(), 32);
-                  LOG.trace(
-                      "  SHA256 debug - preMem at outOffset: {}", preMemAtOutOffset.toHexString());
-                  LOG.trace(
-                      "  SHA256 debug - postMem at outOffset: {}",
-                      postMemAtOutOffset.toHexString());
-                }
-
-                childBuilder.output(out.toHexString());
-              } else if (nextTrace != null
-                  && nextTrace.getOutputData() != null
-                  && !nextTrace.getOutputData().isEmpty()) {
-                LOG.trace("  Using fallback path for output (no postMem)");
-                // Fallback: clamp raw returndata if post-mem not exposed (rare)
+              } else if (postMem != null && precompileId == 0x05) {
+                // ModExp might write to memory, try memory extraction
                 int expected =
                     success
                         ? expectedReturndataLenForPrecompile(
@@ -1126,8 +1076,36 @@ public class CallTracerResultConverter {
                         : 0;
                 if (expected < 0) expected = validatedIo.inSize();
                 final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
+                final Bytes out =
+                    (take == 0)
+                        ? Bytes.EMPTY
+                        : extractCallDataFromMemory(postMem, validatedIo.outOffset(), take);
+                childBuilder.output(out.toHexString());
+              } else if (nextTrace != null && nextTrace.getOutputData() != null) {
+                // For most precompiles (SHA256, ecrecover, etc.), use the output data directly
                 final Bytes rd = nextTrace.getOutputData();
-                final Bytes out = rd.slice(0, Math.min(take, rd.size()));
+
+                // Get expected size for this precompile
+                int expected =
+                    success
+                        ? expectedReturndataLenForPrecompile(
+                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
+                        : 0;
+
+                // For fixed-size precompiles, use the expected size directly
+                final Bytes out;
+                if ((precompileId >= 0x01 && precompileId <= 0x03)
+                    || (precompileId >= 0x06 && precompileId <= 0x0a)) {
+                  // Fixed-size outputs: use expected size
+                  out = rd.size() >= expected ? rd.slice(0, expected) : rd;
+                } else {
+                  // Variable size (ModExp): respect the outSize parameter
+                  final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
+                  out = rd.slice(0, Math.min(take, rd.size()));
+                }
+
+                LOG.trace(
+                    "  Using outputData for precompile {}: {}", precompileId, out.toHexString());
                 childBuilder.output(out.toHexString());
               } else {
                 childBuilder.output("0x");
