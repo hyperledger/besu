@@ -41,10 +41,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.Pack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xerial.snappy.SnappyFramedOutputStream;
 
 /** A class to export ERA1 files */
 public class Era1BlockExporter {
+  private static final Logger LOG = LoggerFactory.getLogger(Era1BlockExporter.class);
   private static final long ERA1_FILE_BLOCKS = 8192;
   private static final String MAINNET_GENESIS_HASH =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
@@ -82,6 +85,7 @@ public class Era1BlockExporter {
     if (endFile < startFile) {
       throw new IllegalArgumentException("End of export range must be after start of export range");
     }
+    LOG.info("Exporting ERA1 files {} to {} inclusive", startFile, endFile);
     for (long fileNumber = startFile; fileNumber <= endFile; fileNumber++) {
       long startBlock = fileNumber * ERA1_FILE_BLOCKS;
       long endBlock = startBlock + ERA1_FILE_BLOCKS - 1;
@@ -185,6 +189,7 @@ public class Era1BlockExporter {
         }
         blockIndex.put(Pack.longToLittleEndian(blocksForFile.size()));
         position += writeSection(writer, Era1Type.BLOCK_INDEX, blockIndex.array());
+        LOG.info("Wrote {} bytes to {}", position, filename);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -207,16 +212,17 @@ public class Era1BlockExporter {
       final FileOutputStream writer, final Era1Type era1Type, final byte[] content)
       throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    SnappyFramedOutputStream snappyOutputStream =
-        snappyFactory.createFramedOutputStream(byteArrayOutputStream);
-    snappyOutputStream.write(content);
+    try (SnappyFramedOutputStream snappyOutputStream =
+        snappyFactory.createFramedOutputStream(byteArrayOutputStream)) {
+      snappyOutputStream.write(content);
+    }
 
     return writeSection(writer, era1Type, byteArrayOutputStream.toByteArray());
   }
 
   private byte[] convertLengthToLittleEndianByteArray(final int length) {
     byte[] lengthBytes = Pack.intToLittleEndian(length);
-    return new byte[] {lengthBytes[0], lengthBytes[1], lengthBytes[2]};
+    return new byte[] {lengthBytes[0], lengthBytes[1], lengthBytes[2], lengthBytes[3], 0, 0};
   }
 
   private record AccumulatorHeaderRecord(Bytes32 blockHash, UInt256 totalDifficulty) {}
