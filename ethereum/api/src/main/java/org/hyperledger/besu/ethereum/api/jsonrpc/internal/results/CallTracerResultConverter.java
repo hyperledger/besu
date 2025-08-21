@@ -1064,51 +1064,76 @@ public class CallTracerResultConverter {
               childBuilder.input(inputHex);
 
               // 3e) OUTPUT
+              // 3e) OUTPUT
               if (precompileId == 0x04) {
                 // Identity: echo input exactly like Geth
                 childBuilder.output(inputHex);
-              } else if (postMem != null && precompileId == 0x05) {
-                // ModExp might write to memory, try memory extraction
-                int expected =
-                    success
-                        ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
-                        : 0;
-                if (expected < 0) expected = validatedIo.inSize();
-                final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
-                final Bytes out =
-                    (take == 0)
-                        ? Bytes.EMPTY
-                        : extractCallDataFromMemory(postMem, validatedIo.outOffset(), take);
-                childBuilder.output(out.toHexString());
-              } else if (nextTrace != null && nextTrace.getOutputData() != null) {
-                // For most precompiles (SHA256, ecrecover, etc.), use the output data directly
-                final Bytes rd = nextTrace.getOutputData();
+              } else {
+                // Try to get output data from various sources
+                Bytes outputData = null;
 
-                // Get expected size for this precompile
-                int expected =
-                    success
-                        ? expectedReturndataLenForPrecompile(
-                            precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
-                        : 0;
-
-                // For fixed-size precompiles, use the expected size directly
-                final Bytes out;
-                if ((precompileId >= 0x01 && precompileId <= 0x03)
-                    || (precompileId >= 0x06 && precompileId <= 0x0a)) {
-                  // Fixed-size outputs: use expected size
-                  out = rd.size() >= expected ? rd.slice(0, expected) : rd;
-                } else {
-                  // Variable size (ModExp): respect the outSize parameter
-                  final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
-                  out = rd.slice(0, Math.min(take, rd.size()));
+                // First try: current frame's output data (for precompiles)
+                if (entryFrame.getOutputData() != null && !entryFrame.getOutputData().isEmpty()) {
+                  outputData = entryFrame.getOutputData();
+                  LOG.trace(
+                      "  Using entryFrame outputData for precompile {}: {}",
+                      precompileId,
+                      outputData.toHexString());
+                }
+                // Second try: next trace's output data
+                else if (nextTrace != null
+                    && nextTrace.getOutputData() != null
+                    && !nextTrace.getOutputData().isEmpty()) {
+                  outputData = nextTrace.getOutputData();
+                  LOG.trace(
+                      "  Using nextTrace outputData for precompile {}: {}",
+                      precompileId,
+                      outputData.toHexString());
+                }
+                // Third try: check if memory was updated (unlikely for most precompiles)
+                else if (postMem != null) {
+                  // Check if memory changed
+                  Bytes preMemCheck =
+                      extractCallDataFromMemory(preMem, validatedIo.outOffset(), 32);
+                  Bytes postMemCheck =
+                      extractCallDataFromMemory(postMem, validatedIo.outOffset(), 32);
+                  if (!preMemCheck.equals(postMemCheck)) {
+                    outputData = postMemCheck;
+                    LOG.trace(
+                        "  Using memory difference for precompile {}: {}",
+                        precompileId,
+                        outputData.toHexString());
+                  }
                 }
 
-                LOG.trace(
-                    "  Using outputData for precompile {}: {}", precompileId, out.toHexString());
-                childBuilder.output(out.toHexString());
-              } else {
-                childBuilder.output("0x");
+                if (outputData != null && !outputData.isEmpty()) {
+                  // Get expected size for this precompile
+                  int expected =
+                      success
+                          ? expectedReturndataLenForPrecompile(
+                              precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
+                          : 0;
+
+                  // Extract the appropriate amount
+                  final Bytes out;
+                  if (precompileId == 0x02) { // SHA256 - always 32 bytes
+                    out = outputData.size() >= 32 ? outputData.slice(0, 32) : outputData;
+                  } else if ((precompileId >= 0x01 && precompileId <= 0x03)
+                      || (precompileId >= 0x06 && precompileId <= 0x0a)) {
+                    // Other fixed-size outputs
+                    out =
+                        outputData.size() >= expected ? outputData.slice(0, expected) : outputData;
+                  } else {
+                    // Variable size (ModExp): respect the outSize parameter
+                    final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
+                    out = outputData.slice(0, Math.min(take, outputData.size()));
+                  }
+
+                  childBuilder.output(out.toHexString());
+                } else {
+                  LOG.trace("  WARNING: No output data found for precompile {}", precompileId);
+                  childBuilder.output("0x");
+                }
               } // 3e
             });
 
