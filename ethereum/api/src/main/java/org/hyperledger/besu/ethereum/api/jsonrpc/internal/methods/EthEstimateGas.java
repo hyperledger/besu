@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -67,14 +69,23 @@ public class EthEstimateGas extends AbstractEstimateGas {
         estimateGasToleranceRatio,
         callParams);
 
+    // if callParams.gasPrice = 0, unset it
+    CallParameter effectiveCallParams;
+    if (callParams.getGasPrice().isPresent() && callParams.getGasPrice().get().equals(Wei.ZERO)) {
+      effectiveCallParams =
+          ImmutableCallParameter.builder().from(callParams).build().withGasPrice(Optional.empty());
+    } else {
+      effectiveCallParams = callParams;
+    }
+
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        minTxCost, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
+        minTxCost, effectiveCallParams, simulationFunction, OperationTracer.NO_TRACING)) {
       return Quantity.create(minTxCost);
     }
 
     final var maybeResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, gasLimitUpperBound), OperationTracer.NO_TRACING);
+            overrideGasLimit(effectiveCallParams, gasLimitUpperBound), OperationTracer.NO_TRACING);
 
     final Optional<JsonRpcErrorResponse> maybeErrorResponse =
         validateSimulationResult(requestContext, maybeResult);
@@ -91,7 +102,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     final var optimisticResult =
         simulationFunction.simulate(
-            overrideGasLimit(callParams, optimisticGasLimit), OperationTracer.NO_TRACING);
+            overrideGasLimit(effectiveCallParams, optimisticGasLimit), OperationTracer.NO_TRACING);
 
     if (optimisticResult.isPresent() && optimisticResult.get().isSuccessful()) {
       high = optimisticGasLimit;
@@ -108,7 +119,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
       mid = (low + high) / 2;
       var binarySearchResult =
           simulationFunction.simulate(
-              overrideGasLimit(callParams, mid), OperationTracer.NO_TRACING);
+              overrideGasLimit(effectiveCallParams, mid), OperationTracer.NO_TRACING);
 
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
