@@ -93,17 +93,6 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    LOG.trace("=== tracePostExecution ENTRY ===");
-    LOG.trace("  OpCode: {}", opcode);
-    LOG.trace("  Recipient: {}", frame.getRecipientAddress());
-    LOG.trace("  Input data: {}", frame.getInputData().toHexString());
-    LOG.trace(
-        "  MessageFrame.getOutputData(): {}",
-        frame.getOutputData() != null ? frame.getOutputData().toHexString() : "null");
-    LOG.trace("  Frame depth: {}", frame.getDepth());
-    LOG.trace("  traceFrames.isEmpty(): {}", traceFrames.isEmpty());
-    LOG.trace("  traceFrames.size(): {}", traceFrames.size());
-    LOG.trace("=== tracePostExecution End ===");
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
@@ -195,7 +184,9 @@ public class DebugOperationTracer implements OperationTracer {
           "  LAST frame output Data: {}",
           traceFrames.get(traceFrames.size() - 1).getOutputData().toHexString());
     }
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
+    final TraceFrame lastTraceFrame = traceFrames.getLast();
+    lastTraceFrame.setPrecompiledGasCost(OptionalLong.of(gasRequirement));
+    lastTraceFrame.setPrecompileIOData(frame.getInputData().copy(), frame.getOutputData());
     LOG.trace("=== tracePrecompileCall Debug End ===");
   }
 
