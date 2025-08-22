@@ -36,8 +36,11 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DebugOperationTracer implements OperationTracer {
+  private static final Logger LOG = LoggerFactory.getLogger(DebugOperationTracer.class);
 
   private final OpCodeTracerConfig options;
 
@@ -90,6 +93,17 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
+    LOG.trace("=== tracePostExecution ENTRY ===");
+    LOG.trace("  OpCode: {}", opcode);
+    LOG.trace("  Recipient: {}", frame.getRecipientAddress());
+    LOG.trace("  Input data: {}", frame.getInputData().toHexString());
+    LOG.trace(
+        "  MessageFrame.getOutputData(): {}",
+        frame.getOutputData() != null ? frame.getOutputData().toHexString() : "null");
+    LOG.trace("  Frame depth: {}", frame.getDepth());
+    LOG.trace("  traceFrames.isEmpty(): {}", traceFrames.isEmpty());
+    LOG.trace("  traceFrames.size(): {}", traceFrames.size());
+    LOG.trace("=== tracePostExecution End ===");
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
@@ -134,6 +148,17 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
+    LOG.trace("=== tracePrecompileCall Debug ===");
+    LOG.trace("  Recipient (precompile): {}", frame.getRecipientAddress());
+    LOG.trace("  Input data: {}", frame.getInputData().toHexString());
+    LOG.trace("  Output parameter: {}", output != null ? output.toHexString() : "null");
+    LOG.trace(
+        "  MessageFrame.getOutputData(): {}",
+        frame.getOutputData() != null ? frame.getOutputData().toHexString() : "null");
+    LOG.trace("  Gas requirement: {}", gasRequirement);
+    LOG.trace("  Frame depth: {}", frame.getDepth());
+    LOG.trace("  traceFrames.isEmpty(): {}", traceFrames.isEmpty());
+    LOG.trace("  traceFrames.size(): {}", traceFrames.size());
     if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           new TraceFrame(
@@ -162,8 +187,16 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty(),
               Optional.empty());
       traceFrames.add(traceFrame);
+    } else {
+      // Also log when we're NOT creating a new frame
+      LOG.trace("  NOT creating new frame because traceFrames is not empty");
+      LOG.trace("  Last frame opcode: {}", traceFrames.get(traceFrames.size() - 1).getOpcode());
+      LOG.trace(
+          "  LAST frame output Data: {}",
+          traceFrames.get(traceFrames.size() - 1).getOutputData().toHexString());
     }
     traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
+    LOG.trace("=== tracePrecompileCall Debug End ===");
   }
 
   @Override
