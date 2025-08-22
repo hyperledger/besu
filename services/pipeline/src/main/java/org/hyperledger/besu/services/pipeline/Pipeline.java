@@ -198,9 +198,6 @@ public class Pipeline<I> {
             try {
               abort(t);
             } catch (final Throwable t2) {
-              // Seems excessive but exceptions that propagate out of this method won't be logged
-              // because the executor just completes the future exceptionally, and we never
-              // need to call get on it which would normally expose the error.
               LOG.error("Failed to abort pipeline after error", t2);
             }
           } finally {
@@ -216,7 +213,9 @@ public class Pipeline<I> {
     if (completing.compareAndSet(false, true)) {
       inputPipe.abort();
       pipes.forEach(Pipe::abort);
-      futures.forEach(future -> future.cancel(true));
+      if (futures != null) {
+        futures.forEach(future -> future.cancel(true));
+      }
       overallFuture.completeExceptionally(error);
     }
   }
