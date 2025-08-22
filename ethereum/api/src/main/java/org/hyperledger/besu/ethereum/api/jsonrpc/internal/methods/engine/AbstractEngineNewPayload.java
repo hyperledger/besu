@@ -25,11 +25,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCK_PROCESSING;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.BlobGas;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.datatypes.VersionedHash;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.*;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -575,10 +571,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // Validate excessBlobGas
     if (maybeParentHeader.isPresent()) {
-      if (!validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec)) {
+      Optional<BlobGas> maybeCalculatedExcess = validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec);
+      if (maybeCalculatedExcess.isPresent()) {
+        BlobGas calculated = maybeCalculatedExcess.get();
+        BlobGas actual = header.getExcessBlobGas().orElse(BlobGas.ZERO);
         return ValidationResult.invalid(
             RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS,
-            "Payload excessBlobGas does not match calculated excessBlobGas");
+            String.format("Payload excessBlobGas does not match calculated excessBlobGas. Expected %s, got %s",
+                    calculated, actual));
       }
     }
 
@@ -600,11 +600,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return ValidationResult.valid();
   }
 
-  private boolean validateExcessBlobGas(
+  private Optional<BlobGas> validateExcessBlobGas(
       final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
-    BlobGas calculatedBlobGas =
-        ExcessBlobGasCalculator.calculateExcessBlobGasForParent(protocolSpec, parentHeader);
-    return header.getExcessBlobGas().orElse(BlobGas.ZERO).equals(calculatedBlobGas);
+      BlobGas calculated = ExcessBlobGasCalculator.calculateExcessBlobGasForParent(protocolSpec, parentHeader);
+      BlobGas actual = parentHeader.getExcessBlobGas().orElse(BlobGas.ZERO);
+
+      return calculated.equals(actual) ? Optional.empty() : Optional.of(calculated);
   }
 
   private boolean validateBlobGasUsed(
