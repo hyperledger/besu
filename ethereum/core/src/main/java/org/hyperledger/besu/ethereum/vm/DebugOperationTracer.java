@@ -179,14 +179,17 @@ public class DebugOperationTracer implements OperationTracer {
     } else {
       // Also log when we're NOT creating a new frame
       LOG.trace("  NOT creating new frame because traceFrames is not empty");
-      LOG.trace("  Last frame opcode: {}", traceFrames.get(traceFrames.size() - 1).getOpcode());
-      LOG.trace(
-          "  LAST frame output Data: {}",
-          traceFrames.get(traceFrames.size() - 1).getOutputData().toHexString());
     }
     final TraceFrame lastTraceFrame = traceFrames.getLast();
     lastTraceFrame.setPrecompiledGasCost(OptionalLong.of(gasRequirement));
     lastTraceFrame.setPrecompileIOData(frame.getInputData().copy(), frame.getOutputData());
+    LOG.trace(
+        "     Last TraceFrame opCode: {}, Input: {}, Output: {}, Precompile Input: {}, Precompile output: {}",
+        lastTraceFrame.getOpcode(),
+        lastTraceFrame.getInputData(),
+        lastTraceFrame.getOutputData(),
+        lastTraceFrame.getPrecompileInputData().orElse(null),
+        lastTraceFrame.getPrecompileOutputData().orElse(null));
     LOG.trace("=== tracePrecompileCall Debug End ===");
   }
 

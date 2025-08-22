@@ -824,13 +824,18 @@ public class CallTracerResultConverter {
       final CallInfo parentCallInfo) {
 
     LOG.trace(
-        "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}",
+        "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}, isPrecompile={}, precompileOutput={}",
         childBuilder.getTo(),
         childBuilder.getType(),
         entryFrame.getPrecompiledGasCost().isPresent()
             ? entryFrame.getPrecompiledGasCost().getAsLong()
             : "-",
-        entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
+        entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-",
+        entryFrame.isPrecompile(),
+        entryFrame
+            .getPrecompileOutputData()
+            .map(Bytes::toHexString)
+            .orElse("Precompile Output Not Available"));
 
     // --- 1) Child gas (Geth-style display): (post - warm) * 63/64 ---
     final long post = Math.max(0L, entryFrame.getGasRemaining());
