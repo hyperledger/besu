@@ -50,8 +50,12 @@ import org.slf4j.LoggerFactory;
  * <ul>
  *   <li>Contract calls (CALL, STATICCALL, DELEGATECALL, CALLCODE)
  *   <li>Contract creation (CREATE, CREATE2)
+ *   <li>Precompiled contracts (addresses 0x01-0x0a)
  *   <li>Return operations (RETURN, REVERT, STOP, SELFDESTRUCT)
  * </ul>
+ *
+ * <p>For precompiled contracts, the converter uses dedicated fields in TraceFrame to capture the
+ * actual input/output data, as precompiles execute atomically without creating child frames.
  *
  * <p>For each call, it extracts relevant information such as addresses, values transferred, input
  * data, output data, gas usage, and error states.
@@ -397,7 +401,7 @@ public class CallTracerResultConverter {
 
     final String toAddress = resolveToAddress(frame, opcode);
 
-    // Authoritative gas (provided): callee frame start if depth+1, else derive (covers precompiles)
+    // Authoritative gas (provided): callee frame start if depth+1, else placeholder value
     final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
 
     // Detect precompile up front so we can defer input/output
@@ -699,7 +703,22 @@ public class CallTracerResultConverter {
   /** Helper class to track call information during trace processing. */
   private record CallInfo(CallTracerResult.Builder builder, TraceFrame entryFrame) {}
 
-  /** Compute the gas provided to the child call. */
+  /**
+   * Compute the gas provided to the child call.
+   *
+   * <p>For calls that enter a child frame (depth+1), returns the child's starting gas. For
+   * precompiles and non-entered calls, returns a placeholder value since:
+   *
+   * <ul>
+   *   <li>Precompiles: Gas will be recalculated in finalizePrecompileChild
+   *   <li>Non-entered calls: Won't create a child (skipped in main loop)
+   * </ul>
+   *
+   * @param frame The current trace frame
+   * @param nextTrace The next trace frame (if any)
+   * @param opcode The operation code
+   * @return The gas provided to the call, or 0 as placeholder
+   */
   private static long computeGasProvided(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
@@ -714,7 +733,7 @@ public class CallTracerResultConverter {
           (nextTrace == null ? "-" : nextTrace.getDepth()),
           (hasCalleeStart
               ? "using callee start gas=" + hexN(Math.max(0L, nextTrace.getGasRemaining()))
-              : "using stack gas (precompile/non-entered)"));
+              : "placeholder for precompile/non-entered"));
     }
 
     // If we actually enter the callee (depth+1), that frame's starting gas is authoritative.
@@ -723,100 +742,32 @@ public class CallTracerResultConverter {
       return (g >= 0) ? g : 0L;
     }
 
-    // Otherwise (precompiles / non-executed call), pull the call gas from the stack.
-    if (isCallOp(opcode)) {
-      final Long fromStack = gasFromStack(frame, opcode);
-      return (fromStack != null && fromStack > 0L) ? fromStack : 0L;
-    }
-
-    // CREATE/CREATE2 normally have a callee frame; if not, we have no better signal.
-    return 0L;
-  }
-
-  /** Read gas argument for a call-like op from the stack. */
-  private static Long gasFromStack(final TraceFrame frame, final String opcode) {
-    return frame
-        .getStack()
-        .map(
-            stack -> {
-              final boolean callOrCallCode = "CALL".equals(opcode) || "CALLCODE".equals(opcode);
-              final int required = callOrCallCode ? 7 : 6;
-              if (stack.length < required) return null;
-
-              // Primary: assume TOS at the END (tail)
-              final int gasIdxTail =
-                  stack.length - required; // e.g. STATIC/DELEGATE: len-6; CALL: len-7
-              // Alternate: assume TOS at index 0
-              final int gasIdxHead = required - 1; // e.g. STATIC/DELEGATE: 5; CALL: 6
-
-              java.math.BigInteger candidate = java.math.BigInteger.ZERO;
-
-              try {
-                if (gasIdxTail >= 0 && gasIdxTail < stack.length && stack[gasIdxTail] != null) {
-                  candidate = stack[gasIdxTail].toUnsignedBigInteger();
-                }
-              } catch (Throwable __ignore) {
-                // ignore
-              }
-
-              if (candidate.signum() == 0) {
-                try {
-                  if (gasIdxHead >= 0 && gasIdxHead < stack.length && stack[gasIdxHead] != null) {
-                    candidate = stack[gasIdxHead].toUnsignedBigInteger();
-                  }
-                } catch (Throwable __ignore) {
-                  // ignore
-                }
-              }
-
-              // Last resort: probe a few plausible positions
-              if (candidate.signum() == 0) {
-                final int n = stack.length;
-                final int[] probe = new int[] {n - 6, n - 7, n - 5, 5, 6, 7};
-                for (int idx : probe) {
-                  if (idx >= 0 && idx < n && stack[idx] != null) {
-                    try {
-                      final java.math.BigInteger bi = stack[idx].toUnsignedBigInteger();
-                      if (bi.signum() > 0) {
-                        candidate = bi;
-                        break;
-                      }
-                    } catch (Throwable __ignore) {
-                      // ignore
-                    }
-                  }
-                }
-              }
-
-              if (candidate.signum() == 0) return null;
-              if (candidate.compareTo(java.math.BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                return Long.MAX_VALUE;
-              }
-              return candidate.longValue();
-            })
-        .orElse(null);
+    // For precompiles and non-executed calls, return a placeholder
+    // Precompiles: The actual gas will be calculated in finalizePrecompileChild
+    // Non-executed calls: Won't create a child anyway (skipped in main loop)
+    return 0L; // Placeholder value
   }
 
   /**
-   * Finalize a precompile "child" call: set gas/gasUsed, compute input/output from memory, and
-   * attach immediately to the parent (no depth+1 callee frame will arrive).
+   * Finalizes a precompile child call by setting gas, gas used, input/output data, and attaching it
+   * to the parent call.
    *
    * <p>Behavior:
    *
    * <ul>
    *   <li><b>Execution model:</b> Precompiles execute inline; no separate callee frame is emitted.
-   *   <li><b>Gas (provided):</b> Forwarded gas per EIP-150: forwarded = min(gasArg, (gasRemaining -
-   *       opCost) * 63/64). If gasArg can’t be read (or is zero), fall back to the cap.
-   *   <li><b>Gas used:</b> Prefer entryFrame.getPrecompiledGasCost(); fallback to opcode gasCost.
-   *   <li><b>Input:</b> Pre-call memory slice using (inOffset, inSize) from the caller’s stack.
-   *   <li><b>Output:</b>
-   *       <ul>
-   *         <li>Identity (0x04): returndata equals input (match Geth callTracer).
-   *         <li>Fixed-size precompiles: use expected length (e.g. 32 or 64) clamped by outSize.
-   *         <li>ModExp (0x05): expected length = modulus length from header (3rd length word).
-   *         <li>Otherwise: conservative fallback min(inSize, outSize).
-   *       </ul>
+   *   <li><b>Gas (provided):</b> Calculated using Geth-style display: (post - warmAccess) * 63/64
+   *       where warmAccess = 100 for post-Berlin, 0 for pre-Berlin.
+   *   <li><b>Gas used:</b> Uses the precompiled gas cost stored in the TraceFrame.
+   *   <li><b>Input:</b> Uses the precompile input data stored in TraceFrame by
+   *       DebugOperationTracer.
+   *   <li><b>Output:</b> Uses the precompile output data stored in TraceFrame by
+   *       DebugOperationTracer.
    * </ul>
+   *
+   * @param entryFrame The trace frame containing the precompile call
+   * @param childBuilder The builder for the precompile call result
+   * @param parentCallInfo The parent call information
    */
   private static void finalizePrecompileChild(
       final TraceFrame entryFrame,
