@@ -17,12 +17,14 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.word256.Word256;
 
-import java.math.BigInteger;
+import org.apache.tuweni.bytes.Bytes32;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The Mul operation. */
+/**
+ * Multiplies two 256-bit words and pushes the result onto the stack. The overflow behavior is
+ * defined by the EVM specification, where the result is truncated to fit within 256 bits.
+ */
 public class MulOperation extends AbstractFixedCostOperation {
 
   /** The Mul operation success result. */
@@ -50,16 +52,10 @@ public class MulOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    BigInteger a = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
-    BigInteger b = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
-    BigInteger c = a.multiply(b);
-    byte[] cBytes = c.toByteArray();
-    Bytes result = Bytes.wrap(cBytes);
-    if (cBytes.length > 32) {
-      result = result.slice(cBytes.length - 32, 32);
-    }
+    final Word256 a = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
+    final Word256 b = Word256.fromBytes(frame.popStackItem().toArrayUnsafe());
 
-    frame.pushStackItem(result);
+    frame.pushStackItem(Bytes32.wrap(a.mul(b).toBytesArray()));
     return mulSuccess;
   }
 }
