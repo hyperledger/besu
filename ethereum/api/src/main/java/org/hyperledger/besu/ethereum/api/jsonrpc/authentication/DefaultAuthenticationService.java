@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import java.io.File;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,6 +35,7 @@ import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
+import io.vertx.ext.auth.authorization.PermissionBasedAuthorization;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
@@ -258,7 +258,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
       final Optional<User> optionalUser,
       final JsonRpcMethod jsonRpcMethod,
       final Collection<String> noAuthMethods) {
-    AtomicBoolean foundMatchingPermission = new AtomicBoolean();
     // if the method is configured as a no auth method we skip permission check
     if (noAuthMethods.stream().anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
       return true;
@@ -267,29 +266,23 @@ public class DefaultAuthenticationService implements AuthenticationService {
     if (optionalUser.isPresent()) {
       User user = optionalUser.get();
       for (String perm : jsonRpcMethod.getPermissions()) {
-        user.isAuthorized(
-            perm,
-            (authed) -> {
-              if (authed.result()) {
-                LOG.trace(
-                    "user {} authorized : {} via permission {}",
-                    user,
-                    jsonRpcMethod.getName(),
-                    perm);
-                foundMatchingPermission.set(true);
-              }
-            });
-        // exit if a matching permission was found, no need to keep checking
-        if (foundMatchingPermission.get()) {
-          return foundMatchingPermission.get();
+        try {
+          // Create a permission-based authorization for the required permission
+          PermissionBasedAuthorization authorization = PermissionBasedAuthorization.create(perm);
+          if (authorization.match(user)) {
+            LOG.trace(
+                "user {} authorized : {} via permission {}", user, jsonRpcMethod.getName(), perm);
+            // exit if a matching permission was found, no need to keep checking
+            return true;
+          }
+        } catch (Exception e) {
+          LOG.debug("Error checking authorization for permission {}: {}", perm, e.getMessage());
         }
       }
     }
 
-    if (!foundMatchingPermission.get()) {
-      LOG.trace("user NOT authorized : {}", jsonRpcMethod.getName());
-    }
-    return foundMatchingPermission.get();
+    LOG.trace("user NOT authorized : {}", jsonRpcMethod.getName());
+    return false;
   }
 
   private void validateExpiryExists(final Optional<User> user) {
