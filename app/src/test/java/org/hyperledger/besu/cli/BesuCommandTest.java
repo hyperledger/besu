@@ -43,7 +43,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -437,7 +436,7 @@ public class BesuCommandTest extends CommandTestAbstract {
       // Verify TOML stores it by the appropriate type
       if (optionSpec.type().equals(Boolean.class)) {
         tomlResult.getBoolean(tomlKey);
-      } else if (optionSpec.isMultiValue() || optionSpec.arity().max > 1) {
+      } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);

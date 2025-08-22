@@ -117,6 +117,9 @@ public interface P2PNetwork extends Closeable {
    */
   boolean removeMaintainedConnectionPeer(final Peer peer);
 
+  /** Returns a collection of peers that are maintained connections. */
+  Collection<Peer> getMaintainedConnectionPeers();
+
   /** Stops the P2P network layer. */
   void stop();
 
@@ -164,5 +167,4 @@ public interface P2PNetwork extends Closeable {
   default RlpxAgent getRlpxAgent() {
     return null;
   }
-  ;
 }

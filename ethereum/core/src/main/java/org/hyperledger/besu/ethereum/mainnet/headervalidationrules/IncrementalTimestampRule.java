@@ -29,4 +29,9 @@ public class IncrementalTimestampRule implements AttachedBlockHeaderValidationRu
 
     return Long.compareUnsigned(blockTimestamp, parentTimestamp) > 0;
   }
+
+  @Override
+  public String toString() {
+    return "IncrementalTimestamp";
+  }
 }

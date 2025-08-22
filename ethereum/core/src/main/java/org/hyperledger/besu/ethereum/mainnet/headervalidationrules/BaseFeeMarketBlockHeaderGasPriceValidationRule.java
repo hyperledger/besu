@@ -74,4 +74,9 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
       return false;
     }
   }
+
+  @Override
+  public String toString() {
+    return "BaseFeeMarketBlockHeaderGasPriceValidation";
+  }
 }
