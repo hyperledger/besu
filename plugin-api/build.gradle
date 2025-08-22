@@ -78,7 +78,7 @@ check.dependsOn('checkAPIChanges')
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
+      groupId = 'org.hyperledger.besu'
       pom {
         name = 'Besu Plugins Library'
         description = 'Core Plugins Libraries for Besu'

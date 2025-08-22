@@ -203,9 +203,9 @@ publishing {
   publications {
     mavenJavaPlatform(MavenPublication) {
       from components.javaPlatform
-      groupId "org.hyperledger.besu"
-      artifactId 'bom'
-      version calculateVersion()
+      groupId = "org.hyperledger.besu"
+      artifactId = 'bom'
+      version = calculateVersion()
 
       pom {
         name = "Besu BOM"

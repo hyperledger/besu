@@ -16,6 +16,6 @@ sourceSets.main.solidity.srcDirs = [
 
 solidity {
   resolvePackages = false
-  version '0.8.25'
-  evmVersion 'shanghai'
+  version = '0.8.25'
+  evmVersion = 'shanghai'
 }
