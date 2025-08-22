@@ -582,14 +582,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       }
     }
 
-    // Validate blobGasUsed
-    if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
-      if (!validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
-        return ValidationResult.invalid(
-            RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
-            "Payload BlobGasUsed does not match calculated BlobGasUsed");
+      // Validate blobGasUsed
+      if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
+          Optional<Long> maybeCalculatedBlobGas = validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec);
+          if (maybeCalculatedBlobGas.isPresent()) {
+              long calculated = maybeCalculatedBlobGas.get();
+              long actual = header.getBlobGasUsed().orElse(0L);
+              return ValidationResult.invalid(
+                      RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
+                      String.format("Payload BlobGasUsed does not match calculated BlobGasUsed. Expected %s, got %s",
+                              calculated, actual));
+          }
       }
-    }
 
     if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size())
         > protocolSpec.getGasLimitCalculator().currentBlobGasLimit()) {
@@ -608,14 +612,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return calculated.equals(actual) ? Optional.empty() : Optional.of(calculated);
   }
 
-  private boolean validateBlobGasUsed(
-      final BlockHeader header,
-      final List<VersionedHash> maybeVersionedHashes,
-      final ProtocolSpec protocolSpec) {
-    var calculatedBlobGas =
-        protocolSpec.getGasCalculator().blobGasCost(maybeVersionedHashes.size());
-    return header.getBlobGasUsed().orElse(0L).equals(calculatedBlobGas);
-  }
+  private Optional<Long> validateBlobGasUsed(
+      final BlockHeader header, final List<VersionedHash> versionedHashes, final ProtocolSpec protocolSpec) {
+      long calculated = protocolSpec.getGasCalculator().blobGasCost(versionedHashes.size());
+      long actual = header.getBlobGasUsed().orElse(0L);
+
+      return calculated == actual ? Optional.empty() : Optional.of(calculated);
+    }
 
   private Optional<List<VersionedHash>> extractVersionedHashes(
       final Optional<List<String>> maybeVersionedHashParam) {
