@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.isPrecompileAddress;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
@@ -132,36 +131,9 @@ public class CallTracerResultConverter {
               (fIn == null ? "null" : fIn.toShortHexString()));
         }
 
-        // Derive 'to' if missing and we have a stack
-        String toForCheck = childBuilder.getTo();
-        if (toForCheck == null) {
-          frame
-              .getStack()
-              .ifPresent(
-                  stack -> {
-                    if (stack.length > 1) {
-                      String derived = toAddress(stack[stack.length - 2]).toHexString();
-                      childBuilder.to(derived);
-                    }
-                  });
-          toForCheck = childBuilder.getTo();
-        }
-
-        // Robust precompile detection – show which signal fired
-        final boolean byTo = toForCheck != null && isPrecompileAddress(toForCheck);
-        final boolean byCost = frame.getPrecompiledGasCost().isPresent();
-        if (LOG.isTraceEnabled() && isCallOp(opcode)) {
-          LOG.trace(
-              " precompile? byTo={} byCost={} to={} precompileGasCost={}",
-              byTo,
-              byCost,
-              toForCheck,
-              byCost ? frame.getPrecompiledGasCost().getAsLong() : "-");
-        }
-
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
-        if (isCallOp(opcode) && (byTo || byCost)) {
-          LOG.trace("Precompile fast-path for to={}", toForCheck);
+        if (frame.isPrecompile()) {
+          LOG.trace("Precompile fast-path for to={}", childBuilder.getTo());
           finalizePrecompileChild(frame, childBuilder, parentCallInfo);
           // Do not store this child in depth tracking; it's already attached
           continue;
@@ -405,9 +377,7 @@ public class CallTracerResultConverter {
     final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
 
     // Detect precompile up front so we can defer input/output
-    final boolean looksLikePrecompile =
-        isCallOp(opcode)
-            && (isPrecompileAddress(toAddress) || frame.getPrecompiledGasCost().isPresent());
+    final boolean looksLikePrecompile = frame.isPrecompile();
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(
@@ -507,24 +477,16 @@ public class CallTracerResultConverter {
   }
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
-    /*
-     * Stack layouts (TOS on the right):
-     *   CALL/CALLCODE:     gas, to, value, inOffset, inSize, outOffset, outSize
-     *   DELEGATECALL:      gas, to, inOffset, inSize, outOffset, outSize
-     *   STATICCALL:        gas, to, inOffset, inSize, outOffset, outSize
-     *
-     * For all of the above, the callee "to" address is the same stack position: -2 from TOS.
-     * (i.e., stack[stack.length - 2]).
-     *
-     * Note:
-     * - For DELEGATECALL, do NOT use frame.getRecipient() — that is the *current* contract (proxy).
-     *   Geth’s callTracer reports the *target implementation* taken from the stack.
-     * - For CREATE/CREATE2, the "to" is not known at call-site (computed later), so we return null.
-     */
-
+    // For CREATE/CREATE2, "to" is not known at call-site
     if ("CREATE".equals(opcode) || "CREATE2".equals(opcode)) {
       return null;
     }
+
+    // For precompiles, use the stored precompile recipient if available
+    if (frame.isPrecompile() && frame.getPrecompileRecipient().isPresent()) {
+      return frame.getPrecompileRecipient().get().toHexString();
+    }
+    // For regular calls, extract from stack
     if ("CALL".equals(opcode)
         || "CALLCODE".equals(opcode)
         || "STATICCALL".equals(opcode)
