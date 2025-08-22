@@ -31,7 +31,6 @@ import java.util.Optional;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.annotations.VisibleForTesting;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -49,13 +48,6 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   private static final String PRECOMPILE_NAME = "ECREC";
   private static final Cache<Integer, PrecompileInputResultTuple> ecrecCache =
       Caffeine.newBuilder().maximumSize(1000).build();
-
-  private static boolean enableK1PrecompileSpecificNative = true;
-
-  @VisibleForTesting
-  public static void disableNative() {
-    enableK1PrecompileSpecificNative = false;
-  }
 
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.
@@ -123,7 +115,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     Bytes resultBytes;
-    if (enableK1PrecompileSpecificNative && isK1PrecompileSpecificNativeAvailable()) {
+    if (signatureAlgorithm.isNative() && isK1PrecompileSpecificNativeAvailable()) {
       resultBytes = computeK1Native(safeInput);
     } else {
       resultBytes = computeDefault(safeInput);

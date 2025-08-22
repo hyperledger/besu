@@ -83,19 +83,6 @@ public class SECP256K1 extends AbstractSECP256 {
     return useNative;
   }
 
-  /**
-   * Check if the native library is available.
-   *
-   * @return true if the native library is available, false otherwise.
-   */
-  public static boolean isNativeAvailable() {
-    try {
-      return LibSecp256k1.CONTEXT != null;
-    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
-      return false;
-    }
-  }
-
   @Override
   public boolean isNative() {
     return useNative;
