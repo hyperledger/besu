@@ -182,10 +182,11 @@ public class DebugOperationTracer implements OperationTracer {
     }
     final TraceFrame lastTraceFrame = traceFrames.getLast();
     lastTraceFrame.setPrecompiledGasCost(OptionalLong.of(gasRequirement));
-    lastTraceFrame.setPrecompileIOData(frame.getInputData().copy(), frame.getOutputData());
+    lastTraceFrame.setPrecompileIOData(frame.getInputData().copy(), output);
     LOG.trace(
-        "     Last TraceFrame opCode: {}, Input: {}, Output: {}, Precompile Input: {}, Precompile output: {}",
+        "     Last TraceFrame opCode: {}, Recipient: {} Input: {}, Output: {}, Precompile Input: {}, Precompile output: {}",
         lastTraceFrame.getOpcode(),
+        lastTraceFrame.getRecipient(),
         lastTraceFrame.getInputData(),
         lastTraceFrame.getOutputData(),
         lastTraceFrame.getPrecompileInputData().orElse(null),
