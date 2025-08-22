@@ -60,7 +60,7 @@ public class NativeLibraryOptions {
       names = {"--Xp256verify-native-enabled"},
       description =
           "Per default a BoringSSL native library is used for p256verify. "
-              + "If the secp256r1 native implementation should be used instead, this option must be set to false",
+              + "If the secp256r1 native signature algorithm implementation should be used instead, this option must be set to false",
       arity = "1")
   private final Boolean nativeP256Verify = Boolean.TRUE;
 
