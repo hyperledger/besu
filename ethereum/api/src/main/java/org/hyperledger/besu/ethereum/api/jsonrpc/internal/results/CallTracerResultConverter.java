@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTra
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.isPrecompileAddress;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.parsePrecompileIdFromTo;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
@@ -30,12 +29,10 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -161,7 +158,7 @@ public class CallTracerResultConverter {
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
         if (isCallOp(opcode) && (byTo || byCost)) {
           LOG.trace("Precompile fast-path for to={}", toForCheck);
-          finalizePrecompileChild(frame, nextTrace, childBuilder, parentCallInfo);
+          finalizePrecompileChild(frame, childBuilder, parentCallInfo);
           // Do not store this child in depth tracking; it's already attached
           continue;
         }
@@ -823,7 +820,6 @@ public class CallTracerResultConverter {
    */
   private static void finalizePrecompileChild(
       final TraceFrame entryFrame,
-      final TraceFrame nextTrace,
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
 
@@ -855,365 +851,16 @@ public class CallTracerResultConverter {
         .ifPresentOrElse(
             childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
 
-    final int precompileId = parsePrecompileIdFromTo(childBuilder.getTo());
-
     // --- 3) I/O computation (no callee frame) ---
-    entryFrame
-        .getStack()
-        .ifPresent(
-            stack -> {
-              if (stack.length < 4) return;
-              logStackDebug(stack);
-
-              final Bytes[] preMem = entryFrame.getMemory().orElse(null);
-              final Bytes[] postMem =
-                  (nextTrace != null && nextTrace.getMemory().isPresent())
-                      ? nextTrace.getMemory().get()
-                      : null;
-
-              // 3a) Success flag (orientation-agnostic)
-              boolean success = true;
-              if (nextTrace != null && nextTrace.getStack().isPresent()) {
-                final Bytes[] postStack = nextTrace.getStack().get();
-                if (postStack.length >= 1) {
-                  final int tail = bytesToInt(postStack[postStack.length - 1]);
-                  final int head = bytesToInt(postStack[0]);
-                  if (tail == 0 || tail == 1) success = (tail != 0);
-                  else if (head == 0 || head == 1) success = (head != 0);
-                }
-              }
-
-              // 3b) Build IO coordinates - handle varying stack layouts
-              final int n = stack.length;
-
-              // Find precompile address in stack to use as anchor
-              int precompileAddressPos = -1;
-              for (int i = n - 6; i < n - 1; i++) { // Search in expected range
-                if (i >= 0 && i < n) {
-                  int val = bytesToInt(stack[i]);
-                  if (val == precompileId) {
-                    precompileAddressPos = i;
-                    break; // Use first occurrence in this range
-                  }
-                }
-              }
-
-              // Determine stack layout and extract coordinates
-              final CallTracerHelper.IoCoords tail;
-              if (precompileAddressPos > 0 && precompileAddressPos == n - 2) {
-                // Precompile address found at n-2, actual outSize is at n-1
-                LOG.trace(
-                    "  Stack layout: precompile address at position {}, using n-1 for outSize",
-                    precompileAddressPos);
-                tail =
-                    new CallTracerHelper.IoCoords(
-                        bytesToInt(stack[n - 5]), // inOffset
-                        bytesToInt(stack[n - 4]), // inSize
-                        bytesToInt(stack[n - 3]), // outOffset
-                        bytesToInt(stack[n - 1])); // outSize (skip precompile at n-2)
-
-              } else if (n >= 17) {
-                // Extended stack (like BN128 operations)
-                LOG.trace("  Stack layout: extended stack with {} elements", n);
-                tail =
-                    new CallTracerHelper.IoCoords(
-                        bytesToInt(stack[n - 5]), // inOffset
-                        bytesToInt(stack[n - 4]), // inSize
-                        bytesToInt(stack[n - 3]), // outOffset
-                        bytesToInt(stack[n - 1])); // outSize (likely at n-1 for extended stacks)
-
-              } else {
-                // Standard layout
-                LOG.trace("  Stack layout: standard");
-                tail =
-                    new CallTracerHelper.IoCoords(
-                        bytesToInt(stack[n - 5]), // inOffset
-                        bytesToInt(stack[n - 4]), // inSize
-                        bytesToInt(stack[n - 3]), // outOffset
-                        bytesToInt(stack[n - 2])); // outSize
-              }
-
-              final CallTracerHelper.IoCoords head =
-                  new CallTracerHelper.IoCoords(
-                      bytesToInt(stack[3]), // inOffset
-                      bytesToInt(stack[2]), // inSize
-                      bytesToInt(stack[1]), // outOffset
-                      bytesToInt(stack[0])); // outSize
-
-              // 3c) Score by memory+spec (gas-agnostic): input must fit preMem; output must fit
-              // postMem
-              final int preBytes = (preMem == null) ? Integer.MAX_VALUE : preMem.length * 32;
-              final int postBytes = (postMem == null) ? Integer.MAX_VALUE : postMem.length * 32;
-
-              final boolean effSuccess = success;
-              java.util.function.ToIntFunction<CallTracerHelper.IoCoords> score =
-                  c -> {
-                    // input must be sane and fit
-                    if (c.inOffset() < 0 || c.inSize() < 0) return Integer.MIN_VALUE;
-                    long inEnd = (long) c.inOffset() + (long) c.inSize();
-                    if (inEnd > preBytes) return Integer.MIN_VALUE;
-
-                    // expected output length per precompile (identity=inSize, sha256=32, etc.)
-                    int expected =
-                        effSuccess
-                            ? expectedReturndataLenForPrecompile(
-                                precompileId, preMem, c.inOffset(), c.inSize())
-                            : 0;
-                    if (expected < 0) expected = c.inSize(); // conservative fallback when unknown
-                    final int take = Math.max(0, Math.min(c.outSize(), expected));
-
-                    // if we can see post-mem, output slice must also fit
-                    if (postMem != null) {
-                      if (c.outOffset() < 0) return Integer.MIN_VALUE;
-                      long outEnd = (long) c.outOffset() + (long) take;
-                      if (outEnd > postBytes) return Integer.MIN_VALUE;
-                    }
-
-                    // soft preferences
-                    int s = 0;
-                    if ((c.inOffset() & 31) == 0) s += 2;
-                    if ((c.outOffset() & 31) == 0) s += 1;
-                    if (c.inSize() <= 4096) s += 1;
-                    if (postMem != null) s += 3; // we could verify output fits
-                    return s;
-                  };
-
-              final int st = score.applyAsInt(tail);
-              final int sh = score.applyAsInt(head);
-              final CallTracerHelper.IoCoords io =
-                  (sh > st) ? head : (st > sh ? tail : head); // prefer HEAD on tie
-
-              LOG.trace(
-                  "  IO coords (mem+spec): inOffset={} inSize={} outOffset={} outSize={}",
-                  io.inOffset(),
-                  io.inSize(),
-                  io.outOffset(),
-                  io.outSize());
-
-              // Validate and potentially override outSize for known fixed-size precompiles
-              final CallTracerHelper.IoCoords validatedIo;
-              if (success) {
-                int correctedOutSize = io.outSize();
-
-                switch (precompileId) {
-                  case 0x01: // ecrecover
-                  case 0x02: // sha256
-                  case 0x03: // ripemd160
-                  case 0x08: // bn128 pairing
-                  case 0x0a: // kzg point evaluation
-                    // These always return 32 bytes
-                    if (correctedOutSize < 32) {
-                      LOG.trace(
-                          "  Overriding outSize for precompile 0x{:02x} from {} to 32",
-                          precompileId,
-                          correctedOutSize);
-                      correctedOutSize = 32;
-                    }
-                    break;
-
-                  case 0x06: // bn128 add
-                  case 0x07: // bn128 mul
-                  case 0x09: // blake2f
-                    // These always return 64 bytes
-                    if (correctedOutSize < 64) {
-                      LOG.trace(
-                          "  Overriding outSize for precompile 0x{:02x} from {} to 64",
-                          precompileId,
-                          correctedOutSize);
-                      correctedOutSize = 64;
-                    }
-                    break;
-
-                  case 0x04: // identity
-                    // Output size should match input size
-                    if (correctedOutSize < io.inSize()) {
-                      LOG.trace(
-                          "  Overriding outSize for identity from {} to {}",
-                          correctedOutSize,
-                          io.inSize());
-                      correctedOutSize = io.inSize();
-                    }
-                    break;
-
-                  case 0x05: // modexp
-                    // Dynamic size - keep the extracted outSize
-                    break;
-                }
-
-                validatedIo =
-                    new CallTracerHelper.IoCoords(
-                        io.inOffset(), io.inSize(), io.outOffset(), correctedOutSize);
-              } else {
-                validatedIo = io;
-              }
-
-              LOG.trace(
-                  "  IO coords (validated): inOffset={} inSize={} outOffset={} outSize={}",
-                  validatedIo.inOffset(),
-                  validatedIo.inSize(),
-                  validatedIo.outOffset(),
-                  validatedIo.outSize());
-
-              // 3d) INPUT from pre-call memory
-              String inputHex = "0x";
-              if (preMem != null) {
-                final Bytes in =
-                    extractCallDataFromMemory(preMem, validatedIo.inOffset(), validatedIo.inSize());
-                inputHex = in.toHexString();
-              }
-              childBuilder.input(inputHex);
-
-              // 3e) OUTPUT
-              // 3e) OUTPUT
-              if (precompileId == 0x04) {
-                // Identity: echo input exactly like Geth
-                childBuilder.output(inputHex);
-              } else {
-                // Try to get output data from various sources
-                Bytes outputData = null;
-
-                // First try: current frame's output data (for precompiles)
-                if (entryFrame.getOutputData() != null && !entryFrame.getOutputData().isEmpty()) {
-                  outputData = entryFrame.getOutputData();
-                  LOG.trace(
-                      "  Using entryFrame outputData for precompile {}: {}",
-                      precompileId,
-                      outputData.toHexString());
-                }
-                // Second try: next trace's output data
-                else if (nextTrace != null
-                    && nextTrace.getOutputData() != null
-                    && !nextTrace.getOutputData().isEmpty()) {
-                  outputData = nextTrace.getOutputData();
-                  LOG.trace(
-                      "  Using nextTrace outputData for precompile {}: {}",
-                      precompileId,
-                      outputData.toHexString());
-                }
-                // Third try: check if memory was updated (unlikely for most precompiles)
-                else if (postMem != null) {
-                  // Check if memory changed
-                  Bytes preMemCheck =
-                      extractCallDataFromMemory(preMem, validatedIo.outOffset(), 32);
-                  Bytes postMemCheck =
-                      extractCallDataFromMemory(postMem, validatedIo.outOffset(), 32);
-                  if (!preMemCheck.equals(postMemCheck)) {
-                    outputData = postMemCheck;
-                    LOG.trace(
-                        "  Using memory difference for precompile {}: {}",
-                        precompileId,
-                        outputData.toHexString());
-                  }
-                }
-
-                if (outputData != null && !outputData.isEmpty()) {
-                  // Get expected size for this precompile
-                  int expected =
-                      success
-                          ? expectedReturndataLenForPrecompile(
-                              precompileId, preMem, validatedIo.inOffset(), validatedIo.inSize())
-                          : 0;
-
-                  // Extract the appropriate amount
-                  final Bytes out;
-                  if (precompileId == 0x02) { // SHA256 - always 32 bytes
-                    out = outputData.size() >= 32 ? outputData.slice(0, 32) : outputData;
-                  } else if ((precompileId >= 0x01 && precompileId <= 0x03)
-                      || (precompileId >= 0x06 && precompileId <= 0x0a)) {
-                    // Other fixed-size outputs
-                    out =
-                        outputData.size() >= expected ? outputData.slice(0, expected) : outputData;
-                  } else {
-                    // Variable size (ModExp): respect the outSize parameter
-                    final int take = Math.max(0, Math.min(validatedIo.outSize(), expected));
-                    out = outputData.slice(0, Math.min(take, outputData.size()));
-                  }
-
-                  childBuilder.output(out.toHexString());
-                } else {
-                  LOG.trace("  WARNING: No output data found for precompile {}", precompileId);
-                  childBuilder.output("0x");
-                }
-              } // 3e
-            });
+    if (entryFrame.isPrecompile()) {
+      childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse("0x"));
+      childBuilder.output(
+          entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse("0x"));
+    }
 
     // --- 4) Attach immediately — precompiles have no callee frame ---
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
-    }
-  }
-
-  private static void logStackDebug(final Bytes[] stack) {
-    LOG.trace(
-        " . Stack debug - length: {}, contents: {}",
-        stack.length,
-        Arrays.stream(stack).map(Bytes::toHexString).collect(Collectors.toList()));
-    LOG.trace(" . Stack[0] (potential TOS-head): {}", stack[0].toHexString());
-    LOG.trace(" . Stack[length-1] (potential TOS-tail): {}", stack[stack.length - 1].toHexString());
-
-    // For STATICCALL, show the specific indices we're accessing
-    if (stack.length >= 6) {
-      LOG.trace(" . STATICCALL stack positions (if tail-TOS):");
-      LOG.trace(" .   gas [-6]: {}", stack[stack.length - 6].toHexString());
-      LOG.trace(" .   to [-5]: {}", stack[stack.length - 5].toHexString());
-      LOG.trace(" .   inOffset [-4]: {}", stack[stack.length - 4].toHexString());
-      LOG.trace(" .   inSize [-3]: {}", stack[stack.length - 3].toHexString());
-      LOG.trace(" .   outOffset [-2]: {}", stack[stack.length - 2].toHexString());
-      LOG.trace(" .   outSize [-1]: {}", stack[stack.length - 1].toHexString());
-
-      LOG.trace(" . STATICCALL stack positions (if head-TOS):");
-      LOG.trace(" .   gas [5]: {}", stack[5].toHexString());
-      LOG.trace(" .   to [4]: {}", stack[4].toHexString());
-      LOG.trace(" .   inOffset [3]: {}", stack[3].toHexString());
-      LOG.trace(" .   inSize [2]: {}", stack[2].toHexString());
-      LOG.trace(" .   outOffset [1]: {}", stack[1].toHexString());
-      LOG.trace(" .   outSize [0]: {}", stack[0].toHexString());
-    }
-  }
-
-  /**
-   * Expected returndata size by precompile. -1 if unknown. - Identity (0x04): inSize - ModExp
-   * (0x05): modulusLen from header (third 32-byte length field at inOffset+64) - Fixed-size
-   * returns: 32 bytes: ecrecover(0x01), sha256(0x02), ripemd160(0x03 padded), pairing(0x08),
-   * kzg(0x0a) 64 bytes: bn128 add(0x06), bn128 mul(0x07), blake2f(0x09)
-   */
-  private static int expectedReturndataLenForPrecompile(
-      final int precompileId, final Bytes[] preCallMemory, final int inOffset, final int inSize) {
-
-    switch (precompileId) {
-      // 32-byte returns
-      case 0x01: // ecrecover
-      case 0x02: // sha256
-      case 0x03: // ripemd160 (padded to 32)
-      case 0x08: // bn128 pairing
-      case 0x0a: // kzg point evaluation
-        return 32;
-
-      // 64-byte returns
-      case 0x06: // bn128 add
-      case 0x07: // bn128 mul
-      case 0x09: // blake2f compression
-        return 64;
-
-      // identity: echo input
-      case 0x04:
-        return Math.max(0, inSize);
-
-      // modexp: output len = modulusLen (third 32-byte length field)
-      case 0x05:
-        if (preCallMemory == null || inSize < 96 || inOffset < 0) return -1;
-        try {
-          final Bytes aLenWord = extractCallDataFromMemory(preCallMemory, inOffset + 64, 32);
-          final java.math.BigInteger bi = aLenWord.toUnsignedBigInteger();
-          if (bi.signum() < 0) return 0;
-          final java.math.BigInteger cap = java.math.BigInteger.valueOf(Integer.MAX_VALUE);
-          return (bi.compareTo(cap) > 0) ? Integer.MAX_VALUE : bi.intValue();
-        } catch (Exception ignored) {
-          return -1;
-        }
-
-      default:
-        return -1;
     }
   }
 }
