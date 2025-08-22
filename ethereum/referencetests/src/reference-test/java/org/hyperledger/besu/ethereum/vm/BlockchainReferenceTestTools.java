@@ -15,14 +15,10 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -30,18 +26,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.account.AccountState;
-import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
@@ -106,12 +96,6 @@ public class BlockchainReferenceTestTools {
 
   @SuppressWarnings("java:S5960") // this is actually test code
   public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
-    final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
-    final MutableWorldState worldState =
-        spec.getWorldStateArchive()
-            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
-            .orElseThrow();
-
     final ProtocolSchedule schedule =
         ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
 
@@ -130,8 +114,6 @@ public class BlockchainReferenceTestTools {
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
-        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
-
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT
@@ -146,18 +128,5 @@ public class BlockchainReferenceTestTools {
     }
 
     Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
-  }
-
-  static void verifyJournaledEVMAccountCompatability(
-          final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
-    EVM evm = protocolSpec.getEvm();
-    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-      assumeFalse(
-              worldState
-                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE).anyMatch(AccountState::isEmpty),
-              "Journaled account configured and empty account detected");
-      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,
-              "Journaled account configured and fork prior to the merge specified");
-    }
   }
 }
