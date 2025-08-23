@@ -18,7 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.mapExceptionalHaltToError;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shouldShowFailedCall;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -141,16 +143,52 @@ public class CallTracerResultConverter {
           continue;
         }
 
-        // If we did not enter a callee (no depth+1) and it's not a precompile, skip creating a
-        // phantom child.
-        if (nextTrace == null || nextTrace.getDepth() <= frameDepth) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(
-                " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
-                (nextTrace == null ? null : nextTrace.getDepth()),
-                frameDepth);
+        // Check if we entered a callee (depth increased)
+        final boolean calleeEntered = (nextTrace != null && nextTrace.getDepth() > frameDepth);
+
+        if (!calleeEntered) {
+          // Check if this is a failed call that should be shown
+          if (frame.getExceptionalHaltReason().isPresent()) {
+            final ExceptionalHaltReason haltReason = frame.getExceptionalHaltReason().get();
+
+            if (shouldShowFailedCall(haltReason)) {
+              LOG.trace(" Showing failed call: {}", haltReason.name());
+
+              String errorMessage = mapExceptionalHaltToError(haltReason);
+              childBuilder.error(errorMessage);
+              childBuilder.gasUsed(frame.getGasCost().orElse(0L));
+
+              if (parentCallInfo != null) {
+                parentCallInfo.builder.addCall(childBuilder.build());
+              }
+            } else {
+              LOG.trace(" skip: exceptional halt {} - not showing", haltReason.name());
+            }
           }
-          // Mirrors geth callTracer behavior: do not emit children for non-executed calls.
+          // Check for insufficient balance (might not have exceptional halt)
+          else if ("CALL".equals(opcode)
+              && frame.getValue() != null
+              && !frame.getValue().isZero()) {
+            // This might be an insufficient balance scenario
+            // Check if the call failed without entering (no depth increase, no exceptional halt,
+            // but has value)
+            LOG.trace(" Possible insufficient balance call detected");
+
+            childBuilder.error("insufficient balance for transfer");
+            childBuilder.gasUsed(0L);
+            childBuilder.input("0x");
+
+            if (parentCallInfo != null) {
+              parentCallInfo.builder.addCall(childBuilder.build());
+            }
+          } else {
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(
+                  " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
+                  (nextTrace == null ? null : nextTrace.getDepth()),
+                  frameDepth);
+            }
+          }
           continue;
         }
 
