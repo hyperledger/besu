@@ -514,5 +514,9 @@ public class CallTracerResult {
     public String getFrom() {
       return this.from;
     }
+
+    public String getValue() {
+      return this.value;
+    }
   }
 }

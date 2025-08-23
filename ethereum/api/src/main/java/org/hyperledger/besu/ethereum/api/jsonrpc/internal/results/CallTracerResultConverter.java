@@ -147,6 +147,36 @@ public class CallTracerResultConverter {
         final boolean calleeEntered = (nextTrace != null && nextTrace.getDepth() > frameDepth);
 
         if (!calleeEntered) {
+          // Enhanced debugging
+          LOG.trace(" === Failed/Non-entered Call Debug ===");
+          LOG.trace("  Opcode: {}", opcode);
+          LOG.trace("  Has exceptional halt: {}", frame.getExceptionalHaltReason().isPresent());
+          if (frame.getExceptionalHaltReason().isPresent()) {
+            LOG.trace("  Halt reason: {}", frame.getExceptionalHaltReason().get().name());
+          }
+          LOG.trace("  Frame value (Wei): {}", frame.getValue());
+          LOG.trace(
+              "  Frame value (hex): {}",
+              frame.getValue() != null ? frame.getValue().toHexString() : "null");
+          LOG.trace("  Builder value: {}", childBuilder.getValue());
+          LOG.trace("  Frame recipient: {}", frame.getRecipient());
+          LOG.trace("  Builder to: {}", childBuilder.getTo());
+          LOG.trace("  Frame depth: {}", frame.getDepth());
+          LOG.trace(
+              "  Frame inputData size: {}",
+              frame.getInputData() != null ? frame.getInputData().size() : 0);
+
+          // Also check the stack to see what value was attempted
+          if (frame.getStack().isPresent() && "CALL".equals(opcode)) {
+            Bytes[] stack = frame.getStack().get();
+            if (stack.length >= 6) {
+              // For CALL: gas, to, value, inOffset, inSize, outOffset, outSize
+              Bytes valueFromStack = stack[stack.length - 5]; // value is at position -5
+              LOG.trace("  Value from stack: {}", valueFromStack.toHexString());
+            }
+          }
+          LOG.trace(" === End Debug ===");
+
           // Check if this is a failed call that should be shown
           if (frame.getExceptionalHaltReason().isPresent()) {
             final ExceptionalHaltReason haltReason = frame.getExceptionalHaltReason().get();
@@ -166,35 +196,32 @@ public class CallTracerResultConverter {
             }
           }
           // Check for insufficient balance (might not have exceptional halt)
-          else if ("CALL".equals(opcode)
-              && frame.getValue() != null
-              && !frame.getValue().isZero()) {
-            // This might be an insufficient balance scenario
-            // Check if the call failed without entering (no depth increase, no exceptional halt,
-            // but has value)
-            LOG.trace(" Possible insufficient balance call detected");
+          else if ("CALL".equals(opcode)) {
+            // Check frame.getValue() directly
+            boolean hasValue = frame.getValue() != null && !frame.getValue().isZero();
+            LOG.trace("  Has value: {}", hasValue);
 
-            childBuilder.error("insufficient balance for transfer");
-            childBuilder.gasUsed(0L);
-            childBuilder.input("0x");
+            if (hasValue) {
+              LOG.trace("  -> Treating as insufficient balance");
+              childBuilder.error("insufficient balance for transfer");
+              childBuilder.gasUsed(0L);
+              childBuilder.input("0x");
 
-            if (parentCallInfo != null) {
-              parentCallInfo.builder.addCall(childBuilder.build());
+              if (parentCallInfo != null) {
+                parentCallInfo.builder.addCall(childBuilder.build());
+              }
             }
           } else {
-            if (LOG.isTraceEnabled()) {
-              LOG.trace(
-                  " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
-                  (nextTrace == null ? null : nextTrace.getDepth()),
-                  frameDepth);
-            }
+
+            LOG.trace(
+                " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
+                (nextTrace == null ? null : nextTrace.getDepth()),
+                frameDepth);
           }
           continue;
         }
 
-        if (LOG.isTraceEnabled()) {
-          LOG.trace(" enqueue child: depth={} (waiting for RETURN/REVERT/STOP)", currentDepth + 1);
-        }
+        LOG.trace(" enqueue child: depth={} (waiting for RETURN/REVERT/STOP)", currentDepth + 1);
         // Normal call path: track child until its RETURN/REVERT/HALT
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
 

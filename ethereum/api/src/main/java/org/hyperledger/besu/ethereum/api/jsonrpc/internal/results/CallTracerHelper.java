@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
+import java.util.Locale;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
-
-import java.util.Locale;
 
 /** Small, static helpers used by CallTracerResultConverter. */
 final class CallTracerHelper {
