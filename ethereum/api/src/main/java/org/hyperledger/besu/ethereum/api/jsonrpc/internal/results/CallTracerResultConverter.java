@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -197,8 +198,57 @@ public class CallTracerResultConverter {
           }
           // Check for insufficient balance (might not have exceptional halt)
           else if ("CALL".equals(opcode)) {
-            // Check frame.getValue() directly
-            boolean hasValue = frame.getValue() != null && !frame.getValue().isZero();
+            // Extract value from the stack, not from frame.getValue()
+            boolean hasValue = false;
+            String callValue = "0x0";
+
+            if (frame.getStack().isPresent()) {
+              Bytes[] stack = frame.getStack().get();
+              if (stack.length >= 7) { // CALL needs 7 stack items
+                // The stack layout (from TOS, which is at stack.length-1):
+                // -7: gas
+                // -6: to
+                // -5: value  <-- This is what we want!
+                // -4: inOffset
+                // -3: inSize
+                // -2: outOffset
+                // -1: outSize (TOS)
+
+                LOG.trace("  Stack values (CALL operation):");
+                LOG.trace(
+                    "    gas     [-7]: {}",
+                    stack.length >= 7 ? stack[stack.length - 7].toHexString() : "N/A");
+                LOG.trace(
+                    "    to      [-6]: {}",
+                    stack.length >= 6 ? stack[stack.length - 6].toHexString() : "N/A");
+                LOG.trace(
+                    "    value   [-5]: {}",
+                    stack.length >= 5 ? stack[stack.length - 5].toHexString() : "N/A");
+                LOG.trace(
+                    "    inOff   [-4]: {}",
+                    stack.length >= 4 ? stack[stack.length - 4].toHexString() : "N/A");
+                LOG.trace(
+                    "    inSize  [-3]: {}",
+                    stack.length >= 3 ? stack[stack.length - 3].toHexString() : "N/A");
+                LOG.trace(
+                    "    outOff  [-2]: {}",
+                    stack.length >= 2 ? stack[stack.length - 2].toHexString() : "N/A");
+                LOG.trace(
+                    "    outSize [-1]: {}",
+                    stack.length >= 1 ? stack[stack.length - 1].toHexString() : "N/A");
+
+                // Value is at position -5 from TOS
+                Bytes valueFromStack = stack[stack.length - 5];
+                BigInteger valueBigInt = new BigInteger(1, valueFromStack.toArrayUnsafe());
+                hasValue = valueBigInt.compareTo(BigInteger.ZERO) > 0;
+
+                if (hasValue) {
+                  callValue = "0x" + valueBigInt.toString(16);
+                  LOG.trace("  Extracted value from stack: {} ({} wei)", callValue, valueBigInt);
+                }
+              }
+            }
+
             LOG.trace("  Has value: {}", hasValue);
 
             if (hasValue) {
@@ -206,10 +256,13 @@ public class CallTracerResultConverter {
               childBuilder.error("insufficient balance for transfer");
               childBuilder.gasUsed(0L);
               childBuilder.input("0x");
+              childBuilder.value(callValue); // Set the actual value being attempted
 
               if (parentCallInfo != null) {
                 parentCallInfo.builder.addCall(childBuilder.build());
               }
+            } else {
+              LOG.trace("  -> CALL without value, skipping");
             }
           } else {
 
