@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -163,7 +164,7 @@ public class CallTracerResultConverter {
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
       }
       // Handle SELFDESTRUCT specifically
-      else if ("SELFDESTRUCT".equalsIgnoreCase(opcode)) {
+      else if (isSelfDestructOp(opcode)) {
         final CallInfo currentCallInfo = depthToCallInfo.get(frameDepth);
         handleSelfDestruct(frame, currentCallInfo);
       }
@@ -224,21 +225,40 @@ public class CallTracerResultConverter {
 
   private static void setOutputAndErrorStatus(
       final CallTracerResult.Builder builder, final TraceFrame frame, final String opcode) {
-
     // Set output data if present
     if (frame.getOutputData() != null && !frame.getOutputData().isEmpty()) {
       builder.output(frame.getOutputData().toHexString());
     }
 
     // Set error information
-    if (frame.getExceptionalHaltReason().isPresent() || "REVERT".equals(opcode)) {
-      builder.error("execution reverted");
+    if (frame.getExceptionalHaltReason().isPresent()) {
+      // Use the specific halt reason description
+      String errorMessage =
+          frame
+              .getExceptionalHaltReason()
+              .map(ExceptionalHaltReason::getDescription)
+              .orElse("execution reverted");
+      builder.error(errorMessage);
 
+      // For failed CREATE/CREATE2, ensure 'to' is null
+      if ("CREATE".equals(builder.getType()) || "CREATE2".equals(builder.getType())) {
+        builder.to(null);
+      }
+
+      // Add revert reason if available
       frame
           .getRevertReason()
           .ifPresent(
               reason -> {
-                // Try to decode the revert reason as a human-readable string
+                String decodedReason = decodeRevertReason(reason);
+                builder.revertReason(decodedReason);
+              });
+    } else if ("REVERT".equals(opcode)) {
+      builder.error("execution reverted");
+      frame
+          .getRevertReason()
+          .ifPresent(
+              reason -> {
                 String decodedReason = decodeRevertReason(reason);
                 builder.revertReason(decodedReason);
               });
@@ -642,8 +662,12 @@ public class CallTracerResultConverter {
     return "REVERT".equals(opcode);
   }
 
+  private static boolean isSelfDestructOp(final String opcode) {
+    return "SELFDESTRUCT".equals(opcode);
+  }
+
   private static boolean isHaltOp(final String opcode) {
-    return "STOP".equals(opcode) || "SELFDESTRUCT".equals(opcode);
+    return "STOP".equals(opcode);
   }
 
   private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
@@ -775,12 +799,20 @@ public class CallTracerResultConverter {
         .ifPresentOrElse(
             childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
 
-    // --- 3) I/O computation (no callee frame) ---
-    if (entryFrame.isPrecompile()) {
-      childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse("0x"));
-      childBuilder.output(
-          entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse("0x"));
+    // Check if precompile failed
+    if (entryFrame.getExceptionalHaltReason().isPresent()) {
+      String errorMessage =
+          entryFrame
+              .getExceptionalHaltReason()
+              .map(ExceptionalHaltReason::getDescription)
+              .orElse("precompile failed");
+      childBuilder.error(errorMessage);
+      LOG.trace("  Precompile failed: {}", errorMessage);
     }
+
+    // --- 3) I/O computation (no callee frame) ---
+    childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse("0x"));
+    childBuilder.output(entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse("0x"));
 
     // --- 4) Attach immediately — precompiles have no callee frame ---
     if (parentCallInfo != null) {
@@ -789,8 +821,7 @@ public class CallTracerResultConverter {
   }
 
   private static void handleSelfDestruct(final TraceFrame frame, final CallInfo currentCallInfo) {
-
-    if (currentCallInfo == null || !frame.getStack().isPresent()) {
+    if (currentCallInfo == null || frame.getStack().isEmpty()) {
       return;
     }
 
