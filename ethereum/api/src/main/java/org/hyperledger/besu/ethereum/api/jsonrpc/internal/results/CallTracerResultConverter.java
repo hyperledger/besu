@@ -161,6 +161,11 @@ public class CallTracerResultConverter {
         // Store call info for this depth
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
       }
+      // Handle SELFDESTRUCT specifically
+      else if ("SELFDESTRUCT".equalsIgnoreCase(opcode)) {
+        final CallInfo currentCallInfo = depthToCallInfo.get(frameDepth);
+        handleSelfDestruct(frame, currentCallInfo);
+      }
       // Process return operations that exit a context
       else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
         currentDepth = frameDepth;
@@ -780,5 +785,40 @@ public class CallTracerResultConverter {
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
+  }
+
+  private static void handleSelfDestruct(final TraceFrame frame, final CallInfo currentCallInfo) {
+
+    if (currentCallInfo == null || !frame.getStack().isPresent()) {
+      return;
+    }
+
+    final Bytes[] stack = frame.getStack().get();
+    if (stack.length == 0) {
+      return;
+    }
+
+    // Extract beneficiary from top of stack
+    final String beneficiary = toAddress(stack[stack.length - 1]).toHexString();
+
+    // The value is the contract's remaining balance
+    final String value = frame.getValue().toShortHexString();
+    final String from = frame.getRecipient().toHexString();
+
+    // Create SELFDESTRUCT entry matching Geth's format
+    final CallTracerResult selfDestructCall =
+        CallTracerResult.builder()
+            .type("SELFDESTRUCT")
+            .from(from)
+            .to(beneficiary)
+            .gas(0L)
+            .gasUsed(0L)
+            .value(value)
+            .input("0x")
+            .build();
+
+    currentCallInfo.builder.addCall(selfDestructCall);
+
+    LOG.trace("SELFDESTRUCT: {} -> {} (value: {})", from, beneficiary, value);
   }
 }
