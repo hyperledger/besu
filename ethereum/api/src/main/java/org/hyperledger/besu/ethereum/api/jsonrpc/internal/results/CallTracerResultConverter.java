@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTra
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -793,24 +794,44 @@ public class CallTracerResultConverter {
       return;
     }
 
+    // Check for exceptional halt first
+    if (frame.getExceptionalHaltReason().isPresent()) {
+      LOG.trace("SELFDESTRUCT failed with halt reason: {}", frame.getExceptionalHaltReason().get());
+      return; // Don't create SELFDESTRUCT entry for failed operation
+    }
+
     final Bytes[] stack = frame.getStack().get();
     if (stack.length == 0) {
       return;
     }
 
     // Extract beneficiary from top of stack
-    final String beneficiary = toAddress(stack[stack.length - 1]).toHexString();
-
-    // The value is the contract's remaining balance
-    final String value = frame.getValue().toShortHexString();
+    final Address beneficiary = toAddress(stack[stack.length - 1]);
+    final String beneficiaryHex = beneficiary.toHexString();
     final String from = frame.getRecipient().toHexString();
+
+    // Get the contract's balance from refunds map
+    // The refund is keyed by beneficiary address and contains the originator's balance
+    String value = "0x0"; // Default if not found
+    if (frame.getMaybeRefunds().isPresent()) {
+      final Map<Address, Wei> refunds = frame.getMaybeRefunds().get();
+      final Wei balance = refunds.get(beneficiary); // Get the refund for this beneficiary
+      if (balance != null) {
+        value = balance.toShortHexString();
+        LOG.trace("SELFDESTRUCT balance from refunds[{}]: {}", beneficiaryHex, value);
+      } else {
+        LOG.warn("SELFDESTRUCT: No refund found for beneficiary {}", beneficiaryHex);
+      }
+    } else {
+      LOG.warn("SELFDESTRUCT: No refunds map available");
+    }
 
     // Create SELFDESTRUCT entry matching Geth's format
     final CallTracerResult selfDestructCall =
         CallTracerResult.builder()
             .type("SELFDESTRUCT")
             .from(from)
-            .to(beneficiary)
+            .to(beneficiaryHex)
             .gas(0L)
             .gasUsed(0L)
             .value(value)
@@ -819,6 +840,6 @@ public class CallTracerResultConverter {
 
     currentCallInfo.builder.addCall(selfDestructCall);
 
-    LOG.trace("SELFDESTRUCT: {} -> {} (value: {})", from, beneficiary, value);
+    LOG.trace("SELFDESTRUCT: {} -> {} (value: {})", from, beneficiaryHex, value);
   }
 }
