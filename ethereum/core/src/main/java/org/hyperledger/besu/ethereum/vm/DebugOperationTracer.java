@@ -93,10 +93,6 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    if ("CALL".equals(opcode)) {
-        LOG.trace(" . . tracePostExecution: CALL Frame Status: {}", frame.getState());
-    }
-
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }

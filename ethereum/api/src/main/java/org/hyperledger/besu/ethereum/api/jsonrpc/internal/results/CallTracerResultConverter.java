@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTra
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.mapExceptionalHaltToError;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shouldShowFailedCall;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -116,31 +114,15 @@ public class CallTracerResultConverter {
       // Process call operations that create a new context (or a precompile effect)
       if (isCallOp(opcode) || isCreateOp(opcode)) {
         currentDepth = frameDepth;
-
         // Get parent call info
         final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth);
-
         // Build the prospective child
         final CallTracerResult.Builder childBuilder =
             createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
 
-        if (LOG.isTraceEnabled()) {
-          final Bytes fIn = frame.getInputData();
-          LOG.trace(
-              " child draft: type={} from={} to={} gas(provided)={} input[{}]={}",
-              childBuilder.getType(),
-              childBuilder.getFrom(),
-              childBuilder.getTo(),
-              (childBuilder.getGas() == null ? "null" : hexN(childBuilder.getGas().longValue())),
-              (fIn == null ? 0 : fIn.size()),
-              (fIn == null ? "null" : fIn.toShortHexString()));
-        }
-
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
         if (frame.isPrecompile()) {
-          LOG.trace("Precompile fast-path for to={}", childBuilder.getTo());
           finalizePrecompileChild(frame, childBuilder, parentCallInfo);
-          // Do not store this child in depth tracking; it's already attached
           continue;
         }
 
@@ -148,137 +130,12 @@ public class CallTracerResultConverter {
         final boolean calleeEntered = (nextTrace != null && nextTrace.getDepth() > frameDepth);
 
         if (!calleeEntered) {
-          // Enhanced debugging
-          LOG.trace(" === Failed/Non-entered Call Debug ===");
-          LOG.trace("  Opcode: {}", opcode);
-          LOG.trace("  Has exceptional halt: {}", frame.getExceptionalHaltReason().isPresent());
-          if (frame.getExceptionalHaltReason().isPresent()) {
-            LOG.trace("  Halt reason: {}", frame.getExceptionalHaltReason().get().name());
-          }
-          LOG.trace("  Frame value (Wei): {}", frame.getValue());
-          LOG.trace(
-              "  Frame value (hex): {}",
-              frame.getValue() != null ? frame.getValue().toHexString() : "null");
-          LOG.trace("  Builder value: {}", childBuilder.getValue());
-          LOG.trace("  Frame recipient: {}", frame.getRecipient());
-          LOG.trace("  Builder to: {}", childBuilder.getTo());
-          LOG.trace("  Frame depth: {}", frame.getDepth());
-          LOG.trace(
-              "  Frame inputData size: {}",
-              frame.getInputData() != null ? frame.getInputData().size() : 0);
-
-          // Also check the stack to see what value was attempted
-          if (frame.getStack().isPresent() && "CALL".equals(opcode)) {
-            Bytes[] stack = frame.getStack().get();
-            if (stack.length >= 6) {
-              // For CALL: gas, to, value, inOffset, inSize, outOffset, outSize
-              Bytes valueFromStack = stack[stack.length - 5]; // value is at position -5
-              LOG.trace("  Value from stack: {}", valueFromStack.toHexString());
-            }
-          }
-          LOG.trace(" === End Debug ===");
-
-          // Check if this is a failed call that should be shown
-          if (frame.getExceptionalHaltReason().isPresent()) {
-            final ExceptionalHaltReason haltReason = frame.getExceptionalHaltReason().get();
-
-            if (shouldShowFailedCall(haltReason)) {
-              LOG.trace(" Showing failed call: {}", haltReason.name());
-
-              String errorMessage = mapExceptionalHaltToError(haltReason);
-              childBuilder.error(errorMessage);
-              childBuilder.gasUsed(frame.getGasCost().orElse(0L));
-
-              if (parentCallInfo != null) {
-                parentCallInfo.builder.addCall(childBuilder.build());
-              }
-            } else {
-              LOG.trace(" skip: exceptional halt {} - not showing", haltReason.name());
-            }
-          }
-          // Check for insufficient balance (might not have exceptional halt)
-          else if ("CALL".equals(opcode)) {
-            // Extract value from the stack, not from frame.getValue()
-            boolean hasValue = false;
-            String callValue = "0x0";
-
-            if (frame.getStack().isPresent()) {
-              Bytes[] stack = frame.getStack().get();
-              if (stack.length >= 7) { // CALL needs 7 stack items
-                // The stack layout (from TOS, which is at stack.length-1):
-                // -7: gas
-                // -6: to
-                // -5: value  <-- This is what we want!
-                // -4: inOffset
-                // -3: inSize
-                // -2: outOffset
-                // -1: outSize (TOS)
-
-                LOG.trace("  Stack values (CALL operation):");
-                LOG.trace(
-                    "    gas     [-7]: {}",
-                    stack.length >= 7 ? stack[stack.length - 7].toHexString() : "N/A");
-                LOG.trace(
-                    "    to      [-6]: {}",
-                    stack.length >= 6 ? stack[stack.length - 6].toHexString() : "N/A");
-                LOG.trace(
-                    "    value   [-5]: {}",
-                    stack.length >= 5 ? stack[stack.length - 5].toHexString() : "N/A");
-                LOG.trace(
-                    "    inOff   [-4]: {}",
-                    stack.length >= 4 ? stack[stack.length - 4].toHexString() : "N/A");
-                LOG.trace(
-                    "    inSize  [-3]: {}",
-                    stack.length >= 3 ? stack[stack.length - 3].toHexString() : "N/A");
-                LOG.trace(
-                    "    outOff  [-2]: {}",
-                    stack.length >= 2 ? stack[stack.length - 2].toHexString() : "N/A");
-                LOG.trace(
-                    "    outSize [-1]: {}",
-                    stack.length >= 1 ? stack[stack.length - 1].toHexString() : "N/A");
-
-                // Value is at position -5 from TOS
-                Bytes valueFromStack = stack[stack.length - 5];
-                BigInteger valueBigInt = new BigInteger(1, valueFromStack.toArrayUnsafe());
-                hasValue = valueBigInt.compareTo(BigInteger.ZERO) > 0;
-
-                if (hasValue) {
-                  callValue = "0x" + valueBigInt.toString(16);
-                  LOG.trace("  Extracted value from stack: {} ({} wei)", callValue, valueBigInt);
-                }
-              }
-            }
-
-            LOG.trace("  Has value: {}", hasValue);
-
-            if (hasValue) {
-              LOG.trace("  -> Treating as insufficient balance");
-              childBuilder.error("insufficient balance for transfer");
-              childBuilder.gasUsed(0L);
-              childBuilder.input("0x");
-              childBuilder.value(callValue); // Set the actual value being attempted
-
-              if (parentCallInfo != null) {
-                parentCallInfo.builder.addCall(childBuilder.build());
-              }
-            } else {
-              LOG.trace("  -> CALL without value, skipping");
-            }
-          } else {
-
-            LOG.trace(
-                " skip: no callee frame opened (nextDepth={} <= frameDepth={})",
-                (nextTrace == null ? null : nextTrace.getDepth()),
-                frameDepth);
-          }
+          handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
           continue;
         }
 
-        LOG.trace(" enqueue child: depth={} (waiting for RETURN/REVERT/STOP)", currentDepth + 1);
         // Normal call path: track child until its RETURN/REVERT/HALT
         final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
-
-        // Store call info for this depth
         depthToCallInfo.put(currentDepth + 1, childCallInfo);
       }
       // Handle SELFDESTRUCT specifically
@@ -293,18 +150,23 @@ public class CallTracerResultConverter {
         // Get child call info
         final CallInfo childCallInfo = depthToCallInfo.get(currentDepth);
         if (LOG.isTraceEnabled() && childCallInfo != null) {
-          LOG.trace(
-              " return: depth={} type={} -> computing gasUsed",
-              currentDepth,
-              childCallInfo.builder.getType());
+          LOG.trace(" return: depth={} type={}", currentDepth, childCallInfo.builder.getType());
         }
         if (childCallInfo == null) {
+          LOG.debug("Orphaned return at depth {} - no matching call entry", currentDepth);
           continue;
         }
 
         // Get entry frame and calculate gas used
         final TraceFrame entryFrame = childCallInfo.entryFrame;
         if (entryFrame != null) {
+          if (isCreateOp(childCallInfo.builder.getType()) && frame.getDepth() > 0) {
+            // For successful CREATE, set the created contract address
+            // This might be available in frame.getRecipient() or frame.getContractAddress()
+            if (childCallInfo.builder.getTo() == null) {
+              childCallInfo.builder.to(frame.getRecipient().toHexString());
+            }
+          }
           // Set output data and error status
           setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
 
@@ -339,6 +201,51 @@ public class CallTracerResultConverter {
     finalizeRoot(rootInfo.builder, trace);
 
     return rootInfo.builder.build();
+  }
+
+  private static void handleNonEnteredCall(
+      final TraceFrame frame,
+      final String opcode,
+      final CallTracerResult.Builder childBuilder,
+      final CallInfo parentCallInfo) {
+    // Call didn't enter - could be: failed call, call to EOA, insufficient balance, etc.
+    // For now, add all non-entered calls to trace with available data
+
+    // Set error if there's an exceptional halt
+    frame
+        .getExceptionalHaltReason()
+        .ifPresent(
+            haltReason -> {
+              String errorMessage = mapExceptionalHaltToError(haltReason);
+              childBuilder.error(errorMessage);
+            });
+
+    // For failed CREATE, ensure 'to' is null
+    if (isCreateOp(opcode)) {
+      childBuilder.to(null); // No contract was created
+    }
+
+    // Set gas used (0 for most failed calls)
+    if (frame.getExceptionalHaltReason().isPresent()) {
+      // Some exceptional halts consume gas
+      ExceptionalHaltReason reason = frame.getExceptionalHaltReason().get();
+      if ("INSUFFICIENT_GAS".equals(reason.name())) {
+        childBuilder.gasUsed(frame.getGasCost().orElse(0L)); // Uses all available
+      } else {
+        childBuilder.gasUsed(0L); // Most other failures use no gas
+      }
+    } else {
+      childBuilder.gasUsed(0L); // Non-exceptional failures (like insufficient balance)
+    }
+
+    // TODO: We need a way to determine if this has happened due to insufficient funds.
+    //  Not very obvious from data from TraceFrame at the moment. Insufficient funds doesn't
+    //  raise exceptional halt reason.
+
+    // Add to parent immediately (like precompiles)
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childBuilder.build());
+    }
   }
 
   private static void setOutputAndErrorStatus(
