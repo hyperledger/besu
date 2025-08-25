@@ -55,7 +55,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final long fixedCost) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
     gasCost = fixedCost;
-    successResponse = new OperationResult(gasCost, null);
+    successResponse = new OperationResult(gasCost);
     outOfGasResponse = new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     underflowResponse =
         new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);

@@ -28,7 +28,7 @@ public class SwapOperation extends AbstractFixedCostOperation {
   public static final int SWAP_BASE = 0x8F;
 
   /** The Swap operation success result. */
-  static final OperationResult swapSuccess = new OperationResult(3, null);
+  static final OperationResult swapSuccess = new OperationResult(3);
 
   private final int index;
 

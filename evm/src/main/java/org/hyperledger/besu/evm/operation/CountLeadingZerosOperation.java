@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
 
   /** The CLZ operation success result. */
-  static final OperationResult clzSuccess = new OperationResult(5, null);
+  static final OperationResult clzSuccess = new OperationResult(5);
 
   /**
    * Instantiates a new Count Leading Zeros Operation

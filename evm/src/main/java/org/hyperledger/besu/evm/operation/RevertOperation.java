@@ -52,6 +52,6 @@ public class RevertOperation extends AbstractOperation {
     frame.setOutputData(reason);
     frame.setRevertReason(reason);
     frame.setState(MessageFrame.State.REVERT);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

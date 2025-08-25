@@ -47,6 +47,6 @@ public class MStore8Operation extends AbstractOperation {
     }
 
     frame.writeMemory(location, theByte, true);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

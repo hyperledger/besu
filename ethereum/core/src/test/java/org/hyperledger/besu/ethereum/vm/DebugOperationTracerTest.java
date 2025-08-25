@@ -63,7 +63,7 @@ class DebugOperationTracerTest {
       new AbstractOperation(0x02, "MUL", 2, 1, null) {
         @Override
         public OperationResult execute(final MessageFrame frame, final EVM evm) {
-          return new OperationResult(20L, null);
+          return new OperationResult(20L);
         }
       };
 

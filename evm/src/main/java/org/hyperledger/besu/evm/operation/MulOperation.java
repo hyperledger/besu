@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class MulOperation extends AbstractFixedCostOperation {
 
   /** The Mul operation success result. */
-  static final OperationResult mulSuccess = new OperationResult(5, null);
+  static final OperationResult mulSuccess = new OperationResult(5);
 
   /**
    * Instantiates a new Mul operation.

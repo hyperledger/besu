@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.MutableBytes32;
 /** The Sign extend operation. */
 public class SignExtendOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult signExtendSuccess = new OperationResult(5, null);
+  private static final OperationResult signExtendSuccess = new OperationResult(5);
 
   /**
    * Instantiates a new Sign extend operation.

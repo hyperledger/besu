@@ -26,7 +26,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0xe6;
 
   /** The Dup success operation result. */
-  static final OperationResult dupSuccess = new OperationResult(3, null);
+  static final OperationResult dupSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Dup operation.

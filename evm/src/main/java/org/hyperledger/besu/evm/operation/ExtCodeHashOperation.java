@@ -96,7 +96,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
           frame.pushStackItem(account.getCodeHash());
         }
       }
-      return new OperationResult(cost, null);
+      return new OperationResult(cost);
 
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);

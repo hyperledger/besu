@@ -25,7 +25,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class EqOperation extends AbstractFixedCostOperation {
 
   /** The Eq operation success result. */
-  static final OperationResult eqSuccess = new OperationResult(3, null);
+  static final OperationResult eqSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Eq operation.

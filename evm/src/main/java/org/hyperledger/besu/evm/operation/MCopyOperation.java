@@ -46,6 +46,6 @@ public class MCopyOperation extends AbstractOperation {
 
     frame.copyMemory(dst, src, length, true);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

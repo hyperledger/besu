@@ -69,6 +69,6 @@ public class LogOperation extends AbstractOperation {
     }
 
     frame.addLog(new Log(address, data, builder.build()));
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

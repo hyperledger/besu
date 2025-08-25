@@ -104,6 +104,6 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       frame.writeMemory(memOffset, sourceOffset, numBytes, code);
     }
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

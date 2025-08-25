@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.List;
@@ -54,18 +55,18 @@ public class BlobHashOperation extends AbstractOperation {
       if (trimmedIndex.size() > 4) {
         // won't fit in an int
         frame.pushStackItem(Bytes.EMPTY);
-        return new OperationResult(3, null);
+        return new OperationResult(3, SoftFailureReason.NONE);
       }
       int versionedHashIndex = trimmedIndex.toInt();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
         VersionedHash requested = versionedHashes.get(versionedHashIndex);
         frame.pushStackItem(requested.toBytes());
       } else {
-        frame.pushStackItem(Bytes.EMPTY);
+        frame.pushStackItem(Bytes.EMPTY); // Is this a Soft Failure?
       }
     } else {
       frame.pushStackItem(Bytes.EMPTY);
     }
-    return new OperationResult(3, null);
+    return new OperationResult(3);
   }
 }

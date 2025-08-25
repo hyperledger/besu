@@ -69,6 +69,6 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

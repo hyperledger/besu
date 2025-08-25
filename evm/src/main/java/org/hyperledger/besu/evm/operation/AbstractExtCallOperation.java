@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
@@ -200,13 +201,13 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(clampedAdd(cost, childGas), null, 0);
+    return new OperationResult(clampedAdd(cost, childGas), 0);
   }
 
   private @NotNull OperationResult softFailure(final MessageFrame frame, final long cost) {
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost, SoftFailureReason.NONE); // TODO: Add actual reason
   }
 
   @Override

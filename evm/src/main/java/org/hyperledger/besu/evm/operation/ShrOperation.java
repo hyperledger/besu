@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class ShrOperation extends AbstractFixedCostOperation {
 
   /** The Shr operation success result. */
-  static final OperationResult shrSuccess = new OperationResult(3, null);
+  static final OperationResult shrSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Shr operation.

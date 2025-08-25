@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Mul mod operation. */
 public class MulModOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult mulModSuccess = new OperationResult(8, null);
+  private static final OperationResult mulModSuccess = new OperationResult(8);
 
   /**
    * Instantiates a new Mul mod operation.

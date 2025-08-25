@@ -63,7 +63,7 @@ public class BalanceOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());
-        return new OperationResult(cost, null);
+        return new OperationResult(cost);
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);

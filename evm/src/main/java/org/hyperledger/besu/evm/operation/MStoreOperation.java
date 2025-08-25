@@ -46,6 +46,6 @@ public class MStoreOperation extends AbstractOperation {
     }
 
     frame.writeMemoryRightAligned(location, 32, value, true);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

@@ -47,6 +47,6 @@ public class MLoadOperation extends AbstractOperation {
     final Bytes value = frame.readMutableMemory(location, 32, true).copy();
 
     frame.pushStackItem(value);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }
