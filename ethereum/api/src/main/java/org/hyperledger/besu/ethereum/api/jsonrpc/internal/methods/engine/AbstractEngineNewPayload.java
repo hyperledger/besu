@@ -575,19 +575,31 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // Validate excessBlobGas
     if (maybeParentHeader.isPresent()) {
-      if (!validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec)) {
+      Optional<BlobGas> maybeCalculatedExcess =
+          validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec);
+      if (maybeCalculatedExcess.isPresent()) {
+        BlobGas calculated = maybeCalculatedExcess.get();
+        BlobGas actual = header.getExcessBlobGas().orElse(BlobGas.ZERO);
         return ValidationResult.invalid(
             RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS,
-            "Payload excessBlobGas does not match calculated excessBlobGas");
+            String.format(
+                "Payload excessBlobGas does not match calculated excessBlobGas. Expected %s, got %s",
+                calculated, actual));
       }
     }
 
     // Validate blobGasUsed
     if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
-      if (!validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
+      Optional<Long> maybeCalculatedBlobGas =
+          validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec);
+      if (maybeCalculatedBlobGas.isPresent()) {
+        long calculated = maybeCalculatedBlobGas.get();
+        long actual = header.getBlobGasUsed().orElse(0L);
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
-            "Payload BlobGasUsed does not match calculated BlobGasUsed");
+            String.format(
+                "Payload BlobGasUsed does not match calculated BlobGasUsed. Expected %s, got %s",
+                calculated, actual));
       }
     }
 
@@ -600,20 +612,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return ValidationResult.valid();
   }
 
-  private boolean validateExcessBlobGas(
+  private Optional<BlobGas> validateExcessBlobGas(
       final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
-    BlobGas calculatedBlobGas =
+    BlobGas calculated =
         ExcessBlobGasCalculator.calculateExcessBlobGasForParent(protocolSpec, parentHeader);
-    return header.getExcessBlobGas().orElse(BlobGas.ZERO).equals(calculatedBlobGas);
+    BlobGas actual = header.getExcessBlobGas().orElse(BlobGas.ZERO);
+
+    return calculated.equals(actual) ? Optional.empty() : Optional.of(calculated);
   }
 
-  private boolean validateBlobGasUsed(
+  private Optional<Long> validateBlobGasUsed(
       final BlockHeader header,
-      final List<VersionedHash> maybeVersionedHashes,
+      final List<VersionedHash> versionedHashes,
       final ProtocolSpec protocolSpec) {
-    var calculatedBlobGas =
-        protocolSpec.getGasCalculator().blobGasCost(maybeVersionedHashes.size());
-    return header.getBlobGasUsed().orElse(0L).equals(calculatedBlobGas);
+    long calculated = protocolSpec.getGasCalculator().blobGasCost(versionedHashes.size());
+    long actual = header.getBlobGasUsed().orElse(0L);
+
+    return calculated == actual ? Optional.empty() : Optional.of(calculated);
   }
 
   private Optional<List<VersionedHash>> extractVersionedHashes(
