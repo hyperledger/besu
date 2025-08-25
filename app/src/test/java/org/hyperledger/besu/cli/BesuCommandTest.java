@@ -1412,13 +1412,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void parsesInvalidBonsaiHistoricalBlockLimitOption() {
 
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "ten");
 
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--bonsai-maximum-back-layers-to-load': 'ten' is not a long");
+            "Invalid value for option '--bonsai-historical-block-limit': 'ten' is not a long");
   }
 
   @Test
