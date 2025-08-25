@@ -36,12 +36,8 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DebugOperationTracer implements OperationTracer {
-  private static final Logger LOG = LoggerFactory.getLogger(DebugOperationTracer.class);
-
   private final OpCodeTracerConfig options;
 
   /**
@@ -137,17 +133,6 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
-    LOG.trace("=== tracePrecompileCall Debug ===");
-    LOG.trace("  Recipient (precompile): {}", frame.getRecipientAddress());
-    LOG.trace("  Input data: {}", frame.getInputData().toHexString());
-    LOG.trace("  Output parameter: {}", output != null ? output.toHexString() : "null");
-    LOG.trace(
-        "  MessageFrame.getOutputData(): {}",
-        frame.getOutputData() != null ? frame.getOutputData().toHexString() : "null");
-    LOG.trace("  Gas requirement: {}", gasRequirement);
-    LOG.trace("  Frame depth: {}", frame.getDepth());
-    LOG.trace("  traceFrames.isEmpty(): {}", traceFrames.isEmpty());
-    LOG.trace("  traceFrames.size(): {}", traceFrames.size());
     if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           new TraceFrame(
@@ -176,23 +161,11 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty(),
               Optional.empty());
       traceFrames.add(traceFrame);
-    } else {
-      // Also log when we're NOT creating a new frame
-      LOG.trace("  NOT creating new frame because traceFrames is not empty");
     }
     final TraceFrame lastTraceFrame = traceFrames.getLast();
     lastTraceFrame.setPrecompiledGasCost(OptionalLong.of(gasRequirement));
     lastTraceFrame.setPrecompileIOData(
         frame.getRecipientAddress(), frame.getInputData().copy(), output);
-    LOG.trace(
-        "     Last TraceFrame opCode: {}, Recipient: {} Input: {}, Output: {}, Precompile Input: {}, Precompile output: {}",
-        lastTraceFrame.getOpcode(),
-        lastTraceFrame.getRecipient(),
-        lastTraceFrame.getInputData(),
-        lastTraceFrame.getOutputData(),
-        lastTraceFrame.getPrecompileInputData().orElse(null),
-        lastTraceFrame.getPrecompileOutputData().orElse(null));
-    LOG.trace("=== tracePrecompileCall Debug End ===");
   }
 
   @Override
