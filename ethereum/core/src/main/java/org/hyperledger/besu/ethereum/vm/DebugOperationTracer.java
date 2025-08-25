@@ -38,7 +38,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
-
   private final OpCodeTracerConfig options;
 
   /**
@@ -163,7 +162,10 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty());
       traceFrames.add(traceFrame);
     }
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
+    final TraceFrame lastTraceFrame = traceFrames.getLast();
+    lastTraceFrame.setPrecompiledGasCost(OptionalLong.of(gasRequirement));
+    lastTraceFrame.setPrecompileIOData(
+        frame.getRecipientAddress(), frame.getInputData().copy(), output);
   }
 
   @Override
