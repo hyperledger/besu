@@ -490,18 +490,6 @@ public class CallTracerResultConverter {
 
   private static long calculateGasUsed(
       final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "calculateGasUsed: exitDepth={} entryGasRem={} exitGasRem={} precompileCost={} gasCost={}",
-          exitFrame.getDepth(),
-          entryFrame.getGasRemaining(),
-          exitFrame.getGasRemaining(),
-          entryFrame.getPrecompiledGasCost().isPresent()
-              ? entryFrame.getPrecompiledGasCost().getAsLong()
-              : "-",
-          entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-");
-    }
-
     // For root transaction
     if (exitFrame.getDepth() == 0) {
       // Root transaction: simply calculate difference and account for refunds
