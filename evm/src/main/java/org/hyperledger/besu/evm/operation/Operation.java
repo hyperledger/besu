@@ -100,10 +100,10 @@ public interface Operation {
      * @param pcIncrement The increment
      */
     public OperationResult(
-        long gasCost,
-        ExceptionalHaltReason haltReason,
-        SoftFailureReason softFailureReason,
-        int pcIncrement) {
+        final long gasCost,
+        final ExceptionalHaltReason haltReason,
+        final SoftFailureReason softFailureReason,
+        final int pcIncrement) {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
       this.softFailureReason = softFailureReason;
