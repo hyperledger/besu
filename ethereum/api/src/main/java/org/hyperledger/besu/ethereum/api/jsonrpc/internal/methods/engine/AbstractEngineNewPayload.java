@@ -616,7 +616,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
     BlobGas calculated =
         ExcessBlobGasCalculator.calculateExcessBlobGasForParent(protocolSpec, parentHeader);
-    BlobGas actual = parentHeader.getExcessBlobGas().orElse(BlobGas.ZERO);
+    BlobGas actual = header.getExcessBlobGas().orElse(BlobGas.ZERO);
 
     return calculated.equals(actual) ? Optional.empty() : Optional.of(calculated);
   }
