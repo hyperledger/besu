@@ -211,7 +211,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     for (int i = 0; i < transactions.size(); i++) {
       final WorldUpdater blockUpdater = worldState.updater();
       final Transaction transaction = transactions.get(i);
-      final WorldUpdater transactionUpdater = blockUpdater.updater();
+      WorldUpdater transactionUpdater = blockUpdater.updater();
+      if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
+        transactionUpdater = blockUpdater;
+      }
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
@@ -253,7 +256,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
 
-      transactionUpdater.commit();
+      if (transactionUpdater instanceof StackedUpdater<?, ?>) {
+        transactionUpdater.commit();
+      }
       blockUpdater.commit();
       blockUpdater.markTransactionBoundary();
 
