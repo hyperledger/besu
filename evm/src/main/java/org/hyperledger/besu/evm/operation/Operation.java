@@ -17,6 +17,9 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
+
+import java.util.Optional;
 
 /** The interface Operation. */
 public interface Operation {
@@ -29,11 +32,15 @@ public interface Operation {
     /** The Halt reason. */
     final ExceptionalHaltReason haltReason;
 
+    /** The soft failure reason that didn't result in revert of the operation */
+    final SoftFailureReason softFailureReason;
+
     /** The increment. */
     final int pcIncrement;
 
     /**
-     * Instantiates a new Operation result.
+     * Instantiates a new Operation result with exceptional halt reason which can result in revert
+     * of operation.
      *
      * @param gasCost the gas cost
      * @param haltReason the halt reason
@@ -43,7 +50,18 @@ public interface Operation {
     }
 
     /**
-     * Instantiates a new Operation result.
+     * Instantiates a new Operation result with soft failure reason which doesn't result in a
+     * revert.
+     *
+     * @param gasCost the gas cost
+     * @param softFailureReason the error reason which doesn't result in halt of operation
+     */
+    public OperationResult(final long gasCost, final SoftFailureReason softFailureReason) {
+      this(gasCost, null, softFailureReason, 1);
+    }
+
+    /**
+     * Instantiates a new Operation result with exceptional halt reason and increment.
      *
      * @param gasCost the gas cost
      * @param haltReason the halt reason
@@ -51,8 +69,35 @@ public interface Operation {
      */
     public OperationResult(
         final long gasCost, final ExceptionalHaltReason haltReason, final int pcIncrement) {
+      this(gasCost, haltReason, null, pcIncrement);
+    }
+
+    /**
+     * Instantiate a new Operation Result without any failures.
+     *
+     * @param gasCost Gas Cost
+     * @param pcIncrement Increment
+     */
+    public OperationResult(final long gasCost, final int pcIncrement) {
+      this(gasCost, null, null, pcIncrement);
+    }
+
+    /**
+     * Instantiate a new Operation Result
+     *
+     * @param gasCost the Gas Cost
+     * @param haltReason The Halt reason
+     * @param softFailureReason The soft failure reason that doesn't result in revert.
+     * @param pcIncrement The increment
+     */
+    public OperationResult(
+        long gasCost,
+        ExceptionalHaltReason haltReason,
+        SoftFailureReason softFailureReason,
+        int pcIncrement) {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
+      this.softFailureReason = softFailureReason;
       this.pcIncrement = pcIncrement;
     }
 
@@ -72,6 +117,15 @@ public interface Operation {
      */
     public ExceptionalHaltReason getHaltReason() {
       return haltReason;
+    }
+
+    /**
+     * Gets Soft Failure Reason.
+     *
+     * @return optional soft failure reason
+     */
+    public Optional<SoftFailureReason> getSoftFailureReason() {
+      return Optional.ofNullable(softFailureReason);
     }
 
     /**

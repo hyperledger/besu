@@ -120,7 +120,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.incrementRemainingGas(cost);
       }
     }
-    return new OperationResult(cost, null, getPcIncrement());
+    return new OperationResult(cost, getPcIncrement());
   }
 
   /**

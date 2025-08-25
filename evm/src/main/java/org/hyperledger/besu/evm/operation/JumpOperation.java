@@ -24,7 +24,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
 
   private static final Operation.OperationResult invalidJumpResponse =
       new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
+  private static final OperationResult jumpResponse = new OperationResult(8L, 0);
 
   private static final JumpService jumpService = new JumpService();
 

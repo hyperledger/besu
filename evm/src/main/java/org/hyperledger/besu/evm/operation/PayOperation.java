@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
 import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM;
@@ -71,14 +72,14 @@ public class PayOperation extends AbstractOperation {
     if (!hasValue || Objects.equals(frame.getSenderAddress(), to)) {
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_SUCCESS_STACK_ITEM);
-      return new OperationResult(cost, null);
+      return new OperationResult(cost, 1);
     }
 
     final MutableAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      return new OperationResult(cost, null);
+      return new OperationResult(cost, INSUFFICIENT_BALANCE);
     }
 
     final MutableAccount recipientAccount = frame.getWorldUpdater().getOrCreate(to);
@@ -87,7 +88,7 @@ public class PayOperation extends AbstractOperation {
 
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(LEGACY_SUCCESS_STACK_ITEM);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost, 1);
   }
 
   private long cost(
