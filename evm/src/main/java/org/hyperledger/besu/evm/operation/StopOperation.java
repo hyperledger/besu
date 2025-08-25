@@ -27,7 +27,7 @@ public class StopOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0x00;
 
   /** The Stop operation success result. */
-  static final OperationResult stopSuccess = new OperationResult(0, null);
+  static final OperationResult stopSuccess = new OperationResult(0);
 
   /**
    * Instantiates a new Stop operation.

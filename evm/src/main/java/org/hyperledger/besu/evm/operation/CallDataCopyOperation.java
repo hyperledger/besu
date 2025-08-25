@@ -50,6 +50,6 @@ public class CallDataCopyOperation extends AbstractOperation {
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, callData, true);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

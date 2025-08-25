@@ -49,6 +49,6 @@ public class CodeCopyOperation extends AbstractOperation {
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code.getBytes(), true);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

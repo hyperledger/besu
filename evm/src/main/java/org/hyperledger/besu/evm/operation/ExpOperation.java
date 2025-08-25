@@ -75,6 +75,6 @@ public class ExpOperation extends AbstractOperation {
     } else {
       frame.pushStackItem(Bytes.wrap(resultArray));
     }
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

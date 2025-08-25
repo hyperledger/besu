@@ -66,6 +66,6 @@ public class DataCopyOperation extends AbstractOperation {
     final Bytes data = code.getData(sourceOffset, length);
     frame.writeMemory(memOffset, length, data);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

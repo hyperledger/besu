@@ -47,7 +47,7 @@ public class TStoreOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else {
       frame.setTransientStorageValue(frame.getRecipientAddress(), key, value);
-      return new OperationResult(cost, null);
+      return new OperationResult(cost);
     }
   }
 }

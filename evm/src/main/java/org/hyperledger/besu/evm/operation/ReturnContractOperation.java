@@ -77,6 +77,6 @@ public class ReturnContractOperation extends AbstractOperation {
 
     frame.setCreatedCode(newCode.get());
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

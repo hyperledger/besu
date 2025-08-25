@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -49,7 +50,7 @@ public class BlockHashOperation extends AbstractOperation {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
     if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(Hash.ZERO);
-      return new OperationResult(cost, null);
+      return new OperationResult(cost, SoftFailureReason.MAX_BLOCK_ARG_SIZE);
     }
 
     final long soughtBlock = blockArg.toLong();
@@ -68,7 +69,7 @@ public class BlockHashOperation extends AbstractOperation {
       frame.pushStackItem(blockHash);
     }
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 
   /**

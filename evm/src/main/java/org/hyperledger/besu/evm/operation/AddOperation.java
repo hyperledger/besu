@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class AddOperation extends AbstractFixedCostOperation {
 
   /** The Add operation success result. */
-  static final OperationResult addSuccess = new OperationResult(3, null);
+  static final OperationResult addSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Add operation.

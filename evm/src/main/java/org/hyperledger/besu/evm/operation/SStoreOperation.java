@@ -103,6 +103,6 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

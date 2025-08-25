@@ -32,7 +32,7 @@ public class PushOperation extends AbstractFixedCostOperation {
   private final int length;
 
   /** The Push operation success result. */
-  static final OperationResult pushSuccess = new OperationResult(3, null);
+  static final OperationResult pushSuccess = new OperationResult(3);
 
   /**
    * Instantiates a new Push operation.

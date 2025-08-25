@@ -26,6 +26,9 @@ public interface SoftFailureReason {
   /** The constant MAX_CALL_DEPTH */
   SoftFailureReason MAX_CALL_DEPTH = DefaultSelfFailureReason.MAX_CALL_DEPTH;
 
+  /** The constant MAX_BLOCK_ARG_SIZE */
+  SoftFailureReason MAX_BLOCK_ARG_SIZE = DefaultSelfFailureReason.MAX_BLOCK_ARG_SIZE;
+
   /**
    * Name string.
    *
@@ -47,7 +50,9 @@ public interface SoftFailureReason {
     /** Soft failure due to insufficient balance for transfer */
     INSUFFICIENT_BALANCE("insufficient balance for transfer"),
     /** Soft failure due to max call depth */
-    MAX_CALL_DEPTH("max call depth exceeded");
+    MAX_CALL_DEPTH("max call depth exceeded"),
+    /** Soft failure due to max block argument size */
+    MAX_BLOCK_ARG_SIZE("max block argument size exceeded");
 
     /** The Description of soft failure. */
     final String description;

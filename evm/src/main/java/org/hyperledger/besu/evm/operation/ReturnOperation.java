@@ -48,6 +48,6 @@ public class ReturnOperation extends AbstractOperation {
 
     frame.setOutputData(frame.readMemory(from, length));
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

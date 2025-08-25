@@ -83,6 +83,15 @@ public interface Operation {
     }
 
     /**
+     * Instantiate a new Operation Result without any failures with pc increment 1.
+     *
+     * @param gasCost Gas Cost
+     */
+    public OperationResult(final long gasCost) {
+      this(gasCost, null, null, 1);
+    }
+
+    /**
      * Instantiate a new Operation Result
      *
      * @param gasCost the Gas Cost

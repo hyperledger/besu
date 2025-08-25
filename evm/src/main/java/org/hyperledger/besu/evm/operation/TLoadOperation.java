@@ -45,7 +45,7 @@ public class TLoadOperation extends AbstractOperation {
       } else {
         frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
 
-        return new OperationResult(cost, null);
+        return new OperationResult(cost);
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);

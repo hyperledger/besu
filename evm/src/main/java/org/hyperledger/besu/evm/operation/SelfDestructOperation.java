@@ -101,6 +101,6 @@ public class SelfDestructOperation extends AbstractOperation {
     // Set frame to CODE_SUCCESS so that the frame performs a normal halt.
     frame.setState(MessageFrame.State.CODE_SUCCESS);
 
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }

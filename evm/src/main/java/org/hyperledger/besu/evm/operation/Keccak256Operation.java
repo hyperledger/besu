@@ -48,6 +48,6 @@ public class Keccak256Operation extends AbstractOperation {
 
     final Bytes bytes = frame.readMutableMemory(from, length);
     frame.pushStackItem(keccak256(bytes));
-    return new OperationResult(cost, null);
+    return new OperationResult(cost);
   }
 }
