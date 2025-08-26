@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -58,7 +58,7 @@ public class BenchmarkHelper {
    * @param pool the destination array
    */
   public static void fillPool(final Bytes[] pool) {
-    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    final Random random = new Random();
 
     for (int i = 0; i < pool.length; i++) {
       final int aSize = 1 + random.nextInt(32); // [1, 32]
