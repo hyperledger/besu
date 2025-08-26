@@ -35,6 +35,7 @@ public interface Operation {
     /** The increment. */
     final int pcIncrement;
 
+    /** Soft Failure Reason. Mainly used to provide visibility to tracers. */
     final SoftFailureReason softFailureReason;
 
     /**

@@ -17,9 +17,9 @@ package org.hyperledger.besu.evm.frame;
 /** The enum Soft Failure reason. */
 public enum SoftFailureReason {
 
-  /** Soft failure due to insufficient balance */
+  /** Soft failure due to insufficient balance. Mainly use to provide visibility to Tracers. */
   LEGACY_INSUFFICIENT_BALANCE("insufficient balance for transfer"),
-  /** Soft failure due to max call depth */
+  /** Soft failure due to max call depth. Mainly use to provide visibility to Tracers. */
   LEGACY_MAX_CALL_DEPTH("max call depth exceeded");
 
   /** The Description of soft failure. */
