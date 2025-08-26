@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
  *
  * @param <W> the WorldView type parameter
  */
-public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
+public class JournaledUpdater<W extends WorldView, A extends Account> implements WorldUpdater {
 
   private final EvmConfiguration evmConfiguration;
   private final WorldUpdater parentWorld;
-  private final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
+  private final AbstractWorldUpdater<W, A> rootWorld;
   private final UndoMap<Address, JournaledAccount> accounts;
   private final UndoSet<Address> deleted;
   private final HashSet<Address> touched;
@@ -55,8 +55,8 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public JournaledUpdater(final WorldUpdater world, final EvmConfiguration evmConfiguration) {
     parentWorld = world;
     this.evmConfiguration = evmConfiguration;
-    if (world instanceof JournaledUpdater<?>) {
-      JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
+    if (world instanceof JournaledUpdater<?, ?>) {
+      JournaledUpdater<W, A> journaledUpdater = (JournaledUpdater<W, A>) world;
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
       touched = new HashSet<>();
@@ -65,7 +65,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
       touched = new HashSet<>();
-      rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
+      rootWorld = (AbstractWorldUpdater<W, A>) world;
     } else {
       throw new IllegalArgumentException(
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
@@ -104,7 +104,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public void commit() {
-    if (parentWorld instanceof JournaledUpdater<?> jw) {
+    if (parentWorld instanceof JournaledUpdater<?, ?> jw) {
       jw.touched.addAll(this.touched);
       return;
     }
@@ -149,15 +149,13 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     if (deleted.contains(address)) {
       return null;
     }
-    // We may have updated it already, so check that first.
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
       touched.add(address);
       return existing;
     }
 
-    // Otherwise, get it from our wrapped view and create a new update tracker.
-    final MutableAccount origin = rootWorld.getAccount(address);
+    final MutableAccount origin = getForMutation(address);
     if (origin == null) {
       return null;
     } else {
@@ -166,6 +164,19 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
       touched.add(address);
       return newAccount;
     }
+  }
+
+  protected MutableAccount getForMutation(final Address address) {
+    final AbstractWorldUpdater<W, A> wrapped = this.rootWorld;
+    final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
+    if (wrappedTracker != null) {
+      return new JournaledAccount(wrappedTracker);
+    }
+    if (wrapped.deletedAccounts.contains(address)) {
+      return null;
+    }
+    final A account = wrapped.getForMutation(address);
+    return account == null ? null : new JournaledAccount(account);
   }
 
   @Override

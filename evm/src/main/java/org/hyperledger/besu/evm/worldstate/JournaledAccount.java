@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
@@ -48,7 +49,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
   private final Address address;
   private final Hash addressHash;
 
-  @Nullable private MutableAccount account;
+  @Nullable private Account account;
 
   private long transactionBoundaryMark;
   private final UndoScalar<Long> nonce;
@@ -90,7 +91,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
    *
    * @param account the account
    */
-  public JournaledAccount(final MutableAccount account) {
+  public JournaledAccount(final Account account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
@@ -130,7 +131,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
    * @return The original account over which this tracks updates, or {@code null} if this is a newly
    *     created account.
    */
-  public MutableAccount getWrappedAccount() {
+  public Account getWrappedAccount() {
     return account;
   }
 
@@ -389,7 +390,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   /** Commit this journaled account entry to the parent, if it is not a journaled account. */
   public void commit() {
-    if (!(account instanceof JournaledAccount)) {
+    if (account instanceof MutableAccount account) {
       if (nonce.updated()) {
         account.setNonce(nonce.get());
       }
