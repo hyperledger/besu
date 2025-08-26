@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.frame.SoftFailureReason.INSUFFICIENT_BALANCE;
-import static org.hyperledger.besu.evm.frame.SoftFailureReason.MAX_CALL_DEPTH;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
@@ -218,7 +218,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       final SoftFailureReason softFailureReason =
-          insufficientBalance ? INSUFFICIENT_BALANCE : MAX_CALL_DEPTH;
+          insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
       return new OperationResult(cost, 1, softFailureReason);
     }
 
