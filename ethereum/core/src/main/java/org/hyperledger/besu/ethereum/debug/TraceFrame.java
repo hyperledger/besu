@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
+import static java.lang.Boolean.TRUE;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -59,7 +61,13 @@ public class TraceFrame {
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
   private final Optional<StorageEntry> maybeUpdatedStorage;
+
+  // precompile specific fields
   private OptionalLong precompiledGasCost;
+  private Optional<Boolean> isPrecompile = Optional.empty();
+  private Optional<Address> precompileRecipient = Optional.empty();
+  private Optional<Bytes> precompileInputData = Optional.empty();
+  private Optional<Bytes> precompileOutputData = Optional.empty();
 
   public TraceFrame(
       final int pc,
@@ -242,5 +250,28 @@ public class TraceFrame {
 
   public void setPrecompiledGasCost(final OptionalLong precompiledGasCost) {
     this.precompiledGasCost = precompiledGasCost;
+  }
+
+  public boolean isPrecompile() {
+    return this.isPrecompile.orElse(Boolean.FALSE);
+  }
+
+  public Optional<Address> getPrecompileRecipient() {
+    return precompileRecipient;
+  }
+
+  public Optional<Bytes> getPrecompileInputData() {
+    return precompileInputData;
+  }
+
+  public Optional<Bytes> getPrecompileOutputData() {
+    return precompileOutputData;
+  }
+
+  public void setPrecompileIOData(final Address recipient, final Bytes input, final Bytes output) {
+    this.isPrecompile = Optional.of(TRUE);
+    this.precompileRecipient = Optional.ofNullable(recipient);
+    this.precompileInputData = Optional.ofNullable(input);
+    this.precompileOutputData = Optional.ofNullable(output);
   }
 }
