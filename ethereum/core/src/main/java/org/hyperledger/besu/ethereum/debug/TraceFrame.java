@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-import static java.lang.Boolean.TRUE;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -269,7 +267,7 @@ public class TraceFrame {
   }
 
   public void setPrecompileIOData(final Address recipient, final Bytes input, final Bytes output) {
-    this.isPrecompile = Optional.of(TRUE);
+    this.isPrecompile = Optional.of(Boolean.TRUE);
     this.precompileRecipient = Optional.ofNullable(recipient);
     this.precompileInputData = Optional.ofNullable(input);
     this.precompileOutputData = Optional.ofNullable(output);
