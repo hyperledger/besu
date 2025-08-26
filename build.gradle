@@ -653,7 +653,7 @@ subprojects {
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
       }
-      duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+      duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
       jvmArgs = [
         '-XX:+EnableDynamicAgentLoading'
       ]
