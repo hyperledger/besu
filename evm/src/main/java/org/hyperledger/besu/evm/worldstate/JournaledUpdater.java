@@ -115,7 +115,15 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
         continue;
       }
       if (a.getWrappedAccount() == null) {
-        a.setWrappedAccount(rootWorld.createAccount(addr, a.getNonce(), a.getBalance()));
+        final MutableAccount account = rootWorld.createAccount(addr, a.getNonce(), a.getBalance());
+        if (a.codeWasUpdated()) {
+          account.setCode(a.getCode());
+        }
+        if (a.getStorageWasCleared()) {
+          account.clearStorage();
+        }
+        a.getUpdatedStorage().forEach(account::setStorageValue);
+        a.setWrappedAccount(account);
       }
       a.commit();
     }
