@@ -16,11 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public final class AccountDiff {
 
   private final DiffNode balance;
   private final DiffNode code;
   private final DiffNode nonce;
+  @JsonIgnore
   private final DiffNode codeHash;
   private final Map<String, DiffNode> storage;
 
@@ -45,6 +48,7 @@ public final class AccountDiff {
     return code;
   }
 
+  @JsonIgnore
   public DiffNode getCodeHash() {
     return codeHash;
   }
