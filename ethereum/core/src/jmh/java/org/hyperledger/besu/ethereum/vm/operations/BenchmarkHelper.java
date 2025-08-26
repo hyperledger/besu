@@ -40,7 +40,7 @@ public class BenchmarkHelper {
         .miningBeneficiary(Address.ZERO)
         .blockHashLookup((__, ___) -> Hash.ZERO)
         .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(1_000_000)
+        .initialGas(Long.MAX_VALUE)
         .address(Address.ZERO)
         .contract(Address.ZERO)
         .inputData(Bytes32.ZERO)
