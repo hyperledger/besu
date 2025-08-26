@@ -53,26 +53,18 @@ public class BenchmarkHelper {
   }
 
   /**
-   * Fills two arrays with random 32-byte values.
+   * Fills an array with random 32-byte values.
    *
-   * @param aPool the destination array for first operands
-   * @param bPool the destination array for second operands
+   * @param pool the destination array
    */
-  public static void fillPools(final Bytes[] aPool, final Bytes[] bPool) {
+  public static void fillPool(final Bytes[] pool) {
     final ThreadLocalRandom random = ThreadLocalRandom.current();
 
-    for (int i = 0; i < aPool.length; i++) {
+    for (int i = 0; i < pool.length; i++) {
       final int aSize = 1 + random.nextInt(32); // [1, 32]
-      final int bSize = 1 + random.nextInt(32);
-
       final byte[] a = new byte[aSize];
-      final byte[] b = new byte[bSize];
-
       random.nextBytes(a);
-      random.nextBytes(b);
-
-      aPool[i] = Bytes.wrap(a);
-      bPool[i] = Bytes.wrap(b);
+      pool[i] = Bytes.wrap(a);
     }
   }
 }

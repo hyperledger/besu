@@ -52,8 +52,9 @@ public abstract class TernaryOperationBenchmark {
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];
     cPool = new Bytes[SAMPLE_SIZE];
-    BenchmarkHelper.fillPools(aPool, bPool);
-    BenchmarkHelper.fillPools(cPool, new Bytes[SAMPLE_SIZE]);
+    BenchmarkHelper.fillPool(aPool);
+    BenchmarkHelper.fillPool(bPool);
+    BenchmarkHelper.fillPool(cPool);
     index = 0;
   }
 
