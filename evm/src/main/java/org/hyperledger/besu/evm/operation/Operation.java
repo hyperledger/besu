@@ -104,6 +104,11 @@ public interface Operation {
       return pcIncrement;
     }
 
+    /**
+     * Returns optional Soft Failure Reason.
+     *
+     * @return Optional Soft Failure Reason
+     */
     public Optional<SoftFailureReason> getSoftFailureReason() {
       return Optional.ofNullable(this.softFailureReason);
     }
