@@ -48,7 +48,7 @@ public abstract class TernaryOperationBenchmark {
 
   @Setup()
   public void setUp() {
-    frame = BenchmarkHelper.createMessageFrame();
+    frame = BenchmarkHelper.createMessageCallFrame();
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];
     cPool = new Bytes[SAMPLE_SIZE];

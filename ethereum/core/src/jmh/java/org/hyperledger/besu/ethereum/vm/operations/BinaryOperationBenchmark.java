@@ -47,7 +47,7 @@ public abstract class BinaryOperationBenchmark {
 
   @Setup()
   public void setUp() {
-    frame = BenchmarkHelper.createMessageFrame();
+    frame = BenchmarkHelper.createMessageCallFrame();
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];
     BenchmarkHelper.fillPools(aPool, bPool);

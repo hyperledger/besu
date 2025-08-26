@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BenchmarkHelper {
-  public static MessageFrame createMessageFrame() {
+  public static MessageFrame createMessageCallFrame() {
     return MessageFrame.builder()
         .worldUpdater(mock(WorldUpdater.class))
         .originator(Address.ZERO)
