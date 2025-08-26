@@ -59,4 +59,9 @@ public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule
   public boolean includeInLightValidation() {
     return AttachedBlockHeaderValidationRule.super.includeInLightValidation();
   }
+
+  @Override
+  public String toString() {
+    return "MergeConstantOmmersHash";
+  }
 }

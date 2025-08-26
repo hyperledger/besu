@@ -25,4 +25,9 @@ public class NoNonceRule implements AttachedBlockHeaderValidationRule {
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     return header.getNonce() == 0L;
   }
+
+  @Override
+  public String toString() {
+    return "NoNonce";
+  }
 }

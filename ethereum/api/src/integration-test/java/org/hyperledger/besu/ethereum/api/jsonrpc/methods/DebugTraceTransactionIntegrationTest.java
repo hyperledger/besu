@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -46,6 +47,9 @@ public class DebugTraceTransactionIntegrationTest {
 
   @BeforeAll
   public static void setUpOnce() throws Exception {
+    // experimental tracers are meant to be enabled in tests
+    DebugTraceTransactionStepFactory.enableExtraTracers = true;
+
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
 
@@ -108,13 +112,12 @@ public class DebugTraceTransactionIntegrationTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-    final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
 
-    // TODO: Replace with the correct class when implemented. This assertion will start failing when
-    // proper implementation is available.
-    assertThat(successResponse.getResult())
-        .isInstanceOf(DebugTraceTransactionStepFactory.UnimplementedTracerResult.class);
-    // Other assertions can be added here to validate the result structure
+    final CallTracerResult result =
+        (CallTracerResult) ((JsonRpcSuccessResponse) response).getResult();
+    assertThat(result.getGas()).isEqualTo("0x4cb2f"); // 314159
+    assertThat(result.getGasUsed()).isEqualTo("0x5c99"); // 23705
+    assertThat(result.getInput()).isEqualTo("0x9dc2c8f5");
   }
 
   @Test
