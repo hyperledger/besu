@@ -18,16 +18,16 @@ package org.hyperledger.besu.evm.frame;
 public interface SoftFailureReason {
 
   /** The constant NONE. */
-  SoftFailureReason NONE = DefaultSelfFailureReason.NONE;
+  SoftFailureReason NONE = DefaultSoftFailureReason.NONE;
 
   /** The constant INSUFFICIENT_BALANCE */
-  SoftFailureReason INSUFFICIENT_BALANCE = DefaultSelfFailureReason.INSUFFICIENT_BALANCE;
+  SoftFailureReason INSUFFICIENT_BALANCE = DefaultSoftFailureReason.INSUFFICIENT_BALANCE;
 
   /** The constant MAX_CALL_DEPTH */
-  SoftFailureReason MAX_CALL_DEPTH = DefaultSelfFailureReason.MAX_CALL_DEPTH;
+  SoftFailureReason MAX_CALL_DEPTH = DefaultSoftFailureReason.MAX_CALL_DEPTH;
 
   /** The constant MAX_BLOCK_ARG_SIZE */
-  SoftFailureReason MAX_BLOCK_ARG_SIZE = DefaultSelfFailureReason.MAX_BLOCK_ARG_SIZE;
+  SoftFailureReason MAX_BLOCK_ARG_SIZE = DefaultSoftFailureReason.MAX_BLOCK_ARG_SIZE;
 
   /**
    * Name string.
@@ -43,8 +43,8 @@ public interface SoftFailureReason {
    */
   String getDescription();
 
-  /** The enum Default self failure reasons. */
-  enum DefaultSelfFailureReason implements SoftFailureReason {
+  /** The enum Default soft failure reasons. */
+  enum DefaultSoftFailureReason implements SoftFailureReason {
     /** None default soft failure reason. */
     NONE(""),
     /** Soft failure due to insufficient balance for transfer */
@@ -58,11 +58,11 @@ public interface SoftFailureReason {
     final String description;
 
     /**
-     * Instantiate DefaultSelfFailureReason with a description
+     * Instantiate DefaultSoftFailureReason with a description
      *
      * @param description The description to use
      */
-    DefaultSelfFailureReason(final String description) {
+    DefaultSoftFailureReason(final String description) {
       this.description = description;
     }
 
