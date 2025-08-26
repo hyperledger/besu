@@ -372,8 +372,7 @@ public class EthPeers implements PeerSelector {
   }
 
   public Stream<EthPeer> streamBestPeers() {
-    return streamAvailablePeers()
-        .filter(EthPeer::isFullyValidated)
+    return streamAvailablePeers().filter(EthPeer::isFullyValidated).toList().stream()
         .sorted(getBestPeerComparator().reversed());
   }
 
