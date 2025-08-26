@@ -14,61 +14,32 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-/** The interface Soft Failure reason. */
-public interface SoftFailureReason {
+/** The enum Soft Failure reason. */
+public enum SoftFailureReason {
 
-  /** The constant NONE. */
-  SoftFailureReason NONE = DefaultSoftFailureReason.NONE;
+  /** Soft failure due to insufficient balance */
+  INSUFFICIENT_BALANCE("insufficient balance for transfer"),
+  /** Soft failure due to max call depth */
+  MAX_CALL_DEPTH("max call depth exceeded");
 
-  /** The constant INSUFFICIENT_BALANCE */
-  SoftFailureReason INSUFFICIENT_BALANCE = DefaultSoftFailureReason.INSUFFICIENT_BALANCE;
-
-  /** The constant MAX_CALL_DEPTH */
-  SoftFailureReason MAX_CALL_DEPTH = DefaultSoftFailureReason.MAX_CALL_DEPTH;
-
-  /** The constant MAX_BLOCK_ARG_SIZE */
-  SoftFailureReason MAX_BLOCK_ARG_SIZE = DefaultSoftFailureReason.MAX_BLOCK_ARG_SIZE;
+  /** The Description of soft failure. */
+  final String description;
 
   /**
-   * Name string.
+   * Enum constructor with description
    *
-   * @return the string
+   * @param description to set
    */
-  String name();
+  SoftFailureReason(final String description) {
+    this.description = description;
+  }
 
   /**
-   * Gets description.
+   * Returns Description
    *
-   * @return the description
+   * @return description.
    */
-  String getDescription();
-
-  /** The enum Default soft failure reasons. */
-  enum DefaultSoftFailureReason implements SoftFailureReason {
-    /** None default soft failure reason. */
-    NONE(""),
-    /** Soft failure due to insufficient balance for transfer */
-    INSUFFICIENT_BALANCE("insufficient balance for transfer"),
-    /** Soft failure due to max call depth */
-    MAX_CALL_DEPTH("max call depth exceeded"),
-    /** Soft failure due to max block argument size */
-    MAX_BLOCK_ARG_SIZE("max block argument size exceeded");
-
-    /** The Description of soft failure. */
-    final String description;
-
-    /**
-     * Instantiate DefaultSoftFailureReason with a description
-     *
-     * @param description The description to use
-     */
-    DefaultSoftFailureReason(final String description) {
-      this.description = description;
-    }
-
-    @Override
-    public String getDescription() {
-      return description;
-    }
+  public String getDescription() {
+    return description;
   }
 }
