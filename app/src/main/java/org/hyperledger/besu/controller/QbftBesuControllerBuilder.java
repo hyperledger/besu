@@ -31,7 +31,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
-import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -271,10 +270,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             blockLogger(transactionPool, localAddress)
                 .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
 
-    final EthSynchronizerUpdater synchronizerUpdater =
-        new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
     final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
-        new FutureMessageBuffer(
+        new FutureMessageBuffer<>(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber(),

@@ -183,7 +183,27 @@ public class QbftController implements QbftEventHandler {
    */
   protected <P extends BftMessage<?>> void consumeQbftMessage(
       final QbftMessage qbftMessage, final P bftMessage, final Consumer<P> handleMessage) {
-    LOG.trace("Received BFT {} message", bftMessage.getClass().getSimpleName());
+    consumeQbftMessage(qbftMessage, bftMessage, handleMessage, false);
+  }
+
+  /**
+   * Consume QBFT message with replay flag.
+   *
+   * @param <P> the type parameter of BftMessage
+   * @param qbftMessage the QBFT message
+   * @param bftMessage the bft message
+   * @param handleMessage the handle message
+   * @param isReplay true if this message is being replayed from future buffer
+   */
+  protected <P extends BftMessage<?>> void consumeQbftMessage(
+      final QbftMessage qbftMessage,
+      final P bftMessage,
+      final Consumer<P> handleMessage,
+      final boolean isReplay) {
+    LOG.trace(
+        "Received BFT {} message{}",
+        bftMessage.getClass().getSimpleName(),
+        isReplay ? " (replay)" : "");
 
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).
@@ -198,7 +218,7 @@ public class QbftController implements QbftEventHandler {
 
     if (processQbftMessage(bftMessage, qbftMessage)) {
       if (gossiper instanceof QbftGossiper) {
-        ((QbftGossiper) gossiper).send(qbftMessage);
+        ((QbftGossiper) gossiper).send(qbftMessage, isReplay);
       } else {
         // Fallback: create a temporary Message wrapper - this shouldn't happen in normal operation
         throw new IllegalStateException(
@@ -305,7 +325,52 @@ public class QbftController implements QbftEventHandler {
   private void startNewHeightManager(final QbftBlockHeader parentHeader) {
     createNewHeightManager(parentHeader);
     final long newChainHeight = getCurrentHeightManager().getChainHeight();
-    futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleQbftMessage);
+    futureMessageBuffer.retrieveAndReplayMessagesForHeight(
+        newChainHeight, this::handleReplayedQbftMessage);
+  }
+
+  private void handleReplayedQbftMessage(final QbftMessage qbftMessage, final boolean isReplay) {
+    final MessageData messageData = qbftMessage.getMessageData();
+
+    switch (messageData.getCode()) {
+      case QbftV1.PROPOSAL:
+        consumeQbftMessage(
+            qbftMessage,
+            ProposalMessageData.fromMessageData(messageData).decode(blockEncoder),
+            currentHeightManager::handleProposalPayload,
+            isReplay);
+        break;
+
+      case QbftV1.PREPARE:
+        consumeQbftMessage(
+            qbftMessage,
+            PrepareMessageData.fromMessageData(messageData).decode(),
+            currentHeightManager::handlePreparePayload,
+            isReplay);
+        break;
+
+      case QbftV1.COMMIT:
+        consumeQbftMessage(
+            qbftMessage,
+            CommitMessageData.fromMessageData(messageData).decode(),
+            currentHeightManager::handleCommitPayload,
+            isReplay);
+        break;
+
+      case QbftV1.ROUND_CHANGE:
+        consumeQbftMessage(
+            qbftMessage,
+            RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder),
+            currentHeightManager::handleRoundChangePayload,
+            isReplay);
+        break;
+
+      default:
+        throw new IllegalArgumentException(
+            String.format(
+                "Received message with messageCode=%d does not conform to any recognised QBFT message structure",
+                qbftMessage.getMessageData().getCode()));
+    }
   }
 
   @SuppressWarnings("UnusedVariable")
