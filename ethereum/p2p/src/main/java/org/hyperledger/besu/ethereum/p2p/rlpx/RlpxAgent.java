@@ -310,6 +310,7 @@ public class RlpxAgent implements PeerInfoProvider {
             });
   }
 
+  @Override
   public boolean canExceedConnectionLimits(final Bytes peerId) {
     return peerPrivileges.canExceedConnectionLimits(peerId);
   }
