@@ -24,7 +24,7 @@ public interface Gossiper {
    *
    * @param message the message
    */
-  void send(Message message);
+  void send(final Message message);
 
   /**
    * Send with replay flag.
@@ -32,7 +32,7 @@ public interface Gossiper {
    * @param message the message
    * @param isReplay true if this message is being replayed from a future message buffer
    */
-  default void send(Message message, boolean isReplay) {
+  default void send(final Message message, final boolean isReplay) {
     send(message);
   }
 }

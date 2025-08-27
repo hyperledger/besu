@@ -41,7 +41,7 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
-import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
+import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;
@@ -96,7 +96,7 @@ public class QbftControllerTest {
   private final ConsensusRoundIdentifier futureRoundIdentifier = new ConsensusRoundIdentifier(5, 0);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(4, 0);
   private final ConsensusRoundIdentifier pastRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
-  @Mock private QbftGossip qbftGossip;
+  @Mock private Gossiper gossiper;
   @Mock private FutureMessageBuffer futureMessageBuffer;
   @Mock private QbftBlockCodec blockEncoder;
   private QbftController qbftController;
@@ -126,7 +126,7 @@ public class QbftControllerTest {
             blockChain,
             qbftFinalState,
             blockHeightManagerFactory,
-            qbftGossip,
+            gossiper,
             messageTracker,
             futureMessageBuffer,
             blockEncoder);
@@ -164,11 +164,11 @@ public class QbftControllerTest {
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager, never()).handleProposalPayload(proposal);
     verify(blockHeightManager).handlePreparePayload(prepare);
-    verify(qbftGossip).send(prepareMessage);
+    verify(gossiper).send(prepareMessage);
     verify(blockHeightManager).handleCommitPayload(commit);
-    verify(qbftGossip).send(commitMessage);
+    verify(gossiper).send(commitMessage);
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
-    verify(qbftGossip).send(roundChangeMessage);
+    verify(gossiper).send(roundChangeMessage);
   }
 
   @Test
@@ -193,13 +193,13 @@ public class QbftControllerTest {
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(futureMessageBuffer, times(2)).retrieveMessagesForHeight(5L);
     verify(blockHeightManager).handleProposalPayload(proposal);
-    verify(qbftGossip).send(proposalMessage);
+    verify(gossiper).send(proposalMessage);
     verify(blockHeightManager).handlePreparePayload(prepare);
-    verify(qbftGossip).send(prepareMessage);
+    verify(gossiper).send(prepareMessage);
     verify(blockHeightManager).handleCommitPayload(commit);
-    verify(qbftGossip).send(commitMessage);
+    verify(gossiper).send(commitMessage);
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
-    verify(qbftGossip).send(roundChangeMessage);
+    verify(gossiper).send(roundChangeMessage);
   }
 
   @Test
@@ -249,7 +249,7 @@ public class QbftControllerTest {
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleProposalPayload(proposal);
-    verify(qbftGossip).send(proposalMessage);
+    verify(gossiper).send(proposalMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -263,7 +263,7 @@ public class QbftControllerTest {
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handlePreparePayload(prepare);
-    verify(qbftGossip).send(prepareMessage);
+    verify(gossiper).send(prepareMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -277,7 +277,7 @@ public class QbftControllerTest {
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleCommitPayload(commit);
-    verify(qbftGossip).send(commitMessage);
+    verify(gossiper).send(commitMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -291,7 +291,7 @@ public class QbftControllerTest {
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
-    verify(qbftGossip).send(roundChangeMessage);
+    verify(gossiper).send(roundChangeMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
