@@ -49,10 +49,14 @@
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 - Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
-- Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
 - Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 - LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
+
+#### Dependencies
+- Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
+- Update commons and log4j dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+- Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
