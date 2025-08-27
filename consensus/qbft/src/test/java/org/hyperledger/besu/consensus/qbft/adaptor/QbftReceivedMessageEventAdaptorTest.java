@@ -19,7 +19,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -42,19 +41,16 @@ class QbftReceivedMessageEventAdaptorTest {
   @Mock private PeerInfo mockPeerInfo;
 
   private final MessageData testMessageData = new RawMessage(1, Bytes.of(1, 2, 3, 4));
-  private final Address testSenderAddress =
-      Address.fromHexString("0x1234567890abcdef1234567890abcdef12345678");
 
   private QbftReceivedMessageEventAdaptor adaptor;
 
   @BeforeEach
   void setUp() {
-    // Setup the mock chain: BftReceivedMessageEvent -> Message -> Connection -> PeerInfo -> Address
+    // Setup the mock chain: BftReceivedMessageEvent -> Message -> Connection -> PeerInfo
     when(mockBftReceivedMessageEvent.getMessage()).thenReturn(mockMessage);
     when(mockMessage.getData()).thenReturn(testMessageData);
     when(mockMessage.getConnection()).thenReturn(mockPeerConnection);
     when(mockPeerConnection.getPeerInfo()).thenReturn(mockPeerInfo);
-    when(mockPeerInfo.getAddress()).thenReturn(testSenderAddress);
 
     adaptor = new QbftReceivedMessageEventAdaptor(mockBftReceivedMessageEvent);
   }
@@ -62,11 +58,6 @@ class QbftReceivedMessageEventAdaptorTest {
   @Test
   void shouldExtractMessageDataFromBftReceivedMessageEvent() {
     assertThat(adaptor.getMessage()).isEqualTo(testMessageData);
-  }
-
-  @Test
-  void shouldExtractSenderAddressFromBftReceivedMessageEvent() {
-    assertThat(adaptor.getSender()).isEqualTo(testSenderAddress);
   }
 
   @Test

@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 public class QbftFutureMessageHandler implements FutureMessageHandler<QbftMessage> {
   private static final Logger LOG = LoggerFactory.getLogger(QbftFutureMessageHandler.class);
 
+  /** Default constructor. */
+  public QbftFutureMessageHandler() {}
+
   @Override
   public void handleFutureMessage(final long msgChainHeight, final QbftMessage message) {
     LOG.debug("Received future QBFT message for chain height {}", msgChainHeight);

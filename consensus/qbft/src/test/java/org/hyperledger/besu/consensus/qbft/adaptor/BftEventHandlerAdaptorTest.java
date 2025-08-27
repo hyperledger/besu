@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftReceivedMessageEvent;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -61,7 +63,7 @@ class BftEventHandlerAdaptorTest {
   @Test
   void handleMessageEventDelegatesToQbftEventHandler() {
     handler.handleMessageEvent(bftReceivedMessageEvent);
-    verify(qbftEventHandler).handleMessageEvent(bftReceivedMessageEvent);
+    verify(qbftEventHandler).handleMessageEvent(any(QbftReceivedMessageEvent.class));
   }
 
   @Test

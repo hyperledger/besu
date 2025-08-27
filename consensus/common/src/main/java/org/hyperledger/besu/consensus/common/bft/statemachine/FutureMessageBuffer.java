@@ -23,7 +23,7 @@ import java.util.TreeMap;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
- * Buffer which holds future IBFT messages.
+ * Buffer which holds future BFT messages.
  *
  * <p>This buffer only allows messages to be added which have a chain height greater than current
  * height and up to chain futureMessagesMaxDistance from the current chain height.
@@ -32,6 +32,8 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * <p>If there is more than one height in the buffer then all messages for the highest chain height
  * are removed. Otherwise if there is only one height the oldest inserted message is removed.
+ *
+ * @param <T> the type of messages stored in this buffer
  */
 public class FutureMessageBuffer<T> {
   private final NavigableMap<Long, List<T>> buffer = new TreeMap<>();
@@ -40,7 +42,11 @@ public class FutureMessageBuffer<T> {
   private final FutureMessageHandler<T> futureMessageHandler;
   private long chainHeight;
 
-  /** Future message handler, which is called when a future message is added to the buffer. */
+  /**
+   * Future message handler, which is called when a future message is added to the buffer.
+   *
+   * @param <T> the type of message being handled
+   */
   public interface FutureMessageHandler<T> {
     /**
      * Notify the handler of the future message being added to the buffer.
@@ -91,7 +97,7 @@ public class FutureMessageBuffer<T> {
    * Add message.
    *
    * @param msgChainHeight the msg chain height
-   * @param rawMsg the raw msg
+   * @param rawMsg the message to add
    */
   public void addMessage(final long msgChainHeight, final T rawMsg) {
     futureMessageHandler.handleFutureMessage(msgChainHeight, rawMsg);
@@ -155,7 +161,11 @@ public class FutureMessageBuffer<T> {
     discardPreviousHeightMessages();
   }
 
-  /** Interface for handling replayed messages with replay flag. */
+  /**
+   * Interface for handling replayed messages with replay flag.
+   *
+   * @param <T> the type of message being handled
+   */
   public interface ReplayHandler<T> {
     /**
      * Handle a replayed message.

@@ -554,7 +554,7 @@ public class TestContextBuilder {
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
     final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
-        new FutureMessageBuffer<QbftMessage>(
+        new FutureMessageBuffer<>(
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber(),
