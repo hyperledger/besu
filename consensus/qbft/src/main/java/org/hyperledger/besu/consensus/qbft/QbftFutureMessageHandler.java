@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A Future message handler for QBFT messages that logs future message reception.
- * Note: This handler does not perform peer synchronization updates since QbftMessage
- * does not contain connection information.
+ * A Future message handler for QBFT messages that logs future message reception. Note: This handler
+ * does not perform peer synchronization updates since QbftMessage does not contain connection
+ * information.
  */
 public class QbftFutureMessageHandler implements FutureMessageHandler<QbftMessage> {
   private static final Logger LOG = LoggerFactory.getLogger(QbftFutureMessageHandler.class);

@@ -332,12 +332,14 @@ public class QbftController implements QbftEventHandler {
       return isMsgFromKnownValidator(msg) && finalState.isLocalNodeValidator();
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
       LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
-      futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), new QbftMessage() {
-        @Override
-        public MessageData getMessageData() {
-          return rawMsg.getData();
-        }
-      });
+      futureMessageBuffer.addMessage(
+          msgRoundIdentifier.getSequenceNumber(),
+          new QbftMessage() {
+            @Override
+            public MessageData getMessageData() {
+              return rawMsg.getData();
+            }
+          });
     } else {
       LOG.trace(
           "BFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",
