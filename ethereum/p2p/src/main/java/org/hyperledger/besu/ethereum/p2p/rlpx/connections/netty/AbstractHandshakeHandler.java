@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -164,6 +165,36 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     LOG.trace("Handshake error:", throwable);
     connectionFuture.completeExceptionally(throwable);
     ctx.close();
+  }
+
+  protected int getCurrentPeerCount() {
+    return Optional.ofNullable(peerInfoProvider)
+        .map(PeerInfoProvider::getConnectionCount)
+        .orElse(0);
+  }
+
+  protected int getMaxPeers() {
+    return Optional.ofNullable(peerInfoProvider)
+        .map(PeerInfoProvider::getMaxPeers)
+        .orElse(Integer.MAX_VALUE);
+  }
+
+  protected Stream<PeerConnection> getActiveConnections() {
+    return Optional.ofNullable(peerInfoProvider)
+        .map(PeerInfoProvider::streamActiveConnections)
+        .orElse(Stream.empty());
+  }
+
+  protected boolean canAcceptMoreConnections() {
+    return Optional.ofNullable(peerInfoProvider)
+        .map(PeerInfoProvider::canAcceptMoreConnections)
+        .orElse(Boolean.FALSE);
+  }
+
+  protected boolean canExceedConnectionLimits(Bytes peerId) {
+    return Optional.ofNullable(peerInfoProvider)
+        .map(provider -> provider.canExceedConnectionLimits(peerId))
+        .orElse(false);
   }
 
   /** Ensures that wire hello message is the first message written. */
