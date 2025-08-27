@@ -317,7 +317,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   }
 
   @Override
-  public Optional<Long> getHighestPeerBlockHeight() {
+  public Optional<Long> getBestPeerChainHead() {
     return syncState.getBestPeerChainHead().map(ChainHeadEstimate::getEstimatedHeight);
   }
 

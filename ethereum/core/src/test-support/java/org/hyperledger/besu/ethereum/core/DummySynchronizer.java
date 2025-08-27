@@ -51,7 +51,7 @@ public class DummySynchronizer implements Synchronizer {
   }
 
   @Override
-  public Optional<Long> getHighestPeerBlockHeight() {
+  public Optional<Long> getBestPeerChainHead() {
     return Optional.empty();
   }
 

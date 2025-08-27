@@ -46,7 +46,7 @@ public interface Synchronizer {
 
   boolean isInSync();
 
-  Optional<Long> getHighestPeerBlockHeight();
+  Optional<Long> getBestPeerChainHead();
 
   boolean resyncWorldState();
 

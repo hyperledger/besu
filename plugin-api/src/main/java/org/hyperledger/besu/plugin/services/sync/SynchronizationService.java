@@ -84,9 +84,9 @@ public interface SynchronizationService extends BesuService {
   boolean isInSync();
 
   /**
-   * Returns the highest block height among peers.
+   * Returns the best peer chain head.
    *
-   * @return the highest peer block height, or empty if not available.
+   * @return the best peer chain head, or empty if no peers are connected.
    */
-  Optional<Long> getHighestPeerBlockHeight();
+  Optional<Long> getBestPeerChainHead();
 }

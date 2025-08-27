@@ -196,7 +196,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   }
 
   @Override
-  public Optional<Long> getHighestPeerBlockHeight() {
-    return synchronizer.getHighestPeerBlockHeight();
+  public Optional<Long> getBestPeerChainHead() {
+    return synchronizer.getBestPeerChainHead();
   }
 }
