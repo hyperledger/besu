@@ -52,7 +52,7 @@
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
 - Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
 - LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
-- Update commons and log4j dependencies []()
+- Update commons and log4j dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
