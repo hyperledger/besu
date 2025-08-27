@@ -15,37 +15,25 @@
 package org.hyperledger.besu.consensus.qbft.network;
 
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
+import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
-import org.hyperledger.besu.consensus.common.bft.payload.Authored;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftGossiper;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-import java.util.List;
-
-import com.google.common.collect.Lists;
-
 /** Class responsible for rebroadcasting QBFT messages to known validators */
-public class QbftGossip implements Gossiper {
+public class QbftGossip implements Gossiper, QbftGossiper {
 
   private final ValidatorMulticaster multicaster;
-  private final QbftBlockCodec blockEncoder;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
-   * @param blockEncoder the block encoder
    */
-  public QbftGossip(final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
+  public QbftGossip(final ValidatorMulticaster multicaster) {
     this.multicaster = multicaster;
-    this.blockEncoder = blockEncoder;
   }
 
   /**
@@ -56,22 +44,61 @@ public class QbftGossip implements Gossiper {
   @Override
   public void send(final Message message) {
     final MessageData messageData = message.getData();
-    final Authored decodedMessage =
-        switch (messageData.getCode()) {
-          case QbftV1.PROPOSAL ->
-              ProposalMessageData.fromMessageData(messageData).decode(blockEncoder);
-          case QbftV1.PREPARE -> PrepareMessageData.fromMessageData(messageData).decode();
-          case QbftV1.COMMIT -> CommitMessageData.fromMessageData(messageData).decode();
-          case QbftV1.ROUND_CHANGE ->
-              RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder);
-          default ->
-              throw new IllegalArgumentException(
-                  "Received message does not conform to any recognised QBFT message structure.");
-        };
-    final List<Address> excludeAddressesList =
-        Lists.newArrayList(
-            message.getConnection().getPeerInfo().getAddress(), decodedMessage.getAuthor());
+    gossipMessage(messageData);
+  }
 
-    multicaster.send(messageData, excludeAddressesList);
+  /**
+   * Retransmit a given QBFT message event to other known validators nodes
+   *
+   * @param messageEvent The BFT message event to be gossiped
+   */
+  public void send(final BftReceivedMessageEvent messageEvent) {
+    final MessageData messageData = messageEvent.getMessage().getData();
+    gossipMessage(messageData);
+  }
+
+  /**
+   * Send a QBFT message to other validators (from QbftGossiper interface).
+   *
+   * @param message the QBFT message to send
+   */
+  @Override
+  public void send(final QbftMessage message) {
+    final MessageData messageData = message.getMessageData();
+    gossipMessageWithoutSender(messageData);
+  }
+
+  /**
+   * Send a QBFT message to other validators with replay flag (from QbftGossiper interface).
+   *
+   * @param message the QBFT message to send
+   * @param isReplay true if this message is being replayed from a future message buffer
+   */
+  @Override
+  public void send(final QbftMessage message, final boolean isReplay) {
+    // For now, we ignore the replay flag - can be enhanced later
+    send(message);
+  }
+
+  /**
+   * Internal method to handle the gossip logic for QBFT messages
+   *
+   * @param messageData The message data to be gossiped
+   */
+  private void gossipMessage(final MessageData messageData) {
+    // Send to all validators - denylist logic removed as per architectural decision
+    // Note: This may result in messages being sent back to sender/author
+    multicaster.send(messageData);
+  }
+
+  /**
+   * Internal method to handle the gossip logic for QBFT messages without sender information
+   *
+   * @param messageData The message data to be gossiped
+   */
+  private void gossipMessageWithoutSender(final MessageData messageData) {
+    // Send to all validators - denylist logic removed as per architectural decision
+    // Note: This may result in messages being sent back to author
+    multicaster.send(messageData);
   }
 }

@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
  * A Future message handler that updates the peers estimated height to be that of the parent block
  * number of the received message.
  */
-public class FutureMessageSynchronizerHandler implements FutureMessageHandler {
+public class FutureMessageSynchronizerHandler implements FutureMessageHandler<Message> {
   private final SynchronizerUpdater synchronizerUpdater;
 
   /**

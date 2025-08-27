@@ -16,15 +16,13 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftReceivedMessageEvent;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 /** Adaptor class to convert {@link BftReceivedMessageEvent} to {@link QbftReceivedMessageEvent}. */
 public class QbftReceivedMessageEventAdaptor implements QbftReceivedMessageEvent {
 
-  private final MessageData messageData;
-  private final Address sender;
+  private final QbftMessage qbftMessage;
 
   /**
    * Create a new instance of the adaptor.
@@ -32,18 +30,12 @@ public class QbftReceivedMessageEventAdaptor implements QbftReceivedMessageEvent
    * @param bftReceivedMessageEvent The {@link BftReceivedMessageEvent} to adapt.
    */
   public QbftReceivedMessageEventAdaptor(final BftReceivedMessageEvent bftReceivedMessageEvent) {
-    this.messageData = bftReceivedMessageEvent.getMessage().getData();
-    this.sender = bftReceivedMessageEvent.getMessage().getConnection().getPeerInfo().getAddress();
+    this.qbftMessage = new QbftMessageAdaptor(bftReceivedMessageEvent.getMessage());
   }
 
   @Override
-  public MessageData getMessage() {
-    return messageData;
-  }
-
-  @Override
-  public Address getSender() {
-    return sender;
+  public QbftMessage getMessage() {
+    return qbftMessage;
   }
 
   @Override

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
-import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;

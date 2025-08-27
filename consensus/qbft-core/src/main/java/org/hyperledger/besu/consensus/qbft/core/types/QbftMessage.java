@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-/** The QBFT received message event interface. */
-public interface QbftReceivedMessageEvent extends BftEvent {
+/** The QBFT message interface. */
+public interface QbftMessage {
 
   /**
-   * Gets message.
+   * Gets message data.
    *
-   * @return the QBFT message
+   * @return the message data
    */
-  QbftMessage getMessage();
+  MessageData getMessageData();
 }

@@ -14,15 +14,23 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
-
-/** The QBFT received message event interface. */
-public interface QbftReceivedMessageEvent extends BftEvent {
+/** The QBFT gossiper interface for handling QBFT-specific message gossiping. */
+public interface QbftGossiper {
 
   /**
-   * Gets message.
+   * Send a QBFT message to other validators.
    *
-   * @return the QBFT message
+   * @param message the QBFT message to send
    */
-  QbftMessage getMessage();
+  void send(final QbftMessage message);
+
+  /**
+   * Send a QBFT message to other validators with replay flag.
+   *
+   * @param message the QBFT message to send
+   * @param isReplay true if this message is being replayed from a future message buffer
+   */
+  default void send(final QbftMessage message, final boolean isReplay) {
+    send(message);
+  }
 }

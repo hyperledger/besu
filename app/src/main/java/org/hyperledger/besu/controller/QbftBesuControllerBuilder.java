@@ -46,6 +46,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
+import org.hyperledger.besu.consensus.qbft.QbftFutureMessageHandler;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
@@ -60,7 +61,6 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
@@ -72,8 +72,10 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
@@ -97,6 +99,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -240,7 +243,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
-    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster, blockEncoder);
+    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
 
     final QbftFinalState finalState =
         new QbftFinalStateImpl(
@@ -272,12 +275,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final EthSynchronizerUpdater synchronizerUpdater =
         new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
-    final FutureMessageBuffer futureMessageBuffer =
+    final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
         new FutureMessageBuffer(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber(),
-            new FutureMessageSynchronizerHandler(synchronizerUpdater));
+            new QbftFutureMessageHandler());
     final MessageTracker duplicateMessageTracker =
         new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 

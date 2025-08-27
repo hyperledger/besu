@@ -60,6 +60,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
+import org.hyperledger.besu.consensus.qbft.QbftFutureMessageHandler;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
@@ -74,7 +75,6 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
@@ -85,7 +85,9 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
@@ -296,8 +298,7 @@ public class TestContextBuilder {
     final UniqueMessageMulticaster uniqueMulticaster =
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
-    final Gossiper gossiper =
-        useGossip ? new QbftGossip(uniqueMulticaster, blockEncoder) : mock(Gossiper.class);
+    final Gossiper gossiper = useGossip ? new QbftGossip(uniqueMulticaster) : mock(Gossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 
@@ -310,7 +311,6 @@ public class TestContextBuilder {
             clock,
             bftEventQueue,
             gossiper,
-            synchronizerUpdater,
             useValidatorContract,
             useLondonMilestone,
             useShanghaiMilestone,
@@ -397,7 +397,6 @@ public class TestContextBuilder {
       final Clock clock,
       final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
-      final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
       final boolean useLondonMilestone,
       final boolean useShanghaiMilestone,
@@ -556,12 +555,12 @@ public class TestContextBuilder {
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
+        new FutureMessageBuffer<QbftMessage>(
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber(),
-            new FutureMessageSynchronizerHandler(synchronizerUpdater));
+            new QbftFutureMessageHandler());
     final QbftValidatorModeTransitionLoggerAdaptor validatorModeTransitionLogger =
         new QbftValidatorModeTransitionLoggerAdaptor(
             new ValidatorModeTransitionLogger(forksSchedule));
