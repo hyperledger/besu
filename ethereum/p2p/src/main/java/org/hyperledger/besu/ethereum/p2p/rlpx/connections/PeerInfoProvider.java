@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public interface PeerInfoProvider {
 
-  int getCurrentPeerCount();
+  int getConnectionCount();
 
   int getMaxPeers();
 
