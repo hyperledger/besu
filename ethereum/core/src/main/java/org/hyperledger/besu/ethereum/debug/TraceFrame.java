@@ -31,7 +31,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TraceFrame {
-
   private final int pc;
   private final Optional<String> opcode;
   private final int opcodeNumber;
@@ -39,7 +38,7 @@ public class TraceFrame {
   private final OptionalLong gasCost;
   private final long gasRefund;
   private final int depth;
-  private Optional<ExceptionalHaltReason> exceptionalHaltReason;
+  private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
   private final Address recipient;
   private final Wei value;
   private final Bytes inputData;
@@ -47,76 +46,510 @@ public class TraceFrame {
   private final Optional<Bytes[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
-
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes[]> stackPostExecution;
-
-  private long gasRemainingPostExecution;
+  private final long gasRemainingPostExecution;
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
   private final Optional<StorageEntry> maybeUpdatedStorage;
 
   // precompile specific fields
-  private OptionalLong precompiledGasCost;
-  private Optional<Boolean> isPrecompile = Optional.empty();
-  private Optional<Address> precompileRecipient = Optional.empty();
-  private Optional<Bytes> precompileInputData = Optional.empty();
-  private Optional<Bytes> precompileOutputData = Optional.empty();
+  private final OptionalLong precompiledGasCost;
+  private final Optional<Boolean> isPrecompile;
+  private final Optional<Address> precompileRecipient;
+  private final Optional<Bytes> precompileInputData;
+  private final Optional<Bytes> precompileOutputData;
 
-  public TraceFrame(
-      final int pc,
-      final Optional<String> opcode,
-      final int opcodeNumber,
-      final long gasRemaining,
-      final OptionalLong gasCost,
-      final long gasRefund,
-      final int depth,
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Address recipient,
-      final Wei value,
-      final Bytes inputData,
-      final Bytes outputData,
-      final Optional<Bytes[]> stack,
-      final Optional<Bytes[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage,
-      final WorldUpdater worldUpdater,
-      final Optional<Bytes> revertReason,
-      final Optional<Map<Address, Wei>> maybeRefunds,
-      final Optional<Code> maybeCode,
-      final int stackItemsProduced,
-      final Optional<Bytes[]> stackPostExecution,
-      final boolean virtualOperation,
-      final Optional<MemoryEntry> maybeUpdatedMemory,
-      final Optional<StorageEntry> maybeUpdatedStorage) {
-    this.pc = pc;
-    this.opcode = opcode;
-    this.opcodeNumber = opcodeNumber;
-    this.gasRemaining = gasRemaining;
-    this.gasCost = gasCost;
-    this.gasRefund = gasRefund;
-    this.depth = depth;
-    this.exceptionalHaltReason = exceptionalHaltReason;
-    this.recipient = recipient;
-    this.value = value;
-    this.inputData = inputData;
-    this.outputData = outputData;
-    this.stack = stack;
-    this.memory = memory;
-    this.storage = storage;
-    this.worldUpdater = worldUpdater;
-    this.revertReason = revertReason;
-    this.maybeRefunds = maybeRefunds;
-    this.maybeCode = maybeCode;
-    this.stackItemsProduced = stackItemsProduced;
-    this.stackPostExecution = stackPostExecution;
-    this.virtualOperation = virtualOperation;
-    this.maybeUpdatedMemory = maybeUpdatedMemory;
-    this.maybeUpdatedStorage = maybeUpdatedStorage;
-    precompiledGasCost = OptionalLong.empty();
+  /** Private constructor - only accessible through Builder */
+  private TraceFrame(final Builder builder) {
+    this.pc = builder.pc;
+    this.opcode = builder.opcode;
+    this.opcodeNumber = builder.opcodeNumber;
+    this.gasRemaining = builder.gasRemaining;
+    this.gasCost = builder.gasCost;
+    this.gasRefund = builder.gasRefund;
+    this.depth = builder.depth;
+    this.exceptionalHaltReason = builder.exceptionalHaltReason;
+    this.recipient = builder.recipient;
+    this.value = builder.value;
+    this.inputData = builder.inputData;
+    this.outputData = builder.outputData;
+    this.stack = builder.stack;
+    this.memory = builder.memory;
+    this.storage = builder.storage;
+    this.worldUpdater = builder.worldUpdater;
+    this.revertReason = builder.revertReason;
+    this.maybeRefunds = builder.maybeRefunds;
+    this.maybeCode = builder.maybeCode;
+    this.stackItemsProduced = builder.stackItemsProduced;
+    this.stackPostExecution = builder.stackPostExecution;
+    this.gasRemainingPostExecution = builder.gasRemainingPostExecution;
+    this.virtualOperation = builder.virtualOperation;
+    this.maybeUpdatedMemory = builder.maybeUpdatedMemory;
+    this.maybeUpdatedStorage = builder.maybeUpdatedStorage;
+    this.precompiledGasCost = builder.precompiledGasCost;
+    this.isPrecompile = builder.isPrecompile;
+    this.precompileRecipient = builder.precompileRecipient;
+    this.precompileInputData = builder.precompileInputData;
+    this.precompileOutputData = builder.precompileOutputData;
+  }
+
+  /**
+   * Static factory method for creating a new builder
+   *
+   * @return a new Builder instance
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Static factory method for creating a builder from an existing TraceFrame
+   *
+   * @param traceFrame the TraceFrame to copy from
+   * @return a new Builder instance initialized with the values from the given TraceFrame
+   */
+  public static Builder from(final TraceFrame traceFrame) {
+    return new Builder(traceFrame);
+  }
+
+  /** TraceFrame Builder class */
+  public static class Builder {
+    private int pc;
+    private Optional<String> opcode = Optional.empty();
+    private int opcodeNumber;
+    private long gasRemaining;
+    private OptionalLong gasCost = OptionalLong.empty();
+    private long gasRefund;
+    private int depth;
+    private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
+    private Address recipient;
+    private Wei value;
+    private Bytes inputData;
+    private Bytes outputData;
+    private Optional<Bytes[]> stack = Optional.empty();
+    private Optional<Bytes[]> memory = Optional.empty();
+    private Optional<Map<UInt256, UInt256>> storage = Optional.empty();
+    private WorldUpdater worldUpdater;
+    private Optional<Bytes> revertReason = Optional.empty();
+    private Optional<Map<Address, Wei>> maybeRefunds = Optional.empty();
+    private Optional<Code> maybeCode = Optional.empty();
+    private int stackItemsProduced;
+    private Optional<Bytes[]> stackPostExecution = Optional.empty();
+    private long gasRemainingPostExecution;
+    private boolean virtualOperation;
+    private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
+    private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
+    private OptionalLong precompiledGasCost = OptionalLong.empty();
+    private Optional<Boolean> isPrecompile = Optional.empty();
+    private Optional<Address> precompileRecipient = Optional.empty();
+    private Optional<Bytes> precompileInputData = Optional.empty();
+    private Optional<Bytes> precompileOutputData = Optional.empty();
+
+    /** Default constructor */
+    public Builder() {}
+
+    /**
+     * Copy constructor
+     *
+     * @param traceFrame TraceFrame to copy from.
+     */
+    public Builder(final TraceFrame traceFrame) {
+      this.pc = traceFrame.pc;
+      this.opcode = traceFrame.opcode;
+      this.opcodeNumber = traceFrame.opcodeNumber;
+      this.gasRemaining = traceFrame.gasRemaining;
+      this.gasCost = traceFrame.gasCost;
+      this.gasRefund = traceFrame.gasRefund;
+      this.depth = traceFrame.depth;
+      this.exceptionalHaltReason = traceFrame.exceptionalHaltReason;
+      this.recipient = traceFrame.recipient;
+      this.value = traceFrame.value;
+      this.inputData = traceFrame.inputData;
+      this.outputData = traceFrame.outputData;
+      this.stack = traceFrame.stack;
+      this.memory = traceFrame.memory;
+      this.storage = traceFrame.storage;
+      this.worldUpdater = traceFrame.worldUpdater;
+      this.revertReason = traceFrame.revertReason;
+      this.maybeRefunds = traceFrame.maybeRefunds;
+      this.maybeCode = traceFrame.maybeCode;
+      this.stackItemsProduced = traceFrame.stackItemsProduced;
+      this.stackPostExecution = traceFrame.stackPostExecution;
+      this.gasRemainingPostExecution = traceFrame.gasRemainingPostExecution;
+      this.virtualOperation = traceFrame.virtualOperation;
+      this.maybeUpdatedMemory = traceFrame.maybeUpdatedMemory;
+      this.maybeUpdatedStorage = traceFrame.maybeUpdatedStorage;
+      this.precompiledGasCost = traceFrame.precompiledGasCost;
+      this.isPrecompile = traceFrame.isPrecompile;
+      this.precompileRecipient = traceFrame.precompileRecipient;
+      this.precompileInputData = traceFrame.precompileInputData;
+      this.precompileOutputData = traceFrame.precompileOutputData;
+    }
+
+    /**
+     * Sets the program counter
+     *
+     * @param pc the program counter value
+     * @return this builder instance for method chaining
+     */
+    public Builder setPc(final int pc) {
+      this.pc = pc;
+      return this;
+    }
+
+    /**
+     * Sets the opcode for this trace frame.
+     *
+     * @param opcode the operation code, or null for no opcode
+     * @return this builder instance for method chaining
+     */
+    public Builder setOpcode(final String opcode) {
+      this.opcode = Optional.ofNullable(opcode);
+      return this;
+    }
+
+    /**
+     * Sets the opcode number for this operation.
+     *
+     * @param opcodeNumber the opcode number
+     * @return this builder instance for method chaining
+     */
+    public Builder setOpcodeNumber(final int opcodeNumber) {
+      this.opcodeNumber = opcodeNumber;
+      return this;
+    }
+
+    /**
+     * Sets the remaining gas for this operation.
+     *
+     * @param gasRemaining the remaining gas in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setGasRemaining(final long gasRemaining) {
+      this.gasRemaining = gasRemaining;
+      return this;
+    }
+
+    /**
+     * Sets the gas cost for this operation.
+     *
+     * @param gasCost the gas cost in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setGasCost(final OptionalLong gasCost) {
+      this.gasCost = gasCost;
+      return this;
+    }
+
+    /**
+     * Sets the gas refund for this operation.
+     *
+     * @param gasRefund the gas refund in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setGasRefund(final long gasRefund) {
+      this.gasRefund = gasRefund;
+      return this;
+    }
+
+    /**
+     * Sets the call depth for this operation.
+     *
+     * @param depth the call depth
+     * @return this builder instance for method chaining
+     */
+    public Builder setDepth(final int depth) {
+      this.depth = depth;
+      return this;
+    }
+
+    /**
+     * Sets the exceptional halt reason for this operation.
+     *
+     * @param exceptionalHaltReason the exceptional halt reason, or null for no halt reason
+     * @return this builder instance for method chaining
+     */
+    public Builder setExceptionalHaltReason(
+        final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+      this.exceptionalHaltReason = exceptionalHaltReason;
+      return this;
+    }
+
+    /**
+     * Sets the recipient address for this operation.
+     *
+     * @param recipient the recipient address
+     * @return this builder instance for method chaining
+     */
+    public Builder setRecipient(final Address recipient) {
+      this.recipient = recipient;
+      return this;
+    }
+
+    /**
+     * Sets the value transferred in this operation.
+     *
+     * @param value the value in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setValue(final Wei value) {
+      this.value = value;
+      return this;
+    }
+
+    /**
+     * Sets the input data for this operation.
+     *
+     * @param inputData the input data as a byte array
+     * @return this builder instance for method chaining
+     */
+    public Builder setInputData(final Bytes inputData) {
+      this.inputData = inputData;
+      return this;
+    }
+
+    /**
+     * Sets the output data for this operation.
+     *
+     * @param outputData the output data as a byte array
+     * @return this builder instance for method chaining
+     */
+    public Builder setOutputData(final Bytes outputData) {
+      this.outputData = outputData;
+      return this;
+    }
+
+    /**
+     * Sets the stack for this operation.
+     *
+     * @param stack the stack as an array of byte arrays, or null for no stack
+     * @return this builder instance for method chaining
+     */
+    public Builder setStack(final Optional<Bytes[]> stack) {
+      this.stack = stack;
+      return this;
+    }
+
+    /**
+     * Sets the memory for this operation.
+     *
+     * @param memory the memory as an optional array of byte arrays
+     * @return this builder instance for method chaining
+     */
+    public Builder setMemory(final Optional<Bytes[]> memory) {
+      this.memory = memory;
+      return this;
+    }
+
+    /**
+     * Sets the storage for this operation.
+     *
+     * @param storage the storage as an optional map of UInt256 keys and values
+     * @return this builder instance for method chaining
+     */
+    public Builder setStorage(final Optional<Map<UInt256, UInt256>> storage) {
+      this.storage = storage;
+      return this;
+    }
+
+    /**
+     * Sets the world updater for this operation.
+     *
+     * @param worldUpdater the world updater
+     * @return this builder instance for method chaining
+     */
+    public Builder setWorldUpdater(final WorldUpdater worldUpdater) {
+      this.worldUpdater = worldUpdater;
+      return this;
+    }
+
+    /**
+     * Sets the revert reason for this operation.
+     *
+     * @param revertReason the revert reason as a byte array, or null for no revert reason
+     * @return this builder instance for method chaining
+     */
+    public Builder setRevertReason(final Optional<Bytes> revertReason) {
+      this.revertReason = revertReason;
+      return this;
+    }
+
+    /**
+     * Sets the maybe refunds for this operation.
+     *
+     * @param maybeRefunds the maybe refunds as an optional map of Address keys and Wei values
+     * @return this builder instance for method chaining
+     */
+    public Builder setMaybeRefunds(final Optional<Map<Address, Wei>> maybeRefunds) {
+      this.maybeRefunds = maybeRefunds;
+      return this;
+    }
+
+    /**
+     * Sets the maybe code for this operation.
+     *
+     * @param maybeCode the maybe code, or null for no code
+     * @return this builder instance for method chaining
+     */
+    public Builder setMaybeCode(final Optional<Code> maybeCode) {
+      this.maybeCode = maybeCode;
+      return this;
+    }
+
+    /**
+     * Sets the number of stack items produced by this operation.
+     *
+     * @param stackItemsProduced the number of stack items produced
+     * @return this builder instance for method chaining
+     */
+    public Builder setStackItemsProduced(final int stackItemsProduced) {
+      this.stackItemsProduced = stackItemsProduced;
+      return this;
+    }
+
+    /**
+     * Sets the stack after execution for this operation.
+     *
+     * @param stackPostExecution the stack after execution as an array of byte arrays, or null for
+     *     no stack
+     * @return this builder instance for method chaining
+     */
+    public Builder setStackPostExecution(final Optional<Bytes[]> stackPostExecution) {
+      this.stackPostExecution = stackPostExecution;
+      return this;
+    }
+
+    /**
+     * Sets the gas remaining after execution for this operation.
+     *
+     * @param gasRemainingPostExecution the gas remaining after execution in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setGasRemainingPostExecution(final long gasRemainingPostExecution) {
+      this.gasRemainingPostExecution = gasRemainingPostExecution;
+      return this;
+    }
+
+    /**
+     * Sets whether this operation is a virtual operation (not part of the original bytecode).
+     *
+     * @param virtualOperation true if this is a virtual operation, false otherwise
+     * @return this builder instance for method chaining
+     */
+    public Builder setVirtualOperation(final boolean virtualOperation) {
+      this.virtualOperation = virtualOperation;
+      return this;
+    }
+
+    /**
+     * Sets the maybe updated memory entry for this operation.
+     *
+     * @param maybeUpdatedMemory the maybe updated memory entry, or null for no update
+     * @return this builder instance for method chaining
+     */
+    public Builder setMaybeUpdatedMemory(final Optional<MemoryEntry> maybeUpdatedMemory) {
+      this.maybeUpdatedMemory = maybeUpdatedMemory;
+      return this;
+    }
+
+    /**
+     * Sets the maybe updated storage entry for this operation.
+     *
+     * @param maybeUpdatedStorage the maybe updated storage entry, or null for no update
+     * @return this builder instance for method chaining
+     */
+    public Builder setMaybeUpdatedStorage(final Optional<StorageEntry> maybeUpdatedStorage) {
+      this.maybeUpdatedStorage = maybeUpdatedStorage;
+      return this;
+    }
+
+    /**
+     * Sets the precompiled gas cost for this operation.
+     *
+     * @param precompiledGasCost the precompiled gas cost in wei
+     * @return this builder instance for method chaining
+     */
+    public Builder setPrecompiledGasCost(final long precompiledGasCost) {
+      this.precompiledGasCost = OptionalLong.of(precompiledGasCost);
+      return this;
+    }
+
+    /**
+     * Sets whether this operation is a precompile call.
+     *
+     * @param isPrecompile true if this is a precompile call, false otherwise
+     * @return this builder instance for method chaining
+     */
+    public Builder setIsPrecompile(final boolean isPrecompile) {
+      this.isPrecompile = Optional.of(isPrecompile);
+      return this;
+    }
+
+    /**
+     * Sets the precompile recipient address for this operation.
+     *
+     * @param precompileRecipient the precompile recipient address, or null for no recipient
+     * @return this builder instance for method chaining
+     */
+    public Builder setPrecompileRecipient(final Address precompileRecipient) {
+      this.precompileRecipient = Optional.ofNullable(precompileRecipient);
+      return this;
+    }
+
+    /**
+     * Sets the precompile input data for this operation.
+     *
+     * @param precompileInputData the precompile input data as a byte array, or null for no input
+     *     data
+     * @return this builder instance for method chaining
+     */
+    public Builder setPrecompileInputData(final Bytes precompileInputData) {
+      this.precompileInputData = Optional.ofNullable(precompileInputData);
+      return this;
+    }
+
+    /**
+     * Sets the precompile output data for this operation.
+     *
+     * @param precompileOutputData the precompile output data as a byte array, or null for no output
+     *     data
+     * @return this builder instance for method chaining
+     */
+    public Builder setPrecompileOutputData(final Bytes precompileOutputData) {
+      this.precompileOutputData = Optional.ofNullable(precompileOutputData);
+      return this;
+    }
+
+    /**
+     * Convenience method to set all precompile IO data at once This also sets isPrecompile to true.
+     *
+     * @param recipient the precompile recipient address, or null for no recipient
+     * @param input the input to the precompile, or null for no input data
+     * @param output the output from the precompile, or null for no output data
+     * @return this builder instance for method chaining
+     */
+    public Builder setPrecompileIOData(
+        final Address recipient, final Bytes input, final Bytes output) {
+      this.isPrecompile = Optional.of(true);
+      this.precompileRecipient = Optional.ofNullable(recipient);
+      this.precompileInputData = Optional.ofNullable(input);
+      this.precompileOutputData = Optional.ofNullable(output);
+      return this;
+    }
+
+    /**
+     * Builds the TraceFrame instance.
+     *
+     * @return the constructed TraceFrame
+     */
+    public TraceFrame build() {
+      return new TraceFrame(this);
+    }
   }
 
   public int getPc() {
@@ -149,10 +582,6 @@ public class TraceFrame {
 
   public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
     return exceptionalHaltReason;
-  }
-
-  public void setExceptionalHaltReason(final ExceptionalHaltReason exceptionalHaltReason) {
-    this.exceptionalHaltReason = Optional.ofNullable(exceptionalHaltReason);
   }
 
   public Address getRecipient() {
@@ -195,21 +624,6 @@ public class TraceFrame {
     return maybeRefunds;
   }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("pc", pc)
-        .add("opcode", opcode)
-        .add("getGasRemaining", gasRemaining)
-        .add("gasCost", gasCost)
-        .add("depth", depth)
-        .add("exceptionalHaltReason", exceptionalHaltReason)
-        .add("stack", stack)
-        .add("memory", memory)
-        .add("storage", storage)
-        .toString();
-  }
-
   public Optional<Code> getMaybeCode() {
     return maybeCode;
   }
@@ -224,10 +638,6 @@ public class TraceFrame {
 
   public long getGasRemainingPostExecution() {
     return gasRemainingPostExecution;
-  }
-
-  public void setGasRemainingPostExecution(final long gasRemainingPostExecution) {
-    this.gasRemainingPostExecution = gasRemainingPostExecution;
   }
 
   public boolean isVirtualOperation() {
@@ -246,10 +656,6 @@ public class TraceFrame {
     return precompiledGasCost;
   }
 
-  public void setPrecompiledGasCost(final OptionalLong precompiledGasCost) {
-    this.precompiledGasCost = precompiledGasCost;
-  }
-
   public boolean isPrecompile() {
     return this.isPrecompile.orElse(Boolean.FALSE);
   }
@@ -266,10 +672,18 @@ public class TraceFrame {
     return precompileOutputData;
   }
 
-  public void setPrecompileIOData(final Address recipient, final Bytes input, final Bytes output) {
-    this.isPrecompile = Optional.of(Boolean.TRUE);
-    this.precompileRecipient = Optional.ofNullable(recipient);
-    this.precompileInputData = Optional.ofNullable(input);
-    this.precompileOutputData = Optional.ofNullable(output);
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("pc", pc)
+        .add("opcode", opcode)
+        .add("gasRemaining", gasRemaining)
+        .add("gasCost", gasCost)
+        .add("depth", depth)
+        .add("exceptionalHaltReason", exceptionalHaltReason)
+        .add("stack", stack)
+        .add("memory", memory)
+        .add("storage", storage)
+        .toString();
   }
 }
