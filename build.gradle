@@ -644,7 +644,8 @@ subprojects {
     jmh {
       jmhVersion = '1.37'
       fork = 3
-      includes = _strListCmdArg('includes', [''])
+      var inc = _strListCmdArg('includes', [''])
+      includes = inc.size() > 1 ? [".*(${inc.join('|')}).*"] : inc
       excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
