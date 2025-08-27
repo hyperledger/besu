@@ -16,6 +16,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
 
 #### Fusaka devnets
 
