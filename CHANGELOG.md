@@ -16,6 +16,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 
 #### Fusaka devnets
 

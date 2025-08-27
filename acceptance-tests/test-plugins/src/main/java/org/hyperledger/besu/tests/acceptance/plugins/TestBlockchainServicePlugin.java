@@ -75,10 +75,12 @@ public class TestBlockchainServicePlugin implements BesuPlugin {
   private HardforkSeen queryHardfork(
       final BlockchainService blockchainService, final BlockHeader header) {
     final var currentHardfork = blockchainService.getHardforkId(header);
+    final var currentHardforkByNumber = blockchainService.getHardforkId(header.getNumber());
     final var nextHardfork =
         blockchainService.getNextBlockHardforkId(header, header.getTimestamp() + 1);
 
-    return new HardforkSeen(header.getNumber(), currentHardfork, nextHardfork);
+    return new HardforkSeen(
+        header.getNumber(), currentHardfork, currentHardforkByNumber, nextHardfork);
   }
 
   @Override
@@ -97,7 +99,11 @@ public class TestBlockchainServicePlugin implements BesuPlugin {
               .map(
                   r ->
                       String.join(
-                          ",", String.valueOf(r.blockNumber), r.current.name(), r.next.name()))
+                          ",",
+                          String.valueOf(r.blockNumber),
+                          r.current.name(),
+                          r.currentByNumber().name(),
+                          r.next.name()))
               .collect(Collectors.joining("\n"));
 
       Files.write(callbackFile.toPath(), content.getBytes(UTF_8));
@@ -107,5 +113,6 @@ public class TestBlockchainServicePlugin implements BesuPlugin {
     }
   }
 
-  private record HardforkSeen(long blockNumber, HardforkId current, HardforkId next) {}
+  private record HardforkSeen(
+      long blockNumber, HardforkId current, HardforkId currentByNumber, HardforkId next) {}
 }
