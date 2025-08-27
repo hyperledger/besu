@@ -25,12 +25,10 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.*;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -57,7 +55,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RlpxAgent {
+public class RlpxAgent implements PeerInfoProvider {
   private static final Logger LOG = LoggerFactory.getLogger(RlpxAgent.class);
 
   private final LocalNode localNode;
@@ -153,6 +151,15 @@ public class RlpxAgent {
     }
   }
 
+  @Override
+  public boolean canAcceptMoreConnections() {
+    final int currentCount = getConnectionCount();
+    final int maxAllowed = getMaxPeers();
+
+    return currentCount < maxAllowed;     // TODO: check for privileged connection attempts
+  }
+
+  @Override
   public int getConnectionCount() {
     try {
       return (int) allActiveConnectionsSupplier.get().count();
@@ -356,6 +363,7 @@ public class RlpxAgent {
     return peersConnectingCache.asMap();
   }
 
+  @Override
   public int getMaxPeers() {
     return maxPeers;
   }
