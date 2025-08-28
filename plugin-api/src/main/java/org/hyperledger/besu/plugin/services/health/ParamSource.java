@@ -12,23 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.p2p;
+package org.hyperledger.besu.plugin.services.health;
 
-import org.hyperledger.besu.plugin.services.BesuService;
-
-/** Service to enable and disable P2P service. */
-public interface P2PService extends BesuService {
-
-  /** Enables P2P discovery. */
-  void enableDiscovery();
-
-  /** Disables P2P discovery. */
-  void disableDiscovery();
-
+/** Interface for parameter sources in health checks. */
+@FunctionalInterface
+public interface ParamSource {
   /**
-   * Returns the current number of connected peers.
+   * Get a parameter value by name.
    *
-   * @return the number of connected peers
+   * @param name the parameter name
+   * @return the parameter value, or null if not found
    */
-  int getPeerCount();
+  String getParam(String name);
 }

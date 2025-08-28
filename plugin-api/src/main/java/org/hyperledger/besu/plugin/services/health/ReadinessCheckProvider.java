@@ -12,23 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.p2p;
+package org.hyperledger.besu.plugin.services.health;
 
-import org.hyperledger.besu.plugin.services.BesuService;
-
-/** Service to enable and disable P2P service. */
-public interface P2PService extends BesuService {
-
-  /** Enables P2P discovery. */
-  void enableDiscovery();
-
-  /** Disables P2P discovery. */
-  void disableDiscovery();
-
+/**
+ * Provider for readiness health checks.
+ *
+ * <p>A simple implementation can look like:
+ *
+ * <pre>{@code
+ * context
+ *    .getService(HealthCheckService.class)
+ *    .get()
+ *    .registerReadinessCheckProvider((paramSource) -> {
+ *        // Your logic here
+ *        return true;
+ *    });
+ * }</pre>
+ */
+@FunctionalInterface
+public interface ReadinessCheckProvider {
   /**
-   * Returns the current number of connected peers.
+   * Perform the readiness check.
    *
-   * @return the number of connected peers
+   * @param paramSource source for health check parameters
+   * @return true if the check passes, false otherwise
    */
-  int getPeerCount();
+  boolean isHealthy(ParamSource paramSource);
 }

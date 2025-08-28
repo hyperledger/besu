@@ -1,0 +1,69 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+}
+
+dependencies {
+  api project(':plugin-api')
+
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:p2p')
+  implementation project(':services:pipeline')
+  implementation 'com.google.guava:guava'
+  implementation 'org.slf4j:slf4j-api'
+
+  testImplementation project(':testutil')
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.assertj:assertj-core'
+}
+
+// Ensure resources are included in the JAR
+sourceSets {
+  main {
+    resources {
+      srcDirs = ['src/main/resources']
+    }
+  }
+}
+
+// Configure the JAR manifest
+jar {
+  manifest {
+    attributes(
+      'Specification-Title': 'Besu Health Check Plugin',
+      'Specification-Version': project.version,
+      'Implementation-Title': 'Besu Health Check Plugin',
+      'Implementation-Version': project.version
+      )
+  }
+}
+
+test {
+  useJUnitPlatform()
+}
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      from components.java
+    }
+  }
+}

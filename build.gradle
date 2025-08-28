@@ -1085,6 +1085,7 @@ dependencies {
   errorprone 'org.hyperledger.besu:besu-errorprone-checks'
   implementation project(':app')
   implementation project(':ethereum:evmtool')
+  implementation project(':plugins:health')
 }
 
 @CompileStatic

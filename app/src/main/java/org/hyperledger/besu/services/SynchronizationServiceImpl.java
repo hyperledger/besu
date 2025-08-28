@@ -176,4 +176,61 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   public void start() {
     synchronizer.start();
   }
+
+  // New methods for health checks
+  @Override
+  public Optional<Long> getHighestBlock() {
+    try {
+      if (synchronizer != null && synchronizer.getSyncStatus().isPresent()) {
+        return Optional.of(synchronizer.getSyncStatus().get().getHighestBlock());
+      }
+      return Optional.empty();
+    } catch (Exception e) {
+      LOG.debug("Could not get highest block: {}", e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<Long> getCurrentBlock() {
+    try {
+      if (protocolContext != null && protocolContext.getBlockchain() != null) {
+        return Optional.of(protocolContext.getBlockchain().getChainHeadBlockNumber());
+      }
+      return Optional.empty();
+    } catch (Exception e) {
+      LOG.debug("Could not get current block: {}", e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public boolean isInSync() {
+    try {
+      if (syncState != null) {
+        return syncState.isInSync();
+      }
+      return false;
+    } catch (Exception e) {
+      LOG.debug("Could not determine sync status: {}", e.getMessage());
+      return false;
+    }
+  }
+
+  @Override
+  public long getBlocksBehind() {
+    try {
+      Optional<Long> highestBlock = getHighestBlock();
+      Optional<Long> currentBlock = getCurrentBlock();
+
+      if (highestBlock.isPresent() && currentBlock.isPresent()) {
+        long blocksBehind = highestBlock.get() - currentBlock.get();
+        return Math.max(0, blocksBehind); // Ensure non-negative
+      }
+      return 0;
+    } catch (Exception e) {
+      LOG.debug("Could not calculate blocks behind: {}", e.getMessage());
+      return 0;
+    }
+  }
 }

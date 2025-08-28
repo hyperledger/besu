@@ -41,4 +41,9 @@ public class P2PServiceImpl implements P2PService {
   public void disableDiscovery() {
     p2PNetwork.stop();
   }
+
+  @Override
+  public int getPeerCount() {
+    return p2PNetwork.getPeerCount();
+  }
 }
