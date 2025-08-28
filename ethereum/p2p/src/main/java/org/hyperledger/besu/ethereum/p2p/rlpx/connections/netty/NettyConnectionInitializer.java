@@ -248,7 +248,8 @@ public class NettyConnectionInitializer
         metricsSystem,
         this,
         this,
-        peerTable);
+        peerTable,
+        peerInfoProvider);
   }
 
   @NotNull
