@@ -200,7 +200,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       } else {
         updater.markTransactionBoundary();
       }
-      updater = updater.updater();
       return updater;
     }
   }

@@ -220,7 +220,7 @@ public class TraceServiceImpl implements TraceService {
                           .getPreExecutionProcessor()
                           .createBlockHashLookup(blockchain, header),
                       blobGasPrice);
-
+              worldUpdater.commit();
               results.add(result);
             });
 
