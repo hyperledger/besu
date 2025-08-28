@@ -59,7 +59,7 @@ public class TraceFrame {
 
   // precompile specific fields
   private final OptionalLong precompiledGasCost;
-  private final Optional<Boolean> isPrecompile;
+  private final boolean isPrecompile;
   private final Optional<Address> precompileRecipient;
   private final Optional<Bytes> precompileInputData;
   private final Optional<Bytes> precompileOutputData;
@@ -145,7 +145,7 @@ public class TraceFrame {
     private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
     private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
     private OptionalLong precompiledGasCost = OptionalLong.empty();
-    private Optional<Boolean> isPrecompile = Optional.empty();
+    private boolean isPrecompile = false;
     private Optional<Address> precompileRecipient = Optional.empty();
     private Optional<Bytes> precompileInputData = Optional.empty();
     private Optional<Bytes> precompileOutputData = Optional.empty();
@@ -486,7 +486,7 @@ public class TraceFrame {
      * @return this builder instance for method chaining
      */
     public Builder setIsPrecompile(final boolean isPrecompile) {
-      this.isPrecompile = Optional.of(isPrecompile);
+      this.isPrecompile = isPrecompile;
       return this;
     }
 
@@ -535,7 +535,7 @@ public class TraceFrame {
      */
     public Builder setPrecompileIOData(
         final Address recipient, final Bytes input, final Bytes output) {
-      this.isPrecompile = Optional.of(true);
+      this.isPrecompile = true;
       this.precompileRecipient = Optional.ofNullable(recipient);
       this.precompileInputData = Optional.ofNullable(input);
       this.precompileOutputData = Optional.ofNullable(output);
@@ -657,7 +657,7 @@ public class TraceFrame {
   }
 
   public boolean isPrecompile() {
-    return this.isPrecompile.orElse(Boolean.FALSE);
+    return isPrecompile;
   }
 
   public Optional<Address> getPrecompileRecipient() {
