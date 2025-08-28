@@ -178,13 +178,13 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     final AbstractWorldUpdater<W, A> wrapped = this.rootWorld;
     final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
     if (wrappedTracker != null) {
-      return new JournaledAccount(wrappedTracker);
+      return wrappedTracker;
     }
     if (wrapped.deletedAccounts.contains(address)) {
       return null;
     }
     final A account = wrapped.getForMutation(address);
-    return account == null ? null : new JournaledAccount(account);
+    return account == null ? null : wrapped.track(new UpdateTrackingAccount<>(account));
   }
 
   @Override
