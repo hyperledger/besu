@@ -147,35 +147,6 @@ public class FutureMessageBuffer<T> {
     return messages;
   }
 
-  /**
-   * Retrieve and replay messages for height with replay handler.
-   *
-   * @param height the height
-   * @param replayHandler the replay handler that will be called for each message with isReplay=true
-   */
-  public void retrieveAndReplayMessagesForHeight(
-      final long height, final ReplayHandler<T> replayHandler) {
-    chainHeight = height;
-    final List<T> messages = buffer.getOrDefault(height, Collections.emptyList());
-    messages.forEach(message -> replayHandler.handleReplayMessage(message, true));
-    discardPreviousHeightMessages();
-  }
-
-  /**
-   * Interface for handling replayed messages with replay flag.
-   *
-   * @param <T> the type of message being handled
-   */
-  public interface ReplayHandler<T> {
-    /**
-     * Handle a replayed message.
-     *
-     * @param message the message being replayed
-     * @param isReplay true since this is always a replay
-     */
-    void handleReplayMessage(T message, boolean isReplay);
-  }
-
   private void discardPreviousHeightMessages() {
     if (!buffer.isEmpty()) {
       for (long h = buffer.firstKey(); h <= chainHeight; h++) {
