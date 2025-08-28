@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerInfoProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -63,7 +62,6 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   private final FramerProvider framerProvider;
   private final boolean inboundInitiated;
   private final PeerTable peerTable;
-  private final PeerInfoProvider peerInfoProvider;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
@@ -75,7 +73,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
       final boolean inboundInitiated,
-      final PeerTable peerTable, PeerInfoProvider peerInfoProvider) {
+      final PeerTable peerTable) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
@@ -86,7 +84,6 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     this.framerProvider = framerProvider;
     this.inboundInitiated = inboundInitiated;
     this.peerTable = peerTable;
-    this.peerInfoProvider = peerInfoProvider;
   }
 
   /**
