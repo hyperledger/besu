@@ -17,7 +17,7 @@
 
 ### Additions and Improvements
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
-- Update log4j
+- Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
 
 #### Fusaka devnets
 
