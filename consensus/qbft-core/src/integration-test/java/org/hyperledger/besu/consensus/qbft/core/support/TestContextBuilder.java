@@ -43,7 +43,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -82,6 +81,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftGossiper;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
@@ -297,7 +297,8 @@ public class TestContextBuilder {
     final UniqueMessageMulticaster uniqueMulticaster =
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
-    final Gossiper gossiper = useGossip ? new QbftGossip(uniqueMulticaster) : mock(Gossiper.class);
+    final QbftGossiper gossiper =
+        useGossip ? new QbftGossip(uniqueMulticaster, blockEncoder) : mock(QbftGossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 
@@ -396,7 +397,7 @@ public class TestContextBuilder {
       final NodeKey nodeKey,
       final Clock clock,
       final BftEventQueue bftEventQueue,
-      final Gossiper gossiper,
+      final QbftGossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
       final boolean useLondonMilestone,
