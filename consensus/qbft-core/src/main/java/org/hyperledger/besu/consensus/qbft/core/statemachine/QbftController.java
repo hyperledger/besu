@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
@@ -52,7 +51,7 @@ public class QbftController implements QbftEventHandler {
   private final QbftBlockchain blockchain;
   private final QbftFinalState finalState;
   private final FutureMessageBuffer<QbftMessage> futureMessageBuffer;
-  private final Gossiper gossiper;
+  private final QbftGossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final QbftBlockCodec blockEncoder;
@@ -65,7 +64,7 @@ public class QbftController implements QbftEventHandler {
    * @param blockchain the blockchain
    * @param finalState the qbft final state
    * @param qbftBlockHeightManagerFactory the qbft block height manager factory
-   * @param gossiper the gossiper
+   * @param gossiper the qbft gossiper
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
    * @param blockEncoder the block encoder
@@ -74,7 +73,7 @@ public class QbftController implements QbftEventHandler {
       final QbftBlockchain blockchain,
       final QbftFinalState finalState,
       final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory,
-      final Gossiper gossiper,
+      final QbftGossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer<QbftMessage> futureMessageBuffer,
       final QbftBlockCodec blockEncoder) {
@@ -217,13 +216,7 @@ public class QbftController implements QbftEventHandler {
     }
 
     if (processQbftMessage(bftMessage, qbftMessage)) {
-      if (gossiper instanceof QbftGossiper) {
-        ((QbftGossiper) gossiper).send(qbftMessage, isReplay);
-      } else {
-        // Fallback: create a temporary Message wrapper - this shouldn't happen in normal operation
-        throw new IllegalStateException(
-            "Gossiper must implement QbftGossiper interface for QBFT messages");
-      }
+      gossiper.send(qbftMessage, isReplay);
       handleMessage.accept(bftMessage);
     }
   }
@@ -252,7 +245,15 @@ public class QbftController implements QbftEventHandler {
     }
 
     if (processMessage(bftMessage, message)) {
-      gossiper.send(message);
+      // Convert Message to QbftMessage and send via QbftGossiper
+      QbftMessage qbftMessage =
+          new QbftMessage() {
+            @Override
+            public MessageData getMessageData() {
+              return message.getData();
+            }
+          };
+      gossiper.send(qbftMessage);
       handleMessage.accept(bftMessage);
     }
   }
