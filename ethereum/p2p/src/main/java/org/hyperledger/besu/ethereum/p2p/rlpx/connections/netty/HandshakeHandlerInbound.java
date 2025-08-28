@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerInfoProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
@@ -43,8 +42,7 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
-      final PeerTable peerTable,
-      final PeerInfoProvider peerInfoProvider) {
+      final PeerTable peerTable) {
     super(
         subProtocols,
         localNode,
@@ -55,8 +53,7 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
         handshakerProvider,
         framerProvider,
         true,
-        peerTable,
-        peerInfoProvider);
+        peerTable);
     handshaker.prepareResponder(nodeKey);
   }
 
