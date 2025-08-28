@@ -24,15 +24,5 @@ public interface Gossiper {
    *
    * @param message the message
    */
-  void send(final Message message);
-
-  /**
-   * Send with replay flag.
-   *
-   * @param message the message
-   * @param isReplay true if this message is being replayed from a future message buffer
-   */
-  default void send(final Message message, final boolean isReplay) {
-    send(message);
-  }
+  void send(Message message);
 }
