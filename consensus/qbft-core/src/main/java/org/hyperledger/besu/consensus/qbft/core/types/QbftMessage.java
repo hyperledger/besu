@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-/** The QBFT message interface. */
+/** Represents a QBFT message */
 public interface QbftMessage {
 
   /**

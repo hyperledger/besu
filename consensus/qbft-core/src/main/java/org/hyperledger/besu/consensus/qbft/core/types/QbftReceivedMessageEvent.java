@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 
-/** The QBFT received message event interface. */
+/** Event indicating a QBFT message has been received */
 public interface QbftReceivedMessageEvent extends BftEvent {
 
   /**

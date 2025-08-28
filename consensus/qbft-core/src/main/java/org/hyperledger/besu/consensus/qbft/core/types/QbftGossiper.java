@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-/** Gossiper resends a QbftMessage to other QBFT nodes in the network */
+/** Responsible for rebroadcasting QBFT messages to known validators */
 public interface QbftGossiper {
 
   /**
