@@ -60,7 +60,7 @@ public class RlpxAgent implements PeerInfoProvider {
 
   private final LocalNode localNode;
   private final PeerConnectionEvents connectionEvents;
-  private ConnectionInitializer connectionInitializer;
+  private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final List<ShouldConnectCallback> connectRequestSubscribers = new ArrayList<>();
   private final PeerRlpxPermissions peerPermissions;
@@ -369,10 +369,6 @@ public class RlpxAgent implements PeerInfoProvider {
     return maxPeers;
   }
 
-  void setConnectionInitializer(ConnectionInitializer connectionInitializer) {
-    this.connectionInitializer = connectionInitializer;
-  }
-
   public static class Builder {
     private NodeKey nodeKey;
     private LocalNode localNode;
@@ -392,18 +388,6 @@ public class RlpxAgent implements PeerInfoProvider {
     public RlpxAgent build() {
       validate();
 
-      final PeerRlpxPermissions rlpxPermissions =
-          new PeerRlpxPermissions(localNode, peerPermissions);
-      final RlpxAgent rlpxAgent = new RlpxAgent(
-          localNode,
-          connectionEvents,
-          null,   // will be set after connectionInitializer is created below
-          rlpxPermissions,
-          peerPrivileges,
-          maxPeers,
-          allConnectionsSupplier,
-          allActiveConnectionsSupplier);
-
       if (connectionEvents == null) {
         connectionEvents = new PeerConnectionEvents(metricsSystem);
       }
@@ -411,11 +395,20 @@ public class RlpxAgent implements PeerInfoProvider {
         LOG.debug("Using default NettyConnectionInitializer");
         connectionInitializer =
             new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable, rlpxAgent);
+                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
       }
-      rlpxAgent.setConnectionInitializer(connectionInitializer);
 
-      return rlpxAgent;
+      final PeerRlpxPermissions rlpxPermissions =
+          new PeerRlpxPermissions(localNode, peerPermissions);
+      return new RlpxAgent(
+          localNode,
+          connectionEvents,
+          connectionInitializer,
+          rlpxPermissions,
+          peerPrivileges,
+          maxPeers,
+          allConnectionsSupplier,
+          allActiveConnectionsSupplier);
     }
 
     private void validate() {
