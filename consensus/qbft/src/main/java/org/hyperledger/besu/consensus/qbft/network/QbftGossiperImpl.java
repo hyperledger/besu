@@ -55,16 +55,12 @@ public class QbftGossiperImpl implements QbftGossiper {
    * Retransmit a given QBFT message to other known validators nodes
    *
    * @param message The raw message to be gossiped
+   * @param isReplay Whether this message is being replayed from the future message buffer
    */
-  @Override
-  public void send(final QbftMessage message) {
-    send(AdaptorUtil.toBesuMessage(message));
-  }
-
   @Override
   public void send(final QbftMessage message, final boolean isReplay) {
     // The isReplay flag is ignored in Besu as the behavior is the same for DevP2P
-    send(message);
+    send(AdaptorUtil.toBesuMessage(message));
   }
 
   private void send(final Message message) {
