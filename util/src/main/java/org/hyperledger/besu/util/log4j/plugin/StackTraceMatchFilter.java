@@ -94,7 +94,9 @@ public class StackTraceMatchFilter extends AbstractFilter {
   /** Builder for StackTraceMatchFilter */
   public static class Builder extends AbstractFilterBuilder<StackTraceMatchFilter.Builder>
       implements org.apache.logging.log4j.core.util.Builder<StackTraceMatchFilter> {
-    @PluginBuilderAttribute private String text = "";
+    @SuppressWarnings("log4j.public.setter")
+    @PluginBuilderAttribute
+    private String text = "";
 
     /** Default constructor */
     public Builder() {
