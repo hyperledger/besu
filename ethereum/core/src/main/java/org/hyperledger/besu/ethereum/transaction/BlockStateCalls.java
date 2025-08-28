@@ -105,7 +105,7 @@ public class BlockStateCalls {
       final long targetBlockNumber, final long startBlockNumber, final long startTimestamp) {
     List<BlockStateCall> intermediateBlocks = new ArrayList<>();
     long blockNumberDiff = targetBlockNumber - startBlockNumber;
-    for (int i = 1; i < blockNumberDiff; i++) {
+    for (long i = 1; i < blockNumberDiff; i++) {
       long nextBlockNumber = startBlockNumber + i;
       long nextTimestamp = startTimestamp + TIMESTAMP_INCREMENT * i;
       var nextBlockOverrides =
