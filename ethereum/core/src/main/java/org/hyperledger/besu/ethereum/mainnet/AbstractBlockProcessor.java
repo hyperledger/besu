@@ -259,6 +259,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 "block did not consume expected blob gas: header %d, transactions %d",
                 headerBlobGasUsed, currentBlobGasUsed);
         LOG.error(errorMessage);
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
     }
@@ -271,6 +274,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
       } catch (final Exception e) {
         LOG.error("failed processing withdrawals", e);
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
         return new BlockProcessingResult(Optional.empty(), e);
       }
     }
@@ -287,6 +293,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     } catch (final Exception e) {
       LOG.error("failed processing requests", e);
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+      }
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
@@ -296,12 +305,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Hash headerRequestsHash = optionalRequestsHash.get();
       Hash calculatedRequestHash = BodyValidation.requestsHash(requests);
       if (!calculatedRequestHash.equals(headerRequestsHash)) {
-        return new BlockProcessingResult(
-            Optional.empty(),
-            "Requests hash mismatch, calculated: "
-                + calculatedRequestHash.toHexString()
-                + " header: "
-                + headerRequestsHash.toHexString());
+        String errorMessage =
+            String.format(
+                "Requests hash mismatch, calculated: %s header: %s",
+                calculatedRequestHash.toHexString(), headerRequestsHash.toHexString());
+        LOG.error(errorMessage);
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
     }
 

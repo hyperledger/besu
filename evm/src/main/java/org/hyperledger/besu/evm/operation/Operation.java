@@ -17,6 +17,9 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
+
+import java.util.Optional;
 
 /** The interface Operation. */
 public interface Operation {
@@ -31,6 +34,9 @@ public interface Operation {
 
     /** The increment. */
     final int pcIncrement;
+
+    /** Soft Failure Reason. Mainly used to provide visibility to tracers. */
+    final SoftFailureReason softFailureReason;
 
     /**
      * Instantiates a new Operation result.
@@ -54,6 +60,22 @@ public interface Operation {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
       this.pcIncrement = pcIncrement;
+      this.softFailureReason = null;
+    }
+
+    /**
+     * Instantiate a new Operation Result with a Soft Failure Reason.
+     *
+     * @param gasCost Gas Cost
+     * @param pcIncrement The increment
+     * @param softFailureReason The Soft Failure Reason
+     */
+    public OperationResult(
+        final long gasCost, final int pcIncrement, final SoftFailureReason softFailureReason) {
+      this.gasCost = gasCost;
+      this.haltReason = null;
+      this.pcIncrement = pcIncrement;
+      this.softFailureReason = softFailureReason;
     }
 
     /**
@@ -81,6 +103,15 @@ public interface Operation {
      */
     public int getPcIncrement() {
       return pcIncrement;
+    }
+
+    /**
+     * Returns optional Soft Failure Reason.
+     *
+     * @return Optional Soft Failure Reason
+     */
+    public Optional<SoftFailureReason> getSoftFailureReason() {
+      return Optional.ofNullable(this.softFailureReason);
     }
   }
 
