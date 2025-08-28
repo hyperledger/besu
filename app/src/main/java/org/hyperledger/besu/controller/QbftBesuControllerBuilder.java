@@ -241,7 +241,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
-    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
+    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster, blockEncoder);
 
     final QbftFinalState finalState =
         new QbftFinalStateImpl(
