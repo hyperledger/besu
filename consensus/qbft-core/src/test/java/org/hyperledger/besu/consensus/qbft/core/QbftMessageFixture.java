@@ -12,17 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.types;
+package org.hyperledger.besu.consensus.qbft.core;
 
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-/** The QBFT message interface. */
-public interface QbftMessage {
+public class QbftMessageFixture implements QbftMessage {
 
-  /**
-   * Gets message data.
-   *
-   * @return the message data
-   */
-  MessageData getData();
+  private final MessageData messageData;
+
+  public QbftMessageFixture(final MessageData messageData) {
+    this.messageData = messageData;
+  }
+
+  @Override
+  public MessageData getData() {
+    return messageData;
+  }
 }

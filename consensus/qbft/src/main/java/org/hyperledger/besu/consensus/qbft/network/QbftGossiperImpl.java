@@ -34,7 +34,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 /** Class responsible for rebroadcasting QBFT messages to known validators */
-public class QbftGossip implements QbftGossiper {
+public class QbftGossiperImpl implements QbftGossiper {
 
   private final ValidatorMulticaster multicaster;
   private final QbftBlockCodec blockEncoder;
@@ -45,7 +45,8 @@ public class QbftGossip implements QbftGossiper {
    * @param multicaster Network connections to the remote validators
    * @param blockEncoder the block encoder
    */
-  public QbftGossip(final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
+  public QbftGossiperImpl(
+      final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
     this.multicaster = multicaster;
     this.blockEncoder = blockEncoder;
   }

@@ -54,7 +54,7 @@ class QbftReceivedMessageEventAdaptorTest {
     QbftMessage qbftMessage = adaptor.getMessage();
 
     assertThat(qbftMessage).isInstanceOf(QbftMessageAdaptor.class);
-    assertThat(qbftMessage.getMessageData()).isEqualTo(testMessageData);
+    assertThat(qbftMessage.getData()).isEqualTo(testMessageData);
     assertThat(((QbftMessageAdaptor) qbftMessage).getBesuMessage()).isEqualTo(mockMessage);
   }
 

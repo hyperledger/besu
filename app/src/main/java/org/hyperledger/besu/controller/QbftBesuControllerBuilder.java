@@ -74,7 +74,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
-import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossiperImpl;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
@@ -241,7 +241,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
-    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster, blockEncoder);
+    final QbftGossiperImpl gossiper = new QbftGossiperImpl(uniqueMessageMulticaster, blockEncoder);
 
     final QbftFinalState finalState =
         new QbftFinalStateImpl(

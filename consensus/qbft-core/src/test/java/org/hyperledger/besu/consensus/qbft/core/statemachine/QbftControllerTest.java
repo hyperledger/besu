@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -28,10 +28,11 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
-import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.qbft.core.QbftMessageFixture;
+import org.hyperledger.besu.consensus.qbft.core.QbftReceivedMessageEventFixture;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
@@ -51,8 +52,9 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftReceivedMessageEvent;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+
+import java.util.Collections;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,19 +76,19 @@ public class QbftControllerTest {
   @Mock private BaseQbftBlockHeightManager blockHeightManager;
 
   @Mock private Proposal proposal;
-  private Message proposalMessage;
+  private QbftMessage proposalMessage;
   @Mock private ProposalMessageData proposalMessageData;
 
   @Mock private Prepare prepare;
-  private Message prepareMessage;
+  private QbftMessage prepareMessage;
   @Mock private PrepareMessageData prepareMessageData;
 
   @Mock private Commit commit;
-  private Message commitMessage;
+  private QbftMessage commitMessage;
   @Mock private CommitMessageData commitMessageData;
 
   @Mock private RoundChange roundChange;
-  private Message roundChangeMessage;
+  private QbftMessage roundChangeMessage;
   @Mock private RoundChangeMessageData roundChangeMessageData;
 
   @Mock private MessageTracker messageTracker;
@@ -95,7 +97,7 @@ public class QbftControllerTest {
   private final ConsensusRoundIdentifier futureRoundIdentifier = new ConsensusRoundIdentifier(5, 0);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(4, 0);
   private final ConsensusRoundIdentifier pastRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
-  @Mock private QbftGossiper gossiper;
+  @Mock private QbftGossiper qbftGossiper;
   @Mock private FutureMessageBuffer<QbftMessage> futureMessageBuffer;
   @Mock private QbftBlockCodec blockEncoder;
   private QbftController qbftController;
@@ -125,7 +127,7 @@ public class QbftControllerTest {
             blockChain,
             qbftFinalState,
             blockHeightManagerFactory,
-            gossiper,
+            qbftGossiper,
             messageTracker,
             futureMessageBuffer,
             blockEncoder);
@@ -143,17 +145,44 @@ public class QbftControllerTest {
 
   @Test
   public void startsNewBlockHeightManagerAndReplaysFutureMessages() {
+    final ConsensusRoundIdentifier roundIdentifierHeight6 = new ConsensusRoundIdentifier(6, 0);
+    setupPrepare(futureRoundIdentifier, validator);
+    setupProposal(roundIdentifierHeight6, validator);
+    setupCommit(futureRoundIdentifier, validator);
+    setupRoundChange(futureRoundIdentifier, validator);
+
+    final List<QbftMessage> height2Msgs =
+        newArrayList(prepareMessage, commitMessage, roundChangeMessage);
     when(blockHeightManager.getChainHeight()).thenReturn(5L);
+    when(futureMessageBuffer.retrieveMessagesForHeight(5L)).thenReturn(height2Msgs);
+
     constructQbftController();
     qbftController.start();
 
-    verify(futureMessageBuffer).retrieveAndReplayMessagesForHeight(eq(5L), any());
+    verify(futureMessageBuffer).retrieveMessagesForHeight(5L);
+    verify(futureMessageBuffer, never()).retrieveMessagesForHeight(6L);
     verify(blockHeightManagerFactory).create(chainHeadBlockHeader);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
+    verify(blockHeightManager, never()).handleProposalPayload(proposal);
+    verify(blockHeightManager).handlePreparePayload(prepare);
+    verify(qbftGossiper).send(prepareMessage);
+    verify(blockHeightManager).handleCommitPayload(commit);
+    verify(qbftGossiper).send(commitMessage);
+    verify(blockHeightManager).handleRoundChangePayload(roundChange);
+    verify(qbftGossiper).send(roundChangeMessage);
   }
 
   @Test
   public void createsNewBlockHeightManagerAndReplaysFutureMessagesOnNewChainHeadEvent() {
+    setupPrepare(futureRoundIdentifier, validator);
+    setupProposal(futureRoundIdentifier, validator);
+    setupCommit(futureRoundIdentifier, validator);
+    setupRoundChange(futureRoundIdentifier, validator);
+
+    when(futureMessageBuffer.retrieveMessagesForHeight(5L))
+        .thenReturn(
+            ImmutableList.of(prepareMessage, proposalMessage, commitMessage, roundChangeMessage))
+        .thenReturn(Collections.emptyList());
     when(blockHeightManager.getChainHeight()).thenReturn(5L);
 
     constructQbftController();
@@ -163,7 +192,15 @@ public class QbftControllerTest {
 
     verify(blockHeightManagerFactory).create(nextBlock);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(futureMessageBuffer, times(2)).retrieveAndReplayMessagesForHeight(eq(5L), any());
+    verify(futureMessageBuffer, times(2)).retrieveMessagesForHeight(5L);
+    verify(blockHeightManager).handleProposalPayload(proposal);
+    verify(qbftGossiper).send(proposalMessage);
+    verify(blockHeightManager).handlePreparePayload(prepare);
+    verify(qbftGossiper).send(prepareMessage);
+    verify(blockHeightManager).handleCommitPayload(commit);
+    verify(qbftGossiper).send(commitMessage);
+    verify(blockHeightManager).handleRoundChangePayload(roundChange);
+    verify(qbftGossiper).send(roundChangeMessage);
   }
 
   @Test
@@ -209,11 +246,11 @@ public class QbftControllerTest {
     setupProposal(roundIdentifier, validator);
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(proposalMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(proposalMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleProposalPayload(proposal);
-    verify(gossiper).send(any(QbftMessage.class), eq(false));
+    verify(qbftGossiper).send(proposalMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -223,11 +260,11 @@ public class QbftControllerTest {
     setupPrepare(roundIdentifier, validator);
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(prepareMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(prepareMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handlePreparePayload(prepare);
-    verify(gossiper).send(any(QbftMessage.class), eq(false));
+    verify(qbftGossiper).send(prepareMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -237,11 +274,11 @@ public class QbftControllerTest {
     setupCommit(roundIdentifier, validator);
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(commitMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(commitMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleCommitPayload(commit);
-    verify(gossiper).send(any(QbftMessage.class), eq(false));
+    verify(qbftGossiper).send(commitMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -251,11 +288,11 @@ public class QbftControllerTest {
     setupRoundChange(roundIdentifier, validator);
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(roundChangeMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(roundChangeMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
-    verify(gossiper).send(any(QbftMessage.class), eq(false));
+    verify(qbftGossiper).send(roundChangeMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
   }
@@ -263,25 +300,25 @@ public class QbftControllerTest {
   @Test
   public void proposalForPastHeightIsDiscarded() {
     setupProposal(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(proposalMessage));
   }
 
   @Test
   public void prepareForPastHeightIsDiscarded() {
     setupPrepare(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(prepareMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(prepareMessage));
   }
 
   @Test
   public void commitForPastHeightIsDiscarded() {
     setupCommit(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(commitMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(commitMessage));
   }
 
   @Test
   public void roundChangeForPastHeightIsDiscarded() {
     setupRoundChange(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(roundChangeMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(roundChangeMessage));
   }
 
   @Test
@@ -307,25 +344,25 @@ public class QbftControllerTest {
   @Test
   public void proposalForUnknownValidatorIsDiscarded() {
     setupProposal(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(proposalMessage));
   }
 
   @Test
   public void prepareForUnknownValidatorIsDiscarded() {
     setupPrepare(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(prepareMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(prepareMessage));
   }
 
   @Test
   public void commitForUnknownValidatorIsDiscarded() {
     setupCommit(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(commitMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(commitMessage));
   }
 
   @Test
   public void roundChangeForUnknownValidatorIsDiscarded() {
     setupRoundChange(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(roundChangeMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(roundChangeMessage));
   }
 
   @Test
@@ -356,7 +393,7 @@ public class QbftControllerTest {
   public void duplicatedMessagesAreNotProcessed() {
     when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(true);
     setupProposal(roundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(createQbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(proposalMessage));
     verify(messageTracker, never()).addSeenMessage(proposalMessageData);
   }
 
@@ -366,7 +403,7 @@ public class QbftControllerTest {
     setupProposal(roundIdentifier, validator);
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(proposalMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(proposalMessage));
 
     verify(messageTracker).addSeenMessage(proposalMessageData);
   }
@@ -387,7 +424,7 @@ public class QbftControllerTest {
 
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(proposalMessage));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(proposalMessage));
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).handleProposalPayload(any());
   }
@@ -402,30 +439,14 @@ public class QbftControllerTest {
     verifyNoMoreInteractions(blockHeightManager);
   }
 
-  private void verifyHasFutureMessages(final long msgHeight, final Message message) {
+  private void verifyHasFutureMessages(final long msgHeight, final QbftMessage message) {
     constructQbftController();
     qbftController.start();
-    qbftController.handleMessageEvent(createQbftReceivedMessageEvent(message));
+    qbftController.handleMessageEvent(new QbftReceivedMessageEventFixture(message));
 
-    verify(futureMessageBuffer).addMessage(eq(msgHeight), any(QbftMessage.class));
+    verify(futureMessageBuffer).addMessage(msgHeight, message);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verifyNoMoreInteractions(blockHeightManager);
-  }
-
-  private QbftReceivedMessageEvent createQbftReceivedMessageEvent(final Message message) {
-    final QbftMessage qbftMessage = message::getData;
-
-    return new QbftReceivedMessageEvent() {
-      @Override
-      public QbftMessage getMessage() {
-        return qbftMessage;
-      }
-
-      @Override
-      public BftEvents.Type getType() {
-        return BftEvents.Type.MESSAGE;
-      }
-    };
   }
 
   private void setupProposal(
@@ -434,7 +455,7 @@ public class QbftControllerTest {
     when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(proposalMessageData.getCode()).thenReturn(QbftV1.PROPOSAL);
     when(proposalMessageData.decode(blockEncoder)).thenReturn(proposal);
-    proposalMessage = new DefaultMessage(null, proposalMessageData);
+    proposalMessage = new QbftMessageFixture(proposalMessageData);
   }
 
   private void setupPrepare(
@@ -443,7 +464,7 @@ public class QbftControllerTest {
     when(prepare.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(prepareMessageData.getCode()).thenReturn(QbftV1.PREPARE);
     when(prepareMessageData.decode()).thenReturn(prepare);
-    prepareMessage = new DefaultMessage(null, prepareMessageData);
+    prepareMessage = new QbftMessageFixture(prepareMessageData);
   }
 
   private void setupCommit(
@@ -452,7 +473,7 @@ public class QbftControllerTest {
     when(commit.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(commitMessageData.getCode()).thenReturn(QbftV1.COMMIT);
     when(commitMessageData.decode()).thenReturn(commit);
-    commitMessage = new DefaultMessage(null, commitMessageData);
+    commitMessage = new QbftMessageFixture(commitMessageData);
   }
 
   private void setupRoundChange(
@@ -461,7 +482,7 @@ public class QbftControllerTest {
     when(roundChange.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(roundChangeMessageData.getCode()).thenReturn(QbftV1.ROUND_CHANGE);
     when(roundChangeMessageData.decode(blockEncoder)).thenReturn(roundChange);
-    roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
+    roundChangeMessage = new QbftMessageFixture(roundChangeMessageData);
   }
 
   @Test

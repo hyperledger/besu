@@ -86,7 +86,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
-import org.hyperledger.besu.consensus.qbft.network.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossiperImpl;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
@@ -298,7 +298,9 @@ public class TestContextBuilder {
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
     final QbftGossiper gossiper =
-        useGossip ? new QbftGossip(uniqueMulticaster, blockEncoder) : mock(QbftGossiper.class);
+        useGossip
+            ? new QbftGossiperImpl(uniqueMulticaster, blockEncoder)
+            : mock(QbftGossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 

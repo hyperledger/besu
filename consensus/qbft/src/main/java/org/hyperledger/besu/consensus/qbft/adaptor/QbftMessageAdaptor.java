@@ -35,7 +35,7 @@ public class QbftMessageAdaptor implements QbftMessage {
   }
 
   @Override
-  public MessageData getMessageData() {
+  public MessageData getData() {
     return messageData;
   }
 
