@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-/** The QBFT gossiper interface for handling QBFT-specific message gossiping. */
+/** Gossiper resends a QbftMessage to other QBFT nodes in the network */
 public interface QbftGossiper {
 
   /**
-   * Send a QBFT message to other validators with replay flag.
+   * Send a QBFT message to other QBFT validators
    *
    * @param message the QBFT message to send
    * @param isReplay true if this message is being replayed from the future message buffer
