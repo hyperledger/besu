@@ -19,10 +19,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -37,8 +36,6 @@ class QbftReceivedMessageEventAdaptorTest {
 
   @Mock private BftReceivedMessageEvent mockBftReceivedMessageEvent;
   @Mock private Message mockMessage;
-  @Mock private PeerConnection mockPeerConnection;
-  @Mock private PeerInfo mockPeerInfo;
 
   private final MessageData testMessageData = new RawMessage(1, Bytes.of(1, 2, 3, 4));
 
@@ -46,18 +43,19 @@ class QbftReceivedMessageEventAdaptorTest {
 
   @BeforeEach
   void setUp() {
-    // Setup the mock chain: BftReceivedMessageEvent -> Message -> Connection -> PeerInfo
     when(mockBftReceivedMessageEvent.getMessage()).thenReturn(mockMessage);
     when(mockMessage.getData()).thenReturn(testMessageData);
-    when(mockMessage.getConnection()).thenReturn(mockPeerConnection);
-    when(mockPeerConnection.getPeerInfo()).thenReturn(mockPeerInfo);
 
     adaptor = new QbftReceivedMessageEventAdaptor(mockBftReceivedMessageEvent);
   }
 
   @Test
-  void shouldExtractMessageDataFromBftReceivedMessageEvent() {
-    assertThat(adaptor.getMessage()).isEqualTo(testMessageData);
+  void shouldExtractMessageFromBftReceivedMessageEvent() {
+    QbftMessage qbftMessage = adaptor.getMessage();
+
+    assertThat(qbftMessage).isInstanceOf(QbftMessageAdaptor.class);
+    assertThat(qbftMessage.getMessageData()).isEqualTo(testMessageData);
+    assertThat(((QbftMessageAdaptor) qbftMessage).getBesuMessage()).isEqualTo(mockMessage);
   }
 
   @Test

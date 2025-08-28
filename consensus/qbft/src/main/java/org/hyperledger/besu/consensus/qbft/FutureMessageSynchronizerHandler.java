@@ -16,13 +16,15 @@ package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer.FutureMessageHandler;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
 /**
  * A Future message handler that updates the peers estimated height to be that of the parent block
  * number of the received message.
  */
-public class FutureMessageSynchronizerHandler implements FutureMessageHandler<Message> {
+public class FutureMessageSynchronizerHandler implements FutureMessageHandler<QbftMessage> {
   private final SynchronizerUpdater synchronizerUpdater;
 
   /**
@@ -35,7 +37,8 @@ public class FutureMessageSynchronizerHandler implements FutureMessageHandler<Me
   }
 
   @Override
-  public void handleFutureMessage(final long msgChainHeight, final Message message) {
+  public void handleFutureMessage(final long msgChainHeight, final QbftMessage qbftMessage) {
+    final Message message = AdaptorUtil.toBesuMessage(qbftMessage);
     synchronizerUpdater.updatePeerChainState(msgChainHeight - 1, message.getConnection());
   }
 }

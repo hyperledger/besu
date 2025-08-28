@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 /** Adaptor class to convert {@link Message} to {@link QbftMessage}. */
 public class QbftMessageAdaptor implements QbftMessage {
 
+  private final Message message;
   private final MessageData messageData;
 
   /**
@@ -29,11 +30,21 @@ public class QbftMessageAdaptor implements QbftMessage {
    * @param message The {@link Message} to adapt.
    */
   public QbftMessageAdaptor(final Message message) {
+    this.message = message;
     this.messageData = message.getData();
   }
 
   @Override
   public MessageData getMessageData() {
     return messageData;
+  }
+
+  /**
+   * Gets besu message.
+   *
+   * @return the besu message
+   */
+  public Message getBesuMessage() {
+    return message;
   }
 }

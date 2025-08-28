@@ -31,6 +31,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
+import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -44,12 +45,12 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
-import org.hyperledger.besu.consensus.qbft.QbftFutureMessageHandler;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
@@ -264,18 +265,20 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
-        qbftBlock -> ethProtocolManager.blockMined(BlockUtil.toBesuBlock(qbftBlock)));
+        qbftBlock -> ethProtocolManager.blockMined(AdaptorUtil.toBesuBlock(qbftBlock)));
     minedBlockObservers.subscribe(
         qbftBlock ->
             blockLogger(transactionPool, localAddress)
-                .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
+                .blockMined(AdaptorUtil.toBesuBlock(qbftBlock)));
 
+    final EthSynchronizerUpdater synchronizerUpdater =
+        new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
     final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
         new FutureMessageBuffer<>(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber(),
-            new QbftFutureMessageHandler());
+            new FutureMessageSynchronizerHandler(synchronizerUpdater));
     final MessageTracker duplicateMessageTracker =
         new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 
