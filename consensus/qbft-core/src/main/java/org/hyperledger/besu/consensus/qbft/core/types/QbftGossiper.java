@@ -18,19 +18,10 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 public interface QbftGossiper {
 
   /**
-   * Send a QBFT message to other validators.
-   *
-   * @param message the QBFT message to send
-   */
-  void send(final QbftMessage message);
-
-  /**
    * Send a QBFT message to other validators with replay flag.
    *
    * @param message the QBFT message to send
-   * @param isReplay true if this message is being replayed from a future message buffer
+   * @param isReplay true if this message is being replayed from the future message buffer
    */
-  default void send(final QbftMessage message, final boolean isReplay) {
-    send(message);
-  }
+  void send(final QbftMessage message, final boolean isReplay);
 }

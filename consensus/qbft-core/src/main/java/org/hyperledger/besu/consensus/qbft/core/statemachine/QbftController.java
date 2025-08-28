@@ -86,7 +86,7 @@ public class QbftController implements QbftEventHandler {
     this.blockEncoder = blockEncoder;
   }
 
-  private void handleMessage(final QbftMessage message) {
+  private void handleMessage(final QbftMessage message, final boolean isReplayed) {
     final MessageData messageData = message.getData();
 
     switch (messageData.getCode()) {
@@ -94,28 +94,32 @@ public class QbftController implements QbftEventHandler {
         consumeMessage(
             message,
             ProposalMessageData.fromMessageData(messageData).decode(blockEncoder),
-            currentHeightManager::handleProposalPayload);
+            currentHeightManager::handleProposalPayload,
+            isReplayed);
         break;
 
       case QbftV1.PREPARE:
         consumeMessage(
             message,
             PrepareMessageData.fromMessageData(messageData).decode(),
-            currentHeightManager::handlePreparePayload);
+            currentHeightManager::handlePreparePayload,
+            isReplayed);
         break;
 
       case QbftV1.COMMIT:
         consumeMessage(
             message,
             CommitMessageData.fromMessageData(messageData).decode(),
-            currentHeightManager::handleCommitPayload);
+            currentHeightManager::handleCommitPayload,
+            isReplayed);
         break;
 
       case QbftV1.ROUND_CHANGE:
         consumeMessage(
             message,
             RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder),
-            currentHeightManager::handleRoundChangePayload);
+            currentHeightManager::handleRoundChangePayload,
+            isReplayed);
         break;
 
       default:
@@ -165,7 +169,7 @@ public class QbftController implements QbftEventHandler {
     final MessageData data = msg.getMessage().getData();
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
       duplicateMessageTracker.addSeenMessage(data);
-      handleMessage(msg.getMessage());
+      handleMessage(msg.getMessage(), false);
     } else {
       LOG.trace("Discarded duplicate message");
     }
@@ -178,9 +182,13 @@ public class QbftController implements QbftEventHandler {
    * @param message the message
    * @param bftMessage the bft message
    * @param handleMessage the handle message
+   * @param isReplayed the message is being replayed
    */
   protected <P extends BftMessage<?>> void consumeMessage(
-      final QbftMessage message, final P bftMessage, final Consumer<P> handleMessage) {
+      final QbftMessage message,
+      final P bftMessage,
+      final Consumer<P> handleMessage,
+      final boolean isReplayed) {
     LOG.trace("Received BFT {} message", bftMessage.getClass().getSimpleName());
 
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
@@ -195,7 +203,7 @@ public class QbftController implements QbftEventHandler {
     }
 
     if (processMessage(bftMessage, message)) {
-      gossiper.send(message);
+      gossiper.send(message, isReplayed);
       handleMessage.accept(bftMessage);
     }
   }
@@ -268,7 +276,9 @@ public class QbftController implements QbftEventHandler {
   private void startNewHeightManager(final QbftBlockHeader parentHeader) {
     createNewHeightManager(parentHeader);
     final long newChainHeight = getCurrentHeightManager().getChainHeight();
-    futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);
+    futureMessageBuffer
+        .retrieveMessagesForHeight(newChainHeight)
+        .forEach(msg -> handleMessage(msg, true));
   }
 
   private boolean processMessage(final BftMessage<?> msg, final QbftMessage rawMsg) {
