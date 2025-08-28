@@ -32,8 +32,8 @@ jar {
 compileJava {
   options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
   options.compilerArgs += [
-          '-Alog4j.graalvm.groupId=' + project.group,
-          '-Alog4j.graalvm.artifactId=' + project.name
+    '-Alog4j.graalvm.groupId=' + project.group,
+    '-Alog4j.graalvm.artifactId=' + project.name
   ]
 }
 
