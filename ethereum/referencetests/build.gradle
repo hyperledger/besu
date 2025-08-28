@@ -80,7 +80,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
 }
 
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
-  final referenceTestsPath = "src/reference-test/external-resources/GeneralStateTests"
+  final referenceTestsPath = "src/reference-test/external-resources/LegacyTests/Cancun/GeneralStateTests"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
   inputs.files fileTree(referenceTestsPath),
     fileTree(generatedTestsPath)
@@ -88,7 +88,7 @@ def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
   generateTestFiles(
     fileTree(referenceTestsPath),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "GeneralStateTests",
+    "LegacyTests/Cancun/GeneralStateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest",
     "org.hyperledger.besu.ethereum.vm.generalstate",
