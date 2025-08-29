@@ -22,13 +22,17 @@ import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionCapacityChecker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.IPBasedPeerResolver;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.RlpxConnectionCapacityChecker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
@@ -62,7 +66,7 @@ public class RlpxAgent {
 
   private final LocalNode localNode;
   private final PeerConnectionEvents connectionEvents;
-  private final ConnectionInitializer connectionInitializer;
+  private ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final List<ShouldConnectCallback> connectRequestSubscribers = new ArrayList<>();
   private final PeerRlpxPermissions peerPermissions;
@@ -82,7 +86,6 @@ public class RlpxAgent {
   private RlpxAgent(
       final LocalNode localNode,
       final PeerConnectionEvents connectionEvents,
-      final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
       final PeerPrivileges peerPrivileges,
       final int maxPeers,
@@ -90,12 +93,19 @@ public class RlpxAgent {
       final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
-    this.connectionInitializer = connectionInitializer;
+    this.connectionInitializer = null; // Will be set in phase 2
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
     this.maxPeers = maxPeers;
     this.allConnectionsSupplier = allConnectionsSupplier;
     this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+  }
+
+  void setConnectionInitializer(final ConnectionInitializer connectionInitializer) {
+    if (this.connectionInitializer != null) {
+      throw new IllegalStateException("Connection initializer already set");
+    }
+    this.connectionInitializer = connectionInitializer;
   }
 
   public static Builder builder() {
@@ -373,6 +383,7 @@ public class RlpxAgent {
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int maxPeers;
     private PeerTable peerTable;
+    private MaintainedPeers maintainedPeers;
 
     private Builder() {}
 
@@ -382,24 +393,48 @@ public class RlpxAgent {
       if (connectionEvents == null) {
         connectionEvents = new PeerConnectionEvents(metricsSystem);
       }
-      if (connectionInitializer == null) {
-        LOG.debug("Using default NettyConnectionInitializer");
-        connectionInitializer =
-            new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
-      }
 
       final PeerRlpxPermissions rlpxPermissions =
           new PeerRlpxPermissions(localNode, peerPermissions);
-      return new RlpxAgent(
-          localNode,
-          connectionEvents,
-          connectionInitializer,
-          rlpxPermissions,
-          peerPrivileges,
-          maxPeers,
-          allConnectionsSupplier,
-          allActiveConnectionsSupplier);
+      final RlpxAgent rlpxAgent =
+          new RlpxAgent(
+              localNode,
+              connectionEvents,
+              rlpxPermissions,
+              peerPrivileges,
+              maxPeers,
+              allConnectionsSupplier,
+              allActiveConnectionsSupplier);
+
+      if (connectionInitializer == null) {
+        LOG.debug("Using default NettyConnectionInitializer with capacity checking");
+
+        final ConnectionCapacityChecker capacityChecker =
+            new RlpxConnectionCapacityChecker(rlpxAgent, peerPrivileges);
+
+        final IPBasedPeerResolver ipResolver;
+        if (maintainedPeers != null) {
+          ipResolver = new IPBasedPeerResolver(peerTable, maintainedPeers);
+        } else {
+          LOG.warn("MaintainedPeers not configured - IP-based privilege checking will be limited");
+          ipResolver = new IPBasedPeerResolver(peerTable, null);
+        }
+
+        connectionInitializer =
+            new NettyConnectionInitializer(
+                nodeKey,
+                config,
+                localNode,
+                connectionEvents,
+                metricsSystem,
+                peerTable,
+                capacityChecker,
+                ipResolver);
+
+        rlpxAgent.setConnectionInitializer(connectionInitializer);
+      }
+
+      return rlpxAgent;
     }
 
     private void validate() {
@@ -478,6 +513,11 @@ public class RlpxAgent {
 
     public Builder peerTable(final PeerTable peerTable) {
       this.peerTable = peerTable;
+      return this;
+    }
+
+    public Builder maintainedPeers(final MaintainedPeers maintainedPeers) {
+      this.maintainedPeers = maintainedPeers;
       return this;
     }
   }

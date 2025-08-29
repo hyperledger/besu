@@ -15,23 +15,32 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionCapacityChecker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.IPBasedPeerResolver;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 
 final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
+
+  private final ConnectionCapacityChecker capacityChecker;
+  private final IPBasedPeerResolver ipBasedPeerResolver;
 
   public HandshakeHandlerInbound(
       final NodeKey nodeKey,
@@ -42,7 +51,9 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
-      final PeerTable peerTable) {
+      final PeerTable peerTable,
+      final ConnectionCapacityChecker capacityChecker,
+      final IPBasedPeerResolver ipBasedPeerResolver) {
     super(
         subProtocols,
         localNode,
@@ -54,7 +65,49 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
         framerProvider,
         true,
         peerTable);
+    this.capacityChecker = capacityChecker;
+    this.ipBasedPeerResolver = ipBasedPeerResolver;
     handshaker.prepareResponder(nodeKey);
+  }
+
+  @Override
+  public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+    if (performEarlyCapacityCheck(ctx)) {
+      return;
+    }
+
+    super.channelActive(ctx);
+  }
+
+  private boolean performEarlyCapacityCheck(final ChannelHandlerContext ctx) {
+    final InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+
+    if (remoteAddress == null || remoteAddress.isUnresolved()) {
+      return false;
+    }
+
+    if (!capacityChecker.hasCapacityforNewConnection()) {
+
+      Optional<DiscoveryPeer> knownPeer = ipBasedPeerResolver.findPeerByEndpoint(remoteAddress);
+      boolean allowBypass = false;
+
+      if (knownPeer.isPresent()) {
+        allowBypass = capacityChecker.canExceedLimits(Optional.of(knownPeer.get().getId()));
+        if (allowBypass) {
+          // todo: add logging
+        }
+      } else if (ipBasedPeerResolver.isPrivilegedIP(remoteAddress)) {
+        allowBypass = true;
+      }
+
+      if (!allowBypass) {
+        ctx.close();
+        connectionFuture.completeExceptionally(
+            new RuntimeException("Disconnecting from peer: " + DisconnectReason.TOO_MANY_PEERS));
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
