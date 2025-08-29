@@ -51,14 +51,13 @@ public class DivOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(Bytes.EMPTY);
     } else {
-      frame.pushStackItem(UInt256Arith.divide(true, value0, value1));
+      frame.pushStackItem(UInt256Arith.divide(false, value0, value1));
     }
 
     return divSuccess;
