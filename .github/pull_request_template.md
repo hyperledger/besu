@@ -20,4 +20,6 @@
 - [ ] acceptance tests: `./gradlew acceptanceTest`
 - [ ] integration tests: `./gradlew integrationTest`
 - [ ] reference tests: `./gradlew ethereum:referenceTests:referenceTests`
+- [ ] hive tests: [Engine or other RPCs modified?](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22156302/Using+Hive+Test+Suite)
+
 
