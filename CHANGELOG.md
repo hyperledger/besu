@@ -60,8 +60,11 @@
 
 #### Dependencies
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
-- Update commons and log4j dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+- Update commons dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+  - resolves CVE-2025-48924
+  - resolves CVE-2020-15250
 - Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
+  - resolves CVE-2025-55163
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
