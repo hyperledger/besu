@@ -49,6 +49,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:gnark'
+  implementation 'org.hyperledger.besu:secp256k1'
   implementation 'org.hyperledger.besu:boringssl'
   implementation 'io.consensys.protocols:jc-kzg-4844'
 
