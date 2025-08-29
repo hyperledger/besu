@@ -16,7 +16,12 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
+
+#### Performance
+- Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
+- Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
 
 #### Fusaka devnets
 
@@ -57,8 +62,11 @@
 
 #### Dependencies
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
-- Update commons and log4j dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+- Update commons dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+  - resolves CVE-2025-48924
+  - resolves CVE-2020-15250
 - Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
+  - resolves CVE-2025-55163
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
