@@ -67,7 +67,7 @@ dependencies {
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
+      groupId = 'org.hyperledger.besu'
       pom {
         name = 'Besu EVM'
         description = 'EVM Engine component'

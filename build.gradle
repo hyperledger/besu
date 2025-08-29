@@ -168,15 +168,15 @@ configure(allprojects - project(':platform')) {
 
   repositories {
     maven {
-      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      url = 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content { includeGroupByRegex('org\\.hyperledger\\..*') }
     }
     maven {
-      url 'https://artifacts.consensys.net/public/maven/maven/'
+      url = 'https://artifacts.consensys.net/public/maven/maven/'
       content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
-      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      url = 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
 
@@ -184,7 +184,7 @@ configure(allprojects - project(':platform')) {
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
     def ethExecSpecTestsRepo = ivy {
-      url 'https://github.com'
+      url = 'https://github.com'
       patternLayout {
         artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
       }
@@ -554,9 +554,9 @@ subprojects {
     publishing {
       publications {
         mavenJava(MavenPublication) {
-          groupId "org.hyperledger.besu.internal"
-          artifactId calculateArtifactId(project)
-          version "${project.version}"
+          groupId = "org.hyperledger.besu.internal"
+          artifactId = calculateArtifactId(project)
+          version = "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
             artifact sourcesJar
@@ -769,7 +769,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
 task autocomplete(type: JavaExec) {
   dependsOn compileJava
   def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
-  standardOutput tempAutocompleteFile.newOutputStream()
+  standardOutput = tempAutocompleteFile.newOutputStream()
   outputs.file "$buildDir/besu.autocomplete.sh"
 
   mainClass = application.mainClass
