@@ -123,7 +123,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       final Bytes input, final MessageFrame messageFrame) {
     if (input.size() != 160) {
       LOG.warn(
-          "Invalid input length for P256VERIFY precompile: expected 128 bytes but got {}",
+          "Invalid input length for P256VERIFY precompile: expected 160 bytes but got {}",
           input.size());
       return PrecompileContractResult.success(INVALID);
     }
