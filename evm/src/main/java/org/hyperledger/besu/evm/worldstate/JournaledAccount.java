@@ -52,6 +52,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
   @Nullable private Account account;
 
   private long transactionBoundaryMark;
+  private boolean transactionBoundary = false;
   private final UndoScalar<Long> nonce;
   private final UndoScalar<Wei> balance;
   private final UndoScalar<Bytes> code;
@@ -258,6 +259,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
   /** Mark transaction boundary. */
   void markTransactionBoundary() {
     transactionBoundaryMark = mark();
+    transactionBoundary = true;
   }
 
   @Override
@@ -277,10 +279,13 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    // if storage was cleared then it is because it was an empty account, hence zero storage
-    // if we have no backing account, it's a new account, hence zero storage
-    // otherwise ask outside of what we are journaling, journaled change may not be original value
-    return (storageWasCleared || account == null) ? UInt256.ZERO : account.getStorageValue(key);
+    if (transactionBoundary) {
+      return getStorageValue(key);
+    } else if (storageWasCleared || account == null) {
+      return UInt256.ZERO;
+    } else {
+      return account.getOriginalStorageValue(key);
+    }
   }
 
   @Override
