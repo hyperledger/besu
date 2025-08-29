@@ -18,9 +18,21 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Interface for checking connection capacity and privileged peer status.
+ */
 public interface ConnectionCapacityChecker {
 
-  boolean hasCapacityforNewConnection();
+  /**
+   * Checks if the node has capacity for new connections.
+   * @return true if new connections can be accepted
+   */
+  boolean hasCapacityForNewConnection();
 
-  boolean canExceedLimits(Optional<Bytes> peerId); // todo : add docs
+  /**
+   * Checks if a peer can exceed connection limits (privileged peer).
+   * @param peerId Optional peer ID if known
+   * @return true if peer can exceed limits
+   */
+  boolean canExceedLimits(Optional<Bytes> peerId);
 }
