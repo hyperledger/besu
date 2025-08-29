@@ -27,18 +27,19 @@ public class RlpxConnectionCapacityChecker implements ConnectionCapacityChecker 
   private final PeerPrivileges peerPrivileges;
 
   public RlpxConnectionCapacityChecker(
-      final RlpxAgent rlpxAgent, final PeerPrivileges peerPrivileges) {
+      final RlpxAgent rlpxAgent,
+      final PeerPrivileges peerPrivileges) {
     this.rlpxAgent = rlpxAgent;
     this.peerPrivileges = peerPrivileges;
   }
 
   @Override
-  public boolean hasCapacityforNewConnection() {
+  public boolean hasCapacityForNewConnection() {
     return rlpxAgent.getConnectionCount() < rlpxAgent.getMaxPeers();
   }
 
   @Override
-  public boolean canExceedLimits(Optional<Bytes> peerId) {
+  public boolean canExceedLimits(final Optional<Bytes> peerId) {
     return peerId.map(peerPrivileges::canExceedConnectionLimits).orElse(false);
   }
 }

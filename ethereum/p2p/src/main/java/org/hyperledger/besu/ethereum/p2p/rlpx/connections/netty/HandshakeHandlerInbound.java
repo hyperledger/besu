@@ -86,7 +86,7 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
       return false;
     }
 
-    if (!capacityChecker.hasCapacityforNewConnection()) {
+    if (!capacityChecker.hasCapacityForNewConnection()) {
 
       Optional<DiscoveryPeer> knownPeer = ipBasedPeerResolver.findPeerByEndpoint(remoteAddress);
       boolean allowBypass = false;
