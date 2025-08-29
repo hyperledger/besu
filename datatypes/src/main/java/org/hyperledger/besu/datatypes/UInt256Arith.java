@@ -9,19 +9,24 @@ public class UInt256Arith {
 
   private static final long LONG_MASK = 0xffffffffL;
 
-  public static Bytes divide(final boolean unsigned, final Bytes numerator, final Bytes denominator) {
+  public static Bytes divide(final boolean signed, final Bytes numerator, final Bytes denominator) {
     if (denominator.isZero()) {
       throw new ArithmeticException("divide by zero");
     }
 
     final byte[] numArray = numerator.size() > 32 ? numerator.slice(numerator.size() - 32).toArrayUnsafe() : numerator.toArrayUnsafe();
+    final byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
+
+    if (signed) {
+      makePositive(numArray, numArray.length != 0 && (numArray[0] >> 7 == -1));
+      makePositive(denomArray, (denomArray[0] >> 7 == -1));
+    }
+
     final int numeratorOffset = numerator.numberOfLeadingZeroBytes();
     final int numeratorSize = numerator.size() - numeratorOffset;
-
-    final byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
     final int denominatorOffset = denominator.numberOfLeadingZeroBytes();
-    final int denominatorSize = denominator.size() - denominatorOffset;
 
+    final int denominatorSize = denominator.size() - denominatorOffset;
     final int cmp = compare(
       numArray, numeratorOffset, numeratorSize, denomArray, denominatorOffset, denominatorSize);
 
@@ -34,8 +39,30 @@ public class UInt256Arith {
     }
 
     final int[] intResult = divideKnuth(toIntLimbs(numArray, numeratorOffset), toIntLimbs(denomArray, denominatorOffset));
+    if (signed) {
+      return Bytes.wrap(fromIntLimbs(intResult, (numArray[0] >> 7 == -1) ^ (denomArray[0] >> 7 == -1)));
+    }
+    return Bytes.wrap(fromIntLimbsUnsigned(intResult));
+  }
 
-    return Bytes.wrap(fromIntLimbs(intResult));
+  private static void makePositive(final byte[] value, final boolean isNegative) {
+    if (value.length == 0 || value[0] >= 0 || !isNegative) {
+      return;
+    }
+
+    // invert all values before
+    for (int i = 0; i < value.length; i++) {
+      value[i] = (byte) ~value[i];
+    }
+
+    // add 1 to the number to get signed value
+    for (int i = value.length - 1; i >= 0; i--) {
+      int aux = (value[i] & 0xFF) + 1;
+      value[i] = (byte) aux;
+      if ((aux & 0x100) == 0) {
+        break; // no more carry
+      }
+    }
   }
 
   private static int compare(final byte[] numArray, final int numeratorOffset, final int numeratorSize, final byte[] denomArray,
@@ -44,6 +71,7 @@ public class UInt256Arith {
       return Integer.compare(numeratorSize, denominatorSize);
     }
     for (int i = numeratorOffset, j = denominatorOffset; i < numeratorSize + numeratorOffset; i++, j++) {
+      // make numbers comparable in unsigned form
       int b1 = (int) numArray[i] + Integer.MIN_VALUE;
       int b2 = (int) denomArray[j] + Integer.MIN_VALUE;
       if (b1 != b2) {
@@ -253,13 +281,53 @@ public class UInt256Arith {
     return trimmedValue;
   }
 
-  private static byte[] fromIntLimbs(final int[] value) {
+  private static byte[] fromIntLimbsUnsigned(final int[] value) {
+    if (value.length == 0) {
+      return new byte[32];
+    }
     final byte[] valueBytes = new byte[32];
-    for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 0 && limbIndex >= 0; i -= 4, limbIndex--) {
+    // package 1 int into 4 bytes by using byte shifting. stop when run out of limbs, rest is zero
+    for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 3 && limbIndex >= 0; i -= 4, limbIndex--) {
       valueBytes[i - 3] = (byte) (value[limbIndex] >>> 24);
       valueBytes[i - 2] = (byte) (value[limbIndex] >>> 16);
       valueBytes[i - 1] = (byte) (value[limbIndex] >>> 8);
       valueBytes[i] = (byte) value[limbIndex];
+    }
+    return valueBytes;
+  }
+
+  private static byte[] fromIntLimbs(final int[] value, final boolean isNegative) {
+    if (value.length == 0) {
+      return new byte[32];
+    }
+    if (!isNegative) {
+      return fromIntLimbsUnsigned(value);
+    }
+    // initialize array with two complement
+    final byte[] valueBytes = new byte[] {
+      -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1,
+      -1, -1};
+
+    for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 3 && limbIndex >= 0; i -= 4, limbIndex--) {
+      // shift limb to get byte and invert it in one go for negative sign
+      valueBytes[i - 3] = (byte) ~(value[limbIndex] >>> 24);
+      valueBytes[i - 2] = (byte) ~(value[limbIndex] >>> 16);
+      valueBytes[i - 1] = (byte) ~(value[limbIndex] >>> 8);
+      valueBytes[i] = (byte) ~value[limbIndex];
+    }
+
+    // lastly grab unsigned byte and add one to complete sign conversion. need to carry bit from sum
+    for (int i = valueBytes.length - 1; i >= 0; i--) {
+      int v = (valueBytes[i] & 0xFF) + 1;
+      valueBytes[i] = (byte) v;
+      if ((v & 0x100) == 0) {
+        break; // no more carry
+      }
     }
     return valueBytes;
   }
@@ -271,10 +339,12 @@ public class UInt256Arith {
     if (value.length == offset) {
       return new int[1];
     }
+    // limbs has the exact size needed, no zeros
     int limbsSize = (value.length - offset) / 4;
     limbsSize += (((value.length - offset) % 4) != 0) ? 1 : 0;
     int[] limbs = new int[limbsSize];
 
+    // fill in limbs from 1...limbSize
     int i = value.length - 1;
     for (int limbIndex = limbsSize - 1; limbIndex > 0; i -= 4, limbIndex--) {
       limbs[limbIndex] =
@@ -284,6 +354,7 @@ public class UInt256Arith {
         | (Byte.toUnsignedInt(value[i]));
     }
 
+    // last limb needs to be treated separately to no go out of bounds on byte array
     limbs[0] = (((i - 3 >= offset) ? Byte.toUnsignedInt(value[i - 3]) : 0) << 24)
       | (((i - 2 >= offset) ? Byte.toUnsignedInt(value[i - 2]) : 0) << 16)
       | (((i - 1 >= offset) ? Byte.toUnsignedInt(value[i - 1]) : 0) << 8)
