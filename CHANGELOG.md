@@ -17,6 +17,7 @@
 
 ### Additions and Improvements
 - Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 
 #### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
