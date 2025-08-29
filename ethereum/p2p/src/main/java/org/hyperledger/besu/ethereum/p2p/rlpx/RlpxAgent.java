@@ -422,14 +422,7 @@ public class RlpxAgent {
 
         connectionInitializer =
             new NettyConnectionInitializer(
-                nodeKey,
-                config,
-                localNode,
-                connectionEvents,
-                metricsSystem,
-                peerTable,
-                capacityChecker,
-                ipResolver);
+                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable, capacityChecker, ipResolver);
 
         rlpxAgent.setConnectionInitializer(connectionInitializer);
       }
