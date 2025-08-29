@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.options.storage;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_PARALLEL_TX_PROCESSING;
-import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable.DEFAULT_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable.DEFAULT_FULL_FLAT_DB_ENABLED;
@@ -44,18 +44,25 @@ public class PathBasedExtraStorageOptions
       names = {MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
-          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
-              + LIMIT_TRIE_LOGS_ENABLED
-              + " it will also be used as the number of layers of trie logs to retain.",
+          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private Long maxLayersToLoad = DEFAULT_MAX_LAYERS_TO_LOAD;
 
   /** The bonsai limit trie logs enabled option name */
   public static final String LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
-  /** The bonsai trie logs pruning window size. */
+  /**
+   * @deprecated Use TRIE_LOG_PRUNING_BATCH_SIZE instead
+   */
+  @Deprecated
   public static final String TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
+
+  /** The bonsai trie logs pruning batch size. */
+  public static final String TRIE_LOG_PRUNING_BATCH_SIZE = "--bonsai-trie-logs-pruning-batch-size";
+
+  /** The bonsai trie logs retention limit option name. */
+  public static final String TRIE_LOG_RETENTION_LIMIT = "--bonsai-trie-logs-retention-limit";
 
   /** The bonsai parallel tx processing enabled option name. */
   public static final String PARALLEL_TX_PROCESSING_ENABLED =
@@ -69,11 +76,28 @@ public class PathBasedExtraStorageOptions
 
   @Option(
       names = {
-        TRIE_LOG_PRUNING_WINDOW_SIZE,
+        TRIE_LOG_PRUNING_BATCH_SIZE,
+        TRIE_LOG_PRUNING_WINDOW_SIZE // deprecated
       },
       description =
-          "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-  private Integer trieLogPruningWindowSize = DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+          "The batch size for processing trie log pruning at startup. "
+              + "Note: --bonsai-trie-logs-pruning-window-size is deprecated, "
+              + "use --bonsai-trie-logs-pruning-batch-size instead. "
+              + "(default: ${DEFAULT-VALUE})")
+  private Integer trieLogPruningBatchSize = DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE;
+
+  @Option(
+      names = {TRIE_LOG_RETENTION_LIMIT},
+      paramLabel = "<LONG>",
+      description =
+          "Number of blocks of trie logs to retain in the database (default: ${DEFAULT-VALUE}). "
+              + "This is independent of "
+              + MAX_LAYERS_TO_LOAD
+              + ". If not specified, defaults to "
+              + MAX_LAYERS_TO_LOAD
+              + " value for backward compatibility.",
+      arity = "1")
+  private Long trieLogRetentionLimit = null;
 
   // TODO --Xbonsai-parallel-tx-processing-enabled is deprecated, remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
@@ -140,24 +164,39 @@ public class PathBasedExtraStorageOptions
               String.format(
                   MAX_LAYERS_TO_LOAD + " minimum value is %d", MINIMUM_TRIE_LOG_RETENTION_LIMIT));
         }
-        if (trieLogPruningWindowSize <= 0) {
+        Long effectiveTrieLogRetentionLimit =
+            trieLogRetentionLimit != null ? trieLogRetentionLimit : maxLayersToLoad;
+        if (effectiveTrieLogRetentionLimit < MINIMUM_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
-                  TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                  trieLogPruningWindowSize));
+                  TRIE_LOG_RETENTION_LIMIT + " minimum value is %d",
+                  MINIMUM_TRIE_LOG_RETENTION_LIMIT));
         }
-        if (trieLogPruningWindowSize <= maxLayersToLoad) {
+        if (trieLogPruningBatchSize <= 0) {
           throw new CommandLine.ParameterException(
               commandLine,
               String.format(
-                  TRIE_LOG_PRUNING_WINDOW_SIZE
+                  TRIE_LOG_PRUNING_BATCH_SIZE + "=%d must be greater than 0",
+                  trieLogPruningBatchSize));
+        }
+        // Legacy validation: only validate pruning window size against historical block limit
+        // when using the original historical-block-limit option (not the new retention limit)
+        if (trieLogRetentionLimit == null && trieLogPruningBatchSize <= maxLayersToLoad) {
+          // Only validate in legacy mode (when new option is not used)
+          throw new CommandLine.ParameterException(
+              commandLine,
+              String.format(
+                  TRIE_LOG_PRUNING_BATCH_SIZE
                       + "=%d must be greater than "
                       + MAX_LAYERS_TO_LOAD
                       + "=%d",
-                  trieLogPruningWindowSize,
+                  trieLogPruningBatchSize,
                   maxLayersToLoad));
         }
+        // Note: No validation between pruning window size and trie log retention limit
+        // These are independent settings: pruning window is startup batch size,
+        // while retention limit is how long to keep trie logs in the database
       }
     }
   }
@@ -173,7 +212,9 @@ public class PathBasedExtraStorageOptions
     final PathBasedExtraStorageOptions dataStorageOptions = PathBasedExtraStorageOptions.create();
     dataStorageOptions.maxLayersToLoad = domainObject.getMaxLayersToLoad();
     dataStorageOptions.limitTrieLogsEnabled = domainObject.getLimitTrieLogsEnabled();
-    dataStorageOptions.trieLogPruningWindowSize = domainObject.getTrieLogPruningWindowSize();
+    dataStorageOptions.trieLogPruningBatchSize = domainObject.getTrieLogPruningBatchSize();
+    // Set trieLogRetentionLimit from domain object for proper round-trip compatibility
+    dataStorageOptions.trieLogRetentionLimit = domainObject.getTrieLogRetentionLimit();
     dataStorageOptions.unstableOptions.fullFlatDbEnabled =
         domainObject.getUnstable().getFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.codeUsingCodeHashEnabled =
@@ -186,10 +227,16 @@ public class PathBasedExtraStorageOptions
 
   @Override
   public final PathBasedExtraStorageConfiguration toDomainObject() {
+    // Backward compatibility: if --bonsai-trie-logs-retention-limit is not specified,
+    // use --bonsai-historical-block-limit value for trie log retention
+    Long effectiveTrieLogRetentionLimit =
+        trieLogRetentionLimit != null ? trieLogRetentionLimit : maxLayersToLoad;
+
     return ImmutablePathBasedExtraStorageConfiguration.builder()
         .maxLayersToLoad(maxLayersToLoad)
         .limitTrieLogsEnabled(limitTrieLogsEnabled)
-        .trieLogPruningWindowSize(trieLogPruningWindowSize)
+        .trieLogPruningBatchSize(trieLogPruningBatchSize)
+        .trieLogRetentionLimit(effectiveTrieLogRetentionLimit)
         .parallelTxProcessingEnabled(isParallelTxProcessingEnabled)
         .unstable(
             ImmutablePathBasedExtraStorageConfiguration.PathBasedUnstable.builder()

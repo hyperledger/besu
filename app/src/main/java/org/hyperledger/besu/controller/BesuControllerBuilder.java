@@ -885,7 +885,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             scheduler::executeServiceTask,
             subStorageConfiguration.getMaxLayersToLoad(),
-            subStorageConfiguration.getTrieLogPruningWindowSize(),
+            subStorageConfiguration.getTrieLogPruningBatchSize(),
             isProofOfStake,
             metricsSystem);
     trieLogPruner.initialize();

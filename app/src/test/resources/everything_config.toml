@@ -217,7 +217,8 @@ ethstats-cacert-file="./root.cert"
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
 bonsai-limit-trie-logs-enabled=true
-bonsai-trie-logs-pruning-window-size=100_000
+bonsai-trie-logs-pruning-batch-size=5000
+bonsai-trie-logs-retention-limit=14400
 receipt-compaction-enabled=true
 bonsai-parallel-tx-processing-enabled=false
 

@@ -4,6 +4,14 @@
 
 ### Breaking Changes
 
+### Deprecated
+- `--bonsai-trie-logs-pruning-window-size` option is deprecated. Use `--bonsai-trie-logs-pruning-batch-size` instead.
+
+### Additions and Improvements
+- Separate trie log retention from historical block limit: New independent `--bonsai-trie-logs-retention-limit` option for configuring trie log retention separately from historical block limit.
+- Improved terminology: "prune window" changed to "batch size" in logs and documentation.
+- Enhanced startup logging: Hide batch size when using default values for cleaner output.
+
 ### Upcoming Breaking Changes
 - Deprecated CLI options
   - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
