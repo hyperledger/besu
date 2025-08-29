@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 
 import java.util.Comparator;
@@ -158,6 +159,11 @@ public class T8nBlockchain implements Blockchain {
   @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
     // Deterministic, but just not implemented.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
     throw new UnsupportedOperationException();
   }
 

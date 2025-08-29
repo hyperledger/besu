@@ -61,6 +61,13 @@ public class ApiConfigurationOptions {
   private final Boolean apiGasAndPriorityFeeLimitingEnabled = false;
 
   @CommandLine.Option(
+      names = {"--Xapi-block-access-list-enabled"},
+      hidden = true,
+      description =
+          "Set to enable eth_getBlockAccessListByNumber method and Block Access Lists in simulation results")
+  private final Boolean apiBlockAccessListEnabled = false;
+
+  @CommandLine.Option(
       names = {"--api-gas-and-priority-fee-lower-bound-coefficient"},
       hidden = true,
       description =
@@ -137,7 +144,8 @@ public class ApiConfigurationOptions {
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
             .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)
-            .maxTraceFilterRange(maxTraceFilterRange);
+            .maxTraceFilterRange(maxTraceFilterRange)
+            .isBlockAccessListEnabled(apiBlockAccessListEnabled);
     if (apiGasAndPriorityFeeLimitingEnabled) {
       builder
           .lowerBoundGasAndPriorityFeeCoefficient(apiGasAndPriorityFeeLowerBoundCoefficient)

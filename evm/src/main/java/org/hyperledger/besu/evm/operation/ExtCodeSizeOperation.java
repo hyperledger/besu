@@ -77,7 +77,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        final Account account = frame.getWorldUpdater().get(address);
+        final Account account = getAccount(address, frame);
 
         Bytes codeSize;
         if (account == null) {

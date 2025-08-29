@@ -126,6 +126,7 @@ public class TestNode implements Closeable {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final GenesisState genesisState =

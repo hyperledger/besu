@@ -194,6 +194,7 @@ public class WebSocketServiceLoginTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
+                        false,
                         new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),

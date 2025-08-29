@@ -193,8 +193,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Account contract = frame.getWorldUpdater().get(to);
+    final Account contract = getAccount(to, frame);
     cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
+
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -202,7 +203,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(frame.getRecipientAddress()));
+
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
     // If the call is sending more value than the account has or the message frame is too deep
@@ -231,20 +234,26 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
-    MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(gasAvailableForChildCall(frame))
-        .address(address(frame))
-        .contract(to)
-        .inputData(inputData)
-        .sender(sender(frame))
-        .value(value(frame))
-        .apparentValue(apparentValue(frame))
-        .code(code)
-        .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child))
-        .build();
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(frame)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(gasAvailableForChildCall(frame))
+            .address(address(frame))
+            .contract(to)
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
 
@@ -265,7 +274,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
     final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
+    final Account recipient = getAccount(address(frame), frame);
     final Address to = to(frame);
     GasCalculator gasCalculator = gasCalculator();
 
@@ -342,6 +351,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final Hash codeHash = account.getCodeHash();
+    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
@@ -363,7 +373,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final CodeDelegationHelper.Target target =
-        getTarget(frame.getWorldUpdater(), evm.getGasCalculator()::isPrecompile, account);
+        getTarget(
+            frame.getWorldUpdater(),
+            evm.getGasCalculator()::isPrecompile,
+            account,
+            frame.getEip7928AccessList());
 
     if (accountHasCodeCache) {
       // If the account has a code cache, we can return the cached code of the target

@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -180,7 +181,8 @@ public class TransactionSimulator {
           operationTracer,
           pendingBlockHeader,
           updater,
-          pendingBlockHeader.getCoinbase());
+          pendingBlockHeader.getCoinbase(),
+          Optional.empty());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -317,7 +319,8 @@ public class TransactionSimulator {
               operationTracer,
               header,
               updater,
-              miningBeneficiary));
+              miningBeneficiary,
+              Optional.empty()));
 
     } catch (final Exception e) {
       return Optional.empty();
@@ -361,7 +364,8 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final ProcessableBlockHeader processableHeader,
       final WorldUpdater updater,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final Optional<TransactionAccessList> transactionAccessList) {
 
     final long simulationGasCap =
         calculateSimulationGasCap(
@@ -401,7 +405,8 @@ public class TransactionSimulator {
         transactionProcessor,
         blobGasPricePerGasSupplier,
         blockHashLookup,
-        () -> FAKE_SIGNATURE);
+        () -> FAKE_SIGNATURE,
+        transactionAccessList);
   }
 
   @NotNull
@@ -417,7 +422,8 @@ public class TransactionSimulator {
       final MainnetTransactionProcessor transactionProcessor,
       final BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasCalculator,
       final BlockHashLookup blockHashLookup,
-      final Supplier<SECPSignature> signatureSupplier) {
+      final Supplier<SECPSignature> signatureSupplier,
+      final Optional<TransactionAccessList> transactionAccessList) {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
@@ -478,7 +484,8 @@ public class TransactionSimulator {
             operationTracer,
             blockHashLookup,
             transactionValidationParams,
-            blobGasPrice);
+            blobGasPrice,
+            transactionAccessList);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

@@ -93,6 +93,7 @@ public class MainnetProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
         .isEqualTo(FRONTIER);
@@ -110,6 +111,7 @@ public class MainnetProtocolScheduleTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getHardforkId())
@@ -148,6 +150,7 @@ public class MainnetProtocolScheduleTest {
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()));
   }

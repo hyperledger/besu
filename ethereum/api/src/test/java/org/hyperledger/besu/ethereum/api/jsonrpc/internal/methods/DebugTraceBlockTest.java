@@ -103,6 +103,7 @@ public class DebugTraceBlockTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
+                        false,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();
