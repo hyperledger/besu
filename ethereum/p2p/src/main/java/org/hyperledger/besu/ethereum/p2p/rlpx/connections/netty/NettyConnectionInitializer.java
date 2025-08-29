@@ -87,8 +87,8 @@ public class NettyConnectionInitializer
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
       final PeerTable peerTable,
-      ConnectionCapacityChecker capacityChecker,
-      IPBasedPeerResolver ipResolver) {
+      final ConnectionCapacityChecker capacityChecker,
+      final IPBasedPeerResolver ipResolver) {
     this.nodeKey = nodeKey;
     this.config = config;
     this.localNode = localNode;
