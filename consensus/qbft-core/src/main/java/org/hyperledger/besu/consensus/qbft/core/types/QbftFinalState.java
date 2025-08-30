@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 
@@ -28,11 +28,11 @@ import java.util.Collection;
 public interface QbftFinalState {
 
   /**
-   * Gets validator multicaster.
+   * Gets peer multicaster.
    *
-   * @return the validator multicaster
+   * @return the peer multicaster
    */
-  ValidatorMulticaster getValidatorMulticaster();
+  PeerMulticaster getPeerMulticaster();
 
   /**
    * Gets node key.
