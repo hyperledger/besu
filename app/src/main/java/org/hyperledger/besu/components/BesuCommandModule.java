@@ -16,6 +16,7 @@ package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -27,6 +28,8 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.io.OutputStreamFactory;
+import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -53,6 +56,8 @@ public class BesuCommandModule {
             JsonBlockImporter::new,
             Era1BlockImporter::new,
             RlpBlockExporter::new,
+            (blockchain) ->
+                new Era1BlockExporter(blockchain, new OutputStreamFactory(), new SnappyFactory()),
             new RunnerBuilder(),
             new BesuController.Builder(),
             new BesuPluginContextImpl(),
