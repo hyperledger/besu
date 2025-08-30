@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -221,6 +222,7 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -233,6 +235,9 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -338,7 +343,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
+  private Supplier<GenesisConfig> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
@@ -634,6 +639,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private final long ephemeryCycle = TimeUnit.DAYS.toSeconds(28);
+  private ScheduledExecutorService ephemeryService;
 
   /**
    * Besu command constructor.
@@ -925,6 +932,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       besuPluginContext.afterExternalServicesMainLoop();
 
+      if (network.equals(EPHEMERY)) {
+        scheduleEphemeryRestart();
+      }
+
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -932,6 +943,46 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private long getEphemeryRestartTime() {
+    long currentTimestamp = Instant.now().getEpochSecond();
+    long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
+    // next restart should be triggered in "lastGenesisTime + cycle - now" seconds
+    return lastGenesisTimestamp + ephemeryCycle - currentTimestamp;
+  }
+
+  private void scheduleEphemeryRestart() {
+    long restartTime = getEphemeryRestartTime();
+    logger.info(
+        "Scheduled Ephemery testnet restart in {} days", TimeUnit.SECONDS.toDays(restartTime));
+    ephemeryService =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread thread = new Thread(r, "ephemery-auto-restart");
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    ephemeryService.scheduleAtFixedRate(
+        this::restartEphemery, restartTime, ephemeryCycle, TimeUnit.SECONDS);
+  }
+
+  private void restartEphemery() {
+    logger.info("Scheduled Ephemery testnet restart triggered");
+    try {
+      besuController.close();
+      genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
+      setMergeConfigOptions();
+      besuController = buildController();
+      preSynchronization();
+
+    } catch (Exception e) {
+      logger.error("Failed to restart Ephemery", e);
+    }
+    logger.info(
+        "Next scheduled Ephemery testnet restart will be in {} days",
+        TimeUnit.SECONDS.toDays(ephemeryCycle));
   }
 
   private void configurePrecompileCaching() {
@@ -2170,6 +2221,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     besuPluginContext.stopPlugins();
                     runner.close();
                     LogConfigurator.shutdown();
+                    ephemeryService.shutdownNow();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Besu");
                   }
