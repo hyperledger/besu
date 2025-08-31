@@ -168,15 +168,15 @@ configure(allprojects - project(':platform')) {
 
   repositories {
     maven {
-      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      url = 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content { includeGroupByRegex('org\\.hyperledger\\..*') }
     }
     maven {
-      url 'https://artifacts.consensys.net/public/maven/maven/'
+      url = 'https://artifacts.consensys.net/public/maven/maven/'
       content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
-      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      url = 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
 
@@ -184,7 +184,7 @@ configure(allprojects - project(':platform')) {
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
     def ethExecSpecTestsRepo = ivy {
-      url 'https://github.com'
+      url = 'https://github.com'
       patternLayout {
         artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
       }
@@ -554,9 +554,9 @@ subprojects {
     publishing {
       publications {
         mavenJava(MavenPublication) {
-          groupId "org.hyperledger.besu.internal"
-          artifactId calculateArtifactId(project)
-          version "${project.version}"
+          groupId = "org.hyperledger.besu.internal"
+          artifactId = calculateArtifactId(project)
+          version = "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
             artifact sourcesJar
@@ -636,6 +636,7 @@ subprojects {
       description = "Usage: gradle jmh -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
         "\t-Pincludes=<includePattern>\tInclude pattern (regular expression) for benchmarks to be executed. Defaults to including all benchmarks.\n" +
+        "\t-Pexcludes=<excludePattern>\tComma-separated exclude pattern (regular expression) for benchmarks to not be executed. Defaults to including all benchmarks.\n" +
         "\t-PasyncProfiler=<libPath>\tLibrary path to fetch the Async profiler from. Default is to disable profiling.\n" +
         "\t-PasyncProfilerOptions=<asyncProfilerOptions>\tOptions to pass on to the Async profiler separated by ';'. Default is to produce a flamegraph with all other default profiler options.\n"
     }
@@ -643,7 +644,9 @@ subprojects {
     jmh {
       jmhVersion = '1.37'
       fork = 3
-      includes = _strListCmdArg('includes', [''])
+      var inc = _strListCmdArg('includes', [''])
+      includes = inc.size() > 1 ? [".*(${inc.join('|')}).*"] : inc
+      excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
       if (asyncProfiler != null) {
@@ -651,7 +654,7 @@ subprojects {
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
       }
-      duplicateClassesStrategy = DuplicatesStrategy.WARN
+      duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
       jvmArgs = [
         '-XX:+EnableDynamicAgentLoading'
       ]
@@ -766,7 +769,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
 task autocomplete(type: JavaExec) {
   dependsOn compileJava
   def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
-  standardOutput tempAutocompleteFile.newOutputStream()
+  standardOutput = tempAutocompleteFile.newOutputStream()
   outputs.file "$buildDir/besu.autocomplete.sh"
 
   mainClass = application.mainClass

@@ -151,6 +151,16 @@ public interface BlockchainService extends BesuService {
   HardforkId getHardforkId(BlockHeader blockHeader);
 
   /**
+   * Get the hardfork identifier for the given block number
+   *
+   * @param blockNumber the block number to determine the hardfork for
+   * @return the hardfork identifier applicable to the given block number
+   * @throws IllegalArgumentException if no block with that number exists
+   */
+  @Unstable
+  HardforkId getHardforkId(long blockNumber);
+
+  /**
    * Get the hardfork identifier for the next block based on the parent block and timestamp
    *
    * @param parentBlockHeader the parent block header
