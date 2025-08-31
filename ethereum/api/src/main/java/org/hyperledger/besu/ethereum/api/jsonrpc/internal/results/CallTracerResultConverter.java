@@ -820,6 +820,12 @@ public class CallTracerResultConverter {
               .map(ExceptionalHaltReason::getDescription)
               .orElse("precompile failed");
       childBuilder.error(errorMessage);
+
+      // revert reason may contain the actual reason for precompile failure
+      if (entryFrame.getRevertReason().isPresent()) {
+        childBuilder.error(
+            new String(entryFrame.getRevertReason().get().toArrayUnsafe(), StandardCharsets.UTF_8));
+      }
       LOG.trace("  Precompile failed: {}", errorMessage);
 
       // TODO: Verify from reviewers - Geth sets "Gas Cost <= gas" in case of error,
