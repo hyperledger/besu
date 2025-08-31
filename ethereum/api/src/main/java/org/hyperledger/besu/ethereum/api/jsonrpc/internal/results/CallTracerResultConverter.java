@@ -92,13 +92,12 @@ public class CallTracerResultConverter {
 
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
     final List<TraceFrame> frames = trace.getTraceFrames();
-    final Transaction tx = trace.getTransaction();
 
     // Track calls by depth
     final Map<Integer, CallInfo> depthToCallInfo = new HashMap<>();
 
     // Initialize the root call
-    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(tx);
+    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
 
     int currentDepth = 0;
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
@@ -198,7 +197,7 @@ public class CallTracerResultConverter {
     processRemainingCalls(depthToCallInfo);
 
     // Add transaction result information to root
-    finalizeRoot(rootInfo.builder, trace);
+    // finalizeRoot(rootInfo.builder, trace);
 
     return rootInfo.builder.build();
   }
@@ -390,27 +389,6 @@ public class CallTracerResultConverter {
     }
   }
 
-  private static void finalizeRoot(
-      final CallTracerResult.Builder rootBuilder, final TransactionTrace trace) {
-    final TransactionProcessingResult result = trace.getResult();
-    final Transaction tx = trace.getTransaction();
-
-    // Set total gas used
-    final long totalGasUsed = tx.getGasLimit() - result.getGasRemaining();
-    rootBuilder.gasUsed(totalGasUsed);
-
-    // Set error if transaction failed
-    if (!result.isSuccessful()) {
-      rootBuilder.error("execution reverted");
-      result.getRevertReason().ifPresent(reason -> rootBuilder.revertReason(reason.toHexString()));
-    }
-
-    // Set output if present
-    if (result.getOutput() != null && !result.getOutput().isEmpty()) {
-      rootBuilder.output(result.getOutput().toHexString());
-    }
-  }
-
   private static CallTracerResult.Builder createCallBuilder(
       final TraceFrame frame,
       final TraceFrame nextTrace,
@@ -464,17 +442,52 @@ public class CallTracerResultConverter {
     return builder;
   }
 
-  private static CallTracerResult.Builder initializeRootBuilder(final Transaction tx) {
-    return CallTracerResult.builder()
-        .type(tx.isContractCreation() ? "CREATE" : "CALL")
-        .from(tx.getSender().toHexString())
-        .to(
-            tx.isContractCreation()
-                ? tx.contractAddress().map(Address::toHexString).orElse(null)
-                : tx.getTo().map(Address::toHexString).orElse(null))
-        .value(tx.getValue().toShortHexString())
-        .gas(tx.getGasLimit())
-        .input(tx.getPayload().toHexString());
+  private static CallTracerResult.Builder initializeRootBuilder(final TransactionTrace trace) {
+    final Transaction tx = trace.getTransaction();
+    final TransactionProcessingResult result = trace.getResult();
+
+    final CallTracerResult.Builder builder =
+        CallTracerResult.builder()
+            .type(tx.isContractCreation() ? "CREATE" : "CALL")
+            .from(tx.getSender().toHexString())
+            .to(
+                tx.isContractCreation()
+                    ? tx.contractAddress().map(Address::toHexString).orElse(null)
+                    : tx.getTo().map(Address::toHexString).orElse(null))
+            .value(tx.getValue().toShortHexString())
+            .gas(tx.getGasLimit())
+            .input(tx.getPayload().toHexString());
+
+    // Set total gas used
+    final long totalGasUsed = tx.getGasLimit() - result.getGasRemaining();
+    builder.gasUsed(totalGasUsed);
+
+    // Set output if present
+    if (result.getOutput() != null && !result.getOutput().isEmpty()) {
+      builder.output(result.getOutput().toHexString());
+    }
+
+    // Set error if transaction failed
+    if (!result.isSuccessful()) {
+      builder.error(
+          result
+              .getExceptionalHaltReason()
+              .map(ExceptionalHaltReason::getDescription)
+              .orElse("execution reverted"));
+
+      if (tx.isContractCreation()) {
+        // set TO as null for failed contract creation
+        builder.to(null);
+        builder.revertReason(result.getRevertReason().map(Bytes::toHexString).orElse(null));
+      } else {
+        // for failed calls, if we don't have an exceptional halt, and revert reason exists, it
+        // needs to set "output" with revert reason
+        if (result.getExceptionalHaltReason().isEmpty() && result.getRevertReason().isPresent()) {
+          builder.output(result.getRevertReason().get().toHexString());
+        }
+      }
+    }
+    return builder;
   }
 
   private static String getCallValue(final TraceFrame frame, final String opcode) {
@@ -686,21 +699,10 @@ public class CallTracerResultConverter {
   private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
     final Transaction tx = trace.getTransaction();
     final TransactionProcessingResult result = trace.getResult();
-    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(tx);
+    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
 
     // Set gas used
     rootBuilder.gasUsed(tx.getGasLimit() - result.getGasRemaining());
-
-    // Set output if present
-    if (result.getOutput() != null && !result.getOutput().isEmpty()) {
-      rootBuilder.output(result.getOutput().toHexString());
-    }
-
-    // Set error if transaction failed
-    if (!result.isSuccessful()) {
-      rootBuilder.error("execution reverted");
-      result.getRevertReason().ifPresent(reason -> rootBuilder.revertReason(reason.toHexString()));
-    }
 
     return rootBuilder.build();
   }
