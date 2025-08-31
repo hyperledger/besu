@@ -821,11 +821,15 @@ public class CallTracerResultConverter {
               .orElse("precompile failed");
       childBuilder.error(errorMessage);
       LOG.trace("  Precompile failed: {}", errorMessage);
+
+      // TODO: Verify from reviewers - Geth sets "Gas Cost <= gas" in case of error,
+      //  Besu should do same?
+      childBuilder.gasUsed(cap);
     }
 
     // --- 3) I/O computation (no callee frame) ---
-    childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse("0x"));
-    childBuilder.output(entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse("0x"));
+    childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse(null));
+    childBuilder.output(entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse(null));
 
     // --- 4) Attach immediately — precompiles have no callee frame ---
     if (parentCallInfo != null) {
