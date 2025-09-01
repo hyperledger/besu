@@ -359,13 +359,18 @@ public class ProtocolSpecBuilder {
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
 
-    BlockAccessListFactory finalBalManager = blockAccessListFactory;
-    if (finalBalManager == null && isBlockAccessListEnabled) {
-      finalBalManager = new BlockAccessListFactory(true, false);
-    } else if (finalBalManager != null
+    BlockAccessListFactory finalBalFactory = blockAccessListFactory;
+    if (finalBalFactory == null && isBlockAccessListEnabled) {
+      // If blockAccessListFactory was not set, but block access lists were enabled via CLI,
+      // blockAccessListFactory must be created.
+      finalBalFactory = new BlockAccessListFactory(true, false);
+    } else if (finalBalFactory != null
         && isBlockAccessListEnabled
-        && !finalBalManager.isCliActivated()) {
-      finalBalManager = new BlockAccessListFactory(true, finalBalManager.isForkActivated());
+        && !finalBalFactory.isCliActivated()) {
+      // If blockAccessListFactory was set, we want to make sure its `cliActivated` flag respects
+      // isBlockAccessListEnabled.
+      finalBalFactory =
+          new BlockAccessListFactory(isBlockAccessListEnabled, finalBalFactory.isForkActivated());
     }
 
     return new ProtocolSpec(
@@ -398,7 +403,7 @@ public class ProtocolSpecBuilder {
         isPoS,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(finalBalManager));
+        Optional.ofNullable(finalBalFactory));
   }
 
   private BlockProcessor createBlockProcessor(
