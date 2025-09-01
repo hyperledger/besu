@@ -18,7 +18,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
 
-public class SDivOperationBenchmark extends BinaryOperationBenchmark {
+public class SDivOperationBenchmark extends DivOperationBenchmark {
+
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
     return SDivOperation.staticOperation(frame);
