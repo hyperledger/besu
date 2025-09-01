@@ -47,6 +47,7 @@ public class ProtocolScheduleModule {
    * @param evmConfiguration the EVM configuration
    * @param badBlockManager the bad block manager
    * @param isParallelTxProcessingEnabled whether parallel tx processing is enabled
+   * @param isBlockAccessListEnabled whether block level access lists are enabled
    * @param metricsSystem the metrics system
    * @param miningConfiguration the mining parameters
    * @return the protocol schedule builder
@@ -60,6 +61,7 @@ public class ProtocolScheduleModule {
       final EvmConfiguration evmConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem,
       final MiningConfiguration miningConfiguration) {
 
@@ -73,6 +75,7 @@ public class ProtocolScheduleModule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem);
 
     return builder;
