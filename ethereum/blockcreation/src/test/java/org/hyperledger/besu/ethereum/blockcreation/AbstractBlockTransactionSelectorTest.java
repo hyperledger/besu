@@ -239,6 +239,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
@@ -1506,6 +1507,27 @@ public abstract class AbstractBlockTransactionSelectorTest {
                   gasUsedByTransaction,
                   gasRemaining,
                   Bytes.EMPTY,
+                  Optional.empty(),
+                  ValidationResult.valid());
+            });
+    when(transactionProcessor.processTransaction(
+            any(), any(), eq(tx), any(), any(), any(), any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              if (processingTime > 0) {
+                try {
+                  Thread.sleep(processingTime);
+                } catch (final InterruptedException e) {
+                  return TransactionProcessingResult.invalid(
+                      ValidationResult.invalid(EXECUTION_INTERRUPTED));
+                }
+              }
+              return TransactionProcessingResult.successful(
+                  new ArrayList<>(),
+                  gasUsedByTransaction,
+                  gasRemaining,
+                  Bytes.EMPTY,
+                  Optional.empty(),
                   ValidationResult.valid());
             });
   }
@@ -1521,6 +1543,20 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final long processingTime) {
     when(transactionProcessor.processTransaction(
             any(), any(), eq(tx), any(), any(), any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              if (processingTime > 0) {
+                try {
+                  Thread.sleep(processingTime);
+                } catch (final InterruptedException e) {
+                  return TransactionProcessingResult.invalid(
+                      ValidationResult.invalid(EXECUTION_INTERRUPTED));
+                }
+              }
+              return TransactionProcessingResult.invalid(ValidationResult.invalid(invalidReason));
+            });
+    when(transactionProcessor.processTransaction(
+            any(), any(), eq(tx), any(), any(), any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
