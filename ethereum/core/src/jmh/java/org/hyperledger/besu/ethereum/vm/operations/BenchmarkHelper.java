@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Random;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -82,10 +83,13 @@ public class BenchmarkHelper {
    */
   public static void fillPool(final Bytes[] pool) {
     final Random random = new Random();
+    fillPool(pool, () -> 1 + random.nextInt(32)); //  [1, 32]
+  }
 
+  public static void fillPool(final Bytes[] pool, final Supplier<Integer> sizeSupplier) {
+    final Random random = new Random();
     for (int i = 0; i < pool.length; i++) {
-      final int aSize = 1 + random.nextInt(32); // [1, 32]
-      final byte[] a = new byte[aSize];
+      final byte[] a = new byte[sizeSupplier.get()];
       random.nextBytes(a);
       pool[i] = Bytes.wrap(a);
     }
