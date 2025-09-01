@@ -91,13 +91,16 @@ public class CallTracerResultConverter {
   }
 
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
+    // Initialize the root call
+    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
+    if (!trace.getResult().isSuccessful()) {
+      // If the transaction failed, return only the root call with error info
+      return rootBuilder.build();
+    }
     final List<TraceFrame> frames = trace.getTraceFrames();
 
     // Track calls by depth
     final Map<Integer, CallInfo> depthToCallInfo = new HashMap<>();
-
-    // Initialize the root call
-    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
 
     int currentDepth = 0;
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
@@ -127,7 +130,10 @@ public class CallTracerResultConverter {
 
         // Check if we entered a callee (depth increased)
         final boolean calleeEntered = (nextTrace != null && nextTrace.getDepth() > frameDepth);
-
+        LOG.trace(
+            "*** calleeEntered={} nextDepth={}",
+            calleeEntered,
+            (nextTrace == null ? "-" : nextTrace.getDepth()));
         if (!calleeEntered) {
           handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
           continue;
@@ -143,18 +149,24 @@ public class CallTracerResultConverter {
         handleSelfDestruct(frame, currentCallInfo);
       }
       // Process return operations that exit a context
-      else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
+      else if (isReturnOp(opcode)
+          || isRevertOp(opcode)
+          || isHaltOp(opcode)
+          || frame.getExceptionalHaltReason().isPresent()) {
         currentDepth = frameDepth;
 
         // Get child call info
         final CallInfo childCallInfo = depthToCallInfo.get(currentDepth);
-        if (LOG.isTraceEnabled() && childCallInfo != null) {
-          LOG.trace(" return: depth={} type={}", currentDepth, childCallInfo.builder.getType());
-        }
+
         if (childCallInfo == null) {
-          LOG.debug("Orphaned return at depth {} - no matching call entry", currentDepth);
+          LOG.debug(">> Orphaned return at depth {} - no matching call entry", currentDepth);
           continue;
         }
+        LOG.trace(
+            " >> return: opcode={}, depth={} type={}",
+            opcode,
+            currentDepth,
+            childCallInfo.builder.getType());
 
         // Get entry frame and calculate gas used
         final TraceFrame entryFrame = childCallInfo.entryFrame;
@@ -195,9 +207,6 @@ public class CallTracerResultConverter {
 
     // Process any remaining calls that didn't have explicit return frames
     processRemainingCalls(depthToCallInfo);
-
-    // Add transaction result information to root
-    // finalizeRoot(rootInfo.builder, trace);
 
     return rootInfo.builder.build();
   }
@@ -267,6 +276,14 @@ public class CallTracerResultConverter {
       // For failed CREATE/CREATE2, ensure 'to' is null
       if ("CREATE".equals(builder.getType()) || "CREATE2".equals(builder.getType())) {
         builder.to(null);
+        // also set code as input for failed contract creation
+        if (frame.getMaybeCode().isPresent()) {
+          // set code to input
+          final Bytes codeBytes = frame.getMaybeCode().get().getBytes();
+          if (codeBytes != null) {
+            builder.input(codeBytes.toHexString());
+          }
+        }
       }
 
       // Add revert reason if available
@@ -408,19 +425,10 @@ public class CallTracerResultConverter {
     // Detect precompile up front so we can defer input/output
     final boolean looksLikePrecompile = frame.isPrecompile();
 
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "createCallBuilder: op={} from={} to={} depth={} nextDepth={} gas(prov)={} stackPresent={} precompile={}",
-          opcode,
-          fromAddress,
-          toAddress,
-          frame.getDepth(),
-          (nextTrace == null ? "-" : nextTrace.getDepth()),
-          hexN(gasProvided),
-          frame.getStack().isPresent(),
-          looksLikePrecompile);
-    }
-
+    LOG.trace(
+        "*** createCallBuilder, TraceFrame: {}, Exceptional Halt: {}",
+        frame,
+        frame.getExceptionalHaltReason().orElse(null));
     final CallTracerResult.Builder builder =
         CallTracerResult.builder()
             .type(opcode)
@@ -433,10 +441,6 @@ public class CallTracerResultConverter {
       // Normal calls/creates: set input now (resolveInputData may use callee frame if we entered)
       final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
       builder.input(inputData.toHexString());
-    } else {
-      // Precompiles: defer both input & output — finalizePrecompileChild(...) will set them once
-      LOG.trace("  precompile detected at createCallBuilder -> deferring input/output");
-      builder.input("0x");
     }
 
     return builder;
