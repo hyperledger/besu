@@ -37,7 +37,7 @@ public class BlockchainServicePluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "pluginNode",
             Collections.singletonList("testPlugins"),
-            Collections.singletonList("--plugin-tx-validator-test-enabled=true"),
+            Collections.singletonList("--plugin-blockchain-service-test-enabled=true"),
             "DEBUG");
 
     cluster.start(pluginNode);

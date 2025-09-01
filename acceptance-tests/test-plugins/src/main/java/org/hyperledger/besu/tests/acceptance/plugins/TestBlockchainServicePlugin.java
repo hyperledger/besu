@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockchainService;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 @AutoService(BesuPlugin.class)
 public class TestBlockchainServicePlugin implements BesuPlugin {
@@ -41,35 +43,46 @@ public class TestBlockchainServicePlugin implements BesuPlugin {
   private ServiceManager serviceManager;
   private File callbackDir;
 
+  @CommandLine.Option(names = "--plugin-blockchain-service-test-enabled")
+  boolean enabled = false;
+
   @Override
   public void register(final ServiceManager serviceManager) {
     LOG.info("Registering TestBlockchainServicePlugin");
     this.serviceManager = serviceManager;
+    serviceManager
+        .getService(PicoCLIOptions.class)
+        .orElseThrow()
+        .addPicoCLIOptions("blockchain-service", this);
+
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
   }
 
   @Override
   public void start() {
-    LOG.info("Starting TestBlockchainServicePlugin");
-    final var blockchainService = serviceManager.getService(BlockchainService.class).orElseThrow();
+    if (enabled) {
+      LOG.info("Starting TestBlockchainServicePlugin");
+      final var blockchainService =
+          serviceManager.getService(BlockchainService.class).orElseThrow();
 
-    serviceManager
-        .getService(BesuEvents.class)
-        .orElseThrow()
-        .addBlockAddedListener(
-            addedBlockContext -> {
-              LOG.info("Block added: {}", addedBlockContext);
-              final var hardforkSeen =
-                  queryHardfork(blockchainService, addedBlockContext.getBlockHeader());
-              seenHardforks.add(
-                  queryHardfork(blockchainService, addedBlockContext.getBlockHeader()));
-              if (hardforkSeen.current.equals(HardforkId.MainnetHardforkId.LONDON)) {
-                LOG.info("Writing seen hardforks: {}", seenHardforks);
-                writeSeenHardforks();
-              }
-            });
+      serviceManager
+          .getService(BesuEvents.class)
+          .orElseThrow()
+          .addBlockAddedListener(
+              addedBlockContext -> {
+                LOG.info("Block added: {}", addedBlockContext);
+                final var hardforkSeen =
+                    queryHardfork(blockchainService, addedBlockContext.getBlockHeader());
+                seenHardforks.add(
+                    queryHardfork(blockchainService, addedBlockContext.getBlockHeader()));
+                if (hardforkSeen.current.equals(HardforkId.MainnetHardforkId.LONDON)) {
+                  LOG.info("Writing seen hardforks: {}", seenHardforks);
+                  writeSeenHardforks();
+                }
+              });
 
-    seenHardforks.add(queryHardfork(blockchainService, blockchainService.getChainHeadHeader()));
+      seenHardforks.add(queryHardfork(blockchainService, blockchainService.getChainHeadHeader()));
+    }
   }
 
   private HardforkSeen queryHardfork(
