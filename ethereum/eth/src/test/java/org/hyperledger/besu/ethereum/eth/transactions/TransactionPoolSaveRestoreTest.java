@@ -104,7 +104,8 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
             transactionReplacementTester,
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningConfiguration.newDefault()),
+            MiningConfiguration.newDefault(),
+            senderBalanceChecker),
         ethScheduler);
   }
 

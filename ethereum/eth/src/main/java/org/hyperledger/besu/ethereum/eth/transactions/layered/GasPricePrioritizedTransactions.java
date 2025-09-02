@@ -34,6 +34,7 @@ import java.util.function.BiFunction;
  * <p>This class is safe for use across multiple threads.
  */
 public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransactions {
+  private final SenderBalanceChecker senderBalanceChecker;
 
   public GasPricePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -43,7 +44,8 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final SenderBalanceChecker senderBalanceChecker) {
     super(
         poolConfig,
         ethScheduler,
@@ -52,6 +54,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         transactionReplacementTester,
         blobCache,
         miningConfiguration);
+    this.senderBalanceChecker = senderBalanceChecker;
   }
 
   @Override
@@ -70,6 +73,11 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
+
+    if (!senderBalanceChecker.hasEnoughBalanceFor(pendingTransaction)) {
+      return false;
+    }
+
     return pendingTransaction.hasPriority()
         || pendingTransaction
             .getTransaction()

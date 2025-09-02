@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -76,6 +77,8 @@ public class ReplayTest {
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   private final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
   private final EthScheduler ethScheduler = new DeterministicEthScheduler();
+  private final SenderBalanceChecker senderBalanceChecker = mock(SenderBalanceChecker.class);
+  private final Map<Address, Wei> recordedSenderBalances = new HashMap<>();
   private final Address senderToLog =
       Address.fromHexString("0xf7445f4b8a07921bf882175470dc8f7221c53996");
 
@@ -120,6 +123,21 @@ public class ReplayTest {
                 new GZIPInputStream(getClass().getResourceAsStream("/tx.csv.gz")),
                 StandardCharsets.UTF_8))) {
 
+      when(senderBalanceChecker.hasEnoughBalanceFor(any()))
+          .thenAnswer(
+              invocationOnMock -> {
+                final var pendingTransaction =
+                    invocationOnMock.getArgument(0, PendingTransaction.class);
+                final var senderBalance =
+                    recordedSenderBalances.get(pendingTransaction.getTransaction().getSender());
+                if (senderBalance == null) {
+                  // null means the sender balance was check during the initial validation phase
+                  return true;
+                }
+                final var txUpfrontCost = pendingTransaction.getTransaction().getUpfrontCost(0L);
+                return senderBalance.greaterOrEqualThan(txUpfrontCost);
+              });
+
       String startLine;
       while ((startLine = br.readLine()) != null) {
         if (startLine.equals("START")) {
@@ -159,6 +177,7 @@ public class ReplayTest {
                   case "B" -> {
                     System.out.println("B:" + commaSplit[1]);
                     processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
+                    recordedSenderBalances.clear();
                   }
                   case "S" -> {
                     // ToDo: commented since not always working, needs fix
@@ -172,6 +191,12 @@ public class ReplayTest {
                   case "PZ" -> {
                     System.out.println("PZ:" + commaSplit[1]);
                     processPenalized(commaSplit[1], prioritizedTransactions);
+                  }
+                  case "SB" -> {
+                    final var balance = Wei.fromHexString(commaSplit[2]);
+                    System.out.println(
+                        "SB:" + commaSplit[1] + " has " + balance.toHumanReadableString());
+                    recordedSenderBalances.put(Address.fromHexString(commaSplit[1]), balance);
                   }
                   case "MGP" -> {
                     final var minTransactionGasPrice = Wei.fromHexString(commaSplit[1]);
@@ -268,7 +293,8 @@ public class ReplayTest {
         txReplacementTester,
         baseFeeMarket,
         new BlobCache(),
-        miningConfiguration);
+        miningConfiguration,
+        senderBalanceChecker);
   }
 
   // ToDo: commented since not always working, needs fix
