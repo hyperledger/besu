@@ -246,6 +246,7 @@ public class BaseBftProtocolScheduleBuilderTest {
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
+        false,
         new NoOpMetricsSystem());
   }
 

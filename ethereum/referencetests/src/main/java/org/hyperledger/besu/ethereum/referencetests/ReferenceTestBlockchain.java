@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -46,12 +47,12 @@ import org.apache.tuweni.bytes.Bytes;
  * that must not affect the execution of its transactions.
  *
  * <p>The Ethereum reference tests for VM execution (VMTests) and transaction processing
- * (GeneralStateTests) require a block's hash to be to be the hash of the string of it's block
- * number.
+ * (GeneralStateTests) require a block's hash to be the hash of the string of its block number.
  */
 public class ReferenceTestBlockchain implements Blockchain {
 
-  // Maximum number of blocks prior to the chain head that can be retrieved by hash.
+  // Maximum number of blocks prior to the chain head that can be retrieved by
+  // hash.
   private static final long MAXIMUM_BLOCKS_BEHIND_HEAD = 256;
   private static final String NUMBER_LOOKUP_ERROR =
       "Blocks must not be looked up by number in the EVM. The block being processed may not be on the canonical chain.";
@@ -160,8 +161,12 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
-    // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();
   }
 

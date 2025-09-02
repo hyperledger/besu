@@ -73,8 +73,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnJre;
-import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.io.TempDir;
 
 class JsonRpcHttpServiceTlsMisconfigurationTest {
@@ -128,6 +126,7 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
@@ -206,23 +205,6 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  @DisabledOnJre({JRE.JAVA_17, JRE.JAVA_18}) // error message changed
-  void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
-    service =
-        createJsonRpcHttpService(
-            rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
-    assertThatExceptionOfType(CompletionException.class)
-        .isThrownBy(
-            () -> {
-              service.start().join();
-              Assertions.fail("service.start should have failed");
-            })
-        .withCauseInstanceOf(JsonRpcServiceException.class)
-        .withMessageContaining("Tag number over 30 is not supported");
-  }
-
-  @Test
-  @DisabledOnJre({JRE.JAVA_11, JRE.JAVA_12, JRE.JAVA_13, JRE.JAVA_14, JRE.JAVA_15, JRE.JAVA_16})
   void exceptionRaisedWhenInvalidKeystoreFileIsSpecified_NewJava() throws IOException {
     service =
         createJsonRpcHttpService(
@@ -305,8 +287,6 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private JsonRpcHttpService createJsonRpcHttpService(
       final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig) {
-    final Path testDir = tempDir.resolve("createJsonRpcHttpSercice");
-    testDir.toFile().mkdirs();
     return new JsonRpcHttpService(
         vertx,
         tempDir,

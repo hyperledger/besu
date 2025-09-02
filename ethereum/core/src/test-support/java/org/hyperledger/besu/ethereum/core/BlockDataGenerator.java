@@ -305,6 +305,7 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .requestsHash(options.getRequestsHash(null))
+            .balHash(options.getBalHash(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -654,6 +655,7 @@ public class BlockDataGenerator {
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
     private Optional<Hash> requestsHash = Optional.empty();
+    private Optional<Hash> balHash = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
 
@@ -724,6 +726,10 @@ public class BlockDataGenerator {
 
     public Hash getRequestsHash(final Hash defaultValue) {
       return requestsHash.orElse(defaultValue);
+    }
+
+    public Hash getBalHash(final Hash defaultValue) {
+      return balHash.orElse(defaultValue);
     }
 
     public Optional<List<Request>> getRequests(final Optional<List<Request>> defaultValue) {
@@ -865,6 +871,11 @@ public class BlockDataGenerator {
 
     public BlockOptions setRequestsHash(final Hash requestsHash) {
       this.requestsHash = Optional.of(requestsHash);
+      return this;
+    }
+
+    public BlockOptions setBalHash(final Hash balHash) {
+      this.balHash = Optional.of(balHash);
       return this;
     }
 

@@ -27,6 +27,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
 public class NoopP2PNetwork implements P2PNetwork {
   @Override
   public Collection<PeerConnection> getPeers() {
-    throw new P2PDisabledException("P2P networking disabled.  Peers list unavailable.");
+    return Collections.emptyList();
   }
 
   @Override
@@ -44,7 +45,8 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
-    throw new P2PDisabledException("P2P networking disabled.  Unable to connect to network.");
+    return CompletableFuture.failedFuture(
+        new P2PDisabledException("P2P network is not enabled, cannot connect to peer: " + peer));
   }
 
   @Override
@@ -61,12 +63,17 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainedConnectionPeer(final Peer peer) {
-    throw new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer.");
+    return false;
   }
 
   @Override
   public boolean removeMaintainedConnectionPeer(final Peer peer) {
-    throw new P2PDisabledException("P2P networking disabled.  Unable to remove a connected peer.");
+    return false;
+  }
+
+  @Override
+  public Collection<Peer> getMaintainedConnectionPeers() {
+    return Collections.emptyList();
   }
 
   @Override

@@ -81,6 +81,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
   }
 
@@ -347,6 +348,7 @@ class ProtocolScheduleBuilderTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
 

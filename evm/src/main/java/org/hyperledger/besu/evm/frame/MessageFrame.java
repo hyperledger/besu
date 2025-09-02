@@ -243,6 +243,8 @@ public class MessageFrame {
 
   private final TxValues txValues;
 
+  private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
+
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
 
@@ -270,7 +272,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
-      final TxValues txValues) {
+      final TxValues txValues,
+      final Optional<Eip7928AccessList> eip7928AccessList) {
 
     this.txValues = txValues;
     this.type = type;
@@ -290,7 +293,7 @@ public class MessageFrame {
     this.completer = completer;
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
-
+    this.eip7928AccessList = eip7928AccessList;
     this.undoMark = txValues.transientStorage().mark();
   }
 
@@ -1314,6 +1317,15 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Accessor for Eip7928AccessList, if present.
+   *
+   * @return optional Eip7928AccessList
+   */
+  public Optional<Eip7928AccessList> getEip7928AccessList() {
+    return eip7928AccessList;
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1345,8 +1357,9 @@ public class MessageFrame {
     private BlockHashLookup blockHashLookup;
     private Map<String, Object> contextVariables;
     private Optional<Bytes> reason = Optional.empty();
-    private Set<Address> accessListWarmAddresses = emptySet();
-    private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
+    private Set<Address> eip2930AccessListWarmAddresses = emptySet();
+    private Multimap<Address, Bytes32> eip2930AccessListWarmStorage = HashMultimap.create();
+    private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
@@ -1599,24 +1612,36 @@ public class MessageFrame {
     }
 
     /**
-     * Sets Access list warm addresses.
+     * Sets EIP 2930 Access list warm addresses.
      *
      * @param accessListWarmAddresses the access list warm addresses
      * @return the builder
      */
-    public Builder accessListWarmAddresses(final Set<Address> accessListWarmAddresses) {
-      this.accessListWarmAddresses = accessListWarmAddresses;
+    public Builder eip2930AccessListWarmAddresses(final Set<Address> accessListWarmAddresses) {
+      this.eip2930AccessListWarmAddresses = accessListWarmAddresses;
       return this;
     }
 
     /**
-     * Sets Access list warm storage.
+     * Sets EIP 2930 Access list warm storage.
      *
      * @param accessListWarmStorage the access list warm storage
      * @return the builder
      */
-    public Builder accessListWarmStorage(final Multimap<Address, Bytes32> accessListWarmStorage) {
-      this.accessListWarmStorage = accessListWarmStorage;
+    public Builder eip2930AccessListWarmStorage(
+        final Multimap<Address, Bytes32> accessListWarmStorage) {
+      this.eip2930AccessListWarmStorage = accessListWarmStorage;
+      return this;
+    }
+
+    /**
+     * Sets EIP 7928 access list to record account and storage accesses.
+     *
+     * @param eip7928AccessList access list to record account and storage accesses
+     * @return the builder
+     */
+    public Builder eip7928AccessList(final Eip7928AccessList eip7928AccessList) {
+      this.eip7928AccessList = Optional.of(eip7928AccessList);
       return this;
     }
 
@@ -1708,14 +1733,15 @@ public class MessageFrame {
               completer,
               contextVariables == null ? Map.of() : contextVariables,
               reason,
-              newTxValues);
+              newTxValues,
+              eip7928AccessList);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       messageFrame.warmUpAddress(contract);
-      for (Address a : accessListWarmAddresses) {
+      for (Address a : eip2930AccessListWarmAddresses) {
         messageFrame.warmUpAddress(a);
       }
-      for (var e : accessListWarmStorage.entries()) {
+      for (var e : eip2930AccessListWarmStorage.entries()) {
         messageFrame.warmUpStorage(e.getKey(), e.getValue());
       }
       return messageFrame;

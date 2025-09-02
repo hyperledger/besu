@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResultConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FlatCallTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
@@ -34,6 +35,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
  * the {@code create} and {@code createAsync} methods respectively.
  */
 public class DebugTraceTransactionStepFactory {
+  // feature flag to enable non-default tracers
+  public static boolean enableExtraTracers = false;
 
   /**
    * Creates a function that processes a {@link TransactionTrace} and returns a {@link
@@ -48,24 +51,31 @@ public class DebugTraceTransactionStepFactory {
       final TracerType tracerType) {
     return switch (tracerType) {
       case OPCODE_TRACER ->
-          (transactionTrace) -> {
+          transactionTrace -> {
             // default - struct/opcode logger tracer
             var result = new OpCodeLoggerTracerResult(transactionTrace);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case CALL_TRACER ->
-          (transactionTrace) -> {
-            // TODO: Implement callTracer logic and wire it here
-            var result = new UnimplementedTracerResult();
-            return new DebugTraceTransactionResult(transactionTrace, result);
+          transactionTrace -> {
+            if (enableExtraTracers) {
+              var result = CallTracerResultConverter.convert(transactionTrace);
+              return new DebugTraceTransactionResult(transactionTrace, result);
+            }
+            return new DebugTraceTransactionResult(
+                transactionTrace, new UnimplementedTracerResult());
           };
       case FLAT_CALL_TRACER ->
-          (transactionTrace) -> {
-            final FlatCallTracerResult result = FlatCallTracerResult.from(transactionTrace);
-            return new DebugTraceTransactionResult(transactionTrace, result);
+          transactionTrace -> {
+            if (enableExtraTracers) {
+              final FlatCallTracerResult result = FlatCallTracerResult.from(transactionTrace);
+              return new DebugTraceTransactionResult(transactionTrace, result);
+            }
+            return new DebugTraceTransactionResult(
+              transactionTrace, new UnimplementedTracerResult());
           };
       case PRESTATE_TRACER ->
-          (transactionTrace) -> {
+          transactionTrace -> {
             // TODO: Implement prestateTracer logic and wire it here
             var result = new UnimplementedTracerResult();
             return new DebugTraceTransactionResult(transactionTrace, result);
