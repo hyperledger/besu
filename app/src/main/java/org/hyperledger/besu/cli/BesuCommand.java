@@ -2619,8 +2619,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
         builder
             .setLimitTrieLogsEnabled()
-            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
-            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+            .setTrieLogRetentionLimit(subStorageConfiguration.getTrieLogRetentionLimit())
+            .setTrieLogsPruningBatchSize(subStorageConfiguration.getTrieLogPruningBatchSize());
       }
     }
 
