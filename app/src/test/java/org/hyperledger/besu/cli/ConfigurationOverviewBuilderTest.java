@@ -204,7 +204,7 @@ class ConfigurationOverviewBuilderTest {
   void setWorldStateUpdateModeDefault() {
     builder.setWorldStateUpdateMode(EvmConfiguration.DEFAULT.worldUpdaterMode());
     final String layeredTxPoolSelected = builder.build();
-    assertThat(layeredTxPoolSelected).contains("Using STACKED worldstate update mode");
+    assertThat(layeredTxPoolSelected).contains("Using JOURNALED worldstate update mode");
   }
 
   @Test

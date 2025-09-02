@@ -26,24 +26,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The Journaled updater.
  *
  * @param <W> the WorldView type parameter
  */
-public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
+public class JournaledUpdater<W extends WorldView, A extends Account> implements WorldUpdater {
 
-  final EvmConfiguration evmConfiguration;
-  final WorldUpdater parentWorld;
-  final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
-  final UndoMap<Address, JournaledAccount> accounts;
-  final UndoSet<Address> deleted;
-  final long undoMark;
+  private final EvmConfiguration evmConfiguration;
+  private final WorldUpdater parentWorld;
+  private final AbstractWorldUpdater<W, A> rootWorld;
+  private final UndoMap<Address, JournaledAccount> accounts;
+  private final UndoSet<Address> deleted;
+  private final HashSet<Address> touched;
+  private final long undoMark;
 
   /**
-   * Instantiates a new Stacked updater.
+   * Instantiates a new Journaled updater.
    *
    * @param world the world
    * @param evmConfiguration the EVM Configuration parameters
@@ -52,15 +55,17 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public JournaledUpdater(final WorldUpdater world, final EvmConfiguration evmConfiguration) {
     parentWorld = world;
     this.evmConfiguration = evmConfiguration;
-    if (world instanceof JournaledUpdater<?>) {
-      JournaledUpdater<W> journaledUpdater = (JournaledUpdater<W>) world;
+    if (world instanceof JournaledUpdater<?, ?>) {
+      JournaledUpdater<W, A> journaledUpdater = (JournaledUpdater<W, A>) world;
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
+      touched = new HashSet<>();
       rootWorld = journaledUpdater.rootWorld;
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
-      rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
+      touched = new HashSet<>();
+      rootWorld = (AbstractWorldUpdater<W, A>) world;
     } else {
       throw new IllegalArgumentException(
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
@@ -68,24 +73,13 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     undoMark = accounts.mark();
   }
 
-  /**
-   * Get an account suitable for mutation. Defer to parent if not tracked locally.
-   *
-   * @param address the account at the address, for mutaton.
-   * @return the mutable account
-   */
-  protected MutableAccount getForMutation(final Address address) {
-    final JournaledAccount wrappedTracker = accounts.get(address);
-    if (wrappedTracker != null) {
-      return wrappedTracker;
-    }
-    final MutableAccount account = rootWorld.getForMutation(address);
-    return account == null ? null : new UpdateTrackingAccount<>(account);
-  }
-
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
-    return new ArrayList<>(accounts.values());
+    return touched.stream()
+        .filter(addr -> !deleted.contains(addr))
+        .map(accounts::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toCollection(() -> new ArrayList<>(touched.size())));
   }
 
   @Override
@@ -96,10 +90,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   /**
    * Remove all changes done by this layer. Rollback to the state prior to the updater's changes.
    */
-  protected void reset() {
+  private void reset() {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);
     deleted.undo(undoMark);
+    touched.clear();
   }
 
   @Override
@@ -109,10 +104,30 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public void commit() {
-    if (!(parentWorld instanceof JournaledUpdater<?>)) {
-      accounts.values().forEach(JournaledAccount::commit);
-      deleted.forEach(parentWorld::deleteAccount);
+    if (parentWorld instanceof JournaledUpdater<?, ?> jw) {
+      jw.touched.addAll(this.touched);
+      return;
     }
+
+    for (final JournaledAccount a : accounts.values()) {
+      final Address addr = a.getAddress();
+      if (deleted.contains(addr)) {
+        continue;
+      }
+      if (a.getWrappedAccount() == null) {
+        final MutableAccount account = rootWorld.createAccount(addr, a.getNonce(), a.getBalance());
+        if (a.codeWasUpdated()) {
+          account.setCode(a.getCode());
+        }
+        if (a.getStorageWasCleared()) {
+          account.clearStorage();
+        }
+        a.getUpdatedStorage().forEach(account::setStorageValue);
+        a.setWrappedAccount(account);
+      }
+      a.commit();
+    }
+    deleted.forEach(parentWorld::deleteAccount);
   }
 
   @Override
@@ -128,37 +143,55 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    JournaledAccount journaledAccount =
-        new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
-    accounts.put(address, journaledAccount);
-    return new JournaledAccount(journaledAccount);
+    final JournaledAccount ja = new JournaledAccount(address);
+    ja.setNonce(nonce);
+    ja.setBalance(balance);
+    accounts.put(address, ja);
+    touched.add(address);
+    deleted.remove(address);
+    return ja;
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    // We may have updated it already, so check that first.
-    final JournaledAccount existing = accounts.get(address);
-    if (existing != null) {
-      return existing;
-    }
     if (deleted.contains(address)) {
       return null;
     }
+    final JournaledAccount existing = accounts.get(address);
+    if (existing != null) {
+      touched.add(address);
+      return existing;
+    }
 
-    // Otherwise, get it from our wrapped view and create a new update tracker.
-    final MutableAccount origin = rootWorld.getAccount(address);
+    final MutableAccount origin = getForMutation(address);
     if (origin == null) {
       return null;
     } else {
       var newAccount = new JournaledAccount(origin);
       accounts.put(address, newAccount);
+      touched.add(address);
       return newAccount;
     }
+  }
+
+  protected MutableAccount getForMutation(final Address address) {
+    final AbstractWorldUpdater<W, A> wrapped = this.rootWorld;
+    final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
+    if (wrappedTracker != null) {
+      return wrappedTracker;
+    }
+    if (wrapped.deletedAccounts.contains(address)) {
+      return null;
+    }
+    final A account = wrapped.getForMutation(address);
+    return account == null ? null : wrapped.track(new UpdateTrackingAccount<>(account));
   }
 
   @Override
   public void deleteAccount(final Address address) {
     deleted.add(address);
+    touched.remove(address);
+    // TODO: This is probably not necessary?
     var account = accounts.get(address);
     if (account != null) {
       account.setDeleted(true);
@@ -167,18 +200,18 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public Account get(final Address address) {
+    if (deleted.contains(address)) {
+      return null;
+    }
     final MutableAccount existing = accounts.get(address);
     if (existing != null) {
       return existing;
-    }
-    if (deleted.contains(address)) {
-      return null;
     }
     return rootWorld.get(address);
   }
 
   @Override
   public WorldUpdater updater() {
-    return new JournaledUpdater<W>(this, evmConfiguration);
+    return new JournaledUpdater<>(this, evmConfiguration);
   }
 }

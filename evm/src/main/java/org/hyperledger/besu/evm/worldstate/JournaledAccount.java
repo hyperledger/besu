@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
@@ -48,9 +49,10 @@ public class JournaledAccount implements MutableAccount, Undoable {
   private final Address address;
   private final Hash addressHash;
 
-  @Nullable private MutableAccount account;
+  @Nullable private Account account;
 
   private long transactionBoundaryMark;
+  private boolean transactionBoundary = false;
   private final UndoScalar<Long> nonce;
   private final UndoScalar<Wei> balance;
   private final UndoScalar<Bytes> code;
@@ -90,7 +92,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
    *
    * @param account the account
    */
-  public JournaledAccount(final MutableAccount account) {
+  public JournaledAccount(final Account account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
@@ -130,7 +132,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
    * @return The original account over which this tracks updates, or {@code null} if this is a newly
    *     created account.
    */
-  public MutableAccount getWrappedAccount() {
+  public Account getWrappedAccount() {
     return account;
   }
 
@@ -257,6 +259,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
   /** Mark transaction boundary. */
   void markTransactionBoundary() {
     transactionBoundaryMark = mark();
+    transactionBoundary = true;
   }
 
   @Override
@@ -276,10 +279,13 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    // if storage was cleared then it is because it was an empty account, hence zero storage
-    // if we have no backing account, it's a new account, hence zero storage
-    // otherwise ask outside of what we are journaling, journaled change may not be original value
-    return (storageWasCleared || account == null) ? UInt256.ZERO : account.getStorageValue(key);
+    if (transactionBoundary) {
+      return getStorageValue(key);
+    } else if (storageWasCleared || account == null) {
+      return UInt256.ZERO;
+    } else {
+      return account.getOriginalStorageValue(key);
+    }
   }
 
   @Override
@@ -389,7 +395,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   /** Commit this journaled account entry to the parent, if it is not a journaled account. */
   public void commit() {
-    if (!(account instanceof JournaledAccount)) {
+    if (account instanceof MutableAccount account) {
       if (nonce.updated()) {
         account.setNonce(nonce.get());
       }
