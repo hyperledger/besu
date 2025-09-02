@@ -37,6 +37,7 @@ public class ProtocolSpecModule {
    * @param evmConfiguration the EVM configuration
    * @param isParalleltxEnabled whether parallel tx processing is enabled
    * @param metricsSystem the metrics system
+   * @param isBlockAccessListEnabled whether block-level access lists are enabled
    * @return the protocol spec for the frontier network fork
    */
   @Provides
@@ -44,8 +45,9 @@ public class ProtocolSpecModule {
   public ProtocolSpecBuilder frontierProtocolSpec(
       final EvmConfiguration evmConfiguration,
       final boolean isParalleltxEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.frontierDefinition(
-        evmConfiguration, isParalleltxEnabled, metricsSystem);
+        evmConfiguration, isParalleltxEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 }

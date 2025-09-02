@@ -170,7 +170,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts modified in this updater.
    */
-  protected Collection<UpdateTrackingAccount<A>> getUpdatedAccounts() {
+  public Collection<UpdateTrackingAccount<A>> getUpdatedAccounts() {
     return updatedAccounts.values();
   }
 
