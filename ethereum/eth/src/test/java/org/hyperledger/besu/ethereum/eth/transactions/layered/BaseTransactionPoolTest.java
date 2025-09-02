@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -72,6 +73,7 @@ public class BaseTransactionPoolTest extends TrustedSetupClassLoaderExtension {
 
   protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
+  protected final SenderBalanceChecker senderBalanceChecker = mock(SenderBalanceChecker.class);
 
   protected Transaction createTransaction(final long nonce) {
     return createTransaction(nonce, Wei.of(5000L), KEYS1);
