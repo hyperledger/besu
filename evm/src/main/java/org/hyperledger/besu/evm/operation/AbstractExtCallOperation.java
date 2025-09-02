@@ -121,7 +121,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
     Address to = Words.toAddress(toBytes);
-    final Account contract = frame.getWorldUpdater().get(to);
+    final Account contract = getAccount(to, frame);
 
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
@@ -164,7 +164,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     long retainedGas = Math.max(currentGas / 64, gasCalculator.getMinRetainedGas());
     long childGas = currentGas - retainedGas;
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.
@@ -184,20 +184,26 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     // all checks passed, do the call
     final Bytes inputData = frame.readMutableMemory(inputOffset, inputLength);
 
-    MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(childGas)
-        .address(address(frame))
-        .contract(to)
-        .inputData(inputData)
-        .sender(sender(frame))
-        .value(value(frame))
-        .apparentValue(apparentValue(frame))
-        .code(code)
-        .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child))
-        .build();
+    final MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(frame)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(childGas)
+            .address(address(frame))
+            .contract(to)
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(clampedAdd(cost, childGas), null, 0);

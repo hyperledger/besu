@@ -379,6 +379,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
+  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.isBlockAccessListEnabled(isBlockAccessListEnabled));
+    return super.isBlockAccessListEnabled(isBlockAccessListEnabled);
+  }
+
+  @Override
   public BesuControllerBuilder requiredBlocks(final Map<Long, Hash> requiredBlocks) {
     besuControllerBuilderSchedule.values().forEach(b -> b.requiredBlocks(requiredBlocks));
     return super.requiredBlocks(requiredBlocks);

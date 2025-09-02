@@ -44,8 +44,11 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -57,12 +60,14 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.google.common.base.Stopwatch;
@@ -90,6 +95,7 @@ import org.slf4j.LoggerFactory;
  * Once "used" this class must be discarded and another created. This class contains state which is
  * not cleared between executions of buildTransactionListForBlock().
  */
+@SuppressWarnings("unchecked")
 public class BlockTransactionSelector implements BlockTransactionSelectionService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
   private final Supplier<Boolean> isCancelled;
@@ -109,10 +115,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
+  private final BlockAccessList.BlockAccessListBuilder balBuilder;
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
+  private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -153,6 +161,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
+    balBuilder = new BlockAccessList.BlockAccessListBuilder();
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -183,6 +192,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
+    transactionSelectionResults.setBlockAccessList(balBuilder.build());
     return transactionSelectionResults;
   }
 
@@ -283,6 +293,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     transactions.forEach(
         transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
+
+    transactionSelectionResults.setBlockAccessList(balBuilder.build());
     return transactionSelectionResults;
   }
 
@@ -446,15 +458,23 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
-    return transactionProcessor.processTransaction(
-        txWorldStateUpdater,
-        blockSelectionContext.pendingBlockHeader(),
-        transaction,
-        blockSelectionContext.miningBeneficiary(),
-        operationTracer,
-        blockHashLookup,
-        TransactionValidationParams.mining(),
-        blockSelectionContext.blobGasPrice());
+    final TransactionAccessList transactionAccessList =
+        new TransactionAccessList(currentTxnLocation.get());
+    final TransactionProcessingResult result =
+        transactionProcessor.processTransaction(
+            txWorldStateUpdater,
+            blockSelectionContext.pendingBlockHeader(),
+            transaction,
+            blockSelectionContext.miningBeneficiary(),
+            operationTracer,
+            blockHashLookup,
+            TransactionValidationParams.mining(),
+            blockSelectionContext.blobGasPrice(),
+            Optional.of(transactionAccessList));
+    if (txWorldStateUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      balBuilder.addTransactionLevelAccessList(transactionAccessList, stackedUpdater);
+    }
+    return result;
   }
 
   /**
@@ -489,9 +509,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
           notifySelected(evaluationContext, processingResult);
           LOG.atTrace()
-              .setMessage("Selected and commited {} for block creation")
+              .setMessage("Selected and commited {} with location {} for block creation")
               .addArgument(transaction::toTraceLog)
+              .addArgument(currentTxnLocation.get())
               .log();
+          currentTxnLocation.incrementAndGet();
         });
 
     if (isTimeout.get()) {
@@ -505,8 +527,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     LOG.atTrace()
         .setMessage(
-            "Potentially selected {} for block creation, evaluated in {}, waiting for commit")
+            "Potentially selected {} with location {} for block creation, evaluated in {}, waiting for commit")
         .addArgument(transaction::toTraceLog)
+        .addArgument(currentTxnLocation.get())
         .addArgument(evaluationContext.getEvaluationTimer())
         .log();
     return SELECTED;

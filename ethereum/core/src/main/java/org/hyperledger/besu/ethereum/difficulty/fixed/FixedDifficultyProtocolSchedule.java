@@ -38,6 +38,7 @@ public class FixedDifficultyProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
             config,
@@ -51,6 +52,7 @@ public class FixedDifficultyProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -61,6 +63,7 @@ public class FixedDifficultyProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -69,6 +72,7 @@ public class FixedDifficultyProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 }
