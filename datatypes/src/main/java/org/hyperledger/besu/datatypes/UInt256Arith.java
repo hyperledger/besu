@@ -17,30 +17,35 @@ public class UInt256Arith {
     final byte[] numArray = numerator.size() > 32 ? numerator.slice(numerator.size() - 32).toArrayUnsafe() : numerator.toArrayUnsafe();
     final byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
 
+    boolean isNumeratorNegative = false;
+    boolean isDenominatorNegative = false;
     if (signed) {
-      makePositive(numArray, numArray.length != 0 && (numArray[0] >> 7 == -1));
-      makePositive(denomArray, (denomArray[0] >> 7 == -1));
+      isNumeratorNegative = (numArray.length != 0 && (numArray[0] >> 7 == -1));
+      makePositive(numArray, isNumeratorNegative);
+      isDenominatorNegative = (denomArray[0] >> 7 == -1);
+      makePositive(denomArray, isDenominatorNegative);
     }
 
-    final int numeratorOffset = numerator.numberOfLeadingZeroBytes();
-    final int numeratorSize = numerator.size() - numeratorOffset;
-    final int denominatorOffset = denominator.numberOfLeadingZeroBytes();
+    final int numeratorOffset = numberOfLeadingZeros(numArray);
+    final int denominatorOffset = numberOfLeadingZeros(denomArray);
 
-    final int denominatorSize = denominator.size() - denominatorOffset;
-    final int cmp = compare(
-      numArray, numeratorOffset, numeratorSize, denomArray, denominatorOffset, denominatorSize);
+    final int cmp = compare(numArray, numeratorOffset, denomArray, denominatorOffset);
 
     if (cmp < 0) {
       return UInt256.ZERO;
     }
 
     if (cmp == 0) {
+      if (signed && (isNumeratorNegative ^ isDenominatorNegative)) {
+        return UInt256.MAX_VALUE;
+      }
       return UInt256.ONE;
     }
 
     final int[] intResult = divideKnuth(toIntLimbs(numArray, numeratorOffset), toIntLimbs(denomArray, denominatorOffset));
     if (signed) {
-      return Bytes.wrap(fromIntLimbs(intResult, (numArray[0] >> 7 == -1) ^ (denomArray[0] >> 7 == -1)));
+      return Bytes.wrap(
+        fromIntLimbs(intResult, (isNumeratorNegative ^ isDenominatorNegative)));
     }
     return Bytes.wrap(fromIntLimbsUnsigned(intResult));
   }
@@ -65,8 +70,10 @@ public class UInt256Arith {
     }
   }
 
-  private static int compare(final byte[] numArray, final int numeratorOffset, final int numeratorSize, final byte[] denomArray,
-                             final int denominatorOffset, final int denominatorSize) {
+  private static int compare(final byte[] numArray, final int numeratorOffset, final byte[] denomArray,
+                             final int denominatorOffset) {
+    final int numeratorSize = numArray.length - numeratorOffset;
+    final int denominatorSize = denomArray.length - denominatorOffset;
     if (numeratorSize != denominatorSize) {
       return Integer.compare(numeratorSize, denominatorSize);
     }
@@ -263,18 +270,10 @@ public class UInt256Arith {
 
   // removes leading zeros from value array
   private static int[] normalize(final int[] value) {
-    if (value.length == 0) {
+    final int numZeros = numberOfLeadingZeros(value);
+    if (numZeros == 0) {
       return value;
     }
-
-    if (value[0] != 0) {
-      return value;
-    }
-
-    int numZeros = 0;
-    do {
-      numZeros++;
-    } while(numZeros < value.length && value[numZeros] == 0);
 
     final int[] trimmedValue = new int[value.length - numZeros];
     System.arraycopy(value, numZeros, trimmedValue, 0, value.length - numZeros);
@@ -323,8 +322,9 @@ public class UInt256Arith {
 
     // lastly grab unsigned byte and add one to complete sign conversion. need to carry bit from sum
     for (int i = valueBytes.length - 1; i >= 0; i--) {
-      int v = (valueBytes[i] & 0xFF) + 1;
-      valueBytes[i] = (byte) v;
+      final int aByte = valueBytes[i];
+      valueBytes[i] = (byte) (aByte + 1);
+      int v = (aByte & 0xFF) + 1;
       if ((v & 0x100) == 0) {
         break; // no more carry
       }
@@ -423,4 +423,29 @@ public class UInt256Arith {
     return (int)carry;
   }
 
+  private static int numberOfLeadingZeros(final byte[] value) {
+    if (value.length == 0 || value[0] != 0) {
+      return 0;
+    }
+
+    int numZeros = 0;
+    do {
+      numZeros++;
+    } while(numZeros < value.length && value[numZeros] == 0);
+
+    return numZeros;
+  }
+
+  private static int numberOfLeadingZeros(final int[] value) {
+    if (value.length == 0 || value[0] != 0) {
+      return 0;
+    }
+
+    int numZeros = 0;
+    do {
+      numZeros++;
+    } while(numZeros < value.length && value[numZeros] == 0);
+
+    return numZeros;
+  }
 }
