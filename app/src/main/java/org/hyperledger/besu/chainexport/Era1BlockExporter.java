@@ -14,30 +14,29 @@
  */
 package org.hyperledger.besu.chainexport;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.era1.Era1Type;
 import org.hyperledger.besu.util.io.OutputStreamFactory;
 import org.hyperledger.besu.util.snappy.SnappyFactory;
+import org.hyperledger.besu.util.ssz.Merkleizer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.Pack;
@@ -57,6 +56,7 @@ public class Era1BlockExporter {
   private final Blockchain blockchain;
   private final OutputStreamFactory outputStreamFactory;
   private final SnappyFactory snappyFactory;
+  private final Merkleizer merkleizer;
 
   /**
    * Instantiates a new ERA1 block exporter.
@@ -72,6 +72,7 @@ public class Era1BlockExporter {
     this.blockchain = blockchain;
     this.outputStreamFactory = outputStreamFactory;
     this.snappyFactory = snappyFactory;
+    this.merkleizer = new Merkleizer();
   }
 
   /**
@@ -102,7 +103,9 @@ public class Era1BlockExporter {
                   blocksForFile.add(block);
                   blockchain
                       .getTxReceipts(block.getHash())
-                      .ifPresent((receipts) -> transactionReceiptsForFile.put(block, receipts));
+                      .ifPresentOrElse(
+                          (receipts) -> transactionReceiptsForFile.put(block, receipts),
+                          () -> transactionReceiptsForFile.put(block, new ArrayList<>()));
                   blockchain
                       .getTotalDifficultyByHash(block.getHash())
                       .ifPresent(
@@ -145,40 +148,48 @@ public class Era1BlockExporter {
               writeCompressedSection(
                   writer,
                   Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
-                  RLP.encode(block.getBody()::writeTo).toArray());
+                  RLP.encode(block.getBody()::writeWrappedBodyTo).toArray());
           position +=
               writeCompressedSection(
                   writer,
                   Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
                   RLP.encode(
-                          (rlpOutput) ->
-                              transactionReceiptsForFile
-                                  .get(block)
-                                  .forEach(
-                                      (tr) ->
-                                          TransactionReceiptEncoder.writeTo(
-                                              tr,
-                                              rlpOutput,
-                                              TransactionReceiptEncodingConfiguration.DEFAULT)))
+                          (rlpOutput) -> {
+                            List<TransactionReceipt> receipts =
+                                transactionReceiptsForFile.get(block);
+                            if (receipts.isEmpty()) {
+                              rlpOutput.writeEmptyList();
+                            } else {
+                              receipts.forEach(
+                                  (tr) ->
+                                      TransactionReceiptEncoder.writeTo(
+                                          tr,
+                                          rlpOutput,
+                                          TransactionReceiptEncodingConfiguration.DEFAULT));
+                            }
+                          })
                       .toArray());
           position +=
               writeSection(
-                  writer, Era1Type.TOTAL_DIFFICULTY, difficultysForFile.get(block).toArray());
+                  writer,
+                  Era1Type.TOTAL_DIFFICULTY,
+                  difficultysForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
         }
 
-        Hash accumulatorHash =
-            Util.getRootFromListOfBytes(
-                accumulatorHeaderRecords.stream()
-                    .map(
-                        (ahr) -> {
-                          ByteBuffer bytes =
-                              ByteBuffer.allocate(
-                                  ahr.blockHash.size() + ahr.totalDifficulty.size());
-                          ahr.blockHash.appendTo(bytes);
-                          ahr.totalDifficulty.appendTo(bytes);
-                          return Bytes.wrapByteBuffer(bytes);
-                        })
-                    .toList());
+        List<Bytes32> accumulatorBytesList =
+            accumulatorHeaderRecords.stream()
+                .map(
+                    (ahr) ->
+                        merkleizer.merkleizeChunks(
+                            List.of(
+                                ahr.blockHash,
+                                Bytes32.wrap(
+                                    ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN)))))
+                .toList();
+        Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList);
+        accumulatorHash =
+            merkleizer.mixinLength(
+                accumulatorHash, UInt256.valueOf(accumulatorHeaderRecords.size()));
         position += writeSection(writer, Era1Type.ACCUMULATOR, accumulatorHash.toArray());
 
         ByteBuffer blockIndex = ByteBuffer.allocate(16 + blockPositions.size() * 8);
