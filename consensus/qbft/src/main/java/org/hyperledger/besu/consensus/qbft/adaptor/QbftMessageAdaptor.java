@@ -47,4 +47,9 @@ public class QbftMessageAdaptor implements QbftMessage {
   public Message getBesuMessage() {
     return message;
   }
+
+  @Override
+  public String toString() {
+    return "QbftMessage{" + "message=" + message + ", messageData=" + messageData + '}';
+  }
 }
