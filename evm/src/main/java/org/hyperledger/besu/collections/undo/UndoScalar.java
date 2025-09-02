@@ -78,6 +78,25 @@ public class UndoScalar<T> implements Undoable {
   }
 
   /**
+   * Get the value of the scalar at a specific mark without modifying the scalar.
+   *
+   * @param mark the mark to retrieve the value from
+   * @return the value at the provided mark
+   */
+  public T get(final long mark) {
+    T result = value;
+    for (int i = undoLog.size() - 1; i >= 0; i--) {
+      final UndoEntry<T> entry = undoLog.get(i);
+      if (entry.level > mark) {
+        result = entry.value;
+      } else {
+        break;
+      }
+    }
+    return result;
+  }
+
+  /**
    * Set a new value in the scalar.
    *
    * @param value new value

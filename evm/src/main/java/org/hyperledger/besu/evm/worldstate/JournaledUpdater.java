@@ -16,9 +16,12 @@ package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.collections.undo.UndoMap;
 import org.hyperledger.besu.collections.undo.UndoSet;
+import org.hyperledger.besu.collections.undo.Undoable;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -26,9 +29,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * The Journaled updater.
@@ -43,6 +52,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   private final UndoMap<Address, JournaledAccount> accounts;
   private final UndoSet<Address> deleted;
   private final HashSet<Address> touched;
+  private final Map<Address, Long> touchMarks;
   private final long undoMark;
 
   /**
@@ -60,11 +70,13 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
       touched = new HashSet<>();
+      touchMarks = new HashMap<>();
       rootWorld = journaledUpdater.rootWorld;
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
       touched = new HashSet<>();
+      touchMarks = new HashMap<>();
       rootWorld = (AbstractWorldUpdater<W, A>) world;
     } else {
       throw new IllegalArgumentException(
@@ -84,7 +96,9 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
 
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
-    return new ArrayList<>(deleted);
+    return deleted.stream()
+        .filter(addr -> !deleted.contains(addr, undoMark))
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   /**
@@ -95,6 +109,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     accounts.undo(undoMark);
     deleted.undo(undoMark);
     touched.clear();
+    touchMarks.clear();
   }
 
   @Override
@@ -106,6 +121,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   public void commit() {
     if (parentWorld instanceof JournaledUpdater<?, ?> jw) {
       jw.touched.addAll(this.touched);
+      touchMarks.forEach(jw.touchMarks::put);
       return;
     }
 
@@ -147,9 +163,9 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     ja.setNonce(nonce);
     ja.setBalance(balance);
     accounts.put(address, ja);
-    touched.add(address);
     deleted.remove(address);
-    return ja;
+    markTouched(address);
+    return new MarkingAccount(address, ja);
   }
 
   @Override
@@ -160,7 +176,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
       touched.add(address);
-      return existing;
+      return new MarkingAccount(address, existing);
     }
 
     final MutableAccount origin = getForMutation(address);
@@ -170,7 +186,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
       var newAccount = new JournaledAccount(origin);
       accounts.put(address, newAccount);
       touched.add(address);
-      return newAccount;
+      return new MarkingAccount(address, newAccount);
     }
   }
 
@@ -191,6 +207,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   public void deleteAccount(final Address address) {
     deleted.add(address);
     touched.remove(address);
+    touchMarks.remove(address);
     // TODO: This is probably not necessary?
     var account = accounts.get(address);
     if (account != null) {
@@ -200,18 +217,145 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
 
   @Override
   public Account get(final Address address) {
-    if (deleted.contains(address)) {
+    if (deleted.contains(address, undoMark)) {
       return null;
     }
-    final MutableAccount existing = accounts.get(address);
-    if (existing != null) {
-      return existing;
+
+    final JournaledAccount current = accounts.get(address);
+    final JournaledAccount atMark = accounts.get(address, undoMark);
+
+    final Long mark = touchMarks.get(address);
+
+    if (atMark == null) {
+      if (mark != null && current != null) {
+        // Created in this updater, return view at last touch
+        return current.snapshot(mark);
+      }
+      // Either never touched or created in a nested updater; delegate to root world
+      return rootWorld.get(address);
+    } else {
+      if (mark != null) {
+        // Updated in this updater, return view at last touch
+        return current.snapshot(mark);
+      } else {
+        // Not touched in this updater, return view at our mark
+        return current.snapshot(undoMark);
+      }
     }
-    return rootWorld.get(address);
   }
 
   @Override
   public WorldUpdater updater() {
     return new JournaledUpdater<>(this, evmConfiguration);
+  }
+
+  private void markTouched(final Address address) {
+    touched.add(address);
+    touchMarks.put(address, Undoable.markState.get());
+  }
+
+  private class MarkingAccount implements MutableAccount {
+    private final Address address;
+    private final JournaledAccount delegate;
+
+    MarkingAccount(final Address address, final JournaledAccount delegate) {
+      this.address = address;
+      this.delegate = delegate;
+    }
+
+    private void mark() {
+      markTouched(address);
+    }
+
+    @Override
+    public void setNonce(final long value) {
+      delegate.setNonce(value);
+      mark();
+    }
+
+    @Override
+    public void setBalance(final Wei value) {
+      delegate.setBalance(value);
+      mark();
+    }
+
+    @Override
+    public void setCode(final Bytes code) {
+      delegate.setCode(code);
+      mark();
+    }
+
+    @Override
+    public void setStorageValue(final UInt256 key, final UInt256 value) {
+      delegate.setStorageValue(key, value);
+      mark();
+    }
+
+    @Override
+    public void clearStorage() {
+      delegate.clearStorage();
+      mark();
+    }
+
+    @Override
+    public Map<UInt256, UInt256> getUpdatedStorage() {
+      return delegate.getUpdatedStorage();
+    }
+
+    @Override
+    public void becomeImmutable() {
+      delegate.becomeImmutable();
+    }
+
+    @Override
+    public Address getAddress() {
+      return delegate.getAddress();
+    }
+
+    @Override
+    public Hash getAddressHash() {
+      return delegate.getAddressHash();
+    }
+
+    @Override
+    public long getNonce() {
+      return delegate.getNonce();
+    }
+
+    @Override
+    public Wei getBalance() {
+      return delegate.getBalance();
+    }
+
+    @Override
+    public Bytes getCode() {
+      return delegate.getCode();
+    }
+
+    @Override
+    public Hash getCodeHash() {
+      return delegate.getCodeHash();
+    }
+
+    @Override
+    public UInt256 getStorageValue(final UInt256 key) {
+      return delegate.getStorageValue(key);
+    }
+
+    @Override
+    public UInt256 getOriginalStorageValue(final UInt256 key) {
+      return delegate.getOriginalStorageValue(key);
+    }
+
+    @Override
+    public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
+        final Bytes32 startKeyHash, final int limit) {
+      return delegate.storageEntriesFrom(startKeyHash, limit);
+    }
+
+    @Override
+    public boolean isStorageEmpty() {
+      return delegate.isStorageEmpty();
+    }
   }
 }

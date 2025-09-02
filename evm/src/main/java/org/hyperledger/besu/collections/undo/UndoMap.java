@@ -17,6 +17,7 @@ package org.hyperledger.besu.collections.undo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -110,6 +111,26 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
     return delegate.get(key);
   }
 
+  /**
+   * Get the value associated with {@code key} at a specific mark without modifying the map.
+   *
+   * @param key the key whose associated value is to be returned
+   * @param mark the mark to retrieve the value from
+   * @return the value at the provided mark, or {@code null} if the key was not present
+   */
+  public V get(final Object key, final long mark) {
+    V value = delegate.get(key);
+    for (int i = undoLog.size() - 1; i >= 0; i--) {
+      final UndoEntry<K, V> entry = undoLog.get(i);
+      if (entry.level > mark && key.equals(entry.key())) {
+        value = entry.value();
+      } else if (entry.level <= mark) {
+        break;
+      }
+    }
+    return value;
+  }
+
   @Override
   public V put(final @NotNull K key, final @NotNull V value) {
     Objects.requireNonNull(value);
@@ -139,6 +160,29 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
   public void clear() {
     delegate.forEach((k, v) -> undoLog.add(new UndoEntry<>(k, v)));
     delegate.clear();
+  }
+
+  /**
+   * Create a snapshot of this map at a specific mark.
+   *
+   * @param mark the mark to snapshot at
+   * @return a map representing the state at the provided mark
+   */
+  public Map<K, V> toMap(final long mark) {
+    final Map<K, V> snapshot = new HashMap<>(delegate);
+    for (int i = undoLog.size() - 1; i >= 0; i--) {
+      final UndoEntry<K, V> entry = undoLog.get(i);
+      if (entry.level > mark) {
+        if (entry.value() == null) {
+          snapshot.remove(entry.key());
+        } else {
+          snapshot.put(entry.key(), entry.value());
+        }
+      } else {
+        break;
+      }
+    }
+    return snapshot;
   }
 
   @NotNull
