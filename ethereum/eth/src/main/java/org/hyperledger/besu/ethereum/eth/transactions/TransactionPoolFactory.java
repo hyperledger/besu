@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.ReadyTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.SparseTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -310,6 +311,10 @@ public class TransactionPoolFactory {
             transactionReplacementHandler.shouldReplace(
                 t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
 
+    final SenderBalanceChecker senderBalanceChecker =
+        SenderBalanceChecker.create(
+            protocolSchedule, protocolContext, transactionPoolConfiguration);
+
     final EndLayer endLayer = new EndLayer(metrics);
 
     final SparseTransactions sparseTransactions =
@@ -347,7 +352,8 @@ public class TransactionPoolFactory {
               transactionReplacementTester,
               feeMarket,
               blobCache,
-              miningConfiguration);
+              miningConfiguration,
+              senderBalanceChecker);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
@@ -357,7 +363,8 @@ public class TransactionPoolFactory {
               metrics,
               transactionReplacementTester,
               blobCache,
-              miningConfiguration);
+              miningConfiguration,
+              senderBalanceChecker);
     }
 
     return new LayeredPendingTransactions(

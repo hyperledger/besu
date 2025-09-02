@@ -49,7 +49,8 @@ public class LayeredTransactionPoolBaseFeeTest extends AbstractLayeredTransactio
         transactionReplacementTester,
         FeeMarket.london(0L),
         new BlobCache(),
-        MiningConfiguration.newDefault());
+        MiningConfiguration.newDefault(),
+        senderBalanceChecker);
   }
 
   @Override
