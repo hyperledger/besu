@@ -37,8 +37,8 @@ public class UInt256ArithTest {
       assertNotNull(bytesResult);
       assertEquals(bytesResult.length, 32, "division result got " + bytesResult.length + " bytes");
       assertEquals(
-        result,
         numBigInt.divide(denomBigInt),
+        result,
         () -> "Division mismatch for num=" + numerator.toHexString() + " denom=" + denominator.toHexString());
     }
   }
@@ -61,13 +61,13 @@ public class UInt256ArithTest {
       }
 
       final byte[] bytesResult = UInt256Arith.divide(true, numerator, denominator).toArrayUnsafe();
-      final BigInteger result = new BigInteger(1, bytesResult);
+      final BigInteger result = new BigInteger(bytesResult);
 
       assertNotNull(bytesResult);
       assertEquals(bytesResult.length, 32, "division result got " + bytesResult.length + " bytes");
       assertEquals(
-        result,
         numBigInt.divide(denomBigInt),
+        result,
         () -> "Division mismatch for num=" + numerator.toHexString() + " denom=" + denominator.toHexString());
     }
   }
@@ -82,11 +82,11 @@ public class UInt256ArithTest {
     final BigInteger denomBigInt = new BigInteger(denominatorBytes.toArrayUnsafe());
 
     final BigInteger result = new BigInteger(
-      1, UInt256Arith.divide(true, numeratorBytes, denominatorBytes).toArrayUnsafe());
+      UInt256Arith.divide(true, numeratorBytes, denominatorBytes).toArrayUnsafe());
 
     assertEquals(
-      result,
       numBigInt.divide(denomBigInt),
+      result,
       () -> "Division mismatch for num=" + numeratorBytes.toHexString() + " denom=" + denominatorBytes.toHexString());
   }
 
@@ -96,7 +96,11 @@ public class UInt256ArithTest {
         {"0x00", "0x01"},
         {"0x50","0x21"},
         {"0x120d7a733f5016ad9fae51cb9896e15a96147719fe0379d0cb2642a6951e0a5c", "0x007cdab49aba612fb02bd738a74c76789bc9a911c90296502a35df43e939e6e2"},
-        {"0xa7f576de3a6c", "0xfffffffffef1c296a4c6"}
+        {"0xa7f576de3a6c", "0xfffffffffef1c296a4c6"},
+        {"0xffffffffffffffffffffffff6bacfb1469f9a4d5674a85b75f951d72d7a58e4a", "0x020000"},
+        {"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01"},
+        {"0x01", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+        {"0x1598209296af93c13b2f5fde7d8e99", "0x09244c1368"},
       });
   }
 
