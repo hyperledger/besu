@@ -98,6 +98,12 @@ public class RocksDBPlugin implements BesuPlugin {
     }
   }
 
+  public void reset() {
+    if (factory != null) {
+      factory.reset();
+    }
+  }
+
   /**
    * Is high spec enabled.
    *

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -91,12 +92,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -141,6 +138,15 @@ public class BesuCommandTest extends CommandTestAbstract {
     "enode://" + VALID_NODE_ID + "@192.168.0.2:4567",
     "enode://" + VALID_NODE_ID + "@192.168.0.3:4567"
   };
+
+  public static final List<EnodeURL> EPHEMERY_BOOT_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://50a54ecbd2175497640bcf46a25bbe9bb4fae51d7cc2a29ef4947a7ee17496cf39a699b7fe6b703ed0feb9dbaae7e44fc3827fcb7435ca9ac6de4daa4d983b3d@137.74.203.240:30303",
+                  "enode://0f2c301a9a3f9fa2ccfa362b79552c052905d8c2982f707f46cd29ece5a9e1c14ecd06f4ac951b228f059a43c6284a1a14fce709e8976cac93b50345218bf2e9@135.181.140.168:30343")
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
+
   private static final String DNS_DISCOVERY_URL =
       "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org";
   private static final JsonObject VALID_GENESIS_WITH_DISCOVERY_OPTIONS =
@@ -2957,5 +2963,51 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     // Verify that the logger does NOT warn about duplication
     verify(mockLogger, never()).warn(contains("bootnodes"));
+  }
+
+  @Test
+  public void networkEphemeryTest() {
+    parseCommand("--network", "ephemery");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+
+    assertThat(networkArg.getValue().bootNodes()).isEqualTo(EPHEMERY_BOOT_NODES);
+
+    assertThat(networkArg.getValue().networkId()).isEqualTo("39438150");
+
+    Map<String, String> overrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    overrides.put("chainId", "39438151");
+    overrides.put("timestamp", String.valueOf(Instant.now().getEpochSecond()));
+    networkArg.getValue().genesisConfig().withOverrides(overrides);
+
+    assertThat(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get())
+        .isEqualTo("39438151");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void overrideAndReadGenesisConfigTest() {
+    parseCommand(
+        "--override-genesis-config", "networkId=39438161", "chainId=39438161", "timestamp=1234");
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+
+    final EthNetworkConfig config = networkArg.getValue();
+    // reads from defaults
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
+
+    final GenesisConfig actualGenesisConfig = (config.genesisConfig());
+    assertThat(actualGenesisConfig).isNotNull();
+    assertThat(actualGenesisConfig.getConfigOptions().getChainId()).isNotEmpty();
+    assertThat(actualGenesisConfig.getConfigOptions().getChainId().get())
+        .isEqualTo(new BigInteger("39438161")); // current = 39438150
   }
 }

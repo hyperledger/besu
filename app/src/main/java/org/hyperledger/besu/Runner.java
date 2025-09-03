@@ -187,6 +187,12 @@ public class Runner implements AutoCloseable {
 
   /** Stop services. */
   public void stop() {
+    stopServices();
+    shutdown.countDown();
+  }
+
+  /** Stop services but not shutdown */
+  public void stopServices() {
     transactionPoolEvictionService.stop();
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
@@ -213,7 +219,6 @@ public class Runner implements AutoCloseable {
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);
-    shutdown.countDown();
   }
 
   /** Await stop. */
