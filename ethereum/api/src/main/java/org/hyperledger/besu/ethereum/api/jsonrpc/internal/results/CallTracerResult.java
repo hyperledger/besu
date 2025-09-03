@@ -501,5 +501,22 @@ public class CallTracerResult {
     public BigInteger getGasUsed() {
       return this.gasUsed;
     }
+
+    /**
+     * To address
+     *
+     * @return the To address
+     */
+    public String getTo() {
+      return this.to;
+    }
+
+    public String getFrom() {
+      return this.from;
+    }
+
+    public String getValue() {
+      return this.value;
+    }
   }
 }
