@@ -28,7 +28,7 @@ public class MainnetBlockValidatorBuilder {
   private MainnetBlockValidatorBuilder() {}
 
   /**
-   * Creates a block validator for the Frontier network with no block size limit.
+   * Creates a block validator for the networks prior to Osaka, with no block size limit.
    *
    * @param blockHeaderValidator the block header validator
    * @param blockBodyValidator the block body validator
