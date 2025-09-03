@@ -118,7 +118,10 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
    * @param mark the mark to retrieve the value from
    * @return the value at the provided mark, or {@code null} if the key was not present
    */
-  public V get(final Object key, final long mark) {
+  public V get(final Object key, final Long mark) {
+    if (mark == null) {
+      return get(key);
+    }
     V value = delegate.get(key);
     for (int i = undoLog.size() - 1; i >= 0; i--) {
       final UndoEntry<K, V> entry = undoLog.get(i);

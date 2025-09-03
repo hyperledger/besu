@@ -89,7 +89,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   public Collection<? extends Account> getTouchedAccounts() {
     return touched.stream()
         .filter(addr -> !deleted.contains(addr))
-        .map(accounts::get)
+        .map(addr -> accounts.get(addr, touchMarks.get(addr)))
         .filter(Objects::nonNull)
         .collect(Collectors.toCollection(() -> new ArrayList<>(touched.size())));
   }
@@ -221,27 +221,21 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
       return null;
     }
 
-    final JournaledAccount current = accounts.get(address);
-    final JournaledAccount atMark = accounts.get(address, undoMark);
-
-    final Long mark = touchMarks.get(address);
-
-    if (atMark == null) {
-      if (mark != null && current != null) {
-        // Created in this updater, return view at last touch
-        return current.snapshot(mark);
-      }
-      // Either never touched or created in a nested updater; delegate to root world
-      return rootWorld.get(address);
-    } else {
-      if (mark != null) {
-        // Updated in this updater, return view at last touch
-        return current.snapshot(mark);
-      } else {
-        // Not touched in this updater, return view at our mark
-        return current.snapshot(undoMark);
-      }
+    // If touched in this layer, return a view at the last touch
+    final Long lastTouch = touchMarks.get(address);
+    if (lastTouch != null) {
+      final JournaledAccount current = accounts.get(address);
+      return current != null ? current.snapshot(lastTouch) : null;
     }
+
+    // If existed at the start of this updater, return view at undoMark
+    final JournaledAccount atStart = accounts.get(address, undoMark);
+    if (atStart != null) {
+      return atStart.snapshot(undoMark);
+    }
+
+    // Else fallback to root updater
+    return rootWorld.get(address);
   }
 
   @Override
