@@ -41,7 +41,7 @@ public class PathBasedExtraStorageOptions
   public static final String MAX_LAYERS_TO_LOAD = "--bonsai-historical-block-limit";
 
   @Option(
-      names = {MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
+      names = {MAX_LAYERS_TO_LOAD},
       paramLabel = "<LONG>",
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "

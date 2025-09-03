@@ -122,6 +122,7 @@ public class OperationBenchmarkHelper {
         .address(messageFrame.getContractAddress())
         .contract(messageFrame.getRecipientAddress())
         .inputData(messageFrame.getInputData())
+        .eip7928AccessList(messageFrame.getEip7928AccessList().get())
         .sender(messageFrame.getSenderAddress())
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())

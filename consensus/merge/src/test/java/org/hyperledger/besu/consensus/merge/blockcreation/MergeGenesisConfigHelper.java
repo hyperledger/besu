@@ -59,6 +59,7 @@ public interface MergeGenesisConfigHelper {
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
+        false,
         new NoOpMetricsSystem());
   }
 }

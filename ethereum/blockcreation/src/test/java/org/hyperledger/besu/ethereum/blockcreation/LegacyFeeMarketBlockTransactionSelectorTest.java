@@ -66,6 +66,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
