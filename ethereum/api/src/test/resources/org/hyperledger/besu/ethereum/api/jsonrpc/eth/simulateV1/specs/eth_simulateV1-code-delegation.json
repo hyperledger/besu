@@ -1,0 +1,116 @@
+{
+  "comment": "This test simulates an ERC-7702 style delegated authorization flow using eth_simulateV1",
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "eth_simulateV1",
+    "params": [
+      {
+        "validation": true,
+        "blockStateCalls": [
+          {
+            "stateOverrides": {
+              "a05b21E5186Ce93d2a226722b85D6e550Ac7D6E3": {
+                "comment": "Sender account",
+                "balance": "0x90000000000000000000000"
+              },
+              "0x8da48afc965480220a3db9244771bd3afcb5d895": {
+                "comment": "Authorizer recipient",
+                "balance": "0x90000000000000000000000"
+              },
+              "0x0000000000000000000000000000000000009999": {
+                "comment": "Contract sends all its Ether to the address provided as a call data.",
+                "code": "5F5F5F5F475F355AF100"
+              },
+              "0x0000000000000000000000000000000000009998": {
+                "comment": "Contract returns the balance of the address provided as a call data.",
+                "code": "6000353160005260206000f3"
+              }
+            },
+            "calls": [
+              {
+                "comment": "Transfer all eth from Authorizer to Sender using delegated authorization",
+                "from": "0xa05b21E5186Ce93d2a226722b85D6e550Ac7D6E3",
+                "to": "0x8da48afc965480220a3db9244771bd3afcb5d895",
+                "data": "0x000000000000000000000000a05b21e5186ce93d2a226722b85d6e550ac7d6e3",
+                "authorizationList": [
+                  {
+                    "chainId": "0xC72DD9D5E883E",
+                    "address": "0x0000000000000000000000000000000000009999",
+                    "nonce": "0x0",
+                    "r": "0xf584f0806d84a493cd390800fb3ae2f26809d209219e60da892f7e4079165c6",
+                    "s": "0x6e65e0f23145ba9ddeb3f4b5dbbe87dfa010827c11aeed53c5624e3f5153c50c",
+                    "v": "0x1"
+                  }
+                ]
+              },
+              {
+                "comment": "Call the contract to get the balance of the Authorizer, should be 0 after transfer",
+                "from": "0xa05b21E5186Ce93d2a226722b85D6e550Ac7D6E3",
+                "to": "0x0000000000000000000000000000000000009998",
+                "data": "0x0000000000000000000000008da48afc965480220a3db9244771bd3afcb5d895"
+              }
+            ]
+          }
+        ]
+      },
+      "latest"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "baseFeePerGas": "0x4c9114a",
+        "blobGasUsed": "0x0",
+        "calls": [
+          {
+            "gasUsed": "0xa637",
+            "logs": [],
+            "returnData": "0x",
+            "status": "0x1"
+          },
+          {
+            "gasUsed": "0x5db5",
+            "logs": [],
+            "returnData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "status": "0x1"
+          }
+        ],
+        "difficulty": "0x0",
+        "excessBlobGas": "0x0",
+        "extraData": "0x",
+        "gasLimit": "0x47e7c40",
+        "gasUsed": "0x103ec",
+        "hash": "0xb3594dcc170016f744d99487df794dbc0d74987832400165424f8d643858a08b",
+        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "miner": "0x0000000000000000000000000000000000000000",
+        "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce": "0x0000000000000000",
+        "number": "0x2e",
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "parentHash": "0xaf51811799f22260e5b4e1f95504dae760505f102dcb2e9ca7d897d8a40124a1",
+        "receiptsRoot": "0xf8b7229846b309e9829bd636a0b2482ddb8c4b7d4a81898684747e929e66914b",
+        "requestsHash": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+        "size": "0x380",
+        "stateRoot": "0x603253689109bd8bea3a058980d64f21938e4fac8ea1c7e7a62597c1c6ce7637",
+        "timestamp": "0x1ce",
+        "transactions": [
+          "0x9cdd80ae02b63110b309cdabae3e07f5dda5ade1acffa67cc44a42c09784bd5e",
+          "0x62efc8aaf1015f73621590ddb64bf85cc03f3a0a255692a1c6b0527c03dfcfcc"
+        ],
+        "transactionsRoot": "0x3b9bdae8a7038e813a514910c6c81257e07722eec074d60872a24867045a56cf",
+        "uncles": [],
+        "withdrawals": [],
+        "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+      }
+    ]
+  },
+  "statusCode": 200
+}
+
+
+
+
