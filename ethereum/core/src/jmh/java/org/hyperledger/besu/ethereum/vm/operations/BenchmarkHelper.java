@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.mockito.Mockito.mock;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -32,24 +33,48 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BenchmarkHelper {
   public static MessageFrame createMessageCallFrame() {
     return MessageFrame.builder()
-        .worldUpdater(mock(WorldUpdater.class))
-        .originator(Address.ZERO)
-        .gasPrice(Wei.ONE)
-        .blobGasPrice(Wei.ONE)
-        .blockValues(mock(BlockValues.class))
-        .miningBeneficiary(Address.ZERO)
-        .blockHashLookup((__, ___) -> Hash.ZERO)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(Long.MAX_VALUE)
-        .address(Address.ZERO)
-        .contract(Address.ZERO)
-        .inputData(Bytes32.ZERO)
-        .sender(Address.ZERO)
-        .value(Wei.ZERO)
-        .apparentValue(Wei.ZERO)
-        .code(CodeV0.EMPTY_CODE)
-        .completer(__ -> {})
-        .build();
+            .worldUpdater(mock(WorldUpdater.class))
+            .originator(Address.ZERO)
+            .gasPrice(Wei.ONE)
+            .blobGasPrice(Wei.ONE)
+            .blockValues(mock(BlockValues.class))
+            .miningBeneficiary(Address.ZERO)
+            .blockHashLookup((__, ___) -> Hash.ZERO)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(Long.MAX_VALUE)
+            .address(Address.ZERO)
+            .contract(Address.ZERO)
+            .inputData(Bytes32.ZERO)
+            .sender(Address.ZERO)
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .code(CodeV0.EMPTY_CODE)
+            .completer(__ -> {
+            })
+            .build();
+  }
+
+  public static MessageFrame createMessageCallFrameWithCallData(final Bytes callData) {
+    return MessageFrame.builder()
+            .worldUpdater(mock(WorldUpdater.class))
+            .originator(Address.ZERO)
+            .gasPrice(Wei.ONE)
+            .blobGasPrice(Wei.ONE)
+            .blockValues(mock(BlockValues.class))
+            .miningBeneficiary(Address.ZERO)
+            .blockHashLookup((__, ___) -> Hash.ZERO)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(Long.MAX_VALUE)
+            .address(Address.ZERO)
+            .contract(Address.ZERO)
+            .inputData(callData)
+            .sender(Address.ZERO)
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .code(CodeV0.EMPTY_CODE)
+            .completer(__ -> {
+            })
+            .build();
   }
 
   /**
@@ -65,6 +90,35 @@ public class BenchmarkHelper {
       final byte[] a = new byte[aSize];
       random.nextBytes(a);
       pool[i] = Bytes.wrap(a);
+    }
+  }
+
+  static Bytes createCallData(final int size, final boolean nonZero) {
+    byte[] data = new byte[size];
+    if (nonZero) {
+      // Fill with pattern to simulate worst-case scenario
+      for (int i = 0; i < size; i++) {
+        data[i] = (byte) (i % 256);
+      }
+    }
+    // else data remains all zeros (best case)
+    return Bytes.wrap(data);
+  }
+
+  static void fillPoolsForCallData(final Bytes[] sizePool, final Bytes[] destOffsetPool, final Bytes[] srcOffsetPool, final int dataSize, final boolean fixedSrcDst) {
+    for (int i = 0; i < sizePool.length; i++) {
+      // Size - use the configured dataSize
+      sizePool[i] = Bytes.wrap(UInt256.valueOf(dataSize));
+
+      if (fixedSrcDst) {
+        // Fixed source and destination (best case)
+        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+      } else {
+        // Variable source and destination (worst case for memory allocation)
+        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024)); // Vary destination
+        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize))); // Vary source within calldata
+      }
     }
   }
 }
