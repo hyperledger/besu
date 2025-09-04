@@ -33,9 +33,10 @@ public class CallDataCopyOperationBenchmark {
     // Parameters matching the test case variations
     @Param({"0", "100", "10240", "1048576"}) // 0 bytes, 100 bytes, 10KiB, 1MiB
     public int dataSize;
-    // dataSize=0 byte      -> gas cost = 3 gas
-    // dataSize=100 bytes   -> gas cost = 15 gas
-    // dataSize=
+    // dataSize=0 byte          -> gas cost = 3 gas
+    // dataSize=100 bytes       -> gas cost = 15 gas
+    // dataSize=10240 bytes     -> gas cost = 963 gas
+    // dataSize=1048576 bytes   -> gas cost = 98307 gas
 
     @Param({"false", "true"})
     public boolean fixedSrcDst;
@@ -66,7 +67,7 @@ public class CallDataCopyOperationBenchmark {
 
         index = 0;
     }
-/*
+
     @Benchmark
     public void baseline() {
         frame.pushStackItem(sizePool[index]);
@@ -79,7 +80,7 @@ public class CallDataCopyOperationBenchmark {
         index = (index + 1) % SAMPLE_SIZE;
 
     }
-*/
+
     @Benchmark
     public void executeOperation(final Blackhole blackhole) {
         frame.pushStackItem(sizePool[index]);

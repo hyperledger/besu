@@ -96,28 +96,23 @@ public class BenchmarkHelper {
   static Bytes createCallData(final int size, final boolean nonZero) {
     byte[] data = new byte[size];
     if (nonZero) {
-      // Fill with pattern to simulate worst-case scenario
       for (int i = 0; i < size; i++) {
         data[i] = (byte) (i % 256);
       }
     }
-    // else data remains all zeros (best case)
     return Bytes.wrap(data);
   }
 
   static void fillPoolsForCallData(final Bytes[] sizePool, final Bytes[] destOffsetPool, final Bytes[] srcOffsetPool, final int dataSize, final boolean fixedSrcDst) {
     for (int i = 0; i < sizePool.length; i++) {
-      // Size - use the configured dataSize
       sizePool[i] = Bytes.wrap(UInt256.valueOf(dataSize));
 
       if (fixedSrcDst) {
-        // Fixed source and destination (best case)
         destOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
         srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
       } else {
-        // Variable source and destination (worst case for memory allocation)
-        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024)); // Vary destination
-        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize))); // Vary source within calldata
+        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024));
+        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize)));
       }
     }
   }
