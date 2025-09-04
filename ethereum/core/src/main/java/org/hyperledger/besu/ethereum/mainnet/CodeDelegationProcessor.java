@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -67,13 +68,17 @@ public class CodeDelegationProcessor {
    * @return The result of the code delegation processing.
    */
   public CodeDelegationResult process(
-      final WorldUpdater worldUpdater, final Transaction transaction) {
+      final WorldUpdater worldUpdater,
+      final Transaction transaction,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     final CodeDelegationResult result = new CodeDelegationResult();
 
     transaction
         .getCodeDelegationList()
         .get()
-        .forEach(codeDelegation -> processCodeDelegation(worldUpdater, codeDelegation, result));
+        .forEach(
+            codeDelegation ->
+                processCodeDelegation(worldUpdater, codeDelegation, result, eip7928AccessList));
 
     return result;
   }
@@ -81,7 +86,8 @@ public class CodeDelegationProcessor {
   private void processCodeDelegation(
       final WorldUpdater worldUpdater,
       final CodeDelegation codeDelegation,
-      final CodeDelegationResult result) {
+      final CodeDelegationResult result,
+      final Optional<TransactionAccessList> eip7928AccessList) {
     LOG.trace("Processing code delegation: {}", codeDelegation);
 
     if (maybeChainId.isPresent()
@@ -115,7 +121,7 @@ public class CodeDelegationProcessor {
 
     final Optional<MutableAccount> maybeAuthorityAccount =
         Optional.ofNullable(worldUpdater.getAccount(authorizer.get()));
-
+    eip7928AccessList.ifPresent(t -> t.addAccount(authorizer.get()));
     result.addAccessedDelegatorAddress(authorizer.get());
 
     MutableAccount authority;
@@ -126,8 +132,10 @@ public class CodeDelegationProcessor {
         return;
       }
       authority = worldUpdater.createAccount(authorizer.get());
+      eip7928AccessList.ifPresent(t -> t.addAccount(authority.getAddress()));
     } else {
       authority = maybeAuthorityAccount.get();
+      eip7928AccessList.ifPresent(t -> t.addAccount(authority.getAddress()));
 
       if (!codeDelegationService.canSetCodeDelegation(authority)) {
         return;

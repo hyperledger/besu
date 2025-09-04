@@ -3,12 +3,44 @@
 ## Unreleased
 
 ### Breaking Changes
-- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)
+- Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
+- Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
+
+#### Performance
+- Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
+- Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
+
+#### Fusaka devnets
+
+### Bug fixes
+
+
+## 25.8.0
+### Breaking Changes
+- Change in behavior for `eth_estimateGas` to improve accuracy when used on a network with a base fee market. 
+  - if there are no gas pricing parameters specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)
+  - however, if you specify gas price of 0, the estimation will fail if the baseFee is > 0
 - Remove PoAMetricsService and IbftQueryService which have been deprecated since 2019 and are replaced by PoaQueryService and BftQueryService respectively [#8940](https://github.com/hyperledger/besu/pull/8940)
 - Remove deprecated `Quantity.getValue` method (deprecated since 2019) [#8968](https://github.com/hyperledger/besu/pull/8968)
 - Support for block creation on networks running a pre-Byzantium fork is removed, after being deprecated for a few months. If still running a pre-Byzantium network, it needs to be updated to continue to produce blocks [#9005](https://github.com/hyperledger/besu/pull/9005)
 - Remove support for Ethereum protocol version `eth/67`. [#9008](https://github.com/hyperledger/besu/pull/9008). 
 - Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
+- Ubuntu 20.04 is no longer supported. You need at least 22.04 (required for native libraries).
+- Improve performance of OperandStack resizes for deep stacks (> 100 elements). Impacts general EVM performance while working with deep stacks [#8869](https://github.com/hyperledger/besu/pull/8869)
 
 ### Upcoming Breaking Changes
 - Deprecated CLI options
@@ -24,9 +56,19 @@
 - Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
 - Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
 - Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
-- Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
 - Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
 - Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
+- LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
+- More informative logs during block creation [#9020](https://github.com/hyperledger/besu/pull/9020)
+- Faster block creation, reducing the time spent committing world state changes [#9023](https://github.com/hyperledger/besu/pull/9023)
+
+#### Dependencies
+- Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
+- Update commons dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+  - resolves CVE-2025-48924
+  - resolves CVE-2020-15250
+- Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
+  - resolves CVE-2025-55163
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
@@ -40,7 +82,6 @@
 
 ### Bug fixes
 - Fix bug with `eth_estimateGas` on QBFT - use zero address when doing simulation against `pending` block [#9031](https://github.com/hyperledger/besu/pull/9031)
-- Fix bug with handling of invalid requests for `engine_newPayloadV4` [#8729](https://github.com/hyperledger/besu/pull/8729)
 
 ## 25.7.0
 ### Breaking Changes

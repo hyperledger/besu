@@ -83,6 +83,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
+        false,
         new NoOpMetricsSystem());
   }
 
@@ -212,6 +213,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
+                false,
                 false,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();

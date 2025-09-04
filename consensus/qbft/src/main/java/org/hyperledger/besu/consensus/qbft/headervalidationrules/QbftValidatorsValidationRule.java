@@ -83,4 +83,9 @@ public class QbftValidatorsValidationRule implements AttachedBlockHeaderValidati
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "QbftValidatorsValidation";
+  }
 }

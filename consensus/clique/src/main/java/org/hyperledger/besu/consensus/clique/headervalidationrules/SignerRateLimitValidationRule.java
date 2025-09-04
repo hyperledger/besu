@@ -48,4 +48,9 @@ public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidat
   public boolean includeInLightValidation() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "CliqueSignerRateLimitValidation";
+  }
 }

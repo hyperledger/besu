@@ -59,7 +59,7 @@ public class PayOperation extends AbstractOperation {
     final Address to = Words.toAddress(toAddressBytes);
     final Wei value = Wei.wrap(frame.getStackItem(1));
     final boolean hasValue = value.greaterThan(Wei.ZERO);
-    final Account recipient = frame.getWorldUpdater().get(to);
+    final Account recipient = getAccount(to, frame);
 
     final boolean accountIsWarm = frame.warmUpAddress(to);
 
@@ -74,14 +74,14 @@ public class PayOperation extends AbstractOperation {
       return new OperationResult(cost, null);
     }
 
-    final MutableAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
+    final MutableAccount senderAccount = getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 
-    final MutableAccount recipientAccount = frame.getWorldUpdater().getOrCreate(to);
+    final MutableAccount recipientAccount = getOrCreateAccount(to, frame);
     senderAccount.decrementBalance(value);
     recipientAccount.incrementBalance(value);
 

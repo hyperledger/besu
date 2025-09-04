@@ -40,6 +40,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final String PRECOMPILE_NAME = "P256VERIFY";
   private static final Bytes32 VALID = Bytes32.leftPad(Bytes.of(1), (byte) 0);
   private static final Bytes INVALID = Bytes.EMPTY;
+  private static final int SECP256R1_INPUT_LENGTH = 160;
 
   private static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
   private static final BigInteger N = R1_PARAMS.getN();
@@ -121,9 +122,10 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, final MessageFrame messageFrame) {
-    if (input.size() != 160) {
+    if (input.size() != SECP256R1_INPUT_LENGTH) {
       LOG.warn(
-          "Invalid input length for P256VERIFY precompile: expected 128 bytes but got {}",
+          "Invalid input length for P256VERIFY precompile: expected {} bytes but got {}",
+          SECP256R1_INPUT_LENGTH,
           input.size());
       return PrecompileContractResult.success(INVALID);
     }

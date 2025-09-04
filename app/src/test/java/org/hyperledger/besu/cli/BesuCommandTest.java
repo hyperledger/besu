@@ -43,7 +43,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -437,7 +436,7 @@ public class BesuCommandTest extends CommandTestAbstract {
       // Verify TOML stores it by the appropriate type
       if (optionSpec.type().equals(Boolean.class)) {
         tomlResult.getBoolean(tomlKey);
-      } else if (optionSpec.isMultiValue() || optionSpec.arity().max > 1) {
+      } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
@@ -1413,13 +1412,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void parsesInvalidBonsaiHistoricalBlockLimitOption() {
 
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "ten");
 
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--bonsai-maximum-back-layers-to-load': 'ten' is not a long");
+            "Invalid value for option '--bonsai-historical-block-limit': 'ten' is not a long");
   }
 
   @Test
@@ -2805,7 +2804,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2830,7 +2829,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2853,7 +2852,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
     assertThat(startupConfigLog)
@@ -2879,7 +2878,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2902,7 +2901,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2927,13 +2926,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  private String getStartupConfigLog() {
+    // find the startup log config summary
+    final Stream<String> stringStream =
+        stringArgumentCaptor.getAllValues().stream().filter(p -> p.contains("####"));
+    return stringStream.findFirst().orElseThrow();
   }
 
   @Test

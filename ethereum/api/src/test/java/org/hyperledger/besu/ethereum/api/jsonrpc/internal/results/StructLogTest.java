@@ -18,7 +18,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Arrays;
 import java.util.HashMap;
