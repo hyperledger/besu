@@ -52,7 +52,12 @@ public class MainnetBlockImporter implements BlockImporter {
           .getYield()
           .ifPresent(
               processingOutputs -> {
-                context.getBlockchain().appendBlock(block, processingOutputs.getReceipts());
+                context
+                    .getBlockchain()
+                    .appendBlock(
+                        block,
+                        processingOutputs.getReceipts(),
+                        processingOutputs.getBlockAccessList());
 
                 // move the head worldstate if block processing was successful:
                 context

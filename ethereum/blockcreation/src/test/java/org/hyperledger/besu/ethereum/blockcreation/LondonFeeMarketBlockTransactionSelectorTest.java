@@ -76,6 +76,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem())
         .createProtocolSchedule();
   }

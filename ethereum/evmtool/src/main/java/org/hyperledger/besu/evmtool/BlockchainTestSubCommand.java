@@ -45,10 +45,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -198,9 +200,10 @@ public class BlockchainTestSubCommand implements Runnable {
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT
                 : HeaderValidationMode.FULL;
+        final Stopwatch timer = Stopwatch.createStarted();
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
-
+        timer.stop();
         if (importResult.isImported() != candidateBlock.isValid()) {
           parentCommand.out.printf(
               "Block %d (%s) %s%n",
@@ -208,11 +211,19 @@ public class BlockchainTestSubCommand implements Runnable {
               block.getHash(),
               importResult.isImported() ? "Failed to be rejected" : "Failed to import");
         } else {
-          parentCommand.out.printf(
-              "Block %d (%s) %s%n",
-              block.getHeader().getNumber(),
-              block.getHash(),
-              importResult.isImported() ? "Imported" : "Rejected (correctly)");
+          if (importResult.isImported()) {
+            final long gasUsed = block.getHeader().getGasUsed();
+            final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+            final float mGps = gasUsed * 1000.0f / timeNs;
+            final double timeMs = timeNs / 1_000_000.0;
+            parentCommand.out.printf(
+                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
+                block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
+          } else {
+            parentCommand.out.printf(
+                "Block %d (%s) Rejected (correctly)%n",
+                block.getHeader().getNumber(), block.getHash());
+          }
         }
       } catch (final RLPException e) {
         if (candidateBlock.isValid()) {

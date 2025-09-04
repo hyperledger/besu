@@ -62,6 +62,6 @@ public class MainnetBlockImporterTest {
     verify(blockValidator, never())
         .validateAndProcessBlock(
             context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL);
-    verify(blockchain, never()).appendBlock(eq(block), any());
+    verify(blockchain, never()).appendBlock(eq(block), any(), any());
   }
 }
