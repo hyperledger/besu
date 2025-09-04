@@ -190,6 +190,17 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     }
   }
 
+  @Override
+  public MutableAccount getMutableFrozen(final Address address) {
+    final Account account = getMutable(address);
+    if (account == null) {
+      return null;
+    }
+    final JournaledAccount frozen = (account instanceof JournaledAccount a) ? a : new JournaledAccount(account);
+    frozen.becomeImmutable();
+    return frozen;
+  }
+
   protected MutableAccount getForMutation(final Address address) {
     final AbstractWorldUpdater<W, A> wrapped = this.rootWorld;
     final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
@@ -213,6 +224,28 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     if (account != null) {
       account.setDeleted(true);
     }
+  }
+
+  private MutableAccount getMutable(final Address address) {
+    if (deleted.contains(address, undoMark)) {
+      return null;
+    }
+
+    // If touched in this layer, return a view at the last touch
+    final Long lastTouch = touchMarks.get(address);
+    if (lastTouch != null) {
+      final JournaledAccount current = accounts.get(address);
+      return current != null ? current.snapshot(lastTouch) : null;
+    }
+
+    // If existed at the start of this updater, return view at undoMark
+    final JournaledAccount atStart = accounts.get(address, undoMark);
+    if (atStart != null) {
+      return atStart.snapshot(undoMark);
+    }
+
+    // Else fallback to root updater
+    return rootWorld.getAccount(address);
   }
 
   @Override

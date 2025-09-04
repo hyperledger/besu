@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -365,9 +366,9 @@ public class JournaledAccount implements MutableAccount, Undoable {
    * Create an immutable snapshot of this account at the provided mark.
    *
    * @param mark the mark to snapshot at
-   * @return an {@link Account} representing the state at {@code mark}
+   * @return an {@link MutableAccount} representing the state at {@code mark}
    */
-  public Account snapshot(final long mark) {
+  public MutableAccount snapshot(final long mark) {
     final long snapNonce = nonce.get(mark);
     final Wei snapBalance = balance.get(mark);
     final Bytes snapCode = code.get(mark);
@@ -382,7 +383,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
       wrappedSnapshot = account;
     }
 
-    return new Account() {
+    return new MutableAccount() {
       @Override
       public Address getAddress() {
         return address;
@@ -404,8 +405,18 @@ public class JournaledAccount implements MutableAccount, Undoable {
       }
 
       @Override
+      public void setBalance(final Wei value) {
+        throw new ModificationNotAllowedException();
+      }
+
+      @Override
       public Bytes getCode() {
         return snapCode;
+      }
+
+      @Override
+      public void setCode(final Bytes code) {
+        throw new ModificationNotAllowedException();
       }
 
       @Override
@@ -428,6 +439,21 @@ public class JournaledAccount implements MutableAccount, Undoable {
       @Override
       public UInt256 getOriginalStorageValue(final UInt256 key) {
         return getStorageValue(key);
+      }
+
+      @Override
+      public void setStorageValue(final UInt256 key, final UInt256 value) {
+        throw new ModificationNotAllowedException();
+      }
+
+      @Override
+      public void clearStorage() {
+        throw new ModificationNotAllowedException();
+      }
+
+      @Override
+      public Map<UInt256, UInt256> getUpdatedStorage() {
+        return Collections.unmodifiableMap(snapStorage);
       }
 
       @Override
@@ -460,6 +486,16 @@ public class JournaledAccount implements MutableAccount, Undoable {
       public boolean isStorageEmpty() {
         return snapStorage.isEmpty()
             && (snapStorageCleared || wrappedSnapshot == null || wrappedSnapshot.isStorageEmpty());
+      }
+
+      @Override
+      public void setNonce(final long value) {
+        throw new ModificationNotAllowedException();
+      }
+
+      @Override
+      public void becomeImmutable() {
+        // already immutable
       }
     };
   }

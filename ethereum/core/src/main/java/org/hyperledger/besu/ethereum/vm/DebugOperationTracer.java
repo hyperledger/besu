@@ -242,7 +242,7 @@ public class DebugOperationTracer implements OperationTracer {
     }
     try {
       Map<UInt256, UInt256> updatedStorage =
-          frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage();
+          frame.getWorldUpdater().getMutableFrozen(frame.getRecipientAddress()).getUpdatedStorage();
       if (updatedStorage.isEmpty()) return Optional.empty();
       final Map<UInt256, UInt256> storageContents = new TreeMap<>(updatedStorage);
 

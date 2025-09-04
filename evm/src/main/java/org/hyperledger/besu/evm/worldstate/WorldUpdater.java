@@ -98,6 +98,23 @@ public interface WorldUpdater extends MutableWorldView {
   MutableAccount getAccount(Address address);
 
   /**
+   * Retrieves the provided account as a {@link MutableAccount} and freezes it.
+   *
+   * <p>The returned account has {@link MutableAccount#becomeImmutable()} invoked on it before being
+   * returned.
+   *
+   * @param address the address of the account
+   * @return the frozen {@link MutableAccount}, or {@code null} if the account does not exist
+   */
+  default MutableAccount getMutableFrozen(final Address address) {
+    final MutableAccount account = getAccount(address);
+    if (account != null) {
+      account.becomeImmutable();
+    }
+    return account;
+  }
+
+  /**
    * Retrieves the senders account, returning a modifiable object (whose updates are accumulated by
    * this updater).
    *
