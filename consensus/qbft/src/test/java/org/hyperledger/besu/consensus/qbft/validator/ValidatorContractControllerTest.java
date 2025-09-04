@@ -89,6 +89,7 @@ public class ValidatorContractControllerTest {
                 0,
                 0,
                 Bytes.fromHexString(GET_VALIDATORS_FUNCTION_RESULT),
+                Optional.empty(),
                 ValidationResult.valid()));
 
     when(transactionSimulator.process(
@@ -137,6 +138,7 @@ public class ValidatorContractControllerTest {
                 0,
                 ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()));
 
     when(transactionSimulator.process(
@@ -159,7 +161,7 @@ public class ValidatorContractControllerTest {
         new TransactionSimulatorResult(
             transaction,
             TransactionProcessingResult.successful(
-                List.of(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                List.of(), 0, 0, Bytes.EMPTY, Optional.empty(), ValidationResult.valid()));
 
     when(transactionSimulator.process(
             callParameter,

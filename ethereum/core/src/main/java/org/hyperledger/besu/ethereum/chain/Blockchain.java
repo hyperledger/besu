@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Comparator;
 import java.util.List;
@@ -182,6 +183,8 @@ public interface Blockchain {
    * @return The block body corresponding to this block hash.
    */
   Optional<BlockBody> getBlockBodySafe(Hash blockHeaderHash);
+
+  Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
 
   /**
    * Given a block's hash, returns the list of transaction receipts associated with this block's
