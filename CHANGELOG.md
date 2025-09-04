@@ -17,6 +17,7 @@
 
 ### Additions and Improvements
 - Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Update spring security framework (toml parsing) [#9153](https://github.com/hyperledger/besu/pull/9153)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
 
