@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import static org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract.N;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -26,14 +25,12 @@ import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.math.ec.ECPoint;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -120,20 +117,31 @@ class P256VerifyPrecompiledContractTest {
 
     // call default  implementation:
     secp256R1.disableNative();
-    var pureJavaResult = contract.computeDefault(inputBytes);
-
-    // call maybeNative implementation
+    var defaultResult = contract.computeDefault(inputBytes);
+    // call default native implementation:
     secp256R1.maybeEnableNative();
+    var defaultMaybeNativeResult = contract.computeDefault(inputBytes);
+
+    // verify boringssl precompile-specific implementation
+    // this should be configured/run statically, adding the call here just for clarity
+    P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL();
     var maybeNativeResult = contract.computePrecompile(inputBytes, messageFrame);
 
     // Should return empty bytes (INVALID) because curve validation catches
     // the invalid point before signature verification attempts
     assertTrue(
-        pureJavaResult.cachedResult().isSuccessful(),
+        defaultResult.cachedResult().isSuccessful(),
         "Invalid curve point should succeed with empty result");
     assertEquals(
         Bytes.EMPTY,
-        pureJavaResult.cachedResult().output(),
+        defaultResult.cachedResult().output(),
+        "Invalid curve point should return empty result");
+    assertTrue(
+        defaultMaybeNativeResult.cachedResult().isSuccessful(),
+        "Invalid curve point should succeed with empty result");
+    assertEquals(
+        Bytes.EMPTY,
+        defaultMaybeNativeResult.cachedResult().output(),
         "Invalid curve point should return empty result");
     assertEquals(
         Bytes.EMPTY,
@@ -143,53 +151,23 @@ class P256VerifyPrecompiledContractTest {
 
   @Test
   void testModularComparisonWhenRPrimeExceedsN() {
-    // Test edge case where R'.x > n to verify proper modular comparison r' ≡ r (mod n)
-    // This tests that the implementation correctly handles cases where the computed
-    // point's x-coordinate exceeds the curve order
-    ECPoint G = P256VerifyPrecompiledContract.R1_PARAMS.getG(); // generator
 
-    // Create a scenario where we can control R' to have x-coordinate > n
-    // We'll use a known private key and construct a signature where R'.x > n but R'.x ≡ r (mod n)
-
-    // Message hash
-    String messageHash = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
-    BigInteger z = new BigInteger(messageHash, 16);
-
-    // Use a private key that will generate a point with large x-coordinate
-    BigInteger privateKey = N.subtract(BigInteger.valueOf(12345)); // close to n
-    ECPoint publicKeyPoint = G.multiply(privateKey).normalize();
-
-    // Create signature using a k value that produces R with x-coordinate > n
-    // We need R.x such that R.x > n but the verification still works via modular arithmetic
-    BigInteger k = N.add(BigInteger.valueOf(98765)); // This will create R.x > n
-    ECPoint R = G.multiply(k).normalize();
-    BigInteger r_full = R.getAffineXCoord().toBigInteger();
-    BigInteger r = r_full.mod(N); // This is the r value that goes in signature
-
-    // Calculate s = k^(-1)(z + r*privateKey) mod n
-    BigInteger s = k.modInverse(N).multiply(z.add(r.multiply(privateKey))).mod(N);
-
-    // Ensure s is not zero
-    if (s.equals(BigInteger.ZERO)) {
-      s = BigInteger.ONE;
-    }
-
-    // Format the signature components
-    String rHex = String.format("%064x", r);
-    String sHex = String.format("%064x", s);
-
-    // Extract public key coordinates
-    BigInteger pubKeyX = publicKeyPoint.getAffineXCoord().toBigInteger();
-    BigInteger pubKeyY = publicKeyPoint.getAffineYCoord().toBigInteger();
-    String pubKeyXHex = String.format("%064x", pubKeyX);
-    String pubKeyYHex = String.format("%064x", pubKeyY);
-
-    String input = messageHash + rHex + sHex + pubKeyXHex + pubKeyYHex;
+    // parameters borrowed from execution-spec-tests for R' exceeding N:
+    // https://github.com/ethereum/execution-spec-tests/blob/61f8ac90841770d9fc407f1498ec0e5229b27508/tests/osaka/eip7951_p256verify_precompiles/test_p256verify.py#L303-L315
+    String messageHash = "BB5A52F42F9C9261ED4361F59422A1E30036E7C32B270C8807A419FECA605023";
+    String r = "000000000000000000000000000000004319055358E8617B0C46353D039CDAAB";
+    String s = "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63254E";
+    String pubKeyX = "0AD99500288D466940031D72A9F5445A4D43784640855BF0A69874D2DE5FE103";
+    String pubKeyY = "C5011E6EF2C42DCD50D5D3D29F99AE6EBA2C80C9244F4C5422F0979FF0C3BA5E";
+    String input = messageHash + r + s + pubKeyX + pubKeyY;
     Bytes inputBytes = Bytes.fromHexString(input);
 
     // call the signaturebased impl explicitly, with native disabled:
     secp256R1.disableNative();
     var defaultResult = contract.computeDefault(inputBytes);
+    // call the signaturebased impl explicitly, with openssl native (maybe)enabled:
+    secp256R1.maybeEnableNative();
+    var defaultMaybeNativeResult = contract.computeDefault(inputBytes);
 
     // maybeNative implementation:
     secp256R1.maybeEnableNative();
@@ -205,6 +183,13 @@ class P256VerifyPrecompiledContractTest {
         Bytes32.leftPad(Bytes.of(1)),
         defaultResult.cachedResult().output(),
         "Valid signature with R'.x > n should verify correctly via modular comparison");
+    assertTrue(
+        defaultMaybeNativeResult.cachedResult().isSuccessful(),
+        "Valid signature with R'.x > n should verify correctly via modular comparison for native SignatureAlgorithm");
+    assertEquals(
+        Bytes32.leftPad(Bytes.of(1)),
+        defaultMaybeNativeResult.cachedResult().output(),
+        "Valid signature with R'.x > n should verify correctly via modular comparison for native SignatureAlgorithm");
     assertEquals(
         Bytes32.leftPad(Bytes.of(1)),
         maybeNativeResult.output(),
