@@ -61,7 +61,7 @@ public class SimulationCodeDelegation implements CodeDelegation {
       @JsonProperty("authority") final Address authority) {
     this.chainId = chainId;
     this.address = address;
-    this.nonce = Bytes.fromHexString(nonce).toLong();
+    this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
     this.authority = authority;
   }
 

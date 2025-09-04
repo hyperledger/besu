@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.CodeDelegation;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
@@ -73,12 +73,7 @@ public class CodeDelegationProcessor {
     transaction
         .getCodeDelegationList()
         .get()
-        .forEach(
-            codeDelegation ->
-                processCodeDelegation(
-                    worldUpdater,
-                    (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
-                    result));
+        .forEach(codeDelegation -> processCodeDelegation(worldUpdater, codeDelegation, result));
 
     return result;
   }
