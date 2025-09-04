@@ -80,7 +80,7 @@ dependencies {
     api 'com.google.dagger:dagger-compiler:2.55'
     api 'com.google.dagger:dagger:2.55'
 
-    api 'com.google.guava:guava:33.4.0-jre'
+    api 'com.google.guava:guava:33.4.2-jre'
 
     api 'com.google.protobuf:protobuf-java:3.25.5'
 
