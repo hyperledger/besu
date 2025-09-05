@@ -223,7 +223,7 @@ public class SyncState {
     return syncTarget.map(SyncTarget::peer).map(EthPeer::chainStateSnapshot);
   }
 
-  private Optional<ChainHeadEstimate> getBestPeerChainHead() {
+  public Optional<ChainHeadEstimate> getBestPeerChainHead() {
     return ethPeers.bestPeerWithHeightEstimate().map(EthPeer::chainStateSnapshot);
   }
 

@@ -46,6 +46,16 @@ public class DummySynchronizer implements Synchronizer {
   }
 
   @Override
+  public boolean isInSync() {
+    return false;
+  }
+
+  @Override
+  public Optional<Long> getBestPeerChainHead() {
+    return Optional.empty();
+  }
+
+  @Override
   public boolean resyncWorldState() {
     return false;
   }
