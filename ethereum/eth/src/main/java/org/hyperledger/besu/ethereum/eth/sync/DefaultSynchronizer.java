@@ -311,11 +311,21 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     return syncState.syncStatus();
   }
 
+  /**
+   * Returns true if the node is in sync.
+   *
+   * @return true if the node is in sync.
+   */
   @Override
   public boolean isInSync() {
     return syncState.isInSync();
   }
 
+  /**
+   * Returns the best known block height of the network.
+   *
+   * @return the best known block height of the network, or empty if not known
+   */
   @Override
   public Optional<Long> getBestPeerChainHead() {
     return syncState.getBestPeerChainHead().map(ChainHeadEstimate::getEstimatedHeight);

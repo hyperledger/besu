@@ -190,11 +190,21 @@ public class SynchronizationServiceImpl implements SynchronizationService {
     return synchronizer.getSyncStatus();
   }
 
+  /**
+   * Returns true if the node is in sync.
+   *
+   * @return true if the node is in sync.
+   */
   @Override
   public boolean isInSync() {
     return synchronizer.isInSync();
   }
 
+  /**
+   * Returns the best peer chain head.
+   *
+   * @return the best peer chain head, or empty if no peers are connected.
+   */
   @Override
   public Optional<Long> getBestPeerChainHead() {
     return synchronizer.getBestPeerChainHead();
