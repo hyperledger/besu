@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +57,7 @@ public class DebugOperationTracer implements OperationTracer {
   private Bytes inputData;
   private int pc;
   private int depth;
+  private final Map<Address, Map<UInt256, UInt256>> storageChanges = new HashMap<>();
 
   /**
    * Creates the operation tracer.
@@ -240,16 +241,21 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.traceStorage()) {
       return Optional.empty();
     }
-    try {
-      Map<UInt256, UInt256> updatedStorage =
-          frame.getWorldUpdater().getMutableFrozen(frame.getRecipientAddress()).getUpdatedStorage();
-      if (updatedStorage.isEmpty()) return Optional.empty();
-      final Map<UInt256, UInt256> storageContents = new TreeMap<>(updatedStorage);
-
-      return Optional.of(storageContents);
-    } catch (final ModificationNotAllowedException e) {
-      return Optional.of(new TreeMap<>());
+    frame
+        .getMaybeUpdatedStorage()
+        .ifPresent(
+            entry -> {
+              final Map<UInt256, UInt256> accountStorage =
+                  storageChanges.computeIfAbsent(frame.getRecipientAddress(), k -> new TreeMap<>());
+              final UInt256 key = entry.getOffset();
+              final UInt256 value = UInt256.fromBytes(entry.getValue());
+              accountStorage.put(key, value);
+            });
+    final Map<UInt256, UInt256> updated = storageChanges.get(frame.getRecipientAddress());
+    if (updated == null || updated.isEmpty()) {
+      return Optional.empty();
     }
+    return Optional.of(new TreeMap<>(updated));
   }
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
@@ -284,6 +290,7 @@ public class DebugOperationTracer implements OperationTracer {
   public void reset() {
     traceFrames = new ArrayList<>();
     lastFrame = null;
+    storageChanges.clear();
   }
 
   public List<TraceFrame> copyTraceFrames() {
