@@ -57,6 +57,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
@@ -77,6 +78,7 @@ public class MergeProtocolScheduleTest {
             false,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
 
@@ -119,6 +121,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final ProtocolSpec parisSpec =
@@ -151,6 +154,7 @@ public class MergeProtocolScheduleTest {
             false,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
 
@@ -185,6 +189,7 @@ public class MergeProtocolScheduleTest {
                 false,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
+                false,
                 false,
                 new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));

@@ -23,7 +23,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class RlpConverterServiceImplTest {
@@ -39,6 +42,8 @@ public class RlpConverterServiceImplTest {
             .timestamp(1710338135 + 1)
             .baseFeePerGas(Wei.of(1000))
             .requestsHash(Hash.ZERO)
+            .balHash(Hash.ZERO)
+            .parentBeaconBlockRoot(Optional.of(Bytes32.ZERO))
             .withdrawalsRoot(Hash.ZERO)
             .blobGasUsed(500L)
             .excessBlobGas(BlobGas.of(500L))
@@ -50,5 +55,6 @@ public class RlpConverterServiceImplTest {
     assertThat(header).isEqualTo(deserialized);
     assertThat(header.getBlobGasUsed()).isEqualTo(deserialized.getBlobGasUsed());
     assertThat(header.getExcessBlobGas()).isEqualTo(deserialized.getExcessBlobGas());
+    assertThat(header.getBalHash()).isEqualTo(deserialized.getBalHash());
   }
 }
