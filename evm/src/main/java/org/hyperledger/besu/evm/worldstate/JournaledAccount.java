@@ -130,6 +130,42 @@ public class JournaledAccount implements MutableAccount, Undoable {
     transactionBoundaryMark = mark();
   }
 
+  public JournaledAccount(final MutableAccount account) {
+    checkNotNull(account);
+
+    this.address = account.getAddress();
+    this.addressHash =
+        (account instanceof JournaledAccount journaledAccount)
+            ? journaledAccount.addressHash
+            : this.address.addressHash();
+    this.account = account;
+
+    if (account instanceof JournaledAccount that) {
+      this.nonce = that.nonce;
+      this.balance = that.balance;
+
+      this.code = that.code;
+      this.codeHash = that.codeHash;
+
+      this.deleted = that.deleted;
+
+      this.updatedStorage = that.updatedStorage;
+      this.storageWasCleared = that.storageWasCleared;
+    } else {
+      this.nonce = UndoScalar.of(account.getNonce());
+      this.balance = UndoScalar.of(account.getBalance());
+
+      this.code = UndoScalar.of(account.getCode());
+      this.codeHash = UndoScalar.of(account.getCodeHash());
+
+      this.deleted = UndoScalar.of(Boolean.FALSE);
+
+      this.updatedStorage = UndoNavigableMap.of(new TreeMap<>(account.getUpdatedStorage()));
+      this.storageWasCleared = UndoScalar.of(Boolean.FALSE);
+    }
+    transactionBoundaryMark = mark();
+  }
+
   /**
    * The original account over which this tracks updates.
    *
