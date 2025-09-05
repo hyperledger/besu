@@ -38,7 +38,15 @@ public final class DiffNode {
     this.to = to;
   }
 
-  boolean hasDifference() {
+  public Optional<String> getFrom() {
+    return from;
+  }
+
+  public Optional<String> getTo() {
+    return to;
+  }
+
+  public boolean hasDifference() {
     return from.map(it -> !it.equals(to.get())).orElse(to.isPresent());
   }
 
