@@ -18,6 +18,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -100,6 +101,8 @@ import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.WorldStateServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.io.OutputStreamFactory;
+import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -710,6 +713,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               JsonBlockImporter::new,
               Era1BlockImporter::new,
               RlpBlockExporter::new,
+              (blockchain) ->
+                  new Era1BlockExporter(blockchain, new OutputStreamFactory(), new SnappyFactory()),
               new RunnerBuilder(),
               new BesuController.Builder(),
               pluginContext,
