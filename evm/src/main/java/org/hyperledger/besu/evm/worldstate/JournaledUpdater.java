@@ -192,13 +192,21 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
 
   @Override
   public MutableAccount getMutableFrozen(final Address address) {
-    final Account account = getMutable(address);
+    final MutableAccount account = getMutable(address);
     if (account == null) {
       return null;
     }
-    final JournaledAccount frozen = (account instanceof JournaledAccount a) ? a : new JournaledAccount(account);
-    frozen.becomeImmutable();
-    return frozen;
+    final boolean isJournaledOrSnapshot =
+        account instanceof JournaledAccount
+            || account.getClass().getEnclosingClass() == JournaledAccount.class;
+    if (!isJournaledOrSnapshot) {
+      final JournaledAccount frozen = new JournaledAccount(account);
+      frozen.becomeImmutable();
+      return frozen;
+    } else {
+      account.becomeImmutable();
+      return account;
+    }
   }
 
   protected MutableAccount getForMutation(final Address address) {
