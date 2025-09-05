@@ -49,7 +49,7 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
-import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubPeerMulticaster;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.inttest.TestTransitions;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
@@ -222,7 +222,7 @@ public class TestContextBuilder {
             genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(IBFT_EXTRA_DATA_ENCODER));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
-    final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
+    final StubPeerMulticaster multicaster = new StubPeerMulticaster();
     final UniqueMessageMulticaster uniqueMulticaster =
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
@@ -302,7 +302,7 @@ public class TestContextBuilder {
 
   private static ControllerAndState createControllerAndFinalState(
       final MutableBlockchain blockChain,
-      final StubValidatorMulticaster multicaster,
+      final StubPeerMulticaster multicaster,
       final NodeKey nodeKey,
       final Clock clock,
       final BftEventQueue bftEventQueue,
