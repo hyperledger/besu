@@ -18,9 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpServiceTest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,12 +45,69 @@ import org.junit.jupiter.api.Test;
 
 public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpServiceTest {
 
-  private static final long HTTP_TIMEOUT_MS = 100;
+  private static final long HTTP_TIMEOUT_MS = 400;
   private static final long OVERRUN_MS = 400;
+  private static final long TRACER_DELAY_PER_OPERATION_MS = 10; // Delay added per EVM operation
 
   @BeforeEach
   public void setUp() throws Exception {
     startService();
+  }
+
+  @Override
+  protected Map<String, JsonRpcMethod> getRpcMethods(
+      final JsonRpcConfiguration config, final BlockchainSetupUtil blockchainSetupUtil) {
+    final Map<String, JsonRpcMethod> methods = super.getRpcMethods(config, blockchainSetupUtil);
+
+    // Get the blockchain queries and transaction tracer from the setup
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            null);
+
+    final TransactionTracer transactionTracer =
+        new TransactionTracer(
+            new org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay(
+                blockchainSetupUtil.getProtocolSchedule(),
+                blockchainSetupUtil.getProtocolContext(),
+                blockchainSetupUtil.getBlockchain()));
+
+    // Replace debug_traceTransaction with one that uses a slow tracer
+    methods.put(
+        "debug_traceTransaction",
+        new DebugTraceTransaction(
+            blockchainQueries,
+            transactionTracer,
+            options -> new SlowDebugOperationTracer(options.opCodeTracerConfig(), true)));
+
+    return methods;
+  }
+
+  /**
+   * A DebugOperationTracer that adds artificial delays to simulate slow execution. This ensures the
+   * test reliably demonstrates the timeout issue regardless of machine speed.
+   */
+  private static class SlowDebugOperationTracer extends DebugOperationTracer {
+
+    public SlowDebugOperationTracer(
+        final OpCodeTracerConfig opCodeTracerConfig, final boolean recordMemory) {
+      super(opCodeTracerConfig, recordMemory);
+    }
+
+    @Override
+    public void tracePreExecution(final MessageFrame frame) {
+      try {
+        // Add delay to simulate slow trace operation
+        Thread.sleep(TRACER_DELAY_PER_OPERATION_MS);
+      } catch (InterruptedException e) {
+        // This is what we want to happen when timeout occurs
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Trace operation interrupted", e);
+      }
+      super.tracePreExecution(frame);
+    }
   }
 
   @Test

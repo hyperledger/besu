@@ -34,16 +34,29 @@ import org.hyperledger.besu.evm.tracing.CancellableOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 public class DebugTraceTransaction implements JsonRpcMethod {
 
   private final TransactionTracer transactionTracer;
   private final BlockchainQueries blockchain;
+  private final Function<TraceOptions, OperationTracer> tracerCreator;
+
+  public DebugTraceTransaction(
+      final BlockchainQueries blockchain,
+      final TransactionTracer transactionTracer,
+      final Function<TraceOptions, OperationTracer> tracerCreator) {
+    this.blockchain = blockchain;
+    this.transactionTracer = transactionTracer;
+    this.tracerCreator = tracerCreator;
+  }
 
   public DebugTraceTransaction(
       final BlockchainQueries blockchain, final TransactionTracer transactionTracer) {
-    this.blockchain = blockchain;
-    this.transactionTracer = transactionTracer;
+    this(
+        blockchain,
+        transactionTracer,
+        options -> new CancellableOperationTracer(new DebugOperationTracer(options.opCodeTracerConfig(), true)));
   }
 
   @Override
@@ -73,10 +86,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
                 .getOptionalParameter(1, TransactionTraceParams.class)
                 .map(TransactionTraceParams::traceOptions)
                 .orElse(TraceOptions.DEFAULT);
-
-        final DebugOperationTracer execTracer =
-            new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
-        operationTracer = new CancellableOperationTracer(execTracer);
+        operationTracer = tracerCreator.apply(traceOptions);
 
       } catch (JsonRpcParameterException e) {
         throw new InvalidJsonRpcParameters(
