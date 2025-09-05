@@ -56,7 +56,9 @@ public class DebugTraceTransaction implements JsonRpcMethod {
     this(
         blockchain,
         transactionTracer,
-        options -> new CancellableOperationTracer(new DebugOperationTracer(options.opCodeTracerConfig(), true)));
+        options ->
+            new CancellableOperationTracer(
+                new DebugOperationTracer(options.opCodeTracerConfig(), true)));
   }
 
   @Override
