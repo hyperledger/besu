@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Objects;
@@ -30,8 +32,25 @@ import java.util.Objects;
  * @param <T> the type parameter
  */
 public class FlexStack<T> {
+  /**
+   * Formula `x = round( y / ( (1 + 0,5)^n ) ) + 1`, computes the initial stack size, `x` that one
+   * has to start with to reach a maximum stack size, `y`, in `n` number of array resizes at a
+   * growth rate of 50%. Currently, for mainnet y=1024 and, if considering n=6 in the worst case,
+   * the start size is 91 which is reasonable for mainnet.
+   */
+  private static final int INITIAL_SIZE =
+      (int) Math.round(MessageFrame.DEFAULT_MAX_STACK_SIZE / Math.pow(1.5D, 6D)) + 1;
 
-  private static final int INCREMENT = 32;
+  /**
+   * Soft limit imposed for growing arrays. JVMs do not allow to allocate arrays above certain
+   * length, and you will get the following exception if trying to do so:
+   *
+   * <p>java.lang.OutOfMemoryError: Requested array size exceeds VM limit
+   *
+   * <p>Therefore the maxSize of any stack is capped to this value. This max value is not arbitrary
+   * and was taken from OpenJDK.
+   */
+  private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
   private T[] entries;
 
@@ -49,8 +68,9 @@ public class FlexStack<T> {
   @SuppressWarnings("unchecked")
   public FlexStack(final int maxSize, final Class<T> klass) {
     checkArgument(maxSize > 0, "max size must be positive");
+    checkArgument(maxSize <= MAX_ARRAY_LENGTH, "max size is too large");
 
-    this.currentCapacity = Math.min(INCREMENT, maxSize);
+    this.currentCapacity = Math.min(INITIAL_SIZE, maxSize);
     this.entries = (T[]) Array.newInstance(klass, currentCapacity);
     this.maxSize = maxSize;
     this.top = -1;
@@ -163,10 +183,19 @@ public class FlexStack<T> {
       throw new OverflowException();
     }
     if (nextTop >= currentCapacity) {
-      expandEntries(Math.min(currentCapacity + INCREMENT, maxSize));
+      final int newCapacity = newLength(currentCapacity, currentCapacity >> 1);
+      expandEntries(newCapacity);
     }
     entries[nextTop] = operand;
     top = nextTop;
+  }
+
+  private int newLength(final int oldCapacity, final int prefGrowth) {
+    final int growth = Math.max(1, prefGrowth);
+    if (MAX_ARRAY_LENGTH - growth < oldCapacity) {
+      return maxSize;
+    }
+    return Math.min(oldCapacity + growth, maxSize);
   }
 
   /**

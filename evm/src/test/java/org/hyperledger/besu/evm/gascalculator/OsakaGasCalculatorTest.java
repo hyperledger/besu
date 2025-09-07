@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class OsakaGasCalculatorTest {
@@ -25,7 +26,21 @@ class OsakaGasCalculatorTest {
   @Test
   void testPrecompileSize() {
     OsakaGasCalculator subject = new OsakaGasCalculator();
-    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    // past last l1 precompile address
+    assertThat(subject.isPrecompile(Address.precompiled(0x12))).isFalse();
+    // past last l2 precompile address
+    assertThat(subject.isPrecompile(Address.precompiled(0x0101))).isFalse();
+    assertThat(subject.isPrecompile(Address.P256_VERIFY)).isTrue();
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
+    assertThat(subject.isPrecompile(Address.precompiled(0x00))).isFalse();
+  }
+
+  @Test
+  void testZeroLengthBaseModCost() {
+    OsakaGasCalculator subject = new OsakaGasCalculator();
+    Bytes input =
+        Bytes.fromHexString(
+            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000660bfd6246b7f481d4a9955bb2bd9ee970e21063193ae484c413aea066fc949d");
+    assertThat(subject.modExpGasCost(input)).isEqualTo(4064L);
   }
 }

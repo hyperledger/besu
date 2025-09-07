@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -89,6 +92,7 @@ public class JsonRpcHttpServiceTestBase {
   protected static Blockchain blockchain;
   protected static BlockchainQueries blockchainQueries;
   protected static ChainHead chainHead;
+  protected static Block block;
   protected static Synchronizer synchronizer;
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
@@ -102,6 +106,10 @@ public class JsonRpcHttpServiceTestBase {
     ethPeersMock = mock(EthPeers.class);
     blockchain = mock(Blockchain.class);
     blockchainQueries = mock(BlockchainQueries.class);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    block = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(block);
+    when(block.getHash()).thenReturn(Hash.EMPTY);
     chainHead = mock(ChainHead.class);
     synchronizer = mock(Synchronizer.class);
 
@@ -124,6 +132,7 @@ public class JsonRpcHttpServiceTestBase {
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),

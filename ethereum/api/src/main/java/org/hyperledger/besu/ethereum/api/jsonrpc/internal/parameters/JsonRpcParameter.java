@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -69,11 +68,9 @@ public class JsonRpcParameter {
       // If we're dealing with a simple type, just cast the value
       param = paramClass.cast(rawParam);
     } else {
-      // Otherwise, serialize param back to json and then deserialize to the paramClass type
       try {
-        final String json = mapper.writeValueAsString(rawParam);
-        param = mapper.readValue(json, paramClass);
-      } catch (final JsonProcessingException e) {
+        param = mapper.convertValue(rawParam, paramClass);
+      } catch (final Exception e) {
         throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
@@ -94,10 +91,9 @@ public class JsonRpcParameter {
     Object rawParam = params[index];
     if (List.class.isAssignableFrom(rawParam.getClass())) {
       try {
-        String listJson = mapper.writeValueAsString(rawParam);
-        List<T> returnedList = mapper.readValue(listJson, new TypeReference<List<T>>() {});
+        List<T> returnedList = mapper.convertValue(rawParam, new TypeReference<>() {});
         return Optional.of(returnedList);
-      } catch (JsonProcessingException e) {
+      } catch (Exception e) {
         throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",

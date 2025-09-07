@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -45,7 +46,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EthProtocolManagerTestBuilder {
   private static final BigInteger DEFAULT_NETWORK_ID = BigInteger.ONE;
-  private static final ProtocolSchedule DEFAULT_PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
   private ProtocolSchedule protocolSchedule;
   private GenesisConfig genesisConfig;
@@ -62,7 +62,7 @@ public class EthProtocolManagerTestBuilder {
   private EthScheduler ethScheduler;
   private EthContext ethContext;
   private List<PeerValidator> peerValidators;
-  private Optional<MergePeerFilter> mergePeerFilter;
+  private Optional<MergePeerFilter> mergePeerFilter = Optional.empty();
   private SynchronizerConfiguration synchronizerConfiguration;
   private PeerTaskExecutor peerTaskExecutor;
 
@@ -168,13 +168,13 @@ public class EthProtocolManagerTestBuilder {
 
   public EthProtocolManager build() {
     if (protocolSchedule == null) {
-      protocolSchedule = DEFAULT_PROTOCOL_SCHEDULE;
+      protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
     }
     if (genesisConfig == null) {
       genesisConfig = GenesisConfig.mainnet();
     }
     if (genesisState == null) {
-      genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+      genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache());
     }
     if (blockchain == null) {
       blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -232,7 +232,7 @@ public class EthProtocolManagerTestBuilder {
     if (peerValidators == null) {
       peerValidators = Collections.emptyList();
     }
-    if (mergePeerFilter == null) {
+    if (mergePeerFilter.isEmpty()) {
       mergePeerFilter = Optional.of(new MergePeerFilter());
     }
     if (synchronizerConfiguration == null) {

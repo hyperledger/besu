@@ -181,6 +181,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -224,7 +225,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     blockchain.observeBlockAdded(
         blockAddedEvent ->
             blockchain
-                .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
+                .getTotalDifficultyByHash(blockAddedEvent.getHeader().getHash())
                 .ifPresent(mergeContext::setIsPostMerge));
 
     return mergeContext;

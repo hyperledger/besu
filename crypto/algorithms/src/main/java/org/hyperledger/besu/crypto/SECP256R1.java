@@ -78,6 +78,19 @@ public class SECP256R1 extends AbstractSECP256 {
   }
 
   /**
+   * Check if the native library is available.
+   *
+   * @return true if the native library is available, false otherwise.
+   */
+  public static boolean isNativeAvailable() {
+    try {
+      return BesuNativeEC.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+      return false;
+    }
+  }
+
+  /**
    * SECP256R1 is using the non-deterministic implementation of K calculation (standard)
    *
    * @return an instance of RandomDSAKCalculator
@@ -104,7 +117,17 @@ public class SECP256R1 extends AbstractSECP256 {
   @Override
   public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     if (useNative) {
-      return verifyNative(data, signature, pub);
+      return verifyNative(data, signature, pub, false);
+    } else {
+      return super.verify(data, signature, pub);
+    }
+  }
+
+  @Override
+  public boolean verifyMalleable(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+    if (useNative) {
+      return verifyNative(data, signature, pub, true);
     } else {
       return super.verify(data, signature, pub);
     }
@@ -164,12 +187,16 @@ public class SECP256R1 extends AbstractSECP256 {
   }
 
   private boolean verifyNative(
-      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+      final Bytes data,
+      final SECPSignature signature,
+      final SECPPublicKey pub,
+      final boolean allowMalleable) {
 
     return libSECP256R1.verify(
         data.toArrayUnsafe(),
         signature.getR().toByteArray(),
         signature.getS().toByteArray(),
-        pub.getEncoded());
+        pub.getEncoded(),
+        allowMalleable);
   }
 }

@@ -40,6 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -119,6 +120,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -383,7 +385,8 @@ public class TestContextBuilder {
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
     return GenesisState.fromConfig(
         GenesisConfig.fromSource(Path.of(genesisFile).toUri().toURL()),
-        ProtocolScheduleFixture.MAINNET);
+        ProtocolScheduleFixture.TESTING_NETWORK,
+        new CodeCache());
   }
 
   private static ControllerAndState createControllerAndFinalState(
@@ -457,6 +460,7 @@ public class TestContextBuilder {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
 
@@ -534,7 +538,10 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
-            new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                new BftRoundExpiryTimeCalculator(Duration.ofSeconds(ROUND_TIMER_SEC)),
+                bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
             clock);

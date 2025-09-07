@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
@@ -33,7 +35,8 @@ import java.util.Optional;
 /** A protocol specification. */
 public class ProtocolSpec {
 
-  private final String name;
+  private final HardforkId hardforkId;
+
   private final EVM evm;
 
   private final GasCalculator gasCalculator;
@@ -78,15 +81,17 @@ public class ProtocolSpec {
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final RequestsValidator requestsValidator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
-  private final BlockHashProcessor blockHashProcessor;
+  private final PreExecutionProcessor preExecutionProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
+  private final Optional<BlockAccessListFactory> blockAccessListFactory;
+
   /**
    * Creates a new protocol specification instance.
    *
-   * @param name the protocol specification name
+   * @param hardforkId the protocol specification hardforkId
    * @param evm the EVM supporting the appropriate operations for this specification
    * @param transactionValidatorFactory the transaction validator factory to use
    * @param transactionProcessor the transaction processor to use
@@ -110,13 +115,13 @@ public class ProtocolSpec {
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param requestsValidator the request validator to use
    * @param requestProcessorCoordinator the request processor to use
-   * @param blockHashProcessor the blockHash processor to use
+   * @param preExecutionProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
    */
   public ProtocolSpec(
-      final String name,
+      final HardforkId hardforkId,
       final EVM evm,
       final TransactionValidatorFactory transactionValidatorFactory,
       final MainnetTransactionProcessor transactionProcessor,
@@ -141,11 +146,12 @@ public class ProtocolSpec {
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final RequestsValidator requestsValidator,
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
-      final BlockHashProcessor blockHashProcessor,
+      final PreExecutionProcessor preExecutionProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported,
-      final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor) {
-    this.name = name;
+      final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
+      final Optional<BlockAccessListFactory> blockAccessListFactory) {
+    this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.transactionProcessor = transactionProcessor;
@@ -170,19 +176,20 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.requestsValidator = requestsValidator;
     this.requestProcessorCoordinator = requestProcessorCoordinator;
-    this.blockHashProcessor = blockHashProcessor;
+    this.preExecutionProcessor = preExecutionProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
+    this.blockAccessListFactory = blockAccessListFactory;
   }
 
   /**
-   * Returns the protocol specification name.
+   * Returns the protocol hardfork ID.
    *
-   * @return the protocol specification name
+   * @return the protocol hardfork ID
    */
-  public String getName() {
-    return name;
+  public HardforkId getHardforkId() {
+    return hardforkId;
   }
 
   /**
@@ -377,8 +384,8 @@ public class ProtocolSpec {
     return requestProcessorCoordinator;
   }
 
-  public BlockHashProcessor getBlockHashProcessor() {
-    return blockHashProcessor;
+  public PreExecutionProcessor getPreExecutionProcessor() {
+    return preExecutionProcessor;
   }
 
   /**
@@ -397,5 +404,9 @@ public class ProtocolSpec {
    */
   public Optional<TransactionPoolPreProcessor> getTransactionPoolPreProcessor() {
     return transactionPoolPreProcessor;
+  }
+
+  public Optional<BlockAccessListFactory> getBlockAccessListFactory() {
+    return blockAccessListFactory;
   }
 }

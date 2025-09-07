@@ -52,6 +52,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -84,6 +85,7 @@ public class BackwardSyncStepTest {
           new StubGenesisConfigOptions(),
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
+          false,
           false,
           new NoOpMetricsSystem());
 
@@ -339,11 +341,11 @@ public class BackwardSyncStepTest {
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
+                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList()));
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty()));
+                Optional.empty(), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList()));
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 

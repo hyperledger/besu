@@ -19,11 +19,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.list;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -44,6 +46,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -166,6 +170,13 @@ public class WebSocketServiceLoginTest {
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
 
+    // mocks so that genesis hash is populated
+    Blockchain blockchain = mock(Blockchain.class);
+    Block block = mock(Block.class);
+    lenient().when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    lenient().when(blockchain.getGenesisBlock()).thenReturn(block);
+    lenient().when(block.getHash()).thenReturn(Hash.EMPTY);
+
     rpcMethods =
         spy(
             new JsonRpcMethodsFactory()
@@ -182,6 +193,7 @@ public class WebSocketServiceLoginTest {
                         genesisConfigOptions,
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
+                        false,
                         false,
                         new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),

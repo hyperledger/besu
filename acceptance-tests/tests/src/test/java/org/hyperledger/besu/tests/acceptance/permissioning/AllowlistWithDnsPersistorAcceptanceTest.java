@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -66,6 +67,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
             .accountsConfigFile(tempFile)
             .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
             .dnsEnabled(true)
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .build();
 
     cluster.start(this.node);

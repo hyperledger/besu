@@ -17,13 +17,14 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 /** A P2P network message received from another peer. */
-public interface Message {
+public interface Message extends org.hyperledger.besu.plugin.data.p2p.Message {
 
   /**
    * Returns the {@link MessageData} contained in the message.
    *
    * @return Data in the message
    */
+  @Override
   MessageData getData();
 
   /**
@@ -31,5 +32,6 @@ public interface Message {
    *
    * @return PeerConnection this message was sent from.
    */
+  @Override
   PeerConnection getConnection();
 }

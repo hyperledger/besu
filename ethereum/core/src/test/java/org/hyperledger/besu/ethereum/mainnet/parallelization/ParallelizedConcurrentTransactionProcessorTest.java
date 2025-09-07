@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -88,10 +89,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
         new BonsaiWorldState(
             bonsaiWorldStateKeyValueStorage,
             new NoopBonsaiCachedMerkleTrieLoader(),
-            new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+            new NoOpBonsaiCachedWorldStorageManager(
+                bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            createStatefulConfigWithTrie());
+            createStatefulConfigWithTrie(),
+            new CodeCache());
 
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
     when(chainHeadBlockHeader.getStateRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
@@ -118,7 +121,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,
@@ -162,6 +170,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
                 Optional.of(Bytes.EMPTY),
+                Optional.empty(),
                 Optional.empty()));
 
     processor.runTransaction(
@@ -190,7 +199,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,

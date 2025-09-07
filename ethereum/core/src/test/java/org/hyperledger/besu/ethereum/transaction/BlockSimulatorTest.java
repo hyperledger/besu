@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -75,6 +75,7 @@ public class BlockSimulatorTest {
   @Mock private MiningConfiguration miningConfiguration;
   @Mock private MutableWorldState mutableWorldState;
   @Mock private Blockchain blockchain;
+  @Mock private WorldUpdater updater;
 
   private BlockHeader blockHeader;
   private BlockSimulator blockSimulator;
@@ -101,7 +102,7 @@ public class BlockSimulatorTest {
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(gasLimitCalculator.nextGasLimit(anyLong(), anyLong(), anyLong())).thenReturn(1L);
     when(protocolSpec.getFeeMarket()).thenReturn(mock(FeeMarket.class));
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(mock(BlockHashProcessor.class));
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(mock(PreExecutionProcessor.class));
   }
 
   @Test
@@ -134,6 +135,10 @@ public class BlockSimulatorTest {
   @Test
   public void shouldStopWhenTransactionSimulationIsInvalid() {
 
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+        .thenReturn(Optional.of(mutableWorldState));
+    when(mutableWorldState.updater()).thenReturn(updater);
+
     CallParameter callParameter = mock(CallParameter.class);
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
@@ -143,7 +148,8 @@ public class BlockSimulatorTest {
         .thenReturn(Optional.of("Invalid Transaction"));
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any(),
+            any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
     BlockStateCallException exception =
@@ -159,11 +165,16 @@ public class BlockSimulatorTest {
   @Test
   public void shouldStopWhenTransactionSimulationIsEmpty() {
 
+    when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
+        .thenReturn(Optional.of(mutableWorldState));
+    when(mutableWorldState.updater()).thenReturn(updater);
+
     CallParameter callParameter = mock(CallParameter.class);
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
-            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any(),
+            any()))
         .thenReturn(Optional.empty());
 
     BlockStateCallException exception =

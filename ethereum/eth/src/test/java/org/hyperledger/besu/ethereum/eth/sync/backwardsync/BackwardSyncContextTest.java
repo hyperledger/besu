@@ -101,6 +101,7 @@ public class BackwardSyncContextTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   @Spy
@@ -231,6 +232,45 @@ public class BackwardSyncContextTest {
             BlocksHeadersConvertor.of(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     return new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
+  }
+
+  @Test
+  public void shouldNotBeReadyUntilPeers() {
+    // other conditions for isReady are true
+    when(syncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
+
+    // set up context with no peers
+    EthProtocolManager ethProtocolManagerWithNoPeers =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(localBlockchain)
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
+
+    EthContext ethContextWithNoPeers = ethProtocolManagerWithNoPeers.ethContext();
+    BackwardSyncContext contextWithNoPeers =
+        new BackwardSyncContext(
+            protocolContext,
+            protocolSchedule,
+            SynchronizerConfiguration.builder().build(),
+            metricsSystem,
+            ethContextWithNoPeers,
+            syncState,
+            backwardChain,
+            NUM_OF_RETRIES,
+            TEST_MAX_BAD_CHAIN_EVENT_ENTRIES);
+
+    // with no peers, we are not ready
+    assertThat(ethContextWithNoPeers.getEthPeers().peerCount()).isEqualTo(0);
+    assertThat(contextWithNoPeers.isReady()).isFalse();
+
+    // add a peer
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManagerWithNoPeers);
+    assertThat(ethContextWithNoPeers.getEthPeers().peerCount()).isEqualTo(1);
+
+    // now we are ready
+    assertThat(contextWithNoPeers.isReady()).isTrue();
   }
 
   @Test
