@@ -770,9 +770,14 @@ public class RunnerBuilder {
             accountPermissioningController.flatMap(
                 AccountPermissioningController::getAccountLocalConfigPermissioningController);
 
-        // Get the HealthCheckService for plugin-based health checks
+    // Get the HealthCheckService for plugin-based health checks
     final HealthCheckService healthCheckService =
-        besuPluginContext.getService(HealthCheckService.class).orElseThrow();
+        besuPluginContext
+            .getService(HealthCheckService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "HealthCheckService is not available. Ensure it is registered before HTTP services are initialized (plugins must register during 'register')."));
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
 
@@ -819,7 +824,8 @@ public class RunnerBuilder {
                   new HealthService(
                       paramSource -> healthCheckService.isLive(name -> paramSource.getParam(name))),
                   new HealthService(
-                      paramSource -> healthCheckService.isReady(name -> paramSource.getParam(name)))));
+                      paramSource ->
+                          healthCheckService.isReady(name -> paramSource.getParam(name)))));
     }
 
     final SubscriptionManager subscriptionManager =
@@ -888,7 +894,8 @@ public class RunnerBuilder {
                   new HealthService(
                       paramSource -> healthCheckService.isLive(name -> paramSource.getParam(name))),
                   new HealthService(
-                      paramSource -> healthCheckService.isReady(name -> paramSource.getParam(name)))));
+                      paramSource ->
+                          healthCheckService.isReady(name -> paramSource.getParam(name)))));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();

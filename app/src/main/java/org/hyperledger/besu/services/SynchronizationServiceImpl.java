@@ -181,7 +181,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public Optional<Long> getHighestBlock() {
     try {
-      if (synchronizer != null && synchronizer.getSyncStatus().isPresent()) {
+      if (synchronizer.getSyncStatus().isPresent()) {
         return Optional.of(synchronizer.getSyncStatus().get().getHighestBlock());
       }
       return Optional.empty();
@@ -194,11 +194,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public Optional<Long> getCurrentBlock() {
     try {
-      if (protocolContext != null && protocolContext.getBlockchain() != null) {
-        return Optional.of(protocolContext.getBlockchain().getChainHeadBlockNumber());
-      }
-      return Optional.empty();
-    } catch (Exception e) {
+      return Optional.of(protocolContext.getBlockchain().getChainHeadBlockNumber());
+    } catch (final Exception e) {
       LOG.debug("Could not get current block: {}", e.getMessage());
       return Optional.empty();
     }
@@ -207,11 +204,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public boolean isInSync() {
     try {
-      if (syncState != null) {
-        return syncState.isInSync();
-      }
-      return false;
-    } catch (Exception e) {
+      return syncState.isInSync();
+    } catch (final Exception e) {
       LOG.debug("Could not determine sync status: {}", e.getMessage());
       return false;
     }
@@ -219,18 +213,13 @@ public class SynchronizationServiceImpl implements SynchronizationService {
 
   @Override
   public long getBlocksBehind() {
-    try {
-      Optional<Long> highestBlock = getHighestBlock();
-      Optional<Long> currentBlock = getCurrentBlock();
+    final Optional<Long> highestBlock = getHighestBlock();
+    final Optional<Long> currentBlock = getCurrentBlock();
 
-      if (highestBlock.isPresent() && currentBlock.isPresent()) {
-        long blocksBehind = highestBlock.get() - currentBlock.get();
-        return Math.max(0, blocksBehind); // Ensure non-negative
-      }
-      return 0;
-    } catch (Exception e) {
-      LOG.debug("Could not calculate blocks behind: {}", e.getMessage());
-      return 0;
+    if (highestBlock.isPresent() && currentBlock.isPresent()) {
+      final long blocksBehind = highestBlock.get() - currentBlock.get();
+      return Math.max(0, blocksBehind); // Ensure non-negative
     }
+    return 0;
   }
 }

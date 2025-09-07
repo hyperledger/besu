@@ -27,21 +27,14 @@ dependencies {
   implementation project(':services:pipeline')
   implementation 'com.google.guava:guava'
   implementation 'org.slf4j:slf4j-api'
+  compileOnly 'com.google.auto.service:auto-service-annotations:1.1.1'
+  annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 
   testImplementation project(':testutil')
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
-}
-
-// Ensure resources are included in the JAR
-sourceSets {
-  main {
-    resources {
-      srcDirs = ['src/main/resources']
-    }
-  }
 }
 
 // Configure the JAR manifest

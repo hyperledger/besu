@@ -66,8 +66,8 @@ public class HealthCheckServiceImpl implements HealthCheckService {
   @Override
   public boolean isLive(final ParamSource paramSource) {
     if (livenessCheckProviders.isEmpty()) {
-      LOG.warn("No liveness providers registered - defaulting to true");
-      return true; // Default to live if no providers registered
+      throw new IllegalStateException(
+          "No liveness providers registered. Ensure at least one provider is registered by a plugin.");
     }
     return livenessCheckProviders.stream()
         .allMatch(provider -> executeLivenessProviderSafely(provider, paramSource));
@@ -76,8 +76,8 @@ public class HealthCheckServiceImpl implements HealthCheckService {
   @Override
   public boolean isReady(final ParamSource paramSource) {
     if (readinessCheckProviders.isEmpty()) {
-      LOG.warn("No readiness providers registered - defaulting to true");
-      return true; // Default to ready if no providers registered
+      throw new IllegalStateException(
+          "No readiness providers registered. Ensure at least one provider is registered by a plugin.");
     }
     return readinessCheckProviders.stream()
         .allMatch(provider -> executeReadinessProviderSafely(provider, paramSource));

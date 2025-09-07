@@ -21,8 +21,8 @@ import org.hyperledger.besu.plugin.services.health.LivenessCheckProvider;
 import org.hyperledger.besu.plugin.services.health.ParamSource;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
+import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * <p>This plugin implements a simple liveness check that always returns true, indicating that the
  * Besu process is alive and running.
  */
+@AutoService(BesuPlugin.class)
 public class LivenessCheckPlugin implements BesuPlugin, LivenessCheckProvider {
   private static final Logger LOG = LoggerFactory.getLogger(LivenessCheckPlugin.class);
 
@@ -60,24 +61,18 @@ public class LivenessCheckPlugin implements BesuPlugin, LivenessCheckProvider {
   }
 
   @Override
-  public void start() {
-    // Registration already done in register() method
+  public boolean isHealthy(final ParamSource paramSource) {
+    // Simple check - always return true as long as the process is running
+    return true;
   }
 
   @Override
-  public CompletableFuture<Void> reloadConfiguration() {
-    // This plugin doesn't support dynamic reloading
-    return CompletableFuture.completedFuture(null);
+  public void start() {
+    // no-op
   }
 
   @Override
   public void stop() {
-    LOG.info("LivenessCheckPlugin stopped");
-  }
-
-  @Override
-  public boolean isHealthy(final ParamSource paramSource) {
-    // Simple check - always return true as long as the process is running
-    return true;
+    // no-op
   }
 }

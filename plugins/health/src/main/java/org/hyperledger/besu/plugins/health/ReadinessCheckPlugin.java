@@ -23,8 +23,8 @@ import org.hyperledger.besu.plugin.services.p2p.P2PService;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
+import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
  *   <li>Synchronization status within acceptable distance from chain head
  * </ul>
  */
+@AutoService(BesuPlugin.class)
 public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider {
   private static final Logger LOG = LoggerFactory.getLogger(ReadinessCheckPlugin.class);
 
@@ -60,11 +61,11 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
 
   @Override
   public void register(final ServiceManager context) {
-    // Get required services
+    // Services may be unavailable in some configurations (e.g., p2p disabled). Defer checks to isHealthy.
     this.p2pService = context.getService(P2PService.class).orElse(null);
     this.synchronizationService = context.getService(SynchronizationService.class).orElse(null);
 
-    // Register immediately when the plugin is loaded
+    // HealthCheckService is required to register the provider
     final Optional<HealthCheckService> healthCheckServiceOpt =
         context.getService(HealthCheckService.class);
     if (healthCheckServiceOpt.isPresent()) {
@@ -74,61 +75,45 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
     } else {
       LOG.warn("HealthCheckService not available during registration");
     }
-
-    if (p2pService == null) {
-      LOG.warn("P2PService not available during registration");
-    }
-    if (synchronizationService == null) {
-      LOG.warn("SynchronizationService not available during registration");
-    }
   }
 
   @Override
   public void start() {
-    // Registration already done in register() method
-  }
-
-  @Override
-  public CompletableFuture<Void> reloadConfiguration() {
-    // This plugin doesn't support dynamic reloading
-    return CompletableFuture.completedFuture(null);
+    // no-op
   }
 
   @Override
   public void stop() {
-    LOG.info("ReadinessCheckPlugin stopped");
+    // no-op
   }
 
   @Override
   public boolean isHealthy(final ParamSource paramSource) {
     try {
-      // Check peer count
-      int minPeers = getIntParam(paramSource, MIN_PEERS_PARAM, DEFAULT_MIN_PEERS);
+      // If HealthCheckService is not available, return true (assume healthy)
+      if (healthCheckService == null) {
+        LOG.debug("HealthCheckService not available; assuming healthy");
+        return true;
+      }
 
-      // Check if P2PService is available
-      if (p2pService == null) {
-        LOG.debug("P2PService not available, skipping peer count check");
-        // If P2P is disabled or not available, we can't check peers, so assume ready
-      } else {
+      // Check peer count (skip if p2pService is unavailable)
+      int minPeers = getIntParam(paramSource, MIN_PEERS_PARAM, DEFAULT_MIN_PEERS);
+      if (p2pService != null) {
         int peerCount = p2pService.getPeerCount();
         LOG.debug("Peer check - minPeers: {}, actual peerCount: {}", minPeers, peerCount);
-
         if (peerCount < minPeers) {
           LOG.debug(
               "Readiness check failed: peer count {} is below minimum {}", peerCount, minPeers);
           return false;
         }
+      } else {
+        LOG.debug("P2PService unavailable; skipping peer count check");
       }
 
-      // Check sync status using SynchronizationService
+      // Check sync status using SynchronizationService (skip if service unavailable)
       int maxBlocksBehind =
           getIntParam(paramSource, MAX_BLOCKS_BEHIND_PARAM, DEFAULT_MAX_BLOCKS_BEHIND);
-
-      // Check if SynchronizationService is available
-      if (synchronizationService == null) {
-        LOG.debug("SynchronizationService not available, skipping sync status check");
-        // If sync service is not available, we can't check sync status, so assume ready
-      } else {
+      if (synchronizationService != null) {
         Optional<Long> highestBlock = synchronizationService.getHighestBlock();
         Optional<Long> currentBlock = synchronizationService.getCurrentBlock();
 
@@ -156,6 +141,8 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
         } else {
           LOG.debug("Sync status information not available, assuming in sync");
         }
+      } else {
+        LOG.debug("SynchronizationService unavailable; skipping sync status check");
       }
 
       return true;
@@ -173,6 +160,7 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
    * @param paramName the parameter name
    * @param defaultValue the default value to use if parameter is not found or invalid
    * @return the parameter value or default value
+   * @throws IllegalArgumentException if the parameter value is present but not a valid integer
    */
   private int getIntParam(
       final ParamSource paramSource, final String paramName, final int defaultValue) {
@@ -193,9 +181,8 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
       LOG.debug("Parameter {} parsed as: {}", paramName, result);
       return result;
     } catch (NumberFormatException e) {
-      LOG.debug(
-          "Invalid {} parameter: {}. Using default value: {}", paramName, paramValue, defaultValue);
-      return defaultValue;
+      throw new IllegalArgumentException(
+          String.format("Invalid integer for parameter '%s': '%s'", paramName, paramValue), e);
     }
   }
 }
