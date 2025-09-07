@@ -184,7 +184,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final long timestamp,
-      boolean rewardCoinbase,
+      final boolean rewardCoinbase,
       final BlockHeader parentHeader) {
 
     final var timings = new BlockCreationTiming();
@@ -193,6 +193,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
+      final boolean includeBlockAccessList =
+          newProtocolSpec.getBlockAccessListFactory().isPresent();
 
       final ProcessableBlockHeader processableBlockHeader =
           createPending(
@@ -219,17 +221,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getTransactionSelectionService()
               .createPluginTransactionSelector(selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
-      operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
+      operationTracer.traceStartBlock(
+          disposableWorldState, processableBlockHeader, miningBeneficiary);
+
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
               processableBlockHeader,
               disposableWorldState,
               newProtocolSpec,
               newProtocolSpec
-                  .getBlockHashProcessor()
+                  .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
               operationTracer);
-      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+      newProtocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
@@ -305,6 +309,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
+      if (includeBlockAccessList && transactionResults.getBlockAccessList().isPresent()) {
+        builder.balHash(BodyValidation.balHash(transactionResults.getBlockAccessList().get()));
+      }
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -316,7 +323,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
-          new BlockBody(transactionResults.getSelectedTransactions(), ommers, withdrawals);
+          new BlockBody(
+              transactionResults.getSelectedTransactions(),
+              ommers,
+              withdrawals,
+              includeBlockAccessList ? transactionResults.getBlockAccessList() : Optional.empty());
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

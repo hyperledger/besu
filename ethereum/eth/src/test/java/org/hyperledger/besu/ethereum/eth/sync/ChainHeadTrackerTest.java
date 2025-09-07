@@ -69,6 +69,7 @@ public class ChainHeadTrackerTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   static class ChainHeadTrackerTestArguments implements ArgumentsProvider {

@@ -15,16 +15,20 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
@@ -43,6 +47,9 @@ public class DebugTraceTransactionIntegrationTest {
 
   @BeforeAll
   public static void setUpOnce() throws Exception {
+    // experimental tracers are meant to be enabled in tests
+    DebugTraceTransactionStepFactory.enableExtraTracers = true;
+
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
 
@@ -68,8 +75,8 @@ public class DebugTraceTransactionIntegrationTest {
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
-    DebugTraceTransactionDetails debugTraceTransactionDetails =
-        (DebugTraceTransactionDetails) ((JsonRpcSuccessResponse) response).getResult();
+    OpCodeLoggerTracerResult debugTraceTransactionDetails =
+        (OpCodeLoggerTracerResult) ((JsonRpcSuccessResponse) response).getResult();
     assertThat(debugTraceTransactionDetails.getGas()).isEqualTo(23705L);
     assertThat(debugTraceTransactionDetails.getReturnValue()).isEmpty();
     assertThat(debugTraceTransactionDetails.failed()).isFalse();
@@ -90,5 +97,40 @@ public class DebugTraceTransactionIntegrationTest {
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void debugTraceTransactionCallTracerSuccessTest() {
+
+    final Map<String, String> map = Map.of("tracer", "callTracer");
+    final Hash trxHash =
+        Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+    final Object[] params = new Object[] {trxHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+
+    final CallTracerResult result =
+        (CallTracerResult) ((JsonRpcSuccessResponse) response).getResult();
+    assertThat(result.getGas()).isEqualTo("0x4cb2f"); // 314159
+    assertThat(result.getGasUsed()).isEqualTo("0x5c99"); // 23705
+    assertThat(result.getInput()).isEqualTo("0x9dc2c8f5");
+  }
+
+  @Test
+  public void invalidTracerTypeErrorTest() {
+    final Map<String, String> map = Map.of("tracer", "invalidTracerType");
+    final Hash trxHash =
+        Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+    final Object[] params = new Object[] {trxHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+
+    assertThatExceptionOfType(InvalidJsonRpcParameters.class)
+        .isThrownBy(() -> method.response(request))
+        .withMessage("Invalid Tracer Type: invalidTracerType.");
   }
 }

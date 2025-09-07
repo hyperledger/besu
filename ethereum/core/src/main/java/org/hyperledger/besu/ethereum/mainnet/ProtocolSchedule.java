@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
@@ -32,16 +32,21 @@ public interface ProtocolSchedule {
   ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader);
 
   default ProtocolSpec getForNextBlockHeader(
-      final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
+      final org.hyperledger.besu.plugin.data.BlockHeader parentBlockHeader,
+      final long timestampForNextBlock) {
     final BlockHeader nextBlockHeader =
         BlockHeaderBuilder.fromHeader(parentBlockHeader)
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestampForNextBlock)
-            .parentHash(parentBlockHeader.getHash())
+            .parentHash(parentBlockHeader.getBlockHash())
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
     return getByBlockHeader(nextBlockHeader);
   }
+
+  Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
+
+  Optional<ScheduledProtocolSpec> getLatestProtocolSpec();
 
   Optional<BigInteger> getChainId();
 

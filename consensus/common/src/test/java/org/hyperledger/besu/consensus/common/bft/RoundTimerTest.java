@@ -47,7 +47,9 @@ public class RoundTimerTest {
     bftExecutors = mock(BftExecutors.class);
     queue = new BftEventQueue(1000);
     queue.start();
-    timer = new RoundTimer(queue, Duration.ofSeconds(1), bftExecutors);
+    timer =
+        new RoundTimer(
+            queue, new BftRoundExpiryTimeCalculator(Duration.ofSeconds(1)), bftExecutors);
   }
 
   @Test

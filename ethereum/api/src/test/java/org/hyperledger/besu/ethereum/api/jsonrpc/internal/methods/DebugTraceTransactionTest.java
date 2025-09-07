@@ -30,16 +30,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -113,34 +113,29 @@ public class DebugTraceTransactionTest {
           Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000002")
         };
     final TraceFrame traceFrame =
-        new TraceFrame(
-            12,
-            Optional.of("NONE"),
-            Integer.MAX_VALUE,
-            45L,
-            OptionalLong.of(56L),
-            0L,
-            2,
-            Optional.empty(),
-            null,
-            Wei.ZERO,
-            Bytes.EMPTY,
-            Bytes.EMPTY,
-            Optional.of(stackBytes),
-            Optional.of(memoryBytes),
-            Optional.empty(),
-            null,
-            Optional.of(Bytes.fromHexString("0x1122334455667788")),
-            Optional.empty(),
-            Optional.empty(),
-            0,
-            Optional.empty(),
-            false,
-            Optional.empty(),
-            Optional.empty());
+        TraceFrame.builder()
+            .setPc(12)
+            .setOpcode("NONE")
+            .setOpcodeNumber(Integer.MAX_VALUE)
+            .setGasRemaining(45L)
+            .setGasCost(OptionalLong.of(56L))
+            .setGasRefund(0L)
+            .setDepth(2)
+            .setRecipient(null)
+            .setValue(Wei.ZERO)
+            .setInputData(Bytes.EMPTY)
+            .setOutputData(Bytes.EMPTY)
+            .setStack(Optional.of(stackBytes))
+            .setMemory(Optional.of(memoryBytes))
+            .setWorldUpdater(null)
+            .setRevertReason(Optional.of(Bytes.fromHexString("0x1122334455667788")))
+            .setStackItemsProduced(0)
+            .setVirtualOperation(false)
+            .build();
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
+    when(transaction.getHash()).thenReturn(transactionHash);
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
     when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
@@ -155,8 +150,8 @@ public class DebugTraceTransactionTest {
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
-    final DebugTraceTransactionDetails transactionResult =
-        (DebugTraceTransactionDetails) response.getResult();
+    final OpCodeLoggerTracerResult transactionResult =
+        (OpCodeLoggerTracerResult) response.getResult();
 
     assertThat(transactionResult.getGas()).isEqualTo(73);
     assertThat(transactionResult.getReturnValue()).isEqualTo("1234");
@@ -181,31 +176,23 @@ public class DebugTraceTransactionTest {
     final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     final TraceFrame traceFrame =
-        new TraceFrame(
-            12,
-            Optional.of("NONE"),
-            Integer.MAX_VALUE,
-            45L,
-            OptionalLong.of(56L),
-            0L,
-            2,
-            Optional.empty(),
-            null,
-            Wei.ZERO,
-            Bytes.EMPTY,
-            Bytes.EMPTY,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            null,
-            Optional.of(Bytes.fromHexString("0x1122334455667788")),
-            Optional.empty(),
-            Optional.empty(),
-            0,
-            Optional.empty(),
-            false,
-            Optional.empty(),
-            Optional.empty());
+        TraceFrame.builder()
+            .setPc(12)
+            .setOpcode("NONE")
+            .setOpcodeNumber(Integer.MAX_VALUE)
+            .setGasRemaining(45L)
+            .setGasCost(OptionalLong.of(56L))
+            .setGasRefund(0L)
+            .setDepth(2)
+            .setRecipient(null)
+            .setValue(Wei.ZERO)
+            .setInputData(Bytes.EMPTY)
+            .setOutputData(Bytes.EMPTY)
+            .setWorldUpdater(null)
+            .setRevertReason(Optional.of(Bytes.fromHexString("0x1122334455667788")))
+            .setStackItemsProduced(0)
+            .setVirtualOperation(false)
+            .build();
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);

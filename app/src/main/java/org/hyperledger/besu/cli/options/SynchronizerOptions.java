@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,6 +65,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
 
+  // Regular (stable) flag
+  private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
+  // Deprecated experimental flag
+  private static final String SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG = "--Xsnapsync-server-enabled";
+
   private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-window-validity";
   private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
@@ -83,14 +89,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
 
-  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
-
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
-  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
+  private static final String SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG =
+      "--snapsync-synchronizer-pre-checkpoint-headers-only-enabled";
 
-  private static final String SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG =
-      "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled";
+  private static final String ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG =
+      "--era1-import-prepipeline-enabled";
+  private static final String ERA1_DATA_URI_FLAG = "--era1-data-uri";
+  private static final String ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG =
+      "--era1-import-prepipeline-concurrency";
 
   /**
    * Parse block propagation range.
@@ -296,12 +304,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int snapsyncFlatStorageHealedCountPerRequest =
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
+  // TODO --Xsnapsync-server-enabled is deprecated, remove in a future release
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = SNAP_SERVER_ENABLED_FLAG,
-      hidden = true,
+      names = {SNAP_SERVER_ENABLED_FLAG, SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG},
       paramLabel = "<Boolean>",
       arity = "0..1",
-      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
+      fallbackValue = "true",
+      description =
+          "Enable snap sync server capability. Note: --Xsnapsync-server-enabled is deprecated and will be removed in a future release. --snapsync-server-enabled is used instead. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
@@ -310,17 +321,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description = "Enable the sync to start from a post-merge block.")
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
-
-  // TODO --Xsnapsync-bft-enabled is deprecated,
-  // remove in a future release
-  @CommandLine.Option(
-      names = SNAP_SYNC_BFT_ENABLED_FLAG, // deprecated
-      hidden = true,
-      paramLabel = "<Boolean>",
-      arity = "0..1",
-      description =
-          "This option is now deprecated and ignored, and will be removed in future release. Snap sync for BFT is supported by default.")
-  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
   @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
@@ -338,15 +338,46 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
+      names = {
+        "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled",
+        SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+      },
       paramLabel = "<Boolean>",
-      hidden = true,
       arity = "0..1",
       description =
-          "Enable snap sync downloader to save only headers for blocks before the merge. (default: ${DEFAULT-VALUE})")
-  private Boolean snapSyncSavePreMergeHeadersOnlyEnabled =
+          "Enable snap sync downloader to save only headers (not block bodies) for blocks before the checkpoint. (default: ${DEFAULT-VALUE}) \"--Xsnapsync-synchronizer-pre-merge-headers-only-enabled\" is deprecated and will be removed in a future release. Use \""
+              + SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
+              + "\" instead.")
+  private Boolean snapSyncSavePreCheckpointHeadersOnlyEnabled =
       DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED;
+
+  @CommandLine.Option(
+      names = ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description =
+          "Enable the ERA1 import prepipeline for FULL sync. ERA1 files will be imported from the URI specified by "
+              + ERA1_DATA_URI_FLAG
+              + " (currently only local files and http is supported). If a sync mode other than FULL is selected, this will have no affect. (default: ${DEFAULT-VALUE})")
+  private Boolean era1ImportPrepipelineEnabled =
+      SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
+
+  @CommandLine.Option(
+      names = ERA1_DATA_URI_FLAG,
+      paramLabel = "<URI>",
+      description =
+          "The URI to attempt to load ERA1 files from. For local files, a simple path may be used (e.g. /home/user/era1). (default: ${DEFAULT-VALUE})")
+  private URI era1DataUri = SynchronizerConfiguration.DEFAULT_ERA1_DATA_URI;
+
+  @CommandLine.Option(
+      names = ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG,
+      paramLabel = "<INTEGER>",
+      description =
+          "How many parallel pipelines to use in the ERA1 import prepipeline (default: ${DEFAULT-VALUE})")
+  private Integer era1ImportPrepipelineConcurrency =
+      SynchronizerConfiguration.DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
 
   private SynchronizerOptions() {}
 
@@ -357,15 +388,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
-  }
-
-  /**
-   * Flag to know whether the Snap sync should be enabled for a BFT chain
-   *
-   * @return true if snap sync for BFT is enabled
-   */
-  public boolean isSnapSyncBftEnabled() {
-    return snapsyncBftEnabled;
   }
 
   /**
@@ -429,8 +451,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
-    options.snapSyncSavePreMergeHeadersOnlyEnabled =
-        config.isSnapSyncSavePreMergeHeadersOnlyEnabled();
+    options.snapSyncSavePreCheckpointHeadersOnlyEnabled =
+        config.isSnapSyncSavePreCheckpointHeadersOnlyEnabled();
+    options.era1ImportPrepipelineEnabled = config.era1ImportPrepipelineEnabled();
+    options.era1DataUri = config.era1DataUri();
+    options.era1ImportPrepipelineConcurrency = config.era1ImportPrepipelineConcurrency();
     return options;
   }
 
@@ -467,7 +492,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
-    builder.snapSyncSavePreMergeHeadersOnlyEnabled(snapSyncSavePreMergeHeadersOnlyEnabled);
+    builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
+        snapSyncSavePreCheckpointHeadersOnlyEnabled);
+    builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
+    builder.era1DataUri(era1DataUri);
+    builder.era1ImportPrepipelineConcurrency(era1ImportPrepipelineConcurrency);
     return builder;
   }
 
@@ -525,8 +554,14 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncServerEnabled),
             SNAP_TRANSACTION_INDEXING_ENABLED_FLAG,
             OptionParser.format(snapTransactionIndexingEnabled),
-            SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_FLAG,
-            OptionParser.format(snapSyncSavePreMergeHeadersOnlyEnabled));
+            SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG,
+            OptionParser.format(snapSyncSavePreCheckpointHeadersOnlyEnabled),
+            ERA1_IMPORT_PREPIPELINE_ENABLED_FLAG,
+            OptionParser.format(era1ImportPrepipelineEnabled),
+            ERA1_DATA_URI_FLAG,
+            OptionParser.format(era1DataUri),
+            ERA1_IMPORT_PREPIPELINE_CONCURRENCY_FLAG,
+            OptionParser.format(era1ImportPrepipelineConcurrency));
     return value;
   }
 }

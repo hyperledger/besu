@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -49,6 +50,7 @@ public class BlockchainImporter {
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -61,7 +63,8 @@ public class BlockchainImporter {
     }
 
     genesisBlock = blocks.get(0);
-    genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
+    // only used in tests no global code cache is needed
+    genesisState = GenesisState.fromJson(genesisJson, protocolSchedule, new CodeCache());
   }
 
   public GenesisState getGenesisState() {

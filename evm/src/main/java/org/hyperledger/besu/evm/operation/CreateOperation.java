@@ -54,7 +54,7 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
-    final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Account sender = getAccount(frame.getRecipientAddress(), frame);
     // Decrement nonce by 1 to normalize the effect of transaction execution
     return Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
   }
@@ -66,6 +66,6 @@ public class CreateOperation extends AbstractCreateOperation {
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
-    return evm.getCodeUncached(inputData);
+    return evm.wrapCode(inputData);
   }
 }

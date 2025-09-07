@@ -20,11 +20,15 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -37,7 +41,8 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
   protected Hash codeHash;
   protected long nonce;
   protected Wei balance;
-  protected Bytes code;
+  protected Code code;
+  protected final CodeCache codeCache;
 
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
@@ -56,6 +61,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
    * @param codeHash The hash of the account's code.
    * @param mutable A boolean indicating if the account is mutable. If false, the account is
    *     considered immutable.
+   * @param codeCache The global cache used to store and retrieve the account's code.
    */
   public PathBasedAccount(
       final PathBasedWorldView context,
@@ -64,15 +70,21 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final boolean mutable) {
+      final boolean mutable,
+      final CodeCache codeCache) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
+    this.codeCache = codeCache;
 
     this.immutable = !mutable;
+
+    if (codeHash.equals(Hash.EMPTY)) {
+      this.code = CodeV0.EMPTY_CODE;
+    }
   }
 
   /**
@@ -100,16 +112,31 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       final long nonce,
       final Wei balance,
       final Hash codeHash,
-      final Bytes code,
-      final boolean mutable) {
+      final Code code,
+      final boolean mutable,
+      final CodeCache codeCache) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
     this.nonce = nonce;
     this.balance = balance;
     this.codeHash = codeHash;
-    this.code = code;
     this.immutable = !mutable;
+    this.codeCache = codeCache;
+
+    if (code == null && codeHash.equals(Hash.EMPTY)) {
+      this.code = CodeV0.EMPTY_CODE;
+    } else {
+      // as this constructor is only used for copying accounts, we assume the code must have
+      // originated
+      // from the cache, so we don't need to put it in the cache again
+      this.code = code;
+    }
+  }
+
+  @Override
+  public org.hyperledger.besu.evm.internal.CodeCache getCodeCache() {
+    return codeCache;
   }
 
   @Override
@@ -150,23 +177,64 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
   @Override
   public Bytes getCode() {
-    if (code == null) {
-      code = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    // always prefer the local copy to avoid unnecessary cache lookups
+    if (code != null) {
+      return code.getBytes();
     }
+
+    return getOrCreateCachedCode().getBytes();
+  }
+
+  @Override
+  public Code getOrCreateCachedCode() {
+    // always prefer the local copy to avoid unnecessary cache lookups
+    if (code != null) {
+      return code;
+    }
+
+    // check if we have a cached version of the code
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+
+    // cache hit, overwrite code and return it
+    if (cachedCode != null) {
+      code = cachedCode;
+      return code;
+    }
+
+    // cache miss get the code from the disk, set it and put it in the cache
+    final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    code = new CodeV0(byteCode, codeHash);
+    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
+
     return code;
   }
 
   @Override
-  public void setCode(final Bytes code) {
+  public void setCode(final Bytes byteCode) {
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
-    this.code = code;
-    if (code == null || code.isEmpty()) {
+
+    if (byteCode == null || byteCode.isEmpty()) {
+      this.code = CodeV0.EMPTY_CODE;
       this.codeHash = Hash.EMPTY;
-    } else {
-      this.codeHash = Hash.hash(code);
+      return;
     }
+
+    this.codeHash = Hash.hash(byteCode);
+
+    // check if we have a cached version of the code
+    final Code cachedCode =
+        Optional.ofNullable(codeCache).map(c -> c.getIfPresent(codeHash)).orElse(null);
+
+    if (cachedCode != null) {
+      this.code = cachedCode;
+      return;
+    }
+
+    this.code = new CodeV0(byteCode, codeHash);
+    Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
   }
 
   @Override

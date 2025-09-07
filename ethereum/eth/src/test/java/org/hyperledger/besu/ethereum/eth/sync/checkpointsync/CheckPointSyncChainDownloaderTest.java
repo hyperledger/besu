@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -37,10 +39,10 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -48,6 +50,8 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -56,12 +60,13 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -162,7 +167,7 @@ public class CheckPointSyncChainDownloaderTest {
               return new PeerTaskExecutorResult<>(
                   Optional.of(getReceiptsFromPeerTaskResult),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.empty());
+                  Collections.emptyList());
             });
 
     final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
@@ -171,19 +176,32 @@ public class CheckPointSyncChainDownloaderTest {
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
 
-    Answer<PeerTaskExecutorResult<List<Block>>> getBlockBodiesAnswer =
+    Answer<PeerTaskExecutorResult<List<SyncBlock>>> getBlockBodiesAnswer =
         (invocationOnMock) -> {
-          GetBodiesFromPeerTask task = invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+          GetSyncBlockBodiesFromPeerTask task =
+              invocationOnMock.getArgument(0, GetSyncBlockBodiesFromPeerTask.class);
           List<Block> blocks =
               task.getBlockHeaders().stream()
                   .map((bh) -> new Block(bh, otherBlockchain.getBlockBody(bh.getBlockHash()).get()))
-                  .collect(Collectors.toList());
-          return new PeerTaskExecutorResult<List<Block>>(
-              Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+                  .toList();
+          List<SyncBlock> syncBlocks = new ArrayList<>();
+          for (Block block : blocks) {
+            BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+            block.getBody().writeWrappedBodyTo(rlpOutput);
+            SyncBlockBody syncBlockBody =
+                SyncBlockBody.readWrappedBodyFrom(
+                    new BytesValueRLPInput(rlpOutput.encoded(), true), true, protocolSchedule);
+            syncBlocks.add(new SyncBlock(block.getHeader(), syncBlockBody));
+          }
+          return new PeerTaskExecutorResult<>(
+              Optional.of(syncBlocks),
+              PeerTaskExecutorResponseCode.SUCCESS,
+              Collections.emptyList());
         };
-    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class)))
+    when(peerTaskExecutor.execute(any(GetSyncBlockBodiesFromPeerTask.class)))
         .thenAnswer(getBlockBodiesAnswer);
-    when(peerTaskExecutor.executeAgainstPeer(any(GetBodiesFromPeerTask.class), any(EthPeer.class)))
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetSyncBlockBodiesFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getBlockBodiesAnswer);
   }
 
@@ -204,7 +222,7 @@ public class CheckPointSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 

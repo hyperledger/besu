@@ -14,14 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.AGHARTA;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.ATLANTIS;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_RECOVERY_INIT;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DIE_HARD;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.GOTHAM;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MAGNETO;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MYSTIQUE;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.PHOENIX;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.SPIRAL;
+import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.THANOS;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -37,7 +47,6 @@ import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
@@ -57,41 +66,54 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createClassicValidator())
-        .name("ClassicRecoveryInit");
+        .hardforkId(CLASSIC_RECOVERY_INIT);
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     evm.getGasCalculator(), gasLimitCalculator, true, chainId))
-        .name("ClassicTangerineWhistle");
+        .hardforkId(CLASSIC_TANGERINE_WHISTLE);
   }
 
   public static ProtocolSpecBuilder dieHardDefinition(
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
-            chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
+            chainId,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
-        .name("DieHard");
+        .hardforkId(DIE_HARD);
   }
 
   public static ProtocolSpecBuilder gothamDefinition(
@@ -99,9 +121,14 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return dieHardDefinition(
-            chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
+            chainId,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -119,7 +146,7 @@ public class ClassicProtocolSpecs {
                     skipZeroBlockRewards,
                     ecip1017EraRounds,
                     protocolSchedule))
-        .name("Gotham");
+        .hardforkId(GOTHAM);
   }
 
   public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
@@ -127,19 +154,21 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return gothamDefinition(
             chainId,
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     evm.getGasCalculator(), gasLimitCalculator, true, chainId))
-        .name("DefuseDifficultyBomb");
+        .hardforkId(DEFUSE_DIFFICULTY_BOMB);
   }
 
   public static ProtocolSpecBuilder atlantisDefinition(
@@ -148,12 +177,14 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return gothamDefinition(
             chainId,
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
@@ -163,9 +194,7 @@ public class ClassicProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(ClassicDifficultyCalculators.EIP100)
         .transactionReceiptFactory(
-            enableRevertReason
-                ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
-                : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
+            new MainnetProtocolSpecs.ByzantiumTransactionReceiptFactory(enableRevertReason))
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -187,7 +216,7 @@ public class ClassicProtocolSpecs {
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .name("Atlantis");
+        .hardforkId(ATLANTIS);
   }
 
   public static ProtocolSpecBuilder aghartaDefinition(
@@ -196,6 +225,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return atlantisDefinition(
             chainId,
@@ -203,12 +233,13 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Agharta");
+        .hardforkId(AGHARTA);
   }
 
   public static ProtocolSpecBuilder phoenixDefinition(
@@ -217,6 +248,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return aghartaDefinition(
             chainId,
@@ -224,6 +256,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
@@ -231,7 +264,7 @@ public class ClassicProtocolSpecs {
                 MainnetEVMs.istanbul(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
-        .name("Phoenix");
+        .hardforkId(PHOENIX);
   }
 
   public static ProtocolSpecBuilder thanosDefinition(
@@ -240,6 +273,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return phoenixDefinition(
             chainId,
@@ -247,6 +281,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
@@ -256,27 +291,7 @@ public class ClassicProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
-        .name("Thanos");
-  }
-
-  private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
-  }
-
-  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      // ignored because it's always FRONTIER for byzantium
-      final TransactionType __,
-      final TransactionProcessingResult result,
-      final WorldState worldState,
-      final long gasUsed) {
-    return new TransactionReceipt(
-        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
+        .hardforkId(THANOS);
   }
 
   public static ProtocolSpecBuilder magnetoDefinition(
@@ -285,6 +300,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return thanosDefinition(
             chainId,
@@ -292,6 +308,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -303,10 +320,8 @@ public class ClassicProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
-        .name("Magneto");
+            new MainnetProtocolSpecs.BerlinTransactionReceiptFactory(enableRevertReason))
+        .hardforkId(MAGNETO);
   }
 
   public static ProtocolSpecBuilder mystiqueDefinition(
@@ -315,6 +330,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return magnetoDefinition(
             chainId,
@@ -322,13 +338,14 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         .gasCalculator(LondonGasCalculator::new)
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
                     evm, true, List.of(MaxCodeSizeRule.from(evm), PrefixCodeRule.of()), 1))
-        .name("Mystique");
+        .hardforkId(MYSTIQUE);
   }
 
   public static ProtocolSpecBuilder spiralDefinition(
@@ -337,6 +354,7 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return mystiqueDefinition(
             chainId,
@@ -344,6 +362,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration,
             isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
             metricsSystem)
         // EIP-3860
         .gasCalculator(ShanghaiGasCalculator::new)
@@ -370,6 +389,6 @@ public class ClassicProtocolSpecs {
                     .feeMarket(feeMarket)
                     .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
                     .build())
-        .name("Spiral");
+        .hardforkId(SPIRAL);
   }
 }

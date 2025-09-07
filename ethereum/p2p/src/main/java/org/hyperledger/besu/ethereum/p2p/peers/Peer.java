@@ -23,13 +23,14 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 
-public interface Peer extends PeerId {
+public interface Peer extends org.hyperledger.besu.plugin.data.p2p.Peer, PeerId {
 
   /**
    * ENode URL of this peer.
    *
    * @return The enode representing the location of this peer.
    */
+  @Override
   EnodeURL getEnodeURL();
 
   /**

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -58,11 +59,19 @@ public class TransactionProcessingResult
 
   public PathBasedWorldStateUpdateAccumulator<?> accumulator;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
+  private final Optional<TransactionAccessList> transactionAccessList;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
-        Status.INVALID, List.of(), -1, -1, Bytes.EMPTY, validationResult, Optional.empty());
+        Status.INVALID,
+        List.of(),
+        -1,
+        -1,
+        Bytes.EMPTY,
+        validationResult,
+        Optional.empty(),
+        Optional.empty());
   }
 
   public static TransactionProcessingResult failed(
@@ -70,7 +79,8 @@ public class TransactionProcessingResult
       final long gasRemaining,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
+      final Optional<TransactionAccessList> transactionAccessList) {
     return new TransactionProcessingResult(
         Status.FAILED,
         List.of(),
@@ -79,7 +89,8 @@ public class TransactionProcessingResult
         Bytes.EMPTY,
         validationResult,
         revertReason,
-        exceptionalHaltReason);
+        exceptionalHaltReason,
+        transactionAccessList);
   }
 
   public static TransactionProcessingResult successful(
@@ -87,6 +98,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
+      final Optional<TransactionAccessList> transactionAccessList,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -95,25 +107,8 @@ public class TransactionProcessingResult
         gasRemaining,
         output,
         validationResult,
-        Optional.empty());
-  }
-
-  public TransactionProcessingResult(
-      final Status status,
-      final List<Log> logs,
-      final long estimateGasUsedByTransaction,
-      final long gasRemaining,
-      final Bytes output,
-      final ValidationResult<TransactionInvalidReason> validationResult,
-      final Optional<Bytes> revertReason) {
-    this.status = status;
-    this.logs = logs;
-    this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
-    this.gasRemaining = gasRemaining;
-    this.output = output;
-    this.validationResult = validationResult;
-    this.revertReason = revertReason;
-    this.exceptionalHaltReason = Optional.empty();
+        Optional.empty(),
+        transactionAccessList);
   }
 
   public TransactionProcessingResult(
@@ -124,7 +119,28 @@ public class TransactionProcessingResult
       final Bytes output,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+      final Optional<TransactionAccessList> transactionAccessList) {
+    this.status = status;
+    this.logs = logs;
+    this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
+    this.gasRemaining = gasRemaining;
+    this.output = output;
+    this.validationResult = validationResult;
+    this.revertReason = revertReason;
+    this.exceptionalHaltReason = Optional.empty();
+    this.transactionAccessList = transactionAccessList;
+  }
+
+  public TransactionProcessingResult(
+      final Status status,
+      final List<Log> logs,
+      final long estimateGasUsedByTransaction,
+      final long gasRemaining,
+      final Bytes output,
+      final ValidationResult<TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason,
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
+      final Optional<TransactionAccessList> transactionAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -133,6 +149,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = exceptionalHaltReason;
+    this.transactionAccessList = transactionAccessList;
   }
 
   /**
@@ -221,6 +238,10 @@ public class TransactionProcessingResult
    */
   public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return validationResult;
+  }
+
+  public Optional<TransactionAccessList> getTransactionAccessList() {
+    return transactionAccessList;
   }
 
   /**

@@ -15,9 +15,17 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.plugin.data.p2p.Peer;
+import org.hyperledger.besu.plugin.data.p2p.PeerConnection;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 
-/** Service to enable and disable P2P discovery. */
+import java.util.Collection;
+
+/**
+ * Default implementation of the {@link P2PService} interface, providing methods to manage P2P
+ * network discovery and peer connections.
+ */
 public class P2PServiceImpl implements P2PService {
 
   private final P2PNetwork p2PNetwork;
@@ -25,7 +33,7 @@ public class P2PServiceImpl implements P2PService {
   /**
    * Creates a new P2PServiceImpl.
    *
-   * @param p2PNetwork the P2P network to enable and disable.
+   * @param p2PNetwork the P2P network
    */
   public P2PServiceImpl(final P2PNetwork p2PNetwork) {
     this.p2PNetwork = p2PNetwork;
@@ -37,6 +45,7 @@ public class P2PServiceImpl implements P2PService {
     p2PNetwork.start();
   }
 
+  /** Disables P2P discovery. */
   @Override
   public void disableDiscovery() {
     p2PNetwork.stop();
@@ -46,4 +55,5 @@ public class P2PServiceImpl implements P2PService {
   public int getPeerCount() {
     return p2PNetwork.getPeerCount();
   }
+
 }

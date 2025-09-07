@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -328,8 +327,8 @@ public class TrieLogSubCommand implements Runnable {
     BesuController besuController = createBesuController();
     final DataStorageConfiguration config = besuController.getDataStorageConfiguration();
     checkArgument(
-        DataStorageFormat.BONSAI.equals(config.getDataStorageFormat()),
-        "Subcommand only works with data-storage-format=BONSAI");
+        config.getDataStorageFormat().isBonsaiFormat(),
+        "Subcommand only works with data-storage-format=BONSAI or X_BONSAI_ARCHIVE");
 
     final StorageProvider storageProvider = besuController.getStorageProvider();
     final BonsaiWorldStateKeyValueStorage rootWorldStateStorage =

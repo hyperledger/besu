@@ -85,9 +85,13 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -208,6 +212,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
+  /** whether block access list functionality was enabled via CLI feature flag */
+  protected boolean isBlockAccessListEnabled;
+
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
 
@@ -216,6 +223,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
+
+  /** The global code cache */
+  protected CodeCache codeCache;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -530,6 +540,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets whether functionality related to testing block-level access list implementation should be
+   * enabled. This includes caching of block-level access lists produced during block processing and
+   * enabling an RPC endpoint serving those cached BALs.
+   *
+   * @param isBlockAccessListEnabled true to enable block-level access list testing functionality
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    return this;
+  }
+
+  /**
    * check if early round change is enabled when f+1 RC messages from higher rounds are received
    *
    * @param isEarlyRoundChangeEnabled whether to enable early round change
@@ -563,6 +586,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(apiConfiguration, "Missing API configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     checkNotNull(besuComponent, "Must supply a BesuComponent");
+
+    this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(new CodeCache());
+    this.codeCache.setupMetricsSystem(metricsSystem);
+
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -581,7 +608,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final var genesisState =
         getGenesisState(
             maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
-            protocolSchedule);
+            protocolSchedule,
+            codeCache);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -803,6 +831,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       }
     }
 
+    if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(
+        dataStorageConfiguration.getDataStorageFormat())) {
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+      final BonsaiArchiver archiver =
+          createBonsaiArchiver(
+              worldStateKeyValueStorage,
+              blockchain,
+              scheduler,
+              ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
+      blockchain.observeBlockAdded(archiver);
+    }
+
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
@@ -830,7 +871,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
     final Optional<Hash> maybeGenesisStateRoot =
         genesisStateHashCacheEnabled
             ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
@@ -842,7 +884,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfig, protocolSchedule, codeCache));
   }
 
   private TrieLogPruner createTrieLogPruner(
@@ -864,6 +907,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     trieLogPruner.initialize();
 
     return trieLogPruner;
+  }
+
+  private BonsaiArchiver createBonsaiArchiver(
+      final WorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
+      final EthScheduler scheduler,
+      final TrieLogManager trieLogManager) {
+    final BonsaiArchiver archiver =
+        new BonsaiArchiver(
+            (PathBasedWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            scheduler::executeServiceTask,
+            trieLogManager,
+            metricsSystem);
+
+    archiver.initialize();
+    LOG.info("Bonsai archiver initialised");
+    return archiver;
   }
 
   /**
@@ -1153,7 +1214,25 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier);
+            worldStateHealerSupplier,
+            codeCache);
+      }
+      case X_BONSAI_ARCHIVE -> {
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+
+        yield new BonsaiArchiveWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(
+                dataStorageConfiguration
+                    .getPathBasedExtraStorageConfiguration()
+                    .getMaxLayersToLoad()),
+            bonsaiCachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration,
+            worldStateHealerSupplier,
+            codeCache);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

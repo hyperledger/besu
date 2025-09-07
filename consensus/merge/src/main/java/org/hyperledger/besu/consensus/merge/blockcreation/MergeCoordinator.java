@@ -614,7 +614,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     validationResult
         .getYield()
         .ifPresentOrElse(
-            result -> chain.storeBlock(block, result.getReceipts()),
+            result ->
+                chain.storeBlock(
+                    block,
+                    result.getReceipts(),
+                    validationResult.getYield().flatMap(y -> y.getBlockAccessList())),
             () -> LOG.debug("empty yield in blockProcessingResult"));
     return validationResult;
   }
@@ -873,7 +877,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
+  public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return protocolContext.getBadBlockManager().getLatestValidHash(blockHash);
   }
 
@@ -903,6 +907,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .getChainId()
         .map(TESTNET_CHAIN_IDS::get)
         .orElse(DEFAULT_TARGET_GAS_LIMIT);
+  }
+
+  /**
+   * Gets the default gas limit by chain id.
+   *
+   * @param chainId the chain id
+   * @return default gas limit by chain id
+   */
+  public static long getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
+    return chainId.map(TESTNET_CHAIN_IDS::get).orElse(DEFAULT_TARGET_GAS_LIMIT);
   }
 
   private static class BlockCreationTask {

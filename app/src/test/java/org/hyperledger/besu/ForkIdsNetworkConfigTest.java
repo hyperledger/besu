@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
@@ -146,7 +147,8 @@ public class ForkIdsNetworkConfigTest {
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
     final GenesisConfig genesisConfig = GenesisConfig.fromResource(chainName.getGenesisFile());
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfig);
-    final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, schedule);
+    final GenesisState genesisState =
+        GenesisState.fromConfig(genesisConfig, schedule, new CodeCache());
     final Blockchain mockBlockchain = mock(Blockchain.class);
     final BlockHeader mockBlockHeader = mock(BlockHeader.class);
 
@@ -184,6 +186,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    false,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
@@ -193,6 +196,7 @@ public class ForkIdsNetworkConfigTest {
                     false,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =

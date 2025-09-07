@@ -41,7 +41,7 @@ public class PathBasedExtraStorageOptions
   public static final String MAX_LAYERS_TO_LOAD = "--bonsai-historical-block-limit";
 
   @Option(
-      names = {MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
+      names = {MAX_LAYERS_TO_LOAD},
       paramLabel = "<LONG>",
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
@@ -67,12 +67,9 @@ public class PathBasedExtraStorageOptions
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean limitTrieLogsEnabled = DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 
-  // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {
         TRIE_LOG_PRUNING_WINDOW_SIZE,
-        "--Xbonsai-trie-logs-pruning-window-size" // deprecated
       },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")

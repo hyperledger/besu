@@ -14,9 +14,19 @@
  */
 package org.hyperledger.besu.plugin.services.p2p;
 
+import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.p2p.Capability;
+import org.hyperledger.besu.plugin.data.p2p.Message;
+import org.hyperledger.besu.plugin.data.p2p.Peer;
+import org.hyperledger.besu.plugin.data.p2p.PeerConnection;
 import org.hyperledger.besu.plugin.services.BesuService;
 
+import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
+
 /** Service to enable and disable P2P service. */
+@Unstable
 public interface P2PService extends BesuService {
 
   /** Enables P2P discovery. */

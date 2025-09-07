@@ -53,7 +53,16 @@ public class NativeLibraryOptions {
           "Per default a native library is used for modexp. "
               + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
-  private final Boolean nativeModExp = Boolean.TRUE;
+  private final Boolean nativeModExp = Boolean.FALSE;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xp256verify-native-enabled"},
+      description =
+          "Per default a BoringSSL native library is used for p256verify. "
+              + "If the secp256r1 native signature algorithm implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeP256Verify = Boolean.TRUE;
 
   /** Default constructor. */
   NativeLibraryOptions() {}
@@ -101,5 +110,14 @@ public class NativeLibraryOptions {
    */
   public Boolean getNativeModExp() {
     return nativeModExp;
+  }
+
+  /**
+   * Whether native p256verify is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeP256Verify() {
+    return nativeP256Verify;
   }
 }

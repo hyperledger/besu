@@ -59,8 +59,4 @@ public class NetConditions {
   public Condition netVersionUnauthorized() {
     return new ExpectUnauthorized(transactions.netVersion());
   }
-
-  public Condition awaitPeerCountExceptional() {
-    return new AwaitNetPeerCountException(transactions.peerCount());
-  }
 }

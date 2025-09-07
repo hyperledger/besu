@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,6 +72,7 @@ public class CliqueProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
@@ -97,10 +99,11 @@ public class CliqueProtocolScheduleTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                false,
                 new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
-    assertThat(homestead.getName()).isEqualTo("Frontier");
+    assertThat(homestead.getHardforkId()).isEqualTo(FRONTIER);
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
@@ -123,6 +126,7 @@ public class CliqueProtocolScheduleTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    false,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
@@ -144,6 +148,7 @@ public class CliqueProtocolScheduleTest {
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
+                    false,
                     false,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -170,6 +175,7 @@ public class CliqueProtocolScheduleTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
+            false,
             false,
             new NoOpMetricsSystem());
 
