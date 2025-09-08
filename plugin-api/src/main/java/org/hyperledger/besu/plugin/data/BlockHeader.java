@@ -131,6 +131,14 @@ public interface BlockHeader extends ProcessableBlockHeader {
   Optional<? extends Hash> getRequestsHash();
 
   /**
+   * The balHash of this header.
+   *
+   * @return The balHash of this header.
+   */
+  @Unstable
+  Optional<? extends Hash> getBalHash();
+
+  /**
    * The excess_blob_gas of this header.
    *
    * @return The excess_blob_gas of this header.

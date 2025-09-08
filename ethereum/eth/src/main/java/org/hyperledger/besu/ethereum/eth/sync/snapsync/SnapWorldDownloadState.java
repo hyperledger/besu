@@ -328,7 +328,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public Set<Bytes> getAccountsHealingList() {
+  public synchronized Set<Bytes> getAccountsHealingList() {
     return accountsHealingList;
   }
 

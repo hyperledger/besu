@@ -234,6 +234,15 @@ public class BlockchainServiceImpl implements BlockchainService {
   }
 
   @Override
+  public HardforkId getHardforkId(final long blockNumber) {
+    return blockchain
+        .getBlockHeader(blockNumber)
+        .map(this::getHardforkId)
+        .orElseThrow(
+            () -> new IllegalArgumentException("Block not found for number: " + blockNumber));
+  }
+
+  @Override
   public HardforkId getNextBlockHardforkId(
       final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
     return protocolSchedule

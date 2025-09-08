@@ -105,6 +105,7 @@ class JsonRpcMethodsFactoryTest {
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     when(mergeCoordinator.isCompatibleWithEngineApi()).thenReturn(true);
