@@ -119,6 +119,8 @@ public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
   @Override
   public String toString() {
     return new StringJoiner(", ", BftMessage.class.getSimpleName() + "[", "]")
+        .add("roundIdentifier=" + getRoundIdentifier())
+        .add("author=" + getAuthor())
         .add("payload=" + payload)
         .toString();
   }
