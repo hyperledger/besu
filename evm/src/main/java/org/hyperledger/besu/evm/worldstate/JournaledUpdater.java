@@ -53,7 +53,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   private final UndoSet<Address> deleted;
   private final HashSet<Address> touched;
   private final Map<Address, Long> touchMarks;
-  private final long undoMark;
+  private final long startingMark;
 
   /**
    * Instantiates a new Journaled updater.
@@ -82,7 +82,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
       throw new IllegalArgumentException(
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
     }
-    undoMark = accounts.mark();
+    startingMark = accounts.mark();
   }
 
   @Override
@@ -97,7 +97,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return deleted.stream()
-        .filter(addr -> !deleted.contains(addr, undoMark))
+        .filter(addr -> !deleted.contains(addr, startingMark))
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
@@ -105,9 +105,9 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
    * Remove all changes done by this layer. Rollback to the state prior to the updater's changes.
    */
   private void reset() {
-    accounts.values().forEach(a -> a.undo(undoMark));
-    accounts.undo(undoMark);
-    deleted.undo(undoMark);
+    accounts.values().forEach(a -> a.undo(startingMark));
+    accounts.undo(startingMark);
+    deleted.undo(startingMark);
     touched.clear();
     touchMarks.clear();
   }
@@ -218,7 +218,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
 
   @Override
   public Account get(final Address address) {
-    if (deleted.contains(address, undoMark)) {
+    if (deleted.contains(address, startingMark)) {
       return null;
     }
 
@@ -229,10 +229,10 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
       return current != null ? current.snapshot(lastTouch) : null;
     }
 
-    // If existed at the start of this updater, return view at undoMark
-    final JournaledAccount atStart = accounts.get(address, undoMark);
+    // If existed at the start of this updater, return view at startingMark
+    final JournaledAccount atStart = accounts.get(address, startingMark);
     if (atStart != null) {
-      return atStart.snapshot(undoMark);
+      return atStart.snapshot(startingMark);
     }
 
     // Else fallback to root updater
