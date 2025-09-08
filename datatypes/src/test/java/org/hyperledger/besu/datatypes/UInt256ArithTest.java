@@ -88,6 +88,10 @@ public class UInt256ArithTest {
       numBigInt.divide(denomBigInt),
       result,
       () -> "Division mismatch for num=" + numeratorBytes.toHexString() + " denom=" + denominatorBytes.toHexString());
+    assertEquals(
+      numeratorBytes, Bytes.fromHexString(numerator), "Original value has been modified");
+    assertEquals(
+      denominatorBytes, Bytes.fromHexString(denominator), "Original value has been modified");
   }
 
   static Collection<Object[]> testCases() {
