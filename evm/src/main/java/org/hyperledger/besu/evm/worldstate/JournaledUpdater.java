@@ -101,20 +101,13 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  /**
-   * Remove all changes done by this layer. Rollback to the state prior to the updater's changes.
-   */
-  private void reset() {
+  @Override
+  public void revert() {
     accounts.values().forEach(a -> a.undo(startingMark));
     accounts.undo(startingMark);
     deleted.undo(startingMark);
     touched.clear();
     touchMarks.clear();
-  }
-
-  @Override
-  public void revert() {
-    reset();
   }
 
   @Override
