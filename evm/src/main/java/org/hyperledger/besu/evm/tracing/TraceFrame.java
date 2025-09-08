@@ -796,19 +796,32 @@ public class TraceFrame {
     return isPrecompile;
   }
 
-  /*
+  /**
+   * the address of the precompile being called
+   *
+   * @return the address of the precompile being called
+   */
   public Optional<Address> getPrecompileRecipient() {
     return precompileRecipient;
   }
 
+  /**
+   * input data sent to the precompile
+   *
+   * @return input data sent to the precompile
+   */
   public Optional<Bytes> getPrecompileInputData() {
     return precompileInputData;
   }
 
+  /**
+   * output data returned from the precompile
+   *
+   * @return output data returned from the precompile
+   */
   public Optional<Bytes> getPrecompileOutputData() {
     return precompileOutputData;
   }
-  */
 
   @Override
   public String toString() {
