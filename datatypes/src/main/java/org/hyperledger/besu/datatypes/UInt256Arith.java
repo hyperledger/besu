@@ -14,16 +14,16 @@ public class UInt256Arith {
       throw new ArithmeticException("divide by zero");
     }
 
-    final byte[] numArray = numerator.size() > 32 ? numerator.slice(numerator.size() - 32).toArrayUnsafe() : numerator.toArrayUnsafe();
-    final byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
+    byte[] numArray = numerator.size() > 32 ? numerator.slice(numerator.size() - 32).toArrayUnsafe() : numerator.toArrayUnsafe();
+    byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
 
     boolean isNumeratorNegative = false;
     boolean isDenominatorNegative = false;
     if (signed) {
       isNumeratorNegative = (numArray.length != 0 && (numArray[0] >> 7 == -1));
-      makePositive(numArray, isNumeratorNegative);
+      numArray = makePositive(numArray, isNumeratorNegative);
       isDenominatorNegative = (denomArray[0] >> 7 == -1);
-      makePositive(denomArray, isDenominatorNegative);
+      denomArray = makePositive(denomArray, isDenominatorNegative);
     }
 
     final int numeratorOffset = numberOfLeadingZeros(numArray);
@@ -50,24 +50,27 @@ public class UInt256Arith {
     return Bytes.wrap(fromIntLimbsUnsigned(intResult));
   }
 
-  private static void makePositive(final byte[] value, final boolean isNegative) {
+  private static byte[] makePositive(final byte[] value, final boolean isNegative) {
     if (value.length == 0 || value[0] >= 0 || !isNegative) {
-      return;
+      return value;
     }
+
+    final byte[] newValue = new byte[value.length];
 
     // invert all values before
     for (int i = 0; i < value.length; i++) {
-      value[i] = (byte) ~value[i];
+      newValue[i] = (byte) ~value[i];
     }
 
     // add 1 to the number to get signed value
-    for (int i = value.length - 1; i >= 0; i--) {
-      int aux = (value[i] & 0xFF) + 1;
-      value[i] = (byte) aux;
+    for (int i = newValue.length - 1; i >= 0; i--) {
+      int aux = (newValue[i] & 0xFF) + 1;
+      newValue[i] = (byte) aux;
       if ((aux & 0x100) == 0) {
         break; // no more carry
       }
     }
+    return newValue;
   }
 
   private static int compare(final byte[] numArray, final int numeratorOffset, final byte[] denomArray,
