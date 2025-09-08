@@ -83,7 +83,10 @@ public class UndoScalar<T> implements Undoable {
    * @param mark the mark to retrieve the value from
    * @return the value at the provided mark
    */
-  public T get(final long mark) {
+  public T get(final Long mark) {
+    if (mark == null) {
+      return get();
+    }
     T result = value;
     for (int i = undoLog.size() - 1; i >= 0; i--) {
       final UndoEntry<T> entry = undoLog.get(i);
