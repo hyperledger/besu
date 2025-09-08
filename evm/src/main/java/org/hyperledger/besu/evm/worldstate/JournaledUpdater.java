@@ -164,7 +164,8 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     ja.setBalance(balance);
     accounts.put(address, ja);
     deleted.remove(address);
-    markTouched(address);
+    touched.add(address);
+    touchMarks.put(address, Undoable.markState.get());
     return new MarkingAccount(address, ja);
   }
 
@@ -284,11 +285,6 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     return new JournaledUpdater<>(this, evmConfiguration);
   }
 
-  private void markTouched(final Address address) {
-    touched.add(address);
-    touchMarks.put(address, Undoable.markState.get());
-  }
-
   private class MarkingAccount implements MutableAccount {
     private final Address address;
     private final JournaledAccount delegate;
@@ -299,7 +295,8 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     }
 
     private void mark() {
-      markTouched(address);
+      touched.add(address);
+      touchMarks.put(address, Undoable.markState.get());
     }
 
     @Override
