@@ -135,7 +135,7 @@ public class CancellableOperationTracer implements OperationTracer {
 
   private void checkInterrupt() {
     if (Thread.interrupted()) {
-      throw new RuntimeException(new InterruptedException("Transaction execution interrupted"));
+      throw new RuntimeException(new InterruptedException("Trace execution interrupted"));
     }
   }
 }
