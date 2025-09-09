@@ -45,7 +45,8 @@ public class BlockStateCallResult extends BlockResult {
         null,
         block.getSize(),
         false,
-        block.getBody().getWithdrawals());
+        block.getBody().getWithdrawals(),
+        block.getBody().getBlockAccessList());
     this.callProcessingResults = callProcessingResults;
   }
 

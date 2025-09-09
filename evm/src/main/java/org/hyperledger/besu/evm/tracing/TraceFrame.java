@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.debug;
+package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -30,6 +30,7 @@ import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** Collects information about the current execution frame during a trace. */
 public class TraceFrame {
   private final int pc;
   private final Optional<String> opcode;
@@ -552,114 +553,250 @@ public class TraceFrame {
     }
   }
 
+  /**
+   * current program counter
+   *
+   * @return current program counter
+   */
   public int getPc() {
     return pc;
   }
 
+  /**
+   * current opcode
+   *
+   * @return current opcode
+   */
   public String getOpcode() {
     return opcode.orElse("");
   }
 
+  /**
+   * number of the opcode
+   *
+   * @return number of the opcode
+   */
   public int getOpcodeNumber() {
     return opcodeNumber;
   }
 
+  /**
+   * how much gas remains
+   *
+   * @return unused portion of gas
+   */
   public long getGasRemaining() {
     return gasRemaining;
   }
 
+  /**
+   * gas cost
+   *
+   * @return gas cost
+   */
   public OptionalLong getGasCost() {
     return gasCost;
   }
 
+  /**
+   * gas to be refunded
+   *
+   * @return amount of gas to be refunded
+   */
   public long getGasRefund() {
     return gasRefund;
   }
 
+  /**
+   * frame depth
+   *
+   * @return frame depth
+   */
   public int getDepth() {
     return depth;
   }
 
+  /**
+   * If halted, why?
+   *
+   * @return reason for halting
+   */
   public Optional<ExceptionalHaltReason> getExceptionalHaltReason() {
     return exceptionalHaltReason;
   }
 
+  /**
+   * the address being sent to
+   *
+   * @return the address being sent to
+   */
   public Address getRecipient() {
     return recipient;
   }
 
+  /**
+   * amount being sent
+   *
+   * @return amount being sent
+   */
   public Wei getValue() {
     return value;
   }
 
+  /**
+   * data to execute over
+   *
+   * @return data to execute over
+   */
   public Bytes getInputData() {
     return this.inputData;
   }
 
+  /**
+   * computed data to return
+   *
+   * @return computed data to return
+   */
   public Bytes getOutputData() {
     return outputData;
   }
 
+  /**
+   * what is on the stack
+   *
+   * @return what is on the stack
+   */
   public Optional<Bytes[]> getStack() {
     return stack;
   }
 
+  /**
+   * what is in memory
+   *
+   * @return what is in memory
+   */
   public Optional<Bytes[]> getMemory() {
     return memory;
   }
 
+  /**
+   * data storage slots and values
+   *
+   * @return data storage slots and values
+   */
   public Optional<Map<UInt256, UInt256>> getStorage() {
     return storage;
   }
 
+  /**
+   * handle to the state updater
+   *
+   * @return handle to the state updater
+   */
   public WorldUpdater getWorldUpdater() {
     return worldUpdater;
   }
 
+  /**
+   * reason for reverting transaction
+   *
+   * @return reason for reverting transaction
+   */
   public Optional<Bytes> getRevertReason() {
     return revertReason;
   }
 
+  /**
+   * map of addresses getting refunds, maybe
+   *
+   * @return map of addresses getting refunds, maybe
+   */
   public Optional<Map<Address, Wei>> getMaybeRefunds() {
     return maybeRefunds;
   }
 
+  /**
+   * evm bytecode, maybe
+   *
+   * @return evm bytecode, maybe
+   */
   public Optional<Code> getMaybeCode() {
     return maybeCode;
   }
 
+  /**
+   * what was put on the stack
+   *
+   * @return what was put on the stack
+   */
   public int getStackItemsProduced() {
     return stackItemsProduced;
   }
 
+  /**
+   * stack content after execution
+   *
+   * @return stack content after execution
+   */
   public Optional<Bytes[]> getStackPostExecution() {
     return stackPostExecution;
   }
 
+  /**
+   * gas left over after running
+   *
+   * @return gas left over after running
+   */
   public long getGasRemainingPostExecution() {
     return gasRemainingPostExecution;
   }
 
+  /**
+   * if this is a virtual operation or not
+   *
+   * @return if this is a virtual operation or not
+   */
   public boolean isVirtualOperation() {
     return virtualOperation;
   }
 
+  /**
+   * if memory was updated, return the entry
+   *
+   * @return modified memory entry, maybe
+   */
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
 
+  /**
+   * if storage was updated, return it
+   *
+   * @return updated storage, maybe
+   */
   public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 
+  /**
+   * gas cost
+   *
+   * @return gas cost
+   */
   public OptionalLong getPrecompiledGasCost() {
     return precompiledGasCost;
   }
 
+  /**
+   * whether the current operation is a precompile
+   *
+   * @return true if precompile, else false
+   */
   public boolean isPrecompile() {
     return isPrecompile;
   }
 
+  /*
   public Optional<Address> getPrecompileRecipient() {
     return precompileRecipient;
   }
@@ -671,6 +808,7 @@ public class TraceFrame {
   public Optional<Bytes> getPrecompileOutputData() {
     return precompileOutputData;
   }
+  */
 
   @Override
   public String toString() {

@@ -51,6 +51,8 @@ public class BlockHeaderBuilder {
   private Hash withdrawalsRoot = null;
   private Hash requestsHash = null;
 
+  private Hash balHash = null;
+
   private Hash receiptsRoot;
 
   private LogsBloomFilter logsBloom;
@@ -130,7 +132,8 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .requestsHash(header.getRequestsHash().orElse(null));
+        .requestsHash(header.getRequestsHash().orElse(null))
+        .balHash(header.getBalHash().orElse(null));
   }
 
   public static BlockHeaderBuilder fromHeader(
@@ -157,7 +160,8 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .requestsHash(header.getRequestsHash().orElse(null));
+        .requestsHash(header.getRequestsHash().orElse(null))
+        .balHash(header.getBalHash().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -182,6 +186,7 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
+            .balHash(fromBuilder.balHash)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -265,6 +270,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
+        balHash,
         blockHeaderFunctions);
   }
 
@@ -306,7 +312,8 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsHash);
+        requestsHash,
+        balHash);
   }
 
   private void validateBlockHeader() {
@@ -371,6 +378,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
+    balHash(sealableBlockHeader.getBalHash().orElse(null));
     return this;
   }
 
@@ -487,6 +495,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder requestsHash(final Hash hash) {
     this.requestsHash = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder balHash(final Hash hash) {
+    this.balHash = hash;
     return this;
   }
 

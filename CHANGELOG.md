@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
 
 ### Upcoming Breaking Changes
 - Deprecated CLI options
@@ -10,13 +11,13 @@
   - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
   - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
   - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
-  - `--bonsai-maximum-back-layers-to-load` is deprecated since 23.4.0. Use `--bonsai-historical-block-limit` instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
   - Fast Sync
 
 ### Additions and Improvements
 - Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
 
@@ -39,6 +40,7 @@
 - Support for block creation on networks running a pre-Byzantium fork is removed, after being deprecated for a few months. If still running a pre-Byzantium network, it needs to be updated to continue to produce blocks [#9005](https://github.com/hyperledger/besu/pull/9005)
 - Remove support for Ethereum protocol version `eth/67`. [#9008](https://github.com/hyperledger/besu/pull/9008). 
 - Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
+- Ubuntu 20.04 is no longer supported. You need at least 22.04 (required for native libraries).
 - Improve performance of OperandStack resizes for deep stacks (> 100 elements). Impacts general EVM performance while working with deep stacks [#8869](https://github.com/hyperledger/besu/pull/8869)
 
 ### Upcoming Breaking Changes
