@@ -747,8 +747,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration,
-            syncConfig.isPeerTaskSystemEnabled());
+            miningConfiguration);
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);
