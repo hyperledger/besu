@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.mapExceptionalHaltToError;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
@@ -273,11 +272,7 @@ public class CallTracerResultConverter {
     // Set error if there's an exceptional halt
     frame
         .getExceptionalHaltReason()
-        .ifPresent(
-            haltReason -> {
-              String errorMessage = mapExceptionalHaltToError(haltReason);
-              childBuilder.error(errorMessage);
-            });
+        .ifPresent(haltReason -> childBuilder.error(haltReason.getDescription()));
 
     // For failed CREATE, ensure 'to' is null
     if (isCreateOp(opcode)) {
@@ -342,8 +337,7 @@ public class CallTracerResultConverter {
           .getRevertReason()
           .ifPresent(
               reason -> {
-                String decodedReason = decodeRevertReason(reason);
-                builder.revertReason(decodedReason);
+                builder.revertReason(reason.toHexString());
               });
     } else if ("REVERT".equals(opcode)) {
       builder.error("execution reverted");
@@ -351,95 +345,9 @@ public class CallTracerResultConverter {
           .getRevertReason()
           .ifPresent(
               reason -> {
-                String decodedReason = decodeRevertReason(reason);
-                builder.revertReason(decodedReason);
+                builder.revertReason(reason.toHexString());
               });
     }
-  }
-
-  /**
-   * Decodes the revert reason bytes into a human-readable string.
-   *
-   * @param reason The raw revert reason bytes
-   * @return A human-readable revert reason string
-   */
-  private static String decodeRevertReason(final Bytes reason) {
-    // Check for empty reason
-    if (reason == null || reason.isEmpty()) {
-      return null;
-    }
-
-    try {
-      // Check for Error(string) format - should start with selector 0x08c379a0
-      if (reason.size() >= 4
-          && reason.get(0) == (byte) 0x08
-          && reason.get(1) == (byte) 0xc3
-          && reason.get(2) == (byte) 0x79
-          && reason.get(3) == (byte) 0xa0) {
-
-        // Reason has format: 0x08c379a0 + 32 bytes offset + 32 bytes length + string data
-        // The offset is usually 0x20 (32) from the selector
-        int strLenOffset = 4 + 32; // Skip selector and offset word
-
-        if (reason.size() >= strLenOffset + 32) { // Must have at least the length word
-          // Extract the string length from the length word
-          int strLen = 0;
-          for (int i = 0; i < 32; i++) {
-            strLen = (strLen << 8) | (reason.get(strLenOffset + i) & 0xFF);
-          }
-
-          // Sanity check on length
-          if (strLen > 0 && strLen < 1000 && strLenOffset + 32 + strLen <= reason.size()) {
-            // Extract the string data
-            final Bytes strData = reason.slice(strLenOffset + 32, strLen);
-            // Convert to a string
-            return new String(strData.toArrayUnsafe(), StandardCharsets.UTF_8);
-          }
-        }
-      }
-
-      // If it's not in the standard format or couldn't be decoded,
-      // return a compact hex representation
-      return toCompactHex(reason, true);
-    } catch (final Exception e) {
-      LOG.warn("Failed to decode revert reason", e);
-      // Fall back to hex representation on any error
-      return reason.toHexString();
-    }
-  }
-
-  /**
-   * Converts bytes to a compact hex representation, removing leading zeros. Based on the
-   * implementation in StructLog.
-   */
-  private static String toCompactHex(final Bytes bytes, final boolean prefix) {
-    if (bytes.isEmpty()) {
-      return prefix ? "0x0" : "0";
-    }
-
-    byte[] byteArray = bytes.toArrayUnsafe();
-    final int size = byteArray.length;
-    final StringBuilder result = new StringBuilder(prefix ? (size * 2) + 2 : size * 2);
-
-    if (prefix) {
-      result.append("0x");
-    }
-
-    boolean leadingZero = true;
-    for (int i = 0; i < size; i++) {
-      byte b = byteArray[i];
-      int highNibble = (b >> 4) & 0xF;
-      if (!leadingZero || highNibble != 0) {
-        result.append(Character.forDigit(highNibble, 16));
-        leadingZero = false;
-      }
-      int lowNibble = b & 0xF;
-      if (!leadingZero || lowNibble != 0 || i == size - 1) {
-        result.append(Character.forDigit(lowNibble, 16));
-        leadingZero = false;
-      }
-    }
-    return result.toString();
   }
 
   private static void processRemainingCalls(final Map<Integer, CallInfo> depthToCallInfo) {
@@ -1051,9 +959,8 @@ public class CallTracerResultConverter {
 
     // Set error if there was an exceptional halt
     if (lastFrameAtDepth.getExceptionalHaltReason().isPresent()) {
-      String errorMessage =
-          mapExceptionalHaltToError(lastFrameAtDepth.getExceptionalHaltReason().get());
-      childCallInfo.builder.error(errorMessage);
+      childCallInfo.builder.error(
+          lastFrameAtDepth.getExceptionalHaltReason().get().getDescription());
     }
 
     // Calculate gas used
