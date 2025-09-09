@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -38,7 +39,6 @@ import com.google.common.collect.Queues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("UnstableApiUsage")
 public class BufferedGetPooledTransactionsFromPeerFetcher {
   private static final Logger LOG =
       LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
@@ -79,11 +79,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   public void requestTransactions() {
     List<Hash> txHashesAnnounced;
     while (!(txHashesAnnounced = getTxHashesAnnounced()).isEmpty()) {
-      final org.hyperledger.besu.ethereum.eth.manager.peertask.task
-              .GetPooledTransactionsFromPeerTask
-          task =
-              new org.hyperledger.besu.ethereum.eth.manager.peertask.task
-                  .GetPooledTransactionsFromPeerTask(txHashesAnnounced);
+      final GetPooledTransactionsFromPeerTask task =
+          new GetPooledTransactionsFromPeerTask(txHashesAnnounced);
       ethContext
           .getScheduler()
           .scheduleServiceTask(
