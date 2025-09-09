@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugins.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,10 +51,12 @@ class LivenessCheckPluginTest {
 
   @Test
   void shouldRegisterWithServiceManager() {
+    when(serviceManager.getService(HealthCheckService.class))
+        .thenReturn(java.util.Optional.of(healthCheckService));
+
     plugin.register(serviceManager);
 
-    // Plugin should store the service manager
-    assertThat(plugin).isNotNull();
+    verify(healthCheckService).registerLivenessCheckProvider(plugin);
   }
 
   @Test
@@ -109,12 +112,8 @@ class LivenessCheckPluginTest {
     when(serviceManager.getService(HealthCheckService.class))
         .thenReturn(java.util.Optional.empty());
 
-    plugin.register(serviceManager);
-
-    // Should not throw exception, just log warning
-    plugin.start();
-
-    // Plugin should still be functional even without HealthCheckService
-    assertThat(plugin.isHealthy(paramSource)).isTrue();
+    assertThatThrownBy(() -> plugin.register(serviceManager))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("HealthCheckService not available");
   }
 }

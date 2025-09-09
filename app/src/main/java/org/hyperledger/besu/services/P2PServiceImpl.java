@@ -50,10 +50,76 @@ public class P2PServiceImpl implements P2PService {
   public void disableDiscovery() {
     p2PNetwork.stop();
   }
+  
+  /**
+   * Returns the number of currently connected peers.
+   *
+   * @return the count of connected peers
+   */
 
   @Override
   public int getPeerCount() {
     return p2PNetwork.getPeerCount();
   }
 
+
+  /**
+   * Returns the current peer connections.
+   *
+   * @return an immutable snapshot of {@link PeerConnection} objects
+   */
+  @Override
+  public Collection<? extends PeerConnection> getPeerConnections() {
+    return p2PNetwork.getPeers();
+  }
+
+  /**
+   * Returns the set of peers that the node attempts to maintain a connection with.
+   *
+   * @return maintained peers
+   */
+  @Override
+  public Collection<? extends Peer> getMaintainedConnectionPeers() {
+    return p2PNetwork.getMaintainedConnectionPeers();
+  }
+
+  /**
+   * Subscribes to connection events.
+   *
+   * @param connectionListener the listener to receive connection events
+   */
+  @Override
+  public void subscribeConnect(final ConnectionListener connectionListener) {
+    p2PNetwork.subscribeConnect(connectionListener::onConnect);
+  }
+
+  /**
+   * Subscribes to disconnection events.
+   *
+   * @param networkSubscriber the subscriber to receive disconnection events
+   */
+  @Override
+  public void subscribeDisconnect(final DisconnectionListener networkSubscriber) {
+    p2PNetwork.subscribeDisconnect(
+        (peerConnection, disconnectReason, initiatedByPeer) ->
+            networkSubscriber.onDisconnect(
+                peerConnection,
+                disconnectReason.getCode(),
+                disconnectReason.getMessage(),
+                initiatedByPeer));
+  }
+
+  /**
+   * Subscribes to messages on a specific capability.
+   *
+   * @param capability the capability to subscribe to
+   * @param networkSubscriber the subscriber to receive messages for the specified capability
+   */
+  @Override
+  public void subscribeMessage(
+      final org.hyperledger.besu.plugin.data.p2p.Capability capability,
+      final MessageListener networkSubscriber) {
+    final Capability wireCap = Capability.create(capability.getName(), capability.getVersion());
+    p2PNetwork.subscribe(wireCap, networkSubscriber::onMessage);
+}
 }

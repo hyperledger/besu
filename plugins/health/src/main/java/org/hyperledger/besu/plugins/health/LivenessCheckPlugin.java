@@ -56,7 +56,8 @@ public class LivenessCheckPlugin implements BesuPlugin, LivenessCheckProvider {
       this.healthCheckService.registerLivenessCheckProvider(this);
       LOG.info("LivenessCheckPlugin registered with HealthCheckService");
     } else {
-      LOG.warn("HealthCheckService not available during registration");
+      throw new IllegalStateException(
+          "HealthCheckService not available during LivenessCheckPlugin registration");
     }
   }
 

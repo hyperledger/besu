@@ -36,9 +36,87 @@ public interface P2PService extends BesuService {
   void disableDiscovery();
 
   /**
-   * Returns the current number of connected peers.
+   * * Get the number of connected peers.
    *
    * @return the number of connected peers
    */
   int getPeerCount();
+
+  
+  /**
+   * Get all connected peer connections.
+   *
+   * @return list of connected peer connections
+   */
+  Collection<? extends PeerConnection> getPeerConnections();
+
+  /**
+   * Get all maintained connection peers.
+   *
+   * @return list of maintained connection peers
+   */
+  Collection<? extends Peer> getMaintainedConnectionPeers();
+
+  /**
+   * Subscribe to connection events.
+   *
+   * @param networkSubscriber the subscriber to receive connection events
+   */
+  void subscribeConnect(ConnectionListener networkSubscriber);
+
+  /**
+   * Subscribe to disconnection events.
+   *
+   * @param networkSubscriber the subscriber to receive disconnection events
+   */
+  void subscribeDisconnect(DisconnectionListener networkSubscriber);
+
+  /**
+   * Subscribe to messages on a specific capability.
+   *
+   * @param capability the capability to subscribe to
+   * @param networkSubscriber the subscriber to receive messages for the specified capability
+   */
+  void subscribeMessage(final Capability capability, final MessageListener networkSubscriber);
+
+  /** Consumer of network connection events. */
+  @FunctionalInterface
+  interface ConnectionListener {
+    /**
+     * Called when a new peer connection is established.
+     *
+     * @param connection the newly established peer connection
+     */
+    void onConnect(final PeerConnection connection);
+  }
+
+  /** Consumer of network disconnection events. */
+  @FunctionalInterface
+  interface DisconnectionListener {
+    /**
+     * Called when a peer connection is terminated.
+     *
+     * @param connection the connection that was closed
+     * @param disconnectionCode the code indicating the reason for disconnection
+     * @param disconnectionMessage a human-readable message explaining the disconnection reason
+     * @param initiatedByPeer {@code true} if the remote peer initiated the disconnect
+     */
+    void onDisconnect(
+        final PeerConnection connection,
+        final Bytes disconnectionCode,
+        final String disconnectionMessage,
+        final boolean initiatedByPeer);
+  }
+
+  /** Consumer of network message events. */
+  @FunctionalInterface
+  interface MessageListener {
+    /**
+     * Called for each incoming message on a subscribed capability.
+     *
+     * @param capability the capability of the message
+     * @param message the message
+     */
+    void onMessage(final Capability capability, final Message message);
+  }
 }

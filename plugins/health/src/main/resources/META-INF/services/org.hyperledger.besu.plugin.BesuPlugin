@@ -1,2 +1,0 @@
-org.hyperledger.besu.plugins.health.LivenessCheckPlugin
-org.hyperledger.besu.plugins.health.ReadinessCheckPlugin

@@ -61,20 +61,34 @@ public class ReadinessCheckPlugin implements BesuPlugin, ReadinessCheckProvider 
 
   @Override
   public void register(final ServiceManager context) {
-    // Services may be unavailable in some configurations (e.g., p2p disabled). Defer checks to isHealthy.
-    this.p2pService = context.getService(P2PService.class).orElse(null);
-    this.synchronizationService = context.getService(SynchronizationService.class).orElse(null);
+    // All required services must be present - fail fast if any are missing
+    this.p2pService =
+        context
+            .getService(P2PService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "P2PService is not available - this indicates a serious internal error"));
 
-    // HealthCheckService is required to register the provider
-    final Optional<HealthCheckService> healthCheckServiceOpt =
-        context.getService(HealthCheckService.class);
-    if (healthCheckServiceOpt.isPresent()) {
-      this.healthCheckService = healthCheckServiceOpt.get();
-      this.healthCheckService.registerReadinessCheckProvider(this);
-      LOG.info("ReadinessCheckPlugin registered with HealthCheckService");
-    } else {
-      LOG.warn("HealthCheckService not available during registration");
-    }
+    this.synchronizationService =
+        context
+            .getService(SynchronizationService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "SynchronizationService is not available - this indicates a serious internal error"));
+
+    this.healthCheckService =
+        context
+            .getService(HealthCheckService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "HealthCheckService is not available - this indicates a serious internal error"));
+
+    // Register the readiness check provider - all required services are present
+    this.healthCheckService.registerReadinessCheckProvider(this);
+    LOG.info("ReadinessCheckPlugin registered successfully with all required services");
   }
 
   @Override

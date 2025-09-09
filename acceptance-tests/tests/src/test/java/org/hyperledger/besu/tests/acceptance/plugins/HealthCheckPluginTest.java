@@ -50,6 +50,30 @@ public class HealthCheckPluginTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void livenessEndpointShouldReturn503WhenForcedDownViaCli() throws Exception {
+    final BesuNode nodeDown =
+        besu.createPluginsNode(
+            "node-down",
+            List.of("testPlugins"),
+            List.of(
+                "--rpc-http-enabled",
+                "--rpc-http-host=127.0.0.1",
+                "--rpc-http-port=0",
+                "--plugin-health-liveness-down=true"));
+    try {
+      cluster.start(nodeDown);
+      final String url =
+          "http://" + nodeDown.getHostName() + ":" + nodeDown.getJsonRpcPort().get() + "/liveness";
+      final Request request = new Request.Builder().url(url).build();
+      try (Response response = client.newCall(request).execute()) {
+        assertThat(response.code()).isEqualTo(503);
+      }
+    } finally {
+      cluster.stopNode(nodeDown);
+    }
+  }
+
+  @Test
   public void readinessEndpointShouldReturn200WhenHealthy() throws IOException {
     // readiness endpoint
     Response response = callHealthEndpoint("/readiness");

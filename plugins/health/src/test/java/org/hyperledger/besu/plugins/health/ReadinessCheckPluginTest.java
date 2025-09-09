@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugins.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,10 +60,15 @@ class ReadinessCheckPluginTest {
 
   @Test
   void shouldRegisterWithServiceManager() {
+    when(serviceManager.getService(HealthCheckService.class))
+        .thenReturn(Optional.of(healthCheckService));
+    when(serviceManager.getService(P2PService.class)).thenReturn(Optional.of(p2pService));
+    when(serviceManager.getService(SynchronizationService.class))
+        .thenReturn(Optional.of(synchronizationService));
+
     plugin.register(serviceManager);
 
-    // Plugin should store the service manager
-    assertThat(plugin).isNotNull();
+    verify(healthCheckService).registerReadinessCheckProvider(plugin);
   }
 
   @Test
@@ -153,19 +159,14 @@ class ReadinessCheckPluginTest {
 
   @Test
   void shouldHandleMissingServices() {
-    when(serviceManager.getService(HealthCheckService.class))
-        .thenReturn(Optional.of(healthCheckService));
     when(serviceManager.getService(P2PService.class)).thenReturn(Optional.empty());
     when(serviceManager.getService(SynchronizationService.class)).thenReturn(Optional.empty());
+    when(serviceManager.getService(HealthCheckService.class))
+        .thenReturn(Optional.of(healthCheckService));
 
-    plugin.register(serviceManager);
-
-    // Should not throw exception, just log warnings
-    plugin.start();
-
-    // Plugin should still be functional even without P2P and Sync services
-    boolean result = plugin.isHealthy(paramSource);
-    assertThat(result).isTrue(); // Should pass when services are not available
+    assertThatThrownBy(() -> plugin.register(serviceManager))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("P2PService is not available");
   }
 
   @Test
@@ -222,14 +223,12 @@ class ReadinessCheckPluginTest {
   @Test
   void shouldHandleMissingHealthCheckService() {
     when(serviceManager.getService(HealthCheckService.class)).thenReturn(Optional.empty());
+    when(serviceManager.getService(P2PService.class)).thenReturn(Optional.of(p2pService));
+    when(serviceManager.getService(SynchronizationService.class))
+        .thenReturn(Optional.of(synchronizationService));
 
-    plugin.register(serviceManager);
-
-    // Should not throw exception, just log warning
-    plugin.start();
-
-    // Plugin should still be functional even without HealthCheckService
-    boolean result = plugin.isHealthy(paramSource);
-    assertThat(result).isTrue(); // Should use default parameters and pass
+    assertThatThrownBy(() -> plugin.register(serviceManager))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("HealthCheckService is not available");
   }
 }
