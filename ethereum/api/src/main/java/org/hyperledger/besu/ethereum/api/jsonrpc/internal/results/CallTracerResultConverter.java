@@ -86,11 +86,42 @@ public class CallTracerResultConverter {
       return createRootCallFromTransaction(transactionTrace);
     }
     LOG.trace(
-        "Building call hierarchy from {} trace frames", transactionTrace.getTraceFrames().size());
+        "** Building call hierarchy for tx: {} from {} trace frames",
+        transactionTrace.getTransaction().getHash(),
+        transactionTrace.getTraceFrames().size());
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
+    // debug log all opcodes
+    for (TraceFrame traceFrame : trace.getTraceFrames()) {
+      String opcodeLog =
+          String.format(
+              "OpCode: %s, Depth: %d, GasRem: %d, GasCost: %s, Exceptional Halt: %s",
+              traceFrame.getOpcode(),
+              traceFrame.getDepth(),
+              traceFrame.getGasRemaining(),
+              traceFrame.getGasCost().isPresent() ? traceFrame.getGasCost().getAsLong() : "N/A",
+              traceFrame
+                  .getExceptionalHaltReason()
+                  .map(ExceptionalHaltReason::name)
+                  .orElse("None"));
+
+      // Add stack details for CALL/CALLCODE
+      if (("CALL".equals(traceFrame.getOpcode()) || "CALLCODE".equals(traceFrame.getOpcode()))
+          && traceFrame.getStack().isPresent()) {
+        Bytes[] stack = traceFrame.getStack().get();
+        if (stack.length >= 3) {
+          Bytes valueBytes = stack[stack.length - 3];
+          Wei value = Wei.wrap(valueBytes);
+          opcodeLog += String.format(", Value from stack: %s", value.toShortHexString());
+        }
+      }
+
+      LOG.trace(opcodeLog);
+    }
+    LOG.trace("-----------------------------------");
+
     // Initialize the root call
     final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
     if (!trace.getResult().isSuccessful()) {
@@ -106,12 +137,28 @@ public class CallTracerResultConverter {
     final CallInfo rootInfo = new CallInfo(rootBuilder, null);
     depthToCallInfo.put(0, rootInfo);
 
+    // Track previous frame to detect implicit returns
+    TraceFrame previousFrame = null;
+
     // Process all frames
     for (int i = 0; i < frames.size(); i++) {
       final TraceFrame nextTrace = i < frames.size() - 1 ? frames.get(i + 1) : null;
       final TraceFrame frame = frames.get(i);
       final String opcode = frame.getOpcode();
       final int frameDepth = frame.getDepth();
+
+      // Check if depth decreased without a proper return (implicit return due to failure)
+      if (previousFrame != null && frameDepth < previousFrame.getDepth()) {
+        // Check if the previous frame was NOT a return/revert/stop
+        if (!isReturnOp(previousFrame.getOpcode())
+            && !isRevertOp(previousFrame.getOpcode())
+            && !isHaltOp(previousFrame.getOpcode())) {
+
+          LOG.trace(
+              "Detected implicit return from depth {} to {}", previousFrame.getDepth(), frameDepth);
+          handleImplicitReturn(previousFrame, depthToCallInfo);
+        }
+      }
 
       // Process call operations that create a new context (or a precompile effect)
       if (isCallOp(opcode) || isCreateOp(opcode)) {
@@ -125,6 +172,7 @@ public class CallTracerResultConverter {
         // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
         if (frame.isPrecompile()) {
           finalizePrecompileChild(frame, childBuilder, parentCallInfo);
+          previousFrame = frame;
           continue;
         }
 
@@ -134,8 +182,10 @@ public class CallTracerResultConverter {
             "*** calleeEntered={} nextDepth={}",
             calleeEntered,
             (nextTrace == null ? "-" : nextTrace.getDepth()));
+
         if (!calleeEntered) {
           handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
+          previousFrame = frame;
           continue;
         }
 
@@ -149,10 +199,7 @@ public class CallTracerResultConverter {
         handleSelfDestruct(frame, currentCallInfo);
       }
       // Process return operations that exit a context
-      else if (isReturnOp(opcode)
-          || isRevertOp(opcode)
-          || isHaltOp(opcode)
-          || frame.getExceptionalHaltReason().isPresent()) {
+      else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
         currentDepth = frameDepth;
 
         // Get child call info
@@ -160,6 +207,7 @@ public class CallTracerResultConverter {
 
         if (childCallInfo == null) {
           LOG.debug(">> Orphaned return at depth {} - no matching call entry", currentDepth);
+          previousFrame = frame;
           continue;
         }
         LOG.trace(
@@ -203,6 +251,9 @@ public class CallTracerResultConverter {
           depthToCallInfo.remove(currentDepth);
         }
       }
+
+      // Update previous frame at the end of the loop
+      previousFrame = frame;
     }
 
     // Process any remaining calls that didn't have explicit return frames
@@ -498,11 +549,29 @@ public class CallTracerResultConverter {
     if ("STATICCALL".equals(opcode)) {
       return null; // omit field to match Geth
     }
-    // For DELEGATECALL, value is always 0, and geth includes the field
+
     if ("DELEGATECALL".equals(opcode)) {
-      return "0x0";
+      return "0x0"; // DELEGATECALL never transfers value
     }
-    return frame.getValue().toShortHexString(); // CALL, CALLCODE, CREATE, CREATE2
+
+    // For CALL/CALLCODE, extract value from stack, NOT from frame.getValue()
+    if ("CALL".equals(opcode) || "CALLCODE".equals(opcode)) {
+      return frame
+          .getStack()
+          .filter(stack -> stack.length >= 3)
+          .map(
+              stack -> {
+                // CALL stack: gas, to, value, inOffset, inSize, outOffset, outSize
+                // Value is at stack[length - 3]
+                Bytes valueBytes = stack[stack.length - 3];
+                Wei value = Wei.wrap(valueBytes);
+                return value.toShortHexString();
+              })
+          .orElse("0x0");
+    }
+
+    // For CREATE/CREATE2, use frame.getValue()
+    return frame.getValue().toShortHexString();
   }
 
   private static long calculateGasUsed(
@@ -591,15 +660,16 @@ public class CallTracerResultConverter {
         (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
 
     // Prefer the callee frame when we actually enter it (authoritative).
-    if (nextTrace != null
-        && nextTrace.getDepth() == frame.getDepth() + 1
-        && nextTrace.getInputData() != null
-        && !nextTrace.getInputData().isEmpty()) {
+    if (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1) {
+      Bytes calleeInput = nextTrace.getInputData();
+      if (calleeInput == null) {
+        calleeInput = Bytes.EMPTY; // Normalize null to empty
+      }
       LOG.trace(
           "  using callee-frame input (authoritative) [{}]={}",
-          nextTrace.getInputData().size(),
-          shortHex(nextTrace.getInputData(), 16));
-      return nextTrace.getInputData();
+          calleeInput.size(),
+          shortHex(calleeInput, 16));
+      return calleeInput;
     }
 
     // CALL-like: [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
@@ -901,5 +971,78 @@ public class CallTracerResultConverter {
     currentCallInfo.builder.addCall(selfDestructCall);
 
     LOG.trace("SELFDESTRUCT: {} -> {} (value: {})", from, beneficiaryHex, value);
+  }
+
+  private static void handleImplicitReturn(
+      final TraceFrame lastFrameAtDepth, final Map<Integer, CallInfo> depthToCallInfo) {
+
+    final int failedDepth = lastFrameAtDepth.getDepth();
+    final CallInfo childCallInfo = depthToCallInfo.get(failedDepth);
+
+    if (childCallInfo == null) {
+      LOG.debug("No matching call info for implicit return at depth {}", failedDepth);
+      return;
+    }
+
+    LOG.trace(
+        "Handling implicit return at depth {} after {} with halt reason: {}",
+        failedDepth,
+        lastFrameAtDepth.getOpcode(),
+        lastFrameAtDepth.getExceptionalHaltReason().orElse(null));
+
+    // Set error if there was an exceptional halt
+    if (lastFrameAtDepth.getExceptionalHaltReason().isPresent()) {
+      String errorMessage =
+          mapExceptionalHaltToError(lastFrameAtDepth.getExceptionalHaltReason().get());
+      childCallInfo.builder.error(errorMessage);
+    }
+
+    // Calculate gas used
+    if (childCallInfo.entryFrame != null) {
+      long gasProvided = childCallInfo.builder.getGas().longValue();
+
+      // If INSUFFICIENT_GAS, all gas was consumed
+      if (lastFrameAtDepth
+          .getExceptionalHaltReason()
+          .map(r -> "INSUFFICIENT_GAS".equals(r.name()))
+          .orElse(false)) {
+        childCallInfo.builder.gasUsed(gasProvided);
+      }
+      // Special handling for SELFDESTRUCT
+      else if ("SELFDESTRUCT".equals(lastFrameAtDepth.getOpcode())) {
+        // For SELFDESTRUCT, we need to calculate based on the gas before SELFDESTRUCT
+        // and the gas after (which would be in the parent frame)
+        // SELFDESTRUCT costs 5000 gas (or 0 if balance is 0 and beneficiary exists)
+
+        // Get the gas cost from the SELFDESTRUCT operation itself
+        long selfDestructCost = lastFrameAtDepth.getGasCost().orElse(5000L);
+        long gasBeforeSelfDestruct = lastFrameAtDepth.getGasRemaining();
+
+        // Calculate total gas used: provided - remaining before + cost of SELFDESTRUCT
+        long gasUsed = gasProvided - gasBeforeSelfDestruct + selfDestructCost;
+
+        LOG.trace(
+            "SELFDESTRUCT gas calculation: provided={}, beforeSD={}, SDcost={}, used={}",
+            gasProvided,
+            gasBeforeSelfDestruct,
+            selfDestructCost,
+            gasUsed);
+
+        childCallInfo.builder.gasUsed(gasUsed);
+      } else {
+        // Normal calculation for other opcodes
+        long gasRemaining = lastFrameAtDepth.getGasRemaining();
+        childCallInfo.builder.gasUsed(Math.max(0, gasProvided - gasRemaining));
+      }
+    }
+
+    // Add to parent
+    final CallInfo parentCallInfo = depthToCallInfo.get(failedDepth - 1);
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childCallInfo.builder.build());
+    }
+
+    // Remove from tracking
+    depthToCallInfo.remove(failedDepth);
   }
 }
