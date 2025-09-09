@@ -37,8 +37,6 @@ import org.apache.tuweni.units.bigints.UInt256;
  * </UL>
  */
 public class Eip4762GasCalculator extends CancunGasCalculator {
-  private static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
   private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
   /** Instantiates a new EIP-4762 Gas Calculator. */
@@ -126,7 +124,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
       return gas;
     }
 
-    if (isPrecompile(to) || isSystemContract(to)) {
+    if (isPrecompile(to)) {
       return clampedAdd(gas, getWarmStorageReadCost());
     }
 
@@ -186,7 +184,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                 .touchCodeChunks(
                     address, false, codeOffset, readSize, codeSize, frame.getRemainingGas()));
 
-    if (isPrecompile(address) || isSystemContract(address)) {
+    if (isPrecompile(address)) {
       return clampedAdd(gas, getWarmStorageReadCost());
     }
 
@@ -271,7 +269,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
   @Override
   public long extCodeHashOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
-    if (isPrecompile(address) || isSystemContract(address)) {
+    if (isPrecompile(address)) {
       return getWarmStorageReadCost();
     }
 
@@ -288,7 +286,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
   @Override
   public long extCodeSizeOperationGasCost(
       final MessageFrame frame, final boolean accountIsWarm, final Address address) {
-    if (isPrecompile(address) || isSystemContract(address)) {
+    if (isPrecompile(address)) {
       return getWarmStorageReadCost();
     }
 
@@ -340,7 +338,7 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
                     originatorAddress, BASIC_DATA_LEAF_KEY, frame.getRemainingGas()));
 
     // TODO: REMOVE - if code removed below there's no point to check for this
-    if (isPrecompile(recipientAddress) || isSystemContract(recipientAddress)) {
+    if (isPrecompile(recipientAddress)) {
       return gas;
     }
 
@@ -400,10 +398,6 @@ public class Eip4762GasCalculator extends CancunGasCalculator {
     return frame
         .getAccessWitness()
         .touchAndChargeContractCreateCompleted(frame.getContractAddress(), frame.getRemainingGas());
-  }
-
-  private static boolean isSystemContract(final Address address) {
-    return HISTORY_STORAGE_ADDRESS.equals(address);
   }
 
   @Override
