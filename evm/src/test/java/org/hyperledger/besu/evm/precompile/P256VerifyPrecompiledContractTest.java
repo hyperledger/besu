@@ -143,6 +143,9 @@ class P256VerifyPrecompiledContractTest {
         Bytes.EMPTY,
         defaultMaybeNativeResult.cachedResult().output(),
         "Invalid curve point should return empty result");
+    assertTrue(
+        maybeNativeResult.isSuccessful(),
+        "Invalid curve point should succeed with empty result for native implementation");
     assertEquals(
         Bytes.EMPTY,
         maybeNativeResult.output(),
