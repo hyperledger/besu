@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console appender for test output -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} %-5level [%logger{1}] %msg%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Enable TRACE level for your specific class or package -->
+        <Logger name="org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResultConverter" level="TRACE" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- You can also enable tracing for an entire package -->
+        <Logger name="org.hyperledger.besu.ethereum.api.jsonrpc.internal.results" level="TRACE" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Keep other loggers at a higher level to reduce noise -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
