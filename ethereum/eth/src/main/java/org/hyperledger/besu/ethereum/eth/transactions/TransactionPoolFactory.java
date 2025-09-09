@@ -55,8 +55,7 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration,
-      final boolean isPeerTaskSystemEnabled) {
+      final MiningConfiguration miningConfiguration) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
@@ -80,8 +79,7 @@ public class TransactionPoolFactory {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         blobCache,
-        miningConfiguration,
-        isPeerTaskSystemEnabled);
+        miningConfiguration);
   }
 
   static TransactionPool createTransactionPool(
@@ -96,8 +94,7 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration,
-      final boolean isPeerTaskSystemEnabled) {
+      final MiningConfiguration miningConfiguration) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -137,8 +134,7 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metrics,
-                isPeerTaskSystemEnabled),
+                metrics),
             transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(

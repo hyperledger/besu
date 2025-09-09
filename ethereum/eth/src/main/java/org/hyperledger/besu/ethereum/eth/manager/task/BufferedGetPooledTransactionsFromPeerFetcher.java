@@ -52,7 +52,6 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
-  private final boolean isPeerTaskSystemEnabled;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -61,8 +60,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
       final TransactionPool transactionPool,
       final PeerTransactionTracker transactionTracker,
       final TransactionPoolMetrics metrics,
-      final String metricLabel,
-      final boolean isPeerTaskSystemEnabled) {
+      final String metricLabel) {
     this.ethContext = ethContext;
     this.scheduledFuture = scheduledFuture;
     this.peer = peer;
@@ -72,7 +70,6 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     this.metricLabel = metricLabel;
     this.txAnnounces =
         Queues.synchronizedQueue(EvictingQueue.create(DEFAULT_MAX_PENDING_TRANSACTIONS));
-    this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
   }
 
   public ScheduledFuture<?> getScheduledFuture() {
@@ -82,53 +79,36 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   public void requestTransactions() {
     List<Hash> txHashesAnnounced;
     while (!(txHashesAnnounced = getTxHashesAnnounced()).isEmpty()) {
-      CompletableFuture<List<Transaction>> futureTransactions;
-      if (isPeerTaskSystemEnabled) {
-        final org.hyperledger.besu.ethereum.eth.manager.peertask.task
-                .GetPooledTransactionsFromPeerTask
-            task =
-                new org.hyperledger.besu.ethereum.eth.manager.peertask.task
-                    .GetPooledTransactionsFromPeerTask(txHashesAnnounced);
-        futureTransactions =
-            ethContext
-                .getScheduler()
-                .scheduleServiceTask(
-                    () -> {
-                      PeerTaskExecutorResult<List<Transaction>> taskResult =
-                          ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-                      if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                          || taskResult.result().isEmpty()) {
-                        return CompletableFuture.failedFuture(
-                            new RuntimeException("Failed to retrieve transactions for hashes"));
-                      }
-                      return CompletableFuture.completedFuture(taskResult.result().get());
-                    });
-      } else {
-        final GetPooledTransactionsFromPeerTask task =
-            GetPooledTransactionsFromPeerTask.forHashes(
-                ethContext, txHashesAnnounced, metrics.getMetricsSystem());
-        task.assignPeer(peer);
-        futureTransactions =
-            ethContext
-                .getScheduler()
-                .scheduleSyncWorkerTask(task)
-                .thenCompose(
-                    (peerTaskResult) ->
-                        CompletableFuture.completedFuture(peerTaskResult.getResult()));
-      }
+      final org.hyperledger.besu.ethereum.eth.manager.peertask.task
+              .GetPooledTransactionsFromPeerTask
+          task =
+              new org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                  .GetPooledTransactionsFromPeerTask(txHashesAnnounced);
+      ethContext
+          .getScheduler()
+          .scheduleServiceTask(
+              () -> {
+                PeerTaskExecutorResult<List<Transaction>> taskResult =
+                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
+                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  return CompletableFuture.failedFuture(
+                      new RuntimeException("Failed to retrieve transactions for hashes"));
+                }
+                return CompletableFuture.completedFuture(taskResult.result().get());
+              })
+          .thenAccept(
+              retrievedTransactions -> {
+                transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
 
-      futureTransactions.thenAccept(
-          retrievedTransactions -> {
-            transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
+                LOG.atTrace()
+                    .setMessage("Got {} transactions requested from peer {}")
+                    .addArgument(retrievedTransactions::size)
+                    .addArgument(peer::getLoggableId)
+                    .log();
 
-            LOG.atTrace()
-                .setMessage("Got {} transactions requested from peer {}")
-                .addArgument(retrievedTransactions::size)
-                .addArgument(peer::getLoggableId)
-                .log();
-
-            transactionPool.addRemoteTransactions(retrievedTransactions);
-          });
+                transactionPool.addRemoteTransactions(retrievedTransactions);
+              });
     }
   }
 
