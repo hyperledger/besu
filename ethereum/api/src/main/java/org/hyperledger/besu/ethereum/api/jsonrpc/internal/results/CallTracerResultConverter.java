@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.shortHex;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -64,6 +63,43 @@ import org.slf4j.LoggerFactory;
 public class CallTracerResultConverter {
   private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
+  // Gas calculation constants
+  private static final long WARM_ACCESS_GAS = 100L; // 0 for pre-Berlin
+  private static final long CODE_DEPOSIT_GAS_PER_BYTE = 200L;
+  private static final long DEFAULT_SELFDESTRUCT_COST = 5000L;
+
+  // Stack position constants for different operations
+  private static final int CALL_STACK_VALUE_OFFSET =
+      3; // Value at stack[length - 3] for CALL/CALLCODE
+  private static final int CALL_STACK_TO_OFFSET = 2; // To address at stack[length - 2]
+  private static final int CALL_STACK_IN_OFFSET = 4; // Input offset at stack[length - 4]
+  private static final int CALL_STACK_IN_SIZE_OFFSET = 3; // Input size at stack[length - 3]
+
+  // CREATE operation stack positions
+  private static final int CREATE_STACK_OFFSET_POS = 2; // Offset at stack[length - 2]
+  private static final int CREATE_STACK_SIZE_POS = 1; // Size at stack[length - 1] (TOS)
+  private static final int CREATE2_STACK_OFFSET_POS = 3; // Offset at stack[length - 3]
+  private static final int CREATE2_STACK_SIZE_POS = 2; // Size at stack[length - 2]
+
+  // Operation types
+  private static final String CALL_TYPE = "CALL";
+  private static final String CALLCODE_TYPE = "CALLCODE";
+  private static final String DELEGATECALL_TYPE = "DELEGATECALL";
+  private static final String STATICCALL_TYPE = "STATICCALL";
+  private static final String CREATE_TYPE = "CREATE";
+  private static final String CREATE2_TYPE = "CREATE2";
+  private static final String SELFDESTRUCT_TYPE = "SELFDESTRUCT";
+  private static final String RETURN_TYPE = "RETURN";
+  private static final String REVERT_TYPE = "REVERT";
+  private static final String STOP_TYPE = "STOP";
+
+  // Error messages
+  private static final String EXECUTION_REVERTED = "execution reverted";
+
+  // Special values
+  private static final String ZERO_VALUE = "0x0";
+  public static final String PRECOMPILE_FAILED = "precompile failed";
+
   /**
    * Converts a transaction trace to a call tracer result.
    *
@@ -107,7 +143,7 @@ public class CallTracerResultConverter {
                   .orElse("None"));
 
       // Add stack details for CALL/CALLCODE
-      if (("CALL".equals(traceFrame.getOpcode()) || "CALLCODE".equals(traceFrame.getOpcode()))
+      if ((CALL_TYPE.equals(traceFrame.getOpcode()) || CALLCODE_TYPE.equals(traceFrame.getOpcode()))
           && traceFrame.getStack().isPresent()) {
         Bytes[] stack = traceFrame.getStack().get();
         if (stack.length >= 3) {
@@ -316,11 +352,11 @@ public class CallTracerResultConverter {
           frame
               .getExceptionalHaltReason()
               .map(ExceptionalHaltReason::getDescription)
-              .orElse("execution reverted");
+              .orElse(EXECUTION_REVERTED);
       builder.error(errorMessage);
 
       // For failed CREATE/CREATE2, ensure 'to' is null
-      if ("CREATE".equals(builder.getType()) || "CREATE2".equals(builder.getType())) {
+      if (CREATE_TYPE.equals(builder.getType()) || CREATE2_TYPE.equals(builder.getType())) {
         builder.to(null);
         // also set code as input for failed contract creation
         if (frame.getMaybeCode().isPresent()) {
@@ -334,8 +370,8 @@ public class CallTracerResultConverter {
 
       // Add revert reason if available
       frame.getRevertReason().ifPresent(builder::revertReason);
-    } else if ("REVERT".equals(opcode)) {
-      builder.error("execution reverted");
+    } else if (REVERT_TYPE.equals(opcode)) {
+      builder.error(EXECUTION_REVERTED);
       frame.getRevertReason().ifPresent(builder::revertReason);
     }
   }
@@ -401,7 +437,7 @@ public class CallTracerResultConverter {
 
     final CallTracerResult.Builder builder =
         CallTracerResult.builder()
-            .type(tx.isContractCreation() ? "CREATE" : "CALL")
+            .type(tx.isContractCreation() ? CREATE_TYPE : CALL_TYPE)
             .from(tx.getSender().toHexString())
             .to(
                 tx.isContractCreation()
@@ -426,7 +462,7 @@ public class CallTracerResultConverter {
           result
               .getExceptionalHaltReason()
               .map(ExceptionalHaltReason::getDescription)
-              .orElse("execution reverted"));
+              .orElse(EXECUTION_REVERTED));
 
       if (tx.isContractCreation()) {
         // set TO as null for failed contract creation
@@ -444,28 +480,28 @@ public class CallTracerResultConverter {
   }
 
   private static String getCallValue(final TraceFrame frame, final String opcode) {
-    if ("STATICCALL".equals(opcode)) {
+    if (STATICCALL_TYPE.equals(opcode)) {
       return null; // omit field to match Geth
     }
 
-    if ("DELEGATECALL".equals(opcode)) {
+    if (DELEGATECALL_TYPE.equals(opcode)) {
       return "0x0"; // DELEGATECALL never transfers value
     }
 
     // For CALL/CALLCODE, extract value from stack, NOT from frame.getValue()
-    if ("CALL".equals(opcode) || "CALLCODE".equals(opcode)) {
+    if (CALL_TYPE.equals(opcode) || CALLCODE_TYPE.equals(opcode)) {
       return frame
           .getStack()
-          .filter(stack -> stack.length >= 3)
+          .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
           .map(
               stack -> {
                 // CALL stack: gas, to, value, inOffset, inSize, outOffset, outSize
                 // Value is at stack[length - 3]
-                Bytes valueBytes = stack[stack.length - 3];
+                Bytes valueBytes = stack[stack.length - CALL_STACK_VALUE_OFFSET];
                 Wei value = Wei.wrap(valueBytes);
                 return value.toShortHexString();
               })
-          .orElse("0x0");
+          .orElse(ZERO_VALUE);
     }
 
     // For CREATE/CREATE2, use frame.getValue()
@@ -487,8 +523,8 @@ public class CallTracerResultConverter {
     long baseGasUsed = 0;
 
     // Check if this was a SELFDESTRUCT exit
-    if ("SELFDESTRUCT".equals(exitFrame.getOpcode())) {
-      long selfDestructCost = exitFrame.getGasCost().orElse(5000L);
+    if (SELFDESTRUCT_TYPE.equals(exitFrame.getOpcode())) {
+      long selfDestructCost = exitFrame.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
       long gasBeforeSelfDestruct = exitFrame.getGasRemaining();
       baseGasUsed = gasProvided - gasBeforeSelfDestruct + selfDestructCost;
     }
@@ -507,13 +543,13 @@ public class CallTracerResultConverter {
 
     // Add code deposit cost for successful CREATE/CREATE2
     String callType = callInfo.builder.getType();
-    if (("CREATE".equals(callType) || "CREATE2".equals(callType))
+    if ((CREATE_TYPE.equals(callType) || CREATE2_TYPE.equals(callType))
         && exitFrame.getOutputData() != null
         && !exitFrame.getOutputData().isEmpty()
         && exitFrame.getExceptionalHaltReason().isEmpty()) {
 
       // Code deposit cost is 200 gas per byte of deployed code
-      long codeDepositCost = exitFrame.getOutputData().size() * 200L;
+      long codeDepositCost = exitFrame.getOutputData().size() * CODE_DEPOSIT_GAS_PER_BYTE;
       baseGasUsed += codeDepositCost;
 
       LOG.trace(
@@ -528,7 +564,7 @@ public class CallTracerResultConverter {
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
     // For CREATE/CREATE2, "to" is not known at call-site
-    if ("CREATE".equals(opcode) || "CREATE2".equals(opcode)) {
+    if (CREATE_TYPE.equals(opcode) || CREATE2_TYPE.equals(opcode)) {
       return null;
     }
 
@@ -537,14 +573,14 @@ public class CallTracerResultConverter {
       return frame.getPrecompileRecipient().get().toHexString();
     }
     // For regular calls, extract from stack
-    if ("CALL".equals(opcode)
-        || "CALLCODE".equals(opcode)
-        || "STATICCALL".equals(opcode)
-        || "DELEGATECALL".equals(opcode)) {
+    if (CALL_TYPE.equals(opcode)
+        || CALLCODE_TYPE.equals(opcode)
+        || STATICCALL_TYPE.equals(opcode)
+        || DELEGATECALL_TYPE.equals(opcode)) {
       return frame
           .getStack()
-          .filter(stack -> stack.length > 1 && stack[stack.length - 2] != null)
-          .map(stack -> toAddress(stack[stack.length - 2]).toHexString())
+          .filter(stack -> stack.length > 1 && stack[stack.length - CALL_STACK_TO_OFFSET] != null)
+          .map(stack -> toAddress(stack[stack.length - CALL_STACK_TO_OFFSET]).toHexString())
           .orElse(null);
     }
 
@@ -588,9 +624,7 @@ public class CallTracerResultConverter {
     if (isCreateOp(opcode)) {
       // Check if the frame has code (init code for CREATE/CREATE2)
       if (frame.getMaybeCode().isPresent()) {
-        Bytes initCode = frame.getMaybeCode().get().getBytes();
-        LOG.trace("Using getMaybeCode() for {} init code: {}", opcode, initCode.toHexString());
-        return initCode;
+        return frame.getMaybeCode().get().getBytes();
       }
 
       // Fallback to memory extraction if getMaybeCode() is not available
@@ -599,15 +633,17 @@ public class CallTracerResultConverter {
           .getStack()
           .map(
               stack -> {
-                if ("CREATE".equals(opcode)) {
+                if (CREATE_TYPE.equals(opcode)) {
                   // CREATE stack layout: value, offset, length (with length at TOS)
-                  if (stack.length < 2) {
+                  if (stack.length < CREATE_STACK_OFFSET_POS) {
                     LOG.warn("CREATE: insufficient stack items");
                     return Bytes.EMPTY;
                   }
 
-                  final int offset = bytesToInt(stack[stack.length - 2]); // offset
-                  final int length = bytesToInt(stack[stack.length - 1]); // length at TOS
+                  final int offset =
+                      bytesToInt(stack[stack.length - CREATE_STACK_OFFSET_POS]); // offset
+                  final int length =
+                      bytesToInt(stack[stack.length - CREATE_STACK_SIZE_POS]); // length at TOS
 
                   LOG.trace(
                       "CREATE-init slice: offset={} length={} memPresent={}",
@@ -627,13 +663,15 @@ public class CallTracerResultConverter {
 
                 } else { // CREATE2
                   // CREATE2 stack layout: value, offset, length, salt (with salt at TOS)
-                  if (stack.length < 3) {
+                  if (stack.length < CREATE2_STACK_OFFSET_POS) {
                     LOG.warn("CREATE2: insufficient stack items");
                     return Bytes.EMPTY;
                   }
 
-                  final int offset = bytesToInt(stack[stack.length - 3]); // offset
-                  final int length = bytesToInt(stack[stack.length - 2]); // length
+                  final int offset =
+                      bytesToInt(stack[stack.length - CREATE2_STACK_OFFSET_POS]); // offset
+                  final int length =
+                      bytesToInt(stack[stack.length - CREATE2_STACK_SIZE_POS]); // length
                   // salt is at stack[stack.length - 1] but we don't need it for input
 
                   LOG.trace(
@@ -662,10 +700,6 @@ public class CallTracerResultConverter {
       if (calleeInput == null) {
         calleeInput = Bytes.EMPTY;
       }
-      LOG.trace(
-          "  using callee-frame input (authoritative) [{}]={}",
-          calleeInput.size(),
-          shortHex(calleeInput, 16));
       return calleeInput;
     }
 
@@ -675,12 +709,12 @@ public class CallTracerResultConverter {
           .getStack()
           .map(
               stack -> {
-                if (stack.length < 4) {
+                if (stack.length < CALL_STACK_IN_OFFSET) {
                   return frame.getInputData();
                 }
 
-                final int inOffset = bytesToInt(stack[stack.length - 4]);
-                final int inSize = bytesToInt(stack[stack.length - 3]);
+                final int inOffset = bytesToInt(stack[stack.length - CALL_STACK_IN_OFFSET]);
+                final int inSize = bytesToInt(stack[stack.length - CALL_STACK_IN_SIZE_OFFSET]);
 
                 LOG.trace(
                     "  CALL-like fallback slice: inOffset={} inSize={} memPresent={}",
@@ -701,30 +735,30 @@ public class CallTracerResultConverter {
   }
 
   private static boolean isCallOp(final String opcode) {
-    return "CALL".equals(opcode)
-        || "CALLCODE".equals(opcode)
-        || "DELEGATECALL".equals(opcode)
-        || "STATICCALL".equals(opcode);
+    return CALL_TYPE.equals(opcode)
+        || CALLCODE_TYPE.equals(opcode)
+        || DELEGATECALL_TYPE.equals(opcode)
+        || STATICCALL_TYPE.equals(opcode);
   }
 
   private static boolean isCreateOp(final String opcode) {
-    return "CREATE".equals(opcode) || "CREATE2".equals(opcode);
+    return CREATE_TYPE.equals(opcode) || CREATE2_TYPE.equals(opcode);
   }
 
   private static boolean isReturnOp(final String opcode) {
-    return "RETURN".equals(opcode);
+    return RETURN_TYPE.equals(opcode);
   }
 
   private static boolean isRevertOp(final String opcode) {
-    return "REVERT".equals(opcode);
+    return REVERT_TYPE.equals(opcode);
   }
 
   private static boolean isSelfDestructOp(final String opcode) {
-    return "SELFDESTRUCT".equals(opcode);
+    return SELFDESTRUCT_TYPE.equals(opcode);
   }
 
   private static boolean isHaltOp(final String opcode) {
-    return "STOP".equals(opcode);
+    return STOP_TYPE.equals(opcode);
   }
 
   private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
@@ -828,7 +862,7 @@ public class CallTracerResultConverter {
 
     // --- 1) Child gas (Geth-style display): (post - warm) * 63/64 ---
     final long post = Math.max(0L, entryFrame.getGasRemaining());
-    final long warmAccess = 100L; // 0 pre-Berlin
+    final long warmAccess = WARM_ACCESS_GAS; // 0 pre-Berlin
     final long base = post > warmAccess ? post - warmAccess : 0L;
     final long cap = base - (base / 64L);
     childBuilder.gas(cap);
@@ -851,7 +885,7 @@ public class CallTracerResultConverter {
           entryFrame
               .getExceptionalHaltReason()
               .map(ExceptionalHaltReason::getDescription)
-              .orElse("precompile failed");
+              .orElse(PRECOMPILE_FAILED);
       childBuilder.error(errorMessage);
 
       // revert reason may contain the actual reason for precompile failure
@@ -861,7 +895,7 @@ public class CallTracerResultConverter {
       }
       LOG.trace("  Precompile failed: {}", errorMessage);
 
-      // TODO: Verify from reviewers - Geth sets "Gas Cost <= gas" in case of error,
+      // TODO: Verify from reviewers - Geth sets "Gas Cost same as gas" in case of error,
       //  Besu should do same?
       childBuilder.gasUsed(cap);
     }
@@ -899,7 +933,7 @@ public class CallTracerResultConverter {
 
     // Get the contract's balance from refunds map
     // The refund is keyed by beneficiary address and contains the originator's balance
-    String value = "0x0"; // Default if not found
+    String value = ZERO_VALUE; // Default if not found
     if (frame.getMaybeRefunds().isPresent()) {
       final Map<Address, Wei> refunds = frame.getMaybeRefunds().get();
       final Wei balance = refunds.get(beneficiary); // Get the refund for this beneficiary
@@ -916,7 +950,7 @@ public class CallTracerResultConverter {
     // Create SELFDESTRUCT entry matching Geth's format
     final CallTracerResult selfDestructCall =
         CallTracerResult.builder()
-            .type("SELFDESTRUCT")
+            .type(SELFDESTRUCT_TYPE)
             .from(from)
             .to(beneficiaryHex)
             .gas(0L)
@@ -965,13 +999,13 @@ public class CallTracerResultConverter {
         childCallInfo.builder.gasUsed(gasProvided);
       }
       // Special handling for SELFDESTRUCT
-      else if ("SELFDESTRUCT".equals(lastFrameAtDepth.getOpcode())) {
+      else if (SELFDESTRUCT_TYPE.equals(lastFrameAtDepth.getOpcode())) {
         // For SELFDESTRUCT, we need to calculate based on the gas before SELFDESTRUCT
         // and the gas after (which would be in the parent frame)
         // SELFDESTRUCT costs 5000 gas (or 0 if balance is 0 and beneficiary exists)
 
         // Get the gas cost from the SELFDESTRUCT operation itself
-        long selfDestructCost = lastFrameAtDepth.getGasCost().orElse(5000L);
+        long selfDestructCost = lastFrameAtDepth.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
         long gasBeforeSelfDestruct = lastFrameAtDepth.getGasRemaining();
 
         // Calculate total gas used: provided - remaining before + cost of SELFDESTRUCT

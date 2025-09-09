@@ -20,16 +20,12 @@ import org.apache.tuweni.bytes.MutableBytes;
 
 /** Small, static helpers used by CallTracerResultConverter. */
 final class CallTracerHelper {
+  // Memory and stack constants
+  private static final int BYTES_PER_WORD = 32;
+  private static final int WORD_SIZE_SHIFT = 5; // For division by 32 (2^5)
+  private static final int WORD_MASK = 31; // For modulo 32 (2^5 - 1)
+
   private CallTracerHelper() {}
-
-  // ---- Hex/log helpers ------------------------------------------------------
-
-  static String shortHex(final Bytes b, final int maxBytes) {
-    if (b == null) return "null";
-    final int n = Math.min(b.size(), Math.max(0, maxBytes));
-    final String hex = b.slice(0, n).toHexString();
-    return b.size() > n ? hex + "...(" + b.size() + "B)" : hex;
-  }
 
   static String hexN(final long v) {
     return "0x" + Long.toHexString(v);
@@ -61,19 +57,19 @@ final class CallTracerHelper {
       return Bytes.EMPTY;
     }
 
-    final int startWord = offset >>> 5; // /32
-    final int endWord = (offset + length + 31) >>> 5; // ceil((off+len)/32)
+    final int startWord = offset >>> WORD_SIZE_SHIFT; // /32
+    final int endWord = (offset + length + WORD_MASK) >>> WORD_SIZE_SHIFT; // ceil((off+len)/32)
     final int wordCount = Math.max(0, endWord - startWord);
     if (wordCount == 0) return Bytes.EMPTY;
 
-    final MutableBytes acc = MutableBytes.create(wordCount * 32);
+    final MutableBytes acc = MutableBytes.create(wordCount * BYTES_PER_WORD);
     for (int w = 0; w < wordCount; w++) {
       final int i = startWord + w;
       final Bytes word = (memory != null && i >= 0 && i < memory.length) ? memory[i] : Bytes32.ZERO;
-      word.copyTo(acc, w * 32);
+      word.copyTo(acc, w * BYTES_PER_WORD);
     }
 
-    final int startByteInWord = offset & 31; // %32
+    final int startByteInWord = offset & WORD_MASK; // %32
     if (startByteInWord + length <= acc.size()) {
       return acc.slice(startByteInWord, length);
     }
