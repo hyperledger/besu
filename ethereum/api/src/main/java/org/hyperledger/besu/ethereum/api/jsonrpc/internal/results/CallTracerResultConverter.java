@@ -333,20 +333,10 @@ public class CallTracerResultConverter {
       }
 
       // Add revert reason if available
-      frame
-          .getRevertReason()
-          .ifPresent(
-              reason -> {
-                builder.revertReason(reason.toHexString());
-              });
+      frame.getRevertReason().ifPresent(builder::revertReason);
     } else if ("REVERT".equals(opcode)) {
       builder.error("execution reverted");
-      frame
-          .getRevertReason()
-          .ifPresent(
-              reason -> {
-                builder.revertReason(reason.toHexString());
-              });
+      frame.getRevertReason().ifPresent(builder::revertReason);
     }
   }
 
@@ -441,7 +431,7 @@ public class CallTracerResultConverter {
       if (tx.isContractCreation()) {
         // set TO as null for failed contract creation
         builder.to(null);
-        builder.revertReason(result.getRevertReason().map(Bytes::toHexString).orElse(null));
+        result.getRevertReason().ifPresent(builder::revertReason);
       } else {
         // for failed calls, if we don't have an exceptional halt, and revert reason exists, it
         // needs to set "output" with revert reason
