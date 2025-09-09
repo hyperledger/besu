@@ -92,7 +92,12 @@ public class BlockchainReferenceTestTools {
       .ignore("/stEOF/")
 
       // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
-      .ignore("/stEIP2537/");
+      .ignore("/stEIP2537/")
+
+      // For Verkle ignore system contract tests
+      .ignore("_contract_execution_2935_contract")
+      .ignore("-target_0xfffffffffffffffffffffffffffffffffffffffe")
+      .ignore("-system_contract");
 
     if (NETWORKS_TO_RUN.isEmpty()) {
       params.ignoreAll();
