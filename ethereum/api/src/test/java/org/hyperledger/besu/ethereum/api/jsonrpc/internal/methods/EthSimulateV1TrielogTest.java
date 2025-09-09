@@ -61,6 +61,7 @@ public class EthSimulateV1TrielogTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   protected final GenesisState genesisState =

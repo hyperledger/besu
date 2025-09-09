@@ -381,11 +381,7 @@ public class BlockSimulator {
             .gasUsed(simResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
-            .balHash(
-                blockStateCallSimulationResult
-                    .getBlockAccessList()
-                    .map(BodyValidation::balHash)
-                    .orElse(null))
+            .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
@@ -394,10 +390,7 @@ public class BlockSimulator {
         new Block(
             finalBlockHeader,
             new BlockBody(
-                transactions,
-                List.of(),
-                Optional.of(List.of()),
-                blockStateCallSimulationResult.getBlockAccessList()));
+                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
 
     if (returnTrieLog && ws instanceof PathBasedWorldState) {
       // if requested and path-based worldstate, return result with trielog and serializer:
