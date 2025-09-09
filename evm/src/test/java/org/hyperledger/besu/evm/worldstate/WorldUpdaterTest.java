@@ -35,7 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class JournaledUpdaterEmptyAccountRevertTest {
+class WorldUpdaterTest {
 
   private static class SimpleWorldView implements WorldView {
     final Map<Address, ToyAccount> accounts = new HashMap<>();
