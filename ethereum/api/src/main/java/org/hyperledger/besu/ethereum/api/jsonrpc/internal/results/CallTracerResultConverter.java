@@ -576,29 +576,56 @@ public class CallTracerResultConverter {
 
   private static long calculateGasUsed(
       final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
+
     // For root transaction
     if (exitFrame.getDepth() == 0) {
-      // Root transaction: simply calculate difference and account for refunds
       long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
       long gasRefund = exitFrame.getGasRefund();
       return Math.max(0, gasUsed - gasRefund);
     }
 
-    // For nested calls with a real callee frame
-    if (exitFrame.getGasRemaining() >= 0) {
-      // Normal case: gas before call - gas after call = gas used
-      return callInfo.builder.getGas().longValue() - exitFrame.getGasRemaining();
+    // Get base gas calculation
+    long gasProvided = callInfo.builder.getGas().longValue();
+    long baseGasUsed = 0;
+
+    // Check if this was a SELFDESTRUCT exit
+    if ("SELFDESTRUCT".equals(exitFrame.getOpcode())) {
+      long selfDestructCost = exitFrame.getGasCost().orElse(5000L);
+      long gasBeforeSelfDestruct = exitFrame.getGasRemaining();
+      baseGasUsed = gasProvided - gasBeforeSelfDestruct + selfDestructCost;
     }
-    // For precompiled contracts (no callee frame => use precompiled cost if present)
+    // Normal return path
+    else if (exitFrame.getGasRemaining() >= 0) {
+      baseGasUsed = gasProvided - exitFrame.getGasRemaining();
+    }
+    // Precompiled contracts
     else if (entryFrame.getPrecompiledGasCost().isPresent()) {
-      return entryFrame.getPrecompiledGasCost().getAsLong();
+      baseGasUsed = entryFrame.getPrecompiledGasCost().getAsLong();
     }
-    // Fallback to operation gas cost
+    // Fallback
     else if (entryFrame.getGasCost().isPresent()) {
-      return entryFrame.getGasCost().getAsLong();
+      baseGasUsed = entryFrame.getGasCost().getAsLong();
     }
 
-    return 0;
+    // Add code deposit cost for successful CREATE/CREATE2
+    String callType = callInfo.builder.getType();
+    if (("CREATE".equals(callType) || "CREATE2".equals(callType))
+        && exitFrame.getOutputData() != null
+        && !exitFrame.getOutputData().isEmpty()
+        && exitFrame.getExceptionalHaltReason().isEmpty()) {
+
+      // Code deposit cost is 200 gas per byte of deployed code
+      long codeDepositCost = exitFrame.getOutputData().size() * 200L;
+      baseGasUsed += codeDepositCost;
+
+      LOG.trace(
+          "Adding code deposit cost for {}: {} bytes * 200 = {} gas",
+          callType,
+          exitFrame.getOutputData().size(),
+          codeDepositCost);
+    }
+
+    return baseGasUsed;
   }
 
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
