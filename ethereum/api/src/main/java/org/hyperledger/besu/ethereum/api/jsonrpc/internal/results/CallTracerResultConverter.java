@@ -686,11 +686,83 @@ public class CallTracerResultConverter {
         frame.getDepth(),
         (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
 
-    // Prefer the callee frame when we actually enter it (authoritative).
+    // For CREATE/CREATE2, try getMaybeCode() first
+    if (isCreateOp(opcode)) {
+      // Check if the frame has code (init code for CREATE/CREATE2)
+      if (frame.getMaybeCode().isPresent()) {
+        Bytes initCode = frame.getMaybeCode().get().getBytes();
+        LOG.trace("Using getMaybeCode() for {} init code: {}", opcode, initCode.toHexString());
+        return initCode;
+      }
+
+      // Fallback to memory extraction if getMaybeCode() is not available
+      LOG.trace("getMaybeCode() not present for {}, falling back to memory extraction", opcode);
+      return frame
+          .getStack()
+          .map(
+              stack -> {
+                if ("CREATE".equals(opcode)) {
+                  // CREATE stack layout: value, offset, length (with length at TOS)
+                  if (stack.length < 2) {
+                    LOG.warn("CREATE: insufficient stack items");
+                    return Bytes.EMPTY;
+                  }
+
+                  final int offset = bytesToInt(stack[stack.length - 2]); // offset
+                  final int length = bytesToInt(stack[stack.length - 1]); // length at TOS
+
+                  LOG.trace(
+                      "CREATE-init slice: offset={} length={} memPresent={}",
+                      offset,
+                      length,
+                      frame.getMemory().isPresent());
+
+                  if (length == 0) {
+                    LOG.warn("CREATE: zero length init code");
+                    return Bytes.EMPTY;
+                  }
+
+                  return frame
+                      .getMemory()
+                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
+                      .orElse(Bytes.EMPTY);
+
+                } else { // CREATE2
+                  // CREATE2 stack layout: value, offset, length, salt (with salt at TOS)
+                  if (stack.length < 3) {
+                    LOG.warn("CREATE2: insufficient stack items");
+                    return Bytes.EMPTY;
+                  }
+
+                  final int offset = bytesToInt(stack[stack.length - 3]); // offset
+                  final int length = bytesToInt(stack[stack.length - 2]); // length
+                  // salt is at stack[stack.length - 1] but we don't need it for input
+
+                  LOG.trace(
+                      "CREATE2-init slice: offset={} length={} memPresent={}",
+                      offset,
+                      length,
+                      frame.getMemory().isPresent());
+
+                  if (length == 0) {
+                    LOG.warn("CREATE2: zero length init code");
+                    return Bytes.EMPTY;
+                  }
+
+                  return frame
+                      .getMemory()
+                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
+                      .orElse(Bytes.EMPTY);
+                }
+              })
+          .orElse(Bytes.EMPTY);
+    }
+
+    // For CALL operations, prefer the callee frame when available
     if (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1) {
       Bytes calleeInput = nextTrace.getInputData();
       if (calleeInput == null) {
-        calleeInput = Bytes.EMPTY; // Normalize null to empty
+        calleeInput = Bytes.EMPTY;
       }
       LOG.trace(
           "  using callee-frame input (authoritative) [{}]={}",
@@ -699,9 +771,7 @@ public class CallTracerResultConverter {
       return calleeInput;
     }
 
-    // CALL-like: [..., gas, to, inOffset, inSize, outOffset, outSize]^TOS
-    // Tail (TOS at end) mapping for calldata:
-    //   inOffset = stack[-4], inSize = stack[-3]
+    // CALL-like fallback when no callee frame
     if (isCallOp(opcode)) {
       return frame
           .getStack()
@@ -728,45 +798,7 @@ public class CallTracerResultConverter {
           .orElse(frame.getInputData());
     }
 
-    // CREATE/CREATE2 have different (offset,size) slots.
-    if (isCreateOp(opcode)) {
-      return frame
-          .getStack()
-          .map(
-              stack -> {
-                if ("CREATE".equals(opcode)) { // CREATE(init_offset, init_size)
-                  if (stack.length < 2) return frame.getInputData();
-                  final int offset = bytesToInt(stack[stack.length - 2]); // [-2]
-                  final int length = bytesToInt(stack[stack.length - 1]); // [-1]
-                  LOG.trace(
-                      "  CREATE-init slice: offset={} length={} memPresent={}",
-                      offset,
-                      length,
-                      frame.getMemory().isPresent());
-
-                  return frame
-                      .getMemory()
-                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                      .orElse(frame.getInputData());
-                } else { // CREATE2(init_offset, init_size, salt)
-                  if (stack.length < 3) return frame.getInputData();
-                  final int offset = bytesToInt(stack[stack.length - 3]); // [-3]
-                  final int length = bytesToInt(stack[stack.length - 2]); // [-2]
-                  LOG.trace(
-                      "  CREATE2-init slice: offset={} length={} memPresent={}",
-                      offset,
-                      length,
-                      frame.getMemory().isPresent());
-                  return frame
-                      .getMemory()
-                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                      .orElse(frame.getInputData());
-                }
-              })
-          .orElse(frame.getInputData());
-    }
-
-    // Default (unchanged)
+    // Default
     return frame.getInputData();
   }
 
