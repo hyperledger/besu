@@ -119,7 +119,7 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
     final Block block = blockchainSetupUtil.getBlockchain().getChainHeadBlock();
     final Hash txHash = block.getBody().getTransactions().get(0).getHash();
 
-    // Create request with very short timeout
+    // Create request
     final String requestJson =
         String.format(
             "{\"jsonrpc\":\"2.0\",\"method\":\"debug_traceTransaction\",\"params\":[\"%s\"],\"id\":1}",
