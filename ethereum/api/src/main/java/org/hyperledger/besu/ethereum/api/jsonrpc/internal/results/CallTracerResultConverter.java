@@ -36,6 +36,8 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Converts Ethereum transaction traces into a hierarchical call tracer format.
@@ -54,6 +56,7 @@ import org.apache.tuweni.bytes.Bytes;
  * </ul>
  */
 public class CallTracerResultConverter {
+  private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
   // Gas calculation constants
   private static final long WARM_ACCESS_GAS = 100L;
   private static final long CODE_DEPOSIT_GAS_PER_BYTE = 200L;
@@ -266,7 +269,8 @@ public class CallTracerResultConverter {
     childBuilder.gasUsed(gasUsed);
   }
 
-  private static void handleSoftFailure(final String opcode, final CallTracerResult.Builder childBuilder) {
+  private static void handleSoftFailure(
+      final String opcode, final CallTracerResult.Builder childBuilder) {
 
     // Soft failures typically don't consume gas for the child call itself
     // They only consume the base operation cost at the parent level
@@ -540,18 +544,23 @@ public class CallTracerResultConverter {
       return Math.max(0L, nextTrace.getGasRemaining());
     }
 
-    // For non-entered calls (including soft failures), calculate the gas that would
-    // have been provided using the 63/64 rule
-    long remainingGas = frame.getGasRemaining();
+    // Special case for precompiles
+    if (frame.isPrecompile()) {
+      return 0L;
+    }
 
-    // Subtract the base cost of the operation itself
+    // For non-entered calls, calculate provided gas
+    long remainingGas = frame.getGasRemaining();
     long gasCost = frame.getGasCost().orElse(0L);
     long gasAfterCost = Math.max(0L, remainingGas - gasCost);
-
-    // Apply 63/64 rule for CALL operations
-    // For most calls, child gets min(gasAfterCost, gasAfterCost * 63/64)
-    // Since we're calculating what WOULD have been provided, use the 63/64 rule
     long gasProvided = gasAfterCost - (gasAfterCost / 64L);
+
+    // Debug logging
+    LOG.trace("DEBUG computeGasProvided for non-entered call:");
+    LOG.trace("  remainingGas: 0x{}", Long.toHexString(remainingGas));
+    LOG.trace("  gasCost: 0x{}", Long.toHexString(gasCost));
+    LOG.trace("  gasAfterCost: 0x{}", Long.toHexString(gasAfterCost));
+    LOG.trace("  gasProvided: 0x{}", Long.toHexString(gasProvided));
 
     return Math.max(0L, gasProvided);
   }
