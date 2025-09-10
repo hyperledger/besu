@@ -56,7 +56,7 @@ public class MainnetBlobsValidatorTest {
   }
 
   @Test
-  void failsWhenBlobsAreEmpty() {
+  void shouldRejectWhenBlobsAreMissing() {
     when(transaction.getBlobsWithCommitments()).thenReturn(Optional.empty());
 
     var result = validator.validateBlobsWithCommitments(transaction);
@@ -68,7 +68,7 @@ public class MainnetBlobsValidatorTest {
   }
 
   @Test
-  void failsWhenBlobAndCommitmentSizesMismatch() {
+  void shouldRejectWhenBlobAndCommitmentCountsDiffer() {
     when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
     when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
     when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
@@ -83,7 +83,7 @@ public class MainnetBlobsValidatorTest {
   }
 
   @Test
-  void failsWhenVersionedHashesAreEmpty() {
+  void shouldRejectWhenVersionedHashesAreMissing() {
     when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
     when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
     when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
@@ -99,7 +99,46 @@ public class MainnetBlobsValidatorTest {
   }
 
   @Test
-  void failsWhenBlobsExceedMaxPerTransaction() {
+  void shouldRejectBlobTransactionWithoutRecipient() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo()).thenReturn(Optional.empty());
+    var result = validator.validateBlobTransaction(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+        "transaction blob transactions must have a to address");
+  }
+
+  @Test
+  void shouldRejectBlobTransactionWithoutVersionedHashes() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo())
+        .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
+    when(transaction.getVersionedHashes()).thenReturn(Optional.empty());
+    var result = validator.validateBlobTransaction(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction blob transactions must specify one or more versioned hashes");
+  }
+
+  @Test
+  void shouldRejectWhenVersionedHashesHaveUnsupportedVersion() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    VersionedHash invalidVersionedHash = mock(VersionedHash.class);
+    when(invalidVersionedHash.getVersionId()).thenReturn((byte) 9);
+    when(transaction.getTo())
+        .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
+    when(transaction.getVersionedHashes()).thenReturn(Optional.of(List.of(invalidVersionedHash)));
+    var result = validator.validateBlobTransaction(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction blobs commitment version is not supported. Expected 1, found 9");
+  }
+
+  @Test
+  void shouldRejectWhenBlobCountExceedsTransactionLimit() {
     when(transaction.getType()).thenReturn(TransactionType.BLOB);
     when(transaction.getTo())
         .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
