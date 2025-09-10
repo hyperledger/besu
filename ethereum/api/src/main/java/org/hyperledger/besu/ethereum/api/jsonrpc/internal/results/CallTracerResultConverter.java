@@ -54,8 +54,6 @@ import org.apache.tuweni.bytes.Bytes;
  * </ul>
  */
 public class CallTracerResultConverter {
-  // private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
-
   // Gas calculation constants
   private static final long WARM_ACCESS_GAS = 100L;
   private static final long CODE_DEPOSIT_GAS_PER_BYTE = 200L;

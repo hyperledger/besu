@@ -797,7 +797,7 @@ public class TraceFrame {
   }
 
   /**
-   * the address of the precompile being called
+   * The address of the precompile being called.
    *
    * @return the address of the precompile being called
    */
@@ -806,7 +806,7 @@ public class TraceFrame {
   }
 
   /**
-   * input data sent to the precompile
+   * Input data sent to the precompile.
    *
    * @return input data sent to the precompile
    */
@@ -815,7 +815,7 @@ public class TraceFrame {
   }
 
   /**
-   * output data returned from the precompile
+   * Output data returned from the precompile.
    *
    * @return output data returned from the precompile
    */
