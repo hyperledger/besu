@@ -98,10 +98,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
     checkNotNull(account);
 
     this.address = account.getAddress();
-    this.addressHash =
-        (account instanceof JournaledAccount journaledAccount)
-            ? journaledAccount.addressHash
-            : this.address.addressHash();
+    this.addressHash = account.getAddress().addressHash();
     this.account = account;
 
     if (account instanceof JournaledAccount that) {
@@ -134,10 +131,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
     checkNotNull(account);
 
     this.address = account.getAddress();
-    this.addressHash =
-        (account instanceof JournaledAccount journaledAccount)
-            ? journaledAccount.addressHash
-            : this.address.addressHash();
+    this.addressHash = account.getAddress().addressHash();
     this.account = account;
 
     if (account instanceof JournaledAccount that) {
