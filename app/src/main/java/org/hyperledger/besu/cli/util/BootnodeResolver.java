@@ -20,7 +20,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,43 +46,66 @@ public final class BootnodeResolver {
         continue;
       }
 
-      if (node.startsWith("http://") || node.startsWith("https://")) {
-        // Remote list
+      // Try parsing as URI to branch by scheme (http/https/file). Fallback to path/raw.
+      URI uri = null;
+      try {
+        uri = URI.create(node);
+      } catch (final IllegalArgumentException ignored) {
+        // Not a URI; may be a local path or a raw enode. Handled below.
+      }
+
+      final String scheme = (uri != null) ? uri.getScheme() : null;
+
+      if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+        // Remote list (URL)
         try (BufferedReader reader =
-            new BufferedReader(new InputStreamReader(new URL(node).openStream(), UTF_8))) {
-          reader.lines().map(String::trim).filter(line -> !line.isEmpty()).forEach(resolved::add);
+            new BufferedReader(new InputStreamReader(uri.toURL().openStream(), UTF_8))) {
+
+          final List<String> lines =
+              reader
+                  .lines()
+                  .map(String::trim)
+                  .filter(l -> !l.isEmpty())
+                  .filter(l -> !l.startsWith("#"))
+                  .toList();
+
+          resolved.addAll(lines);
+
           LOG.debug("Resolved bootnodes from URL: {}", node);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Bootnodes fetched from {}: {}", node, lines);
+          }
         } catch (final IOException e) {
           throw new BootnodeResolutionException(
               "Failed to fetch bootnodes from URL: " + node + "; " + e.getMessage(), e);
         }
 
-      } else if (node.startsWith("file://")) {
-
+      } else if ("file".equalsIgnoreCase(scheme)) {
+        // file:// URI → unified file handling
         try {
-          final URI uri = new URI(node);
-          final Path path = Paths.get(uri);
-          Files.readAllLines(path, UTF_8).stream()
-              .map(String::trim)
-              .filter(line -> !line.isEmpty())
-              .forEach(resolved::add);
+          final List<String> lines = readPathLines(Paths.get(uri));
+          resolved.addAll(lines);
           LOG.debug("Resolved bootnodes from file URI: {}", node);
-        } catch (final Exception e) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Bootnodes fetched from {}: {}", node, lines);
+          }
+        } catch (final IOException e) {
           throw new BootnodeResolutionException(
               "Failed to read bootnodes from file URI: " + node + "; " + e.getMessage(), e);
         }
 
       } else {
-        // Local file path or raw enode
+        // Local file path or raw enode string
         final Path p = Paths.get(node);
         if (Files.exists(p)) {
           try {
-            Files.readAllLines(p, UTF_8).stream()
-                .map(String::trim)
-                .filter(line -> !line.isEmpty())
-                .forEach(resolved::add);
+            final List<String> lines = readPathLines(p);
+            resolved.addAll(lines);
             LOG.debug("Resolved bootnodes from local file: {}", node);
-            continue;
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Bootnodes fetched from {}: {}", node, lines);
+            }
+            continue; // handled as file; skip fallback
           } catch (final IOException e) {
             throw new BootnodeResolutionException(
                 "Failed to read bootnodes from file: " + node + "; " + e.getMessage(), e);
@@ -98,6 +120,16 @@ public final class BootnodeResolver {
 
     LOG.debug("Total resolved bootnodes: {}", resolved.size());
     return resolved;
+  }
+
+  private static List<String> readPathLines(final Path path) throws IOException {
+    try (var lines = Files.lines(path, UTF_8)) {
+      return lines
+          .map(String::trim) // normalize stray whitespace
+          .filter(l -> !l.isEmpty()) // drop blanks
+          .filter(l -> !l.startsWith("#")) // allow comments
+          .toList(); // if building with Java 11, use .collect(Collectors.toList())
+    }
   }
 
   public static final class BootnodeResolutionException extends RuntimeException {
