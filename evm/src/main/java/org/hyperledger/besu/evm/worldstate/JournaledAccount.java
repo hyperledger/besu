@@ -367,8 +367,8 @@ public class JournaledAccount implements MutableAccount, Undoable {
    */
   @Override
   public boolean isStorageEmpty() {
-    return updatedStorage.isEmpty()
-        && (storageWasCleared.get() || account == null || account.isStorageEmpty());
+    return storageWasCleared.get()
+        || (updatedStorage.isEmpty() && (account == null || account.isStorageEmpty()));
   }
 
   /**
