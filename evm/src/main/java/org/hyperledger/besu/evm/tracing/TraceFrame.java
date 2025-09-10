@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -40,6 +41,7 @@ public class TraceFrame {
   private final long gasRefund;
   private final int depth;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
+  private final Optional<SoftFailureReason> softFailureReason;
   private final Address recipient;
   private final Wei value;
   private final Bytes inputData;
@@ -75,6 +77,7 @@ public class TraceFrame {
     this.gasRefund = builder.gasRefund;
     this.depth = builder.depth;
     this.exceptionalHaltReason = builder.exceptionalHaltReason;
+    this.softFailureReason = builder.softFailureReason;
     this.recipient = builder.recipient;
     this.value = builder.value;
     this.inputData = builder.inputData;
@@ -128,6 +131,7 @@ public class TraceFrame {
     private long gasRefund;
     private int depth;
     private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
+    private Optional<SoftFailureReason> softFailureReason = Optional.empty();
     private Address recipient;
     private Wei value;
     private Bytes inputData;
@@ -168,6 +172,7 @@ public class TraceFrame {
       this.gasRefund = traceFrame.gasRefund;
       this.depth = traceFrame.depth;
       this.exceptionalHaltReason = traceFrame.exceptionalHaltReason;
+      this.softFailureReason = traceFrame.softFailureReason;
       this.recipient = traceFrame.recipient;
       this.value = traceFrame.value;
       this.inputData = traceFrame.inputData;
@@ -278,6 +283,17 @@ public class TraceFrame {
     public Builder setExceptionalHaltReason(
         final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
       this.exceptionalHaltReason = exceptionalHaltReason;
+      return this;
+    }
+
+    /**
+     * Sets the soft failure reason for this operation.
+     *
+     * @param softFailureReason the soft failure reason, or null for no soft failure reason
+     * @return this builder instance for method chaining
+     */
+    public Builder setSoftFailureReason(final Optional<SoftFailureReason> softFailureReason) {
+      this.softFailureReason = softFailureReason;
       return this;
     }
 
@@ -821,6 +837,15 @@ public class TraceFrame {
    */
   public Optional<Bytes> getPrecompileOutputData() {
     return precompileOutputData;
+  }
+
+  /**
+   * Returns optional Soft Failure Reason.
+   *
+   * @return Optional Soft Failure Reason
+   */
+  public Optional<SoftFailureReason> getSoftFailureReason() {
+    return softFailureReason;
   }
 
   @Override

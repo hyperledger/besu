@@ -234,12 +234,17 @@ public class CallTracerResultConverter {
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
 
-    // Check for exceptional halt (hard failures)
+    // Check for soft failure vs hard failure
     if (frame.getExceptionalHaltReason().isPresent()) {
       handleHardFailure(frame, opcode, childBuilder);
+    } else if (frame.getSoftFailureReason().isPresent()) {
+      handleSoftFailure(frame, opcode, childBuilder);
     } else {
-      // Soft failure (e.g., insufficient balance, call depth exceeded)
-      handleSoftFailure(opcode, childBuilder);
+      // Unknown failure type - no error message
+      childBuilder.gasUsed(0L);
+      if (isCreateOp(opcode)) {
+        childBuilder.to(null);
+      }
     }
 
     // Add to parent immediately
@@ -275,11 +280,9 @@ public class CallTracerResultConverter {
   }
 
   private static void handleSoftFailure(
-      final String opcode, final CallTracerResult.Builder childBuilder) {
+      final TraceFrame frame, final String opcode, final CallTracerResult.Builder childBuilder) {
 
-    // Soft failures typically don't consume gas for the child call itself
-    // They only consume the base operation cost at the parent level
-    // The child shows gasUsed: 0 since it never executed
+    // Soft failures don't consume gas for the child call itself
     childBuilder.gasUsed(0L);
 
     // For failed CREATE, ensure 'to' is null
@@ -287,30 +290,13 @@ public class CallTracerResultConverter {
       childBuilder.to(null);
     }
 
-    // TODO: Set error messages for soft failures to match Geth behavior.
-    // Once Besu provides soft failure context in TraceFrame, implement:
-    //
-    // Error messages that Geth sets for soft failures:
-    // - "insufficient balance for transfer" - when caller lacks funds for value transfer
-    // - "max call depth exceeded" - when call depth > 1024
-    // - "invalid input length" - for certain precompile failures
-    //
-    // Example implementation when available:
-    // if (frame.getSoftFailureReason().isPresent()) {
-    //   switch (frame.getSoftFailureReason().get()) {
-    //     case INSUFFICIENT_BALANCE:
-    //       childBuilder.error("insufficient balance for transfer");
-    //       break;
-    //     case CALL_DEPTH_EXCEEDED:
-    //       childBuilder.error("max call depth exceeded");
-    //       break;
-    //     default:
-    //       // No error for other soft failures
-    //   }
-    // }
-    //
-    // For now, we don't set errors for soft failures as Besu doesn't provide
-    // the necessary context to distinguish between different soft failure types.
+    // Set error message based on soft failure reason
+    frame
+        .getSoftFailureReason()
+        .ifPresent(
+            reason -> {
+              childBuilder.error(reason.getDescription());
+            });
   }
 
   private static void setOutputAndErrorStatus(
