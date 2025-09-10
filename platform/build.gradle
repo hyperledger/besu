@@ -179,7 +179,6 @@ dependencies {
     api 'org.web3j:besu:4.12.3'
     api 'org.web3j:core:4.12.3'
     api 'org.web3j:crypto:4.12.3'
-    api 'org.web3j:quorum:4.10.0'
 
     api 'org.xerial.snappy:snappy-java:1.1.10.7'
 
