@@ -45,7 +45,45 @@ public class MainnetBlobsValidator {
     this.gasCalculator = gasCalculator;
   }
 
-  public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
+  public ValidationResult<TransactionInvalidReason> validateBlobTransaction(
+      final Transaction transaction) {
+
+    if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "transaction blob transactions must have a to address");
+    }
+
+    if (transaction.getVersionedHashes().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blob transactions must specify one or more versioned hashes");
+    }
+
+    // Check blob gas cost against cap
+    final List<VersionedHash> versionedHashes = transaction.getVersionedHashes().get();
+    final long blobGasCost = gasCalculator.blobGasCost(versionedHashes.size());
+    if (blobGasCost > gasLimitCalculator.transactionBlobGasLimitCap()) {
+      final String error =
+          String.format("Blob transaction has too many blobs: %d", versionedHashes.size());
+      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, error);
+    }
+
+    // Validate versioned hashes
+    for (final VersionedHash versionedHash : versionedHashes) {
+      if (versionedHash.getVersionId() != VersionedHash.SHA256_VERSION_ID) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment version is not supported. Expected "
+                + VersionedHash.SHA256_VERSION_ID
+                + ", found "
+                + versionedHash.getVersionId());
+      }
+    }
+    return ValidationResult.valid();
+  }
+
+  public ValidationResult<TransactionInvalidReason> validateBlobsWithCommitments(
       final Transaction transaction) {
 
     if (transaction.getBlobsWithCommitments().isEmpty()) {
@@ -71,24 +109,9 @@ public class MainnetBlobsValidator {
     }
     final List<VersionedHash> versionedHashes = transaction.getVersionedHashes().get();
 
-    final long blobGasCost = gasCalculator.blobGasCost(versionedHashes.size());
-    if (blobGasCost > gasLimitCalculator.transactionBlobGasLimitCap()) {
-      final String error =
-          String.format("Blob transaction has too many blobs: %d", versionedHashes.size());
-      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, error);
-    }
-
     for (int i = 0; i < versionedHashes.size(); i++) {
       final KZGCommitment commitment = blobsWithCommitments.getKzgCommitments().get(i);
       final VersionedHash versionedHash = versionedHashes.get(i);
-      if (versionedHash.getVersionId() != VersionedHash.SHA256_VERSION_ID) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_BLOBS,
-            "transaction blobs commitment version is not supported. Expected "
-                + VersionedHash.SHA256_VERSION_ID
-                + ", found "
-                + versionedHash.getVersionId());
-      }
 
       final VersionedHash calculatedVersionedHash = hashCommitment(commitment);
       if (!calculatedVersionedHash.equals(versionedHash)) {

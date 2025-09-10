@@ -118,7 +118,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (transactionType.supportsBlob()) {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
-          validateBlobTransaction(transaction);
+          blobsValidator.validateBlobTransaction(transaction);
       if (!blobTransactionResult.isValid()) {
         LOG.info(
             "Blob transaction {} validation failed: {}",
@@ -129,7 +129,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
       if (transaction.getBlobsWithCommitments().isPresent()) {
         final ValidationResult<TransactionInvalidReason> blobsResult =
-            blobsValidator.validateTransactionsBlobs(transaction);
+            blobsValidator.validateBlobsWithCommitments(transaction);
         if (!blobsResult.isValid()) {
           return blobsResult;
         }
@@ -381,23 +381,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");
-    }
-    return ValidationResult.valid();
-  }
-
-  public ValidationResult<TransactionInvalidReason> validateBlobTransaction(
-      final Transaction transaction) {
-
-    if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "transaction blob transactions must have a to address");
-    }
-
-    if (transaction.getVersionedHashes().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "transaction blob transactions must specify one or more versioned hashes");
     }
     return ValidationResult.valid();
   }

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.BlobType;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -58,7 +59,7 @@ public class MainnetBlobsValidatorTest {
   void failsWhenBlobsAreEmpty() {
     when(transaction.getBlobsWithCommitments()).thenReturn(Optional.empty());
 
-    var result = validator.validateTransactionsBlobs(transaction);
+    var result = validator.validateBlobsWithCommitments(transaction);
 
     assertInvalidResult(
         result,
@@ -73,7 +74,7 @@ public class MainnetBlobsValidatorTest {
     when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
     when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of());
 
-    var result = validator.validateTransactionsBlobs(transaction);
+    var result = validator.validateBlobsWithCommitments(transaction);
 
     assertInvalidResult(
         result,
@@ -89,7 +90,7 @@ public class MainnetBlobsValidatorTest {
     when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(mock(KZGCommitment.class)));
     when(transaction.getVersionedHashes()).thenReturn(Optional.empty());
 
-    var result = validator.validateTransactionsBlobs(transaction);
+    var result = validator.validateBlobsWithCommitments(transaction);
 
     assertInvalidResult(
         result,
@@ -99,6 +100,9 @@ public class MainnetBlobsValidatorTest {
 
   @Test
   void failsWhenBlobsExceedMaxPerTransaction() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo())
+        .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
     when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
     when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
     when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
@@ -115,7 +119,7 @@ public class MainnetBlobsValidatorTest {
             Set.of(BlobType.KZG_PROOF, BlobType.KZG_CELL_PROOFS),
             gasLimitCalculator,
             gasCalculator);
-    var result = validator.validateTransactionsBlobs(transaction);
+    var result = validator.validateBlobTransaction(transaction);
     assertInvalidResult(
         result, TransactionInvalidReason.INVALID_BLOBS, "Blob transaction has too many blobs: 1");
   }
