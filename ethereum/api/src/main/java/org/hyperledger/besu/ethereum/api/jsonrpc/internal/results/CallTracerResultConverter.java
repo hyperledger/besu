@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.hexN;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
@@ -32,11 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Converts Ethereum transaction traces into a hierarchical call tracer format.
@@ -53,33 +52,26 @@ import org.slf4j.LoggerFactory;
  *   <li>Precompiled contracts (addresses 0x01-0x0a)
  *   <li>Return operations (RETURN, REVERT, STOP, SELFDESTRUCT)
  * </ul>
- *
- * <p>For precompiled contracts, the converter uses dedicated fields in TraceFrame to capture the
- * actual input/output data, as precompiles execute atomically without creating child frames.
- *
- * <p>For each call, it extracts relevant information such as addresses, values transferred, input
- * data, output data, gas usage, and error states.
  */
 public class CallTracerResultConverter {
-  private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
+  // private static final Logger LOG = LoggerFactory.getLogger(CallTracerResultConverter.class);
 
   // Gas calculation constants
-  private static final long WARM_ACCESS_GAS = 100L; // 0 for pre-Berlin
+  private static final long WARM_ACCESS_GAS = 100L;
   private static final long CODE_DEPOSIT_GAS_PER_BYTE = 200L;
   private static final long DEFAULT_SELFDESTRUCT_COST = 5000L;
 
   // Stack position constants for different operations
-  private static final int CALL_STACK_VALUE_OFFSET =
-      3; // Value at stack[length - 3] for CALL/CALLCODE
-  private static final int CALL_STACK_TO_OFFSET = 2; // To address at stack[length - 2]
-  private static final int CALL_STACK_IN_OFFSET = 4; // Input offset at stack[length - 4]
-  private static final int CALL_STACK_IN_SIZE_OFFSET = 3; // Input size at stack[length - 3]
+  private static final int CALL_STACK_VALUE_OFFSET = 3;
+  private static final int CALL_STACK_TO_OFFSET = 2;
+  private static final int CALL_STACK_IN_OFFSET = 4;
+  private static final int CALL_STACK_IN_SIZE_OFFSET = 3;
 
   // CREATE operation stack positions
-  private static final int CREATE_STACK_OFFSET_POS = 2; // Offset at stack[length - 2]
-  private static final int CREATE_STACK_SIZE_POS = 1; // Size at stack[length - 1] (TOS)
-  private static final int CREATE2_STACK_OFFSET_POS = 3; // Offset at stack[length - 3]
-  private static final int CREATE2_STACK_SIZE_POS = 2; // Size at stack[length - 2]
+  private static final int CREATE_STACK_OFFSET_POS = 2;
+  private static final int CREATE_STACK_SIZE_POS = 1;
+  private static final int CREATE2_STACK_OFFSET_POS = 3;
+  private static final int CREATE2_STACK_SIZE_POS = 2;
 
   // Operation types
   private static final String CALL_TYPE = "CALL";
@@ -95,10 +87,9 @@ public class CallTracerResultConverter {
 
   // Error messages
   private static final String EXECUTION_REVERTED = "execution reverted";
+  private static final String PRECOMPILE_FAILED = "precompile failed";
 
-  // Special values
   private static final String ZERO_VALUE = "0x0";
-  public static final String PRECOMPILE_FAILED = "precompile failed";
 
   /**
    * Converts a transaction trace to a call tracer result.
@@ -117,184 +108,118 @@ public class CallTracerResultConverter {
         transactionTrace.getResult(), "CallTracerResultConverter requires non-null Result");
 
     if (transactionTrace.getTraceFrames() == null || transactionTrace.getTraceFrames().isEmpty()) {
-      LOG.trace("No trace frames available, creating root call from transaction");
       return createRootCallFromTransaction(transactionTrace);
     }
-    LOG.trace(
-        "** Building call hierarchy for tx: {} from {} trace frames",
-        transactionTrace.getTransaction().getHash(),
-        transactionTrace.getTraceFrames().size());
+
     return buildCallHierarchyFromFrames(transactionTrace);
   }
 
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
-    // debug log all opcodes
-    for (TraceFrame traceFrame : trace.getTraceFrames()) {
-      String opcodeLog =
-          String.format(
-              "OpCode: %s, Depth: %d, GasRem: %d, GasCost: %s, Exceptional Halt: %s",
-              traceFrame.getOpcode(),
-              traceFrame.getDepth(),
-              traceFrame.getGasRemaining(),
-              traceFrame.getGasCost().isPresent() ? traceFrame.getGasCost().getAsLong() : "N/A",
-              traceFrame
-                  .getExceptionalHaltReason()
-                  .map(ExceptionalHaltReason::name)
-                  .orElse("None"));
-
-      // Add stack details for CALL/CALLCODE
-      if ((CALL_TYPE.equals(traceFrame.getOpcode()) || CALLCODE_TYPE.equals(traceFrame.getOpcode()))
-          && traceFrame.getStack().isPresent()) {
-        Bytes[] stack = traceFrame.getStack().get();
-        if (stack.length >= 3) {
-          Bytes valueBytes = stack[stack.length - 3];
-          Wei value = Wei.wrap(valueBytes);
-          opcodeLog += String.format(", Value from stack: %s", value.toShortHexString());
-        }
-      }
-
-      LOG.trace(opcodeLog);
-    }
-    LOG.trace("-----------------------------------");
-
-    // Initialize the root call
     final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
+
     if (!trace.getResult().isSuccessful()) {
-      // If the transaction failed, return only the root call with error info
       return rootBuilder.build();
     }
-    final List<TraceFrame> frames = trace.getTraceFrames();
 
-    // Track calls by depth
+    final List<TraceFrame> frames = trace.getTraceFrames();
     final Map<Integer, CallInfo> depthToCallInfo = new HashMap<>();
 
-    int currentDepth = 0;
-    final CallInfo rootInfo = new CallInfo(rootBuilder, null);
-    depthToCallInfo.put(0, rootInfo);
+    depthToCallInfo.put(0, new CallInfo(rootBuilder, null));
 
-    // Track previous frame to detect implicit returns
     TraceFrame previousFrame = null;
 
-    // Process all frames
     for (int i = 0; i < frames.size(); i++) {
-      final TraceFrame nextTrace = i < frames.size() - 1 ? frames.get(i + 1) : null;
       final TraceFrame frame = frames.get(i);
+      final TraceFrame nextTrace = (i < frames.size() - 1) ? frames.get(i + 1) : null;
+
+      // Handle implicit returns when depth decreases
+      if (shouldHandleImplicitReturn(previousFrame, frame)) {
+        handleImplicitReturn(previousFrame, depthToCallInfo);
+      }
+
       final String opcode = frame.getOpcode();
-      final int frameDepth = frame.getDepth();
 
-      // Check if depth decreased without a proper return (implicit return due to failure)
-      if (previousFrame != null && frameDepth < previousFrame.getDepth()) {
-        // Check if the previous frame was NOT a return/revert/stop
-        if (!isReturnOp(previousFrame.getOpcode())
-            && !isRevertOp(previousFrame.getOpcode())
-            && !isHaltOp(previousFrame.getOpcode())) {
-
-          LOG.trace(
-              "Detected implicit return from depth {} to {}", previousFrame.getDepth(), frameDepth);
-          handleImplicitReturn(previousFrame, depthToCallInfo);
-        }
-      }
-
-      // Process call operations that create a new context (or a precompile effect)
       if (isCallOp(opcode) || isCreateOp(opcode)) {
-        currentDepth = frameDepth;
-        // Get parent call info
-        final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth);
-        // Build the prospective child
-        final CallTracerResult.Builder childBuilder =
-            createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
-
-        // PRECOMPILE FAST-PATH: finalize immediately (no callee frame at depth+1)
-        if (frame.isPrecompile()) {
-          finalizePrecompileChild(frame, childBuilder, parentCallInfo);
-          previousFrame = frame;
-          continue;
-        }
-
-        // Check if we entered a callee (depth increased)
-        final boolean calleeEntered = (nextTrace != null && nextTrace.getDepth() > frameDepth);
-        LOG.trace(
-            "*** calleeEntered={} nextDepth={}",
-            calleeEntered,
-            (nextTrace == null ? "-" : nextTrace.getDepth()));
-
-        if (!calleeEntered) {
-          handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
-          previousFrame = frame;
-          continue;
-        }
-
-        // Normal call path: track child until its RETURN/REVERT/HALT
-        final CallInfo childCallInfo = new CallInfo(childBuilder, frame);
-        depthToCallInfo.put(currentDepth + 1, childCallInfo);
-      }
-      // Handle SELFDESTRUCT specifically
-      else if (isSelfDestructOp(opcode)) {
-        final CallInfo currentCallInfo = depthToCallInfo.get(frameDepth);
-        handleSelfDestruct(frame, currentCallInfo);
-      }
-      // Process return operations that exit a context
-      else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
-        currentDepth = frameDepth;
-
-        // Get child call info
-        final CallInfo childCallInfo = depthToCallInfo.get(currentDepth);
-
-        if (childCallInfo == null) {
-          LOG.debug(">> Orphaned return at depth {} - no matching call entry", currentDepth);
-          previousFrame = frame;
-          continue;
-        }
-        LOG.trace(
-            " >> return: opcode={}, depth={} type={}",
-            opcode,
-            currentDepth,
-            childCallInfo.builder.getType());
-
-        // Get entry frame and calculate gas used
-        final TraceFrame entryFrame = childCallInfo.entryFrame;
-        if (entryFrame != null) {
-          if (isCreateOp(childCallInfo.builder.getType()) && frame.getDepth() > 0) {
-            // For successful CREATE, set the created contract address
-            // This might be available in frame.getRecipient() or frame.getContractAddress()
-            if (childCallInfo.builder.getTo() == null) {
-              childCallInfo.builder.to(frame.getRecipient().toHexString());
-            }
-          }
-          // Set output data and error status
-          setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
-
-          // Calculate gas used
-          final long gasUsed = calculateGasUsed(childCallInfo, entryFrame, frame);
-          childCallInfo.builder.gasUsed(gasUsed);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(
-                " gasUsed={} (provided={} - exitGasRem={})",
-                gasUsed,
-                (childCallInfo.builder.getGas() == null ? "null" : childCallInfo.builder.getGas()),
-                frame.getGasRemaining());
-          }
-
-          // Find parent and add this call to parent's calls
-          final CallInfo parentCallInfo = depthToCallInfo.get(currentDepth - 1);
-          if (parentCallInfo != null) {
-            final CallTracerResult childResult = childCallInfo.builder.build();
-            parentCallInfo.builder.addCall(childResult);
-          }
-
-          // Remove this call from tracking as it's now complete
-          depthToCallInfo.remove(currentDepth);
-        }
+        processCallOrCreate(frame, nextTrace, opcode, depthToCallInfo);
+      } else if (isSelfDestructOp(opcode)) {
+        handleSelfDestruct(frame, depthToCallInfo.get(frame.getDepth()));
+      } else if (isReturnOp(opcode) || isRevertOp(opcode) || isHaltOp(opcode)) {
+        processReturn(frame, opcode, depthToCallInfo);
       }
 
-      // Update previous frame at the end of the loop
       previousFrame = frame;
     }
 
-    // Process any remaining calls that didn't have explicit return frames
     processRemainingCalls(depthToCallInfo);
+    return depthToCallInfo.get(0).builder.build();
+  }
 
-    return rootInfo.builder.build();
+  private static boolean shouldHandleImplicitReturn(
+      final TraceFrame previousFrame, final TraceFrame currentFrame) {
+    return previousFrame != null
+        && currentFrame.getDepth() < previousFrame.getDepth()
+        && !isReturnOp(previousFrame.getOpcode())
+        && !isRevertOp(previousFrame.getOpcode())
+        && !isHaltOp(previousFrame.getOpcode());
+  }
+
+  private static void processCallOrCreate(
+      final TraceFrame frame,
+      final TraceFrame nextTrace,
+      final String opcode,
+      final Map<Integer, CallInfo> depthToCallInfo) {
+
+    final CallInfo parentCallInfo = depthToCallInfo.get(frame.getDepth());
+    final CallTracerResult.Builder childBuilder =
+        createCallBuilder(frame, nextTrace, opcode, parentCallInfo);
+
+    // Handle precompiles
+    if (frame.isPrecompile()) {
+      finalizePrecompileChild(frame, childBuilder, parentCallInfo);
+      return;
+    }
+
+    // Check if call entered (depth increased)
+    final boolean calleeEntered = nextTrace != null && nextTrace.getDepth() > frame.getDepth();
+
+    if (!calleeEntered) {
+      handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
+      return;
+    }
+
+    // Track child for later processing
+    depthToCallInfo.put(frame.getDepth() + 1, new CallInfo(childBuilder, frame));
+  }
+
+  private static void processReturn(
+      final TraceFrame frame, final String opcode, final Map<Integer, CallInfo> depthToCallInfo) {
+
+    final CallInfo childCallInfo = depthToCallInfo.get(frame.getDepth());
+    if (childCallInfo == null || childCallInfo.entryFrame == null) {
+      return;
+    }
+
+    // Handle CREATE contract address
+    if (isCreateOp(childCallInfo.builder.getType())
+        && frame.getDepth() > 0
+        && childCallInfo.builder.getTo() == null) {
+      childCallInfo.builder.to(frame.getRecipient().toHexString());
+    }
+
+    // Set output and error status
+    setOutputAndErrorStatus(childCallInfo.builder, frame, opcode);
+
+    // Calculate and set gas used
+    final long gasUsed = calculateGasUsed(childCallInfo, childCallInfo.entryFrame, frame);
+    childCallInfo.builder.gasUsed(gasUsed);
+
+    // Add to parent's calls
+    final CallInfo parentCallInfo = depthToCallInfo.get(frame.getDepth() - 1);
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childCallInfo.builder.build());
+    }
+
+    depthToCallInfo.remove(frame.getDepth());
   }
 
   private static void handleNonEnteredCall(
@@ -302,93 +227,137 @@ public class CallTracerResultConverter {
       final String opcode,
       final CallTracerResult.Builder childBuilder,
       final CallInfo parentCallInfo) {
-    // Call didn't enter - could be: failed call, call to EOA, insufficient balance, etc.
-    // For now, add all non-entered calls to trace with available data
 
-    // Set error if there's an exceptional halt
-    frame
-        .getExceptionalHaltReason()
-        .ifPresent(haltReason -> childBuilder.error(haltReason.getDescription()));
-
-    // For failed CREATE, ensure 'to' is null
-    if (isCreateOp(opcode)) {
-      childBuilder.to(null); // No contract was created
-    }
-
-    // Set gas used (0 for most failed calls)
+    // Check for exceptional halt (hard failures)
     if (frame.getExceptionalHaltReason().isPresent()) {
-      // Some exceptional halts consume gas
-      ExceptionalHaltReason reason = frame.getExceptionalHaltReason().get();
-      if ("INSUFFICIENT_GAS".equals(reason.name())) {
-        childBuilder.gasUsed(frame.getGasCost().orElse(0L)); // Uses all available
-      } else {
-        childBuilder.gasUsed(0L); // Most other failures use no gas
-      }
+      handleHardFailure(frame, opcode, childBuilder);
     } else {
-      childBuilder.gasUsed(0L); // Non-exceptional failures (like insufficient balance)
+      // Soft failure (e.g., insufficient balance, call depth exceeded)
+      handleSoftFailure(frame, opcode, childBuilder);
     }
 
-    // TODO: We need a way to determine if this has happened due to insufficient funds.
-    //  Not very obvious from data from TraceFrame at the moment. Insufficient funds doesn't
-    //  raise exceptional halt reason.
-
-    // Add to parent immediately (like precompiles)
+    // Add to parent immediately
     if (parentCallInfo != null) {
       parentCallInfo.builder.addCall(childBuilder.build());
     }
   }
 
+  private static void handleHardFailure(
+      final TraceFrame frame, final String opcode, final CallTracerResult.Builder childBuilder) {
+
+    String errorMessage =
+        frame
+            .getExceptionalHaltReason()
+            .map(ExceptionalHaltReason::getDescription)
+            .orElse(EXECUTION_REVERTED);
+    childBuilder.error(errorMessage);
+
+    // For failed CREATE, ensure 'to' is null
+    if (isCreateOp(opcode)) {
+      childBuilder.to(null);
+    }
+
+    // Set gas used based on failure type
+    long gasUsed = 0L;
+    if (frame
+        .getExceptionalHaltReason()
+        .map(r -> Objects.equals(r, ExceptionalHaltReason.INSUFFICIENT_GAS))
+        .orElse(false)) {
+      gasUsed = frame.getGasCost().orElse(0L);
+    }
+    childBuilder.gasUsed(gasUsed);
+  }
+
+  private static void handleSoftFailure(
+      final TraceFrame frame, final String opcode, final CallTracerResult.Builder childBuilder) {
+
+    // Soft failures consume only the base call cost
+    long gasUsed = frame.getGasCost().orElse(0L);
+    childBuilder.gasUsed(gasUsed);
+
+    // For failed CREATE, ensure 'to' is null
+    if (isCreateOp(opcode)) {
+      childBuilder.to(null);
+    }
+
+    // TODO: Set error messages for soft failures to match Geth behavior.
+    // Once Besu provides soft failure context in TraceFrame, implement:
+    //
+    // Error messages that Geth sets for soft failures:
+    // - "insufficient balance for transfer" - when caller lacks funds for value transfer
+    // - "max call depth exceeded" - when call depth > 1024
+    // - "invalid input length" - for certain precompile failures
+    //
+    // Example implementation when available:
+    // if (frame.getSoftFailureReason().isPresent()) {
+    //   switch (frame.getSoftFailureReason().get()) {
+    //     case INSUFFICIENT_BALANCE:
+    //       childBuilder.error("insufficient balance for transfer");
+    //       break;
+    //     case CALL_DEPTH_EXCEEDED:
+    //       childBuilder.error("max call depth exceeded");
+    //       break;
+    //     default:
+    //       // No error for other soft failures
+    //   }
+    // }
+    //
+    // For now, we don't set errors for soft failures as Besu doesn't provide
+    // the necessary context to distinguish between different soft failure types.
+  }
+
   private static void setOutputAndErrorStatus(
       final CallTracerResult.Builder builder, final TraceFrame frame, final String opcode) {
-    // Set output data if present
+
+    // Set output data
     if (frame.getOutputData() != null && !frame.getOutputData().isEmpty()) {
       builder.output(frame.getOutputData().toHexString());
     }
 
-    // Set error information
+    // Handle errors
     if (frame.getExceptionalHaltReason().isPresent()) {
-      // Use the specific halt reason description
-      String errorMessage =
-          frame
-              .getExceptionalHaltReason()
-              .map(ExceptionalHaltReason::getDescription)
-              .orElse(EXECUTION_REVERTED);
-      builder.error(errorMessage);
-
-      // For failed CREATE/CREATE2, ensure 'to' is null
-      if (CREATE_TYPE.equals(builder.getType()) || CREATE2_TYPE.equals(builder.getType())) {
-        builder.to(null);
-        // also set code as input for failed contract creation
-        if (frame.getMaybeCode().isPresent()) {
-          // set code to input
-          final Bytes codeBytes = frame.getMaybeCode().get().getBytes();
-          if (codeBytes != null) {
-            builder.input(codeBytes.toHexString());
-          }
-        }
-      }
-
-      // Add revert reason if available
-      frame.getRevertReason().ifPresent(builder::revertReason);
+      handleExceptionalHalt(builder, frame);
     } else if (REVERT_TYPE.equals(opcode)) {
       builder.error(EXECUTION_REVERTED);
       frame.getRevertReason().ifPresent(builder::revertReason);
     }
   }
 
-  private static void processRemainingCalls(final Map<Integer, CallInfo> depthToCallInfo) {
-    // Walk whatever depths we actually stored, deepest first
-    final TreeSet<Integer> depths = new TreeSet<>(depthToCallInfo.keySet());
-    for (final Integer depth : depths.descendingSet()) {
-      if (depth == 0) continue; // skip root
-      final CallInfo child = depthToCallInfo.get(depth);
-      if (child == null) continue;
-      final CallInfo parent = depthToCallInfo.get(depth - 1);
-      if (parent != null) {
-        parent.builder.addCall(child.builder.build());
-      }
-      depthToCallInfo.remove(depth);
+  private static void handleExceptionalHalt(
+      final CallTracerResult.Builder builder, final TraceFrame frame) {
+
+    String errorMessage =
+        frame
+            .getExceptionalHaltReason()
+            .map(ExceptionalHaltReason::getDescription)
+            .orElse(EXECUTION_REVERTED);
+    builder.error(errorMessage);
+
+    // For failed CREATE, set 'to' to null and use code as input
+    if (isCreateOp(builder.getType())) {
+      builder.to(null);
+      frame
+          .getMaybeCode()
+          .map(Code::getBytes)
+          .ifPresent(codeBytes -> builder.input(codeBytes.toHexString()));
     }
+
+    frame.getRevertReason().ifPresent(builder::revertReason);
+  }
+
+  private static void processRemainingCalls(final Map<Integer, CallInfo> depthToCallInfo) {
+    new TreeSet<>(depthToCallInfo.keySet())
+        .descendingSet().stream()
+            .filter(depth -> depth > 0)
+            .forEach(
+                depth -> {
+                  CallInfo child = depthToCallInfo.get(depth);
+                  CallInfo parent = depthToCallInfo.get(depth - 1);
+                  if (child != null && parent != null) {
+                    parent.builder.addCall(child.builder.build());
+                  }
+                  depthToCallInfo.remove(depth);
+                });
   }
 
   private static CallTracerResult.Builder createCallBuilder(
@@ -397,23 +366,15 @@ public class CallTracerResultConverter {
       final String opcode,
       final CallInfo parentCallInfo) {
 
-    String fromAddress = null;
-    if (parentCallInfo != null && parentCallInfo.builder != null) {
-      fromAddress = parentCallInfo.builder.build().getTo();
-    }
+    final String fromAddress =
+        (parentCallInfo != null && parentCallInfo.builder != null)
+            ? parentCallInfo.builder.build().getTo()
+            : null;
 
     final String toAddress = resolveToAddress(frame, opcode);
+    final long gasProvided = computeGasProvided(frame, nextTrace);
+    final boolean isPrecompile = frame.isPrecompile();
 
-    // Authoritative gas (provided): callee frame start if depth+1, else placeholder value
-    final long gasProvided = computeGasProvided(frame, nextTrace, opcode);
-
-    // Detect precompile up front so we can defer input/output
-    final boolean looksLikePrecompile = frame.isPrecompile();
-
-    LOG.trace(
-        "*** createCallBuilder, TraceFrame: {}, Exceptional Halt: {}",
-        frame,
-        frame.getExceptionalHaltReason().orElse(null));
     final CallTracerResult.Builder builder =
         CallTracerResult.builder()
             .type(opcode)
@@ -422,10 +383,8 @@ public class CallTracerResultConverter {
             .value(getCallValue(frame, opcode))
             .gas(gasProvided);
 
-    if (!looksLikePrecompile) {
-      // Normal calls/creates: set input now (resolveInputData may use callee frame if we entered)
-      final Bytes inputData = resolveInputData(frame, nextTrace, opcode);
-      builder.input(inputData.toHexString());
+    if (!isPrecompile) {
+      builder.input(resolveInputData(frame, nextTrace, opcode).toHexString());
     }
 
     return builder;
@@ -445,295 +404,376 @@ public class CallTracerResultConverter {
                     : tx.getTo().map(Address::toHexString).orElse(null))
             .value(tx.getValue().toShortHexString())
             .gas(tx.getGasLimit())
-            .input(tx.getPayload().toHexString());
-
-    // Set total gas used
-    final long totalGasUsed = tx.getGasLimit() - result.getGasRemaining();
-    builder.gasUsed(totalGasUsed);
+            .input(tx.getPayload().toHexString())
+            .gasUsed(tx.getGasLimit() - result.getGasRemaining());
 
     // Set output if present
     if (result.getOutput() != null && !result.getOutput().isEmpty()) {
       builder.output(result.getOutput().toHexString());
     }
 
-    // Set error if transaction failed
+    // Handle errors
     if (!result.isSuccessful()) {
-      builder.error(
-          result
-              .getExceptionalHaltReason()
-              .map(ExceptionalHaltReason::getDescription)
-              .orElse(EXECUTION_REVERTED));
-
-      if (tx.isContractCreation()) {
-        // set TO as null for failed contract creation
-        builder.to(null);
-        result.getRevertReason().ifPresent(builder::revertReason);
-      } else {
-        // for failed calls, if we don't have an exceptional halt, and revert reason exists, it
-        // needs to set "output" with revert reason
-        if (result.getExceptionalHaltReason().isEmpty() && result.getRevertReason().isPresent()) {
-          builder.output(result.getRevertReason().get().toHexString());
-        }
-      }
+      handleRootError(builder, tx, result);
     }
+
     return builder;
+  }
+
+  private static void handleRootError(
+      final CallTracerResult.Builder builder,
+      final Transaction tx,
+      final TransactionProcessingResult result) {
+
+    builder.error(
+        result
+            .getExceptionalHaltReason()
+            .map(ExceptionalHaltReason::getDescription)
+            .orElse(EXECUTION_REVERTED));
+
+    if (tx.isContractCreation()) {
+      builder.to(null);
+      result.getRevertReason().ifPresent(builder::revertReason);
+    } else if (result.getExceptionalHaltReason().isEmpty()
+        && result.getRevertReason().isPresent()) {
+      builder.output(result.getRevertReason().get().toHexString());
+    }
   }
 
   private static String getCallValue(final TraceFrame frame, final String opcode) {
     if (STATICCALL_TYPE.equals(opcode)) {
-      return null; // omit field to match Geth
+      return null;
     }
 
     if (DELEGATECALL_TYPE.equals(opcode)) {
-      return "0x0"; // DELEGATECALL never transfers value
+      return ZERO_VALUE;
     }
 
-    // For CALL/CALLCODE, extract value from stack, NOT from frame.getValue()
     if (CALL_TYPE.equals(opcode) || CALLCODE_TYPE.equals(opcode)) {
-      return frame
-          .getStack()
-          .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
-          .map(
-              stack -> {
-                // CALL stack: gas, to, value, inOffset, inSize, outOffset, outSize
-                // Value is at stack[length - 3]
-                Bytes valueBytes = stack[stack.length - CALL_STACK_VALUE_OFFSET];
-                Wei value = Wei.wrap(valueBytes);
-                return value.toShortHexString();
-              })
-          .orElse(ZERO_VALUE);
+      return extractValueFromStack(frame);
     }
 
-    // For CREATE/CREATE2, use frame.getValue()
     return frame.getValue().toShortHexString();
+  }
+
+  private static String extractValueFromStack(final TraceFrame frame) {
+    return frame
+        .getStack()
+        .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
+        .map(stack -> Wei.wrap(stack[stack.length - CALL_STACK_VALUE_OFFSET]).toShortHexString())
+        .orElse(ZERO_VALUE);
   }
 
   private static long calculateGasUsed(
       final CallInfo callInfo, final TraceFrame entryFrame, final TraceFrame exitFrame) {
 
-    // For root transaction
+    // Root transaction
     if (exitFrame.getDepth() == 0) {
-      long gasUsed = entryFrame.getGasRemaining() - exitFrame.getGasRemaining();
-      long gasRefund = exitFrame.getGasRefund();
-      return Math.max(0, gasUsed - gasRefund);
+      return Math.max(
+          0, entryFrame.getGasRemaining() - exitFrame.getGasRemaining() - exitFrame.getGasRefund());
     }
 
-    // Get base gas calculation
     long gasProvided = callInfo.builder.getGas().longValue();
-    long baseGasUsed = 0;
+    long baseGasUsed = calculateBaseGasUsed(exitFrame, entryFrame, gasProvided);
 
-    // Check if this was a SELFDESTRUCT exit
-    if (SELFDESTRUCT_TYPE.equals(exitFrame.getOpcode())) {
-      long selfDestructCost = exitFrame.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
-      long gasBeforeSelfDestruct = exitFrame.getGasRemaining();
-      baseGasUsed = gasProvided - gasBeforeSelfDestruct + selfDestructCost;
-    }
-    // Normal return path
-    else if (exitFrame.getGasRemaining() >= 0) {
-      baseGasUsed = gasProvided - exitFrame.getGasRemaining();
-    }
-    // Precompiled contracts
-    else if (entryFrame.getPrecompiledGasCost().isPresent()) {
-      baseGasUsed = entryFrame.getPrecompiledGasCost().getAsLong();
-    }
-    // Fallback
-    else if (entryFrame.getGasCost().isPresent()) {
-      baseGasUsed = entryFrame.getGasCost().getAsLong();
-    }
-
-    // Add code deposit cost for successful CREATE/CREATE2
-    String callType = callInfo.builder.getType();
-    if ((CREATE_TYPE.equals(callType) || CREATE2_TYPE.equals(callType))
-        && exitFrame.getOutputData() != null
-        && !exitFrame.getOutputData().isEmpty()
-        && exitFrame.getExceptionalHaltReason().isEmpty()) {
-
-      // Code deposit cost is 200 gas per byte of deployed code
-      long codeDepositCost = exitFrame.getOutputData().size() * CODE_DEPOSIT_GAS_PER_BYTE;
-      baseGasUsed += codeDepositCost;
-
-      LOG.trace(
-          "Adding code deposit cost for {}: {} bytes * 200 = {} gas",
-          callType,
-          exitFrame.getOutputData().size(),
-          codeDepositCost);
+    // Add code deposit cost for successful CREATE
+    if (shouldAddCodeDepositCost(callInfo.builder.getType(), exitFrame)) {
+      baseGasUsed += exitFrame.getOutputData().size() * CODE_DEPOSIT_GAS_PER_BYTE;
     }
 
     return baseGasUsed;
   }
 
+  private static long calculateBaseGasUsed(
+      final TraceFrame exitFrame, final TraceFrame entryFrame, final long gasProvided) {
+
+    if (SELFDESTRUCT_TYPE.equals(exitFrame.getOpcode())) {
+      long selfDestructCost = exitFrame.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
+      return gasProvided - exitFrame.getGasRemaining() + selfDestructCost;
+    }
+
+    if (exitFrame.getGasRemaining() >= 0) {
+      return gasProvided - exitFrame.getGasRemaining();
+    }
+
+    if (entryFrame.getPrecompiledGasCost().isPresent()) {
+      return entryFrame.getPrecompiledGasCost().getAsLong();
+    }
+
+    return entryFrame.getGasCost().orElse(0L);
+  }
+
+  private static boolean shouldAddCodeDepositCost(
+      final String callType, final TraceFrame exitFrame) {
+    return (CREATE_TYPE.equals(callType) || CREATE2_TYPE.equals(callType))
+        && exitFrame.getOutputData() != null
+        && !exitFrame.getOutputData().isEmpty()
+        && exitFrame.getExceptionalHaltReason().isEmpty();
+  }
+
   private static String resolveToAddress(final TraceFrame frame, final String opcode) {
-    // For CREATE/CREATE2, "to" is not known at call-site
-    if (CREATE_TYPE.equals(opcode) || CREATE2_TYPE.equals(opcode)) {
+    if (isCreateOp(opcode)) {
       return null;
     }
 
-    // For precompiles, use the stored precompile recipient if available
     if (frame.isPrecompile() && frame.getPrecompileRecipient().isPresent()) {
       return frame.getPrecompileRecipient().get().toHexString();
     }
-    // For regular calls, extract from stack
-    if (CALL_TYPE.equals(opcode)
-        || CALLCODE_TYPE.equals(opcode)
-        || STATICCALL_TYPE.equals(opcode)
-        || DELEGATECALL_TYPE.equals(opcode)) {
-      return frame
-          .getStack()
-          .filter(stack -> stack.length > 1 && stack[stack.length - CALL_STACK_TO_OFFSET] != null)
-          .map(stack -> toAddress(stack[stack.length - CALL_STACK_TO_OFFSET]).toHexString())
-          .orElse(null);
+
+    if (isCallOp(opcode)) {
+      return extractToAddressFromStack(frame);
     }
 
-    // Unknown/other opcodes: no callee address.
     return null;
   }
 
-  /**
-   * Returns the callee's calldata (for CALL/DELEGATECALL/STATICCALL) or the init code (for
-   * CREATE/CREATE2), matching geth's callTracer behavior.
-   *
-   * <p>Strategy: 1) Prefer the immediate callee frame's inputData when the very next trace frame is
-   * at depth+1. This is the authoritative view of what the callee actually received.
-   *
-   * <p>2) Otherwise, reconstruct from the caller's memory using the op-specific stack operands
-   * (inOffset, inSize / offset, size). Indices below are counted from the top-of-stack (TOS), i.e.
-   * stack[stack.length - 1] is TOS.
-   *
-   * <p>Notes: - Precompiles (and some edge cases) may not emit a depth+1 frame; hence the
-   * memory-slice fallback. - For CREATE/CREATE2, "input" here refers to the init code (which runs
-   * once to produce the deployed runtime code), not any constructor arguments encoding semantics.
-   *
-   * <p>Stack layouts (TOS on the right): CALL/CALLCODE: gas, to, value, inOffset, inSize,
-   * outOffset, outSize DELEGATECALL: gas, to, inOffset, inSize, outOffset, outSize STATICCALL: gas,
-   * to, inOffset, inSize, outOffset, outSize CREATE: value, offset, size CREATE2: value, offset,
-   * size, salt
-   *
-   * <p>Therefore: CALL/DELEGATECALL/STATICCALL -> inOffset = -4, inSize = -3 CREATE -> offset = -2,
-   * size = -1 CREATE2 -> offset = -3, size = -2
-   */
+  private static String extractToAddressFromStack(final TraceFrame frame) {
+    return frame
+        .getStack()
+        .filter(stack -> stack.length > 1 && stack[stack.length - CALL_STACK_TO_OFFSET] != null)
+        .map(stack -> toAddress(stack[stack.length - CALL_STACK_TO_OFFSET]).toHexString())
+        .orElse(null);
+  }
+
+  private static long computeGasProvided(final TraceFrame frame, final TraceFrame nextTrace) {
+    boolean hasCalleeStart = nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1;
+
+    if (hasCalleeStart) {
+      return Math.max(0L, nextTrace.getGasRemaining());
+    }
+
+    return 0L; // Placeholder for precompiles/non-entered calls
+  }
+
   private static Bytes resolveInputData(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
-    LOG.trace(
-        "resolveInputData: op={} depth={} hasNextCalleeFrame={}",
-        opcode,
-        frame.getDepth(),
-        (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1));
-
-    // For CREATE/CREATE2, try getMaybeCode() first
     if (isCreateOp(opcode)) {
-      // Check if the frame has code (init code for CREATE/CREATE2)
-      if (frame.getMaybeCode().isPresent()) {
-        return frame.getMaybeCode().get().getBytes();
-      }
-
-      // Fallback to memory extraction if getMaybeCode() is not available
-      LOG.trace("getMaybeCode() not present for {}, falling back to memory extraction", opcode);
-      return frame
-          .getStack()
-          .map(
-              stack -> {
-                if (CREATE_TYPE.equals(opcode)) {
-                  // CREATE stack layout: value, offset, length (with length at TOS)
-                  if (stack.length < CREATE_STACK_OFFSET_POS) {
-                    LOG.warn("CREATE: insufficient stack items");
-                    return Bytes.EMPTY;
-                  }
-
-                  final int offset =
-                      bytesToInt(stack[stack.length - CREATE_STACK_OFFSET_POS]); // offset
-                  final int length =
-                      bytesToInt(stack[stack.length - CREATE_STACK_SIZE_POS]); // length at TOS
-
-                  LOG.trace(
-                      "CREATE-init slice: offset={} length={} memPresent={}",
-                      offset,
-                      length,
-                      frame.getMemory().isPresent());
-
-                  if (length == 0) {
-                    LOG.warn("CREATE: zero length init code");
-                    return Bytes.EMPTY;
-                  }
-
-                  return frame
-                      .getMemory()
-                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                      .orElse(Bytes.EMPTY);
-
-                } else { // CREATE2
-                  // CREATE2 stack layout: value, offset, length, salt (with salt at TOS)
-                  if (stack.length < CREATE2_STACK_OFFSET_POS) {
-                    LOG.warn("CREATE2: insufficient stack items");
-                    return Bytes.EMPTY;
-                  }
-
-                  final int offset =
-                      bytesToInt(stack[stack.length - CREATE2_STACK_OFFSET_POS]); // offset
-                  final int length =
-                      bytesToInt(stack[stack.length - CREATE2_STACK_SIZE_POS]); // length
-                  // salt is at stack[stack.length - 1] but we don't need it for input
-
-                  LOG.trace(
-                      "CREATE2-init slice: offset={} length={} memPresent={}",
-                      offset,
-                      length,
-                      frame.getMemory().isPresent());
-
-                  if (length == 0) {
-                    LOG.warn("CREATE2: zero length init code");
-                    return Bytes.EMPTY;
-                  }
-
-                  return frame
-                      .getMemory()
-                      .map(memory -> extractCallDataFromMemory(memory, offset, length))
-                      .orElse(Bytes.EMPTY);
-                }
-              })
-          .orElse(Bytes.EMPTY);
+      return resolveCreateInputData(frame, opcode);
     }
 
-    // For CALL operations, prefer the callee frame when available
+    // Prefer callee frame for calls
     if (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1) {
-      Bytes calleeInput = nextTrace.getInputData();
-      if (calleeInput == null) {
-        calleeInput = Bytes.EMPTY;
-      }
-      return calleeInput;
+      return nextTrace.getInputData() != null ? nextTrace.getInputData() : Bytes.EMPTY;
     }
 
-    // CALL-like fallback when no callee frame
+    // Fallback to memory extraction for calls
     if (isCallOp(opcode)) {
-      return frame
-          .getStack()
-          .map(
-              stack -> {
-                if (stack.length < CALL_STACK_IN_OFFSET) {
-                  return frame.getInputData();
-                }
-
-                final int inOffset = bytesToInt(stack[stack.length - CALL_STACK_IN_OFFSET]);
-                final int inSize = bytesToInt(stack[stack.length - CALL_STACK_IN_SIZE_OFFSET]);
-
-                LOG.trace(
-                    "  CALL-like fallback slice: inOffset={} inSize={} memPresent={}",
-                    inOffset,
-                    inSize,
-                    frame.getMemory().isPresent());
-
-                return frame
-                    .getMemory()
-                    .map(memory -> extractCallDataFromMemory(memory, inOffset, inSize))
-                    .orElse(frame.getInputData());
-              })
-          .orElse(frame.getInputData());
+      return extractCallInputFromMemory(frame);
     }
 
-    // Default
     return frame.getInputData();
   }
 
+  private static Bytes resolveCreateInputData(final TraceFrame frame, final String opcode) {
+    // Try getMaybeCode() first
+    if (frame.getMaybeCode().isPresent()) {
+      return frame.getMaybeCode().get().getBytes();
+    }
+
+    // Fallback to memory extraction
+    return frame
+        .getStack()
+        .map(stack -> extractCreateInitCode(frame, stack, opcode))
+        .orElse(Bytes.EMPTY);
+  }
+
+  private static Bytes extractCreateInitCode(
+      final TraceFrame frame, final Bytes[] stack, final String opcode) {
+
+    if (CREATE_TYPE.equals(opcode)) {
+      if (stack.length < CREATE_STACK_OFFSET_POS) return Bytes.EMPTY;
+
+      int offset = bytesToInt(stack[stack.length - CREATE_STACK_OFFSET_POS]);
+      int length = bytesToInt(stack[stack.length - CREATE_STACK_SIZE_POS]);
+
+      return extractFromMemory(frame, offset, length);
+    } else { // CREATE2
+      if (stack.length < CREATE2_STACK_OFFSET_POS) return Bytes.EMPTY;
+
+      int offset = bytesToInt(stack[stack.length - CREATE2_STACK_OFFSET_POS]);
+      int length = bytesToInt(stack[stack.length - CREATE2_STACK_SIZE_POS]);
+
+      return extractFromMemory(frame, offset, length);
+    }
+  }
+
+  private static Bytes extractCallInputFromMemory(final TraceFrame frame) {
+    return frame
+        .getStack()
+        .filter(stack -> stack.length >= CALL_STACK_IN_OFFSET)
+        .map(
+            stack -> {
+              int inOffset = bytesToInt(stack[stack.length - CALL_STACK_IN_OFFSET]);
+              int inSize = bytesToInt(stack[stack.length - CALL_STACK_IN_SIZE_OFFSET]);
+              return extractFromMemory(frame, inOffset, inSize);
+            })
+        .orElse(frame.getInputData());
+  }
+
+  private static Bytes extractFromMemory(
+      final TraceFrame frame, final int offset, final int length) {
+    if (length == 0) return Bytes.EMPTY;
+
+    return frame
+        .getMemory()
+        .map(memory -> extractCallDataFromMemory(memory, offset, length))
+        .orElse(Bytes.EMPTY);
+  }
+
+  private static void finalizePrecompileChild(
+      final TraceFrame entryFrame,
+      final CallTracerResult.Builder childBuilder,
+      final CallInfo parentCallInfo) {
+
+    // Calculate gas for precompile (Geth-style)
+    final long post = Math.max(0L, entryFrame.getGasRemaining());
+    final long base = post > WARM_ACCESS_GAS ? post - WARM_ACCESS_GAS : 0L;
+    final long cap = base - (base / 64L);
+    childBuilder.gas(cap);
+
+    // Set gas used
+    long gasUsed =
+        entryFrame.getPrecompiledGasCost().orElseGet(() -> entryFrame.getGasCost().orElse(0L));
+
+    // Handle precompile failure
+    if (entryFrame.getExceptionalHaltReason().isPresent()) {
+      handlePrecompileError(entryFrame, childBuilder);
+      gasUsed = cap; // Failed precompiles consume all gas
+    }
+
+    childBuilder.gasUsed(gasUsed);
+
+    // Set I/O data
+    childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse(null));
+    childBuilder.output(entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse(null));
+
+    // Add to parent
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childBuilder.build());
+    }
+  }
+
+  private static void handlePrecompileError(
+      final TraceFrame entryFrame, final CallTracerResult.Builder childBuilder) {
+
+    String errorMessage =
+        entryFrame
+            .getExceptionalHaltReason()
+            .map(ExceptionalHaltReason::getDescription)
+            .orElse(PRECOMPILE_FAILED);
+
+    // Check for revert reason with actual error message
+    if (entryFrame.getRevertReason().isPresent()) {
+      errorMessage =
+          new String(entryFrame.getRevertReason().get().toArrayUnsafe(), StandardCharsets.UTF_8);
+    }
+
+    childBuilder.error(errorMessage);
+  }
+
+  private static void handleSelfDestruct(final TraceFrame frame, final CallInfo currentCallInfo) {
+    if (currentCallInfo == null
+        || frame.getStack().isEmpty()
+        || frame.getExceptionalHaltReason().isPresent()) {
+      return;
+    }
+
+    frame
+        .getStack()
+        .ifPresent(
+            stack -> {
+              if (stack.length == 0) return;
+
+              final Address beneficiary = toAddress(stack[stack.length - 1]);
+              final String from = frame.getRecipient().toHexString();
+              final String value = extractSelfDestructValue(frame, beneficiary);
+
+              final CallTracerResult selfDestructCall =
+                  CallTracerResult.builder()
+                      .type(SELFDESTRUCT_TYPE)
+                      .from(from)
+                      .to(beneficiary.toHexString())
+                      .gas(0L)
+                      .gasUsed(0L)
+                      .value(value)
+                      .input("0x")
+                      .build();
+
+              currentCallInfo.builder.addCall(selfDestructCall);
+            });
+  }
+
+  private static String extractSelfDestructValue(
+      final TraceFrame frame, final Address beneficiary) {
+    return frame
+        .getMaybeRefunds()
+        .map(refunds -> refunds.get(beneficiary))
+        .map(Wei::toShortHexString)
+        .orElse(ZERO_VALUE);
+  }
+
+  private static void handleImplicitReturn(
+      final TraceFrame lastFrameAtDepth, final Map<Integer, CallInfo> depthToCallInfo) {
+
+    final int failedDepth = lastFrameAtDepth.getDepth();
+    final CallInfo childCallInfo = depthToCallInfo.get(failedDepth);
+
+    if (childCallInfo == null) return;
+
+    // Set error if exceptional halt
+    lastFrameAtDepth
+        .getExceptionalHaltReason()
+        .ifPresent(reason -> childCallInfo.builder.error(reason.getDescription()));
+
+    // Calculate gas used
+    if (childCallInfo.entryFrame != null) {
+      long gasUsed = calculateImplicitReturnGasUsed(lastFrameAtDepth, childCallInfo);
+      childCallInfo.builder.gasUsed(gasUsed);
+    }
+
+    // Add to parent and remove from tracking
+    CallInfo parentCallInfo = depthToCallInfo.get(failedDepth - 1);
+    if (parentCallInfo != null) {
+      parentCallInfo.builder.addCall(childCallInfo.builder.build());
+    }
+
+    depthToCallInfo.remove(failedDepth);
+  }
+
+  private static long calculateImplicitReturnGasUsed(
+      final TraceFrame lastFrame, final CallInfo childCallInfo) {
+
+    long gasProvided = childCallInfo.builder.getGas().longValue();
+
+    // All gas consumed for insufficient gas
+    if (lastFrame
+        .getExceptionalHaltReason()
+        .map(r -> Objects.equals(r, ExceptionalHaltReason.INSUFFICIENT_GAS))
+        .orElse(false)) {
+      return gasProvided;
+    }
+
+    // Special handling for SELFDESTRUCT
+    if (SELFDESTRUCT_TYPE.equals(lastFrame.getOpcode())) {
+      long selfDestructCost = lastFrame.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
+      return gasProvided - lastFrame.getGasRemaining() + selfDestructCost;
+    }
+
+    // Normal calculation
+    return Math.max(0, gasProvided - lastFrame.getGasRemaining());
+  }
+
+  private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
+    final Transaction tx = trace.getTransaction();
+    final TransactionProcessingResult result = trace.getResult();
+
+    return initializeRootBuilder(trace)
+        .gasUsed(tx.getGasLimit() - result.getGasRemaining())
+        .build();
+  }
+
+  // Helper utilities
   private static boolean isCallOp(final String opcode) {
     return CALL_TYPE.equals(opcode)
         || CALLCODE_TYPE.equals(opcode)
@@ -761,278 +801,6 @@ public class CallTracerResultConverter {
     return STOP_TYPE.equals(opcode);
   }
 
-  private static CallTracerResult createRootCallFromTransaction(final TransactionTrace trace) {
-    final Transaction tx = trace.getTransaction();
-    final TransactionProcessingResult result = trace.getResult();
-    final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
-
-    // Set gas used
-    rootBuilder.gasUsed(tx.getGasLimit() - result.getGasRemaining());
-
-    return rootBuilder.build();
-  }
-
   /** Helper class to track call information during trace processing. */
   private record CallInfo(CallTracerResult.Builder builder, TraceFrame entryFrame) {}
-
-  /**
-   * Compute the gas provided to the child call.
-   *
-   * <p>For calls that enter a child frame (depth+1), returns the child's starting gas. For
-   * precompiles and non-entered calls, returns a placeholder value since:
-   *
-   * <ul>
-   *   <li>Precompiles: Gas will be recalculated in finalizePrecompileChild
-   *   <li>Non-entered calls: Won't create a child (skipped in main loop)
-   * </ul>
-   *
-   * @param frame The current trace frame
-   * @param nextTrace The next trace frame (if any)
-   * @param opcode The operation code
-   * @return The gas provided to the call, or 0 as placeholder
-   */
-  private static long computeGasProvided(
-      final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
-
-    final boolean hasCalleeStart =
-        (nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1);
-
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "computeGasProvided: op={} depth={} nextDepth={} -> {}",
-          opcode,
-          frame.getDepth(),
-          (nextTrace == null ? "-" : nextTrace.getDepth()),
-          (hasCalleeStart
-              ? "using callee start gas=" + hexN(Math.max(0L, nextTrace.getGasRemaining()))
-              : "placeholder for precompile/non-entered"));
-    }
-
-    // If we actually enter the callee (depth+1), that frame's starting gas is authoritative.
-    if (hasCalleeStart) {
-      final long g = nextTrace.getGasRemaining();
-      return (g >= 0) ? g : 0L;
-    }
-
-    // For precompiles and non-executed calls, return a placeholder
-    // Precompiles: The actual gas will be calculated in finalizePrecompileChild
-    // Non-executed calls: Won't create a child anyway (skipped in main loop)
-    return 0L; // Placeholder value
-  }
-
-  /**
-   * Finalizes a precompile child call by setting gas, gas used, input/output data, and attaching it
-   * to the parent call.
-   *
-   * <p>Behavior:
-   *
-   * <ul>
-   *   <li><b>Execution model:</b> Precompiles execute inline; no separate callee frame is emitted.
-   *   <li><b>Gas (provided):</b> Calculated using Geth-style display: (post - warmAccess) * 63/64
-   *       where warmAccess = 100 for post-Berlin, 0 for pre-Berlin.
-   *   <li><b>Gas used:</b> Uses the precompiled gas cost stored in the TraceFrame.
-   *   <li><b>Input:</b> Uses the precompile input data stored in TraceFrame by
-   *       DebugOperationTracer.
-   *   <li><b>Output:</b> Uses the precompile output data stored in TraceFrame by
-   *       DebugOperationTracer.
-   * </ul>
-   *
-   * @param entryFrame The trace frame containing the precompile call
-   * @param childBuilder The builder for the precompile call result
-   * @param parentCallInfo The parent call information
-   */
-  private static void finalizePrecompileChild(
-      final TraceFrame entryFrame,
-      final CallTracerResult.Builder childBuilder,
-      final CallInfo parentCallInfo) {
-
-    LOG.trace(
-        "finalizePrecompileChild: to={} type={} precompileGasCost={} gasCost={}, isPrecompile={}, precompileOutput={}",
-        childBuilder.getTo(),
-        childBuilder.getType(),
-        entryFrame.getPrecompiledGasCost().isPresent()
-            ? entryFrame.getPrecompiledGasCost().getAsLong()
-            : "-",
-        entryFrame.getGasCost().isPresent() ? entryFrame.getGasCost().getAsLong() : "-",
-        entryFrame.isPrecompile(),
-        entryFrame
-            .getPrecompileOutputData()
-            .map(Bytes::toHexString)
-            .orElse("Precompile Output Not Available"));
-
-    // --- 1) Child gas (Geth-style display): (post - warm) * 63/64 ---
-    final long post = Math.max(0L, entryFrame.getGasRemaining());
-    final long warmAccess = WARM_ACCESS_GAS; // 0 pre-Berlin
-    final long base = post > warmAccess ? post - warmAccess : 0L;
-    final long cap = base - (base / 64L);
-    childBuilder.gas(cap);
-    LOG.trace(
-        "  precompile gas(display): post={} warmAccess={} base={} cap={}",
-        hexN(post),
-        hexN(warmAccess),
-        hexN(base),
-        hexN(cap));
-
-    // --- 2) gasUsed: prefer precompiledGasCost, else opcode gasCost ---
-    entryFrame
-        .getPrecompiledGasCost()
-        .ifPresentOrElse(
-            childBuilder::gasUsed, () -> entryFrame.getGasCost().ifPresent(childBuilder::gasUsed));
-
-    // Check if precompile failed
-    if (entryFrame.getExceptionalHaltReason().isPresent()) {
-      String errorMessage =
-          entryFrame
-              .getExceptionalHaltReason()
-              .map(ExceptionalHaltReason::getDescription)
-              .orElse(PRECOMPILE_FAILED);
-      childBuilder.error(errorMessage);
-
-      // revert reason may contain the actual reason for precompile failure
-      if (entryFrame.getRevertReason().isPresent()) {
-        childBuilder.error(
-            new String(entryFrame.getRevertReason().get().toArrayUnsafe(), StandardCharsets.UTF_8));
-      }
-      LOG.trace("  Precompile failed: {}", errorMessage);
-
-      // TODO: Verify from reviewers - Geth sets "Gas Cost same as gas" in case of error,
-      //  Besu should do same?
-      childBuilder.gasUsed(cap);
-    }
-
-    // --- 3) I/O computation (no callee frame) ---
-    childBuilder.input(entryFrame.getPrecompileInputData().map(Bytes::toHexString).orElse(null));
-    childBuilder.output(entryFrame.getPrecompileOutputData().map(Bytes::toHexString).orElse(null));
-
-    // --- 4) Attach immediately — precompiles have no callee frame ---
-    if (parentCallInfo != null) {
-      parentCallInfo.builder.addCall(childBuilder.build());
-    }
-  }
-
-  private static void handleSelfDestruct(final TraceFrame frame, final CallInfo currentCallInfo) {
-    if (currentCallInfo == null || frame.getStack().isEmpty()) {
-      return;
-    }
-
-    // Check for exceptional halt first
-    if (frame.getExceptionalHaltReason().isPresent()) {
-      LOG.trace("SELFDESTRUCT failed with halt reason: {}", frame.getExceptionalHaltReason().get());
-      return; // Don't create SELFDESTRUCT entry for failed operation
-    }
-
-    final Bytes[] stack = frame.getStack().get();
-    if (stack.length == 0) {
-      return;
-    }
-
-    // Extract beneficiary from top of stack
-    final Address beneficiary = toAddress(stack[stack.length - 1]);
-    final String beneficiaryHex = beneficiary.toHexString();
-    final String from = frame.getRecipient().toHexString();
-
-    // Get the contract's balance from refunds map
-    // The refund is keyed by beneficiary address and contains the originator's balance
-    String value = ZERO_VALUE; // Default if not found
-    if (frame.getMaybeRefunds().isPresent()) {
-      final Map<Address, Wei> refunds = frame.getMaybeRefunds().get();
-      final Wei balance = refunds.get(beneficiary); // Get the refund for this beneficiary
-      if (balance != null) {
-        value = balance.toShortHexString();
-        LOG.trace("SELFDESTRUCT balance from refunds[{}]: {}", beneficiaryHex, value);
-      } else {
-        LOG.warn("SELFDESTRUCT: No refund found for beneficiary {}", beneficiaryHex);
-      }
-    } else {
-      LOG.warn("SELFDESTRUCT: No refunds map available");
-    }
-
-    // Create SELFDESTRUCT entry matching Geth's format
-    final CallTracerResult selfDestructCall =
-        CallTracerResult.builder()
-            .type(SELFDESTRUCT_TYPE)
-            .from(from)
-            .to(beneficiaryHex)
-            .gas(0L)
-            .gasUsed(0L)
-            .value(value)
-            .input("0x")
-            .build();
-
-    currentCallInfo.builder.addCall(selfDestructCall);
-
-    LOG.trace("SELFDESTRUCT: {} -> {} (value: {})", from, beneficiaryHex, value);
-  }
-
-  private static void handleImplicitReturn(
-      final TraceFrame lastFrameAtDepth, final Map<Integer, CallInfo> depthToCallInfo) {
-
-    final int failedDepth = lastFrameAtDepth.getDepth();
-    final CallInfo childCallInfo = depthToCallInfo.get(failedDepth);
-
-    if (childCallInfo == null) {
-      LOG.debug("No matching call info for implicit return at depth {}", failedDepth);
-      return;
-    }
-
-    LOG.trace(
-        "Handling implicit return at depth {} after {} with halt reason: {}",
-        failedDepth,
-        lastFrameAtDepth.getOpcode(),
-        lastFrameAtDepth.getExceptionalHaltReason().orElse(null));
-
-    // Set error if there was an exceptional halt
-    if (lastFrameAtDepth.getExceptionalHaltReason().isPresent()) {
-      childCallInfo.builder.error(
-          lastFrameAtDepth.getExceptionalHaltReason().get().getDescription());
-    }
-
-    // Calculate gas used
-    if (childCallInfo.entryFrame != null) {
-      long gasProvided = childCallInfo.builder.getGas().longValue();
-
-      // If INSUFFICIENT_GAS, all gas was consumed
-      if (lastFrameAtDepth
-          .getExceptionalHaltReason()
-          .map(r -> "INSUFFICIENT_GAS".equals(r.name()))
-          .orElse(false)) {
-        childCallInfo.builder.gasUsed(gasProvided);
-      }
-      // Special handling for SELFDESTRUCT
-      else if (SELFDESTRUCT_TYPE.equals(lastFrameAtDepth.getOpcode())) {
-        // For SELFDESTRUCT, we need to calculate based on the gas before SELFDESTRUCT
-        // and the gas after (which would be in the parent frame)
-        // SELFDESTRUCT costs 5000 gas (or 0 if balance is 0 and beneficiary exists)
-
-        // Get the gas cost from the SELFDESTRUCT operation itself
-        long selfDestructCost = lastFrameAtDepth.getGasCost().orElse(DEFAULT_SELFDESTRUCT_COST);
-        long gasBeforeSelfDestruct = lastFrameAtDepth.getGasRemaining();
-
-        // Calculate total gas used: provided - remaining before + cost of SELFDESTRUCT
-        long gasUsed = gasProvided - gasBeforeSelfDestruct + selfDestructCost;
-
-        LOG.trace(
-            "SELFDESTRUCT gas calculation: provided={}, beforeSD={}, SDcost={}, used={}",
-            gasProvided,
-            gasBeforeSelfDestruct,
-            selfDestructCost,
-            gasUsed);
-
-        childCallInfo.builder.gasUsed(gasUsed);
-      } else {
-        // Normal calculation for other opcodes
-        long gasRemaining = lastFrameAtDepth.getGasRemaining();
-        childCallInfo.builder.gasUsed(Math.max(0, gasProvided - gasRemaining));
-      }
-    }
-
-    // Add to parent
-    final CallInfo parentCallInfo = depthToCallInfo.get(failedDepth - 1);
-    if (parentCallInfo != null) {
-      parentCallInfo.builder.addCall(childCallInfo.builder.build());
-    }
-
-    // Remove from tracking
-    depthToCallInfo.remove(failedDepth);
-  }
 }
