@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.SoftFailureReason;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /** The interface Operation. */
 public interface Operation {
@@ -37,6 +38,9 @@ public interface Operation {
 
     /** Soft Failure Reason. Mainly used to provide visibility to tracers. */
     final SoftFailureReason softFailureReason;
+
+    /** Gas allocated for child call, if applicable. Used in conjunction to soft failure reason. */
+    private final OptionalLong gasAvailableForChildCall;
 
     /**
      * Instantiates a new Operation result.
@@ -61,6 +65,7 @@ public interface Operation {
       this.haltReason = haltReason;
       this.pcIncrement = pcIncrement;
       this.softFailureReason = null;
+      this.gasAvailableForChildCall = OptionalLong.empty();
     }
 
     /**
@@ -71,11 +76,15 @@ public interface Operation {
      * @param softFailureReason The Soft Failure Reason
      */
     public OperationResult(
-        final long gasCost, final int pcIncrement, final SoftFailureReason softFailureReason) {
+        final long gasCost,
+        final int pcIncrement,
+        final SoftFailureReason softFailureReason,
+        final long gasAvailableForChildCall) {
       this.gasCost = gasCost;
       this.haltReason = null;
       this.pcIncrement = pcIncrement;
       this.softFailureReason = softFailureReason;
+      this.gasAvailableForChildCall = OptionalLong.of(gasAvailableForChildCall);
     }
 
     /**
@@ -112,6 +121,17 @@ public interface Operation {
      */
     public Optional<SoftFailureReason> getSoftFailureReason() {
       return Optional.ofNullable(this.softFailureReason);
+    }
+
+    /**
+     * If this operation result is associated with a soft failure that involves a child call,
+     * returns the gas allocated for that child call.
+     *
+     * @return an OptionalLong containing the gas allocated for the child call, or empty if not
+     *     applicable.
+     */
+    public OptionalLong getGasAvailableForChildCall() {
+      return gasAvailableForChildCall;
     }
   }
 

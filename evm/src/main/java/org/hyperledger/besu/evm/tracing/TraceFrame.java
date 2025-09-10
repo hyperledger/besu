@@ -41,7 +41,6 @@ public class TraceFrame {
   private final long gasRefund;
   private final int depth;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
-  private final Optional<SoftFailureReason> softFailureReason;
   private final Address recipient;
   private final Wei value;
   private final Bytes inputData;
@@ -67,6 +66,9 @@ public class TraceFrame {
   private final Optional<Bytes> precompileInputData;
   private final Optional<Bytes> precompileOutputData;
 
+  private final Optional<SoftFailureReason> softFailureReason;
+  private final OptionalLong gasAvailableForChildCall;
+
   /** Private constructor - only accessible through Builder */
   private TraceFrame(final Builder builder) {
     this.pc = builder.pc;
@@ -77,7 +79,6 @@ public class TraceFrame {
     this.gasRefund = builder.gasRefund;
     this.depth = builder.depth;
     this.exceptionalHaltReason = builder.exceptionalHaltReason;
-    this.softFailureReason = builder.softFailureReason;
     this.recipient = builder.recipient;
     this.value = builder.value;
     this.inputData = builder.inputData;
@@ -100,6 +101,8 @@ public class TraceFrame {
     this.precompileRecipient = builder.precompileRecipient;
     this.precompileInputData = builder.precompileInputData;
     this.precompileOutputData = builder.precompileOutputData;
+    this.softFailureReason = builder.softFailureReason;
+    this.gasAvailableForChildCall = builder.gasAvailableForChildCall;
   }
 
   /**
@@ -131,7 +134,6 @@ public class TraceFrame {
     private long gasRefund;
     private int depth;
     private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
-    private Optional<SoftFailureReason> softFailureReason = Optional.empty();
     private Address recipient;
     private Wei value;
     private Bytes inputData;
@@ -154,6 +156,8 @@ public class TraceFrame {
     private Optional<Address> precompileRecipient = Optional.empty();
     private Optional<Bytes> precompileInputData = Optional.empty();
     private Optional<Bytes> precompileOutputData = Optional.empty();
+    private Optional<SoftFailureReason> softFailureReason = Optional.empty();
+    private OptionalLong gasAvailableForChildCall = OptionalLong.empty();
 
     /** Default constructor */
     public Builder() {}
@@ -172,7 +176,6 @@ public class TraceFrame {
       this.gasRefund = traceFrame.gasRefund;
       this.depth = traceFrame.depth;
       this.exceptionalHaltReason = traceFrame.exceptionalHaltReason;
-      this.softFailureReason = traceFrame.softFailureReason;
       this.recipient = traceFrame.recipient;
       this.value = traceFrame.value;
       this.inputData = traceFrame.inputData;
@@ -195,6 +198,8 @@ public class TraceFrame {
       this.precompileRecipient = traceFrame.precompileRecipient;
       this.precompileInputData = traceFrame.precompileInputData;
       this.precompileOutputData = traceFrame.precompileOutputData;
+      this.softFailureReason = traceFrame.softFailureReason;
+      this.gasAvailableForChildCall = traceFrame.gasAvailableForChildCall;
     }
 
     /**
@@ -559,6 +564,11 @@ public class TraceFrame {
       return this;
     }
 
+    public Builder setGasAvailableForChildCall(final OptionalLong gasAvailableForChildCall) {
+      this.gasAvailableForChildCall = gasAvailableForChildCall;
+      return this;
+    }
+
     /**
      * Builds the TraceFrame instance.
      *
@@ -846,6 +856,16 @@ public class TraceFrame {
    */
   public Optional<SoftFailureReason> getSoftFailureReason() {
     return softFailureReason;
+  }
+
+  /**
+   * If the operation involved a call, returns the gas available for the child call.
+   *
+   * @return OptionalLong containing the gas available for the child call, or empty if not
+   *     applicable.
+   */
+  public OptionalLong getGasAvailableForChildCall() {
+    return gasAvailableForChildCall;
   }
 
   @Override
