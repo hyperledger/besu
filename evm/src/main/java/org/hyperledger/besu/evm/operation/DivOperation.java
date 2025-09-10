@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Div operation. */

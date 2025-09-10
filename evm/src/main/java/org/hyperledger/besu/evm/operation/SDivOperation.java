@@ -19,10 +19,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** The SDiv operation. */
 public class SDivOperation extends AbstractFixedCostOperation {
