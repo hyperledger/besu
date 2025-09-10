@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -54,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -465,7 +465,7 @@ public class EvmToolCommand implements Runnable {
         var contractAccount = updater.getOrCreate(contract);
         contractAccount.setCode(codeBytes);
 
-        final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
+        final Set<Address> addressList = new HashSet<>(Address.SIZE);
         addressList.add(sender);
         addressList.add(contract);
         if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
