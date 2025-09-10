@@ -45,7 +45,19 @@ public class MainnetBlobsValidator {
     this.gasCalculator = gasCalculator;
   }
 
-  public ValidationResult<TransactionInvalidReason> validateBlobTransaction(
+  public ValidationResult<TransactionInvalidReason> validate(final Transaction transaction) {
+    ValidationResult<TransactionInvalidReason> blobTransactionResult =
+        validateBlobTransaction(transaction);
+    if (!blobTransactionResult.isValid()) {
+      return blobTransactionResult;
+    }
+    if (transaction.getBlobsWithCommitments().isPresent()) {
+      return validateBlobsWithCommitments(transaction);
+    }
+    return ValidationResult.valid();
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateBlobTransaction(
       final Transaction transaction) {
 
     if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
@@ -83,7 +95,8 @@ public class MainnetBlobsValidator {
     return ValidationResult.valid();
   }
 
-  public ValidationResult<TransactionInvalidReason> validateBlobsWithCommitments(
+  /** Validate the blobs and commitments of a transaction. Versioned hashes must be present */
+  private ValidationResult<TransactionInvalidReason> validateBlobsWithCommitments(
       final Transaction transaction) {
 
     if (transaction.getBlobsWithCommitments().isEmpty()) {

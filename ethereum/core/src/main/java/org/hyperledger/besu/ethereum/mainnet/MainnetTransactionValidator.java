@@ -118,21 +118,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (transactionType.supportsBlob()) {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
-          blobsValidator.validateBlobTransaction(transaction);
+          blobsValidator.validate(transaction);
       if (!blobTransactionResult.isValid()) {
         LOG.info(
             "Blob transaction {} validation failed: {}",
             transaction.getHash().toHexString(),
             blobTransactionResult.getErrorMessage());
         return blobTransactionResult;
-      }
-
-      if (transaction.getBlobsWithCommitments().isPresent()) {
-        final ValidationResult<TransactionInvalidReason> blobsResult =
-            blobsValidator.validateBlobsWithCommitments(transaction);
-        if (!blobsResult.isValid()) {
-          return blobsResult;
-        }
       }
     }
 
