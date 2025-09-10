@@ -564,6 +564,12 @@ public class TraceFrame {
       return this;
     }
 
+    /**
+     * Sets the gas available for child call, if applicable.
+     *
+     * @param gasAvailableForChildCall the gas available for child call
+     * @return this builder instance for method chaining
+     */
     public Builder setGasAvailableForChildCall(final OptionalLong gasAvailableForChildCall) {
       this.gasAvailableForChildCall = gasAvailableForChildCall;
       return this;
