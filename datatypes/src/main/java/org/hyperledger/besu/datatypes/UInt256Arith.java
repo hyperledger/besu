@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.datatypes;
 
 import java.util.Arrays;
@@ -14,12 +28,14 @@ public class UInt256Arith {
       throw new ArithmeticException("divide by zero");
     }
 
-    byte[] numArray = numerator.size() > UInt256.SIZE ?
-      numerator.slice(numerator.size() - UInt256.SIZE).toArrayUnsafe() :
-      numerator.toArrayUnsafe();
-    byte[] denomArray = denominator.size() > UInt256.SIZE ?
-      denominator.slice(denominator.size() - UInt256.SIZE).toArrayUnsafe() :
-      denominator.toArrayUnsafe();
+    byte[] numArray =
+        numerator.size() > UInt256.SIZE
+            ? numerator.slice(numerator.size() - UInt256.SIZE).toArrayUnsafe()
+            : numerator.toArrayUnsafe();
+    byte[] denomArray =
+        denominator.size() > UInt256.SIZE
+            ? denominator.slice(denominator.size() - UInt256.SIZE).toArrayUnsafe()
+            : denominator.toArrayUnsafe();
 
     boolean isNumeratorNegative = false;
     boolean isDenominatorNegative = false;
@@ -46,10 +62,11 @@ public class UInt256Arith {
       return UInt256.ONE;
     }
 
-    final int[] intResult = divideKnuth(toIntLimbs(numArray, numeratorOffset), toIntLimbs(denomArray, denominatorOffset));
+    final int[] intResult =
+        divideKnuth(
+            toIntLimbs(numArray, numeratorOffset), toIntLimbs(denomArray, denominatorOffset));
     if (signed) {
-      return Bytes.wrap(
-        fromIntLimbs(intResult, (isNumeratorNegative ^ isDenominatorNegative)));
+      return Bytes.wrap(fromIntLimbs(intResult, (isNumeratorNegative ^ isDenominatorNegative)));
     }
     return Bytes.wrap(fromIntLimbsUnsigned(intResult));
   }
@@ -77,14 +94,19 @@ public class UInt256Arith {
     return newValue;
   }
 
-  private static int compare(final byte[] numArray, final int numeratorOffset, final byte[] denomArray,
-                             final int denominatorOffset) {
+  private static int compare(
+      final byte[] numArray,
+      final int numeratorOffset,
+      final byte[] denomArray,
+      final int denominatorOffset) {
     final int numeratorSize = numArray.length - numeratorOffset;
     final int denominatorSize = denomArray.length - denominatorOffset;
     if (numeratorSize != denominatorSize) {
       return Integer.compare(numeratorSize, denominatorSize);
     }
-    for (int i = numeratorOffset, j = denominatorOffset; i < numeratorSize + numeratorOffset; i++, j++) {
+    for (int i = numeratorOffset, j = denominatorOffset;
+        i < numeratorSize + numeratorOffset;
+        i++, j++) {
       // make numbers comparable in unsigned form
       int b1 = (int) numArray[i] + Integer.MIN_VALUE;
       int b2 = (int) denomArray[j] + Integer.MIN_VALUE;
@@ -116,14 +138,14 @@ public class UInt256Arith {
       } else {
         rem = new int[num.length + 2];
         int rFrom = 0;
-        int c=0;
+        int c = 0;
         int n2 = 32 - shift;
-        for (int i=1; i < num.length+1; i++,rFrom++) {
+        for (int i = 1; i < num.length + 1; i++, rFrom++) {
           int b = c;
           c = num[rFrom];
           rem[i] = (b << shift) | (c >>> n2);
         }
-        rem[num.length+1] = c << shift;
+        rem[num.length + 1] = c << shift;
       }
     } else {
       divisor = Arrays.copyOfRange(denom, 0, denom.length);
@@ -146,7 +168,7 @@ public class UInt256Arith {
     int dl = divisor[1];
 
     // D2 Initialize j
-    for (int j=0; j < limit-1; j++) {
+    for (int j = 0; j < limit - 1; j++) {
       // D3 Calculate qhat
       // estimate qhat
       int qhat = 0;
@@ -154,34 +176,32 @@ public class UInt256Arith {
       boolean skipCorrection = false;
       int nh = rem[j];
       int nh2 = nh + 0x80000000;
-      int nm = rem[j+1];
+      int nm = rem[j + 1];
 
       if (nh == dh) {
         qhat = ~0;
         qrem = nh + nm;
         skipCorrection = qrem + 0x80000000 < nh2;
       } else {
-        long nChunk = (((long)nh) << 32) | (nm & LONG_MASK);
+        long nChunk = (((long) nh) << 32) | (nm & LONG_MASK);
         qhat = (int) Long.divideUnsigned(nChunk, dhLong);
         qrem = (int) Long.remainderUnsigned(nChunk, dhLong);
       }
 
-      if (qhat == 0)
-        continue;
+      if (qhat == 0) continue;
 
       if (!skipCorrection) { // Correct qhat
-        long nl = rem[j+2] & LONG_MASK;
+        long nl = rem[j + 2] & LONG_MASK;
         long rs = ((qrem & LONG_MASK) << 32) | nl;
         long estProduct = (dl & LONG_MASK) * (qhat & LONG_MASK);
 
         if (unsignedLongCompare(estProduct, rs)) {
           qhat--;
-          qrem = (int)((qrem & LONG_MASK) + dhLong);
-          if ((qrem & LONG_MASK) >=  dhLong) {
+          qrem = (int) ((qrem & LONG_MASK) + dhLong);
+          if ((qrem & LONG_MASK) >= dhLong) {
             estProduct -= (dl & LONG_MASK);
             rs = ((qrem & LONG_MASK) << 32) | nl;
-            if (unsignedLongCompare(estProduct, rs))
-              qhat--;
+            if (unsignedLongCompare(estProduct, rs)) qhat--;
           }
         }
       }
@@ -193,7 +213,7 @@ public class UInt256Arith {
       // D5 Test remainder
       if (borrow + 0x80000000 > nh2) {
         // D6 Add back
-        divadd(divisor, rem, j+1);
+        divadd(divisor, rem, j + 1);
         qhat--;
       }
 
@@ -230,8 +250,7 @@ public class UInt256Arith {
           if ((qrem & LONG_MASK) >= dhLong) {
             estProduct -= (dl & LONG_MASK);
             rs = ((qrem & LONG_MASK) << 32) | nl;
-            if (unsignedLongCompare(estProduct, rs))
-              qhat--;
+            if (unsignedLongCompare(estProduct, rs)) qhat--;
           }
         }
       }
@@ -253,26 +272,25 @@ public class UInt256Arith {
     return normalize(quotient);
   }
 
- private static int[] divideOneWord(final int[] numerator, final int denominator) {
-   long divisorLong = denominator & LONG_MASK;
+  private static int[] divideOneWord(final int[] numerator, final int denominator) {
+    long divisorLong = denominator & LONG_MASK;
 
-   // Special case of one word dividend
-   if (numerator.length == 1) {
-     return new int[] {Integer.divideUnsigned(numerator[0], denominator)};
-   }
+    // Special case of one word dividend
+    if (numerator.length == 1) {
+      return new int[] {Integer.divideUnsigned(numerator[0], denominator)};
+    }
 
-   int[] quotient = new int[numerator.length];
+    int[] quotient = new int[numerator.length];
 
-   long rem = 0;
-   for (int xlen = numerator.length; xlen > 0; xlen--) {
-     long dividendEstimate = (rem << 32) |
-       (numerator[numerator.length - xlen] & LONG_MASK);
-     int q = (int) Long.divideUnsigned(dividendEstimate, divisorLong);
-     rem = Long.remainderUnsigned(dividendEstimate, divisorLong);
-     quotient[numerator.length - xlen] = q;
-   }
+    long rem = 0;
+    for (int xlen = numerator.length; xlen > 0; xlen--) {
+      long dividendEstimate = (rem << 32) | (numerator[numerator.length - xlen] & LONG_MASK);
+      int q = (int) Long.divideUnsigned(dividendEstimate, divisorLong);
+      rem = Long.remainderUnsigned(dividendEstimate, divisorLong);
+      quotient[numerator.length - xlen] = q;
+    }
 
-   return normalize(quotient);
+    return normalize(quotient);
   }
 
   // removes leading zeros from value array
@@ -293,7 +311,9 @@ public class UInt256Arith {
     }
     final byte[] valueBytes = new byte[UInt256.SIZE];
     // package 1 int into 4 bytes by using byte shifting. stop when run out of limbs, rest is zero
-    for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 3 && limbIndex >= 0; i -= 4, limbIndex--) {
+    for (int i = valueBytes.length - 1, limbIndex = value.length - 1;
+        i >= 3 && limbIndex >= 0;
+        i -= 4, limbIndex--) {
       valueBytes[i - 3] = (byte) (value[limbIndex] >>> 24);
       valueBytes[i - 2] = (byte) (value[limbIndex] >>> 16);
       valueBytes[i - 1] = (byte) (value[limbIndex] >>> 8);
@@ -310,16 +330,20 @@ public class UInt256Arith {
       return fromIntLimbsUnsigned(value);
     }
     // initialize array with two complement
-    final byte[] valueBytes = new byte[] {
-      -1, -1, -1, -1, -1,
-      -1, -1, -1, -1, -1,
-      -1, -1, -1, -1, -1,
-      -1, -1, -1, -1, -1,
-      -1, -1, -1, -1, -1,
-      -1, -1, -1, -1, -1,
-      -1, -1};
+    final byte[] valueBytes =
+        new byte[] {
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1,
+          -1, -1
+        };
 
-    for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 3 && limbIndex >= 0; i -= 4, limbIndex--) {
+    for (int i = valueBytes.length - 1, limbIndex = value.length - 1;
+        i >= 3 && limbIndex >= 0;
+        i -= 4, limbIndex--) {
       // shift limb to get byte and invert it in one go for negative sign
       valueBytes[i - 3] = (byte) ~(value[limbIndex] >>> 24);
       valueBytes[i - 2] = (byte) ~(value[limbIndex] >>> 16);
@@ -341,7 +365,8 @@ public class UInt256Arith {
 
   private static int[] toIntLimbs(final byte[] value, final int offset) {
     if (offset < 0 || offset > value.length) {
-      throw new IllegalArgumentException("offset out of range: [0, " + value.length + "], offset=" + offset);
+      throw new IllegalArgumentException(
+          "offset out of range: [0, " + value.length + "], offset=" + offset);
     }
     if (value.length == offset) {
       return new int[1];
@@ -355,22 +380,24 @@ public class UInt256Arith {
     int i = value.length - 1;
     for (int limbIndex = limbsSize - 1; limbIndex > 0; i -= 4, limbIndex--) {
       limbs[limbIndex] =
-        (Byte.toUnsignedInt(value[i - 3]) << 24)
-        | (Byte.toUnsignedInt(value[i - 2]) << 16)
-        | (Byte.toUnsignedInt(value[i - 1]) << 8)
-        | (Byte.toUnsignedInt(value[i]));
+          (Byte.toUnsignedInt(value[i - 3]) << 24)
+              | (Byte.toUnsignedInt(value[i - 2]) << 16)
+              | (Byte.toUnsignedInt(value[i - 1]) << 8)
+              | (Byte.toUnsignedInt(value[i]));
     }
 
     // last limb needs to be treated separately to no go out of bounds on byte array
-    limbs[0] = (((i - 3 >= offset) ? Byte.toUnsignedInt(value[i - 3]) : 0) << 24)
-      | (((i - 2 >= offset) ? Byte.toUnsignedInt(value[i - 2]) : 0) << 16)
-      | (((i - 1 >= offset) ? Byte.toUnsignedInt(value[i - 1]) : 0) << 8)
-      | ((i >= offset) ? Byte.toUnsignedInt(value[i]) : 0);
+    limbs[0] =
+        (((i - 3 >= offset) ? Byte.toUnsignedInt(value[i - 3]) : 0) << 24)
+            | (((i - 2 >= offset) ? Byte.toUnsignedInt(value[i - 2]) : 0) << 16)
+            | (((i - 1 >= offset) ? Byte.toUnsignedInt(value[i - 1]) : 0) << 8)
+            | ((i >= offset) ? Byte.toUnsignedInt(value[i]) : 0);
 
     return limbs;
   }
 
-  private static void primitiveLeftShift(final int[] value, final int n, final int[] result, final int resFrom) {
+  private static void primitiveLeftShift(
+      final int[] value, final int n, final int[] result, final int resFrom) {
     int n2 = 32 - n;
     final int m = value.length - 1;
     int b = value[0];
@@ -383,51 +410,52 @@ public class UInt256Arith {
   }
 
   private static boolean unsignedLongCompare(final long one, final long two) {
-    return (one+Long.MIN_VALUE) > (two+Long.MIN_VALUE);
+    return (one + Long.MIN_VALUE) > (two + Long.MIN_VALUE);
   }
 
-  private static int mulsub(final int[] q, final int[] a, final int x, final int len, final int offSet) {
+  private static int mulsub(
+      final int[] q, final int[] a, final int x, final int len, final int offSet) {
     int offset = offSet;
     long xLong = x & LONG_MASK;
     long carry = 0;
     offset += len;
 
-    for (int j=len-1; j >= 0; j--) {
+    for (int j = len - 1; j >= 0; j--) {
       long product = (a[j] & LONG_MASK) * xLong + carry;
       long difference = q[offset] - product;
-      q[offset--] = (int)difference;
-      carry = (product >>> 32)
-        + (((difference & LONG_MASK) >
-        (((~(int)product) & LONG_MASK))) ? 1:0);
+      q[offset--] = (int) difference;
+      carry =
+          (product >>> 32)
+              + (((difference & LONG_MASK) > (((~(int) product) & LONG_MASK))) ? 1 : 0);
     }
-    return (int)carry;
+    return (int) carry;
   }
 
   private static int divadd(final int[] a, final int[] result, final int offset) {
     long carry = 0;
 
-    for (int j=a.length-1; j >= 0; j--) {
-      long sum = (a[j] & LONG_MASK) +
-        (result[j+offset] & LONG_MASK) + carry;
-      result[j+offset] = (int)sum;
+    for (int j = a.length - 1; j >= 0; j--) {
+      long sum = (a[j] & LONG_MASK) + (result[j + offset] & LONG_MASK) + carry;
+      result[j + offset] = (int) sum;
       carry = sum >>> 32;
     }
-    return (int)carry;
+    return (int) carry;
   }
 
-  private static int mulsubBorrow(final int[] q, final int[] a, final int x, final int len, final int offSet) {
+  private static int mulsubBorrow(
+      final int[] q, final int[] a, final int x, final int len, final int offSet) {
     int offset = offSet;
     long xLong = x & LONG_MASK;
     long carry = 0;
     offset += len;
-    for (int j=len-1; j >= 0; j--) {
+    for (int j = len - 1; j >= 0; j--) {
       long product = (a[j] & LONG_MASK) * xLong + carry;
       long difference = q[offset--] - product;
-      carry = (product >>> 32)
-        + (((difference & LONG_MASK) >
-        (((~(int)product) & LONG_MASK))) ? 1:0);
+      carry =
+          (product >>> 32)
+              + (((difference & LONG_MASK) > (((~(int) product) & LONG_MASK))) ? 1 : 0);
     }
-    return (int)carry;
+    return (int) carry;
   }
 
   private static int numberOfLeadingZeros(final byte[] value) {
@@ -438,7 +466,7 @@ public class UInt256Arith {
     int numZeros = 0;
     do {
       numZeros++;
-    } while(numZeros < value.length && value[numZeros] == 0);
+    } while (numZeros < value.length && value[numZeros] == 0);
 
     return numZeros;
   }
@@ -451,7 +479,7 @@ public class UInt256Arith {
     int numZeros = 0;
     do {
       numZeros++;
-    } while(numZeros < value.length && value[numZeros] == 0);
+    } while (numZeros < value.length && value[numZeros] == 0);
 
     return numZeros;
   }

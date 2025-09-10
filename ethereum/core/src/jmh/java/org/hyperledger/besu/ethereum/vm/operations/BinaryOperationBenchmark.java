@@ -17,13 +17,10 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
-import java.math.BigInteger;
-import java.util.Comparator;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -87,10 +84,10 @@ public abstract class BinaryOperationBenchmark {
   protected abstract Operation.OperationResult invoke(MessageFrame frame);
 
   public <T> void fillPools(
-    final Supplier<Integer> aSizeSupplier,
-    final Supplier<Integer> bSizeSupplier,
-    final Function<byte[], T> transform,
-    final BiPredicate<T, T> swapOperands) {
+      final Supplier<Integer> aSizeSupplier,
+      final Supplier<Integer> bSizeSupplier,
+      final Function<byte[], T> transform,
+      final BiPredicate<T, T> swapOperands) {
 
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];
@@ -106,12 +103,10 @@ public abstract class BinaryOperationBenchmark {
       if (swapOperands.test(transform.apply(a), transform.apply(b))) {
         bPool[i] = Bytes.wrap(a);
         aPool[i] = Bytes.wrap(b);
-      }
-      else {
+      } else {
         aPool[i] = Bytes.wrap(a);
         bPool[i] = Bytes.wrap(b);
       }
     }
-
   }
 }
