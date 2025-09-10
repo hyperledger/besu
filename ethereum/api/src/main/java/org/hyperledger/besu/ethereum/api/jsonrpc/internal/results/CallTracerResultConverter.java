@@ -231,7 +231,7 @@ public class CallTracerResultConverter {
       handleHardFailure(frame, opcode, childBuilder);
     } else {
       // Soft failure (e.g., insufficient balance, call depth exceeded)
-      handleSoftFailure(frame, opcode, childBuilder);
+      handleSoftFailure(opcode, childBuilder);
     }
 
     // Add to parent immediately
@@ -266,8 +266,7 @@ public class CallTracerResultConverter {
     childBuilder.gasUsed(gasUsed);
   }
 
-  private static void handleSoftFailure(
-      final TraceFrame frame, final String opcode, final CallTracerResult.Builder childBuilder) {
+  private static void handleSoftFailure(final String opcode, final CallTracerResult.Builder childBuilder) {
 
     // Soft failures typically don't consume gas for the child call itself
     // They only consume the base operation cost at the parent level
