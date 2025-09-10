@@ -138,7 +138,9 @@ public class MainnetBlobsValidatorTest {
             gasCalculator);
     var result = blobsValidator.validate(transaction);
     assertInvalidResult(
-        result, TransactionInvalidReason.INVALID_BLOBS, "Blob transaction has too many blobs: 1");
+        result,
+        TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
+        "Blob transaction has too many blobs: 1");
   }
 
   private void assertInvalidResult(
