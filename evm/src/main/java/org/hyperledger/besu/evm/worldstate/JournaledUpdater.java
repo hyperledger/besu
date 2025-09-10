@@ -43,6 +43,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * The Journaled updater.
  *
  * @param <W> the WorldView type parameter
+ * @param <A> the Account type parameter
  */
 public class JournaledUpdater<W extends WorldView, A extends Account> implements WorldUpdater {
 
@@ -184,7 +185,7 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
     }
   }
 
-  protected MutableAccount getForMutation(final Address address) {
+  private MutableAccount getForMutation(final Address address) {
     final AbstractWorldUpdater<W, A> wrapped = this.rootWorld;
     final UpdateTrackingAccount<A> wrappedTracker = wrapped.updatedAccounts.get(address);
     if (wrappedTracker != null) {

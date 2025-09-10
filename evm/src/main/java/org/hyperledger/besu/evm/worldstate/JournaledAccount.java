@@ -127,6 +127,11 @@ public class JournaledAccount implements MutableAccount, Undoable {
     transactionBoundaryMark = mark();
   }
 
+  /**
+   * Instantiates a new Update tracking account.
+   *
+   * @param account the account
+   */
   public JournaledAccount(final MutableAccount account) {
     checkNotNull(account);
 
