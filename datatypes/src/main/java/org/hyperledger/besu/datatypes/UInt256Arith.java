@@ -14,15 +14,19 @@ public class UInt256Arith {
       throw new ArithmeticException("divide by zero");
     }
 
-    byte[] numArray = numerator.size() > 32 ? numerator.slice(numerator.size() - 32).toArrayUnsafe() : numerator.toArrayUnsafe();
-    byte[] denomArray = denominator.size() > 32 ? denominator.slice(denominator.size() - 32).toArrayUnsafe() : denominator.toArrayUnsafe();
+    byte[] numArray = numerator.size() > UInt256.SIZE ?
+      numerator.slice(numerator.size() - UInt256.SIZE).toArrayUnsafe() :
+      numerator.toArrayUnsafe();
+    byte[] denomArray = denominator.size() > UInt256.SIZE ?
+      denominator.slice(denominator.size() - UInt256.SIZE).toArrayUnsafe() :
+      denominator.toArrayUnsafe();
 
     boolean isNumeratorNegative = false;
     boolean isDenominatorNegative = false;
     if (signed) {
-      isNumeratorNegative = (numArray.length != 0 && (numArray[0] >> 7 == -1));
+      isNumeratorNegative = (numArray.length == UInt256.SIZE && (numArray[0] >> 7 == -1));
       numArray = makePositive(numArray, isNumeratorNegative);
-      isDenominatorNegative = (denomArray[0] >> 7 == -1);
+      isDenominatorNegative = (denomArray.length == UInt256.SIZE && denomArray[0] >> 7 == -1);
       denomArray = makePositive(denomArray, isDenominatorNegative);
     }
 
@@ -55,7 +59,7 @@ public class UInt256Arith {
       return value;
     }
 
-    final byte[] newValue = new byte[value.length];
+    final byte[] newValue = new byte[UInt256.SIZE];
 
     // invert all values before
     for (int i = 0; i < value.length; i++) {
@@ -285,9 +289,9 @@ public class UInt256Arith {
 
   private static byte[] fromIntLimbsUnsigned(final int[] value) {
     if (value.length == 0) {
-      return new byte[32];
+      return new byte[0];
     }
-    final byte[] valueBytes = new byte[32];
+    final byte[] valueBytes = new byte[UInt256.SIZE];
     // package 1 int into 4 bytes by using byte shifting. stop when run out of limbs, rest is zero
     for (int i = valueBytes.length - 1, limbIndex = value.length - 1; i >= 3 && limbIndex >= 0; i -= 4, limbIndex--) {
       valueBytes[i - 3] = (byte) (value[limbIndex] >>> 24);
@@ -300,7 +304,7 @@ public class UInt256Arith {
 
   private static byte[] fromIntLimbs(final int[] value, final boolean isNegative) {
     if (value.length == 0) {
-      return new byte[32];
+      return new byte[0];
     }
     if (!isNegative) {
       return fromIntLimbsUnsigned(value);
