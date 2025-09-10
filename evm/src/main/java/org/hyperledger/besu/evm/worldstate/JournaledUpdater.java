@@ -212,15 +212,22 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
 
   @Override
   public Account get(final Address address) {
-    if (deleted.contains(address, startingMark)) {
-      return null;
-    }
-
     // If touched in this layer, return a view at the last touch
     final Long lastTouch = touchMarks.get(address);
     if (lastTouch != null) {
       final JournaledAccount current = accounts.get(address);
       return current != null ? current.snapshot(lastTouch) : null;
+    }
+
+    // If deleted before this updater started, the account is not visible
+    if (deleted.contains(address, startingMark)) {
+      return null;
+    }
+
+    // If the account existed when this updater started but has been deleted since,
+    // it should be hidden from this updater
+    if (deleted.contains(address) && accounts.get(address, startingMark) != null) {
+      return null;
     }
 
     // If existed at the start of this updater, return view at startingMark
