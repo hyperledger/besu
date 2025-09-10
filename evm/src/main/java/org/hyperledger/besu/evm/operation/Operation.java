@@ -69,11 +69,12 @@ public interface Operation {
     }
 
     /**
-     * Instantiate a new Operation Result with a Soft Failure Reason.
+     * Instantiates a new Operation result for a soft failure.
      *
-     * @param gasCost Gas Cost
-     * @param pcIncrement The increment
-     * @param softFailureReason The Soft Failure Reason
+     * @param gasCost the gas cost
+     * @param pcIncrement the increment
+     * @param softFailureReason the soft failure reason
+     * @param gasAvailableForChildCall the gas available for child call
      */
     public OperationResult(
         final long gasCost,

@@ -567,6 +567,10 @@ public class CallTracerResultConverter {
 
     // Fallback to memory extraction for calls
     if (isCallOp(opcode)) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "Falling back to memory extraction for CALL input data at depth {}", frame.getDepth());
+      }
       return extractCallInputFromMemory(frame);
     }
 
@@ -580,6 +584,10 @@ public class CallTracerResultConverter {
     }
 
     // Fallback to memory extraction
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "Falling back to memory extraction for CREATE input data at depth {}", frame.getDepth());
+    }
     return frame
         .getStack()
         .map(stack -> extractCreateInitCode(frame, stack, opcode))
