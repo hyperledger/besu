@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -17,8 +18,8 @@ public class UInt256ArithTest {
   @Test
   void randomUnsignedDivisionAgainstBigInteger() {
     Random random = new Random();
-    final byte[] numArray = new byte[random.nextInt(0, 32)];
-    final byte[] denomArray = new byte[random.nextInt(0, 32)];
+    final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
+    final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
     while (true) {
       random.nextBytes(numArray);
       random.nextBytes(denomArray);
@@ -35,7 +36,7 @@ public class UInt256ArithTest {
       final BigInteger result = new BigInteger(1, bytesResult);
 
       assertNotNull(bytesResult);
-      assertEquals(bytesResult.length, 32, "division result got " + bytesResult.length + " bytes");
+      assertEquals(bytesResult.length, UInt256.SIZE, "division result got " + bytesResult.length + " bytes");
       assertEquals(
         numBigInt.divide(denomBigInt),
         result,
@@ -46,16 +47,22 @@ public class UInt256ArithTest {
   @Test
   void randomSignedDivisionAgainstBigInteger() {
     Random random = new Random();
-    final byte[] numArray = new byte[random.nextInt(0, 32)];
-    final byte[] denomArray = new byte[random.nextInt(0, 32)];
+    final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
+    final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
     while (true) {
       random.nextBytes(numArray);
       random.nextBytes(denomArray);
       final Bytes numerator = Bytes.wrap(numArray);
       final Bytes denominator = Bytes.wrap(denomArray);
 
-      final BigInteger numBigInt = new BigInteger(numArray);
-      final BigInteger denomBigInt = new BigInteger(denomArray);
+      final BigInteger numBigInt =
+        numerator.size() < UInt256.SIZE ?
+          new BigInteger(1, numerator.toArrayUnsafe()) :
+          new BigInteger(numerator.toArrayUnsafe());
+      final BigInteger denomBigInt =
+        numerator.size() < UInt256.SIZE ?
+          new BigInteger(1, numerator.toArrayUnsafe()) :
+          new BigInteger(numerator.toArrayUnsafe());
       if (denomBigInt.equals(BigInteger.ZERO)) {
         continue;
       }
@@ -64,7 +71,7 @@ public class UInt256ArithTest {
       final BigInteger result = new BigInteger(bytesResult);
 
       assertNotNull(bytesResult);
-      assertEquals(bytesResult.length, 32, "division result got " + bytesResult.length + " bytes");
+      assertEquals(bytesResult.length, UInt256.SIZE, "division result got " + bytesResult.length + " bytes");
       assertEquals(
         numBigInt.divide(denomBigInt),
         result,
@@ -78,15 +85,21 @@ public class UInt256ArithTest {
     final Bytes numeratorBytes = Bytes.fromHexString(numerator);
     final Bytes denominatorBytes = Bytes.fromHexString(denominator);
 
-    final BigInteger numBigInt = new BigInteger(numeratorBytes.toArrayUnsafe());
-    final BigInteger denomBigInt = new BigInteger(denominatorBytes.toArrayUnsafe());
+    final BigInteger numBigInt =
+      numeratorBytes.size() < UInt256.SIZE ?
+        new BigInteger(1, numeratorBytes.toArrayUnsafe()) :
+        new BigInteger(numeratorBytes.toArrayUnsafe());
+    final BigInteger denomBigInt =
+      denominatorBytes.size() < UInt256.SIZE ?
+        new BigInteger(1, denominatorBytes.toArrayUnsafe()) :
+        new BigInteger(denominatorBytes.toArrayUnsafe());
 
-    final BigInteger result = new BigInteger(
-      UInt256Arith.divide(true, numeratorBytes, denominatorBytes).toArrayUnsafe());
+    final Bytes resultBytes = UInt256Arith.divide(true, numeratorBytes, denominatorBytes);
+    final BigInteger result = new BigInteger(resultBytes.toArrayUnsafe());
 
-    assertEquals(
-      numBigInt.divide(denomBigInt),
-      result,
+    final BigInteger expectedResult = numBigInt.divide(denomBigInt);
+
+    assertEquals(expectedResult, result,
       () -> "Division mismatch for num=" + numeratorBytes.toHexString() + " denom=" + denominatorBytes.toHexString());
     assertEquals(
       numeratorBytes, Bytes.fromHexString(numerator), "Original value has been modified");
@@ -105,6 +118,7 @@ public class UInt256ArithTest {
         {"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01"},
         {"0x01", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
         {"0x1598209296af93c13b2f5fde7d8e99", "0x09244c1368"},
+        {"0xfffffffffffffff9309d38241af6a2545b52958d000000000000000000000000","0xb17217f7d1cf79abc9e3b398"}
       });
   }
 
