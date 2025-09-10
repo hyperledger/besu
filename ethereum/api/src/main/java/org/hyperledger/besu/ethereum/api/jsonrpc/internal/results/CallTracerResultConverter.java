@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.traceFrameToDebugString;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -185,10 +184,6 @@ public class CallTracerResultConverter {
     final boolean calleeEntered = nextTrace != null && nextTrace.getDepth() > frame.getDepth();
 
     if (!calleeEntered) {
-      LOG.debug("Non-entered call detected: {}", traceFrameToDebugString(frame));
-      if (nextTrace != null) {
-        LOG.debug("Next frame after non-entered call: {}", traceFrameToDebugString(nextTrace));
-      }
       handleNonEnteredCall(frame, opcode, childBuilder, parentCallInfo);
       return;
     }
@@ -565,7 +560,7 @@ public class CallTracerResultConverter {
 
     return Math.max(0L, childGas);
   }
-  
+
   private static Bytes resolveInputData(
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 

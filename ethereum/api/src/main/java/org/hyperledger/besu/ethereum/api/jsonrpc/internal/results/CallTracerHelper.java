@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.evm.tracing.TraceFrame;
-
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -163,96 +161,5 @@ final class CallTracerHelper {
     }
 
     return Bytes.concatenate(availableSlice, MutableBytes.create(paddingNeeded));
-  }
-
-  /**
-   * Creates a detailed string representation of the TraceFrame for debugging purposes. Includes all
-   * relevant fields that are useful for tracing gas calculations and call flows.
-   *
-   * @param frame the TraceFrame to convert to string
-   * @return a detailed string representation
-   */
-  public static String traceFrameToDebugString(final TraceFrame frame) {
-    if (frame == null) {
-      return "null";
-    }
-
-    StringBuilder sb = new StringBuilder();
-    sb.append("TraceFrame{");
-    sb.append("\n  pc=").append(frame.getPc());
-    sb.append("\n  opcode=").append(frame.getOpcode());
-    sb.append("\n  depth=").append(frame.getDepth());
-    sb.append("\n  gasRemaining=0x")
-        .append(Long.toHexString(frame.getGasRemaining()))
-        .append(" (")
-        .append(frame.getGasRemaining())
-        .append(")");
-
-    frame
-        .getGasCost()
-        .ifPresent(
-            cost ->
-                sb.append("\n  gasCost=0x")
-                    .append(Long.toHexString(cost))
-                    .append(" (")
-                    .append(cost)
-                    .append(")"));
-
-    sb.append("\n  gasRemainingPostExecution=0x")
-        .append(Long.toHexString(frame.getGasRemainingPostExecution()))
-        .append(" (")
-        .append(frame.getGasRemainingPostExecution())
-        .append(")");
-
-    if (frame.getGasRefund() > 0) {
-      sb.append("\n  gasRefund=").append(frame.getGasRefund());
-    }
-
-    frame
-        .getExceptionalHaltReason()
-        .ifPresent(reason -> sb.append("\n  exceptionalHalt=").append(reason.name()));
-
-    if (frame.getValue() != null && !frame.getValue().isZero()) {
-      sb.append("\n  value=").append(frame.getValue().toShortHexString());
-    }
-
-    if (frame.getRecipient() != null) {
-      sb.append("\n  recipient=").append(frame.getRecipient().toHexString());
-    }
-
-    // Stack information (top few items for CALL operations)
-    if (frame.getStack().isPresent()
-        && (frame.getOpcode().startsWith("CALL") || frame.getOpcode().startsWith("CREATE"))) {
-      Bytes[] stack = frame.getStack().get();
-      sb.append("\n  stack(top 5)=[");
-      int start = Math.max(0, stack.length - 5);
-      for (int i = stack.length - 1; i >= start; i--) {
-        if (i < stack.length - 1) sb.append(", ");
-        sb.append("0x").append(stack[i].toShortHexString());
-      }
-      sb.append("]");
-    }
-
-    // Precompile information
-    if (frame.isPrecompile()) {
-      sb.append("\n  isPrecompile=true");
-      frame
-          .getPrecompileRecipient()
-          .ifPresent(addr -> sb.append("\n  precompileRecipient=").append(addr.toHexString()));
-      frame
-          .getPrecompiledGasCost()
-          .ifPresent(cost -> sb.append("\n  precompiledGasCost=").append(cost));
-    }
-
-    // Input/Output data (show length only for brevity)
-    if (frame.getInputData() != null && !frame.getInputData().isEmpty()) {
-      sb.append("\n  inputDataLength=").append(frame.getInputData().size());
-    }
-    if (frame.getOutputData() != null && !frame.getOutputData().isEmpty()) {
-      sb.append("\n  outputDataLength=").append(frame.getOutputData().size());
-    }
-
-    sb.append("\n}");
-    return sb.toString();
   }
 }
