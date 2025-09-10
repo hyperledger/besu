@@ -269,9 +269,10 @@ public class CallTracerResultConverter {
   private static void handleSoftFailure(
       final TraceFrame frame, final String opcode, final CallTracerResult.Builder childBuilder) {
 
-    // Soft failures consume only the base call cost
-    long gasUsed = frame.getGasCost().orElse(0L);
-    childBuilder.gasUsed(gasUsed);
+    // Soft failures typically don't consume gas for the child call itself
+    // They only consume the base operation cost at the parent level
+    // The child shows gasUsed: 0 since it never executed
+    childBuilder.gasUsed(0L);
 
     // For failed CREATE, ensure 'to' is null
     if (isCreateOp(opcode)) {
@@ -540,7 +541,20 @@ public class CallTracerResultConverter {
       return Math.max(0L, nextTrace.getGasRemaining());
     }
 
-    return 0L; // Placeholder for precompiles/non-entered calls
+    // For non-entered calls (including soft failures), calculate the gas that would
+    // have been provided using the 63/64 rule
+    long remainingGas = frame.getGasRemaining();
+
+    // Subtract the base cost of the operation itself
+    long gasCost = frame.getGasCost().orElse(0L);
+    long gasAfterCost = Math.max(0L, remainingGas - gasCost);
+
+    // Apply 63/64 rule for CALL operations
+    // For most calls, child gets min(gasAfterCost, gasAfterCost * 63/64)
+    // Since we're calculating what WOULD have been provided, use the 63/64 rule
+    long gasProvided = gasAfterCost - (gasAfterCost / 64L);
+
+    return Math.max(0L, gasProvided);
   }
 
   private static Bytes resolveInputData(
