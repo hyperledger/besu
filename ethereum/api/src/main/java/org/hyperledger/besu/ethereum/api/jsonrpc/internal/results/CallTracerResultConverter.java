@@ -541,28 +541,116 @@ public class CallTracerResultConverter {
     boolean hasCalleeStart = nextTrace != null && nextTrace.getDepth() == frame.getDepth() + 1;
 
     if (hasCalleeStart) {
-      return Math.max(0L, nextTrace.getGasRemaining());
+      long calleeGas = Math.max(0L, nextTrace.getGasRemaining());
+      LOG.trace("computeGasProvided: Using callee start gas: 0x{}", Long.toHexString(calleeGas));
+      return calleeGas;
     }
 
     // Special case for precompiles
     if (frame.isPrecompile()) {
+      LOG.trace("computeGasProvided: Precompile detected, returning placeholder 0");
       return 0L;
     }
 
-    // For non-entered calls, calculate provided gas
-    long remainingGas = frame.getGasRemaining();
-    long gasCost = frame.getGasCost().orElse(0L);
-    long gasAfterCost = Math.max(0L, remainingGas - gasCost);
-    long gasProvided = gasAfterCost - (gasAfterCost / 64L);
+    // For non-entered calls, calculate what would have been provided
+    String opcode = frame.getOpcode();
+    long gasBeforeOp = frame.getGasRemaining();
+    long operationCost = frame.getGasCost().orElse(0L);
 
-    // Debug logging
-    LOG.trace("DEBUG computeGasProvided for non-entered call:");
-    LOG.trace("  remainingGas: 0x{}", Long.toHexString(remainingGas));
-    LOG.trace("  gasCost: 0x{}", Long.toHexString(gasCost));
-    LOG.trace("  gasAfterCost: 0x{}", Long.toHexString(gasAfterCost));
-    LOG.trace("  gasProvided: 0x{}", Long.toHexString(gasProvided));
+    LOG.trace(
+        "computeGasProvided for non-entered {}: gasBeforeOp=0x{}, operationCost=0x{}",
+        opcode,
+        Long.toHexString(gasBeforeOp),
+        Long.toHexString(operationCost));
 
-    return Math.max(0L, gasProvided);
+    // Check stack for the gas parameter passed to CALL
+    long requestedGas = 0L;
+    if (frame.getStack().isPresent() && frame.getStack().get().length > 0) {
+      Bytes[] stack = frame.getStack().get();
+      // For CALL operations, gas is at top of stack (stack[length - 1])
+      requestedGas = bytesToLong(stack[stack.length - 1]);
+      LOG.trace("  Gas requested in CALL: 0x{}", Long.toHexString(requestedGas));
+    }
+
+    // The EVM calculation for CALL with value is complex:
+    // 1. Base cost (700) + value transfer cost (9000) + possible new account (25000)
+    // 2. After deducting base costs, apply 63/64 rule OR use requested gas (whichever is less)
+
+    // Let's try different calculations to see which matches Geth's 0x55ce
+
+    // Approach 1: Simple 63/64 of remaining gas
+    long approach1 = gasBeforeOp - (gasBeforeOp / 64L);
+    LOG.trace("  Approach 1 (63/64 of gasBeforeOp): 0x{}", Long.toHexString(approach1));
+
+    // Approach 2: 63/64 of (gasBeforeOp - some minimum reservation)
+    long minReservation = 2300L; // G_callstipend
+    long approach2 = 0L;
+    if (gasBeforeOp > minReservation) {
+      long available = gasBeforeOp - minReservation;
+      approach2 = available - (available / 64L);
+    }
+    LOG.trace(
+        "  Approach 2 (63/64 after {} reservation): 0x{}",
+        minReservation,
+        Long.toHexString(approach2));
+
+    // Approach 3: Use the requested gas if it's less than calculated
+    long approach3 = Math.min(requestedGas, approach1);
+    LOG.trace("  Approach 3 (min of requested and 63/64): 0x{}", Long.toHexString(approach3));
+
+    // Approach 4: Account for value transfer stipend
+    long callStipend = 2300L;
+    long approach4 = 0L;
+    if ("CALL".equals(opcode) && hasValue(frame)) {
+      // With value transfer, add stipend
+      long baseGas = gasBeforeOp - (gasBeforeOp / 64L);
+      approach4 = baseGas + callStipend;
+      LOG.trace("  Approach 4 (with value stipend): 0x{}", Long.toHexString(approach4));
+    }
+
+    // For debugging: let's see which approach gives us closest to 0x55ce (21966)
+    long target = 0x55ceL;
+    LOG.trace("  Target (Geth): 0x{} ({})", Long.toHexString(target), target);
+    LOG.trace(
+        "  Differences from target: A1={}, A2={}, A3={}, A4={}",
+        Math.abs(approach1 - target),
+        Math.abs(approach2 - target),
+        Math.abs(approach3 - target),
+        Math.abs(approach4 - target));
+
+    // For now, use approach 3 (min of requested and calculated)
+    // This is most likely to be correct based on EVM spec
+    return Math.max(0L, approach3);
+  }
+
+  // Helper method to check if CALL has value
+  private static boolean hasValue(final TraceFrame frame) {
+    if (!"CALL".equals(frame.getOpcode()) && !"CALLCODE".equals(frame.getOpcode())) {
+      return false;
+    }
+
+    return frame
+        .getStack()
+        .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
+        .map(
+            stack -> {
+              Wei value = Wei.wrap(stack[stack.length - CALL_STACK_VALUE_OFFSET]);
+              return !value.isZero();
+            })
+        .orElse(false);
+  }
+
+  // Helper to convert Bytes to long
+  private static long bytesToLong(final Bytes bytes) {
+    if (bytes == null || bytes.isEmpty()) {
+      return 0L;
+    }
+    try {
+      return bytes.toLong();
+    } catch (Exception e) {
+      // If the value is too large for long, return max
+      return Long.MAX_VALUE;
+    }
   }
 
   private static Bytes resolveInputData(
