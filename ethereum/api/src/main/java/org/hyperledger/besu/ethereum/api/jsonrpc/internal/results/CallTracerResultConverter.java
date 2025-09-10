@@ -286,12 +286,7 @@ public class CallTracerResultConverter {
     }
 
     // Set error message based on soft failure reason
-    frame
-        .getSoftFailureReason()
-        .ifPresent(
-            reason -> {
-              childBuilder.error(reason.getDescription());
-            });
+    frame.getSoftFailureReason().ifPresent(reason -> childBuilder.error(reason.getDescription()));
   }
 
   private static void setOutputAndErrorStatus(
@@ -538,12 +533,7 @@ public class CallTracerResultConverter {
     // For non-entered calls (soft failures), use the gas that would have been
     // provided to the child, which is now directly available in the TraceFrame
     if (frame.getGasAvailableForChildCall().isPresent()) {
-      long childGas = frame.getGasAvailableForChildCall().getAsLong();
-      LOG.trace(
-          "Using gasAvailableForChildCall from frame: 0x{} ({})",
-          Long.toHexString(childGas),
-          childGas);
-      return childGas;
+      return frame.getGasAvailableForChildCall().getAsLong();
     }
 
     // Fallback calculation if gasAvailableForChildCall is not available
@@ -551,12 +541,14 @@ public class CallTracerResultConverter {
     long gasAfter = frame.getGasRemainingPostExecution();
     long childGas = (gasAfter * 63L) / 64L;
 
-    LOG.trace(
-        "Fallback gas calculation: gasAfter={} (0x{}), calculated childGas={} (0x{})",
-        gasAfter,
-        Long.toHexString(gasAfter),
-        childGas,
-        Long.toHexString(childGas));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "Fallback gas calculation: gasAfter={} (0x{}), calculated childGas={} (0x{})",
+          gasAfter,
+          Long.toHexString(gasAfter),
+          childGas,
+          Long.toHexString(childGas));
+    }
 
     return Math.max(0L, childGas);
   }
