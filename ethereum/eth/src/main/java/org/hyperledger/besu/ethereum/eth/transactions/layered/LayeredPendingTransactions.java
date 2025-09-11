@@ -42,6 +42,7 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -325,9 +326,25 @@ public class LayeredPendingTransactions implements PendingTransactions {
     selection:
     for (final var entry : candidateTxsByScore.entrySet()) {
       LOG.trace("Evaluating txs with score {}", entry.getKey());
-      final var list = entry.getValue();
-      Collections.shuffle(list);
-      for (final var senderTxs : list) {
+      final var lists =
+          entry.getValue().stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      senderPendingTransactions ->
+                          senderPendingTransactions.pendingTransactions().stream()
+                              .anyMatch(
+                                  org.hyperledger.besu.datatypes.PendingTransaction::hasPriority)));
+
+      final var priorityList = lists.get(Boolean.TRUE);
+      final var normalList = lists.get(Boolean.FALSE);
+
+      Collections.shuffle(normalList);
+
+      final var finalList =
+          new ArrayList<SenderPendingTransactions>(priorityList.size() + normalList.size());
+      finalList.addAll(priorityList);
+      finalList.addAll(normalList);
+      for (final var senderTxs : finalList) {
         LOG.trace("Evaluating sender txs {}", senderTxs);
 
         for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
