@@ -77,8 +77,6 @@ public class QbftBlockHeaderAdaptor implements QbftBlockHeader {
 
   @Override
   public String toString() {
-    return "QbftBlockHeaderAdaptor{" +
-            "blockHeader=" + blockHeader +
-            '}';
+    return "QbftBlockHeaderAdaptor{" + "blockHeader=" + blockHeader + '}';
   }
 }

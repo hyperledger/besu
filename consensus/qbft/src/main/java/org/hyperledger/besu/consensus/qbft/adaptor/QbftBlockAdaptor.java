@@ -71,9 +71,11 @@ public class QbftBlockAdaptor implements QbftBlock {
 
   @Override
   public String toString() {
-    return "QbftBlockAdaptor{" +
-            "besuBlock=" + besuBlock +
-            ", qbftBlockHeader=" + qbftBlockHeader +
-            '}';
+    return "QbftBlockAdaptor{"
+        + "besuBlock="
+        + besuBlock
+        + ", qbftBlockHeader="
+        + qbftBlockHeader
+        + '}';
   }
 }

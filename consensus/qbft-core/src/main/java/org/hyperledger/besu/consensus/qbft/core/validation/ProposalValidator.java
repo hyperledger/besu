@@ -124,7 +124,8 @@ public class ProposalValidator {
           getRoundChangeWithLatestPreparedRound(proposal.getRoundChanges());
 
       if (roundChangeWithLatestPreparedRound.isPresent()) {
-        SignedData<RoundChangePayload> roundChangePayloadSignedData = roundChangeWithLatestPreparedRound.get();
+        SignedData<RoundChangePayload> roundChangePayloadSignedData =
+            roundChangeWithLatestPreparedRound.get();
         final PreparedRoundMetadata metadata =
             roundChangePayloadSignedData.getPayload().getPreparedRoundMetadata().get();
 
@@ -142,7 +143,10 @@ public class ProposalValidator {
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
         final QbftBlock currentBlockWithOldRound =
-            blockInterface.replaceRoundAndProposerInBlock(proposal.getBlock(), metadata.getPreparedRound(), roundChangePayloadSignedData.getAuthor());
+            blockInterface.replaceRoundAndProposerInBlock(
+                proposal.getBlock(),
+                metadata.getPreparedRound(),
+                roundChangePayloadSignedData.getAuthor());
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 
