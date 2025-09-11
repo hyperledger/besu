@@ -35,6 +35,7 @@ public interface QbftBlockInterface {
    *
    * @param proposalBlock the proposal block
    * @param roundNumber the round number
+   * @param proposer the proposer address
    * @return the new qbft block with updated round number
    */
   QbftBlock replaceRoundAndProposerInBlock(

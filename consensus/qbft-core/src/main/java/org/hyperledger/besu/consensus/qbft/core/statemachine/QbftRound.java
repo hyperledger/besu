@@ -81,6 +81,7 @@ public class QbftRound {
    * @param protocolSchedule the protocol schedule
    * @param observers the observers
    * @param nodeKey the node key
+   * @param localAddress the local address
    * @param messageFactory the message factory
    * @param transmitter the transmitter
    * @param roundTimer the round timer
