@@ -40,14 +40,18 @@ public class JsonRpcExecutorHandler {
       final Tracer tracer,
       final JsonRpcConfiguration jsonRpcConfiguration) {
     return ctx -> {
+      long timeoutMillis = jsonRpcConfiguration.getHttpTimeoutSec() * 1000;
       final long timerId =
           ctx.vertx()
               .setTimer(
-                  jsonRpcConfiguration.getHttpTimeoutSec() * 1000,
+                  timeoutMillis,
                   id -> {
                     final String method =
                         ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-                    LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
+                    LOG.error(
+                        "Timeout ({} ms) occurred in JSON-RPC executor for method {}",
+                        timeoutMillis,
+                        method);
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.TIMEOUT_ERROR);
                   });
 
