@@ -82,12 +82,12 @@ public class RoundTimer {
         bftExecutors.scheduleTask(newTimerRunnable, expiryTime.toMillis(), TimeUnit.MILLISECONDS);
 
     // Once we are up to round 2 start logging round expiries
-    //    if (round.getRoundNumber() >= 2) {
-    LOG.info(
-        "Moved to round {} which will expire in {} seconds",
-        round.getRoundNumber(),
-        expiryTime.toSeconds());
-    //    }
+    if (round.getRoundNumber() >= 2) {
+      LOG.info(
+          "Moved to round {} which will expire in {} seconds",
+          round.getRoundNumber(),
+          expiryTime.toSeconds());
+    }
 
     currentTimerTask = Optional.of(newTimerTask);
   }
