@@ -35,6 +35,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -65,6 +66,7 @@ public class QbftRound {
   protected final QbftProtocolSchedule protocolSchedule;
 
   private final NodeKey nodeKey;
+  private final Address localAddress;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
 
@@ -91,6 +93,7 @@ public class QbftRound {
       final QbftProtocolSchedule protocolSchedule,
       final Subscribers<QbftMinedBlockObserver> observers,
       final NodeKey nodeKey,
+      final Address localAddress,
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
@@ -101,6 +104,7 @@ public class QbftRound {
     this.protocolSchedule = protocolSchedule;
     this.observers = observers;
     this.nodeKey = nodeKey;
+    this.localAddress = localAddress;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.parentHeader = parentHeader;
@@ -147,8 +151,8 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
       blockToPublish =
-          blockInterface.replaceRoundInBlock(
-              preparedBlock, roundState.getRoundIdentifier().getRoundNumber());
+          blockInterface.replaceRoundAndProposerInBlock(
+              preparedBlock, roundState.getRoundIdentifier().getRoundNumber(), localAddress);
     }
 
     LOG.debug(" proposal - new/prepared block hash : {}", blockToPublish.getHash());
