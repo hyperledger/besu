@@ -203,7 +203,8 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInterface.replaceRoundAndProposerInBlock(proposedBlock, 0, localAddress)).thenReturn(publishBlock);
+    when(blockInterface.replaceRoundAndProposerInBlock(proposedBlock, 0, localAddress))
+        .thenReturn(publishBlock);
     when(blockInterface.replaceRoundInBlock(publishBlock, 0)).thenReturn(commitBlock);
 
     final ConsensusRoundIdentifier priorRoundChange = new ConsensusRoundIdentifier(1, 0);
