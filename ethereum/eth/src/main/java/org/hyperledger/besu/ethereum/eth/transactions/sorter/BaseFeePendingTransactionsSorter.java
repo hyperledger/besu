@@ -97,6 +97,9 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
+  public void penalize(final PendingTransaction pendingTransaction) {}
+
+  @Override
   public void manageBlockAdded(final BlockHeader blockHeader) {
     blockHeader.getBaseFee().ifPresent(this::updateBaseFee);
   }

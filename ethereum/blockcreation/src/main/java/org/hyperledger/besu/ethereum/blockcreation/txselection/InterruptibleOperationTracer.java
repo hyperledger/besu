@@ -91,17 +91,20 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
 
   @Override
   public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
+    checkInterrupt();
     delegate.tracePrepareTransaction(worldView, transaction);
   }
 
   @Override
   public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
+    checkInterrupt();
     delegate.traceStartTransaction(worldView, transaction);
   }
 
   @Override
   public void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {
+    checkInterrupt();
     delegate.traceBeforeRewardTransaction(worldView, tx, miningReward);
   }
 
@@ -115,6 +118,7 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
+    checkInterrupt();
     delegate.traceEndTransaction(
         worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
   }

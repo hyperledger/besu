@@ -192,6 +192,11 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
+  default boolean getShuffleSenders() {
+    return true;
+  }
+
+  @Value.Default
   default TransactionPoolValidatorService getTransactionPoolValidatorService() {
     return new TransactionPoolValidatorService() {
       @Override

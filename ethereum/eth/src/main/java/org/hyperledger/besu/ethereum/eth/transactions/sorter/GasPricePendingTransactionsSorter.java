@@ -58,6 +58,9 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
+  public void penalize(final PendingTransaction pendingTransaction) {}
+
+  @Override
   public void manageBlockAdded(final BlockHeader blockHeader) {
     // nothing to do
   }

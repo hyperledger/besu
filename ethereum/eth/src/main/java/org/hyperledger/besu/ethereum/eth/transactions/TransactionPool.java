@@ -148,6 +148,10 @@ public class TransactionPool implements BlockAddedObserver {
     subscribeDroppedTransactions(transactionBroadcaster);
   }
 
+  public void penalizeTransaction(final PendingTransaction pendingTransaction) {
+    pendingTransactions.penalize(pendingTransaction);
+  }
+
   private void initLogForReplay() {
     // log the initial block header data
     LOG_FOR_REPLAY

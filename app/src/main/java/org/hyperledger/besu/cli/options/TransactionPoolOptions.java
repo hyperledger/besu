@@ -48,6 +48,7 @@ import picocli.CommandLine;
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
   private static final String TX_POOL_NO_LOCAL_PRIORITY = "--tx-pool-no-local-priority";
+  private static final String TX_POOL_SHUFFLE_SENDERS = "--tx-pool-shuffle-senders";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
@@ -75,6 +76,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       fallbackValue = "true",
       arity = "0..1")
   private Boolean noLocalPriority = TransactionPoolConfiguration.DEFAULT_NO_LOCAL_PRIORITY;
+
+  @CommandLine.Option(
+      names = {TX_POOL_SHUFFLE_SENDERS},
+      paramLabel = "<Boolean>",
+      description = "Shuffle senders before block creation (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true",
+      arity = "0..1")
+  private Boolean shuffleSenders = true;
 
   @CommandLine.Option(
       names = {TX_POOL_ENABLE_SAVE_RESTORE},
@@ -338,6 +347,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.prioritySenders = config.getPrioritySenders();
     options.minGasPrice = config.getMinGasPrice();
+    options.shuffleSenders = config.getShuffleSenders();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
@@ -402,6 +412,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .prioritySenders(prioritySenders)
         .minGasPrice(minGasPrice)
+        .shuffleSenders(shuffleSenders)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxPrioritizedTransactionsByType(layeredOptions.txPoolMaxPrioritizedByType)

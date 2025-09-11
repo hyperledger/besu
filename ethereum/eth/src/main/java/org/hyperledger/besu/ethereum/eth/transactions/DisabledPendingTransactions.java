@@ -121,4 +121,7 @@ public class DisabledPendingTransactions implements PendingTransactions {
   public Optional<Transaction> restoreBlob(final Transaction transaction) {
     return Optional.empty();
   }
+
+  @Override
+  public void penalize(final PendingTransaction pendingTransaction) {}
 }

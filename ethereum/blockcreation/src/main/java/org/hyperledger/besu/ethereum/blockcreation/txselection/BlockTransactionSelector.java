@@ -208,6 +208,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       txSelectionTask.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
+        LOG.debug("Cancelled during transaction selection");
         throw new CancellationException("Cancelled during transaction selection");
       }
       LOG.warn("Error during block transaction selection", e);
@@ -217,7 +218,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         isTimeout.set(true);
       }
 
-      cancelEvaluatingTxWithGraceTime(txSelectionTask);
+      cancelEvaluatingTxWithGraceTime(blockSelectionContext, txSelectionTask);
 
       final var logBuilder =
           LOG.atWarn()
@@ -234,7 +235,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
   }
 
-  private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
+  private void cancelEvaluatingTxWithGraceTime(
+      final BlockSelectionContext blockSelectionContext, final FutureTask<Void> txSelectionTask) {
     final long elapsedTime =
         currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS);
     // adding 100ms so we are sure it take strictly more than the block selection max time
@@ -242,7 +244,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     LOG.atDebug()
         .setMessage(
-            "Transaction {} is processing for {}ms, giving it {}ms grace time, before considering it taking too much time to execute")
+            "Transaction {} is processing for {}ms, giving it {}ms grace time,"
+                + " before considering it taking too much time to execute")
         .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
         .addArgument(elapsedTime)
         .addArgument(txRemainingTime)
@@ -250,22 +253,81 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     ethScheduler.scheduleFutureTask(
         () -> {
-          if (!txSelectionTask.isDone()) {
+          if (txSelectionTask.isDone()) {
             LOG.atDebug()
                 .setMessage(
-                    "Transaction {} is still processing after the grace time, total processing time {}ms,"
-                        + " greater than max block selection time of {}ms, forcing an interrupt")
+                    "Transaction {} completed before trying to cancel it, total processing time {}ms,"
+                        + " less than max block selection time of {}ms plus the grace time of {}ms")
                 .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
                 .addArgument(
                     () ->
                         currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS))
                 .addArgument(blockTxsSelectionMaxTime)
+                .addArgument(100)
+                .log();
+          } else {
+            blockSelectionContext
+                .transactionPool()
+                .penalizeTransaction(
+                    (PendingTransaction) currTxEvaluationContext.getPendingTransaction());
+            LOG.atDebug()
+                .setMessage("Force penalization of tx that took too much time to execute {}")
+                .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
                 .log();
 
-            txSelectionTask.cancel(true);
+            final var cancelResult = txSelectionTask.cancel(true);
+            if (LOG.isDebugEnabled()) {
+              final var elapsedTimeBeforeCancellation =
+                  currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS);
+              LOG.debug(
+                  "Transaction {} is still processing after the grace time, total processing time {}ms,"
+                      + " greater than max block selection time of {}ms plus the grace time of {}ms, "
+                      + "return value of cancellation request {}",
+                  currTxEvaluationContext.getPendingTransaction().toTraceLog(),
+                  elapsedTimeBeforeCancellation,
+                  blockTxsSelectionMaxTime,
+                  100,
+                  cancelResult);
+              if (txSelectionTask.isCancelled()) {
+                LOG.debug(
+                    "Transaction task {} has already been cancelled no need to track it",
+                    currTxEvaluationContext.getPendingTransaction());
+              } else {
+                trackCancelledTask(
+                    txSelectionTask, currTxEvaluationContext, elapsedTimeBeforeCancellation);
+              }
+            }
           }
         },
         Duration.ofMillis(txRemainingTime));
+  }
+
+  private void trackCancelledTask(
+      final FutureTask<Void> txSelectionTask,
+      final TransactionEvaluationContext currTxEvaluationContext,
+      final long elapsedTimeBeforeCancellation) {
+    ethScheduler.scheduleFutureTask(
+        () -> {
+          final var cancelElapsedTime =
+              currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS)
+                  - elapsedTimeBeforeCancellation;
+          if (txSelectionTask.isDone()) {
+            LOG.debug(
+                "Transaction {} processing is done after {}ms with state {}",
+                currTxEvaluationContext.getPendingTransaction(),
+                cancelElapsedTime,
+                txSelectionTask.state());
+          } else {
+            LOG.debug(
+                "Transaction {} processing still running after {}ms with state {}, keep tracking",
+                currTxEvaluationContext.getPendingTransaction(),
+                cancelElapsedTime,
+                txSelectionTask.state());
+            trackCancelledTask(
+                txSelectionTask, currTxEvaluationContext, elapsedTimeBeforeCancellation);
+          }
+        },
+        Duration.ofMillis(100));
   }
 
   /**

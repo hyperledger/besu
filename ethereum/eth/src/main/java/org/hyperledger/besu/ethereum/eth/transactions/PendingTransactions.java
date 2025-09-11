@@ -74,6 +74,8 @@ public interface PendingTransactions {
 
   Optional<Transaction> restoreBlob(Transaction transaction);
 
+  void penalize(PendingTransaction pendingTransaction);
+
   @FunctionalInterface
   interface TransactionSelector {
     TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);
