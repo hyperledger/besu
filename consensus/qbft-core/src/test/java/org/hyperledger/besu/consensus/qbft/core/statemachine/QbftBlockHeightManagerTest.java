@@ -88,6 +88,7 @@ import org.mockito.quality.Strictness;
 public class QbftBlockHeightManagerTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
   private final QbftBlockHeaderTestFixture headerTestFixture = new QbftBlockHeaderTestFixture();
   private MessageFactory messageFactory;
 
@@ -157,6 +158,7 @@ public class QbftBlockHeightManagerTest {
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
+                  localAddress,
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
@@ -174,6 +176,7 @@ public class QbftBlockHeightManagerTest {
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
+                  localAddress,
                   messageFactory,
                   messageTransmitter,
                   roundTimer,

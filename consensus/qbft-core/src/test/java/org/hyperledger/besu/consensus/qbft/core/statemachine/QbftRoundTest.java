@@ -49,6 +49,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -72,6 +73,7 @@ import org.mockito.quality.Strictness;
 public class QbftRoundTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final Address localAddress = Address.extract(nodeKey.getPublicKey());
   private final NodeKey nodeKey2 = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<QbftMinedBlockObserver> subscribers = Subscribers.create();
@@ -129,6 +131,7 @@ public class QbftRoundTest {
         protocolSchedule,
         subscribers,
         nodeKey,
+        localAddress,
         messageFactory,
         transmitter,
         roundTimer,
@@ -147,6 +150,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -177,6 +181,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -198,7 +203,7 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(publishBlock);
+    when(blockInterface.replaceRoundAndProposerInBlock(proposedBlock, 0, localAddress)).thenReturn(publishBlock);
     when(blockInterface.replaceRoundInBlock(publishBlock, 0)).thenReturn(commitBlock);
 
     final ConsensusRoundIdentifier priorRoundChange = new ConsensusRoundIdentifier(1, 0);
@@ -211,6 +216,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -261,6 +267,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -302,6 +309,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -332,6 +340,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             messageFactory,
             transmitter,
             roundTimer,
@@ -366,6 +375,7 @@ public class QbftRoundTest {
             protocolSchedule,
             subscribers,
             throwingNodeKey,
+            localAddress,
             throwingMessageFactory,
             transmitter,
             roundTimer,

@@ -68,4 +68,12 @@ public class QbftBlockAdaptor implements QbftBlock {
   public int hashCode() {
     return Objects.hash(besuBlock, qbftBlockHeader);
   }
+
+  @Override
+  public String toString() {
+    return "QbftBlockAdaptor{" +
+            "besuBlock=" + besuBlock +
+            ", qbftBlockHeader=" + qbftBlockHeader +
+            '}';
+  }
 }

@@ -74,4 +74,11 @@ public class QbftBlockHeaderAdaptor implements QbftBlockHeader {
   public int hashCode() {
     return Objects.hashCode(blockHeader);
   }
+
+  @Override
+  public String toString() {
+    return "QbftBlockHeaderAdaptor{" +
+            "blockHeader=" + blockHeader +
+            '}';
+  }
 }
