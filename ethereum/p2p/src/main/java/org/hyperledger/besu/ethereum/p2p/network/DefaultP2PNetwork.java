@@ -18,8 +18,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -529,7 +531,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
-    private Blockchain blockchain;
+    private Hash genesisHash;
+    private long genesisTimestamp;
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
@@ -581,13 +584,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
       checkState(blockNumberForks != null, "BlockNumberForks must be set.");
       checkState(timestampForks != null, "TimestampForks must be set.");
+      checkState(genesisHash != null, "GenesisHash must be set.");
       checkState(allConnectionsSupplier != null, "Supplier must be set.");
       checkState(allActiveConnectionsSupplier != null, "Supplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
       final ForkIdManager forkIdManager =
-          new ForkIdManager(blockchain, blockNumberForks, timestampForks);
+          new ForkIdManager(genesisHash, genesisTimestamp, blockNumberForks, timestampForks);
 
       return VertxPeerDiscoveryAgent.create(
           vertx,
@@ -690,11 +694,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder blockchain(final MutableBlockchain blockchain) {
-      checkNotNull(blockchain);
-      this.blockchain = blockchain;
-      return this;
-    }
 
     public Builder blockNumberForks(final List<Long> forks) {
       checkNotNull(forks);
@@ -705,6 +704,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder timestampForks(final List<Long> forks) {
       checkNotNull(forks);
       this.timestampForks = forks;
+      return this;
+    }
+
+    public Builder genesisHash(final Hash genesisHash) {
+      checkNotNull(genesisHash);
+      this.genesisHash = genesisHash;
+      return this;
+    }
+
+    public Builder genesisTimestamp(final long genesisTimestamp) {
+      this.genesisTimestamp = genesisTimestamp;
       return this;
     }
 
