@@ -46,12 +46,12 @@ public class JsonRpcExecutorHandler {
               .setTimer(
                   timeoutMillis,
                   id -> {
-                    final String method =
+                    final String requestBodyAsJson =
                         ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
                     LOG.error(
                         "Timeout ({} ms) occurred in JSON-RPC executor for method {}",
                         timeoutMillis,
-                        method);
+                        getShortLogString(requestBodyAsJson));
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.TIMEOUT_ERROR);
                   });
 
@@ -76,12 +76,22 @@ public class JsonRpcExecutorHandler {
                   cancelTimer(ctx);
                 });
       } catch (final RuntimeException e) {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-        LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
+        final String requestBodyAsJson =
+            ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
+        LOG.error(
+            "Unhandled exception in JSON-RPC executor for method {}",
+            getShortLogString(requestBodyAsJson),
+            e);
         handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
         cancelTimer(ctx);
       }
     };
+  }
+
+  private static Object getShortLogString(final String requestBodyAsJson) {
+    return requestBodyAsJson == null || requestBodyAsJson.length() < 128
+        ? requestBodyAsJson
+        : requestBodyAsJson.substring(0, 128).concat("...");
   }
 
   private static void cancelTimer(final RoutingContext ctx) {
