@@ -106,7 +106,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "                               export."
           + System.lineSeparator()
-          + "      --to=<FILE>            File to write the block list to."
+          + "      --to=<FILE>            File (or directory, in the case of ERA1 format"
+          + System.lineSeparator()
+          + "                               export) to write the block list to."
           + System.lineSeparator()
           + "  -V, --version              Print version information and exit."
           + System.lineSeparator();
