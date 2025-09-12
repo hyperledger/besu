@@ -23,8 +23,6 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
 /**
@@ -44,7 +42,8 @@ public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   }
 
   @Override
-  public QbftBlock replaceRoundInBlock(final QbftBlock proposalBlock, final int roundNumber) {
+  public QbftBlock replaceRoundForCommitBlock(
+      final QbftBlock proposalBlock, final int roundNumber) {
     final Block besuBlock = toBesuBlock(proposalBlock);
     final BlockHeaderFunctions blockHeaderFunctions =
         BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec);
@@ -54,20 +53,10 @@ public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   }
 
   @Override
-  public QbftBlock replaceRoundAndProposerInBlock(
+  public QbftBlock replaceRoundAndProposerForProposalBlock(
       final QbftBlock proposalBlock, final int roundNumber, final Address proposer) {
-    final Block besuBlock = toBesuBlock(proposalBlock);
-    final BlockHeaderFunctions blockHeaderFunctions =
-        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec);
-    final Block updatedRoundBlock =
-        bftBlockInterface.replaceRoundInBlock(besuBlock, roundNumber, blockHeaderFunctions);
-
-    // update the proposer
-    final BlockHeaderBuilder headerBuilder =
-        BlockHeaderBuilder.fromHeader(updatedRoundBlock.getHeader());
-    headerBuilder.coinbase(proposer).blockHeaderFunctions(blockHeaderFunctions);
-    final BlockHeader newHeader = headerBuilder.buildBlockHeader();
-
-    return new QbftBlockAdaptor(new Block(newHeader, updatedRoundBlock.getBody()));
+    // We don't want to update the proposer in the block as this would break compatibility with
+    // selecting proposers
+    return replaceRoundForCommitBlock(proposalBlock, roundNumber);
   }
 }

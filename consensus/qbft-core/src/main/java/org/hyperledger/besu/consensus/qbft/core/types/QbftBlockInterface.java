@@ -20,24 +20,24 @@ import org.hyperledger.besu.datatypes.Address;
 public interface QbftBlockInterface {
 
   /**
-   * Create a new block using the supplied block with round number replaced. The hash must be for
-   * the committed seal.
+   * Create a new commit block using the supplied block with round number replaced. The hash must be
+   * for the committed seal.
    *
    * @param proposalBlock the proposal block
    * @param roundNumber the round number
    * @return the new qbft block with updated round number
    */
-  QbftBlock replaceRoundInBlock(QbftBlock proposalBlock, int roundNumber);
+  QbftBlock replaceRoundForCommitBlock(QbftBlock proposalBlock, int roundNumber);
 
   /**
-   * Create a new block using the supplied block with round number and proposer replaced. The hash
-   * must be for the committed seal.
+   * Create a new proposal block using the supplied block with round number and proposer replaced.
+   * The hash must be for the committed seal.
    *
    * @param proposalBlock the proposal block
    * @param roundNumber the round number
    * @param proposer the proposer address
    * @return the new qbft block with updated round number
    */
-  QbftBlock replaceRoundAndProposerInBlock(
+  QbftBlock replaceRoundAndProposerForProposalBlock(
       QbftBlock proposalBlock, int roundNumber, Address proposer);
 }
