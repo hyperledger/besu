@@ -430,7 +430,7 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private long convertBlockNumberToFileNumber(final long blockNumber) {
-      return (blockNumber + 1) / ERA1_FILE_BLOCKS;
+      return blockNumber / ERA1_FILE_BLOCKS;
     }
 
     private void checkCommand(
