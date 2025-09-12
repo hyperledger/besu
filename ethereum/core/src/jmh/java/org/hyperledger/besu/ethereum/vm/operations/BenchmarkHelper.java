@@ -28,6 +28,7 @@ import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BenchmarkHelper {
   public static MessageFrame createMessageCallFrame() {
@@ -52,6 +53,28 @@ public class BenchmarkHelper {
         .build();
   }
 
+  public static MessageFrame createMessageCallFrameWithCallData(final Bytes callData) {
+    return MessageFrame.builder()
+        .worldUpdater(mock(WorldUpdater.class))
+        .originator(Address.ZERO)
+        .gasPrice(Wei.ONE)
+        .blobGasPrice(Wei.ONE)
+        .blockValues(mock(BlockValues.class))
+        .miningBeneficiary(Address.ZERO)
+        .blockHashLookup((__, ___) -> Hash.ZERO)
+        .type(MessageFrame.Type.MESSAGE_CALL)
+        .initialGas(Long.MAX_VALUE)
+        .address(Address.ZERO)
+        .contract(Address.ZERO)
+        .inputData(callData)
+        .sender(Address.ZERO)
+        .value(Wei.ZERO)
+        .apparentValue(Wei.ZERO)
+        .code(CodeV0.EMPTY_CODE)
+        .completer(__ -> {})
+        .build();
+  }
+
   /**
    * Fills an array with random 32-byte values.
    *
@@ -65,6 +88,35 @@ public class BenchmarkHelper {
       final byte[] a = new byte[aSize];
       random.nextBytes(a);
       pool[i] = Bytes.wrap(a);
+    }
+  }
+
+  static Bytes createCallData(final int size, final boolean nonZero) {
+    byte[] data = new byte[size];
+    if (nonZero) {
+      for (int i = 0; i < size; i++) {
+        data[i] = (byte) (i % 256);
+      }
+    }
+    return Bytes.wrap(data);
+  }
+
+  static void fillPoolsForCallData(
+      final Bytes[] sizePool,
+      final Bytes[] destOffsetPool,
+      final Bytes[] srcOffsetPool,
+      final int dataSize,
+      final boolean fixedSrcDst) {
+    for (int i = 0; i < sizePool.length; i++) {
+      sizePool[i] = Bytes.wrap(UInt256.valueOf(dataSize));
+
+      if (fixedSrcDst) {
+        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+      } else {
+        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024));
+        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize)));
+      }
     }
   }
 }

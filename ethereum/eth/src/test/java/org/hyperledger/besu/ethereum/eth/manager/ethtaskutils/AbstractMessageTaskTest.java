@@ -146,8 +146,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
     transactionPool.setEnabled();
 
     ethProtocolManager =

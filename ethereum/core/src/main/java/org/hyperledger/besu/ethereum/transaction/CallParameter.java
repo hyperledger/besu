@@ -78,7 +78,7 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
 
   @Override
   @JsonProperty("authorizationList")
-  @JsonDeserialize(contentAs = org.hyperledger.besu.ethereum.core.CodeDelegation.class)
+  @JsonDeserialize(contentUsing = CodeDelegationParameterDeserializer.class)
   public abstract List<CodeDelegation> getCodeDelegationAuthorizations();
 
   @Override
