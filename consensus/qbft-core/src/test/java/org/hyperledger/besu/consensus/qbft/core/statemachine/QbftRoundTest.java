@@ -156,7 +156,8 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(proposedBlock), eq(0)))
+        .thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(
@@ -170,7 +171,7 @@ public class QbftRoundTest {
     final QbftBlockHeader header = new QbftBlockHeaderTestFixture().number(0).buildHeader();
 
     final QbftBlock commitBlock = new QbftBlockTestFixture().blockHeader(header).build();
-    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundForCommitBlock(proposedBlock, 0)).thenReturn(commitBlock);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final QbftRound round =
@@ -203,9 +204,9 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInterface.replaceRoundAndProposerInBlock(proposedBlock, 0, localAddress))
+    when(blockInterface.replaceRoundAndProposerForProposalBlock(proposedBlock, 0, localAddress))
         .thenReturn(publishBlock);
-    when(blockInterface.replaceRoundInBlock(publishBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundForCommitBlock(publishBlock, 0)).thenReturn(commitBlock);
 
     final ConsensusRoundIdentifier priorRoundChange = new ConsensusRoundIdentifier(1, 0);
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
@@ -257,7 +258,7 @@ public class QbftRoundTest {
         new QbftBlockTestFixture()
             .blockHeader(new QbftBlockHeaderTestFixture().number(0).buildHeader())
             .build();
-    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(commitBlock);
+    when(blockInterface.replaceRoundForCommitBlock(proposedBlock, 0)).thenReturn(commitBlock);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final QbftRound round =
@@ -316,7 +317,7 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInterface.replaceRoundInBlock(proposedBlock, 0)).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundForCommitBlock(proposedBlock, 0)).thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(proposedBlock), eq(0), any())).thenReturn(proposedBlock);
 
     round.handleCommitMessage(
@@ -347,7 +348,8 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(proposedBlock), eq(0)))
+        .thenReturn(proposedBlock);
     when(blockCreator.createSealedBlock(eq(proposedBlock), eq(0), any())).thenReturn(proposedBlock);
 
     round.handleCommitMessage(
@@ -382,7 +384,8 @@ public class QbftRoundTest {
             roundTimer,
             parentHeader);
 
-    when(blockInterface.replaceRoundInBlock(eq(proposedBlock), eq(0))).thenReturn(proposedBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(proposedBlock), eq(0)))
+        .thenReturn(proposedBlock);
 
     round.handleProposalMessage(
         messageFactory.createProposal(

@@ -149,7 +149,7 @@ public class ProposalValidator {
                 new ConsensusRoundIdentifier(
                     roundIdentifier.getSequenceNumber(), metadata.getPreparedRound()));
         final QbftBlock currentBlockWithOldRound =
-            blockInterface.replaceRoundAndProposerInBlock(
+            blockInterface.replaceRoundAndProposerForProposalBlock(
                 proposal.getBlock(), metadata.getPreparedRound(), proposerForOldRound);
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();

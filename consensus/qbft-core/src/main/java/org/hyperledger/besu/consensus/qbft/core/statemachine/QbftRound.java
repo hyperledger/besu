@@ -152,7 +152,7 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
       blockToPublish =
-          blockInterface.replaceRoundAndProposerInBlock(
+          blockInterface.replaceRoundAndProposerForProposalBlock(
               preparedBlock, roundState.getRoundIdentifier().getRoundNumber(), localAddress);
     }
 
@@ -374,7 +374,7 @@ public class QbftRound {
   }
 
   private QbftBlock createCommitBlock(final QbftBlock block) {
-    return blockInterface.replaceRoundInBlock(block, getRoundIdentifier().getRoundNumber());
+    return blockInterface.replaceRoundForCommitBlock(block, getRoundIdentifier().getRoundNumber());
   }
 
   private void notifyNewBlockListeners(final QbftBlock block) {
