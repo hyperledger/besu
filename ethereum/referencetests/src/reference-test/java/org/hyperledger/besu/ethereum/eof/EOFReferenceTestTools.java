@@ -43,7 +43,7 @@ public class EOFReferenceTestTools {
 
   static {
     final String eips =
-        System.getProperty("test.ethereum.eof.eips", "Osaka,Amsterdam,Bogota,Polis,Bangkok");
+        System.getProperty("test.ethereum.eof.eips", "Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 

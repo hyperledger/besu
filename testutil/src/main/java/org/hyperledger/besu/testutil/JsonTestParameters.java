@@ -318,7 +318,7 @@ public class JsonTestParameters<S, T> {
       try (final Stream<Path> s = Files.walk(dir)) {
         s.map(Path::toFile)
             .filter(f -> f.getPath().endsWith(".json"))
-            .filter(f -> !fileExcludes.contains(f.getName()))
+            .filter(f -> fileExcludes.stream().noneMatch(f.getPath()::matches))
             .forEach(files::add);
       } catch (final IOException e) {
         throw new RuntimeException("Problem reading directory " + dir, e);
