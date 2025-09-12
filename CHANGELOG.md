@@ -18,6 +18,7 @@
 ### Additions and Improvements
 - Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
 - Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
+- Update grpc and guava [#9150](https://github.com/hyperledger/besu/pull/9150)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
 
