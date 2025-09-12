@@ -106,10 +106,7 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case FULL_RANDOM:
         fillPools(
-          () -> 1 + RANDOM.nextInt(32),
-          () -> 1 + RANDOM.nextInt(32),
-          __ -> 0,
-          (__, ___) -> true);
+            () -> 1 + RANDOM.nextInt(32), () -> 1 + RANDOM.nextInt(32), __ -> 0, (__, ___) -> true);
         break;
     }
     index = 0;
