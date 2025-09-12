@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.util.ssz;
 
+import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,8 @@ public class Merkleizer {
    * @return the supplied length mixed in with the supplied rootHash
    */
   public Bytes32 mixinLength(final Bytes32 rootHash, final UInt256 length) {
-    return hashPairs(List.of(rootHash, length)).getFirst();
+    return hashPairs(List.of(rootHash, Bytes32.wrap(length.toArray(ByteOrder.LITTLE_ENDIAN))))
+        .getFirst();
   }
 
   private List<Bytes32> hashPairs(final List<Bytes32> chunks) {

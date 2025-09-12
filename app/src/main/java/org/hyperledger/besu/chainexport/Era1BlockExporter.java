@@ -179,14 +179,17 @@ public class Era1BlockExporter {
         List<Bytes32> accumulatorBytesList =
             accumulatorHeaderRecords.stream()
                 .map(
-                    (ahr) ->
-                        merkleizer.merkleizeChunks(
-                            List.of(
-                                ahr.blockHash,
-                                Bytes32.wrap(
-                                    ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN)))))
+                    (ahr) -> {
+                      Bytes32 hashRoot =
+                          merkleizer.merkleizeChunks(
+                              List.of(
+                                  ahr.blockHash,
+                                  Bytes32.wrap(
+                                      ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN))));
+                      return hashRoot;
+                    })
                 .toList();
-        Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList);
+        Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList, 8192);
         accumulatorHash =
             merkleizer.mixinLength(
                 accumulatorHash, UInt256.valueOf(accumulatorHeaderRecords.size()));
