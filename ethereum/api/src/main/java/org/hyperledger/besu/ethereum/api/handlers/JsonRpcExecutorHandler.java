@@ -52,6 +52,11 @@ public class JsonRpcExecutorHandler {
                         "Timeout ({} ms) occurred in JSON-RPC executor for method {}",
                         timeoutMillis,
                         getShortLogString(requestBodyAsJson));
+                    LOG.atTrace()
+                        .setMessage("Timeout ({} ms) occurred in JSON-RPC executor for method {}")
+                        .addArgument(timeoutMillis)
+                        .addArgument(requestBodyAsJson)
+                        .log();
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.TIMEOUT_ERROR);
                   });
 
@@ -65,7 +70,13 @@ public class JsonRpcExecutorHandler {
                     executor.execute();
                   } catch (IOException e) {
                     final String method = executor.getRpcMethodName(ctx);
+                    final String requestBodyAsJson =
+                        ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
                     LOG.error("{} - Error streaming JSON-RPC response", method, e);
+                    LOG.atTrace()
+                        .setMessage("{} - Error streaming JSON-RPC response")
+                        .addArgument(requestBodyAsJson)
+                        .log();
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
                   } finally {
                     cancelTimer(ctx);
@@ -82,6 +93,10 @@ public class JsonRpcExecutorHandler {
             "Unhandled exception in JSON-RPC executor for method {}",
             getShortLogString(requestBodyAsJson),
             e);
+        LOG.atTrace()
+            .setMessage("Unhandled exception in JSON-RPC executor for method {}")
+            .addArgument(requestBodyAsJson)
+            .log();
         handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
         cancelTimer(ctx);
       }
@@ -89,9 +104,10 @@ public class JsonRpcExecutorHandler {
   }
 
   private static Object getShortLogString(final String requestBodyAsJson) {
-    return requestBodyAsJson == null || requestBodyAsJson.length() < 128
+    final int maxLogLength = 256;
+    return requestBodyAsJson == null || requestBodyAsJson.length() < maxLogLength
         ? requestBodyAsJson
-        : requestBodyAsJson.substring(0, 128).concat("...");
+        : requestBodyAsJson.substring(0, maxLogLength).concat("...");
   }
 
   private static void cancelTimer(final RoutingContext ctx) {
