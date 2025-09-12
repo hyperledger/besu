@@ -420,6 +420,24 @@ public class Runner implements AutoCloseable {
   }
 
   /**
+   * Gets besu controller.
+   *
+   * @return the besu controller
+   */
+  public BesuController getBesuController() {
+    return besuController;
+  }
+
+  /**
+   * Gets data dir.
+   *
+   * @return the data dir
+   */
+  public Path getDataDir() {
+    return dataDir;
+  }
+
+  /**
    * Gets local enode.
    *
    * @return the local enode
