@@ -19,10 +19,24 @@ import java.util.Arrays;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class UInt256Arith {
+/** This class implement UInt256 arithmetics required by EVM opcodes. */
+public final class UInt256Arith {
 
   private static final long LONG_MASK = 0xffffffffL;
 
+  private UInt256Arith() {}
+
+  /**
+   * Divide two values stored as Bytes instances in Big Endian form. It can do signed or unsigned
+   * division which is controlled by a flag. When in signed division, both numerator and denominator
+   * are converted to positive values and sign is added at the end. Signed values must be in two
+   * complement form.
+   *
+   * @param signed boolean indicating whether to consider values unsigned or signed.
+   * @param numerator value for the numerator in the division.
+   * @param denominator value for the denominator in the division.
+   * @return the result of the division numerator / denominator.
+   */
   public static Bytes divide(final boolean signed, final Bytes numerator, final Bytes denominator) {
     if (denominator.isZero()) {
       throw new ArithmeticException("divide by zero");
