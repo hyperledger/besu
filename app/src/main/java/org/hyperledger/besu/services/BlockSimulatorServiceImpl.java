@@ -39,9 +39,6 @@ import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 
 import java.util.List;
-import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
 
 /** This class is a service that simulates the processing of a block */
 public class BlockSimulatorServiceImpl implements BlockSimulationService {
@@ -49,16 +46,14 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
   // Dummy signature for transactions to not fail being processed.
   private static final SECPSignature FAKE_SIGNATURE =
-      SIGNATURE_ALGORITHM
-          .get()
-          .createSignature(
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              (byte) 0);
+      SIGNATURE_ALGORITHM.createSignature(
+          SIGNATURE_ALGORITHM.getHalfCurveOrder(),
+          SIGNATURE_ALGORITHM.getHalfCurveOrder(),
+          (byte) 0);
 
   /**
    * This constructor creates a BlockSimulatorServiceImpl object

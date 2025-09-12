@@ -117,8 +117,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 import org.slf4j.Logger;
@@ -130,8 +128,8 @@ public abstract class MainnetProtocolSpecs {
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
@@ -912,7 +910,7 @@ public abstract class MainnetProtocolSpecs {
                         .codeDelegationProcessor(
                             new CodeDelegationProcessor(
                                 chainId,
-                                SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                                SIGNATURE_ALGORITHM.getHalfCurveOrder(),
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
