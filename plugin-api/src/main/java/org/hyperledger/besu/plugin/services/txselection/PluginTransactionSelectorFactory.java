@@ -24,11 +24,6 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 @Unstable
 public interface PluginTransactionSelectorFactory {
   /**
-   * A default factory that does not propose any pending transactions and does not apply any filter
-   */
-  PluginTransactionSelectorFactory NO_OP_FACTORY = new PluginTransactionSelectorFactory() {};
-
-  /**
    * Create a plugin transaction selector, that can be used during block creation to apply custom
    * filters to proposed pending transactions
    *

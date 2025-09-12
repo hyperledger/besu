@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Arrays;
 import java.util.Map;

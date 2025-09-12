@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;

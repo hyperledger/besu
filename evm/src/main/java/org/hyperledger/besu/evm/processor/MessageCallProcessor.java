@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +128,9 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
     } else {
+      frame.getEip7928AccessList().ifPresent(t -> t.addAccount(senderAccount.getAddress()));
+      frame.getEip7928AccessList().ifPresent(t -> t.addAccount(recipientAccount.getAddress()));
+
       final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
       final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());
 
@@ -152,26 +156,28 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       final MessageFrame frame,
       final OperationTracer operationTracer) {
     final long gasRequirement = contract.gasRequirement(frame.getInputData());
+    final Bytes output;
     if (frame.getRemainingGas() < gasRequirement) {
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-      operationTracer.tracePrecompileCall(frame, gasRequirement, null);
+      output = null;
     } else {
       frame.decrementRemainingGas(gasRequirement);
       final PrecompiledContract.PrecompileContractResult result =
           contract.computePrecompile(frame.getInputData(), frame);
-      operationTracer.tracePrecompileCall(frame, gasRequirement, result.output());
+      output = result.output();
       if (result.isRefundGas()) {
         frame.incrementRemainingGas(gasRequirement);
       }
       if (frame.getState() == MessageFrame.State.REVERT) {
-        frame.setRevertReason(result.output());
+        frame.setRevertReason(output);
       } else {
-        frame.setOutputData(result.output());
+        frame.setOutputData(output);
       }
       frame.setState(result.state());
       frame.setExceptionalHaltReason(result.haltReason());
     }
+    operationTracer.tracePrecompileCall(frame, gasRequirement, output);
   }
 
   /**

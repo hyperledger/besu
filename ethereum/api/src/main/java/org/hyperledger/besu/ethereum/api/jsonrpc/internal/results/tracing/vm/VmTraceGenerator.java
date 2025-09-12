@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

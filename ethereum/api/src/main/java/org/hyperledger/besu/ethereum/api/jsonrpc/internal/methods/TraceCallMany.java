@@ -170,7 +170,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
             tracer,
             header,
             worldUpdater,
-            miningBeneficiary);
+            miningBeneficiary,
+            Optional.empty());
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {

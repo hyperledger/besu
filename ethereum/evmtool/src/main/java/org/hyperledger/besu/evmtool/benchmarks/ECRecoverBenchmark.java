@@ -456,13 +456,12 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
     }
-    output.println(signatureAlgorithm.isNative() ? "Native EcRecover" : "Java EcRecover");
+    output.println(
+        signatureAlgorithm.isNative() ? "Native LibSecp256k1JNI EcRecover" : "Java EcRecover");
 
     final PrecompiledContract contract =
         EvmSpec.evmSpec(evmSpecVersion).getPrecompileContractRegistry().get(Address.ECREC);
 
-    warmIterations = warmIterations / testCases.size();
-    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {

@@ -24,12 +24,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

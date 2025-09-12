@@ -173,7 +173,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
     } catch (RuntimeException ex) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -203,7 +203,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeRequests = extractRequests(maybeRequestsParam);
     } catch (RequestType.InvalidRequestTypeException ex) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -275,6 +275,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
+            null,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -285,15 +286,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      // If the block is invalid, we want to return INVALID
-      // from the spec:
-      // https://github.com/ethereum/execution-apis/blob/main/src/engine/prague.md#engine_newpayloadv4
-      // Given the executionRequests, client software MUST compute the execution requests commitment
-      // and incorporate it into the blockHash validation process.
-      // That is, if the computed commitment does not match the corresponding commitment in the
-      // execution layer block header,
-      // the call MUST return {status: INVALID, latestValidHash: null, validationError: errorMessage
-      // | null}.
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
@@ -308,7 +300,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeVersionedHashes,
             protocolSchedule.get().getByBlockHeader(newBlockHeader));
     if (!blobValidationResult.isValid()) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -335,7 +327,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeParentHeader.isPresent()
         && (Long.compareUnsigned(maybeParentHeader.get().getTimestamp(), blockParam.getTimestamp())
             >= 0)) {
-      return respondWithError(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
@@ -382,7 +374,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Throwable causedBy = executionResult.causedBy().get();
         if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
           RpcErrorType error = RpcErrorType.INTERNAL_ERROR;
-          return new JsonRpcErrorResponse(reqId, error);
+          JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
+          return response;
         }
       }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
@@ -464,7 +457,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
       final EnginePayloadParameter param,
-      final Hash latestValidHash, // this should be null for invalid
+      final Hash latestValidHash,
       final EngineStatus invalidStatus,
       final String validationError) {
     if (!INVALID.equals(invalidStatus) && !INVALID_BLOCK_HASH.equals(invalidStatus)) {
@@ -491,36 +484,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         requestId,
         new EnginePayloadStatusResult(
             invalidStatus, latestValidHash, Optional.of(validationError)));
-  }
-
-  JsonRpcResponse respondWithError(
-      final Object requestId,
-      final EnginePayloadParameter param,
-      final Hash latestValidHash,
-      final EngineStatus invalidStatus,
-      final String validationError) {
-    if (!INVALID.equals(invalidStatus) && !INVALID_BLOCK_HASH.equals(invalidStatus)) {
-      throw new IllegalArgumentException(
-          "Don't call respondWithError() with non-invalid status of " + invalidStatus.toString());
-    }
-    final String invalidBlockLogMessage =
-        String.format(
-            "Invalid new payload: number: %s, hash: %s, parentHash: %s, latestValidHash: %s, status: %s, validationError: %s",
-            param.getBlockNumber(),
-            param.getBlockHash(),
-            param.getParentHash(),
-            latestValidHash == null ? null : latestValidHash.toHexString(),
-            invalidStatus.name(),
-            validationError);
-    // always log invalid at DEBUG
-    LOG.debug(invalidBlockLogMessage);
-    // periodically log at WARN
-    if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
-      lastInvalidWarn = System.currentTimeMillis();
-      LOG.warn(invalidBlockLogMessage);
-    }
-    // return ErrorResponse
-    return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_ENGINE_PARAMS);
   }
 
   protected EngineStatus getInvalidBlockHashStatus() {

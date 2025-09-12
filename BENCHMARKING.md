@@ -14,7 +14,7 @@ Besu includes [JMH](https://openjdk.org/projects/code-tools/jmh/) microbenchmark
 
 JMH tasks are defined in various modules such as `ethereum:core`, `ethereum:eth`, and `ethereum:rlp`.
 
-### 🔁 Run All Benchmarks
+### ▶️  Run All Benchmarks
 
 ```bash
 ./gradlew :ethereum:core:jmh
@@ -22,14 +22,22 @@ JMH tasks are defined in various modules such as `ethereum:core`, `ethereum:eth`
 
 This runs all available benchmarks in the `core` module using default settings.
 
+Gradle won't rerun a task by default with no changes, so to run subsequent times without changes add the gradle `--rerun-tasks` option.
+
+### 🔁 Rerun All Benchmarks
+
+```bash
+./gradlew :ethereum:core:jmh --rerun-tasks
+```
+
 ---
 
 ## 🎯 Filter Benchmarks by Name
 
-To run a specific benchmark class, use the `-Pincludes` parameter:
+To run a specific benchmark class, use the `-Pincludes` and/or `-Pexcludes` project properties:
 
 ```bash
-./gradlew :ethereum:core:jmh -Pincludes=SomeBenchmark
+./gradlew :ethereum:core:jmh -Pincludes=SomeBenchmark -Pexcludes=TransientStorage,BlockHash
 ```
 
 This uses a regex pattern so other kinds of regexes can be used.

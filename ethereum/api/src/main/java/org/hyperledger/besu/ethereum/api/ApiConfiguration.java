@@ -157,4 +157,14 @@ public abstract class ApiConfiguration {
   public Long getMaxTraceFilterRange() {
     return 1000L;
   }
+
+  /**
+   * Returns whether Block Access List RPC methods are enabled. Default value is false.
+   *
+   * @return true if BAL RPC is enabled, false otherwise
+   */
+  @Value.Default
+  public boolean isBlockAccessListEnabled() {
+    return false;
+  }
 }

@@ -48,7 +48,7 @@ configurations { testArtifacts }
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
+      groupId = 'org.hyperledger.besu'
       pom {
         name = 'Besu Datatypes'
         description = 'Cross-module datatypes'

@@ -18,7 +18,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,25 +29,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class BlockchainServicePluginTest extends AcceptanceTestBase {
-  private BesuNode minerNode;
   private BesuNode pluginNode;
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode =
-        besu.createQbftNode(
-            "minerNode",
-            besuNodeConfigurationBuilder ->
-                besuNodeConfigurationBuilder.genesisConfigProvider(
-                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
         besu.createQbftPluginsNode(
             "pluginNode",
             Collections.singletonList("testPlugins"),
-            Collections.singletonList("--plugin-tx-validator-test-enabled=true"),
+            Collections.singletonList("--plugin-blockchain-service-test-enabled=true"),
             "DEBUG");
 
-    cluster.start(pluginNode, minerNode);
+    cluster.start(pluginNode);
   }
 
   @Test
@@ -57,7 +49,8 @@ public class BlockchainServicePluginTest extends AcceptanceTestBase {
     waitForFile(hardforkListFile);
     final var fileContents = Files.readAllLines(hardforkListFile);
 
-    final var expectedLines = List.of("0,BERLIN,BERLIN", "1,BERLIN,LONDON", "2,LONDON,LONDON");
+    final var expectedLines =
+        List.of("0,BERLIN,BERLIN,BERLIN", "1,BERLIN,BERLIN,LONDON", "2,LONDON,LONDON,LONDON");
 
     for (int i = 0; i < expectedLines.size(); i++) {
       assertThat(fileContents.get(i)).isEqualTo(expectedLines.get(i));

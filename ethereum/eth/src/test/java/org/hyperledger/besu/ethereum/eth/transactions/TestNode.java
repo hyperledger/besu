@@ -44,6 +44,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -126,6 +128,7 @@ public class TestNode implements Closeable {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final GenesisState genesisState =
@@ -174,7 +177,12 @@ public class TestNode implements Closeable {
     ethPeers.setChainHeadTracker(mockCHT);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler, null);
+    final EthContext ethContext =
+        new EthContext(
+            ethPeers,
+            ethMessages,
+            scheduler,
+            new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem));
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -186,8 +194,7 @@ public class TestNode implements Closeable {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

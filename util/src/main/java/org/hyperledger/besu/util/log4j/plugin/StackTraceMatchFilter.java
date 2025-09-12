@@ -94,7 +94,8 @@ public class StackTraceMatchFilter extends AbstractFilter {
   /** Builder for StackTraceMatchFilter */
   public static class Builder extends AbstractFilterBuilder<StackTraceMatchFilter.Builder>
       implements org.apache.logging.log4j.core.util.Builder<StackTraceMatchFilter> {
-    @PluginBuilderAttribute private String text = "";
+
+    @PluginBuilderAttribute private String matchString = "";
 
     /** Default constructor */
     public Builder() {
@@ -108,13 +109,13 @@ public class StackTraceMatchFilter extends AbstractFilter {
      * @return this builder
      */
     public StackTraceMatchFilter.Builder setMatchString(final String text) {
-      this.text = text;
+      this.matchString = text;
       return this;
     }
 
     @Override
     public StackTraceMatchFilter build() {
-      return new StackTraceMatchFilter(this.text, this.getOnMatch(), this.getOnMismatch());
+      return new StackTraceMatchFilter(this.matchString, this.getOnMatch(), this.getOnMismatch());
     }
   }
 }

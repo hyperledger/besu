@@ -188,6 +188,7 @@ public class IbftBlockHeightManagerTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     ProtocolSchedule protocolSchedule =

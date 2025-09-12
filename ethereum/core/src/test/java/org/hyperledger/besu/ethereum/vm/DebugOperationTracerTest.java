@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.evm.operation.AbstractOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;

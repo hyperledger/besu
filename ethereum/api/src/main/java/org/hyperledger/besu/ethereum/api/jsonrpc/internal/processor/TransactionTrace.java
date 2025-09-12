@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.List;
 import java.util.Optional;
