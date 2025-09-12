@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.QbftBlockTestFixture;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
@@ -81,6 +82,7 @@ public class ProposalValidatorTest {
   @Mock private QbftProtocolSchedule protocolSchedule;
   @Mock private QbftBlockCodec blockEncoder;
   @Mock private QbftBlockInterface blockInterface;
+  @Mock private ProposerSelector proposerSelector;
   private QbftNodeList validators;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -93,6 +95,8 @@ public class ProposalValidatorTest {
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
+    when(proposerSelector.selectProposerForRound(any()))
+        .thenReturn(validators.getNode(0).getAddress());
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));
@@ -115,7 +119,7 @@ public class ProposalValidatorTest {
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),
             roundIdentifier,
-            validators.getNode(0).getAddress()));
+            proposerSelector));
   }
 
   // NOTE: tests herein assume the ProposalPayloadValidator works as expected, so other than
@@ -309,7 +313,8 @@ public class ProposalValidatorTest {
     final List<SignedData<RoundChangePayload>> roundChanges =
         createEmptyRoundChangePayloads(
             roundItem.roundIdentifier, validators.getNode(0), validators.getNode(1));
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final RoundChangePayload illegalPayload =
@@ -374,7 +379,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfPiggybackedPreparePayloadIsFromNonValidator() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final QbftNode nonValidator = QbftNode.create(blockEncoder);
@@ -399,7 +405,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfPiggybackedPreparePayloadHasDuplicatedAuthors() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final Proposal proposal =
@@ -423,7 +430,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfInsufficientPiggybackedPreparePayloads() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final Proposal proposal =
@@ -446,7 +454,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfPreparePayloadsDoNotMatchMetadataInRoundChanges() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final Proposal proposal =
@@ -470,7 +479,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfPreparePayloadsDoNotMatchBlockHashInRoundChanges() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final Proposal proposal =
@@ -494,7 +504,8 @@ public class ProposalValidatorTest {
   public void validationFailsIfTwoRoundChangesArePreparedOnSameRoundDifferentBlock() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
-    when(blockInterface.replaceRoundInBlock(roundItem.block, 0))
+    when(blockInterface.replaceRoundAndProposerInBlock(
+            roundItem.block, 0, validators.getNode(0).getAddress()))
         .thenReturn(roundItems.get(ROUND_ID.ZERO).block);
 
     final RoundChangePayload illegalPreparedRoundChangePayload =
