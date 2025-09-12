@@ -19,7 +19,14 @@ import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.BesuService;
 
-/** Synchronization service wraps the sync state and sync event lifecycle. */
+import java.util.Optional;
+
+/**
+ * Service for accessing synchronization status information.
+ *
+ * <p>This service provides information about the node's synchronization state, including current
+ * block height and sync status.
+ */
 public interface SynchronizationService extends BesuService {
 
   /**
@@ -65,4 +72,32 @@ public interface SynchronizationService extends BesuService {
 
   /** Starts the synchronizer. */
   void start();
+
+  /**
+   * Get the highest block number known to the network.
+   *
+   * @return the highest block number, or empty if not available
+   */
+  Optional<Long> getHighestBlock();
+
+  /**
+   * Get the current block number that this node has processed.
+   *
+   * @return the current block number, or empty if not available
+   */
+  Optional<Long> getCurrentBlock();
+
+  /**
+   * Check if the node is currently in sync with the network.
+   *
+   * @return true if the node is in sync, false otherwise
+   */
+  boolean isInSync();
+
+  /**
+   * Get the number of blocks this node is behind the network head.
+   *
+   * @return the number of blocks behind, or 0 if in sync
+   */
+  long getBlocksBehind();
 }

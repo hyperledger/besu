@@ -44,8 +44,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
-import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -112,6 +110,7 @@ import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.HealthCheckService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -771,6 +770,15 @@ public class RunnerBuilder {
             accountPermissioningController.flatMap(
                 AccountPermissioningController::getAccountLocalConfigPermissioningController);
 
+    // Get the HealthCheckService for plugin-based health checks
+    final HealthCheckService healthCheckService =
+        besuPluginContext
+            .getService(HealthCheckService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "HealthCheckService is not available. Ensure it is registered before HTTP services are initialized (plugins must register during 'register')."));
+
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
 
     if (jsonRpcConfiguration.isEnabled()) {
@@ -813,8 +821,11 @@ public class RunnerBuilder {
                   metricsSystem,
                   natService,
                   nonEngineMethods,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+                  new HealthService(
+                      paramSource -> healthCheckService.isLive(name -> paramSource.getParam(name))),
+                  new HealthService(
+                      paramSource ->
+                          healthCheckService.isReady(name -> paramSource.getParam(name)))));
     }
 
     final SubscriptionManager subscriptionManager =
@@ -880,8 +891,11 @@ public class RunnerBuilder {
                   Optional.ofNullable(engineSocketConfig),
                   besuController.getProtocolManager().ethContext().getScheduler(),
                   authToUse,
-                  new HealthService(new LivenessCheck()),
-                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+                  new HealthService(
+                      paramSource -> healthCheckService.isLive(name -> paramSource.getParam(name))),
+                  new HealthService(
+                      paramSource ->
+                          healthCheckService.isReady(name -> paramSource.getParam(name)))));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();

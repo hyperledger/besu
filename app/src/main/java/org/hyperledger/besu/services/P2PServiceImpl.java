@@ -50,16 +50,18 @@ public class P2PServiceImpl implements P2PService {
   public void disableDiscovery() {
     p2PNetwork.stop();
   }
-
+  
   /**
    * Returns the number of currently connected peers.
    *
    * @return the count of connected peers
    */
+
   @Override
   public int getPeerCount() {
     return p2PNetwork.getPeerCount();
   }
+
 
   /**
    * Returns the current peer connections.
@@ -119,5 +121,5 @@ public class P2PServiceImpl implements P2PService {
       final MessageListener networkSubscriber) {
     final Capability wireCap = Capability.create(capability.getName(), capability.getVersion());
     p2PNetwork.subscribe(wireCap, networkSubscriber::onMessage);
-  }
+}
 }

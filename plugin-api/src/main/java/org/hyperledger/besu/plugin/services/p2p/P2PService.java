@@ -36,12 +36,13 @@ public interface P2PService extends BesuService {
   void disableDiscovery();
 
   /**
-   * Get the number of connected peers.
+   * * Get the number of connected peers.
    *
    * @return the number of connected peers
    */
   int getPeerCount();
 
+  
   /**
    * Get all connected peer connections.
    *
