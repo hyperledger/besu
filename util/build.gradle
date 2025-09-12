@@ -29,6 +29,14 @@ jar {
   }
 }
 
+compileJava {
+  options.generatedSourceOutputDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
+  options.compilerArgs += [
+    '-Alog4j.graalvm.groupId=' + project.group,
+    '-Alog4j.graalvm.artifactId=' + project.name
+  ]
+}
+
 dependencies {
   api 'org.slf4j:slf4j-api'
 

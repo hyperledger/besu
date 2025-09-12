@@ -71,6 +71,7 @@ public final class BlockHeadersMessageTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                false,
                 new NoOpMetricsSystem()));
 
     for (int i = 0; i < 50; ++i) {

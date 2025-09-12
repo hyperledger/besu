@@ -146,4 +146,9 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "IbftLegacyExtraData";
+  }
 }

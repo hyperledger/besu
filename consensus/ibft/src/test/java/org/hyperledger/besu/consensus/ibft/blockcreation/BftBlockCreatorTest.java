@@ -122,6 +122,7 @@ public class BftBlockCreatorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
         new ProtocolContext.Builder()

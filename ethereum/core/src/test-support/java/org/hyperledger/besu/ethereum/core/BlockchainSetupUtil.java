@@ -170,6 +170,7 @@ public class BlockchainSetupUtil {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
+        false,
         new NoOpMetricsSystem());
   }
 

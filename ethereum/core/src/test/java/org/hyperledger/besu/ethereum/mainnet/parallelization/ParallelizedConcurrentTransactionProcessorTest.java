@@ -90,7 +90,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
             bonsaiWorldStateKeyValueStorage,
             new NoopBonsaiCachedMerkleTrieLoader(),
             new NoOpBonsaiCachedWorldStorageManager(
-                bonsaiWorldStateKeyValueStorage, new CodeCache()),
+                bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
             createStatefulConfigWithTrie(),
@@ -121,7 +121,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,
@@ -165,6 +170,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
                 Optional.of(Bytes.EMPTY),
+                Optional.empty(),
                 Optional.empty()));
 
     processor.runTransaction(
@@ -193,7 +199,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,

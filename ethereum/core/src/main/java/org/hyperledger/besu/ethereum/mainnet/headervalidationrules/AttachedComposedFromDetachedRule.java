@@ -36,4 +36,9 @@ public class AttachedComposedFromDetachedRule implements AttachedBlockHeaderVali
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     return detachedRule.validate(header, parent);
   }
+
+  @Override
+  public String toString() {
+    return detachedRule.toString();
+  }
 }
