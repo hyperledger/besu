@@ -54,7 +54,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private final PeerConnectionEventDispatcher connectionEventDispatcher;
 
-  private final CompletableFuture<PeerConnection> connectionFuture;
+  protected final CompletableFuture<PeerConnection> connectionFuture;
   private final List<SubProtocol> subProtocols;
 
   private final MetricsSystem metricsSystem;
