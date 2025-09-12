@@ -14,4 +14,10 @@
  */
 package org.hyperledger.besu.util.era1;
 
+/**
+ * Represents the total difficulty of a block
+ *
+ * @param totalDifficulty the total difficulty of the block
+ * @param blockIndex The blockIndex number
+ */
 public record Era1TotalDifficulty(byte[] totalDifficulty, long blockIndex) {}

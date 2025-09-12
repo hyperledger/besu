@@ -14,4 +14,9 @@
  */
 package org.hyperledger.besu.util.era1;
 
+/**
+ * Represents an ERA1 accumulator value, which can be used for file verification
+ *
+ * @param accumulator an ERA1 accumulator value
+ */
 public record Era1Accumulator(byte[] accumulator) {}
