@@ -47,7 +47,7 @@ import org.xerial.snappy.SnappyFramedOutputStream;
 /** A class to export ERA1 files */
 public class Era1BlockExporter {
   private static final Logger LOG = LoggerFactory.getLogger(Era1BlockExporter.class);
-  private static final long ERA1_FILE_BLOCKS = 8192;
+  private static final int ERA1_FILE_BLOCKS = 8192;
   private static final String MAINNET_GENESIS_HASH =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
   private static final String SEPOLIA_GENESIS_HASH =
@@ -123,13 +123,23 @@ public class Era1BlockExporter {
             case SEPOLIA_GENESIS_HASH -> "sepolia";
             default -> throw new RuntimeException("Unable to export ERA1 files for this network");
           };
+      List<Bytes32> accumulatorBytesList =
+          accumulatorHeaderRecords.stream()
+              .map(
+                  (ahr) ->
+                      merkleizer.merkleizeChunks(
+                          List.of(
+                              ahr.blockHash,
+                              Bytes32.wrap(ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN)))))
+              .toList();
+      Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList, ERA1_FILE_BLOCKS);
+      accumulatorHash =
+          merkleizer.mixinLength(accumulatorHash, UInt256.valueOf(accumulatorHeaderRecords.size()));
 
       String filename =
           String.format(
               "%s-%05d-%s.era1",
-              network,
-              fileNumber,
-              blocksForFile.getLast().getHeader().getStateRoot().toFastHex(false).substring(0, 8));
+              network, fileNumber, accumulatorHash.toFastHex(false).substring(0, 8));
       try (FileOutputStream writer =
           outputStreamFactory.createFileOutputStream(
               outputDirectory.toPath().resolve(filename).toFile())) {
@@ -176,23 +186,6 @@ public class Era1BlockExporter {
                   difficultysForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
         }
 
-        List<Bytes32> accumulatorBytesList =
-            accumulatorHeaderRecords.stream()
-                .map(
-                    (ahr) -> {
-                      Bytes32 hashRoot =
-                          merkleizer.merkleizeChunks(
-                              List.of(
-                                  ahr.blockHash,
-                                  Bytes32.wrap(
-                                      ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN))));
-                      return hashRoot;
-                    })
-                .toList();
-        Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList, 8192);
-        accumulatorHash =
-            merkleizer.mixinLength(
-                accumulatorHash, UInt256.valueOf(accumulatorHeaderRecords.size()));
         position += writeSection(writer, Era1Type.ACCUMULATOR, accumulatorHash.toArray());
 
         ByteBuffer blockIndex = ByteBuffer.allocate(16 + blockPositions.size() * 8);
