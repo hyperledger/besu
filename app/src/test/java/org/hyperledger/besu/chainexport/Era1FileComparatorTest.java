@@ -34,6 +34,7 @@ import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,15 +48,15 @@ public class Era1FileComparatorTest {
 
   @Test
   public void compareFiles() throws IOException {
-    final String actualFile = "/home/matilda/sepolia-00000-93375bd8.era1";
-    final String expectedFile = "/home/matilda/sepolia-00000-643a00f7.era1";
+    final String actualFile = "/home/matilda/sepolia-00000-643a00f7.era1";
+    final String expectedFile = "https://sepolia.era1.nimbus.team//sepolia-00000-643a00f7.era1";
 
     final SnappyFactory snappyFactory = new SnappyFactory();
     final InputStreamFactory inputStreamFactory = new InputStreamFactory();
 
     final Era1Reader expectedEra1Reader = new Era1Reader(snappyFactory, inputStreamFactory);
     final Era1ReaderListener expectedListener = new Era1ReaderListener();
-    expectedEra1Reader.read(new FileInputStream(expectedFile), expectedListener);
+    expectedEra1Reader.read(URI.create(expectedFile).toURL().openStream(), expectedListener);
 
     final Era1Reader actualEra1Reader = new Era1Reader(snappyFactory, inputStreamFactory);
     final Era1ReaderListener actualListener = new Era1ReaderListener();
