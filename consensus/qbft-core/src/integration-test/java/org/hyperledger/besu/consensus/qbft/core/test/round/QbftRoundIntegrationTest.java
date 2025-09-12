@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubPeerMulticaster;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
@@ -89,7 +89,7 @@ public class QbftRoundIntegrationTest {
   @Mock private NodeKey nodeKey;
   private MessageFactory throwingMessageFactory;
   private QbftMessageTransmitter transmitter;
-  @Mock private StubValidatorMulticaster multicaster;
+  @Mock private StubPeerMulticaster multicaster;
   @Mock private QbftBlockHeader parentHeader;
   @Mock private QbftBlockCodec blockEncoder;
 
