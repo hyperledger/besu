@@ -64,21 +64,19 @@ public class JournaledUpdater<W extends WorldView, A extends Account> implements
    */
   @SuppressWarnings("unchecked")
   public JournaledUpdater(final WorldUpdater world, final EvmConfiguration evmConfiguration) {
-    parentWorld = world;
     this.evmConfiguration = evmConfiguration;
-    if (world instanceof JournaledUpdater<?, ?>) {
-      JournaledUpdater<W, A> journaledUpdater = (JournaledUpdater<W, A>) world;
+    parentWorld = world;
+    touched = new HashSet<>();
+    touchMarks = new HashMap<>();
+    if (parentWorld instanceof JournaledUpdater<?, ?>) {
+      JournaledUpdater<W, A> journaledUpdater = (JournaledUpdater<W, A>) parentWorld;
       accounts = journaledUpdater.accounts;
       deleted = journaledUpdater.deleted;
-      touched = new HashSet<>();
-      touchMarks = new HashMap<>();
       rootWorld = journaledUpdater.rootWorld;
-    } else if (world instanceof AbstractWorldUpdater<?, ?>) {
+    } else if (parentWorld instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
-      touched = new HashSet<>();
-      touchMarks = new HashMap<>();
-      rootWorld = (AbstractWorldUpdater<W, A>) world;
+      rootWorld = (AbstractWorldUpdater<W, A>) parentWorld;
     } else {
       throw new IllegalArgumentException(
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");

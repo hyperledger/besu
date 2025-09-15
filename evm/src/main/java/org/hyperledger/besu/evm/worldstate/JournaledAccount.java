@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -101,17 +100,17 @@ public class JournaledAccount implements MutableAccount, Undoable {
     this.addressHash = account.getAddress().addressHash();
     this.account = account;
 
-    if (account instanceof JournaledAccount that) {
-      this.nonce = that.nonce;
-      this.balance = that.balance;
+    if (account instanceof JournaledAccount wrapped) {
+      this.nonce = wrapped.nonce;
+      this.balance = wrapped.balance;
 
-      this.code = that.code;
-      this.codeHash = that.codeHash;
+      this.code = wrapped.code;
+      this.codeHash = wrapped.codeHash;
 
-      this.deleted = that.deleted;
+      this.deleted = wrapped.deleted;
 
-      this.updatedStorage = that.updatedStorage;
-      this.storageWasCleared = that.storageWasCleared;
+      this.updatedStorage = wrapped.updatedStorage;
+      this.storageWasCleared = wrapped.storageWasCleared;
     } else {
       this.nonce = UndoScalar.of(account.getNonce());
       this.balance = UndoScalar.of(account.getBalance());
@@ -139,17 +138,17 @@ public class JournaledAccount implements MutableAccount, Undoable {
     this.addressHash = account.getAddress().addressHash();
     this.account = account;
 
-    if (account instanceof JournaledAccount that) {
-      this.nonce = that.nonce;
-      this.balance = that.balance;
+    if (account instanceof JournaledAccount wrapped) {
+      this.nonce = wrapped.nonce;
+      this.balance = wrapped.balance;
 
-      this.code = that.code;
-      this.codeHash = that.codeHash;
+      this.code = wrapped.code;
+      this.codeHash = wrapped.codeHash;
 
-      this.deleted = that.deleted;
+      this.deleted = wrapped.deleted;
 
-      this.updatedStorage = that.updatedStorage;
-      this.storageWasCleared = that.storageWasCleared;
+      this.updatedStorage = wrapped.updatedStorage;
+      this.storageWasCleared = wrapped.storageWasCleared;
     } else {
       this.nonce = UndoScalar.of(account.getNonce());
       this.balance = UndoScalar.of(account.getBalance());
@@ -403,7 +402,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
    * @param mark the mark to snapshot at
    * @return an {@link MutableAccount} representing the state at {@code mark}
    */
-  public MutableAccount snapshot(final long mark) {
+  public Account snapshot(final long mark) {
     final long snapNonce = nonce.get(mark);
     final Wei snapBalance = balance.get(mark);
     final Bytes snapCode = code.get(mark);
@@ -418,7 +417,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
       wrappedSnapshot = account;
     }
 
-    return new MutableAccount() {
+    class ImmutableAccount implements Account {
       @Override
       public Address getAddress() {
         return address;
@@ -440,18 +439,8 @@ public class JournaledAccount implements MutableAccount, Undoable {
       }
 
       @Override
-      public void setBalance(final Wei value) {
-        throw new ModificationNotAllowedException();
-      }
-
-      @Override
       public Bytes getCode() {
         return snapCode;
-      }
-
-      @Override
-      public void setCode(final Bytes code) {
-        throw new ModificationNotAllowedException();
       }
 
       @Override
@@ -474,21 +463,6 @@ public class JournaledAccount implements MutableAccount, Undoable {
       @Override
       public UInt256 getOriginalStorageValue(final UInt256 key) {
         return getStorageValue(key);
-      }
-
-      @Override
-      public void setStorageValue(final UInt256 key, final UInt256 value) {
-        throw new ModificationNotAllowedException();
-      }
-
-      @Override
-      public void clearStorage() {
-        throw new ModificationNotAllowedException();
-      }
-
-      @Override
-      public Map<UInt256, UInt256> getUpdatedStorage() {
-        return Collections.unmodifiableMap(snapStorage);
       }
 
       @Override
@@ -522,17 +496,9 @@ public class JournaledAccount implements MutableAccount, Undoable {
         return snapStorage.isEmpty()
             && (snapStorageCleared || wrappedSnapshot == null || wrappedSnapshot.isStorageEmpty());
       }
+    }
 
-      @Override
-      public void setNonce(final long value) {
-        throw new ModificationNotAllowedException();
-      }
-
-      @Override
-      public void becomeImmutable() {
-        // already immutable
-      }
-    };
+    return new ImmutableAccount();
   }
 
   @Override
