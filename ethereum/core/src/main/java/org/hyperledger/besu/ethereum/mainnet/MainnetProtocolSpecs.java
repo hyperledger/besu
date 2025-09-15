@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -985,6 +986,28 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
         .hardforkId(OSAKA);
+  }
+
+  static ProtocolSpecBuilder amsterdamDefinition(
+          final Optional<BigInteger> chainId,
+          final boolean enableRevertReason,
+          final GenesisConfigOptions genesisConfigOptions,
+          final EvmConfiguration evmConfiguration,
+          final MiningConfiguration miningConfiguration,
+          final boolean isParallelTxProcessingEnabled,
+          final boolean isBlockAccessListEnabled,
+          final MetricsSystem metricsSystem) {
+    return osakaDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
+            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+            .hardforkId(AMSTERDAM);
   }
 
   static ProtocolSpecBuilder bpo1Definition(

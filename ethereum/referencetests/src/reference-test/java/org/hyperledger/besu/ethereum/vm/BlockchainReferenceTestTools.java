@@ -54,7 +54,7 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok,Amsterdam");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -139,6 +139,7 @@ public class BlockchainReferenceTestTools {
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
 
+        System.out.println("Expected BAL " + candidateBlock.getBlockAccessList());
         assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
       } catch (final RLPException e) {
         assertThat(candidateBlock.isValid()).isFalse();

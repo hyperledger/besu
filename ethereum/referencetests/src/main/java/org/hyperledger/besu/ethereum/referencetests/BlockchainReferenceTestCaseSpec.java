@@ -147,6 +147,7 @@ public class BlockchainReferenceTestCaseSpec {
     return sealEngine;
   }
 
+  @SuppressWarnings("unused")
   public static class ReferenceTestBlockHeader extends BlockHeader {
 
     @JsonCreator
@@ -172,7 +173,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
-        @JsonProperty("hash") final String hash) {
+        @JsonProperty("hash") final String hash,
+        @JsonProperty ("blockAccessListHash") final String blockAccessListHash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
@@ -199,7 +201,7 @@ public class BlockchainReferenceTestCaseSpec {
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
-          null,
+              blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -237,6 +239,7 @@ public class BlockchainReferenceTestCaseSpec {
 
     private final Boolean valid;
     private final List<TransactionSequence> transactionSequence;
+    private final Object blockAccessList;
 
     @JsonCreator
     public CandidateBlock(
@@ -248,7 +251,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositRequests") final Object depositRequests,
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
-        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence) {
+        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence,
+        @JsonProperty ("blockAccessList") final Object blockAccessList) {
       boolean blockValid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -265,13 +269,17 @@ public class BlockchainReferenceTestCaseSpec {
           && withdrawals == null) {
         blockValid = false;
       }
-
       this.valid = blockValid;
       this.transactionSequence = transactionSequence;
+      this.blockAccessList = blockAccessList;
     }
 
     public boolean isValid() {
       return valid;
+    }
+
+    public Object getBlockAccessList() {
+      return blockAccessList;
     }
 
     public boolean areAllTransactionsValid() {

@@ -391,6 +391,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (headerBalHash.isPresent()) {
           final Hash expectedHash = BodyValidation.balHash(bal);
           if (!headerBalHash.get().equals(expectedHash)) {
+            System.out.println("Generated BAL " + bal);
             LOG.warn(
                 "{} (header BAL hash)\n!=\n{} (expected BAL hash)",
                 headerBalHash.get(),
