@@ -212,7 +212,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.5.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:bal@v1.0.1:fixtures_bal@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
