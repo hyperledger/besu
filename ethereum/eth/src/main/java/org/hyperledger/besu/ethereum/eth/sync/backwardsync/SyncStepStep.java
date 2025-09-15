@@ -18,10 +18,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -40,26 +45,37 @@ public class SyncStepStep {
 
   public CompletableFuture<Block> executeAsync(final Hash hash) {
     return CompletableFuture.supplyAsync(() -> hash)
-        .thenCompose(this::requestBlock)
+        .thenApply(this::requestBlock)
         .thenApply(this::saveBlock);
   }
 
-  private CompletableFuture<Block> requestBlock(final Hash targetHash) {
-    LOG.atDebug().setMessage("Fetching block by hash {} from peers").addArgument(targetHash).log();
-    final RetryingGetBlockFromPeersTask getBlockTask =
-        RetryingGetBlockFromPeersTask.create(
-            context.getProtocolSchedule(),
-            context.getEthContext(),
-            context.getSynchronizerConfiguration(),
-            context.getMetricsSystem(),
-            context.getEthContext().getEthPeers().peerCount(),
-            Optional.of(targetHash),
-            UNUSED);
-    return context
-        .getEthContext()
-        .getScheduler()
-        .scheduleSyncWorkerTask(getBlockTask::run)
-        .thenApply(AbstractPeerTask.PeerTaskResult::getResult);
+  private Block requestBlock(final Hash targetHash) {
+    LOG.debug("Fetching block by hash {} from peers", targetHash);
+    GetHeadersFromPeerTask headersFromPeerTask =
+        new GetHeadersFromPeerTask(
+            targetHash,
+            UNUSED,
+            1,
+            0,
+            Direction.FORWARD,
+            Math.max(1, context.getEthContext().getEthPeers().peerCount()),
+            context.getProtocolSchedule());
+    PeerTaskExecutorResult<List<BlockHeader>> headerExecutorResult =
+        context.getEthContext().getPeerTaskExecutor().execute(headersFromPeerTask);
+    if (headerExecutorResult.result().isEmpty()
+        || headerExecutorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+      throw new RuntimeException(new InvalidPeerTaskResponseException());
+    }
+    GetBodiesFromPeerTask bodiesTask =
+        new GetBodiesFromPeerTask(
+            headerExecutorResult.result().get(), context.getProtocolSchedule());
+    PeerTaskExecutorResult<List<Block>> blockExecutorResult =
+        context.getEthContext().getPeerTaskExecutor().execute(bodiesTask);
+    if (blockExecutorResult.result().isEmpty()
+        || blockExecutorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+      throw new RuntimeException(new InvalidPeerTaskResponseException());
+    }
+    return blockExecutorResult.result().get().getFirst();
   }
 
   private Block saveBlock(final Block block) {
