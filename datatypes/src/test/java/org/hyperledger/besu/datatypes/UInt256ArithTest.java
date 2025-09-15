@@ -31,12 +31,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class UInt256ArithTest {
   @Test
-  @Disabled
+  @Disabled("Infinite fuzz test - enable locally for testing if needed")
   void randomUnsignedDivisionAgainstBigInteger() {
     Random random = new Random();
-    final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
-    final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
     while (true) {
+      final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
+      final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
       random.nextBytes(numArray);
       random.nextBytes(denomArray);
       final Bytes numerator = Bytes.wrap(numArray);
@@ -66,12 +66,12 @@ public class UInt256ArithTest {
   }
 
   @Test
-  @Disabled
+  @Disabled("Infinite fuzz test - enable locally for testing if needed")
   void randomSignedDivisionAgainstBigInteger() {
     Random random = new Random();
-    final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
-    final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
     while (true) {
+      final byte[] numArray = new byte[random.nextInt(0, UInt256.SIZE)];
+      final byte[] denomArray = new byte[random.nextInt(0, UInt256.SIZE)];
       random.nextBytes(numArray);
       random.nextBytes(denomArray);
       final Bytes numerator = Bytes.wrap(numArray);
