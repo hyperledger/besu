@@ -306,6 +306,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 

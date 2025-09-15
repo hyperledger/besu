@@ -80,7 +80,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       }
 
-      final Account account = frame.getWorldUpdater().get(address);
+      final Account account = getAccount(address, frame);
 
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);

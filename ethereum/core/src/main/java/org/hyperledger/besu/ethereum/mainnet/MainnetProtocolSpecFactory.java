@@ -31,6 +31,7 @@ public class MainnetProtocolSpecFactory {
   private final EvmConfiguration evmConfiguration;
   private final MiningConfiguration miningConfiguration;
   private final boolean isParallelTxProcessingEnabled;
+  private final boolean isBlockAccessListEnabled;
   private final MetricsSystem metricsSystem;
 
   public MainnetProtocolSpecFactory(
@@ -40,6 +41,7 @@ public class MainnetProtocolSpecFactory {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     this.chainId = chainId;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
@@ -47,37 +49,42 @@ public class MainnetProtocolSpecFactory {
     this.evmConfiguration = evmConfiguration;
     this.miningConfiguration = miningConfiguration;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
     this.metricsSystem = metricsSystem;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
     return MainnetProtocolSpecs.frontierDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 
   public ProtocolSpecBuilder homesteadDefinition() {
     return MainnetProtocolSpecs.homesteadDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 
   public ProtocolSpecBuilder daoRecoveryInitDefinition() {
     return MainnetProtocolSpecs.daoRecoveryInitDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 
   public ProtocolSpecBuilder daoRecoveryTransitionDefinition() {
     return MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 
   public ProtocolSpecBuilder tangerineWhistleDefinition() {
     return MainnetProtocolSpecs.tangerineWhistleDefinition(
-        evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        evmConfiguration, isParallelTxProcessingEnabled, isBlockAccessListEnabled, metricsSystem);
   }
 
   public ProtocolSpecBuilder spuriousDragonDefinition() {
     return MainnetProtocolSpecs.spuriousDragonDefinition(
-        chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        chainId,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
+        metricsSystem);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
@@ -86,6 +93,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -95,6 +103,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -104,6 +113,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -113,6 +123,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -122,6 +133,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -131,6 +143,7 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -142,6 +155,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -154,6 +168,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -166,6 +181,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -177,6 +193,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -188,6 +205,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -199,6 +217,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -210,6 +229,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -221,6 +241,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -232,6 +253,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -243,6 +265,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -254,6 +277,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -265,6 +289,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -276,6 +301,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -287,6 +313,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -309,6 +336,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -331,6 +359,7 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         miningConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -339,17 +368,31 @@ public class MainnetProtocolSpecFactory {
   // Classic Protocol Specs
   public ProtocolSpecBuilder dieHardDefinition() {
     return ClassicProtocolSpecs.dieHardDefinition(
-        chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        chainId,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
+        metricsSystem);
   }
 
   public ProtocolSpecBuilder gothamDefinition() {
     return ClassicProtocolSpecs.gothamDefinition(
-        chainId, ecip1017EraRounds, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        chainId,
+        ecip1017EraRounds,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
+        metricsSystem);
   }
 
   public ProtocolSpecBuilder defuseDifficultyBombDefinition() {
     return ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-        chainId, ecip1017EraRounds, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem);
+        chainId,
+        ecip1017EraRounds,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
+        metricsSystem);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {
@@ -359,6 +402,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -369,6 +413,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -379,6 +424,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -389,6 +435,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -399,6 +446,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -409,6 +457,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -419,6 +468,7 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 }

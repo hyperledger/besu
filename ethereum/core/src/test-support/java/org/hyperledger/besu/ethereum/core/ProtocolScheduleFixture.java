@@ -42,6 +42,7 @@ public class ProtocolScheduleFixture {
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
 
   // A pointer to a specific network. Used widely in tests.

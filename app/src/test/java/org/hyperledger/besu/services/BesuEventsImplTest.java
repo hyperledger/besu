@@ -173,8 +173,7 @@ public class BesuEventsImplTest {
             syncState,
             txPoolConfig,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
 
     serviceImpl =
         new BesuEventsImpl(
@@ -220,7 +219,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null, null, null, null));
+            null, null, null, null, null, null));
   }
 
   private void clearSyncTarget() {

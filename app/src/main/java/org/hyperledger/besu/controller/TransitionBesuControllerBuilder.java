@@ -386,6 +386,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
+  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    super.isBlockAccessListEnabled(isBlockAccessListEnabled);
+    return propagateConfig(z -> z.isBlockAccessListEnabled(isBlockAccessListEnabled));
+  }
+
+  @Override
   public BesuControllerBuilder requiredBlocks(final Map<Long, Hash> requiredBlocks) {
     super.requiredBlocks(requiredBlocks);
     return propagateConfig(z -> z.requiredBlocks(requiredBlocks));

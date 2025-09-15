@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -90,9 +91,13 @@ public class DebugOperationTracer implements OperationTracer {
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    if (lastFrame != null) {
-      lastFrame.setGasRemainingPostExecution(gasRemaining);
+    if (!traceFrames.isEmpty()) {
+      final TraceFrame lastTraceFrame = traceFrames.removeLast();
+      final TraceFrame updatedLast =
+          TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
+      traceFrames.add(updatedLast);
     }
+
     final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
@@ -100,33 +105,40 @@ public class DebugOperationTracer implements OperationTracer {
     if (recordChildCallGas && currentOperation instanceof AbstractCallOperation) {
       thisGasCost += frame.getMessageFrameStack().getFirst().getRemainingGas();
     }
+
+    final Optional<ExceptionalHaltReason> haltReason =
+        Optional.ofNullable(operationResult.getHaltReason()).or(frame::getExceptionalHaltReason);
+
+    final Optional<Code> maybeCode =
+        Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode);
     lastFrame =
-        new TraceFrame(
-            pc,
-            Optional.of(opcode),
-            opcodeNumber,
-            gasRemaining,
-            thisGasCost == 0 ? OptionalLong.empty() : OptionalLong.of(thisGasCost),
-            frame.getGasRefund(),
-            depth,
-            Optional.ofNullable(operationResult.getHaltReason())
-                .or(frame::getExceptionalHaltReason),
-            frame.getRecipientAddress(),
-            frame.getApparentValue(),
-            inputData,
-            outputData,
-            preExecutionStack,
-            memory,
-            storage,
-            worldUpdater,
-            frame.getRevertReason(),
-            maybeRefunds,
-            Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
-            frame.getCurrentOperation().getStackItemsProduced(),
-            stackPostExecution,
-            currentOperation.isVirtualOperation(),
-            frame.getMaybeUpdatedMemory(),
-            frame.getMaybeUpdatedStorage());
+        TraceFrame.builder()
+            .setPc(pc)
+            .setOpcode(opcode)
+            .setOpcodeNumber(opcodeNumber)
+            .setGasRemaining(gasRemaining)
+            .setGasCost(thisGasCost == 0 ? OptionalLong.empty() : OptionalLong.of(thisGasCost))
+            .setGasRefund(frame.getGasRefund())
+            .setDepth(depth)
+            .setExceptionalHaltReason(haltReason)
+            .setRecipient(frame.getRecipientAddress())
+            .setValue(frame.getApparentValue())
+            .setInputData(inputData)
+            .setOutputData(outputData)
+            .setStack(preExecutionStack)
+            .setMemory(memory)
+            .setStorage(storage)
+            .setWorldUpdater(worldUpdater)
+            .setRevertReason(frame.getRevertReason())
+            .setMaybeRefunds(maybeRefunds)
+            .setMaybeCode(maybeCode)
+            .setStackItemsProduced(frame.getCurrentOperation().getStackItemsProduced())
+            .setStackPostExecution(stackPostExecution)
+            .setVirtualOperation(currentOperation.isVirtualOperation())
+            .setMaybeUpdatedMemory(frame.getMaybeUpdatedMemory())
+            .setMaybeUpdatedStorage(frame.getMaybeUpdatedStorage())
+            .build();
+
     traceFrames.add(lastFrame);
     frame.reset();
   }
@@ -134,36 +146,42 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
+
+    final Address recipient = frame.getRecipientAddress();
+    final Bytes inputData = frame.getInputData().copy();
+
     if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
-          new TraceFrame(
-              frame.getPC(),
-              Optional.empty(),
-              Integer.MAX_VALUE,
-              frame.getRemainingGas(),
-              OptionalLong.empty(),
-              frame.getGasRefund(),
-              frame.getDepth(),
-              Optional.empty(),
-              frame.getRecipientAddress(),
-              frame.getValue(),
-              frame.getInputData().copy(),
-              frame.getOutputData(),
-              Optional.empty(),
-              Optional.empty(),
-              Optional.empty(),
-              frame.getWorldUpdater(),
-              Optional.empty(),
-              Optional.ofNullable(frame.getRefunds()),
-              Optional.ofNullable(frame.getCode()),
-              frame.getMaxStackSize(),
-              Optional.empty(),
-              true,
-              Optional.empty(),
-              Optional.empty());
+          TraceFrame.builder()
+              .setPc(frame.getPC())
+              .setOpcodeNumber(Integer.MAX_VALUE)
+              .setGasRemaining(frame.getRemainingGas())
+              .setGasRefund(frame.getGasRefund())
+              .setDepth(frame.getDepth())
+              .setRecipient(recipient)
+              .setValue(frame.getValue())
+              .setInputData(inputData)
+              .setOutputData(frame.getOutputData())
+              .setWorldUpdater(frame.getWorldUpdater())
+              .setMaybeRefunds(Optional.ofNullable(frame.getRefunds()))
+              .setMaybeCode(Optional.ofNullable(frame.getCode()))
+              .setStackItemsProduced(frame.getMaxStackSize())
+              .setVirtualOperation(true)
+              .setPrecompiledGasCost(gasRequirement)
+              .setPrecompileIOData(recipient, inputData, output)
+              .build();
       traceFrames.add(traceFrame);
+    } else {
+      final TraceFrame lastTraceFrame = traceFrames.removeLast();
+      final TraceFrame updatedTraceFrame =
+          TraceFrame.from(lastTraceFrame)
+              .setExceptionalHaltReason(frame.getExceptionalHaltReason())
+              .setRevertReason(frame.getRevertReason())
+              .setPrecompiledGasCost(gasRequirement)
+              .setPrecompileIOData(recipient, inputData, output)
+              .build();
+      traceFrames.add(updatedTraceFrame);
     }
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
   }
 
   @Override
@@ -172,45 +190,50 @@ public class DebugOperationTracer implements OperationTracer {
     haltReason.ifPresent(
         exceptionalHaltReason -> {
           if (!traceFrames.isEmpty()) {
-            TraceFrame foundTraceFrame = null;
-            int frameIndex = traceFrames.size() - 1;
-            do {
-              if (!traceFrames.get(frameIndex).getOpcode().equals("RETURN")) {
-                foundTraceFrame = traceFrames.get(frameIndex);
-              }
-              frameIndex--;
-            } while (foundTraceFrame == null);
-            foundTraceFrame.setExceptionalHaltReason(exceptionalHaltReason);
+            updateFirstNonReturnFrame(exceptionalHaltReason);
           } else {
-            final TraceFrame traceFrame =
-                new TraceFrame(
-                    frame.getPC(),
-                    Optional.empty(),
-                    Integer.MAX_VALUE,
-                    frame.getRemainingGas(),
-                    OptionalLong.empty(),
-                    frame.getGasRefund(),
-                    frame.getDepth(),
-                    Optional.of(exceptionalHaltReason),
-                    frame.getRecipientAddress(),
-                    frame.getValue(),
-                    frame.getInputData().copy(),
-                    frame.getOutputData(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    frame.getWorldUpdater(),
-                    Optional.empty(),
-                    Optional.ofNullable(frame.getRefunds()),
-                    Optional.ofNullable(frame.getCode()),
-                    frame.getMaxStackSize(),
-                    Optional.empty(),
-                    true,
-                    Optional.empty(),
-                    Optional.empty());
-            traceFrames.add(traceFrame);
+            addNewTraceFrame(frame, exceptionalHaltReason);
           }
         });
+  }
+
+  private void updateFirstNonReturnFrame(final ExceptionalHaltReason exceptionalHaltReason) {
+    // Find the last non-RETURN frame
+    for (int i = traceFrames.size() - 1; i >= 0; i--) {
+      final TraceFrame currentFrame = traceFrames.get(i);
+      if (!"RETURN".equals(currentFrame.getOpcode())) {
+        // Create updated frame with the exceptional halt reason
+        final TraceFrame updatedFrame =
+            TraceFrame.from(currentFrame)
+                .setExceptionalHaltReason(Optional.of(exceptionalHaltReason))
+                .build();
+        traceFrames.set(i, updatedFrame);
+        break;
+      }
+    }
+  }
+
+  private void addNewTraceFrame(
+      final MessageFrame frame, final ExceptionalHaltReason exceptionalHaltReason) {
+    final TraceFrame traceFrame =
+        TraceFrame.builder()
+            .setPc(frame.getPC())
+            .setOpcodeNumber(Integer.MAX_VALUE)
+            .setGasRemaining(frame.getRemainingGas())
+            .setGasRefund(frame.getGasRefund())
+            .setDepth(frame.getDepth())
+            .setExceptionalHaltReason(Optional.of(exceptionalHaltReason))
+            .setRecipient(frame.getRecipientAddress())
+            .setValue(frame.getValue())
+            .setInputData(frame.getInputData().copy())
+            .setOutputData(frame.getOutputData())
+            .setWorldUpdater(frame.getWorldUpdater())
+            .setMaybeRefunds(Optional.ofNullable(frame.getRefunds()))
+            .setMaybeCode(Optional.ofNullable(frame.getCode()))
+            .setStackItemsProduced(frame.getMaxStackSize())
+            .setVirtualOperation(true)
+            .build();
+    traceFrames.add(traceFrame);
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
@@ -253,6 +276,7 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(stackContents);
   }
 
+  @Override
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
   }
