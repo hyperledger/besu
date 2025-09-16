@@ -245,7 +245,8 @@ public class BlockSimulator {
       RequestProcessingContext requestProcessingContext =
           new RequestProcessingContext(
               blockProcessingContext, blockStateCallSimulationResult.getReceipts());
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      maybeRequests =
+          Optional.of(requestProcessor.get().process(requestProcessingContext, Optional.empty()));
     }
 
     return createFinalBlock(

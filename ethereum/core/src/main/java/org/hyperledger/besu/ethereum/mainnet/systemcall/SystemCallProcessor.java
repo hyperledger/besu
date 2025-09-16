@@ -74,7 +74,7 @@ public class SystemCallProcessor {
       final Optional<TransactionAccessList> transactionAccessList) {
     WorldUpdater blockUpdater = context.getWorldState().updater();
     WorldUpdater transactionUpdater = blockUpdater.updater();
-    final Account maybeContract = blockUpdater.get(callAddress);
+    final Account maybeContract = transactionUpdater.get(callAddress);
     if (maybeContract == null) {
       LOG.error("Invalid system call address: {}", callAddress);
       throw new InvalidSystemCallAddressException("Invalid system call address: " + callAddress);
