@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -102,7 +103,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final Supplier<Boolean> isCancelled;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
-  //  private final WorldUpdater worldUpdater;
   private final MutableWorldState worldState;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final BlockSelectionContext blockSelectionContext;
@@ -116,6 +116,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
+  private final long pluginTxsSelectionMaxTime;
   private final Optional<BlockAccessList.BlockAccessListBuilder> maybeBlockAccessListBuilder;
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
@@ -162,7 +163,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
-
+    pluginTxsSelectionMaxTime = miningConfiguration.getPluginTxsSelectionMaxTime();
     maybeBlockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
@@ -206,17 +207,35 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   }
 
   private void timeLimitedSelection() {
+    final long startTime = System.currentTimeMillis();
+
+    selectorsStateManager.blockSelectionStarted();
+
+    pluginTimeLimitedSelection(startTime);
+
+    final long elapsedPluginTxsSelectionTime = System.currentTimeMillis() - startTime;
+    final long remainingSelectionTime = blockTxsSelectionMaxTime - elapsedPluginTxsSelectionTime;
+    LOG.trace(
+        "Plugin transaction selection took: {}ms of max {}ms, remaining block selection time {}ms of max {}ms",
+        elapsedPluginTxsSelectionTime,
+        pluginTxsSelectionMaxTime,
+        remainingSelectionTime,
+        blockTxsSelectionMaxTime);
+
+    // reset timeout status for next selection run
+    isTimeout.set(false);
+
+    internalTimeLimitedSelection(remainingSelectionTime);
+  }
+
+  private void internalTimeLimitedSelection(final long remainingSelectionTime) {
     final var txSelectionTask =
         new FutureTask<Void>(
             () -> {
-              selectorsStateManager.blockSelectionStarted();
-
-              LOG.debug("Starting plugin transaction selection");
-              transactionSelectionService.selectPendingTransactions(
-                  this, blockSelectionContext.pendingBlockHeader());
-
               LOG.atDebug()
-                  .setMessage("Starting internal pool transaction selection, stats {}")
+                  .setMessage(
+                      "Starting internal pool transaction selection, run time capped at {}ms, stats {}")
+                  .addArgument(remainingSelectionTime)
                   .addArgument(blockSelectionContext.transactionPool()::logStats)
                   .log();
               blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
@@ -225,7 +244,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     ethScheduler.scheduleBlockCreationTask(txSelectionTask);
 
     try {
-      txSelectionTask.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
+      txSelectionTask.get(remainingSelectionTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during transaction selection");
@@ -243,13 +262,76 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           LOG.atWarn()
               .setMessage(
                   "Interrupting the selection of transactions for block inclusion as it exceeds"
-                      + " the maximum configured duration of {}ms")
-              .addArgument(blockTxsSelectionMaxTime);
+                      + " the maximum remaining duration of {}ms")
+              .addArgument(remainingSelectionTime);
 
       if (LOG.isTraceEnabled()) {
         logBuilder.setCause(e).log();
       } else {
         logBuilder.log();
+      }
+    }
+  }
+
+  private void pluginTimeLimitedSelection(final long startTime) {
+    final CountDownLatch pluginSelectionDone = new CountDownLatch(1);
+
+    final var pluginTxSelectionTask =
+        new FutureTask<Void>(
+            () -> {
+              try {
+                LOG.debug(
+                    "Starting plugin transaction selection, run time capped at {}ms",
+                    pluginTxsSelectionMaxTime);
+                transactionSelectionService.selectPendingTransactions(
+                    this, blockSelectionContext.pendingBlockHeader());
+              } finally {
+                pluginSelectionDone.countDown();
+              }
+            },
+            null);
+
+    ethScheduler.scheduleBlockCreationTask(pluginTxSelectionTask);
+
+    try {
+      pluginTxSelectionTask.get(pluginTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      if (isCancelled.get()) {
+        throw new CancellationException("Cancelled during plugin transaction selection");
+      }
+      LOG.warn("Error during block transaction selection", e);
+    } catch (TimeoutException e) {
+      // synchronize since we want to be sure that there is no concurrent state update
+      synchronized (isTimeout) {
+        isTimeout.set(true);
+      }
+
+      // cancelling the task and interrupting the thread running it
+      pluginTxSelectionTask.cancel(true);
+      final long elapsedPluginTxsSelectionTime = System.currentTimeMillis() - startTime;
+      LOG.warn(
+          "Interrupting the plugin selection of transactions for block inclusion after {}ms,"
+              + " as it exceeds the maximum configured duration of {}ms",
+          elapsedPluginTxsSelectionTime,
+          pluginTxsSelectionMaxTime);
+
+      try {
+        LOG.trace(
+            "Plugin transaction selection state {}, waiting for the thread to process the interrupt",
+            pluginTxSelectionTask.state());
+
+        // need to wait for the thread to fully process the interrupt,
+        // before proceeding, to avoid overlapping executions.
+        pluginSelectionDone.await();
+        LOG.atTrace()
+            .setMessage("Plugin selection cancellation processed in {}ms, task status {}")
+            .addArgument(
+                () -> (System.currentTimeMillis() - startTime) - elapsedPluginTxsSelectionTime)
+            .addArgument(pluginTxSelectionTask.state())
+            .log();
+      } catch (InterruptedException ex) {
+        LOG.warn("Interrupted while cancelling plugin transaction selection", ex);
+        throw new RuntimeException(ex);
       }
     }
   }

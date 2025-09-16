@@ -43,6 +43,8 @@ public abstract class MiningConfiguration {
       PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt(75);
+  public static final PositiveNumber DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt(50);
   public static final MiningConfiguration MINING_DISABLED =
       ImmutableMiningConfiguration.builder()
           .mutableInitValues(
@@ -153,6 +155,11 @@ public abstract class MiningConfiguration {
   }
 
   @Value.Default
+  public PositiveNumber getPluginBlockTxsSelectionMaxTime() {
+    return DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
+  }
+
+  @Value.Default
   public TransactionSelectionService getTransactionSelectionService() {
     return new TransactionSelectionService() {
       @Override
@@ -180,6 +187,10 @@ public abstract class MiningConfiguration {
           / 100;
     }
     return getNonPoaBlockTxsSelectionMaxTime().getValue();
+  }
+
+  public long getPluginTxsSelectionMaxTime() {
+    return (getBlockTxsSelectionMaxTime() * getPluginBlockTxsSelectionMaxTime().getValue()) / 100;
   }
 
   @Value.Default
