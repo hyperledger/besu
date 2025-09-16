@@ -304,17 +304,25 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
     }
+    final Optional<TransactionAccessList> postExecutionAccessList =
+        createAccessList(blockAccessListBuilder, transactions.size() + 1);
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
+    final WorldUpdater worldUpdater = worldState.updater();
+    final WorldUpdater withdrawalsUpdater = worldUpdater.updater();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
       try {
         maybeWithdrawalsProcessor
             .get()
-            .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+            .processWithdrawals(
+                maybeWithdrawals.get(), withdrawalsUpdater, postExecutionAccessList);
+        withdrawalsUpdater.clearAccountsThatAreEmpty();
+        withdrawalsUpdater.commit();
+        worldUpdater.commit();
       } catch (final Exception e) {
         LOG.error("failed processing withdrawals", e);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+          ((BonsaiWorldStateUpdateAccumulator) withdrawalsUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), e);
       }
@@ -328,7 +336,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (requestProcessor.isPresent()) {
         RequestProcessingContext requestProcessingContext =
             new RequestProcessingContext(blockProcessingContext, receipts);
-        maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+        maybeRequests =
+            Optional.of(
+                requestProcessor.get().process(requestProcessingContext, postExecutionAccessList));
       }
     } catch (final Exception e) {
       LOG.error("failed processing requests", e);
@@ -336,6 +346,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), e);
+    }
+
+    if (withdrawalsUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      postExecutionAccessList.ifPresent(
+          t ->
+              blockAccessListBuilder.ifPresent(
+                  b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
     }
 
     final var optionalRequestsHash = blockHeader.getRequestsHash();

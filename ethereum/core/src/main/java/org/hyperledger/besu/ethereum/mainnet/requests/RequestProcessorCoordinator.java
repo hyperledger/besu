@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 
 import java.util.List;
 import java.util.Map;
@@ -39,9 +40,11 @@ public class RequestProcessorCoordinator {
     this.processors = processors;
   }
 
-  public List<Request> process(final RequestProcessingContext context) {
+  public List<Request> process(
+      final RequestProcessingContext context,
+      final Optional<TransactionAccessList> transactionAccessList) {
     return processors.values().stream()
-        .map(requestProcessor -> requestProcessor.process(context, Optional.empty()))
+        .map(requestProcessor -> requestProcessor.process(context, transactionAccessList))
         .toList();
   }
 
