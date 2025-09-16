@@ -368,7 +368,7 @@ public class T8nExecutor {
             OperationTracer.NO_TRACING);
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+      protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();

@@ -237,7 +237,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
               operationTracer);
-      newProtocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+      // TODO: Pass transaction access list with zero index
+      newProtocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =

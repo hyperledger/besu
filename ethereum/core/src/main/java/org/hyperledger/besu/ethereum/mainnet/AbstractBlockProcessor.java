@@ -172,10 +172,23 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
+    Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .filter(BlockAccessListFactory::isEnabled)
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
+    final Optional<TransactionAccessList> preExecutionAccessList =
+        createAccessList(blockAccessListBuilder, 0);
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
-            blockHeader, worldState, protocolSpec, blockHashLookup, blockTracer);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+            blockHeader,
+            worldState,
+            protocolSpec,
+            blockHashLookup,
+            blockTracer,
+            blockAccessListBuilder);
+    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, preExecutionAccessList);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
@@ -202,12 +215,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
 
-    Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        protocolSpec
-            .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
-            .map(BlockAccessListFactory::newBlockAccessListBuilder);
-
     for (int i = 0; i < transactions.size(); i++) {
       final WorldUpdater blockUpdater = worldState.updater();
       final Transaction transaction = transactions.get(i);
@@ -220,7 +227,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       final Optional<TransactionAccessList> transactionAccessList =
-          createAccessList(blockAccessListBuilder, i);
+          createAccessList(blockAccessListBuilder, i + 1);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
