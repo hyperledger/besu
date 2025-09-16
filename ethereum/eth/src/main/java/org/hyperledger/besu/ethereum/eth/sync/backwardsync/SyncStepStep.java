@@ -44,9 +44,15 @@ public class SyncStepStep {
   }
 
   public CompletableFuture<Block> executeAsync(final Hash hash) {
-    return CompletableFuture.supplyAsync(() -> hash)
-        .thenApply(this::requestBlock)
-        .thenApply(this::saveBlock);
+    return context
+        .getEthContext()
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              Block block = requestBlock(hash);
+              saveBlock(block);
+              return CompletableFuture.completedFuture(block);
+            });
   }
 
   private Block requestBlock(final Hash targetHash) {

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
@@ -158,6 +159,7 @@ public class BackwardSyncContextTest {
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(localBlockchain)
             .setPeerTaskExecutor(peerTaskExecutor)
+            .setEthScheduler(new EthScheduler(1, 1, 1, metricsSystem))
             .build();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -286,7 +288,7 @@ public class BackwardSyncContextTest {
 
   @Test
   public void shouldSyncUntilHash() throws Exception {
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
@@ -298,7 +300,7 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldNotSyncUntilHashWhenNotInSync() {
     doReturn(false).when(context).isReady();
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
@@ -313,7 +315,7 @@ public class BackwardSyncContextTest {
   public void shouldSyncUntilRemoteBranch() throws Exception {
 
     final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
     respondUntilFutureIsDone(future);
 
@@ -325,10 +327,10 @@ public class BackwardSyncContextTest {
   public void shouldAddExpectedBlock() throws Exception {
 
     final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT - 1));
 
     final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
     assertThat(future).isSameAs(secondFuture);
 
@@ -346,7 +348,7 @@ public class BackwardSyncContextTest {
   }
 
   @NotNull
-  private Block getBlockByNumber(final int number) {
+  private Block getRemoteBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }
 
