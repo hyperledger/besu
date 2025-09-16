@@ -72,9 +72,9 @@ public final class BootnodeResolver {
           resolved.addAll(lines);
 
           LOG.debug("Resolved bootnodes from URL: {}", node);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Bootnodes fetched from {}: {}", node, lines);
-          }
+
+          LOG.trace("Bootnodes fetched from {}: {}", node, lines);
+
         } catch (final IOException e) {
           throw new BootnodeResolutionException(
               "Failed to fetch bootnodes from URL: " + node + "; " + e.getMessage(), e);
@@ -86,9 +86,7 @@ public final class BootnodeResolver {
           final List<String> lines = readPathLines(Paths.get(uri));
           resolved.addAll(lines);
           LOG.debug("Resolved bootnodes from file URI: {}", node);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Bootnodes fetched from {}: {}", node, lines);
-          }
+          LOG.trace("Bootnodes fetched from {}: {}", node, lines);
         } catch (final IOException e) {
           throw new BootnodeResolutionException(
               "Failed to read bootnodes from file URI: " + node + "; " + e.getMessage(), e);
