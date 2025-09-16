@@ -212,6 +212,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
+  /** whether block access list functionality was enabled via CLI feature flag */
+  protected boolean isBlockAccessListEnabled;
+
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
 
@@ -537,6 +540,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets whether functionality related to testing block-level access list implementation should be
+   * enabled. This includes caching of block-level access lists produced during block processing and
+   * enabling an RPC endpoint serving those cached BALs.
+   *
+   * @param isBlockAccessListEnabled true to enable block-level access list testing functionality
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    return this;
+  }
+
+  /**
    * check if early round change is enabled when f+1 RC messages from higher rounds are received
    *
    * @param isEarlyRoundChangeEnabled whether to enable early round change
@@ -731,8 +747,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration,
-            syncConfig.isPeerTaskSystemEnabled());
+            miningConfiguration);
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);

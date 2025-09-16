@@ -29,6 +29,7 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -251,7 +252,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             uniqueMessageMulticaster,
             new RoundTimer(
                 bftEventQueue,
-                Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds()),
+                new BftRoundExpiryTimeCalculator(
+                    Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds())),
                 bftExecutors),
             new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
@@ -366,6 +368,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 

@@ -39,6 +39,7 @@ public class FixedProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();

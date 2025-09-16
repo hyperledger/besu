@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import oshi.PlatformEnum;
 import oshi.SystemInfo;
@@ -65,6 +67,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isHistoryExpiryPruneEnabled = false;
   private boolean isParallelTxProcessingEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
+  private Long targetGasLimit;
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -355,6 +358,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the target gas limit.
+   *
+   * @param targetGasLimit the target gas limit
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTargetGasLimit(final Long targetGasLimit) {
+    this.targetGasLimit = targetGasLimit;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -467,6 +481,10 @@ public class ConfigurationOverviewBuilder {
       lines.add(blobDBString.toString());
     }
 
+    if (targetGasLimit != null) {
+      lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+    }
+
     lines.add("");
     lines.add("Host:");
 
@@ -530,6 +548,30 @@ public class ConfigurationOverviewBuilder {
                     "jemalloc library not found, memory usage may be reduced by installing it");
               }
             });
+  }
+
+  /**
+   * Normalize gas string.<br>
+   * The implemented logic is<br>
+   * - if the received gas is greater than 1 million, calculates the precision and returns the
+   * number as a floating point number with the calculated precision plus an 'M' at the end (e.g.,
+   * 50.55M)<br>
+   * - if the received gas is lower than 1 million, returns the number as a decimal integer grouping
+   * digits by thousands (e.g., 100,000)
+   *
+   * @param gas the gas
+   * @return the formatted string
+   */
+  static String normalizeGas(final long gas) {
+    final double normalizedGas = gas / 1_000_000D;
+    if (normalizedGas < 1) {
+      return String.format("%,d", gas);
+    } else {
+      final int decimals =
+          (Iterables.get(Splitter.on('.').split(String.valueOf(normalizedGas)), 1)).length();
+      final String format = normalizedGas % 1 == 0 ? "%.0fM" : "%." + decimals + "fM";
+      return String.format(format, normalizedGas);
+    }
   }
 
   private String normalizeSize(final long size) {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -76,6 +77,11 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
   public abstract Optional<List<VersionedHash>> getBlobVersionedHashes();
 
   @Override
+  @JsonProperty("authorizationList")
+  @JsonDeserialize(contentUsing = CodeDelegationParameterDeserializer.class)
+  public abstract List<CodeDelegation> getCodeDelegationAuthorizations();
+
+  @Override
   @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
   public abstract OptionalLong getNonce();
 
@@ -134,6 +140,8 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
 
     tx.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
     tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    tx.getCodeDelegationList()
+        .ifPresent(list -> list.forEach(builder::addCodeDelegationAuthorizations));
     return builder.build();
   }
 
@@ -156,6 +164,8 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
     tx.getAccessList().ifPresent(builder::accessList);
     tx.getMaxFeePerBlobGas().map(Wei::fromQuantity).ifPresent(builder::maxFeePerBlobGas);
     tx.getVersionedHashes().ifPresent(builder::blobVersionedHashes);
+    tx.getCodeDelegationList()
+        .ifPresent(list -> list.forEach(builder::addCodeDelegationAuthorizations));
     return builder.build();
   }
 }

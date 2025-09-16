@@ -254,8 +254,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
             .orElseThrow(
                 () -> new RuntimeException("Expected blockHeaders in PeerTaskExecutorResult"));
     final EthPeer ethPeer =
-        headersResult
-            .ethPeer()
+        headersResult.ethPeers().reversed().stream()
+            .findFirst()
             .orElseThrow(() -> new RuntimeException("Expected a peer in PeerTaskExecutorResult"));
     return processHeaders(blockHeaders, ethPeer);
   }

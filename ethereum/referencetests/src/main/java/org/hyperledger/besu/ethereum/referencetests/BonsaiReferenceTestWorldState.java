@@ -242,7 +242,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
     final NoOpBonsaiCachedWorldStorageManager noOpCachedWorldStorageManager =
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage, new CodeCache());
+        new NoOpBonsaiCachedWorldStorageManager(
+            bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache());
 
     final BonsaiReferenceTestWorldState worldState =
         new BonsaiReferenceTestWorldState(

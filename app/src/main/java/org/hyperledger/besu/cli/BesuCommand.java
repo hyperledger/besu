@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
+import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
 import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
 import org.hyperledger.besu.cli.options.EngineRPCOptions;
@@ -87,11 +88,13 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
@@ -136,6 +139,7 @@ import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -160,6 +164,7 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.TransactionValidatorService;
+import org.hyperledger.besu.plugin.services.WorldStateService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.mining.MiningService;
@@ -190,6 +195,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
+import org.hyperledger.besu.services.WorldStateServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.EphemeryGenesisUpdater;
@@ -253,8 +259,11 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
+import picocli.CommandLine.Model.ITypeInfo;
+import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.ParseResult;
 
 /** Represents the main Besu CLI command that runs the Besu Ethereum client full node. */
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
@@ -298,6 +307,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
   private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
+  private final DebugTracerOptions unstableDebugTracerOptions = DebugTracerOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -832,6 +842,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuParameterExceptionHandler parameterExceptionHandler,
       final BesuExecutionExceptionHandler executionExceptionHandler,
       final String... args) {
+
+    try {
+      // Parse and run duplicate-check
+      // As this happens before the plugins registration and plugins can add options, we must
+      // allow unmatched options
+      final ParseResult pr = commandLine.setUnmatchedArgumentsAllowed(true).parseArgs(args);
+      rejectDuplicateScalarOptions(pr); // your generic validator
+    } catch (ParameterException e) {
+      // ← Send it to the standard handler: prints one line & exits status 1
+      return parameterExceptionHandler.handleParseException(e, args);
+    }
     return commandLine
         .setExecutionStrategy(executionStrategy)
         .setParameterExceptionHandler(parameterExceptionHandler)
@@ -846,7 +867,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void toCommandLine() {
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
-            .setCaseInsensitiveEnumValuesAllowed(true);
+            .setCaseInsensitiveEnumValuesAllowed(true)
+            .setToggleBooleanFlags(false);
   }
 
   @Override
@@ -936,6 +958,33 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             precompileCounter
                 .labels(cacheEvent.precompile(), cacheEvent.cacheMetric().name())
                 .inc());
+  }
+
+  /** Reject any option that is not multi-valued but appears more than once. */
+  private static void rejectDuplicateScalarOptions(final ParseResult pr) {
+    for (OptionSpec spec : pr.matchedOptions()) {
+
+      // skip help/version flags
+      if (spec.usageHelp() || spec.versionHelp()) {
+        continue;
+      }
+
+      // ── determine if this option can repeat
+      ITypeInfo type = spec.typeInfo();
+      boolean multiValued =
+          spec.arity().max() > 1 || type.isMultiValue() || type.isCollection() || type.isArray();
+
+      if (multiValued) {
+        continue; // lists are allowed to repeat
+      }
+
+      // ── single-valued: abort if it appears more than once ───────────
+      if (pr.matchedOption(spec.longestName()).stringValues().size() > 1) {
+        throw new ParameterException(
+            pr.commandSpec().commandLine(),
+            String.format("Option '%s' should be specified only once", spec.longestName()));
+      }
+    }
   }
 
   private void checkPermissionsAndPrintPaths(final String userName) {
@@ -1108,6 +1157,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
             .put("QBFT Options", unstableQbftOptions)
+            .put("Debug Tracer Options", unstableDebugTracerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1201,7 +1251,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
-    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+    besuPluginContext.addService(
+        WorldStateService.class,
+        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
 
     besuPluginContext.addService(
         SynchronizationService.class,
@@ -1315,6 +1367,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       Blake2bfMessageDigest.Blake2bfDigest.disableNative();
       logger.info("Using the Java implementation of the blake2bf algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeP256Verify()
+        && P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL()) {
+      logger.info("Using the native BoringSSL implementation of p256verify");
+    } else {
+      P256VerifyPrecompiledContract.disableNativeBoringSSL();
+      if (SECP256R1.isNativeAvailable()) {
+        logger.info("Using the native secp256r1 signature algorithm implementation of p256verify");
+      } else {
+        logger.info("Using the Java secp256r1 implementation of p256verify");
+      }
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
@@ -1762,6 +1826,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       besuControllerBuilder.isParallelTxProcessingEnabled(
           subStorageConfiguration.getParallelTxProcessingEnabled());
     }
+    besuControllerBuilder.isBlockAccessListEnabled(
+        apiConfigurationOptions.apiConfiguration().isBlockAccessListEnabled());
     return besuControllerBuilder;
   }
 
@@ -2556,6 +2622,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
             .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
+    }
+
+    if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
+      builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
+    } else {
+      builder.setTargetGasLimit(
+          MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId())));
     }
 
     builder

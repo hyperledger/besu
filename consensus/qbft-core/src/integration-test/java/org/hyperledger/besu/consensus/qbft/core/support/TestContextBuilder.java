@@ -40,6 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -460,6 +461,7 @@ public class TestContextBuilder {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            false,
             new NoOpMetricsSystem());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
@@ -536,7 +538,10 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
-            new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                new BftRoundExpiryTimeCalculator(Duration.ofSeconds(ROUND_TIMER_SEC)),
+                bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, BFT_EXTRA_DATA_ENCODER),
             clock);

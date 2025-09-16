@@ -36,7 +36,8 @@ public class SnapSyncProcessState extends FastSyncState {
     super(
         fastSyncState.getPivotBlockNumber(),
         fastSyncState.getPivotBlockHash(),
-        fastSyncState.getPivotBlockHeader());
+        fastSyncState.getPivotBlockHeader(),
+        fastSyncState.isSourceTrusted());
   }
 
   public boolean isHealTrieInProgress() {

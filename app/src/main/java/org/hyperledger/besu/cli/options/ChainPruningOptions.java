@@ -59,7 +59,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       description =
           "The number of recent blocks for which to keep the chain data. Should be >= "
               + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
-              + " (default: ${DEFAULT-VALUE}). Unused if --Xhistory-expiry-prune is enabled")
+              + " (default: ${DEFAULT-VALUE}). Unused if --history-expiry-prune is enabled")
   private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
   @CommandLine.Option(
@@ -69,7 +69,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
           "Allows setting the limit below which no more blocks can be pruned. This prevents setting a value lower than this for "
               + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
               + ". This flag should be used with caution as reducing the limit may have unintended side effects."
-              + " (default: ${DEFAULT-VALUE}). Unused if --Xhistory-expiry-prune is enabled")
+              + " (default: ${DEFAULT-VALUE}). Unused if --history-expiry-prune is enabled")
   private final Long chainDataPruningBlocksRetainedLimit =
       CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
