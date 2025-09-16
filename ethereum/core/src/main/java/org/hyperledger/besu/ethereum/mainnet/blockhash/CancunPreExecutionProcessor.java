@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
@@ -33,19 +34,24 @@ public class CancunPreExecutionProcessor extends FrontierPreExecutionProcessor {
       Address.fromHexString("0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02");
 
   @Override
-  public Void process(final BlockProcessingContext context) {
+  public Void process(
+      final BlockProcessingContext context,
+      final Optional<TransactionAccessList> transactionAccessList) {
     ProcessableBlockHeader currentBlockHeader = context.getBlockHeader();
     currentBlockHeader
         .getParentBeaconBlockRoot()
-        .ifPresent(beaconRoot -> process(context, beaconRoot));
+        .ifPresent(beaconRoot -> process(context, beaconRoot, transactionAccessList));
     return null;
   }
 
-  private void process(final BlockProcessingContext context, final Bytes32 beaconRootsAddress) {
+  private void process(
+      final BlockProcessingContext context,
+      final Bytes32 beaconRootsAddress,
+      final Optional<TransactionAccessList> transactionAccessList) {
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
     try {
-      processor.process(BEACON_ROOTS_ADDRESS, context, beaconRootsAddress);
+      processor.process(BEACON_ROOTS_ADDRESS, context, beaconRootsAddress, transactionAccessList);
     } catch (InvalidSystemCallAddressException e) {
       // According to EIP-4788, fail silently if no code exists
       LOG.warn("Invalid system call address: {}", BEACON_ROOTS_ADDRESS);

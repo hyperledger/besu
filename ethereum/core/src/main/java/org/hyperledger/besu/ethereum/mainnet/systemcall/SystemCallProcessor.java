@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -28,9 +29,11 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -65,9 +68,13 @@ public class SystemCallProcessor {
    * @return The output of the system call.
    */
   public Bytes process(
-      final Address callAddress, final BlockProcessingContext context, final Bytes inputData) {
-    WorldUpdater updater = context.getWorldState().updater();
-    final Account maybeContract = updater.get(callAddress);
+      final Address callAddress,
+      final BlockProcessingContext context,
+      final Bytes inputData,
+      final Optional<TransactionAccessList> transactionAccessList) {
+    WorldUpdater blockUpdater = context.getWorldState().updater();
+    WorldUpdater transactionUpdater = blockUpdater.updater();
+    final Account maybeContract = blockUpdater.get(callAddress);
     if (maybeContract == null) {
       LOG.error("Invalid system call address: {}", callAddress);
       throw new InvalidSystemCallAddressException("Invalid system call address: " + callAddress);
@@ -83,10 +90,11 @@ public class SystemCallProcessor {
     final MessageFrame frame =
         createMessageFrame(
             callAddress,
-            updater,
+            transactionUpdater,
             context.getBlockHeader(),
             context.getBlockHashLookup(),
-            inputData);
+            inputData,
+            transactionAccessList);
 
     if (!frame.getCode().isValid()) {
       throw new RuntimeException(
@@ -98,8 +106,17 @@ public class SystemCallProcessor {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
+    if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      transactionAccessList.ifPresent(
+          t ->
+              context
+                  .getBlockAccessListBuilder()
+                  .ifPresent(b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
+    }
+
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      updater.commit();
+      transactionUpdater.commit();
+      blockUpdater.commit();
       return frame.getOutputData();
     }
 
@@ -122,31 +139,38 @@ public class SystemCallProcessor {
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
       final BlockHashLookup blockHashLookup,
-      final Bytes inputData) {
+      final Bytes inputData,
+      final Optional<TransactionAccessList> transactionAccessList) {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
-    return MessageFrame.builder()
-        .maxStackSize(DEFAULT_MAX_STACK_SIZE)
-        .worldUpdater(worldUpdater)
-        .initialGas(SYSTEM_CALL_GAS_LIMIT)
-        .originator(SYSTEM_ADDRESS)
-        .gasPrice(Wei.ZERO)
-        .blobGasPrice(Wei.ZERO)
-        .value(Wei.ZERO)
-        .apparentValue(Wei.ZERO)
-        .blockValues(blockHeader)
-        .completer(__ -> {})
-        .miningBeneficiary(Address.ZERO) // Confirm this
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .address(callAddress)
-        .contract(callAddress)
-        .inputData(inputData)
-        .sender(SYSTEM_ADDRESS)
-        .blockHashLookup(blockHashLookup)
-        .code(getCode(worldUpdater.get(callAddress), processor))
-        .build();
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .maxStackSize(DEFAULT_MAX_STACK_SIZE)
+            .worldUpdater(worldUpdater)
+            .initialGas(SYSTEM_CALL_GAS_LIMIT)
+            .originator(SYSTEM_ADDRESS)
+            .gasPrice(Wei.ZERO)
+            .blobGasPrice(Wei.ZERO)
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .blockValues(blockHeader)
+            .completer(__ -> {})
+            .miningBeneficiary(Address.ZERO) // Confirm this
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .address(callAddress)
+            .contract(callAddress)
+            .inputData(inputData)
+            .sender(SYSTEM_ADDRESS)
+            .blockHashLookup(blockHashLookup)
+            .code(getCode(worldUpdater.get(callAddress), processor));
+
+    if (transactionAccessList.isPresent()) {
+      builder.eip7928AccessList(transactionAccessList.get());
+    }
+
+    return builder.build();
   }
 
   private Code getCode(final Account contract, final AbstractMessageProcessor processor) {

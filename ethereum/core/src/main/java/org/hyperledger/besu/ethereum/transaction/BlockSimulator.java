@@ -221,7 +221,8 @@ public class BlockSimulator {
             protocolSpec,
             blockHashLookup,
             OperationTracer.NO_TRACING);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+    // TODO: Pass transaction access list with zero index
+    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(

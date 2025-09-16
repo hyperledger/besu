@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSortedMap;
@@ -40,7 +41,7 @@ public class RequestProcessorCoordinator {
 
   public List<Request> process(final RequestProcessingContext context) {
     return processors.values().stream()
-        .map(requestProcessor -> requestProcessor.process(context))
+        .map(requestProcessor -> requestProcessor.process(context, Optional.empty()))
         .toList();
   }
 
