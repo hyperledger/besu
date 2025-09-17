@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public final class BlockAccessListEncoder {
 
@@ -32,13 +34,13 @@ public final class BlockAccessListEncoder {
               acct.storageChanges(),
               (sc, scOut) -> {
                 scOut.startList();
-                scOut.writeUInt256Scalar(sc.slot().getSlotKey().get());
+                scOut.writeBytes(sc.slot().getSlotKey().get());
                 scOut.writeList(
                     sc.changes(),
                     (chg, chgOut) -> {
                       chgOut.startList();
-                      chgOut.writeInt(chg.txIndex());
-                      chgOut.writeUInt256Scalar(chg.newValue());
+                      chgOut.writeUInt64Scalar(UInt64.valueOf(chg.txIndex()));
+                      chgOut.writeBytes(chg.newValue());
                       chgOut.endList();
                     });
                 scOut.endList();
@@ -46,14 +48,14 @@ public final class BlockAccessListEncoder {
 
           acctOut.writeList(
               acct.storageReads(),
-              (sr, srOut) -> srOut.writeUInt256Scalar(sr.slot().getSlotKey().get()));
+              (sr, srOut) -> srOut.writeBytes(sr.slot().getSlotKey().get()));
 
           acctOut.writeList(
               acct.balanceChanges(),
               (bc, bcOut) -> {
                 bcOut.startList();
-                bcOut.writeInt(bc.txIndex());
-                bcOut.writeBytes(bc.postBalance());
+                bcOut.writeUInt64Scalar(UInt64.valueOf(bc.txIndex()));
+                bcOut.writeUInt256Scalar(UInt256.fromBytes(bc.postBalance()));
                 bcOut.endList();
               });
 
@@ -61,8 +63,8 @@ public final class BlockAccessListEncoder {
               acct.nonceChanges(),
               (nc, ncOut) -> {
                 ncOut.startList();
-                ncOut.writeInt(nc.txIndex());
-                ncOut.writeLongScalar(nc.newNonce());
+                ncOut.writeUInt64Scalar(UInt64.valueOf(nc.txIndex()));
+                ncOut.writeUInt64Scalar(UInt64.valueOf(nc.newNonce()));
                 ncOut.endList();
               });
 
@@ -70,7 +72,7 @@ public final class BlockAccessListEncoder {
               acct.codeChanges(),
               (cc, ccOut) -> {
                 ccOut.startList();
-                ccOut.writeInt(cc.txIndex());
+                ccOut.writeUInt64Scalar(UInt64.valueOf(cc.txIndex()));
                 ccOut.writeBytes(cc.newCode());
                 ccOut.endList();
               });
