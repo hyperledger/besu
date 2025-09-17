@@ -40,10 +40,11 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final String PRECOMPILE_NAME = "P256VERIFY";
   private static final Bytes32 VALID = Bytes32.leftPad(Bytes.of(1), (byte) 0);
   private static final Bytes INVALID = Bytes.EMPTY;
+  private static final int SECP256R1_INPUT_LENGTH = 160;
 
-  private static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
-  private static final BigInteger N = R1_PARAMS.getN();
-  private static final BigInteger P = R1_PARAMS.getCurve().getField().getCharacteristic();
+  static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
+  static final BigInteger N = R1_PARAMS.getN();
+  static final BigInteger P = R1_PARAMS.getCurve().getField().getCharacteristic();
 
   /** The constant useNative. */
   // use the BoringSSL native library implementation, if it is available
@@ -121,9 +122,10 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, final MessageFrame messageFrame) {
-    if (input.size() != 160) {
+    if (input.size() != SECP256R1_INPUT_LENGTH) {
       LOG.warn(
-          "Invalid input length for P256VERIFY precompile: expected 128 bytes but got {}",
+          "Invalid input length for P256VERIFY precompile: expected {} bytes but got {}",
+          SECP256R1_INPUT_LENGTH,
           input.size());
       return PrecompileContractResult.success(INVALID);
     }
@@ -188,7 +190,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
 
   // This may still use native SECP256R1 depending on how SignatureAlgorithm is configured
   @NotNull
-  private PrecompileInputResultTuple computeDefault(final Bytes input) {
+  PrecompileInputResultTuple computeDefault(final Bytes input) {
     final Bytes messageHash = input.slice(0, 32);
     final Bytes rBytes = input.slice(32, 32);
     final Bytes sBytes = input.slice(64, 32);
@@ -220,7 +222,14 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
       return new PrecompileInputResultTuple(
           enableResultCaching ? input.copy() : input, PrecompileContractResult.success(INVALID));
     }
-
+    try {
+      final org.bouncycastle.math.ec.ECPoint ecPoint = R1_PARAMS.getCurve().createPoint(qx, qy);
+      signatureAlgorithm.getCurve().validatePublicPoint(ecPoint);
+    } catch (IllegalArgumentException e) {
+      LOG.trace("Public key not on curve: {}", e.getMessage());
+      return new PrecompileInputResultTuple(
+          enableResultCaching ? input.copy() : input, PrecompileContractResult.success(INVALID));
+    }
     // Create the signature; recID is not used in verification - use 0
     final SECPSignature signature = signatureAlgorithm.createSignature(r, s, (byte) 0);
     final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(pubKeyBytes);

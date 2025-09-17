@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
-import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -44,8 +43,10 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -375,6 +376,26 @@ public class EthPeers implements PeerSelector {
     return streamAvailablePeers()
         .filter(EthPeer::isFullyValidated)
         .sorted(getBestPeerComparator().reversed());
+  }
+
+  // NOTE: this is a quick fix to avoid rapid changes in chain height causing invalid comparator
+  // results. A more complete solution should be made using immutable peers or something
+  public List<EthPeer> getBestPeers() {
+    Map<Long, List<EthPeer>> chainHeightsByPeer = new HashMap<>();
+    for (EthPeer ethPeer : activeConnections.values()) {
+      if (!ethPeer.isDisconnected() && ethPeer.isFullyValidated()) {
+        chainHeightsByPeer
+            .computeIfAbsent(ethPeer.chainState().getEstimatedHeight(), (k) -> new ArrayList<>())
+            .add(ethPeer);
+      }
+    }
+    List<Long> sortedChainHeights =
+        chainHeightsByPeer.keySet().stream().sorted().toList().reversed();
+    List<EthPeer> result = new ArrayList<>();
+    for (Long chainHeight : sortedChainHeights) {
+      result.addAll(chainHeightsByPeer.get(chainHeight));
+    }
+    return result;
   }
 
   public Optional<EthPeer> bestPeer() {

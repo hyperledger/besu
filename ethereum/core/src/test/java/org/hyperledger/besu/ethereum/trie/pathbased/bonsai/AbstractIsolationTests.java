@@ -109,6 +109,7 @@ public abstract class AbstractIsolationTests {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          false,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(
@@ -232,6 +233,11 @@ public abstract class AbstractIsolationTests {
 
               @Override
               public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
+              public long getConfiguredRpcHttpTimeoutSec() {
                 return 0;
               }
 

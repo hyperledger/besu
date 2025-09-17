@@ -528,7 +528,7 @@ public class EvmToolCommand implements Runnable {
                     protocolSpec
                         .getPreExecutionProcessor()
                         .createBlockHashLookup(component.getBlockchain(), blockHeader))
-                .accessListWarmAddresses(addressList)
+                .eip2930AccessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 

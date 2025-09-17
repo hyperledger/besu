@@ -53,7 +53,7 @@ public class SLoadOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+      final Account account = getAccount(frame.getRecipientAddress(), frame);
       final Address address = account.getAddress();
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
@@ -61,8 +61,7 @@ public class SLoadOperation extends AbstractOperation {
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
-
+        frame.pushStackItem(getStorageValue(account, UInt256.fromBytes(key), frame));
         return slotIsWarm ? warmSuccess : coldSuccess;
       }
     } catch (final UnderflowException ufe) {
