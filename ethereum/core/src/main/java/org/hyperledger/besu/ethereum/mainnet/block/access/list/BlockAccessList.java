@@ -179,7 +179,7 @@ public class BlockAccessList {
 
             Bytes newCode = account.getCode();
             Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
-            if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
+            if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
               builder.addCodeChange(txList.getIndex(), newCode);
             }
           } else {
@@ -189,7 +189,7 @@ public class BlockAccessList {
             }
 
             Bytes newCode = account.getCode();
-            if (!newCode.isEmpty() && !newCode.isZero()) {
+            if (!newCode.isEmpty()) {
               long newNonce = account.getNonce();
               builder.addCodeChange(txList.getIndex(), newCode);
               builder.addNonceChange(txList.getIndex(), newNonce);
