@@ -26,12 +26,14 @@ public class WithdrawalsProcessor {
 
   public void processWithdrawals(
       final List<Withdrawal> withdrawals,
-      final WorldUpdater worldUpdater,
+      final WorldUpdater withdrawalsUpdater,
       final Optional<TransactionAccessList> transactionAccessList) {
     for (final Withdrawal withdrawal : withdrawals) {
-      final MutableAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
-      transactionAccessList.ifPresent(t -> t.addAccount(account.getAddress()));
+      final MutableAccount account = withdrawalsUpdater.getOrCreate(withdrawal.getAddress());
       account.incrementBalance(withdrawal.getAmount().getAsWei());
+      transactionAccessList.ifPresent(t -> t.addAccount(account.getAddress()));
     }
+    withdrawalsUpdater.clearAccountsThatAreEmpty();
+    withdrawalsUpdater.commit();
   }
 }

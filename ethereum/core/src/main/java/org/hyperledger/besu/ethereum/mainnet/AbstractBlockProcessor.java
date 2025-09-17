@@ -304,25 +304,30 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
     }
+
     final Optional<TransactionAccessList> postExecutionAccessList =
         createAccessList(blockAccessListBuilder, transactions.size() + 1);
+    final WorldUpdater blockUpdater = worldState.updater();
+    WorldUpdater postExecutionUpdater = blockUpdater.updater();
+    if (!(postExecutionUpdater instanceof StackedUpdater<?, ?>)) {
+      postExecutionUpdater = blockUpdater;
+    }
+
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
-    final WorldUpdater worldUpdater = worldState.updater();
-    final WorldUpdater withdrawalsUpdater = worldUpdater.updater();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
       try {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), withdrawalsUpdater, postExecutionAccessList);
-        withdrawalsUpdater.clearAccountsThatAreEmpty();
-        withdrawalsUpdater.commit();
-        worldUpdater.commit();
+                maybeWithdrawals.get(), postExecutionUpdater, postExecutionAccessList);
+        if (postExecutionUpdater instanceof StackedUpdater<?, ?>) {
+          blockUpdater.commit();
+        }
       } catch (final Exception e) {
         LOG.error("failed processing withdrawals", e);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) withdrawalsUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), e);
       }
@@ -348,7 +353,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    if (withdrawalsUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+    if (postExecutionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
       postExecutionAccessList.ifPresent(
           t ->
               blockAccessListBuilder.ifPresent(
