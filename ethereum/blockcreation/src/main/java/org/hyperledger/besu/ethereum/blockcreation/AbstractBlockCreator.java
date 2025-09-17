@@ -262,7 +262,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       if (withdrawalsCanBeProcessed) {
         maybeWithdrawalsProcessor
             .get()
-            .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater());
+            .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater(), Optional.empty());
       }
 
       throwIfStopped();
@@ -274,7 +274,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           new RequestProcessingContext(blockProcessingContext, transactionResults.getReceipts());
 
       Optional<List<Request>> maybeRequests =
-          requestProcessor.map(processor -> processor.process(requestProcessingContext));
+          requestProcessor.map(processor -> processor.process(requestProcessingContext, Optional.empty()));
 
       throwIfStopped();
 
