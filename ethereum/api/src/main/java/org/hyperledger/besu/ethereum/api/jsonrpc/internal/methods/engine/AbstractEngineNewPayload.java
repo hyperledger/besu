@@ -589,8 +589,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   /**
-   * Validates that the excessBlobGas in the header matches the calculated value from the parent header.
-   * Returns Optional.of(calculated) if mismatched, otherwise Optional.empty().
+   * Validates that the excessBlobGas in the header matches the calculated value from the parent
+   * header. Returns Optional.of(calculated) if mismatched, otherwise Optional.empty().
    */
   private Optional<BlobGas> validateExcessBlobGas(
       final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
@@ -602,8 +602,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   /**
-   * Validates that blobGasUsed in the header matches the calculated value from the versioned hashes.
-   * Returns Optional.of(calculated) if mismatched, otherwise Optional.empty().
+   * Validates that blobGasUsed in the header matches the calculated value from the versioned
+   * hashes. Returns Optional.of(calculated) if mismatched, otherwise Optional.empty().
    */
   private Optional<Long> validateBlobGasUsed(
       final BlockHeader header,
