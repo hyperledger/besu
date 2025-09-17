@@ -83,7 +83,7 @@ public final class BootnodeResolver {
         }
 
       } else {
-        // Local file path or raw enode string
+        
         final Path p = Paths.get(node);
         if (Files.exists(p)) {
           try {
@@ -93,14 +93,14 @@ public final class BootnodeResolver {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Bootnodes fetched from {}: {}", node, lines);
             }
-            continue; // handled as file; skip fallback
+            continue; 
           } catch (final IOException e) {
             throw new BootnodeResolutionException(
                 "Failed to read bootnodes from file: " + node + "; " + e.getMessage(), e);
           }
         }
 
-        // Fallback: treat as raw enode string
+        
         resolved.add(node);
         LOG.debug("Using raw bootnode string: {}", node);
       }
@@ -113,10 +113,10 @@ public final class BootnodeResolver {
   private static List<String> readPathLines(final Path path) throws IOException {
     try (var lines = Files.lines(path, UTF_8)) {
       return lines
-          .map(String::trim) // normalize stray whitespace
-          .filter(l -> !l.isEmpty()) // drop blanks
-          .filter(l -> !l.startsWith("#")) // allow comments
-          .toList(); // if building with Java 11, use .collect(Collectors.toList())
+          .map(String::trim) 
+          .filter(l -> !l.isEmpty()) 
+          .filter(l -> !l.startsWith("#")) 
+          .toList();
     }
   }
 

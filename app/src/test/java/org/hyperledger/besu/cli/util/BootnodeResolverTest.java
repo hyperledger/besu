@@ -144,7 +144,7 @@ public class BootnodeResolverTest {
               .map(String::trim)
               .filter(l -> !l.isEmpty())
               .filter(l -> !l.startsWith("#"))
-              .toList(); // If building on Java 11, use
+              .toList();
     }
 
     assertThat(lines)
