@@ -14,19 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
+import static org.mockito.Mockito.mock;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -170,7 +175,10 @@ public class GetHeadersFromPeerTaskTest {
 
     Mockito.when(ethPeer.chainState()).thenReturn(chainState);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
-
+    Mockito.when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+    Mockito.when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(ethPeer.getConnection()).thenReturn(connection);
     return ethPeer;
   }
 }
