@@ -384,6 +384,37 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
     blockTracer.traceEndBlock(blockHeader, blockBody);
 
+    final Optional<BlockAccessList> maybeBlockAccessList;
+    try {
+      if (blockAccessListBuilder.isPresent()) {
+        final BlockAccessList bal = blockAccessListBuilder.get().build();
+        final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
+        if (headerBalHash.isPresent()) {
+          final Hash expectedHash = BodyValidation.balHash(bal);
+          if (!headerBalHash.get().equals(expectedHash)) {
+            final String errorMessage =
+                String.format(
+                    "Block access list hash mismatch, calculated: %s header: %s",
+                    expectedHash.toHexString(), headerBalHash.get().toHexString());
+            LOG.error(errorMessage);
+            if (worldState instanceof BonsaiWorldState) {
+              ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+            }
+            return new BlockProcessingResult(Optional.empty(), errorMessage);
+          }
+        }
+        maybeBlockAccessList = Optional.of(bal);
+      } else {
+        maybeBlockAccessList = Optional.empty();
+      }
+    } catch (Exception e) {
+      LOG.error("Error validating BAL hash", e);
+      if (worldState instanceof BonsaiWorldState) {
+        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+      }
+      return new BlockProcessingResult(Optional.empty(), e);
+    }
+
     try {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
@@ -404,28 +435,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);
-    }
-
-    final Optional<BlockAccessList> maybeBlockAccessList;
-    if (blockAccessListBuilder.isPresent()) {
-      final BlockAccessList bal = blockAccessListBuilder.get().build();
-      maybeBlockAccessList = Optional.of(bal);
-      try {
-        final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
-        if (headerBalHash.isPresent()) {
-          final Hash expectedHash = BodyValidation.balHash(bal);
-          if (!headerBalHash.get().equals(expectedHash)) {
-            LOG.warn(
-                "{} (header BAL hash)\n!=\n{} (expected BAL hash)",
-                headerBalHash.get(),
-                expectedHash);
-          }
-        }
-      } catch (Exception e) {
-        LOG.error("Error validating BAL hash", e);
-      }
-    } else {
-      maybeBlockAccessList = Optional.empty();
     }
 
     return new BlockProcessingResult(
