@@ -84,7 +84,7 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
   }
 
   @Test
@@ -92,7 +92,7 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
   }
 
   @Test
@@ -102,7 +102,7 @@ abstract class AbstractBlockProcessorTest {
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
-    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
+    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any());
   }
 
   @Test
@@ -113,7 +113,7 @@ abstract class AbstractBlockProcessorTest {
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
   }
 
   private static class TestBlockProcessor extends AbstractBlockProcessor {
