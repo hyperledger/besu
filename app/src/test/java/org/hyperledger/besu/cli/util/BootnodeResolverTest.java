@@ -18,8 +18,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -114,6 +117,40 @@ public class BootnodeResolverTest {
     final List<String> result = BootnodeResolver.resolve(List.of(raw));
 
     assertThat(result).containsExactly(raw);
+  }
+
+  @Test
+  void fileUri_openStream_readsLines(@TempDir final Path tempDir) throws Exception {
+
+    final Path file = tempDir.resolve("enodes.txt");
+    Files.writeString(
+        file,
+        "enode://"
+            + VALID_NODE_ID
+            + "@10.0.0.1:30303\n"
+            + "# comment\n"
+            + "\n"
+            + "enode://"
+            + VALID_NODE_ID
+            + "@10.0.0.2:30303\n",
+        UTF_8);
+
+    final URI uri = file.toUri();
+    final List<String> lines;
+    try (var in = uri.toURL().openStream();
+        var br = new BufferedReader(new InputStreamReader(in, UTF_8))) {
+      lines =
+          br.lines()
+              .map(String::trim)
+              .filter(l -> !l.isEmpty())
+              .filter(l -> !l.startsWith("#"))
+              .toList(); // If building on Java 11, use
+    }
+
+    assertThat(lines)
+        .containsExactly(
+            "enode://" + VALID_NODE_ID + "@10.0.0.1:30303",
+            "enode://" + VALID_NODE_ID + "@10.0.0.2:30303");
   }
 
   @Test

@@ -56,7 +56,9 @@ public final class BootnodeResolver {
 
       final String scheme = (uri != null) ? uri.getScheme() : null;
 
-      if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+      if ("http".equalsIgnoreCase(scheme)
+          || "https".equalsIgnoreCase(scheme)
+          || "file".equalsIgnoreCase(scheme)) {
         // Remote list (URL)
         try (BufferedReader reader =
             new BufferedReader(new InputStreamReader(uri.toURL().openStream(), UTF_8))) {
@@ -78,18 +80,6 @@ public final class BootnodeResolver {
         } catch (final IOException e) {
           throw new BootnodeResolutionException(
               "Failed to fetch bootnodes from URL: " + node + "; " + e.getMessage(), e);
-        }
-
-      } else if ("file".equalsIgnoreCase(scheme)) {
-        // file:// URI → unified file handling
-        try {
-          final List<String> lines = readPathLines(Paths.get(uri));
-          resolved.addAll(lines);
-          LOG.debug("Resolved bootnodes from file URI: {}", node);
-          LOG.trace("Bootnodes fetched from {}: {}", node, lines);
-        } catch (final IOException e) {
-          throw new BootnodeResolutionException(
-              "Failed to read bootnodes from file URI: " + node + "; " + e.getMessage(), e);
         }
 
       } else {
