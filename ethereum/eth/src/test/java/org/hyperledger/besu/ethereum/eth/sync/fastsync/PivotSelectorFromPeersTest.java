@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -53,8 +54,8 @@ public class PivotSelectorFromPeersTest {
 
   @Test
   public void testSelectNewPivotBlock() {
-    EthPeer peer1 = mockPeer(true, 10, true);
-    EthPeer peer2 = mockPeer(true, 8, true);
+    EthPeerImmutableAttributes peer1 = EthPeerImmutableAttributes.from(mockPeer(true, 10, true));
+    EthPeerImmutableAttributes peer2 = EthPeerImmutableAttributes.from(mockPeer(true, 8, true));
 
     Mockito.when(ethContext.getEthPeers()).thenReturn(ethPeers);
     Mockito.when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(peer1, peer2));

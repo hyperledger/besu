@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.List;
@@ -153,7 +154,8 @@ public class PeerTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, transaction2);
     tracker.addToPeerSendQueue(ethPeer2, transaction3);
 
-    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer2));
+    when(ethPeers.streamAllPeers())
+        .thenReturn(Stream.of(ethPeer2).map(EthPeerImmutableAttributes::from));
     tracker.onDisconnect(ethPeer1);
 
     assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer2);
@@ -171,7 +173,8 @@ public class PeerTransactionTrackerTest {
     tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction1));
     tracker.markTransactionsAsSeen(ethPeer2, List.of(transaction2));
 
-    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer2));
+    when(ethPeers.streamAllPeers())
+        .thenReturn(Stream.of(ethPeer2).map(EthPeerImmutableAttributes::from));
     tracker.onDisconnect(ethPeer1);
 
     // false because tracker removed for ethPeer1

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -45,7 +46,8 @@ public class BlockBroadcasterTest {
   public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer = mock(EthPeer.class);
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(Stream.of(EthPeerImmutableAttributes.from(ethPeer)));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -68,7 +70,11 @@ public class BlockBroadcasterTest {
     final EthPeer ethPeer1 = mock(EthPeer.class);
 
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer0, ethPeer1));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(
+            Stream.of(
+                EthPeerImmutableAttributes.from(ethPeer0),
+                EthPeerImmutableAttributes.from(ethPeer1)));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);

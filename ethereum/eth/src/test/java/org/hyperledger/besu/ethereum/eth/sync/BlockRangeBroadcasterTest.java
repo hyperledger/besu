@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
@@ -87,7 +88,8 @@ public class BlockRangeBroadcasterTest {
 
   private void setupPeers(final EthPeer... peers) {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(peers));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(Stream.of(peers).map(EthPeerImmutableAttributes::from));
   }
 
   private void broadcastBlockRange() {

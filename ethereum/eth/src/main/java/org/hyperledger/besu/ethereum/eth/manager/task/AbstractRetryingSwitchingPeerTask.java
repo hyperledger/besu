@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -127,7 +128,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   protected Optional<EthPeer> nextPeerToTry() {
     for (EthPeer peer : getEthContext().getEthPeers().getBestPeers()) {
-      if (isSuitablePeer(peer) && !triedPeers.contains(peer)) {
+      if (isSuitablePeer(EthPeerImmutableAttributes.from(peer)) && !triedPeers.contains(peer)) {
         return Optional.of(peer);
       }
     }
@@ -140,7 +141,9 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     // or the least useful
 
     if (peers.peerCount() >= peers.getMaxPeers()) {
-      failedPeers.stream().filter(peer -> !peer.isDisconnected()).findAny().stream()
+      failedPeers.stream()
+          .map(EthPeerImmutableAttributes::from)
+          .filter(peer -> !peer.isDisconnected())
           .min(EthPeers.MOST_USEFUL_PEER)
           .or(() -> peers.streamAvailablePeers().min(EthPeers.MOST_USEFUL_PEER))
           .ifPresent(
@@ -148,11 +151,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                 LOG.atDebug()
                     .setMessage(
                         "Refresh peers disconnecting peer {} Waiting for better peers. Current {} of max {}")
-                    .addArgument(peer::getLoggableId)
+                    .addArgument(peer.ethPeer().getLoggableId())
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)
                     .log();
-                peer.disconnect(DisconnectReason.USELESS_PEER_BY_REPUTATION);
+                peer.ethPeer().disconnect(DisconnectReason.USELESS_PEER_BY_REPUTATION);
               });
     }
   }

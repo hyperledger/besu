@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
@@ -113,8 +114,11 @@ public class GetHeadersFromPeerTaskTest {
     EthPeer failForShortChainHeight = mockPeer(1);
     EthPeer successfulCandidate = mockPeer(5);
 
-    Assertions.assertFalse(task.getPeerRequirementFilter().test(failForShortChainHeight));
-    Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
+    Assertions.assertFalse(
+        task.getPeerRequirementFilter()
+            .test(EthPeerImmutableAttributes.from(failForShortChainHeight)));
+    Assertions.assertTrue(
+        task.getPeerRequirementFilter().test(EthPeerImmutableAttributes.from(successfulCandidate)));
   }
 
   @Test

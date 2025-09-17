@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -154,7 +155,9 @@ public class TransactionBroadcasterTest {
   @Test
   public void onTransactionsAddedWithOnlyNonEth65PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeerNoEth65, ethPeerNoEth65_2));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(
+            Stream.of(ethPeerNoEth65, ethPeerNoEth65_2).map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -174,7 +177,8 @@ public class TransactionBroadcasterTest {
   public void onTransactionsAddedWithOnlyFewEth65PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.of(ethPeerWithEth65, ethPeerWithEth65_2));
+        .thenReturn(
+            Stream.of(ethPeerWithEth65, ethPeerWithEth65_2).map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -195,7 +199,9 @@ public class TransactionBroadcasterTest {
   public void onTransactionsAddedWithOnlyEth65PeersSendFullTransactionsAndTransactionHashes() {
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.of(ethPeerWithEth65, ethPeerWithEth65_2, ethPeerWithEth65_3));
+        .thenReturn(
+            Stream.of(ethPeerWithEth65, ethPeerWithEth65_2, ethPeerWithEth65_3)
+                .map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -219,7 +225,9 @@ public class TransactionBroadcasterTest {
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65)));
+        .thenReturn(
+            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
+                .map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -253,7 +261,9 @@ public class TransactionBroadcasterTest {
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65)));
+        .thenReturn(
+            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
+                .map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(BLOB, 0, 1));
 
@@ -282,7 +292,9 @@ public class TransactionBroadcasterTest {
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65)));
+        .thenReturn(
+            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
+                .map(EthPeerImmutableAttributes::from));
 
     // 1 full broadcast transaction type
     // 1 hash only broadcast transaction type
