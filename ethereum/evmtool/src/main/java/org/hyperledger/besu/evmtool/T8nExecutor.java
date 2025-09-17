@@ -532,7 +532,9 @@ public class T8nExecutor {
               .ifPresent(
                   p ->
                       p.processWithdrawals(
-                          referenceTestEnv.getWithdrawals(), worldState.updater(), Optional.empty()));
+                          referenceTestEnv.getWithdrawals(),
+                          worldState.updater(),
+                          Optional.empty()));
         } catch (RuntimeException re) {
           resultObject.put("exception", re.getMessage());
         }
@@ -545,7 +547,8 @@ public class T8nExecutor {
 
       RequestProcessingContext requestContext =
           new RequestProcessingContext(blockProcessingContext, receipts);
-      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext, Optional.empty()));
+      Optional<List<Request>> maybeRequests =
+          Optional.of(rpc.process(requestContext, Optional.empty()));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -47,8 +48,7 @@ public final class BlockAccessListEncoder {
               });
 
           acctOut.writeList(
-              acct.storageReads(),
-              (sr, srOut) -> srOut.writeBytes(sr.slot().getSlotKey().get()));
+              acct.storageReads(), (sr, srOut) -> srOut.writeBytes(sr.slot().getSlotKey().get()));
 
           acctOut.writeList(
               acct.balanceChanges(),
