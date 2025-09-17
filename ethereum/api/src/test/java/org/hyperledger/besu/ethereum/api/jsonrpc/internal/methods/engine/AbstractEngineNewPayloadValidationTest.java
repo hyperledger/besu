@@ -154,6 +154,12 @@ public class AbstractEngineNewPayloadValidationTest {
     @Test
     void validateBlobs_reportsEnhancedMessage_forExcessBlobGasMismatch() {
         when(mockHeader.getExcessBlobGas()).thenReturn(Optional.of(BlobGas.of(800)));
+
+        var mockGasLimitCalculator = mock(org.hyperledger.besu.ethereum.GasLimitCalculator.class);
+        when(mockProtocolSpec.getGasLimitCalculator()).thenReturn(mockGasLimitCalculator);
+        when(mockGasLimitCalculator.transactionBlobGasLimitCap()).thenReturn(1000000L);
+        when(mockGasLimitCalculator.currentBlobGasLimit()).thenReturn(1000000L);
+
         try (MockedStatic<ExcessBlobGasCalculator> mocked = mockStatic(ExcessBlobGasCalculator.class)) {
             mocked
                     .when(() ->
@@ -173,6 +179,39 @@ public class AbstractEngineNewPayloadValidationTest {
             assertThat(result.getErrorMessage()).contains("Expected", "1000");
             assertThat(result.getErrorMessage()).contains("got", "800");
         }
+    }
+
+    @Test
+    void validateBlobs_reportsEnhancedMessage_forBlobGasUsedMismatch() {
+        when(mockProtocolSpec.getGasCalculator()).thenReturn(mockGasCalculator);
+        when(mockGasCalculator.blobGasCost(2L)).thenReturn(262144L);
+        when(mockGasCalculator.blobGasCost(1L)).thenReturn(131072L);
+
+        var mockGasLimitCalculator = mock(org.hyperledger.besu.ethereum.GasLimitCalculator.class);
+        when(mockProtocolSpec.getGasLimitCalculator()).thenReturn(mockGasLimitCalculator);
+        when(mockGasLimitCalculator.transactionBlobGasLimitCap()).thenReturn(1000000L);
+        when(mockGasLimitCalculator.currentBlobGasLimit()).thenReturn(1000000L);
+
+        when(mockHeader.getBlobGasUsed()).thenReturn(Optional.of(100000L));
+
+        List<VersionedHash> versionedHashes = List.of(createValidVersionedHash(1), createValidVersionedHash(2));
+
+        Transaction blobTx1 = mock(Transaction.class);
+        Transaction blobTx2 = mock(Transaction.class);
+        when(blobTx1.getVersionedHashes()).thenReturn(Optional.of(List.of(versionedHashes.get(0))));
+        when(blobTx2.getVersionedHashes()).thenReturn(Optional.of(List.of(versionedHashes.get(1))));
+        List<Transaction> blobTransactions = List.of(blobTx1, blobTx2);
+
+        var result = method.testValidateBlobs(
+                blobTransactions,
+                mockHeader,
+                Optional.of(mockParentHeader),
+                Optional.of(versionedHashes),
+                mockProtocolSpec);
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrorMessage()).contains("Expected", "262144");
+        assertThat(result.getErrorMessage()).contains("got", "100000");
     }
 
     @Test
@@ -264,3 +303,4 @@ public class AbstractEngineNewPayloadValidationTest {
         return new VersionedHash(Bytes32.wrap(validHash));
     }
 }
+
