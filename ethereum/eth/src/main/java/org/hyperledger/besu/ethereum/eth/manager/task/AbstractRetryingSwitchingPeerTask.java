@@ -127,12 +127,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   protected Optional<EthPeer> nextPeerToTry() {
-    for (EthPeer peer : getEthContext().getEthPeers().getBestPeers()) {
-      if (isSuitablePeer(EthPeerImmutableAttributes.from(peer)) && !triedPeers.contains(peer)) {
-        return Optional.of(peer);
-      }
-    }
-    return Optional.empty();
+    return getEthContext()
+        .getEthPeers()
+        .streamBestPeers()
+        .filter((peer) -> isSuitablePeer(peer) && !triedPeers.contains(peer.ethPeer()))
+        .map(EthPeerImmutableAttributes::ethPeer)
+        .findFirst();
   }
 
   private void refreshPeers() {
