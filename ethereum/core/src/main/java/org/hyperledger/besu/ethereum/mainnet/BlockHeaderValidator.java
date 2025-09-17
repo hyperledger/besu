@@ -86,10 +86,7 @@ public class BlockHeaderValidator {
             rule -> {
               boolean worked = rule.validate(header, parent, protocolContext);
               if (!worked) {
-                String canonicalName = rule.innerRuleClass().getCanonicalName();
-                LOG.debug(
-                    "{} rule failed",
-                    canonicalName == null ? rule.innerRuleClass().getName() : canonicalName);
+                LOG.debug("{} rule failed", rule);
               }
               return worked;
             });
@@ -131,8 +128,9 @@ public class BlockHeaderValidator {
       return includeInLightValidation;
     }
 
-    public Class<? extends AttachedBlockHeaderValidationRule> innerRuleClass() {
-      return wrappedRule.getClass();
+    @Override
+    public String toString() {
+      return this.wrappedRule.toString();
     }
   }
 

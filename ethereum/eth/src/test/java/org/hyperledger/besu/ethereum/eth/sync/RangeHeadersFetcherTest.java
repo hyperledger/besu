@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -81,7 +82,7 @@ public class RangeHeadersFetcherTest {
           }
         }
         return new PeerTaskExecutorResult<List<BlockHeader>>(
-            Optional.of(resultList), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+            Optional.of(resultList), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
       };
 
   private EthProtocolManager ethProtocolManager;
@@ -330,7 +331,7 @@ public class RangeHeadersFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        new FastSyncState(targetHeader),
+        new FastSyncState(targetHeader, false),
         metricsSystem);
   }
 

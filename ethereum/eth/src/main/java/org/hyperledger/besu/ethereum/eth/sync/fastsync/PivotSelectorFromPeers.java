@@ -83,7 +83,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
       return Optional.empty();
     }
     LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-    return Optional.of(new FastSyncState(pivotBlockNumber));
+    return Optional.of(new FastSyncState(pivotBlockNumber, false));
   }
 
   protected Optional<EthPeer> selectBestPeer() {

@@ -152,7 +152,7 @@ public class WorldStateDownloaderBenchmark {
   @Benchmark
   public Optional<Bytes> downloadWorldState() {
     final CompletableFuture<Void> result =
-        worldStateDownloader.run(null, new FastSyncState(blockHeader));
+        worldStateDownloader.run(null, new FastSyncState(blockHeader, false));
     if (result.isDone()) {
       throw new IllegalStateException("World state download was already complete");
     }

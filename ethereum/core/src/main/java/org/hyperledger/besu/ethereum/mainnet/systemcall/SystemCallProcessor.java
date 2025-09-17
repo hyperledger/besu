@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -88,7 +89,8 @@ public class SystemCallProcessor {
             inputData);
 
     if (!frame.getCode().isValid()) {
-      throw new RuntimeException("System call did not execute to completion - opcode invalid");
+      throw new RuntimeException(
+          "System call did not execute to completion - opcode invalid at address: " + callAddress);
     }
 
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
@@ -102,6 +104,11 @@ public class SystemCallProcessor {
     }
 
     // The call must execute to completion
+    LOG.error(
+        "System call did not execute to completion - haltReason: {}, address: {}, frame state: {}",
+        frame.getExceptionalHaltReason().orElse(ExceptionalHaltReason.NONE),
+        callAddress,
+        frame.getState());
     String errorMessage =
         frame
             .getExceptionalHaltReason()
