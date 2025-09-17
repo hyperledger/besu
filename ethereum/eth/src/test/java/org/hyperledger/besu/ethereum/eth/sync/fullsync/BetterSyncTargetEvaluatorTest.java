@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -164,7 +164,7 @@ public class BetterSyncTargetEvaluatorTest {
     chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     when(peer.getReputation()).thenReturn(new PeerReputation());
-      PeerConnection connection = mock(PeerConnection.class);
+    PeerConnection connection = mock(PeerConnection.class);
     when(peer.getConnection()).thenReturn(connection);
     return peer;
   }
