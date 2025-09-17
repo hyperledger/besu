@@ -83,7 +83,7 @@ public final class BootnodeResolver {
         }
 
       } else {
-        
+
         final Path p = Paths.get(node);
         if (Files.exists(p)) {
           try {
@@ -93,14 +93,13 @@ public final class BootnodeResolver {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Bootnodes fetched from {}: {}", node, lines);
             }
-            continue; 
+            continue;
           } catch (final IOException e) {
             throw new BootnodeResolutionException(
                 "Failed to read bootnodes from file: " + node + "; " + e.getMessage(), e);
           }
         }
 
-        
         resolved.add(node);
         LOG.debug("Using raw bootnode string: {}", node);
       }
@@ -113,9 +112,9 @@ public final class BootnodeResolver {
   private static List<String> readPathLines(final Path path) throws IOException {
     try (var lines = Files.lines(path, UTF_8)) {
       return lines
-          .map(String::trim) 
-          .filter(l -> !l.isEmpty()) 
-          .filter(l -> !l.startsWith("#")) 
+          .map(String::trim)
+          .filter(l -> !l.isEmpty())
+          .filter(l -> !l.startsWith("#"))
           .toList();
     }
   }
