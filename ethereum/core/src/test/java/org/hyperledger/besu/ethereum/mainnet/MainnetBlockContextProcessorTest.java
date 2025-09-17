@@ -145,7 +145,8 @@ public class MainnetBlockContextProcessorTest {
             OperationTracer.NO_TRACING);
 
     when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
-    return systemCallProcessor.process(CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY, Optional.empty());
+    return systemCallProcessor.process(
+        CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY, Optional.empty());
   }
 
   private MutableWorldState createWorldState(final Address address) {
