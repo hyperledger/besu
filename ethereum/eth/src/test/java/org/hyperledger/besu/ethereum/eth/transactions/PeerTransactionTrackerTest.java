@@ -18,11 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -32,8 +37,8 @@ import org.junit.jupiter.api.Test;
 
 public class PeerTransactionTrackerTest {
   private final EthPeers ethPeers = mock(EthPeers.class);
-  private final EthPeer ethPeer1 = mock(EthPeer.class);
-  private final EthPeer ethPeer2 = mock(EthPeer.class);
+  private final EthPeer ethPeer1 = mockPeer();
+  private final EthPeer ethPeer2 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
@@ -210,5 +215,17 @@ public class PeerTransactionTrackerTest {
         return stopTracking;
       }
     };
+  }
+
+  private EthPeer mockPeer() {
+    final EthPeer peer = mock(EthPeer.class);
+    final ChainState chainState = new ChainState();
+    chainState.updateHeightEstimate(0);
+    chainState.statusReceived(Hash.EMPTY, Difficulty.of(0));
+    when(peer.chainState()).thenReturn(chainState);
+    when(peer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    when(peer.getConnection()).thenReturn(connection);
+    return peer;
   }
 }
