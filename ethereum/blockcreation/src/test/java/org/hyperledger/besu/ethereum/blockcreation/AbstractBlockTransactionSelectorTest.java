@@ -210,6 +210,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     return false;
   }
 
+  private Boolean shouldFinalize() {
+    return false;
+  }
+
   protected Wei getMinGasPrice() {
     return Wei.ONE;
   }
@@ -1414,6 +1418,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             blockHeader,
             protocolSchedule.getByBlockHeader(blockHeader).getTransactionReceiptFactory(),
             this::isCancelled,
+            this::shouldFinalize,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,

@@ -60,6 +60,7 @@ public class TransactionSelectionResult {
   private enum BaseStatus implements Status {
     SELECTED,
     BLOCK_FULL(true, false, false),
+    FINALIZATION_REQUESTED(true, false, false),
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SIZE_ABOVE_THRESHOLD(true, false, false),
@@ -115,6 +116,13 @@ public class TransactionSelectionResult {
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
+
+  /**
+   * The transaction has not been selected since the finalization of the block building has been
+   * selected.
+   */
+  public static final TransactionSelectionResult FINALIZATION_REQUESTED =
+      new TransactionSelectionResult(BaseStatus.FINALIZATION_REQUESTED);
 
   /** The block already contains the max number of allowed blobs. */
   public static final TransactionSelectionResult BLOBS_FULL =

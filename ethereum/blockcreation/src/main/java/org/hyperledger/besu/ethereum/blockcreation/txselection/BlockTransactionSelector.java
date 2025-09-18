@@ -99,6 +99,7 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector implements BlockTransactionSelectionService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
   private final Supplier<Boolean> isCancelled;
+  private final Supplier<Boolean> shouldFinalize;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
   //  private final WorldUpdater worldUpdater;
@@ -131,6 +132,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Supplier<Boolean> isCancelled,
+      final Supplier<Boolean> shouldFinalize,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final ProtocolSpec protocolSpec,
@@ -142,6 +144,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.worldState = worldState;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
+    this.shouldFinalize = shouldFinalize;
     this.ethScheduler = ethScheduler;
     this.blockSelectionContext =
         new BlockSelectionContext(
@@ -219,9 +222,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       txSelectionTask.get(blockTxsSelectionMaxTime, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
-        throw new CancellationException("Cancelled during transaction selection");
+        LOG.debug(
+            "Transaction selection cancelled during execution, finalizing with current progress");
+      } else {
+        LOG.warn("Error during block transaction selection", e);
       }
-      LOG.warn("Error during block transaction selection", e);
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
       synchronized (isTimeout) {
@@ -317,12 +322,20 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
    * provided transaction's gasLimit does not fit within the space remaining in the block.
    *
    * @param pendingTransaction The transaction to be evaluated.
-   * @return The result of the transaction evaluation process.
-   * @throws CancellationException if the transaction selection process is cancelled.
+   * @return The result of the transaction evaluation process. Returns FINALIZATION_REQUESTED if the
+   *     transaction selection process is cancelled to allow graceful completion.
    */
   @Override
   public TransactionSelectionResult evaluatePendingTransaction(
       final org.hyperledger.besu.datatypes.PendingTransaction pendingTransaction) {
+
+    // Check if we should finalize the block gracefully
+    if (shouldFinalize.get()) {
+      LOG.debug(
+          "Block finalization requested, stopping transaction selection with {} transactions",
+          transactionSelectionResults.getSelectedTransactions().size());
+      return TransactionSelectionResult.FINALIZATION_REQUESTED;
+    }
 
     checkCancellation();
 
