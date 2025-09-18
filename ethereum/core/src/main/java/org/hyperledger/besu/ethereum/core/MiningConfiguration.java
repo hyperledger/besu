@@ -179,18 +179,21 @@ public abstract class MiningConfiguration {
     };
   }
 
-  public long getBlockTxsSelectionMaxTime() {
+  public Duration getBlockTxsSelectionMaxTime() {
     final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
     if (maybeBlockPeriodSeconds.isPresent()) {
-      return (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
-              * getPoaBlockTxsSelectionMaxTime().getValue())
-          / 100;
+      return Duration.ofMillis(
+          (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
+                  * getPoaBlockTxsSelectionMaxTime().getValue())
+              / 100);
     }
-    return getNonPoaBlockTxsSelectionMaxTime().getValue();
+    return Duration.ofMillis(getNonPoaBlockTxsSelectionMaxTime().getValue());
   }
 
-  public long getPluginTxsSelectionMaxTime() {
-    return (getBlockTxsSelectionMaxTime() * getPluginBlockTxsSelectionMaxTime().getValue()) / 100;
+  public Duration getPluginTxsSelectionMaxTime() {
+    return Duration.ofMillis(
+        (getBlockTxsSelectionMaxTime().toMillis() * getPluginBlockTxsSelectionMaxTime().getValue())
+            / 100);
   }
 
   @Value.Default
