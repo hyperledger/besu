@@ -166,7 +166,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     maybeBlockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
+            .filter(BlockAccessListFactory::isForkActivated)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
   }
 
