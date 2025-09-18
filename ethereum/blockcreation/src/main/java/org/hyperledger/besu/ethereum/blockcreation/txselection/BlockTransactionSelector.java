@@ -48,7 +48,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -144,7 +143,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
       final EthScheduler ethScheduler,
-      final SelectorsStateManager selectorsStateManager) {
+      final SelectorsStateManager selectorsStateManager,
+      final Optional<BlockAccessList.BlockAccessListBuilder> maybeBlockAccessListBuilder) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -173,11 +173,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.blockTxsSelectionMaxTimeNanos = blockTxsSelectionMaxTime.toNanos();
     this.pluginTxsSelectionMaxTimeNanos =
         miningConfiguration.getPluginTxsSelectionMaxTime(blockTxsSelectionMaxTime).toNanos();
-    this.maybeBlockAccessListBuilder =
-        protocolSpec
-            .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isForkActivated)
-            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+    this.maybeBlockAccessListBuilder = maybeBlockAccessListBuilder;
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -208,10 +204,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
-    maybeBlockAccessListBuilder.ifPresent(
-        blockAccessListBuilder -> {
-          transactionSelectionResults.setBlockAccessList(blockAccessListBuilder.build());
-        });
     return transactionSelectionResults;
   }
 
@@ -442,10 +434,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     transactions.forEach(
         transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
 
-    maybeBlockAccessListBuilder.ifPresent(
-        blockAccessListBuilder -> {
-          transactionSelectionResults.setBlockAccessList(blockAccessListBuilder.build());
-        });
     return transactionSelectionResults;
   }
 
@@ -617,7 +605,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     final TransactionAccessList transactionAccessList =
-        new TransactionAccessList(currentTxnLocation.get());
+        new TransactionAccessList(currentTxnLocation.get() + 1);
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),

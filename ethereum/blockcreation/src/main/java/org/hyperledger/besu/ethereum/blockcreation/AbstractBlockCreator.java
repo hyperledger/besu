@@ -47,12 +47,16 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
@@ -194,11 +198,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
-      final boolean includeBlockAccessList =
-          newProtocolSpec
-              .getBlockAccessListFactory()
-              .filter(BlockAccessListFactory::isForkActivated)
-              .isPresent();
 
       final ProcessableBlockHeader processableBlockHeader =
           createPending(
@@ -228,6 +227,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       operationTracer.traceStartBlock(
           disposableWorldState, processableBlockHeader, miningBeneficiary);
 
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder =
+          newProtocolSpec
+              .getBlockAccessListFactory()
+              .filter(BlockAccessListFactory::isForkActivated)
+              .map(BlockAccessListFactory::newBlockAccessListBuilder);
+      final Optional<TransactionAccessList> preExecutionAccessList =
+          Optional.of(new TransactionAccessList(0));
+
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
               processableBlockHeader,
@@ -237,8 +244,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
               operationTracer);
-      // TODO: Pass transaction access list with zero index
-      newProtocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
+      newProtocolSpec
+          .getPreExecutionProcessor()
+          .process(blockProcessingContext, preExecutionAccessList);
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
@@ -250,20 +258,34 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               newProtocolSpec,
               pluginTransactionSelector,
               selectorsStateManager,
-              parentHeader);
+              parentHeader,
+              blockAccessListBuilder);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
       throwIfStopped();
 
+      final Optional<TransactionAccessList> postExecutionAccessList =
+          Optional.of(
+              new TransactionAccessList(transactionResults.getSelectedTransactions().size() + 1));
+
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
           newProtocolSpec.getWithdrawalsProcessor();
+
+      WorldUpdater worldUpdater = disposableWorldState.updater();
+      WorldUpdater postExecutionUpdater = worldUpdater.updater();
+      if (!(postExecutionUpdater instanceof StackedUpdater<?, ?>)) {
+        postExecutionUpdater = worldUpdater;
+      }
       final boolean withdrawalsCanBeProcessed =
           maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent();
       if (withdrawalsCanBeProcessed) {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), disposableWorldState.updater(), Optional.empty());
+                maybeWithdrawals.get(), postExecutionUpdater, postExecutionAccessList);
+        if (postExecutionUpdater instanceof StackedUpdater<?, ?>) {
+          worldUpdater.commit();
+        }
       }
 
       throwIfStopped();
@@ -276,7 +298,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       Optional<List<Request>> maybeRequests =
           requestProcessor.map(
-              processor -> processor.process(requestProcessingContext, Optional.empty()));
+              processor -> processor.process(requestProcessingContext, postExecutionAccessList));
+
+      if (postExecutionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+        postExecutionAccessList.ifPresent(
+            t ->
+                blockAccessListBuilder.ifPresent(
+                    b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
+      }
 
       throwIfStopped();
 
@@ -316,9 +345,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
-      if (includeBlockAccessList && transactionResults.getBlockAccessList().isPresent()) {
-        builder.balHash(BodyValidation.balHash(transactionResults.getBlockAccessList().get()));
-      }
+
+      final Optional<BlockAccessList> blockAccessList = blockAccessListBuilder.map(BlockAccessListBuilder::build);
+      blockAccessList.ifPresent(b -> builder.balHash(BodyValidation.balHash(b)));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -331,10 +360,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
           new BlockBody(
-              transactionResults.getSelectedTransactions(),
-              ommers,
-              withdrawals,
-              includeBlockAccessList ? transactionResults.getBlockAccessList() : Optional.empty());
+              transactionResults.getSelectedTransactions(), ommers, withdrawals, blockAccessList);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
@@ -382,7 +408,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
       final SelectorsStateManager selectorsStateManager,
-      final BlockHeader parentHeader)
+      final BlockHeader parentHeader,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
@@ -409,7 +436,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec,
             pluginTransactionSelector,
             ethScheduler,
-            selectorsStateManager);
+            selectorsStateManager,
+            blockAccessListBuilder);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
