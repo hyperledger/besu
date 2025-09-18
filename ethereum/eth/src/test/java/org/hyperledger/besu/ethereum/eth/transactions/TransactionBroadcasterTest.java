@@ -28,13 +28,17 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,6 +53,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -64,11 +69,11 @@ public class TransactionBroadcasterTest {
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
-  private final EthPeer ethPeerNoEth65 = mock(EthPeer.class);
-  private final EthPeer ethPeerWithEth65 = mock(EthPeer.class);
-  private final EthPeer ethPeerNoEth65_2 = mock(EthPeer.class);
-  private final EthPeer ethPeerWithEth65_2 = mock(EthPeer.class);
-  private final EthPeer ethPeerWithEth65_3 = mock(EthPeer.class);
+  private final EthPeer ethPeerNoEth65 = mockPeer();
+  private final EthPeer ethPeerWithEth65 = mockPeer();
+  private final EthPeer ethPeerNoEth65_2 = mockPeer();
+  private final EthPeer ethPeerWithEth65_2 = mockPeer();
+  private final EthPeer ethPeerWithEth65_3 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
   private TransactionBroadcaster txBroadcaster;
@@ -385,5 +390,18 @@ public class TransactionBroadcasterTest {
   private void verifyNoTransactionAddedToPeerSendingQueue(final EthPeer peer) {
 
     verify(transactionTracker, times(0)).addToPeerSendQueue(eq(peer), any());
+  }
+
+  private EthPeer mockPeer() {
+    EthPeer ethPeer = Mockito.mock(EthPeer.class);
+    ChainState chainState = Mockito.mock(ChainState.class);
+
+    Mockito.when(ethPeer.chainState()).thenReturn(chainState);
+    Mockito.when(chainState.getEstimatedHeight()).thenReturn(0L);
+    Mockito.when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+    Mockito.when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(ethPeer.getConnection()).thenReturn(connection);
+    return ethPeer;
   }
 }
