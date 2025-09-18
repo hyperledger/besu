@@ -20,6 +20,7 @@
 - Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
+- Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
 
 #### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
