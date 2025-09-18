@@ -472,26 +472,16 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     final TransactionAccessList transactionAccessList =
         new TransactionAccessList(currentTxnLocation.get());
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            txWorldStateUpdater,
-            blockSelectionContext.pendingBlockHeader(),
-            transaction,
-            blockSelectionContext.miningBeneficiary(),
-            operationTracer,
-            blockHashLookup,
-            TransactionValidationParams.mining(),
-            blockSelectionContext.blobGasPrice(),
-            Optional.of(transactionAccessList));
-    maybeBlockAccessListBuilder.ifPresent(
-        blockAccessListBuilder -> {
-          if (txWorldStateUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-            blockAccessListBuilder.addTransactionLevelAccessList(
-                transactionAccessList, stackedUpdater);
-          }
-        });
-
-    return result;
+    return transactionProcessor.processTransaction(
+        txWorldStateUpdater,
+        blockSelectionContext.pendingBlockHeader(),
+        transaction,
+        blockSelectionContext.miningBeneficiary(),
+        operationTracer,
+        blockHashLookup,
+        TransactionValidationParams.mining(),
+        blockSelectionContext.blobGasPrice(),
+        Optional.of(transactionAccessList));
   }
 
   /**
@@ -522,6 +512,18 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               transactionReceiptFactory.create(
                   transaction.getType(), processingResult, cumulativeGasUsed);
 
+          maybeBlockAccessListBuilder.ifPresent(
+              blockAccessListBuilder ->
+                  processingResult
+                      .getTransactionAccessList()
+                      .ifPresent(
+                          transactionAccessList -> {
+                            if (txWorldStateUpdater
+                                instanceof StackedUpdater<?, ?> stackedUpdater) {
+                              blockAccessListBuilder.addTransactionLevelAccessList(
+                                  transactionAccessList, stackedUpdater);
+                            }
+                          }));
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
           notifySelected(evaluationContext, processingResult);
