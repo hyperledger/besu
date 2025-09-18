@@ -45,9 +45,11 @@ public class BlockBroadcasterTest {
   @Test
   public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes.ethPeer()).thenReturn(ethPeer);
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.of(EthPeerImmutableAttributes.from(ethPeer)));
+    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeerImmutableAttributes));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -65,16 +67,19 @@ public class BlockBroadcasterTest {
   @Test
   public void blockPropagationUnitTestSeenUnseen() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer0 = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes0 =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes0.ethPeer()).thenReturn(ethPeer0);
     when(ethPeer0.hasSeenBlock(any())).thenReturn(true);
 
     final EthPeer ethPeer1 = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes1 =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes1.ethPeer()).thenReturn(ethPeer1);
 
     final EthPeers ethPeers = mock(EthPeers.class);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.of(
-                EthPeerImmutableAttributes.from(ethPeer0),
-                EthPeerImmutableAttributes.from(ethPeer1)));
+        .thenReturn(Stream.of(ethPeerImmutableAttributes0, ethPeerImmutableAttributes1));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);

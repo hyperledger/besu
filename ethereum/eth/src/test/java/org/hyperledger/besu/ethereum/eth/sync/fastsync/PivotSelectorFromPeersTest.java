@@ -14,13 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -86,6 +91,10 @@ public class PivotSelectorFromPeersTest {
     Mockito.when(chainState.hasEstimatedHeight()).thenReturn(hasEstimatedHeight);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
     Mockito.when(ethPeer.isFullyValidated()).thenReturn(isFullyValidated);
+    Mockito.when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+    Mockito.when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(ethPeer.getConnection()).thenReturn(connection);
 
     return ethPeer;
   }
