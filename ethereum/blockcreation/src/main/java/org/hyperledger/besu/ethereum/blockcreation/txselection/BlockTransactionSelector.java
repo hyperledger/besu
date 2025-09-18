@@ -370,13 +370,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     synchronized (isTimeout) {
       isTooLate = isTimeout.get();
       if (!isTooLate) {
+        for (final var pendingAction : selectedTxPendingActions) {
+          pendingAction.run();
+        }
         selectorsStateManager.commit();
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
         blockWorldStateUpdater.markTransactionBoundary();
-        for (final var pendingAction : selectedTxPendingActions) {
-          pendingAction.run();
-        }
       }
     }
 
