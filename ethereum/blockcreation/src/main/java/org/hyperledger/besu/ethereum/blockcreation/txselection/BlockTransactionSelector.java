@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
@@ -124,6 +126,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private volatile TransactionEvaluationContext currTxEvaluationContext;
   private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
   private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
+  private volatile TransactionSelectionResult validTxSelectionTimeoutResult;
+  private volatile TransactionSelectionResult invalidTxSelectionTimeoutResult;
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -233,6 +237,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   }
 
   private void internalTimeLimitedSelection(final long remainingSelectionTime) {
+    validTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT;
+    invalidTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT_INVALID_TX;
+
     final var txSelectionTask =
         new FutureTask<Void>(
             () -> {
@@ -278,6 +285,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   }
 
   private void pluginTimeLimitedSelection(final long startTime) {
+    validTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT;
+    invalidTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
+
     final CountDownLatch pluginSelectionDone = new CountDownLatch(1);
 
     final var pluginTxSelectionTask =
@@ -710,7 +720,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       return selectionResult.discard() ? INVALID_TX_EVALUATION_TOO_LONG : TX_EVALUATION_TOO_LONG;
     }
 
-    return selectionResult.discard() ? BLOCK_SELECTION_TIMEOUT_INVALID_TX : BLOCK_SELECTION_TIMEOUT;
+    return selectionResult.discard()
+        ? invalidTxSelectionTimeoutResult
+        : validTxSelectionTimeoutResult;
   }
 
   /**
