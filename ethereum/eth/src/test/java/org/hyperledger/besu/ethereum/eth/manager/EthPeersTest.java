@@ -47,6 +47,7 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 public class EthPeersTest {
@@ -252,8 +253,13 @@ public class EthPeersTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    when(peerRequest.isEthPeerSuitable(EthPeerImmutableAttributes.from(peer.getEthPeer())))
-        .thenReturn(true);
+    when(peerRequest.isEthPeerSuitable(Mockito.any()))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              EthPeerImmutableAttributes ethPeer =
+                  invocationOnMock.getArgument(0, EthPeerImmutableAttributes.class);
+              return ethPeer.ethPeer().equals(peer.getEthPeer());
+            });
     useAllAvailableCapacity(peer.getEthPeer());
 
     final PendingPeerRequest pendingRequest =
