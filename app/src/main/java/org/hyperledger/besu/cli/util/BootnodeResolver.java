@@ -29,12 +29,25 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A utility class for resolving bootnodes from various sources such as URLs, files, or raw strings.
+ */
 public final class BootnodeResolver {
 
   private static final Logger LOG = LoggerFactory.getLogger(BootnodeResolver.class);
 
   private BootnodeResolver() {}
 
+  /**
+   * Resolves a list of bootnodes from the provided sources.
+   *
+   * <p>The sources can be URLs (http, https, file), local file paths, or raw bootnode strings.
+   * Comments (lines starting with '#') and empty lines are ignored.
+   *
+   * @param bootNodesList A list of bootnode sources (e.g., URLs, file paths, or raw strings).
+   * @return A list of resolved bootnode strings.
+   * @throws BootnodeResolutionException If an error occurs while resolving bootnodes.
+   */
   public static List<String> resolve(final List<String> bootNodesList) {
     final List<String> resolved = new ArrayList<>();
     if (bootNodesList == null || bootNodesList.isEmpty()) {
@@ -109,6 +122,15 @@ public final class BootnodeResolver {
     return resolved;
   }
 
+  /**
+   * Reads and processes lines from a file at the specified path.
+   *
+   * <p>Trims each line, removes empty lines, and ignores lines starting with '#'.
+   *
+   * @param path The path to the file.
+   * @return A list of processed lines from the file.
+   * @throws IOException If an error occurs while reading the file.
+   */
   private static List<String> readPathLines(final Path path) throws IOException {
     try (var lines = Files.lines(path, UTF_8)) {
       return lines
@@ -119,7 +141,14 @@ public final class BootnodeResolver {
     }
   }
 
+  /** Exception thrown when there is an error resolving bootnodes. */
   public static final class BootnodeResolutionException extends RuntimeException {
+    /**
+     * Constructs a new BootnodeResolutionException with the specified detail message and cause.
+     *
+     * @param message The detail message.
+     * @param cause The cause of the exception.
+     */
     public BootnodeResolutionException(final String message, final Throwable cause) {
       super(message, cause);
     }
