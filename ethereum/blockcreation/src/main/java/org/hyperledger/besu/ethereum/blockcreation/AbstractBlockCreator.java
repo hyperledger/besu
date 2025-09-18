@@ -271,21 +271,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
           newProtocolSpec.getWithdrawalsProcessor();
 
-      WorldUpdater worldUpdater = disposableWorldState.updater();
-      WorldUpdater postExecutionUpdater = worldUpdater.updater();
-      if (!(postExecutionUpdater instanceof StackedUpdater<?, ?>)) {
-        postExecutionUpdater = worldUpdater;
-      }
       final boolean withdrawalsCanBeProcessed =
           maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent();
       if (withdrawalsCanBeProcessed) {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), postExecutionUpdater, postExecutionAccessList);
-        if (postExecutionUpdater instanceof StackedUpdater<?, ?>) {
-          worldUpdater.commit();
-        }
+                maybeWithdrawals.get(), disposableWorldState.updater(), postExecutionAccessList);
       }
 
       throwIfStopped();
@@ -300,7 +292,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           requestProcessor.map(
               processor -> processor.process(requestProcessingContext, postExecutionAccessList));
 
-      if (postExecutionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+      if (disposableWorldState.updater().updater() instanceof StackedUpdater<?, ?> stackedUpdater) {
         postExecutionAccessList.ifPresent(
             t ->
                 blockAccessListBuilder.ifPresent(
