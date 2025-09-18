@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -175,6 +176,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
+            .filter(
+                b ->
+                    protocolSpec
+                        .getEvm()
+                        .getEvmConfiguration()
+                        .worldUpdaterMode()
+                        .equals(WorldUpdaterMode.STACKED))
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
@@ -240,14 +248,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               transactionAccessList);
 
-      if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-        transactionProcessingResult
-            .getTransactionAccessList()
-            .ifPresent(
-                t ->
-                    blockAccessListBuilder.ifPresent(
-                        b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
-      }
+      addTransactionAccessListToBlockAccessListBuilder(
+          transactionProcessingResult.getTransactionAccessList(),
+          blockAccessListBuilder,
+          transactionUpdater);
 
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
@@ -307,11 +311,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final Optional<TransactionAccessList> postExecutionAccessList =
         createAccessList(blockAccessListBuilder, transactions.size() + 1);
-    final WorldUpdater blockUpdater = worldState.updater();
-    WorldUpdater postExecutionUpdater = blockUpdater.updater();
-    if (!(postExecutionUpdater instanceof StackedUpdater<?, ?>)) {
-      postExecutionUpdater = blockUpdater;
-    }
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
@@ -320,14 +319,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), postExecutionUpdater, postExecutionAccessList);
-        if (postExecutionUpdater instanceof StackedUpdater<?, ?>) {
-          blockUpdater.commit();
-        }
+                maybeWithdrawals.get(), worldState.updater(), postExecutionAccessList);
       } catch (final Exception e) {
         LOG.error("failed processing withdrawals", e);
         if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
         }
         return new BlockProcessingResult(Optional.empty(), e);
       }
@@ -353,12 +349,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    if (postExecutionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-      postExecutionAccessList.ifPresent(
-          t ->
-              blockAccessListBuilder.ifPresent(
-                  b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
-    }
+    addTransactionAccessListToBlockAccessListBuilder(
+        postExecutionAccessList, blockAccessListBuilder, worldState.updater().updater());
 
     final var optionalRequestsHash = blockHeader.getRequestsHash();
     if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
@@ -493,6 +485,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private Optional<TransactionAccessList> createAccessList(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder, final int i) {
     return blockAccessListBuilder.map(b -> new TransactionAccessList(i));
+  }
+
+  private void addTransactionAccessListToBlockAccessListBuilder(
+      final Optional<TransactionAccessList> transactionAccessList,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final WorldUpdater transactionUpdater) {
+    transactionAccessList.ifPresent(
+        t ->
+            blockAccessListBuilder.ifPresent(
+                b ->
+                    b.addTransactionLevelAccessList(t, (StackedUpdater<?, ?>) transactionUpdater)));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
