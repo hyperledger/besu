@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -115,7 +116,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isTimeout = new AtomicBoolean(false);
   private final long blockTxsSelectionMaxTime;
-  private final BlockAccessList.BlockAccessListBuilder balBuilder;
+  private final Optional<BlockAccessList.BlockAccessListBuilder> maybeBlockAccessListBuilder;
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
@@ -161,7 +162,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
     blockTxsSelectionMaxTime = miningConfiguration.getBlockTxsSelectionMaxTime();
-    balBuilder = new BlockAccessList.BlockAccessListBuilder();
+
+    maybeBlockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .filter(BlockAccessListFactory::isForkActivated)
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
   }
 
   private List<AbstractTransactionSelector> createTransactionSelectors(
@@ -192,7 +198,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
-    transactionSelectionResults.setBlockAccessList(balBuilder.build());
+    maybeBlockAccessListBuilder.ifPresent(
+        blockAccessListBuilder -> {
+          transactionSelectionResults.setBlockAccessList(blockAccessListBuilder.build());
+        });
     return transactionSelectionResults;
   }
 
@@ -294,7 +303,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     transactions.forEach(
         transaction -> evaluateTransaction(new PendingTransaction.Local.Priority(transaction)));
 
-    transactionSelectionResults.setBlockAccessList(balBuilder.build());
+    maybeBlockAccessListBuilder.ifPresent(
+        blockAccessListBuilder -> {
+          transactionSelectionResults.setBlockAccessList(blockAccessListBuilder.build());
+        });
     return transactionSelectionResults;
   }
 
@@ -358,13 +370,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     synchronized (isTimeout) {
       isTooLate = isTimeout.get();
       if (!isTooLate) {
+        for (final var pendingAction : selectedTxPendingActions) {
+          pendingAction.run();
+        }
         selectorsStateManager.commit();
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
         blockWorldStateUpdater.markTransactionBoundary();
-        for (final var pendingAction : selectedTxPendingActions) {
-          pendingAction.run();
-        }
       }
     }
 
@@ -460,21 +472,16 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
     final TransactionAccessList transactionAccessList =
         new TransactionAccessList(currentTxnLocation.get());
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            txWorldStateUpdater,
-            blockSelectionContext.pendingBlockHeader(),
-            transaction,
-            blockSelectionContext.miningBeneficiary(),
-            operationTracer,
-            blockHashLookup,
-            TransactionValidationParams.mining(),
-            blockSelectionContext.blobGasPrice(),
-            Optional.of(transactionAccessList));
-    if (txWorldStateUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-      balBuilder.addTransactionLevelAccessList(transactionAccessList, stackedUpdater);
-    }
-    return result;
+    return transactionProcessor.processTransaction(
+        txWorldStateUpdater,
+        blockSelectionContext.pendingBlockHeader(),
+        transaction,
+        blockSelectionContext.miningBeneficiary(),
+        operationTracer,
+        blockHashLookup,
+        TransactionValidationParams.mining(),
+        blockSelectionContext.blobGasPrice(),
+        Optional.of(transactionAccessList));
   }
 
   /**
@@ -505,6 +512,18 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               transactionReceiptFactory.create(
                   transaction.getType(), processingResult, cumulativeGasUsed);
 
+          maybeBlockAccessListBuilder.ifPresent(
+              blockAccessListBuilder ->
+                  processingResult
+                      .getTransactionAccessList()
+                      .ifPresent(
+                          transactionAccessList -> {
+                            if (txWorldStateUpdater
+                                instanceof StackedUpdater<?, ?> stackedUpdater) {
+                              blockAccessListBuilder.addTransactionLevelAccessList(
+                                  transactionAccessList, stackedUpdater);
+                            }
+                          }));
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
           notifySelected(evaluationContext, processingResult);
