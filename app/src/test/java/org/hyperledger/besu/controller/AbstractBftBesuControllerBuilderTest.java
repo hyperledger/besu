@@ -56,6 +56,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -195,7 +196,8 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
     assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
+    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime())
+        .isEqualTo(Duration.ofMillis(2000 * 75 / 100));
   }
 
   protected abstract BlockHeaderFunctions getBlockHeaderFunctions();
