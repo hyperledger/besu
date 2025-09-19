@@ -373,7 +373,26 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
-    cleanupBlockCreationTask(payloadId);
+
+    // Signal graceful finalization to the block creator
+    blockCreationTasks.computeIfPresent(
+        payloadId,
+        (pid, task) -> {
+          task.blockCreator.finalizeCurrentBlock();
+          LOG.debug("Signaled block creator to finalize gracefully for payload {}", payloadId);
+          return task;
+        });
+
+    // Schedule cleanup after a short delay to allow graceful completion
+    ethScheduler.scheduleServiceTask(
+        () -> {
+          try {
+            Thread.sleep(800); // Give 800ms for graceful finalization
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+          cleanupBlockCreationTask(payloadId);
+        });
   }
 
   private void tryToBuildBetterBlock(
