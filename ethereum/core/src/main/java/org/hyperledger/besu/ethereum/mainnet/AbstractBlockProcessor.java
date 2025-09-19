@@ -378,9 +378,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
-    LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-    blockTracer.traceEndBlock(blockHeader, blockBody);
-
     final Optional<BlockAccessList> maybeBlockAccessList;
     try {
       if (blockAccessListBuilder.isPresent()) {
@@ -411,6 +408,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       return new BlockProcessingResult(Optional.empty(), e);
     }
+
+    LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
+    blockTracer.traceEndBlock(blockHeader, blockBody);
 
     try {
       worldState.persist(blockHeader);
