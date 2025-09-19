@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
@@ -67,29 +65,33 @@ public class TransitionUtils<SwitchingObject> {
     consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
-    /**
-     * Dispatch function according to merge state.
-     *
-     * @param <T> the type parameter
-     * @param function the function
-     * @return the t
-     */
-    public <T> T dispatchFunctionAccordingToMergeState(final Function<SwitchingObject, T> function) {
-        return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
-    }
-
-
-    /**
-   * Dispatch function according to merge state and block header.
+  /**
+   * Dispatch function according to merge state.
    *
    * @param <T> the type parameter
-     * @param blockHeader the block header
    * @param function the function
    * @return the t
    */
-  public <T> T dispatchFunctionAccordingToMergeState(final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader,final Function<SwitchingObject, T> function) {
-    return function.apply(mergeContext.isPostMerge() && blockHeader.getDifficulty().getAsBigInteger().equals(BigInteger.ZERO)
-             ? postMergeObject : preMergeObject);
+  public <T> T dispatchFunctionAccordingToMergeState(final Function<SwitchingObject, T> function) {
+    return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
+  }
+
+  /**
+   * Dispatch function according to merge state and block header.
+   *
+   * @param <T> the type parameter
+   * @param blockHeader the block header
+   * @param function the function
+   * @return the t
+   */
+  public <T> T dispatchFunctionAccordingToMergeState(
+      final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader,
+      final Function<SwitchingObject, T> function) {
+    return function.apply(
+        mergeContext.isPostMerge()
+                && blockHeader.getDifficulty().getAsBigInteger().equals(BigInteger.ZERO)
+            ? postMergeObject
+            : preMergeObject);
   }
 
   /**
