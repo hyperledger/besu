@@ -65,6 +65,8 @@ public class TransactionSelectionResult {
     BLOCK_SIZE_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SELECTION_TIMEOUT(true, false, false),
     BLOCK_SELECTION_TIMEOUT_INVALID_TX(true, true, true),
+    PLUGIN_SELECTION_TIMEOUT(false, false, false),
+    PLUGIN_SELECTION_TIMEOUT_INVALID_TX(false, true, true),
     TX_EVALUATION_TOO_LONG(true, false, true),
     INVALID_TX_EVALUATION_TOO_LONG(true, true, true),
     INVALID_TRANSIENT(false, false, false),
@@ -127,6 +129,17 @@ public class TransactionSelectionResult {
   /** There was no more time to add transaction to the block, and the transaction is invalid */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT_INVALID_TX =
       new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT_INVALID_TX);
+
+  /** There was no more time for plugins to add transaction to the block */
+  public static final TransactionSelectionResult PLUGIN_SELECTION_TIMEOUT =
+      new TransactionSelectionResult(BaseStatus.PLUGIN_SELECTION_TIMEOUT);
+
+  /**
+   * There was no more time for plugins to add transaction to the block, and the transaction is
+   * invalid
+   */
+  public static final TransactionSelectionResult PLUGIN_SELECTION_TIMEOUT_INVALID_TX =
+      new TransactionSelectionResult(BaseStatus.PLUGIN_SELECTION_TIMEOUT_INVALID_TX);
 
   /** Transaction took too much to evaluate, but it was valid */
   public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =
