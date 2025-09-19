@@ -391,7 +391,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             System.currentTimeMillis(),
             miningOn.parentHeader);
     final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getTransactionSelectionResults().getBlockAccessList();
+        blockCreationResult.getBlock().getBody().getBlockAccessList();
     assertThat(maybeBlockAccessList).isEmpty();
   }
 

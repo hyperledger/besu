@@ -1444,7 +1444,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionSelectionService.createPluginTransactionSelector(selectorsStateManager),
             ethScheduler,
             selectorsStateManager,
-            new BlockAccessListBuilder());
+            Optional.empty());
 
     return selector;
   }
