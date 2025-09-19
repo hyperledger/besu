@@ -26,6 +26,7 @@
 #### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
 - Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
+- Improve DIV and SDIV performance [#9175](https://github.com/hyperledger/besu/pull/9175)
 
 #### Fusaka devnets
 
