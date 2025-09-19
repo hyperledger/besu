@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
@@ -124,6 +125,15 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
               + " To be only used on PoA networks, for other networks see block-txs-selection-max-time."
               + " (default: ${DEFAULT-VALUE})")
   private PositiveNumber poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+
+  @Option(
+      names = {"--plugin-block-txs-selection-max-time"},
+      converter = PositiveNumberConverter.class,
+      description =
+          "Specifies the maximum time that plugins could spent selecting transactions to be included in the block, as a percentage of the max block selection time."
+              + " (default: ${DEFAULT-VALUE})")
+  private PositiveNumber pluginBlockTxsSelectionMaxTime =
+      DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
@@ -292,6 +302,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
+    miningOptions.pluginBlockTxsSelectionMaxTime =
+        miningConfiguration.getPluginBlockTxsSelectionMaxTime();
 
     miningOptions.unstableOptions.remoteSealersLimit =
         miningConfiguration.getUnstable().getRemoteSealersLimit();
@@ -337,6 +349,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         .mutableInitValues(updatableInitValuesBuilder.build())
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
+        .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
         .unstable(
             ImmutableMiningConfiguration.Unstable.builder()
                 .remoteSealersLimit(unstableOptions.remoteSealersLimit)
