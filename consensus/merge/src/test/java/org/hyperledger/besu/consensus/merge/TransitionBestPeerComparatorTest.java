@@ -18,10 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -32,22 +33,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class TransitionBestPeerComparatorTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  EthPeer a;
+  EthPeerImmutableAttributes a;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  EthPeer b;
+  EthPeerImmutableAttributes b;
 
   @Test
   public void assertDistanceFromTTDPrecedence() {
     var comparator = new TransitionBestPeerComparator(Difficulty.of(5000));
-    when(a.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(5002));
-    when(b.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(4995));
+    when(a.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(5002));
+    when(b.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(4995));
     // a has less distance from TTD:
     assertThat(comparator.compare(a, b)).isEqualTo(1);
-    when(b.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(5001));
+    when(b.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(5001));
     // b has less distance from TTD:
     assertThat(comparator.compare(a, b)).isEqualTo(-1);
-    when(b.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(5002));
+    when(b.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(5002));
     // a and b are equi-distant
     assertThat(comparator.compare(a, b)).isEqualTo(0);
   }
@@ -55,8 +56,8 @@ public class TransitionBestPeerComparatorTest {
   @Test
   public void assertHandlesNewTTD() {
     var comparator = new TransitionBestPeerComparator(Difficulty.of(5000));
-    when(a.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(5002));
-    when(b.chainState().getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(4999));
+    when(a.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(5002));
+    when(b.estimatedTotalDifficulty()).thenReturn(UInt256.valueOf(4999));
     assertThat(comparator.compare(a, b)).isEqualTo(-1);
 
     // update TTD with actual value

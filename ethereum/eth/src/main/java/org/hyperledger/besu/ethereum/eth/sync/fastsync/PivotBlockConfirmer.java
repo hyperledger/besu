@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -110,7 +111,12 @@ class PivotBlockConfirmer {
     synchronized (runningQueries) {
       if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
         for (EthPeer ethPeer :
-            ethContext.getEthPeers().streamBestPeers().toList().subList(0, numberOfPeersToQuery)) {
+            ethContext
+                .getEthPeers()
+                .streamBestPeers()
+                .map(EthPeerImmutableAttributes::ethPeer)
+                .toList()
+                .subList(0, numberOfPeersToQuery)) {
           peersUsed.add(ethPeer);
           final CompletableFuture<?> query =
               executePivotQueryWithPeerTaskSystem(blockNumber, ethPeer)
@@ -198,7 +204,8 @@ class PivotBlockConfirmer {
                       ethContext
                           .getEthPeers()
                           .waitForPeer(
-                              (peer) -> !pivotBlockQueriesByPeerId.containsKey(peer.nodeId()))
+                              (peer) ->
+                                  !pivotBlockQueriesByPeerId.containsKey(peer.ethPeer().nodeId()))
                           // Ignore result, ensure even a timeout will result in calling
                           // executePivotQuery
                           .handle((r, e) -> null)
@@ -241,7 +248,10 @@ class PivotBlockConfirmer {
                 try {
                   return executePivotQueryWithPeerTaskSystem(
                       blockNumber,
-                      ethContext.getEthPeers().waitForPeer((p) -> !peersUsed.contains(p)).get());
+                      ethContext
+                          .getEthPeers()
+                          .waitForPeer((p) -> !peersUsed.contains(p.ethPeer()))
+                          .get());
                 } catch (InterruptedException | ExecutionException e) {
                   return CompletableFuture.failedFuture(e);
                 }
@@ -254,10 +264,11 @@ class PivotBlockConfirmer {
     return ethContext
         .getEthPeers()
         .streamBestPeers()
-        .filter(p -> p.chainState().getEstimatedHeight() >= blockNumber)
-        .filter(EthPeer::isFullyValidated)
-        .filter(p -> !pivotBlockQueriesByPeerId.keySet().contains(p.nodeId()))
+        .filter(p -> p.estimatedChainHeight() >= blockNumber)
+        .filter(EthPeerImmutableAttributes::isFullyValidated)
+        .filter(p -> !pivotBlockQueriesByPeerId.containsKey(p.ethPeer().nodeId()))
         .findFirst()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .flatMap((peer) -> createGetHeaderTask(peer, blockNumber));
   }
 
