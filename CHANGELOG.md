@@ -20,6 +20,7 @@
 - Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
 - Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
+- Configurable limit for how much time plugins are allowed take, to propose transactions, during block creation [#9184](https://github.com/hyperledger/besu/pull/9184)
 - Add Osaka, BPO1 and BPO2 fork times for holesky, hoodi and sepolia [#9196](https://github.com/hyperledger/besu/pull/9196/files)
 
 #### Performance
