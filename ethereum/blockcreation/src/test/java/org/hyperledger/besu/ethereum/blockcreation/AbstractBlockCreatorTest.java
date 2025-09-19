@@ -77,6 +77,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -296,9 +297,27 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     return createBlockCreator(protocolSpecAdapters);
   }
 
+  private CreateOn blockCreatorWithBalSupport() {
+    final var alwaysValidTransactionValidatorFactory = mock(TransactionValidatorFactory.class);
+    when(alwaysValidTransactionValidatorFactory.get())
+        .thenReturn(new AlwaysValidTransactionValidator());
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0,
+            specBuilder -> {
+              specBuilder.isReplayProtectionSupported(true);
+              specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              specBuilder.blockAccessListFactory(new BlockAccessListFactory(true, true));
+              specBuilder.transactionValidatorFactoryBuilder(
+                  (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
+              return specBuilder;
+            });
+    return createBlockCreator(protocolSpecAdapters);
+  }
+
   @Test
   public void blockAccessListIncludesAccountChanges() {
-    final CreateOn miningOn = blockCreatorWithBlobGasSupport();
+    final CreateOn miningOn = blockCreatorWithBalSupport();
     final AbstractBlockCreator blockCreator = miningOn.blockCreator;
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
@@ -343,6 +362,36 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     assertThat(accountChange3.balanceChanges().size()).isEqualTo(1);
     assertThat(accountChange3.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
     assertThat(accountChange3.balanceChanges().get(0).txIndex()).isNotNull();
+  }
+
+  @Test
+  public void blockAccessListShouldNotIncludesAccountWithoutBalSupport() {
+    final CreateOn miningOn = blockCreatorWithBlobGasSupport();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
+    final GenesisAccount sender = accounts.get(1);
+    final GenesisAccount recipient = accounts.get(2);
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+    final BigInteger delta = Wei.fromEth(1).toBigInteger();
+    final Transaction txn =
+        new TransactionTestFixture()
+            .sender(sender.address())
+            .to(Optional.of(recipient.address()))
+            .value(Wei.of(delta))
+            .gasLimit(21_000L)
+            .nonce(sender.nonce())
+            .createTransaction(keyPair);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.of(List.of(txn)),
+            Optional.empty(),
+            System.currentTimeMillis(),
+            miningOn.parentHeader);
+    final Optional<BlockAccessList> maybeBlockAccessList =
+        blockCreationResult.getTransactionSelectionResults().getBlockAccessList();
+    assertThat(maybeBlockAccessList).isEmpty();
   }
 
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
