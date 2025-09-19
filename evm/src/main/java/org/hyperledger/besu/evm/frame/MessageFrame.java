@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.frame;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
@@ -39,6 +38,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1695,7 +1695,7 @@ public class MessageFrame {
             new TxValues(
                 blockHashLookup,
                 maxStackSize,
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                UndoSet.of(new HashSet<>(Address.SIZE)),
                 UndoTable.of(HashBasedTable.create()),
                 originator,
                 gasPrice,
@@ -1705,8 +1705,8 @@ public class MessageFrame {
                 miningBeneficiary,
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                UndoSet.of(new HashSet<>(Address.SIZE)),
+                UndoSet.of(new HashSet<>(Address.SIZE)),
                 new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
