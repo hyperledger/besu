@@ -45,7 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallExcept
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
@@ -214,6 +215,22 @@ public class BlockSimulator {
         createBlockHashLookup(
             blockOverrides, protocolSpec, overridenBaseBlockHeader, blockHashCache);
 
+    Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .filter(
+                b ->
+                    protocolSpec
+                        .getEvm()
+                        .getEvmConfiguration()
+                        .worldUpdaterMode()
+                        .equals(WorldUpdaterMode.STACKED))
+            .filter(BlockAccessListFactory::isEnabled)
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
+    Optional<TransactionAccessList> preExecutionAccessList =
+        blockAccessListBuilder.map(b -> new TransactionAccessList(0));
+
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             overridenBaseBlockHeader,
@@ -221,7 +238,8 @@ public class BlockSimulator {
             protocolSpec,
             blockHashLookup,
             OperationTracer.NO_TRACING);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+
+    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, preExecutionAccessList);
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
@@ -234,7 +252,14 @@ public class BlockSimulator {
             transactionProcessor,
             blockHashLookup,
             signatureSupplier,
-            simulationCumulativeGasUsed);
+            simulationCumulativeGasUsed,
+            blockAccessListBuilder);
+
+    Optional<TransactionAccessList> postExecutionAccessList =
+        blockAccessListBuilder.map(
+            b ->
+                new TransactionAccessList(
+                    blockStateCallSimulationResult.getTransactions().size() + 1));
 
     // EIP-7685: process EL requests
     final Optional<RequestProcessorCoordinator> requestProcessor =
@@ -244,8 +269,17 @@ public class BlockSimulator {
       RequestProcessingContext requestProcessingContext =
           new RequestProcessingContext(
               blockProcessingContext, blockStateCallSimulationResult.getReceipts());
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      maybeRequests =
+          Optional.of(
+              requestProcessor.get().process(requestProcessingContext, postExecutionAccessList));
     }
+
+    postExecutionAccessList.ifPresent(
+        t ->
+            blockAccessListBuilder.ifPresent(
+                b ->
+                    b.addTransactionLevelAccessList(
+                        t, (StackedUpdater<?, ?>) ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
@@ -265,7 +299,8 @@ public class BlockSimulator {
       final MainnetTransactionProcessor transactionProcessor,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -280,13 +315,6 @@ public class BlockSimulator {
             .getFeeRecipient()
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
-
-    final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
-    final boolean includeBlockAccessList =
-        protocolSpec
-            .getBlockAccessListFactory()
-            .map(BlockAccessListFactory::isForkActivated)
-            .orElse(false);
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
@@ -329,13 +357,15 @@ public class BlockSimulator {
           transactionSimulatorResult.orElseThrow(
               () -> new BlockStateCallException("Transaction simulator result is empty"));
 
-      if (includeBlockAccessList
-          && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-        transactionSimulationResult
-            .result()
-            .getTransactionAccessList()
-            .ifPresent(t -> balBuilder.addTransactionLevelAccessList(t, stackedUpdater));
-      }
+      transactionSimulationResult
+          .result()
+          .getTransactionAccessList()
+          .ifPresent(
+              t ->
+                  blockAccessListBuilder.ifPresent(
+                      b ->
+                          b.addTransactionLevelAccessList(
+                              t, (StackedUpdater<?, ?>) transactionUpdater)));
 
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
@@ -348,9 +378,7 @@ public class BlockSimulator {
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
 
-    if (includeBlockAccessList) {
-      blockStateCallSimulationResult.set(balBuilder.build());
-    }
+    blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
     return blockStateCallSimulationResult;
   }
 

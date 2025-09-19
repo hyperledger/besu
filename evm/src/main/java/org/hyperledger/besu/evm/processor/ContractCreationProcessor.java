@@ -99,6 +99,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
       Address contractAddress = frame.getContractAddress();
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
+      frame.getEip7928AccessList().ifPresent(t -> t.addAccount(contractAddress));
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",

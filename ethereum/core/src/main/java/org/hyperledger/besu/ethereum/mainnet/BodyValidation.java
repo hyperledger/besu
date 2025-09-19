@@ -143,6 +143,6 @@ public final class BodyValidation {
    * @return the block access list hash
    */
   public static Hash balHash(final BlockAccessList bal) {
-    return Hash.wrap(sha256(RLP.encode(bal::writeTo)));
+    return Hash.wrap(keccak256(RLP.encode(bal::writeTo)));
   }
 }

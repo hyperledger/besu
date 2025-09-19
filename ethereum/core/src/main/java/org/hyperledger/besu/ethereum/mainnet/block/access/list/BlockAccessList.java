@@ -39,8 +39,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessList {
-  private static final Set<Address> excludedAddresses =
-      Set.of(Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935"));
   private final List<AccountChanges> accountChanges;
 
   public BlockAccessList(final List<AccountChanges> accountChanges) {
@@ -141,10 +139,6 @@ public class BlockAccessList {
           txList.getAccounts().entrySet()) {
         final Address address = accountAccessListEntry.getKey();
 
-        if (excludedAddresses.contains(address)) {
-          continue;
-        }
-
         BlockAccessListBuilder.AccountBuilder builder =
             accountChangesBuilders.computeIfAbsent(
                 address,
@@ -185,7 +179,7 @@ public class BlockAccessList {
 
             Bytes newCode = account.getCode();
             Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
-            if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
+            if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
               builder.addCodeChange(txList.getIndex(), newCode);
             }
           } else {
@@ -195,7 +189,7 @@ public class BlockAccessList {
             }
 
             Bytes newCode = account.getCode();
-            if (!newCode.isEmpty() && !newCode.isZero()) {
+            if (!newCode.isEmpty()) {
               long newNonce = account.getNonce();
               builder.addCodeChange(txList.getIndex(), newCode);
               builder.addNonceChange(txList.getIndex(), newNonce);
