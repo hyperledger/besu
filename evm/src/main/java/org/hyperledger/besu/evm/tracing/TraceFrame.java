@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -65,6 +66,9 @@ public class TraceFrame {
   private final Optional<Bytes> precompileInputData;
   private final Optional<Bytes> precompileOutputData;
 
+  private final Optional<SoftFailureReason> softFailureReason;
+  private final OptionalLong gasAvailableForChildCall;
+
   /** Private constructor - only accessible through Builder */
   private TraceFrame(final Builder builder) {
     this.pc = builder.pc;
@@ -97,6 +101,8 @@ public class TraceFrame {
     this.precompileRecipient = builder.precompileRecipient;
     this.precompileInputData = builder.precompileInputData;
     this.precompileOutputData = builder.precompileOutputData;
+    this.softFailureReason = builder.softFailureReason;
+    this.gasAvailableForChildCall = builder.gasAvailableForChildCall;
   }
 
   /**
@@ -150,6 +156,8 @@ public class TraceFrame {
     private Optional<Address> precompileRecipient = Optional.empty();
     private Optional<Bytes> precompileInputData = Optional.empty();
     private Optional<Bytes> precompileOutputData = Optional.empty();
+    private Optional<SoftFailureReason> softFailureReason = Optional.empty();
+    private OptionalLong gasAvailableForChildCall = OptionalLong.empty();
 
     /** Default constructor */
     public Builder() {}
@@ -190,6 +198,8 @@ public class TraceFrame {
       this.precompileRecipient = traceFrame.precompileRecipient;
       this.precompileInputData = traceFrame.precompileInputData;
       this.precompileOutputData = traceFrame.precompileOutputData;
+      this.softFailureReason = traceFrame.softFailureReason;
+      this.gasAvailableForChildCall = traceFrame.gasAvailableForChildCall;
     }
 
     /**
@@ -278,6 +288,17 @@ public class TraceFrame {
     public Builder setExceptionalHaltReason(
         final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
       this.exceptionalHaltReason = exceptionalHaltReason;
+      return this;
+    }
+
+    /**
+     * Sets the soft failure reason for this operation.
+     *
+     * @param softFailureReason the soft failure reason, or null for no soft failure reason
+     * @return this builder instance for method chaining
+     */
+    public Builder setSoftFailureReason(final Optional<SoftFailureReason> softFailureReason) {
+      this.softFailureReason = softFailureReason;
       return this;
     }
 
@@ -544,6 +565,17 @@ public class TraceFrame {
     }
 
     /**
+     * Sets the gas available for child call, if applicable.
+     *
+     * @param gasAvailableForChildCall the gas available for child call
+     * @return this builder instance for method chaining
+     */
+    public Builder setGasAvailableForChildCall(final OptionalLong gasAvailableForChildCall) {
+      this.gasAvailableForChildCall = gasAvailableForChildCall;
+      return this;
+    }
+
+    /**
      * Builds the TraceFrame instance.
      *
      * @return the constructed TraceFrame
@@ -796,19 +828,51 @@ public class TraceFrame {
     return isPrecompile;
   }
 
-  /*
+  /**
+   * The address of the precompile being called.
+   *
+   * @return the address of the precompile being called
+   */
   public Optional<Address> getPrecompileRecipient() {
     return precompileRecipient;
   }
 
+  /**
+   * Input data sent to the precompile.
+   *
+   * @return input data sent to the precompile
+   */
   public Optional<Bytes> getPrecompileInputData() {
     return precompileInputData;
   }
 
+  /**
+   * Output data returned from the precompile.
+   *
+   * @return output data returned from the precompile
+   */
   public Optional<Bytes> getPrecompileOutputData() {
     return precompileOutputData;
   }
-  */
+
+  /**
+   * Returns optional Soft Failure Reason.
+   *
+   * @return Optional Soft Failure Reason
+   */
+  public Optional<SoftFailureReason> getSoftFailureReason() {
+    return softFailureReason;
+  }
+
+  /**
+   * If the operation involved a call, returns the gas available for the child call.
+   *
+   * @return OptionalLong containing the gas available for the child call, or empty if not
+   *     applicable.
+   */
+  public OptionalLong getGasAvailableForChildCall() {
+    return gasAvailableForChildCall;
+  }
 
   @Override
   public String toString() {
