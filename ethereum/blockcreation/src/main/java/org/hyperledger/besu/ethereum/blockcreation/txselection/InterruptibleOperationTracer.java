@@ -59,6 +59,7 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
 
   @Override
   public boolean isExtendedTracing() {
+    checkInterrupt();
     return delegate.isExtendedTracing();
   }
 
