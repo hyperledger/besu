@@ -32,14 +32,12 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionTestFixture {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair KEY_PAIR = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  private static final KeyPair KEY_PAIR = SIGNATURE_ALGORITHM.generateKeyPair();
   private static final org.hyperledger.besu.datatypes.CodeDelegation CODE_DELEGATION =
       createSignedCodeDelegation(BigInteger.ZERO, Address.ZERO, 0, KEY_PAIR);
 
@@ -222,7 +220,7 @@ public class TransactionTestFixture {
             Bytes.concatenate(
                 org.hyperledger.besu.ethereum.core.CodeDelegation.MAGIC, rlpOutput.encoded()));
 
-    final var signature = SIGNATURE_ALGORITHM.get().sign(hash, keys);
+    final var signature = SIGNATURE_ALGORITHM.sign(hash, keys);
 
     return new org.hyperledger.besu.ethereum.core.CodeDelegation(
         chainId,

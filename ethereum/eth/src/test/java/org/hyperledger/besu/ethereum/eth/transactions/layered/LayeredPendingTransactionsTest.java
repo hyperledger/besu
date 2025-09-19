@@ -248,7 +248,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
               i,
               DEFAULT_BASE_FEE.add(i),
               (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes() + 1,
-              SIGNATURE_ALGORITHM.get().generateKeyPair());
+              SIGNATURE_ALGORITHM.generateKeyPair());
       smallPendingTransactions.addTransaction(
           createRemotePendingTransaction(tx), Optional.of(sender));
       firstTxs.add(tx);
@@ -262,7 +262,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             0,
             DEFAULT_MIN_GAS_PRICE.multiply(1000),
             (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes(),
-            SIGNATURE_ALGORITHM.get().generateKeyPair());
+            SIGNATURE_ALGORITHM.generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);
     smallPendingTransactions.addTransaction(
@@ -296,8 +296,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn((long) i);
       final var tx =
-          createTransaction(
-              i, DEFAULT_BASE_FEE.add(i), SIGNATURE_ALGORITHM.get().generateKeyPair());
+          createTransaction(i, DEFAULT_BASE_FEE.add(i), SIGNATURE_ALGORITHM.generateKeyPair());
       pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
       txs.add(tx);
       assertTransactionPending(pendingTransactions, tx);

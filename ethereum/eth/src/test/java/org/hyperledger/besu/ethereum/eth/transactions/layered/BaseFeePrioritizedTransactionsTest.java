@@ -142,7 +142,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                         createTransaction(
                             0,
                             DEFAULT_MIN_GAS_PRICE.add(1),
-                            SIGNATURE_ALGORITHM.get().generateKeyPair())))
+                            SIGNATURE_ALGORITHM.generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
 
     final var lowestPriorityFee =
@@ -226,7 +226,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                             DEFAULT_MIN_GAS_PRICE.add(1).multiply(20),
                             0,
                             null,
-                            SIGNATURE_ALGORITHM.get().generateKeyPair())))
+                            SIGNATURE_ALGORITHM.generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
 
     shouldPrioritizeValueThenTimeAddedToPool(
@@ -249,7 +249,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
               1,
               BlobType.KZG_PROOF,
               null,
-              SIGNATURE_ALGORITHM.get().generateKeyPair());
+              SIGNATURE_ALGORITHM.generateKeyPair());
       addedTxs.add(tx);
       assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
     }
@@ -264,7 +264,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
             1,
             BlobType.KZG_PROOF,
             null,
-            SIGNATURE_ALGORITHM.get().generateKeyPair());
+            SIGNATURE_ALGORITHM.generateKeyPair());
     assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
 
     addedTxs.forEach(this::assertTransactionPrioritized);
