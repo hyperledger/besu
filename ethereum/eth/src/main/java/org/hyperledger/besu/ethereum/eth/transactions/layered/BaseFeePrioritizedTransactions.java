@@ -160,7 +160,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
-
     // check if the tx is willing to pay at least the base fee
     if (nextBlockBaseFee
         .map(pendingTransaction.getTransaction().getMaxGasPrice()::lessThan)
@@ -174,15 +173,16 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       if (pendingTransaction
           .getTransaction()
           .getEffectiveGasPrice(nextBlockBaseFee)
-          .lessThan(miningConfiguration.getMinTransactionGasPrice())) {
+          .lessThan(getAndLogMinTransactionGasPrice())) {
         return false;
       }
 
       // check if enough priority fee is paid
-      if (!miningConfiguration.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
+      final var minPriorityFeePerGas = getAndLogMinPriorityFeePerGas();
+      if (!minPriorityFeePerGas.equals(Wei.ZERO)) {
         final Wei priorityFeePerGas =
             pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee);
-        if (priorityFeePerGas.lessThan(miningConfiguration.getMinPriorityFeePerGas())) {
+        if (priorityFeePerGas.lessThan(minPriorityFeePerGas)) {
           return false;
         }
       }

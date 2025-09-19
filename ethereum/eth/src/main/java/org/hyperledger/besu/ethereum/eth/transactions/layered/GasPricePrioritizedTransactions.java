@@ -74,7 +74,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         || pendingTransaction
             .getTransaction()
             .getGasPrice()
-            .map(miningConfiguration.getMinTransactionGasPrice()::lessThan)
+            .map(getAndLogMinTransactionGasPrice()::lessThan)
             .orElse(false);
   }
 
