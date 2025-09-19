@@ -73,8 +73,8 @@ public class SystemCallProcessor {
       final Bytes inputData,
       final Optional<TransactionAccessList> transactionAccessList) {
     WorldUpdater blockUpdater = context.getWorldState().updater();
-    WorldUpdater transactionUpdater = blockUpdater.updater();
-    final Account maybeContract = transactionUpdater.get(callAddress);
+    WorldUpdater systemCallUpdater = blockUpdater.updater();
+    final Account maybeContract = systemCallUpdater.get(callAddress);
     if (maybeContract == null) {
       LOG.error("Invalid system call address: {}", callAddress);
       throw new InvalidSystemCallAddressException("Invalid system call address: " + callAddress);
@@ -90,7 +90,7 @@ public class SystemCallProcessor {
     final MessageFrame frame =
         createMessageFrame(
             callAddress,
-            transactionUpdater,
+            systemCallUpdater,
             context.getBlockHeader(),
             context.getBlockHashLookup(),
             inputData,
@@ -106,7 +106,7 @@ public class SystemCallProcessor {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
-    if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+    if (systemCallUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
       transactionAccessList.ifPresent(
           t ->
               context
@@ -115,7 +115,7 @@ public class SystemCallProcessor {
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      transactionUpdater.commit();
+      systemCallUpdater.commit();
       blockUpdater.commit();
       return frame.getOutputData();
     }
