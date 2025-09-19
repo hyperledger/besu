@@ -83,7 +83,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public ProtocolSpec getByBlockHeader(
       final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader) {
-    return this.transitionUtils.dispatchFunctionAccordingToMergeState(
+    return this.transitionUtils.dispatchFunctionAccordingToMergeState(blockHeader,
         protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader));
   }
 
@@ -149,7 +149,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
-    return transitionUtils.dispatchFunctionAccordingToMergeState(
+    return transitionUtils.dispatchFunctionAccordingToMergeState(blockHeader,
         schedule -> schedule.isOnMilestoneBoundary(blockHeader));
   }
 
