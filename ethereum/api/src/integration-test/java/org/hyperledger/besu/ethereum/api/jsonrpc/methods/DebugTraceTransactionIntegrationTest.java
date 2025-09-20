@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -118,6 +119,33 @@ public class DebugTraceTransactionIntegrationTest {
     assertThat(result.getGas()).isEqualTo("0x4cb2f"); // 314159
     assertThat(result.getGasUsed()).isEqualTo("0x5c99"); // 23705
     assertThat(result.getInput()).isEqualTo("0x9dc2c8f5");
+  }
+
+  @Test
+  public void debugTraceTransactionFourByteTracerSuccessTest() {
+    final Map<String, String> map = Map.of("tracer", "4byteTracer");
+    final Hash trxHash =
+        Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+    final Object[] params = new Object[] {trxHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+
+    final FourByteTracerResult result =
+        (FourByteTracerResult) ((JsonRpcSuccessResponse) response).getResult();
+    
+    // Verify that the result contains function selector mappings
+    final Map<String, Integer> selectorCounts = result.getResult();
+    assertThat(selectorCounts).isNotNull();
+    assertThat(selectorCounts).isNotEmpty();
+    
+    // Verify that the function selector from the transaction input is captured
+    // The transaction input 0x9dc2c8f5 should result in selector 0x9dc2c8f5 with parameter data size 0
+    assertThat(selectorCounts).containsKey("0x9dc2c8f5-0");
+    assertThat(selectorCounts.get("0x9dc2c8f5-0")).isEqualTo(1);
   }
 
   @Test
