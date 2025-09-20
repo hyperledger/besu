@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.IPBasedPeerResolver;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionCapacityChecker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
@@ -69,6 +71,8 @@ public class NettyConnectionInitializer
   private final MetricsSystem metricsSystem;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final PeerTable peerTable;
+  private final ConnectionCapacityChecker capacityChecker;
+  private final IPBasedPeerResolver ipResolver;
 
   private ChannelFuture server;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
@@ -82,13 +86,17 @@ public class NettyConnectionInitializer
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
-      final PeerTable peerTable) {
+      final PeerTable peerTable,
+      final ConnectionCapacityChecker capacityChecker,
+      final IPBasedPeerResolver ipResolver) {
     this.nodeKey = nodeKey;
     this.config = config;
     this.localNode = localNode;
     this.eventDispatcher = eventDispatcher;
     this.metricsSystem = metricsSystem;
     this.peerTable = peerTable;
+    this.capacityChecker = capacityChecker;
+    this.ipResolver = ipResolver;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -244,7 +252,9 @@ public class NettyConnectionInitializer
         metricsSystem,
         this,
         this,
-        peerTable);
+        peerTable,
+        capacityChecker,
+        ipResolver);
   }
 
   @NotNull
