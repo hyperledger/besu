@@ -45,6 +45,9 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
@@ -56,6 +59,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
@@ -277,12 +281,22 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
-    for (CallParameter callParameter : blockStateCall.getCalls()) {
+    final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
+    final boolean includeBlockAccessList =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .map(BlockAccessListFactory::isForkActivated)
+            .orElse(false);
 
+    final WorldUpdater blockUpdater = ws.updater();
+    for (int transactionLocation = 0;
+        transactionLocation < blockStateCall.getCalls().size();
+        transactionLocation++) {
+      final WorldUpdater transactionUpdater = blockUpdater.updater();
+      final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
       OperationTracer operationTracer =
           isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 
-      final WorldUpdater transactionUpdater = ws.updater();
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
               blockHeader,
@@ -293,6 +307,8 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
+      final TransactionAccessList transactionAccessList =
+          new TransactionAccessList(transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -306,18 +322,34 @@ public class BlockSimulator {
               transactionProcessor,
               blobGasPricePerGasSupplier,
               blockHashLookup,
-              signatureSupplier);
+              signatureSupplier,
+              Optional.of(transactionAccessList));
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
               () -> new BlockStateCallException("Transaction simulator result is empty"));
 
+      if (includeBlockAccessList
+          && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
+        transactionSimulationResult
+            .result()
+            .getTransactionAccessList()
+            .ifPresent(t -> balBuilder.addTransactionLevelAccessList(t, stackedUpdater));
+      }
+
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
+
       transactionUpdater.commit();
+      blockUpdater.commit();
+
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
+    }
+
+    if (includeBlockAccessList) {
+      blockStateCallSimulationResult.set(balBuilder.build());
     }
     return blockStateCallSimulationResult;
   }
@@ -343,12 +375,23 @@ public class BlockSimulator {
             .gasUsed(blockStateCallSimulationResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
+            .balHash(
+                blockStateCallSimulationResult
+                    .getBlockAccessList()
+                    .map(BodyValidation::balHash)
+                    .orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
 
     Block block =
-        new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
+        new Block(
+            finalBlockHeader,
+            new BlockBody(
+                transactions,
+                List.of(),
+                Optional.of(List.of()),
+                blockStateCallSimulationResult.getBlockAccessList()));
 
     return new BlockSimulationResult(block, blockStateCallSimulationResult);
   }

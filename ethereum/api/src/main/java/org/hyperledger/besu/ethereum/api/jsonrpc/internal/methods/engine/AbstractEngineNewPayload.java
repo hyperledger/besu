@@ -275,6 +275,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
+            null,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -505,6 +506,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final ProtocolSpec protocolSpec) {
 
     final List<VersionedHash> transactionVersionedHashes = new ArrayList<>();
+    long transactionBlobGasLimitCap =
+        protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap();
+    long blockBlobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
     for (Transaction transaction : blobTransactions) {
       var versionedHashes = transaction.getVersionedHashes();
       // blob transactions must have at least one blob
@@ -512,11 +516,21 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
-      if (protocolSpec.getGasCalculator().blobGasCost(versionedHashes.get().size())
-          > protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap()) {
+      int totalBlobCount = versionedHashes.get().size();
+      long transactionBlobGasUsed = protocolSpec.getGasCalculator().blobGasCost(totalBlobCount);
+      // Check if blob gas used by tx exceeds block blob gas limit
+      if (transactionBlobGasUsed > blockBlobGasLimit) {
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT,
-            String.format("Blob transaction has too many blobs: %d", versionedHashes.get().size()));
+            String.format(
+                "Blob transaction %s exceeds block blob gas limit: %d > %d",
+                transaction.getHash(), transactionBlobGasUsed, blockBlobGasLimit));
+      }
+      // Check if blob gas used by tx exceeds transaction cap
+      if (transactionBlobGasUsed > transactionBlobGasLimitCap) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_BLOB_COUNT,
+            String.format("Blob transaction has too many blobs: %d", totalBlobCount));
       }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }

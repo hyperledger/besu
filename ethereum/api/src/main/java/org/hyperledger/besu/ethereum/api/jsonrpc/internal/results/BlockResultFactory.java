@@ -55,6 +55,7 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
+    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -62,7 +63,8 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals());
+        blockWithMetadata.getWithdrawals(),
+        Optional.empty());
   }
 
   public BlockResult transactionComplete(final Block block) {
@@ -231,6 +233,7 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
+    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -238,6 +241,7 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals());
+        blockWithMetadata.getWithdrawals(),
+        Optional.empty());
   }
 }

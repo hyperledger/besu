@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
 
 ### Upcoming Breaking Changes
 - Deprecated CLI options
@@ -10,13 +11,21 @@
   - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
   - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
   - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
-  - `--bonsai-maximum-back-layers-to-load` is deprecated since 23.4.0. Use `--bonsai-historical-block-limit` instead.
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
   - Fast Sync
 
 ### Additions and Improvements
+- Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
+- Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
+- Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
+- Configurable limit for how much time plugins are allowed take, to propose transactions, during block creation [#9184](https://github.com/hyperledger/besu/pull/9184)
+- Add Osaka, BPO1 and BPO2 fork times for holesky, hoodi and sepolia [#9196](https://github.com/hyperledger/besu/pull/9196/files)
+
+#### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
+- Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
 
 #### Fusaka devnets
 
@@ -33,6 +42,7 @@
 - Support for block creation on networks running a pre-Byzantium fork is removed, after being deprecated for a few months. If still running a pre-Byzantium network, it needs to be updated to continue to produce blocks [#9005](https://github.com/hyperledger/besu/pull/9005)
 - Remove support for Ethereum protocol version `eth/67`. [#9008](https://github.com/hyperledger/besu/pull/9008). 
 - Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
+- Ubuntu 20.04 is no longer supported. You need at least 22.04 (required for native libraries).
 - Improve performance of OperandStack resizes for deep stacks (> 100 elements). Impacts general EVM performance while working with deep stacks [#8869](https://github.com/hyperledger/besu/pull/8869)
 
 ### Upcoming Breaking Changes
@@ -57,8 +67,11 @@
 
 #### Dependencies
 - Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
-- Update commons and log4j dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+- Update commons dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+  - resolves CVE-2025-48924
+  - resolves CVE-2020-15250
 - Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
+  - resolves CVE-2025-55163
 
 #### Performance
 - Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)

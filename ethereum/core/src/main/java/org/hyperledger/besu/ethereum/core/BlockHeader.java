@@ -68,6 +68,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
+      final Hash balHash,
       final BlockHeaderFunctions blockHeaderFunctions) {
     this(
         parentHash,
@@ -91,6 +92,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
+        balHash,
         blockHeaderFunctions,
         Optional.empty());
   }
@@ -117,6 +119,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
+      final Hash balHash,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
     super(
@@ -139,9 +142,64 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsHash);
+        requestsHash,
+        balHash);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
+    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
+    this.rawRlp = rawRlp;
+  }
+
+  private BlockHeader(
+      final Hash parentHash,
+      final Hash ommersHash,
+      final Address coinbase,
+      final Hash stateRoot,
+      final Hash transactionsRoot,
+      final Hash receiptsRoot,
+      final LogsBloomFilter logsBloom,
+      final Difficulty difficulty,
+      final long number,
+      final long gasLimit,
+      final long gasUsed,
+      final long timestamp,
+      final Bytes extraData,
+      final Wei baseFee,
+      final Bytes32 mixHashOrPrevRandao,
+      final long nonce,
+      final Hash withdrawalsRoot,
+      final Long blobGasUsed,
+      final BlobGas excessBlobGas,
+      final Bytes32 parentBeaconBlockRoot,
+      final Hash requestsHash,
+      final Hash balHash,
+      final Hash blockHeaderHash,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final Optional<Bytes> rawRlp) {
+    super(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee,
+        mixHashOrPrevRandao,
+        withdrawalsRoot,
+        blobGasUsed,
+        excessBlobGas,
+        parentBeaconBlockRoot,
+        requestsHash,
+        balHash);
+    this.nonce = nonce;
+    this.hash = Suppliers.memoize(() -> blockHeaderHash);
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
     this.rawRlp = rawRlp;
   }
@@ -244,6 +302,9 @@ public class BlockHeader extends SealableBlockHeader
 
             if (requestsHash == null) break;
             out.writeBytes(requestsHash);
+
+            if (balHash == null) break;
+            out.writeBytes(balHash);
           } while (false);
           out.endList();
         });
@@ -284,6 +345,8 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? headerRlp.readBytes32() : null;
     final Hash requestsHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Hash balHash =
+        !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -307,6 +370,73 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
+        balHash,
+        blockHeaderFunctions,
+        Optional.of(headerRlp.raw()));
+  }
+
+  public static BlockHeader readFrom(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions, final Hash knownHash) {
+    final RLPInput headerRlp = input.readAsRlp();
+    if (headerRlp.enterList() == 0) {
+      return null;
+    }
+
+    final Hash parentHash = Hash.wrap(headerRlp.readBytes32());
+    final Hash ommersHash = Hash.wrap(headerRlp.readBytes32());
+    final Address coinbase = Address.readFrom(headerRlp);
+    final Hash stateRoot = Hash.wrap(headerRlp.readBytes32());
+    final Hash transactionsRoot = Hash.wrap(headerRlp.readBytes32());
+    final Hash receiptsRoot = Hash.wrap(headerRlp.readBytes32());
+    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(headerRlp);
+    final Difficulty difficulty = Difficulty.of(headerRlp.readUInt256Scalar());
+    final long number = headerRlp.readLongScalar();
+    final long gasLimit = headerRlp.readLongScalar();
+    final long gasUsed = headerRlp.readLongScalar();
+    final long timestamp = headerRlp.readLongScalar();
+    final Bytes extraData = headerRlp.readBytes();
+    final Bytes32 mixHashOrPrevRandao = headerRlp.readBytes32();
+    final long nonce = headerRlp.readLong();
+    final Wei baseFee =
+        !headerRlp.isEndOfCurrentList() ? Wei.of(headerRlp.readUInt256Scalar()) : null;
+    final Hash withdrawalHashRoot =
+        !(headerRlp.isEndOfCurrentList() || headerRlp.isZeroLengthString())
+            ? Hash.wrap(headerRlp.readBytes32())
+            : null;
+    final Long blobGasUsed = !headerRlp.isEndOfCurrentList() ? headerRlp.readLongScalar() : null;
+    final BlobGas excessBlobGas =
+        !headerRlp.isEndOfCurrentList() ? BlobGas.of(headerRlp.readUInt64Scalar()) : null;
+    final Bytes32 parentBeaconBlockRoot =
+        !headerRlp.isEndOfCurrentList() ? headerRlp.readBytes32() : null;
+    final Hash requestsHash =
+        !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Hash balHash =
+        !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    headerRlp.leaveList();
+    return new BlockHeader(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee,
+        mixHashOrPrevRandao,
+        nonce,
+        withdrawalHashRoot,
+        blobGasUsed,
+        excessBlobGas,
+        parentBeaconBlockRoot,
+        requestsHash,
+        balHash,
+        knownHash,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
   }
@@ -319,12 +449,12 @@ public class BlockHeader extends SealableBlockHeader
     if (!(obj instanceof BlockHeader other)) {
       return false;
     }
-    return getHash().equals(other.getHash());
+    return getHash().equals(other.getHash()) && Objects.equals(getBalHash(), other.getBalHash());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getHash());
+    return Objects.hash(getHash(), getBalHash());
   }
 
   @Override
@@ -359,7 +489,10 @@ public class BlockHeader extends SealableBlockHeader
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
     if (requestsHash != null) {
-      sb.append("requestsHash=").append(requestsHash);
+      sb.append("requestsHash=").append(requestsHash).append(", ");
+    }
+    if (balHash != null) {
+      sb.append("balHash=").append(balHash);
     }
     return sb.append("}").toString();
   }
@@ -395,6 +528,7 @@ public class BlockHeader extends SealableBlockHeader
             .getRequestsHash()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        pluginBlockHeader.getBalHash().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
         blockHeaderFunctions);
   }
 

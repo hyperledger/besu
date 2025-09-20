@@ -191,8 +191,8 @@ public class TraceServiceImpl implements TraceService {
     final BlockHeader header = block.getHeader();
     final Address miningBeneficiary =
         protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(block.getHeader());
-    final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
-    tracer.traceStartBlock(worldUpdater, block.getHeader(), block.getBody(), miningBeneficiary);
+    tracer.traceStartBlock(
+        chainUpdater.getNextUpdater(), block.getHeader(), block.getBody(), miningBeneficiary);
 
     block
         .getBody()
@@ -211,7 +211,7 @@ public class TraceServiceImpl implements TraceService {
 
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
-                      worldUpdater,
+                      chainUpdater.getNextUpdater(),
                       header,
                       transaction,
                       protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
