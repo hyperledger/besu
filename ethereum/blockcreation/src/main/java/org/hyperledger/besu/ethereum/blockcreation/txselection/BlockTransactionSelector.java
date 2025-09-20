@@ -226,12 +226,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                   "Interrupting the selection of transactions for block inclusion as it exceeds"
                       + " the maximum configured duration of {}ms")
               .addArgument(blockTxsSelectionMaxTime);
-
-      if (LOG.isTraceEnabled()) {
-        logBuilder.setCause(e).log();
-      } else {
-        logBuilder.log();
-      }
+      logBuilder.log();
     }
   }
 
