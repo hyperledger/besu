@@ -132,6 +132,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCacheStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
@@ -913,6 +914,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       besuController = buildController();
+
+      // load code cache from disk if it exists
+      CodeCacheStorage.loadFromDisk(dataDir(), besuController.getCodeCache());
 
       besuPluginContext.beforeExternalServices();
 
@@ -2171,6 +2175,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             new Thread(
                 () -> {
                   try {
+                    // persist code cache to disk
+                    CodeCacheStorage.deleteAllPersistedCodeCaches(runner.getDataDir());
+                    CodeCacheStorage.writeToDisk(
+                        runner.getDataDir(), runner.getBesuController().getCodeCache());
+
                     besuPluginContext.stopPlugins();
                     runner.close();
                     LogConfigurator.shutdown();
