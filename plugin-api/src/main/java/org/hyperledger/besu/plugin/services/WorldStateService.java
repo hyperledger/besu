@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.Unstable;
+
+import java.util.Optional;
 
 /** A service that plugin can use to access world state */
 @Unstable
@@ -27,4 +30,12 @@ public interface WorldStateService extends BesuService {
    * @return the head world view
    */
   WorldView getWorldView();
+
+  /**
+   * Returns a view of the world state at the specified block header.
+   *
+   * @param blockHash the block header to get the world view for
+   * @return the world view at the specified block header
+   */
+  Optional<WorldView> getWorldView(final Hash blockHash);
 }
