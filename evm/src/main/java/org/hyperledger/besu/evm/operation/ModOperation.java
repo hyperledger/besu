@@ -15,11 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.UInt256;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Mod operation. */
 public class ModOperation extends AbstractFixedCostOperation {
@@ -53,7 +54,7 @@ public class ModOperation extends AbstractFixedCostOperation {
     UInt256 b1 = UInt256.fromBytesBE(value0.toArrayUnsafe());
     UInt256 b2 = UInt256.fromBytesBE(value1.toArrayUnsafe());
     final UInt256 result = b1.mod(b2);
-    Bytes resultBytes = Bytes.wrap(result.toBytesBE());
+    Bytes resultBytes = Bytes32.leftPad(Bytes.wrap(result.toBytesBE()));
     frame.pushStackItem(resultBytes);
     return modSuccess;
   }
