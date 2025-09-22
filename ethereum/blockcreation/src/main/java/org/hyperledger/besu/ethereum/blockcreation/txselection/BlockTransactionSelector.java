@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
@@ -261,9 +262,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       txSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
-        throw new CancellationException("Cancelled during transaction selection");
+        throw new CancellationException("Cancelled during internal transaction selection");
       }
-      LOG.warn("Error during block transaction selection", e);
+      LOG.error("Unhandled exception during internal transaction selection", e);
+      // force rollback
+      rollback();
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
       synchronized (isTimeout) {
@@ -272,18 +275,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
       cancelEvaluatingTxWithGraceTime(txSelectionTask);
 
-      final var logBuilder =
-          LOG.atWarn()
-              .setMessage(
-                  "Interrupting the selection of transactions for block inclusion as it exceeds"
-                      + " the maximum remaining duration of {}ms")
-              .addArgument(() -> nanosToMillis(remainingSelectionTime));
-
-      if (LOG.isTraceEnabled()) {
-        logBuilder.setCause(e).log();
-      } else {
-        logBuilder.log();
-      }
+      LOG.warn(
+          "Interrupting the internal selection of transactions for block inclusion as it exceeds"
+              + " the allowed max duration of {}ms",
+          nanosToMillis(remainingSelectionTime));
     }
   }
 
@@ -317,7 +312,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during plugin transaction selection");
       }
-      LOG.warn("Error during block transaction selection", e);
+      LOG.error("Unhandled exception during plugin transaction selection", e);
+      // force a rollback
+      rollback();
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
       synchronized (isTimeout) {
@@ -425,7 +422,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   private TransactionSelectionResult evaluateTransaction(
       final PendingTransaction pendingTransaction) {
-    final var evaluationResult = evaluatePendingTransaction(pendingTransaction);
+
+    TransactionSelectionResult evaluationResult;
+    try {
+      evaluationResult = evaluatePendingTransaction(pendingTransaction);
+    } catch (Throwable t) {
+      LOG.error("Unhandled exception evaluating transaction {}", pendingTransaction, t);
+      evaluationResult = INTERNAL_ERROR;
+    }
 
     if (evaluationResult.selected()) {
       return commit() ? evaluationResult : BLOCK_SELECTION_TIMEOUT;

@@ -16,6 +16,7 @@
 
 ### Additions and Improvements
 - Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
+- Manage unexpected exceptions during block creation [#9208](https://github.com/hyperledger/besu/pull/9208)
 
 ### Bug fixes
 
