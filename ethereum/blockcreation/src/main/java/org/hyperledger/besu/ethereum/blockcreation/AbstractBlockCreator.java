@@ -338,7 +338,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
 
-      final Optional<BlockAccessList> blockAccessList = blockAccessListBuilder.map(BlockAccessListBuilder::build);
+      final Optional<BlockAccessList> blockAccessList =
+          blockAccessListBuilder.map(BlockAccessListBuilder::build);
       blockAccessList.ifPresent(b -> builder.balHash(BodyValidation.balHash(b)));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);

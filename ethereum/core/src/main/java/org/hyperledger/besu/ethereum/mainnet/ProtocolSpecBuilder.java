@@ -366,10 +366,8 @@ public class ProtocolSpecBuilder {
 
     if (isStackedModeEnabled && isBlockAccessListEnabled) {
       // Ensure we have a factory and its CLI flag reflects the CLI setting.
-      final boolean forkActivated =
-          finalBalFactory != null && finalBalFactory.isForkActivated();
-      final boolean cliActivated =
-          finalBalFactory != null && finalBalFactory.isCliActivated();
+      final boolean forkActivated = finalBalFactory != null && finalBalFactory.isForkActivated();
+      final boolean cliActivated = finalBalFactory != null && finalBalFactory.isCliActivated();
 
       if (!cliActivated) {
         finalBalFactory = new BlockAccessListFactory(true, forkActivated);
