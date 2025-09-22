@@ -22,10 +22,17 @@ import java.util.Arrays;
  * <p>This class is an optimised version of BigInteger for fixed width 8byte integers
  */
 public final class UInt256 {
+  // UInt256 is a big-endian up to 256-bits integer.
+  // Internally, it is represented with int/long limbs in little-endian order.
   // Wraps a view over limbs array from 0..length.
-  // Limbs are little-endian and can perhaps have more elements than length, which are ignored.
+  // Internally limbs are little-endian and can perhaps have more elements than length.
   private final int[] limbs;
   private final int length;
+
+  // Maximum number of significant limbs
+  private static final int N_LIMBS = 8;
+  // Number of limbs allocated, one more for carries
+  private static final int N_ALLOC = 9;
 
   // --- Getters for testing ---
   int length() {
@@ -71,10 +78,10 @@ public final class UInt256 {
   }
 
   UInt256(final int[] limbs) {
-    int i = Math.min(limbs.length - 1, 7);
+    int i = Math.min(limbs.length - 1, N_ALLOC - 1);
     while ((i >= 0) && (limbs[i] == 0)) i--;
     this.limbs = limbs;
-    this.length = i + 1;
+    this.length = Math.min(i + 1, N_LIMBS);
   }
 
   /**
@@ -89,7 +96,8 @@ public final class UInt256 {
     int nBytes = bytes.length - offset;
     if (nBytes == 0) return ZERO;
     int len = (nBytes + 3) / 4;
-    int[] limbs = new int[len];
+    // int[] limbs = new int[len];
+    int[] limbs = new int[N_ALLOC];
 
     int i;
     int base;
@@ -226,13 +234,13 @@ public final class UInt256 {
     int limbShift = shift / 32;
     int bitShift = shift % 32;
     if (bitShift == 0) {
-      return Arrays.copyOfRange(limbs, limbShift, length + limbShift);
+      return Arrays.copyOfRange(limbs, limbShift, length + limbShift + 1);
     }
 
     int[] res = new int[length + limbShift + 1];
     int j = limbShift;
     int carry = 0;
-    for (int i = 0; (i < length) && (j < 8); ++i, ++j) {
+    for (int i = 0; i < length; ++i, ++j) {
       res[j] = (limbs[i] << bitShift) | carry;
       carry = limbs[i] >>> (32 - bitShift);
     }
@@ -271,9 +279,9 @@ public final class UInt256 {
     }
 
     int[] res = new int[this.limbs.length - limbShift];
-    int j = this.limbs.length - 1 - limbShift; // res index
+    int j = this.length - 1 - limbShift; // res index
     int carry = 0;
-    for (int i = this.limbs.length - 1; j >= 0; i--, j--) {
+    for (int i = this.length - 1; j >= 0; i--, j--) {
       int r = (limbs[i] >>> bitShift) | carry;
       res[j] = r;
       carry = limbs[i] << (32 - bitShift);
@@ -294,6 +302,7 @@ public final class UInt256 {
     if (cmp == 0) return ZERO;
 
     int n = divisor.length;
+    int m = this.length - n;
     if (n == 1) {
       long d = divisor.limbs[0] & 0xFFFFFFFFL;
       long rem = 0;
@@ -328,20 +337,19 @@ public final class UInt256 {
     int[] uLimbs = this.shiftLeftWithCarry(shift);
 
     // Main division loop
-    int m = uLimbs.length - n - 1;
+    long vn1 = vLimbs[n - 1] & 0xFFFFFFFFL;
+    long vn2 = vLimbs[n - 2] & 0xFFFFFFFFL;
     for (int j = m; j >= 0; j--) {
       long ujn = (uLimbs[j + n] & 0xFFFFFFFFL);
       long ujn1 = (uLimbs[j + n - 1] & 0xFFFFFFFFL);
       long ujn2 = (uLimbs[j + n - 2] & 0xFFFFFFFFL);
-      long vn1 = vLimbs[n - 1] & 0xFFFFFFFFL;
-      long vn2 = (n > 1) ? vLimbs[n - 2] & 0xFFFFFFFFL : 0;
 
       long dividendPart = (ujn << 32) | ujn1;
       // Check that no need for Unsigned version of divrem.
-      long qhat = dividendPart / vn1;
-      long rhat = dividendPart % vn1;
+      long qhat = Long.divideUnsigned(dividendPart, vn1);
+      long rhat = Long.remainderUnsigned(dividendPart, vn1);
 
-      while (qhat == 0x1_0000_0000L || (qhat * vn2) > ((rhat << 32) | ujn2)) {
+      while (qhat == 0x1_0000_0000L || Long.compareUnsigned(qhat * vn2, (rhat << 32) | ujn2) > 0) {
         qhat--;
         rhat += vn1;
         if (rhat >= 0x1_0000_0000L) break;
@@ -353,7 +361,7 @@ public final class UInt256 {
         long prod = (vLimbs[i] & 0xFFFFFFFFL) * qhat;
         long sub = (uLimbs[i + j] & 0xFFFFFFFFL) - (prod & 0xFFFFFFFFL) - borrow;
         uLimbs[i + j] = (int) sub;
-        borrow = (prod >>> 32) - (sub >> 63);
+        borrow = (prod >>> 32) - (sub >> 32);
       }
       long sub = (uLimbs[j + n] & 0xFFFFFFFFL) - borrow;
       uLimbs[j + n] = (int) sub;

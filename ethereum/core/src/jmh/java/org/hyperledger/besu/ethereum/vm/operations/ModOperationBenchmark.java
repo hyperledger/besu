@@ -98,15 +98,19 @@ public class ModOperationBenchmark extends BinaryOperationBenchmark {
       random.nextBytes(a);
       random.nextBytes(b);
 
-      BigInteger aInt = new BigInteger(a);
-      BigInteger bInt = new BigInteger(b);
-
-      if ((scenario.divSize == scenario.modSize) && (aInt.compareTo(bInt) < 0)) {
-        aPool[i] = Bytes.wrap(b);
-        bPool[i] = Bytes.wrap(a);
-      } else {
+      if ((scenario.divSize != scenario.modSize)) {
         aPool[i] = Bytes.wrap(a);
         bPool[i] = Bytes.wrap(b);
+      } else {
+        BigInteger aInt = new BigInteger(a);
+        BigInteger bInt = new BigInteger(b);
+        if ((aInt.compareTo(bInt) < 0)) {
+          aPool[i] = Bytes.wrap(b);
+          bPool[i] = Bytes.wrap(a);
+        } else {
+          aPool[i] = Bytes.wrap(a);
+          bPool[i] = Bytes.wrap(b);
+        }
       }
     }
     index = 0;
