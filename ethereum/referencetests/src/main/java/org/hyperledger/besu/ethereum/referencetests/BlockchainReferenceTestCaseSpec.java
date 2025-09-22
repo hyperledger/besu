@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -69,8 +71,8 @@ public class BlockchainReferenceTestCaseSpec {
   private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+      final Map<String, ReferenceTestWorldState.AccountMock> accounts, final MutableBlockchain blockchain) {
+    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive(blockchain);
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -104,8 +106,9 @@ public class BlockchainReferenceTestCaseSpec {
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.worldStateArchive = buildWorldStateArchive(accounts);
-    this.blockchain = buildBlockchain(genesisBlockHeader);
+      this.blockchain = buildBlockchain(genesisBlockHeader);
+      this.worldStateArchive = buildWorldStateArchive(accounts, blockchain);
+     this.worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
     this.sealEngine = sealEngine;
     this.protocolContext =
         new ProtocolContext.Builder()
