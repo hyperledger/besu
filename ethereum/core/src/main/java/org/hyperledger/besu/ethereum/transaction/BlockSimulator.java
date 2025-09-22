@@ -285,7 +285,7 @@ public class BlockSimulator {
     final boolean includeBlockAccessList =
         protocolSpec
             .getBlockAccessListFactory()
-            .map(BlockAccessListFactory::isEnabled)
+            .map(BlockAccessListFactory::isForkActivated)
             .orElse(false);
 
     final WorldUpdater blockUpdater = ws.updater();
