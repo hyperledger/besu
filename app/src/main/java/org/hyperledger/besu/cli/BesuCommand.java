@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -340,7 +341,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
+  private Supplier<GenesisConfig> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
@@ -370,7 +371,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--data-path"},
       paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
-  final Path dataPath = getDefaultBesuDataPath(this);
+  Path dataPath = getDefaultBesuDataPath(this);
 
   // Genesis file path with null default option.
   // This default is handled by Runner
@@ -634,8 +635,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuConfigurationImpl pluginCommonConfiguration;
 
   private Vertx vertx;
+  private Runner runner;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private BigInteger ephemeryCycleId = BigInteger.ZERO;
 
   /**
    * Besu command constructor.
@@ -880,53 +883,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     try {
       configureLogging(true);
-
-      if (printPathsAndExit) {
-        // Print configured paths requiring read/write permissions to be adjusted
-        checkPermissionsAndPrintPaths(besuUserName);
-        System.exit(0); // Exit before any services are started
-      }
-
-      // set merge config on the basis of genesis config
-      setMergeConfigOptions();
-
-      instantiateSignatureAlgorithmFactory();
-
       logger.info("Starting Besu");
 
-      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+      ephemeryCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
 
-      validateOptions();
+      initialProcess();
 
-      configure();
-
-      setIgnorableStorageSegments();
-
-      // If we're not running against a named network, or if version compat protection has been
-      // explicitly enabled, perform compatibility check
-      VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
-
-      configureNativeLibs(Optional.ofNullable(network));
-      if (enablePrecompileCaching) {
-        configurePrecompileCaching();
+      if (network.equals(EPHEMERY)) {
+        long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
+        runner.scheduleEphemeryRestart(this, lastGenesisTimestamp);
       }
-
-      besuController = buildController();
-
-      besuPluginContext.beforeExternalServices();
-
-      final var runner = buildRunner();
-      runner.startExternalServices();
-
-      startPlugins(runner);
-      setReleaseMetrics();
-      preSynchronization();
-
-      runner.startEthereumMainLoop();
-
-      besuPluginContext.afterExternalServicesMainLoop();
-
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -934,6 +900,58 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  public void initialProcess() throws Exception {
+    if (network.equals(EPHEMERY)) {
+      genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
+      dataPath = dataPath.resolve("Ephemery-data-chain-" + ephemeryCycleId);
+      ephemeryCycleId = ephemeryCycleId.add(BigInteger.ONE);
+    }
+
+    if (printPathsAndExit) {
+      // Print configured paths requiring read/write permissions to be adjusted
+      checkPermissionsAndPrintPaths(besuUserName);
+      System.exit(0); // Exit before any services are started
+    }
+
+    // set merge config on the basis of genesis config
+    setMergeConfigOptions();
+
+    instantiateSignatureAlgorithmFactory();
+
+    // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
+    vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+
+    validateOptions();
+
+    configure();
+
+    setIgnorableStorageSegments();
+
+    // If we're not running against a named network, or if version compat protection has been
+    // explicitly enabled, perform compatibility check
+    VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
+
+    configureNativeLibs(Optional.ofNullable(network));
+    if (enablePrecompileCaching) {
+      configurePrecompileCaching();
+    }
+
+    besuController = buildController();
+
+    besuPluginContext.beforeExternalServices();
+
+    runner = buildRunner();
+    runner.startExternalServices();
+
+    startPlugins(runner);
+    setReleaseMetrics();
+    preSynchronization();
+
+    runner.startEthereumMainLoop();
+
+    besuPluginContext.afterExternalServicesMainLoop();
   }
 
   private void configurePrecompileCaching() {
@@ -2668,5 +2686,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public MetricsOptions getMetricsOptions() {
     return metricsOptions;
+  }
+
+  public Runner getRunner() {
+    return this.runner;
+  }
+
+  public RocksDBPlugin getRocksDBPlugin() {
+    return this.rocksDBPlugin;
+  }
+
+  public CommandLine getCommandLine() {
+    return this.commandLine;
+  }
+
+  public void clearAllocatedPorts() {
+    allocatedPorts.clear();
+  }
+
+  public void setDataPathToParent() {
+    this.dataPath = dataPath.getParent();
   }
 }
