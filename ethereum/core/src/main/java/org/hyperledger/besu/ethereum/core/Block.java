@@ -76,7 +76,6 @@ public class Block {
     out.writeList(body.getTransactions(), Transaction::writeTo);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
     body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
-    body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
     body.getBlockAccessList()
         .ifPresent(accessList -> BlockAccessListEncoder.encode(accessList, out));
 
