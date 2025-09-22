@@ -1287,8 +1287,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
@@ -1296,11 +1295,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (classicBlock.isPresent()) {
       validators.add(
           new ClassicForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              classicBlock.getAsLong()));
+              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
@@ -1308,8 +1303,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
     }
