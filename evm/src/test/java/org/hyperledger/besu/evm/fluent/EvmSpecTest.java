@@ -75,7 +75,7 @@ public class EvmSpecTest {
   @Test
   void currentEVM() {
     var subject = EvmSpec.evmSpec();
-    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.PRAGUE);
+    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.OSAKA);
   }
 
   @ParameterizedTest
