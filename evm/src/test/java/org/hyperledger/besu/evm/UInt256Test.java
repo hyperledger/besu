@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -48,20 +49,20 @@ public class UInt256Test {
 
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {-2147483648};
-    assertThat(result.length()).as("4b-neg-length").isEqualTo(expectedLimbs.length);
+    expectedLimbs = new int[] {-2147483648, 0, 0, 0, 0, 0, 0, 0, 0};
+    assertThat(result.length()).as("4b-neg-length").isEqualTo(1);
     assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536};
-    assertThat(result.length()).as("3b-length").isEqualTo(expectedLimbs.length);
+    expectedLimbs = new int[] {1 + 256 + 65536, 0, 0, 0, 0, 0, 0, 0, 0};
+    assertThat(result.length()).as("3b-length").isEqualTo(1);
     assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {1, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 16777216};
-    assertThat(result.length()).as("8b-length").isEqualTo(expectedLimbs.length);
+    expectedLimbs = new int[] {1 + 256 + 65536, 16777216, 0, 0, 0, 0, 0, 0, 0};
+    assertThat(result.length()).as("8b-length").isEqualTo(2);
     assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -70,8 +71,8 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216};
-    assertThat(result.length()).as("32b-length").isEqualTo(expectedLimbs.length);
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216, 0};
+    assertThat(result.length()).as("32b-length").isEqualTo(8);
     assertThat(result.limbs()).as("32b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -80,8 +81,8 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257};
-    assertThat(result.length()).as("32b-padded-length").isEqualTo(expectedLimbs.length);
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257, 0, 0};
+    assertThat(result.length()).as("32b-padded-length").isEqualTo(7);
     assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
   }
 
@@ -174,29 +175,55 @@ public class UInt256Test {
 
   @Test
   public void modA() {
-    byte[] num_arr = new byte[] {0x00, 0x00, 0x00, 0x00, 0x67, (byte) 0xe3, 0x68, 0x64};
-    byte[] mod_arr = new byte[] {0x00, 0x1f, (byte) 0xff};
-    UInt256 number = UInt256.fromBytesBE(num_arr);
-    UInt256 modulus = UInt256.fromBytesBE(mod_arr);
+    BigInteger big_number = new BigInteger("0000000067e36864", 16);
+    BigInteger big_modulus = new BigInteger("001fff", 16);
+    UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+    UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-    BigInteger big_number = new BigInteger(1, num_arr);
-    BigInteger big_modulus = new BigInteger(1, mod_arr);
     Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
     assertThat(remainder).isEqualTo(expected);
   }
 
   @Test
   public void modB() {
-    byte[] num_arr =
-        new byte[] {0x02, 0x2b, 0x1c, (byte) 0x8c, 0x12, 0x27, (byte) 0xa0, 0x00, 0x00};
-    byte[] mod_arr =
-        new byte[] {0x03, (byte) 0x8d, 0x7e, (byte) 0xa4, (byte) 0xc6, (byte) 0x80, 0x00};
-    UInt256 number = UInt256.fromBytesBE(num_arr);
-    UInt256 modulus = UInt256.fromBytesBE(mod_arr);
+    BigInteger big_number = new BigInteger("022b1c8c1227a00000", 16);
+    BigInteger big_modulus = new BigInteger("038d7ea4c68000", 16);
+    UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+    UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-    BigInteger big_number = new BigInteger(1, num_arr);
-    BigInteger big_modulus = new BigInteger(1, mod_arr);
     Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
     assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
+  public void modGeneralState() {
+    BigInteger big_number = new BigInteger("cea0c5cc171fa61277e5604a3bc8aef4de3d3882", 16);
+    BigInteger big_modulus = new BigInteger("7dae7454bb193b1c28e64a6a935bc3", 16);
+    UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+    UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
+    Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
+  public void modDiv8Mod8() {
+    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    for (int i = 0; i < 30000; i++) {
+      final byte[] a = new byte[32];
+      final byte[] b = new byte[32];
+      random.nextBytes(a);
+      random.nextBytes(b);
+      BigInteger aInt = new BigInteger(1, a);
+      BigInteger bInt = new BigInteger(1, b);
+      int comp = aInt.compareTo(bInt);
+      BigInteger big_number = (comp >= 0) ? aInt : bInt;
+      BigInteger big_modulus = (comp >= 0) ? bInt : aInt;
+      UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+      UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+      Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
+      Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+      assertThat(remainder).isEqualTo(expected);
+    }
   }
 }
