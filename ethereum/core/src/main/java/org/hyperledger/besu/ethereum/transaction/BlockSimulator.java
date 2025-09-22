@@ -218,13 +218,6 @@ public class BlockSimulator {
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
-            .filter(
-                b ->
-                    protocolSpec
-                        .getEvm()
-                        .getEvmConfiguration()
-                        .worldUpdaterMode()
-                        .equals(WorldUpdaterMode.STACKED))
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
