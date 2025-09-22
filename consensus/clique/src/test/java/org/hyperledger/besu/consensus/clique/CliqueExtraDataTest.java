@@ -50,7 +50,7 @@ public class CliqueExtraDataTest {
     final List<Address> validators =
         Arrays.asList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
-    final Bytes vanityData = Bytes.fromHexString("11223344", 32);
+    final Bytes vanityData = Bytes vanityData = Bytes.fromHexString("11223344").leftPad(32);
 
     final CliqueExtraData extraData =
         new CliqueExtraData(
