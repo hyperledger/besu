@@ -156,6 +156,12 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenAnswer(
             new GetHeadersFromPeerTaskExecutorAnswer(
                 getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(
+                getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
         .thenAnswer(
             new GetBodiesFromPeerTaskExecutorAnswer(

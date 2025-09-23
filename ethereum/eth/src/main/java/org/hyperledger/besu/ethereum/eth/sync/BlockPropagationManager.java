@@ -577,6 +577,16 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             (blockHeader) -> {
               GetBodiesFromPeerTask bodiesTask =
                   new GetBodiesFromPeerTask(List.of(blockHeader), protocolSchedule);
+              if (maybePreferredPeer.isPresent()) {
+                PeerTaskExecutorResult<List<Block>> executorResult =
+                    ethContext
+                        .getPeerTaskExecutor()
+                        .executeAgainstPeer(bodiesTask, maybePreferredPeer.get());
+                if (executorResult.result().isPresent()
+                    && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                  return executorResult;
+                }
+              }
               PeerTaskExecutorResult<List<Block>> executorResult =
                   ethContext.getPeerTaskExecutor().execute(bodiesTask);
               if (executorResult.result().isEmpty()
