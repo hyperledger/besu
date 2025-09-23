@@ -571,7 +571,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
               .getPeerTaskExecutor()
               .executeAgainstPeer(headersFromPeerTask, maybePreferredPeer.get());
       if (executorResult.result().isPresent()
-          && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+          && executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
         return CompletableFuture.completedFuture(executorResult.result().get().getFirst());
       }
     }
@@ -593,7 +593,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       PeerTaskExecutorResult<List<Block>> executorResult =
           ethContext.getPeerTaskExecutor().executeAgainstPeer(bodiesTask, maybePreferredPeer.get());
       if (executorResult.result().isPresent()
-          && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+          && executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
         return executorResult;
       }
     }
