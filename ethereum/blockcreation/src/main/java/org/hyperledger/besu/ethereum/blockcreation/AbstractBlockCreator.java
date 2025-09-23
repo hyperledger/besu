@@ -243,7 +243,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               newProtocolSpec
                   .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
-              operationTracer);
+              operationTracer,
+              blockAccessListBuilder);
       newProtocolSpec
           .getPreExecutionProcessor()
           .process(blockProcessingContext, preExecutionAccessList);
