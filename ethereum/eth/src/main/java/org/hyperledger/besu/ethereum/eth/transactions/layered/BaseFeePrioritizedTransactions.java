@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransactions {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseFeePrioritizedTransactions.class);
+  private final SenderBalanceChecker senderBalanceChecker;
   private Optional<Wei> nextBlockBaseFee;
 
   public BaseFeePrioritizedTransactions(
@@ -51,7 +52,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
           transactionReplacementTester,
       final FeeMarket feeMarket,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final SenderBalanceChecker senderBalanceChecker) {
     super(
         poolConfig,
         ethScheduler,
@@ -62,6 +64,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         miningConfiguration);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
+    this.senderBalanceChecker = senderBalanceChecker;
   }
 
   @Override
@@ -100,6 +103,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();
+    senderBalanceChecker.clear();
 
     final var itTxsBySender = txsBySender.entrySet().iterator();
     while (itTxsBySender.hasNext()) {
@@ -188,7 +192,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       }
     }
 
-    return true;
+    // check is the sender has enough balance
+    return senderBalanceChecker.hasEnoughBalanceFor(pendingTransaction);
   }
 
   @Override

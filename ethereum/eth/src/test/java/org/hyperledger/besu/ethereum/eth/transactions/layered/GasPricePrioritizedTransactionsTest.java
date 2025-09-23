@@ -53,7 +53,8 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
         txPoolMetrics,
         transactionReplacementTester,
         new BlobCache(),
-        miningConfiguration);
+        miningConfiguration,
+        senderBalanceChecker);
   }
 
   @Override

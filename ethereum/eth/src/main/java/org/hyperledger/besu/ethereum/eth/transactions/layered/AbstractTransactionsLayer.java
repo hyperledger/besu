@@ -342,6 +342,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     increaseCounters(addedTx);
     metrics.incrementAdded(addedTx, addReason, name());
     internalAdd(senderTxs, addedTx);
+    LOG.atTrace()
+        .setMessage("[{}] added pending transactions {}, reason: {}")
+        .addArgument(name())
+        .addArgument(addedTx::toTraceLog)
+        .addArgument(addReason)
+        .log();
   }
 
   protected abstract void internalAdd(
