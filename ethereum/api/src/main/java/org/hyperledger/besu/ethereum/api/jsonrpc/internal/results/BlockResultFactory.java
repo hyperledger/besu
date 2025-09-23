@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -215,6 +216,53 @@ public class BlockResultFactory {
         requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV2);
+  }
+
+  public EngineGetPayloadResultV6 payloadTransactionCompleteV6(final PayloadWrapper payload) {
+    final var blockWithReceipts = payload.blockWithReceipts();
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(
+                transaction ->
+                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+    final Optional<List<String>> requestsWithoutRequestId =
+        payload
+            .requests()
+            .map(
+                rqs ->
+                    rqs.stream()
+                        .sorted(Comparator.comparing(Request::getType))
+                        .filter(r -> !r.getData().isEmpty())
+                        .map(Request::getEncodedRequest)
+                        .map(Bytes::toHexString)
+                        .toList());
+
+    final BlobsBundleV2 blobsBundleV2 =
+        new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
+
+    final String blockAccessList =
+        blockWithReceipts
+            .getBlock()
+            .getBody()
+            .getBlockAccessList()
+            .map(
+                bal -> {
+                  final BytesValueRLPOutput output = new BytesValueRLPOutput();
+                  bal.writeTo(output);
+                  return output.encoded().toHexString();
+                })
+            .orElse(null);
+
+    return new EngineGetPayloadResultV6(
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        requestsWithoutRequestId,
+        Quantity.create(payload.blockValue()),
+        blobsBundleV2,
+        blockAccessList);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
