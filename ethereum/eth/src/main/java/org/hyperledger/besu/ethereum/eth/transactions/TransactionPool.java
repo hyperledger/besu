@@ -661,11 +661,27 @@ public class TransactionPool implements BlockAddedObserver {
     return CompletableFuture.completedFuture(null);
   }
 
+  /**
+   * Disables the transaction pool.
+   *
+   * <p>When called, this method:
+   *
+   * <ul>
+   *   <li>Marks the pool as disabled and unsubscribes listeners/events.
+   *   <li>Clears the blob map to prevent stale or duplicate entries (blobs are restored from disk
+   *       when the pool is re-enabled).
+   *   <li>Persists current pending transactions to disk asynchronously.
+   *   <li>Replaces the pending transactions with a disabled placeholder.
+   * </ul>
+   *
+   * @return a {@link CompletableFuture} that completes once the save-to-disk operation finishes
+   */
   public CompletableFuture<Void> setDisabled() {
     if (isEnabled()) {
       isPoolEnabled.set(false);
       subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
       pendingTransactionsListenersProxy.unsubscribe();
+      mapOfBlobsInTransactionPool.clear();
       final CompletableFuture<Void> saveOperation =
           saveRestoreManager
               .saveToDisk(pendingTransactions)
