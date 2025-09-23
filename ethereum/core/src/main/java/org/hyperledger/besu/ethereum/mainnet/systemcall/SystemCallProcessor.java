@@ -106,13 +106,14 @@ public class SystemCallProcessor {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
-    if (systemCallUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-      transactionAccessList.ifPresent(
-          t ->
-              context
-                  .getBlockAccessListBuilder()
-                  .ifPresent(b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
-    }
+    transactionAccessList.ifPresent(
+        t ->
+            context
+                .getBlockAccessListBuilder()
+                .ifPresent(
+                    b ->
+                        b.addTransactionLevelAccessList(
+                            t, (StackedUpdater<?, ?>) systemCallUpdater)));
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       systemCallUpdater.commit();

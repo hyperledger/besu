@@ -292,12 +292,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           requestProcessor.map(
               processor -> processor.process(requestProcessingContext, postExecutionAccessList));
 
-      if (disposableWorldState.updater().updater() instanceof StackedUpdater<?, ?> stackedUpdater) {
-        postExecutionAccessList.ifPresent(
-            t ->
-                blockAccessListBuilder.ifPresent(
-                    b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
-      }
+      postExecutionAccessList.ifPresent(
+          t ->
+              blockAccessListBuilder.ifPresent(
+                  b ->
+                      b.addTransactionLevelAccessList(
+                          t, (StackedUpdater<?, ?>) disposableWorldState.updater().updater())));
 
       throwIfStopped();
 
