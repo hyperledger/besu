@@ -186,10 +186,10 @@ public final class UInt256 {
    * @return Big-endian ordered bytes for this UInt256 value.
    */
   public byte[] toBytesBE() {
-    byte[] out = new byte[length * 4];
-    for (int i = 0; i < length; ++i) {
-      int offset = i * 4;
-      int v = limbs[length - i - 1];
+    byte[] out = new byte[32];
+    for (int i = 0; i < length; i++) {
+      int offset = 28 - 4 * i;
+      int v = limbs[i];
       out[offset] = (byte) (v >>> 24);
       out[offset + 1] = (byte) (v >>> 16);
       out[offset + 2] = (byte) (v >>> 8);
