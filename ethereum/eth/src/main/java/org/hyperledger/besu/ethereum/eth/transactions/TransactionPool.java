@@ -141,7 +141,6 @@ public class TransactionPool implements BlockAddedObserver {
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
     initializeBlobMetrics();
-    initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(
         (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
@@ -149,6 +148,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private void initLogForReplay() {
+    LOG_FOR_REPLAY.trace("START");
     // log the initial block header data
     LOG_FOR_REPLAY
         .atTrace()
@@ -183,6 +183,8 @@ public class TransactionPool implements BlockAddedObserver {
                     .map(e -> e.getKey().name() + "=" + e.getValue())
                     .collect(Collectors.joining(",")))
         .log();
+    // log configuration: minScore
+    LOG_FOR_REPLAY.atTrace().setMessage("{}").addArgument(configuration::getMinScore).log();
   }
 
   @VisibleForTesting
@@ -223,11 +225,13 @@ public class TransactionPool implements BlockAddedObserver {
                     },
                     (transaction1, transaction2) -> transaction1));
 
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("S,{}")
-        .addArgument(() -> pendingTransactions.logStats())
-        .log();
+    if (isEnabled()) {
+      LOG_FOR_REPLAY
+          .atTrace()
+          .setMessage("S,{}")
+          .addArgument(() -> pendingTransactions.logStats())
+          .log();
+    }
 
     LOG.atTrace()
         .setMessage(
@@ -645,6 +649,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
+      initLogForReplay();
       pendingTransactions = pendingTransactionsSupplier.get();
       pendingTransactionsListenersProxy.subscribe();
       isPoolEnabled.set(true);
@@ -691,6 +696,7 @@ public class TransactionPool implements BlockAddedObserver {
                     return null;
                   });
       pendingTransactions = new DisabledPendingTransactions();
+      LOG_FOR_REPLAY.trace("STOP");
       return saveOperation;
     }
     return CompletableFuture.completedFuture(null);
