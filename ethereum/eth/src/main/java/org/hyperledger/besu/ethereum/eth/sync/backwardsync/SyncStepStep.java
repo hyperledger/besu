@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 public class SyncStepStep {
   private static final Logger LOG = getLogger(SyncStepStep.class);
 
-  public static final int UNUSED = -1;
   private final BackwardSyncContext context;
   private final BackwardChain backwardChain;
 
@@ -60,7 +59,6 @@ public class SyncStepStep {
     GetHeadersFromPeerTask headersFromPeerTask =
         new GetHeadersFromPeerTask(
             targetHash,
-            UNUSED,
             1,
             0,
             Direction.FORWARD,
