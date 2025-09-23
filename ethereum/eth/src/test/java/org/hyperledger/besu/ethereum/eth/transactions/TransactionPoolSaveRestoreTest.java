@@ -184,6 +184,9 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
     // after being disabled the txpool must be empty
     assertThat(transactionPool.getPendingTransactions()).isEmpty();
 
+    // after being disabled the blob map size must be zero
+    assertThat(transactionPool.getBlobMapSize()).isEqualTo(0);
+
     final var savedContent = Files.readString(saveFilePath, StandardCharsets.US_ASCII);
 
     assertThat(savedContent)
