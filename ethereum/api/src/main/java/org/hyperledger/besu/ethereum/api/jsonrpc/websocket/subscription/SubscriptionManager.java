@@ -154,7 +154,7 @@ public class SubscriptionManager extends AbstractVerticle {
             .eventBus()
             .send(subscription.getConnectionId(), jsonObjectMapper.writeValueAsString(response));
       } catch (JsonProcessingException e) {
-        LOG.error("Error streaming JSON-RPC response", e);
+        LOG.error("Error streaming websocket JSON-RPC response", e);
       }
     }
   }
