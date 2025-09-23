@@ -54,7 +54,7 @@ public class ModOperation extends AbstractFixedCostOperation {
     UInt256 b1 = UInt256.fromBytesBE(value0.toArrayUnsafe());
     UInt256 b2 = UInt256.fromBytesBE(value1.toArrayUnsafe());
     final UInt256 result = b1.mod(b2);
-    Bytes resultBytes = Bytes32.leftPad(Bytes.wrap(result.toBytesBE()));
+    Bytes resultBytes = Bytes.wrap(result.toBytesBE());
     frame.pushStackItem(resultBytes);
     return modSuccess;
   }
