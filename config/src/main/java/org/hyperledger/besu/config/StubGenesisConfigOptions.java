@@ -51,6 +51,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong cancunEOFTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
   private OptionalLong osakaTime = OptionalLong.empty();
+  private OptionalLong amsterdamTime = OptionalLong.empty();
   private OptionalLong bpo1Time = OptionalLong.empty();
   private OptionalLong bpo2Time = OptionalLong.empty();
   private OptionalLong bpo3Time = OptionalLong.empty();
@@ -273,6 +274,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public OptionalLong getAmsterdamTime() {
+    return amsterdamTime;
+  }
+
+  @Override
   public OptionalLong getBpo1Time() {
     return bpo1Time;
   }
@@ -431,6 +437,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
     getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
+    getAmsterdamTime().ifPresent(l -> builder.put("amsterdamTime", l));
     getBpo1Time().ifPresent(l -> builder.put("bpo1Time", l));
     getBpo2Time().ifPresent(l -> builder.put("bpo2Time", l));
     getBpo3Time().ifPresent(l -> builder.put("bpo3Time", l));
@@ -733,6 +740,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions osakaTime(final long timestamp) {
     osakaTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * Amsterdam time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions amsterdamTime(final long timestamp) {
+    amsterdamTime = OptionalLong.of(timestamp);
     return this;
   }
 
