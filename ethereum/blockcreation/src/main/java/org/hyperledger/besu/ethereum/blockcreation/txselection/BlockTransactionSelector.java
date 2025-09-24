@@ -486,8 +486,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final TransactionProcessingResult processingResult =
         processTransaction(evaluationContext.getTransaction());
 
-    txWorldStateUpdater.markTransactionBoundary();
-
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
 
     return postProcessingSelectionResult.selected()
@@ -509,6 +507,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         }
         selectorsStateManager.commit();
         txWorldStateUpdater.commit();
+        txWorldStateUpdater.markTransactionBoundary();
         blockWorldStateUpdater.commit();
         blockWorldStateUpdater.markTransactionBoundary();
       }
