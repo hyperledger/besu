@@ -53,6 +53,10 @@ public class EthHashCacheFactory {
     }
   }
 
+  public void cleanCache() {
+    descriptorCache.invalidateAll();
+  }
+
   private EthHashDescriptor createHashCache(
       final long epochIndex, final EpochCalculator epochCalculator, final long blockNumber) {
     final int[] cache =
