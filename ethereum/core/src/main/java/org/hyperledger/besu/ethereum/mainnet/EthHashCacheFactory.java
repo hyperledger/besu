@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -41,8 +40,7 @@ public class EthHashCacheFactory {
     }
   }
 
-  Cache<Long, EthHashDescriptor> descriptorCache =
-      CacheBuilder.newBuilder().maximumSize(5).expireAfterAccess(1, TimeUnit.HOURS).build();
+  Cache<Long, EthHashDescriptor> descriptorCache = CacheBuilder.newBuilder().maximumSize(5).build();
 
   public EthHashDescriptor ethHashCacheFor(
       final long blockNumber, final EpochCalculator epochCalc) {
@@ -53,10 +51,6 @@ public class EthHashCacheFactory {
     } catch (final ExecutionException ex) {
       throw new RuntimeException("Failed to create a suitable cache for EthHash calculations.", ex);
     }
-  }
-
-  public void cleanCache() {
-    descriptorCache.invalidateAll();
   }
 
   private EthHashDescriptor createHashCache(
