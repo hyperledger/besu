@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableDebugAccountAtResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -64,11 +63,6 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   public String getName() {
     return RpcMethod.DEBUG_ACCOUNT_AT.getMethodName();
-  }
-
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return (JsonRpcResponse) handleParamTypes(requestContext);
   }
 
   @Override
