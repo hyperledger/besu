@@ -35,8 +35,10 @@ import org.slf4j.LoggerFactory;
 
 /** The Transition protocol schedule. */
 public class TransitionProtocolSchedule implements ProtocolSchedule {
-  private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
+  private final TransitionUtils<ProtocolSchedule> transitionUtils;
+  private final ProtocolSchedule preMergeProtocolSchedule;
+  private final ProtocolSchedule postMergeProtocolSchedule;
   private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
 
@@ -51,6 +53,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
       final MergeContext mergeContext) {
+    this.preMergeProtocolSchedule = preMergeProtocolSchedule;
+    this.postMergeProtocolSchedule = postMergeProtocolSchedule;
     this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
@@ -219,17 +223,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public void setPermissionTransactionFilter(
       final PermissionTransactionFilter permissionTransactionFilter) {
-    transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule ->
-            protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
+    preMergeProtocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter);
+    postMergeProtocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter);
   }
 
   @Override
   public void setAdditionalValidationRules(
       final List<TransactionValidationRule> additionalValidationRules) {
-    transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule ->
-            protocolSchedule.setAdditionalValidationRules(additionalValidationRules));
+    preMergeProtocolSchedule.setAdditionalValidationRules(additionalValidationRules);
+    postMergeProtocolSchedule.setAdditionalValidationRules(additionalValidationRules);
   }
 
   /**

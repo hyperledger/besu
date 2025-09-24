@@ -84,17 +84,17 @@ public interface HardforkId {
     /** Prague fork. */
     PRAGUE(true, "Prague"),
     /** Osaka fork. */
-    OSAKA(false, "Osaka"),
+    OSAKA(true, "Osaka"),
     /** BPO1 fork. */
-    BPO1(false, "BPO1"),
+    BPO1(true, "BPO1"),
     /** BPO2 fork. */
-    BPO2(false, "BPO2"),
+    BPO2(true, "BPO2"),
     /** BPO3 fork. */
-    BPO3(false, "BPO3"),
+    BPO3(true, "BPO3"),
     /** BPO4 fork. */
-    BPO4(false, "BPO4"),
+    BPO4(true, "BPO4"),
     /** BPO5 fork. */
-    BPO5(false, "BPO5"),
+    BPO5(true, "BPO5"),
     /** Amsterdam fork. */
     AMSTERDAM(false, "Amsterdam"),
     /** Bogota fork. */
