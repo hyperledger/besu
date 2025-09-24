@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -62,6 +63,11 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   public String getName() {
     return RpcMethod.DEBUG_SET_HEAD.getMethodName();
+  }
+
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return (JsonRpcResponse) handleParamTypes(requestContext);
   }
 
   @Override

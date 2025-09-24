@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
@@ -84,6 +85,16 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
     } else {
       return remoteHashesPerSecond();
     }
+  }
+
+  @Override
+  public boolean disable() {
+    boolean miningDisabled = super.disable();
+    if (miningDisabled) {
+      PoWHasher.ETHASH_LIGHT.cleanCache();
+    }
+
+    return false;
   }
 
   private Optional<Long> remoteHashesPerSecond() {
