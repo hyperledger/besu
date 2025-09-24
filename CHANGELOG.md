@@ -3,6 +3,25 @@
 ## Unreleased
 
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
+
+### Bug fixes
+
+## 25.9.0
+
+### Breaking Changes
 - Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
 
 ### Upcoming Breaking Changes
@@ -22,16 +41,10 @@
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
 - Configurable limit for how much time plugins are allowed take, to propose transactions, during block creation [#9184](https://github.com/hyperledger/besu/pull/9184)
 - Add Osaka, BPO1 and BPO2 fork times for holesky, hoodi and sepolia [#9196](https://github.com/hyperledger/besu/pull/9196/files)
-- Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
 
 #### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
 - Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
-
-#### Fusaka devnets
-
-### Bug fixes
-
 
 ## 25.8.0
 ### Breaking Changes
