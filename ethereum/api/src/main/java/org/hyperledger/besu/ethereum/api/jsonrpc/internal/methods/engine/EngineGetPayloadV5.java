@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
@@ -72,8 +72,8 @@ public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
     return ForkSupportHelper.validateForkSupported(
         OSAKA,
         osakaMilestone,
-        FUTURE_EIPS,
-        protocolSchedule.flatMap(s -> s.milestoneFor(FUTURE_EIPS)),
+        AMSTERDAM,
+        protocolSchedule.flatMap(s -> s.milestoneFor(AMSTERDAM)),
         blockTimestamp);
   }
 }
