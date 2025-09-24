@@ -106,6 +106,7 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
     executeSyncStep(firstHash)
         .whenComplete(
             (result, error) -> {
+              context.getBackwardChain().removeFromHashToAppend(firstHash);
               if (error != null) {
                 handleSyncStepError(error, firstHash, syncStep);
               } else {

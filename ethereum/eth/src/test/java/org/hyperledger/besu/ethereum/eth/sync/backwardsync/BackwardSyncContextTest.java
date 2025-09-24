@@ -521,4 +521,27 @@ public class BackwardSyncContextTest {
       }
     }
   }
+
+  @Test
+  public void whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressInNextSession() {
+    // This scenario can happen due to a reorg
+    // Expectation we progress beyond the reorg block upon receiving the next FCU
+
+    // choose an intermediate remote block to create a reorg block from
+    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
+    final Hash reorgBlockParentHash = getRemoteBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
+
+    // represents first FCU with a block that will become reorged away
+    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
+    respondUntilFutureIsDone(fcuBeforeReorg);
+    assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(reorgBlockHeight);
+
+    // represents subsequent FCU with successfully reorged version of the same block
+    final CompletableFuture<Void> fcuAfterReorg =
+        context.syncBackwardsUntil(getRemoteBlockByNumber(reorgBlockHeight).getHash());
+    respondUntilFutureIsDone(fcuAfterReorg);
+    assertThat(localBlockchain.getChainHeadBlock())
+        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
+  }
 }

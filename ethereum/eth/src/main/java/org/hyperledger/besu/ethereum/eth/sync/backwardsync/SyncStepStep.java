@@ -69,17 +69,18 @@ public class SyncStepStep {
     if (headerExecutorResult.result().isEmpty()
         || headerExecutorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
       throw new RuntimeException(new InvalidPeerTaskResponseException());
+    } else {
+      GetBodiesFromPeerTask bodiesTask =
+          new GetBodiesFromPeerTask(
+              headerExecutorResult.result().get(), context.getProtocolSchedule());
+      PeerTaskExecutorResult<List<Block>> blockExecutorResult =
+          context.getEthContext().getPeerTaskExecutor().execute(bodiesTask);
+      if (blockExecutorResult.result().isEmpty()
+          || blockExecutorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+        throw new RuntimeException(new InvalidPeerTaskResponseException());
+      }
+      return blockExecutorResult.result().get().getFirst();
     }
-    GetBodiesFromPeerTask bodiesTask =
-        new GetBodiesFromPeerTask(
-            headerExecutorResult.result().get(), context.getProtocolSchedule());
-    PeerTaskExecutorResult<List<Block>> blockExecutorResult =
-        context.getEthContext().getPeerTaskExecutor().execute(bodiesTask);
-    if (blockExecutorResult.result().isEmpty()
-        || blockExecutorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
-      throw new RuntimeException(new InvalidPeerTaskResponseException());
-    }
-    return blockExecutorResult.result().get().getFirst();
   }
 
   private Block saveBlock(final Block block) {
