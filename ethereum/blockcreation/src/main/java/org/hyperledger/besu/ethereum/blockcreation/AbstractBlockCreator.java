@@ -233,7 +233,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
       final Optional<TransactionAccessList> preExecutionAccessList =
-          Optional.of(new TransactionAccessList(0));
+          blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
@@ -266,8 +266,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final Optional<TransactionAccessList> postExecutionAccessList =
-          Optional.of(
-              new TransactionAccessList(transactionResults.getSelectedTransactions().size() + 1));
+          blockAccessListBuilder.map(
+              b ->
+                  BlockAccessListBuilder.createPostExecutionAccessList(
+                      transactionResults.getSelectedTransactions().size()));
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
           newProtocolSpec.getWithdrawalsProcessor();
@@ -297,7 +299,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           t ->
               blockAccessListBuilder.ifPresent(
                   b ->
-                      b.addTransactionLevelAccessList(
+                      b.addTransactionAccessList(
                           t, (StackedUpdater<?, ?>) disposableWorldState.updater().updater())));
 
       throwIfStopped();

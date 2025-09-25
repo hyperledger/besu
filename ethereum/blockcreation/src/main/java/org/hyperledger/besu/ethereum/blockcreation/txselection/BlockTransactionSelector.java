@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -603,8 +604,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
-    final TransactionAccessList transactionAccessList =
-        new TransactionAccessList(currentTxnLocation.get() + 1);
+    final Optional<TransactionAccessList> transactionAccessList =
+        maybeBlockAccessListBuilder.map(
+            b -> BlockAccessListBuilder.createTransactionAccessList(currentTxnLocation.get()));
     return transactionProcessor.processTransaction(
         txWorldStateUpdater,
         blockSelectionContext.pendingBlockHeader(),
@@ -614,7 +616,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockHashLookup,
         TransactionValidationParams.mining(),
         blockSelectionContext.blobGasPrice(),
-        Optional.of(transactionAccessList));
+        transactionAccessList);
   }
 
   /**
@@ -651,11 +653,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                       .getTransactionAccessList()
                       .ifPresent(
                           transactionAccessList -> {
-                            if (txWorldStateUpdater
-                                instanceof StackedUpdater<?, ?> stackedUpdater) {
-                              blockAccessListBuilder.addTransactionLevelAccessList(
-                                  transactionAccessList, stackedUpdater);
-                            }
+                            blockAccessListBuilder.addTransactionAccessList(
+                                transactionAccessList, (StackedUpdater<?, ?>) txWorldStateUpdater);
                           }));
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 

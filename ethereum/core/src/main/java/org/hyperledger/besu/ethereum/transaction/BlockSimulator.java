@@ -221,7 +221,7 @@ public class BlockSimulator {
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<TransactionAccessList> preExecutionAccessList =
-        blockAccessListBuilder.map(b -> new TransactionAccessList(0));
+        blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
@@ -250,8 +250,8 @@ public class BlockSimulator {
     Optional<TransactionAccessList> postExecutionAccessList =
         blockAccessListBuilder.map(
             b ->
-                new TransactionAccessList(
-                    blockStateCallSimulationResult.getTransactions().size() + 1));
+                BlockAccessListBuilder.createPostExecutionAccessList(
+                    blockStateCallSimulationResult.getTransactions().size()));
 
     // EIP-7685: process EL requests
     final Optional<RequestProcessorCoordinator> requestProcessor =
@@ -269,9 +269,7 @@ public class BlockSimulator {
     postExecutionAccessList.ifPresent(
         t ->
             blockAccessListBuilder.ifPresent(
-                b ->
-                    b.addTransactionLevelAccessList(
-                        t, (StackedUpdater<?, ?>) ws.updater().updater())));
+                b -> b.addTransactionAccessList(t, (StackedUpdater<?, ?>) ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
@@ -327,8 +325,8 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final TransactionAccessList transactionAccessList =
-          new TransactionAccessList(transactionLocation);
+      final Optional<TransactionAccessList> transactionAccessList =
+          createTransactionAccessList(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -343,7 +341,7 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              Optional.of(transactionAccessList));
+              transactionAccessList);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
@@ -361,7 +359,7 @@ public class BlockSimulator {
               t ->
                   blockAccessListBuilder.ifPresent(
                       b ->
-                          b.addTransactionLevelAccessList(
+                          b.addTransactionAccessList(
                               t, (StackedUpdater<?, ?>) transactionUpdater)));
 
       transactionUpdater.commit();
@@ -372,6 +370,13 @@ public class BlockSimulator {
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
     return blockStateCallSimulationResult;
+  }
+
+  private Optional<TransactionAccessList> createTransactionAccessList(
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final int transactionLocation) {
+    return blockAccessListBuilder.map(
+        b -> BlockAccessListBuilder.createTransactionAccessList(transactionLocation));
   }
 
   private BlockSimulationResult createFinalBlock(

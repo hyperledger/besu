@@ -111,9 +111,7 @@ public class SystemCallProcessor {
             context
                 .getBlockAccessListBuilder()
                 .ifPresent(
-                    b ->
-                        b.addTransactionLevelAccessList(
-                            t, (StackedUpdater<?, ?>) systemCallUpdater)));
+                    b -> b.addTransactionAccessList(t, (StackedUpdater<?, ?>) systemCallUpdater)));
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       systemCallUpdater.commit();

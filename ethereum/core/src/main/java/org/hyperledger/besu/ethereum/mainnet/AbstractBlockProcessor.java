@@ -179,7 +179,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     final Optional<TransactionAccessList> preExecutionAccessList =
-        createAccessList(blockAccessListBuilder, 0);
+        blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             blockHeader,
@@ -227,7 +227,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       final Optional<TransactionAccessList> transactionAccessList =
-          createAccessList(blockAccessListBuilder, i + 1);
+          createTransactionAccessList(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
@@ -302,7 +302,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final Optional<TransactionAccessList> postExecutionAccessList =
-        createAccessList(blockAccessListBuilder, transactions.size() + 1);
+        blockAccessListBuilder.map(
+            b -> BlockAccessListBuilder.createPostExecutionAccessList(transactions.size()));
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
@@ -474,9 +475,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return true;
   }
 
-  private Optional<TransactionAccessList> createAccessList(
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder, final int i) {
-    return blockAccessListBuilder.map(b -> new TransactionAccessList(i));
+  private Optional<TransactionAccessList> createTransactionAccessList(
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final int transactionLocation) {
+    return blockAccessListBuilder.map(
+        b -> BlockAccessListBuilder.createTransactionAccessList(transactionLocation));
   }
 
   private void addTransactionAccessListToBlockAccessListBuilder(
@@ -486,8 +489,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     transactionAccessList.ifPresent(
         t ->
             blockAccessListBuilder.ifPresent(
-                b ->
-                    b.addTransactionLevelAccessList(t, (StackedUpdater<?, ?>) transactionUpdater)));
+                b -> b.addTransactionAccessList(t, (StackedUpdater<?, ?>) transactionUpdater)));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

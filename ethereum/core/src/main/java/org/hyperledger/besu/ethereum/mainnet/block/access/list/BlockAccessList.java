@@ -133,7 +133,20 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(
+    public static TransactionAccessList createPreExecutionAccessList() {
+      return new TransactionAccessList(0);
+    }
+
+    public static TransactionAccessList createPostExecutionAccessList(
+        final int numberOfTransactions) {
+      return new TransactionAccessList(numberOfTransactions + 1);
+    }
+
+    public static TransactionAccessList createTransactionAccessList(final int transactionLocation) {
+      return new TransactionAccessList(transactionLocation + 1);
+    }
+
+    public void addTransactionAccessList(
         final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
       for (Map.Entry<Address, AccountAccessList> accountAccessListEntry :
           txList.getAccounts().entrySet()) {
@@ -168,31 +181,31 @@ public class BlockAccessList {
             Wei newBalance = account.getBalance();
             Wei originalBalance = builder.getLastBalance().orElse(wrappedAccount.getBalance());
             if (!newBalance.equals(originalBalance)) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+              builder.addBalanceChange(txList.getBlockAccessIndex(), newBalance.toBytes());
             }
 
             long newNonce = account.getNonce();
             long originalNonce = builder.getLastNonce().orElse(wrappedAccount.getNonce());
             if (newNonce > 0 && newNonce > originalNonce) {
-              builder.addNonceChange(txList.getIndex(), newNonce);
+              builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
             }
 
             Bytes newCode = account.getCode();
             Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
             if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
-              builder.addCodeChange(txList.getIndex(), newCode);
+              builder.addCodeChange(txList.getBlockAccessIndex(), newCode);
             }
           } else {
             Wei newBalance = account.getBalance();
             if (!newBalance.isZero()) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+              builder.addBalanceChange(txList.getBlockAccessIndex(), newBalance.toBytes());
             }
 
             Bytes newCode = account.getCode();
             if (!newCode.isEmpty()) {
               long newNonce = account.getNonce();
-              builder.addCodeChange(txList.getIndex(), newCode);
-              builder.addNonceChange(txList.getIndex(), newNonce);
+              builder.addCodeChange(txList.getBlockAccessIndex(), newCode);
+              builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
             }
           }
 
@@ -215,7 +228,7 @@ public class BlockAccessList {
               final boolean isWrite = isSet || isReset || isUpdate;
 
               if (isWrite) {
-                builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
+                builder.addStorageWrite(slotKeyObj, txList.getBlockAccessIndex(), updatedValue);
               } else {
                 builder.addStorageRead(slotKeyObj);
               }
