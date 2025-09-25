@@ -106,7 +106,7 @@ public class GeneralStateReferenceTestTools {
     }
 
     // Consumes a huge amount of memory
-    params.ignore("static_Call1MB1024Calldepth-\\w");
+    params.ignore("static_Call1MB1024Calldepth");
     params.ignore("ShanghaiLove_.*");
 
     // Don't do time-consuming tests
