@@ -88,13 +88,9 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
   }
 
   @Override
-  public boolean disable() {
-    boolean miningDisabled = super.disable();
-    if (miningDisabled) {
-      PoWHasher.ETHASH_LIGHT.cleanCache();
-    }
-
-    return false;
+  public void stop() {
+    super.stop();
+    PoWHasher.ETHASH_LIGHT.cleanCache();
   }
 
   private Optional<Long> remoteHashesPerSecond() {
