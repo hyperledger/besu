@@ -80,8 +80,6 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Comparator<BlockHeader> blockChoiceRule;
 
-  private final int numberOfBlocksToCache;
-  private final int numberOfBlockHeadersToCache;
   private Optional<Cache<Hash, BlockHeader>> blockHeadersCache;
   private Optional<Cache<Hash, BlockBody>> blockBodiesCache;
   private Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
@@ -129,8 +127,6 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
-    this.numberOfBlocksToCache = numberOfBlocksToCache;
-    this.numberOfBlockHeadersToCache = numberOfBlockHeadersToCache;
 
     initializeCaches(metricsSystem, numberOfBlockHeadersToCache, numberOfBlocksToCache);
     createCounters(metricsSystem);
@@ -545,10 +541,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         cache -> cache.put(block.getHash(), block.getHeader().getDifficulty()));
     blockAccessListCache.ifPresent(
         cache -> blockAccessList.ifPresent(t -> cache.put(block.getHash(), t)));
-  }
-
-  private void cacheBlockHeader(final BlockHeader blockHeader) {
-    blockHeadersCache.ifPresent(cache -> cache.put(blockHeader.getHash(), blockHeader));
   }
 
   private boolean blockShouldBeProcessed(
