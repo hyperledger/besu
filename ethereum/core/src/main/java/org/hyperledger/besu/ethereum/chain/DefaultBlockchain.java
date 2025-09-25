@@ -157,7 +157,6 @@ public class DefaultBlockchain implements MutableBlockchain {
       ;
       blockAccessListCache =
           Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      ;
       registerCacheMetrics(metricsSystem);
     } else {
       // Only headers cache is created, rest are empty
