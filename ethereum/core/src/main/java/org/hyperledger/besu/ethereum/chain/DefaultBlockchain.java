@@ -494,12 +494,14 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public synchronized void appendSyncBlock(
       final SyncBlock block, final List<TransactionReceipt> receipts) {
+    cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, true);
   }
 
   @Override
   public synchronized void appendSyncBlockWithoutIndexingTransactions(
       final SyncBlock block, final List<TransactionReceipt> receipts) {
+    cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, false);
   }
 
@@ -514,6 +516,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {
+    // as this is used only to store premerge block headers, we don't cache the header in this case
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     updater.putBlockHeader(blockHeader.getHash(), blockHeader);
     updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
@@ -528,13 +531,17 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
-    blockHeadersCache.ifPresent(cache -> cache.put(block.getHash(), block.getHeader()));
+    cacheBlockHeader(block.getHeader());
     blockBodiesCache.ifPresent(cache -> cache.put(block.getHash(), block.getBody()));
     transactionReceiptsCache.ifPresent(cache -> cache.put(block.getHash(), receipts));
     totalDifficultyCache.ifPresent(
         cache -> cache.put(block.getHash(), block.getHeader().getDifficulty()));
     blockAccessListCache.ifPresent(
         cache -> blockAccessList.ifPresent(t -> cache.put(block.getHash(), t)));
+  }
+
+  private void cacheBlockHeader(final BlockHeader blockHeader) {
+    blockHeadersCache.ifPresent(cache -> cache.put(blockHeader.getHash(), blockHeader));
   }
 
   private boolean blockShouldBeProcessed(
