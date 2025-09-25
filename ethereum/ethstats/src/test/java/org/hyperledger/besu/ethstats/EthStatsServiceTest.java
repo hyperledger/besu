@@ -236,7 +236,7 @@ public class EthStatsServiceTest {
   }
 
   @Test
-  public void shouldSerializeBlockMessageWithOptionalFields() throws Exception {
+  public void shouldSerializeBlockMessage() throws Exception {
     ethStatsService =
         new EthStatsService(
             ethStatsConnectOptions,
