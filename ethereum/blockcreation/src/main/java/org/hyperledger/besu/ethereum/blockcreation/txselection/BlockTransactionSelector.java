@@ -365,12 +365,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
     final long txRemainingTime;
-    if (currTxEvaluationContext == null) {
-      LOG.atWarn()
-          .setMessage("Cancelling transaction selection before starting any evaluation")
-          .log();
-      txRemainingTime = blockTxsSelectionMaxTimeNanos + CANCELLATION_GRACE_TIME_NANOS;
-    } else {
+    if (currTxEvaluationContext != null) {
       final long txElapsedTime =
           currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
       // adding a grace time so we are sure it take strictly more than the block selection max time
@@ -384,6 +379,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           .addArgument(() -> nanosToMillis(txElapsedTime))
           .addArgument(() -> nanosToMillis(txRemainingTime))
           .log();
+    } else {
+      LOG.atWarn()
+          .setMessage("Cancelling transaction selection before starting any evaluation")
+          .log();
+      txRemainingTime = blockTxsSelectionMaxTimeNanos + CANCELLATION_GRACE_TIME_NANOS;
     }
     ethScheduler.scheduleFutureTask(
         () -> {
