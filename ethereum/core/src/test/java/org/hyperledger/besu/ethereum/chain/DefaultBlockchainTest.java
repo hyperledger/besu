@@ -1016,7 +1016,7 @@ public class DefaultBlockchainTest {
   }
 
   @Test
-  public void testCacheUsedWhenNumberOfBlockHHeadersToCacheNotZero() {
+  public void testCacheUsedWhenNumberOfBlockHeadersToCacheNotZero() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
