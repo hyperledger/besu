@@ -611,6 +611,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer numberOfBlocksToCache = 0;
 
   @CommandLine.Option(
+      names = {"--cache-last-block-headers"},
+      description =
+          "Specifies the number of last block headers to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfBlockHeadersToCache = 0;
+
+  @CommandLine.Option(
       names = {"--cache-precompiles"},
       description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
   private final Boolean enablePrecompileCaching = false;
@@ -1821,6 +1827,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
+            .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
