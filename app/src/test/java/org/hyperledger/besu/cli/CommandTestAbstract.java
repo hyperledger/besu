@@ -169,6 +169,17 @@ public abstract class CommandTestAbstract {
                       "clique",
                       new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
 
+  protected static final JsonObject VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("terminaltotaldifficulty", 10)
+                  .put(
+                      "clique",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
   protected static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
       new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
 
