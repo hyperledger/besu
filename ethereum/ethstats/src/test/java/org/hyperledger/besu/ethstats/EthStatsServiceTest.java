@@ -236,7 +236,7 @@ public class EthStatsServiceTest {
   }
 
   @Test
-  public void shouldSerializeBlockMessage() throws Exception {
+  public void shouldSendBlockMessage() throws Exception {
     ethStatsService =
         new EthStatsService(
             ethStatsConnectOptions,
