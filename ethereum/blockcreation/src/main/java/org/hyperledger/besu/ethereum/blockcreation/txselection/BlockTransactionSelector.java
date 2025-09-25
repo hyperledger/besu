@@ -364,23 +364,33 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   }
 
   private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
-    final long txElapsedTime =
-        currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
-    // adding a grace time so we are sure it take strictly more than the block selection max time
-    final long txRemainingTime =
-        (blockTxsSelectionMaxTimeNanos - txElapsedTime) + CANCELLATION_GRACE_TIME_NANOS;
+    final long txRemainingTime;
+    if (currTxEvaluationContext == null) {
+      LOG.atWarn()
+          .setMessage("Cancelling transaction selection before starting any evaluation")
+          .log();
+      txRemainingTime = blockTxsSelectionMaxTimeNanos + CANCELLATION_GRACE_TIME_NANOS;
+    } else {
+      final long txElapsedTime =
+          currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
+      // adding a grace time so we are sure it take strictly more than the block selection max time
+      txRemainingTime =
+          (blockTxsSelectionMaxTimeNanos - txElapsedTime) + CANCELLATION_GRACE_TIME_NANOS;
 
-    LOG.atDebug()
-        .setMessage(
-            "Transaction {} is processing for {}ms, giving it {}ms grace time, before considering it taking too much time to execute")
-        .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
-        .addArgument(() -> nanosToMillis(txElapsedTime))
-        .addArgument(() -> nanosToMillis(txRemainingTime))
-        .log();
-
+      LOG.atDebug()
+          .setMessage(
+              "Transaction {} is processing for {}ms, giving it {}ms grace time, before considering it taking too much time to execute")
+          .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+          .addArgument(() -> nanosToMillis(txElapsedTime))
+          .addArgument(() -> nanosToMillis(txRemainingTime))
+          .log();
+    }
     ethScheduler.scheduleFutureTask(
         () -> {
-          if (!txSelectionTask.isDone()) {
+          if (txSelectionTask.isDone()) {
+            return;
+          }
+          if (currTxEvaluationContext != null) {
             LOG.atDebug()
                 .setMessage(
                     "Transaction {} is still processing after the grace time, total processing time {}ms,"
@@ -391,9 +401,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                         currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS))
                 .addArgument(() -> nanosToMillis(blockTxsSelectionMaxTimeNanos))
                 .log();
-
-            txSelectionTask.cancel(true);
           }
+          txSelectionTask.cancel(true);
         },
         Duration.ofNanos(txRemainingTime));
   }
