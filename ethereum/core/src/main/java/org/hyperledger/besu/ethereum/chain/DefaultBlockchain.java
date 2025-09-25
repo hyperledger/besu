@@ -174,7 +174,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private void registerCacheMetrics(final MetricsSystem metricsSystem) {
-    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockHeaders", blockHeadersCache.get());
+    registerHeadersCacheMetrics(metricsSystem);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockBodies", blockBodiesCache.get());
     metricsSystem.createGuavaCacheCollector(
         BLOCKCHAIN, "transactionReceipts", transactionReceiptsCache.get());
