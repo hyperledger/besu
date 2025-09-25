@@ -1090,6 +1090,29 @@ public abstract class AbstractBlockTransactionSelectorTest {
         false);
   }
 
+  @Test
+  public void shouldHandleTimeoutBeforeAnyTransactionIsEvaluated() {
+    // set a very short max time for tx selection to force the timeout before evaluation of the tx
+    int txsSelectionMaxTime = 1;
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                transactionSelectionService,
+                Wei.ZERO,
+                MIN_OCCUPANCY_100_PERCENT,
+                PositiveNumber.fromInt(txsSelectionMaxTime)),
+            transactionProcessor,
+            createBlock(301_000),
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            transactionSelectionService);
+    transactionPool.addRemoteTransactions(List.of(createTransaction(2, Wei.of(7), 100_000)));
+
+    var results = selector.buildTransactionListForBlock();
+    assertThat(results.getSelectedTransactions()).isEmpty();
+  }
+
   private void internalBlockSelectionTimeoutSimulation(
       final boolean isPoa,
       final boolean preProcessingTooLate,
