@@ -18,6 +18,8 @@
 - Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
 
 ### Bug fixes
+- Fix eth_subscribe RPC failing returning a block response [#9212](https://github.com/hyperledger/besu/pull/9212)
+- Fix ethstats integration failing to provide block updates to ethstats server [#9220](https://github.com/hyperledger/besu/pull/9220)
 
 ## 25.9.0
 
