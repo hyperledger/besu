@@ -14,14 +14,17 @@
  */
 package org.hyperledger.besu.evm;
 
+
 import java.util.Arrays;
 
 /**
  * 256-bits wide unsigned integer class.
  *
- * <p>This class is an optimised version of BigInteger for fixed width 8byte integers
+ * <p>This class is an optimised version of BigInteger for fixed width 256-bits integers.
  */
 public final class UInt256 {
+  //region Internals
+  //--------------------------------------------------------------------------
   // UInt256 is a big-endian up to 256-bits integer.
   // Internally, it is represented with int/long limbs in little-endian order.
   // Wraps a view over limbs array from 0..length.
@@ -31,10 +34,8 @@ public final class UInt256 {
 
   // Maximum number of significant limbs
   private static final int N_LIMBS = 8;
-  // Number of limbs allocated, one more for carries
-  private static final int N_ALLOC = 9;
 
-  // --- Getters for testing ---
+  // Getters for testing
   int length() {
     return length;
   }
@@ -42,8 +43,11 @@ public final class UInt256 {
   int[] limbs() {
     return limbs;
   }
+  //--------------------------------------------------------------------------
+  //endregion
 
-  // --- Preallocating small integers 0..nSmallInts ---
+  //region Preallocating Small Integers
+  //--------------------------------------------------------------------------
   private static final int nSmallInts = 256;
   private static final UInt256[] smallInts = new UInt256[nSmallInts];
 
@@ -68,8 +72,11 @@ public final class UInt256 {
 
   /** The constant 16. */
   public static final UInt256 SIXTEEN = smallInts[16];
+  //--------------------------------------------------------------------------
+  //endregion
 
-  // --- Constructors ---
+  //region Constructors
+  //--------------------------------------------------------------------------
 
   UInt256(final int[] limbs, final int length) {
     this.limbs = limbs;
@@ -77,11 +84,11 @@ public final class UInt256 {
     // Unchecked length: assumes length is properly set.
   }
 
-  UInt256(final int[] limbs) {
-    int i = Math.min(limbs.length - 1, N_ALLOC - 1);
+  public UInt256(final int[] limbs) {
+    int i = Math.min(limbs.length, N_LIMBS) - 1;
     while ((i >= 0) && (limbs[i] == 0)) i--;
     this.limbs = limbs;
-    this.length = Math.min(i + 1, N_LIMBS);
+    this.length = i + 1;
   }
 
   /**
@@ -96,8 +103,8 @@ public final class UInt256 {
     int nBytes = bytes.length - offset;
     if (nBytes == 0) return ZERO;
     int len = (nBytes + 3) / 4;
-    // int[] limbs = new int[len];
-    int[] limbs = new int[N_ALLOC];
+    int[] limbs = new int[len];
+    // int[] limbs = new int[N_LIMBS];
 
     int i;
     int base;
@@ -149,8 +156,11 @@ public final class UInt256 {
     if (0 <= value && value < nSmallInts) return smallInts[(int) value];
     return new UInt256(new int[] {(int) value, (int) (value >>> 32)});
   }
+  //--------------------------------------------------------------------------
+  //endregion
 
-  // ---- conversion ----
+  //region Conversions
+  //--------------------------------------------------------------------------
 
   /**
    * Convert to int.
@@ -187,8 +197,7 @@ public final class UInt256 {
    */
   public byte[] toBytesBE() {
     byte[] out = new byte[32];
-    for (int i = 0; i < length; i++) {
-      int offset = 28 - 4 * i;
+    for (int i = 0, offset = 28; i < length; i++, offset -= 4) {
       int v = limbs[i];
       out[offset] = (byte) (v >>> 24);
       out[offset + 1] = (byte) (v >>> 16);
@@ -198,7 +207,27 @@ public final class UInt256 {
     return out;
   }
 
-  // ---- comparison ----
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("0x");
+    byte[] out = new byte[length * 4];
+    for (int i = 0, offset = 4 * (length - 1); i < length; i++, offset -= 4) {
+      int v = limbs[i];
+      out[offset] = (byte) (v >>> 24);
+      out[offset + 1] = (byte) (v >>> 16);
+      out[offset + 2] = (byte) (v >>> 8);
+      out[offset + 3] = (byte) v;
+    }
+    for (byte b : out) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
+  }
+  //--------------------------------------------------------------------------
+  //endregion
+
+  //region Comparisons
+  //--------------------------------------------------------------------------
 
   /**
    * Is the value 0 ?
@@ -230,23 +259,30 @@ public final class UInt256 {
     return 0;
   }
 
-  private int[] shiftLeftWithCarry(final int shift) {
-    int limbShift = shift / 32;
-    int bitShift = shift % 32;
-    if (bitShift == 0) {
-      return Arrays.copyOfRange(limbs, limbShift, length + limbShift + 1);
-    }
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) return true;
+    if (!(obj instanceof UInt256)) return false;
+    UInt256 other = (UInt256) obj;
 
-    int[] res = new int[length + limbShift + 1];
-    int j = limbShift;
-    int carry = 0;
-    for (int i = 0; i < length; ++i, ++j) {
-      res[j] = (limbs[i] << bitShift) | carry;
-      carry = limbs[i] >>> (32 - bitShift);
-    }
-    res[j] = carry; // last carry
-    return res;
+    // Compare lengths after trimming leading zero limbs
+    int cmp = UInt256.compare(this, other);
+    return cmp == 0;
   }
+
+  @Override
+  public int hashCode() {
+    int h = 1;
+    for (int i = 0; i < length; i++) {
+      h = 31 * h + limbs[i];
+    }
+    return h;
+  }
+  //--------------------------------------------------------------------------
+  //endregion
+
+  //region Bitwise Operations
+  //--------------------------------------------------------------------------
 
   /**
    * Shifts value to the left.
@@ -255,10 +291,14 @@ public final class UInt256 {
    * @return Shifted UInt256 value.
    */
   public UInt256 shiftLeft(final int shift) {
+    if (shift >= length * 32) return ZERO;
     if (shift < 0) return shiftRight(-shift);
     if (shift == 0 || isZero()) return this;
-    if (shift >= length * 32) return ZERO;
-    return new UInt256(shiftLeftWithCarry(shift));
+    int nDiffBits = shift - numberOfLeadingZeros(this.limbs, this.length);
+    int size = this.length + (nDiffBits + 31) / 32;
+    int[] shifted = new int[size];
+    shiftLeftInto(shifted, this.limbs, shift);
+    return new UInt256(shifted, size);
   }
 
   /**
@@ -269,72 +309,165 @@ public final class UInt256 {
    */
   public UInt256 shiftRight(final int shift) {
     if (shift < 0) return shiftLeft(-shift);
-    if (shift == 0 || isZero()) return this;
-    if (shift >= length * 32) return ZERO;
+    if (isZero()) return ZERO;
+    int[] shifted = new int[this.length];
+    shiftRightInto(shifted, this.limbs, shift);
+    return new UInt256(shifted);
+  }
+  //--------------------------------------------------------------------------
+  //endregion
 
-    int limbShift = shift / 32;
-    int bitShift = shift % 32;
-    if (bitShift == 0) {
-      return new UInt256(Arrays.copyOfRange(limbs, limbShift, length), length - limbShift);
-    }
+  //region Arithmetic Operations
+  //--------------------------------------------------------------------------
 
-    int[] res = new int[this.limbs.length - limbShift];
-    int j = this.length - 1 - limbShift; // res index
-    int carry = 0;
-    for (int i = this.length - 1; j >= 0; i--, j--) {
-      int r = (limbs[i] >>> bitShift) | carry;
-      res[j] = r;
-      carry = limbs[i] << (32 - bitShift);
-    }
-    return new UInt256(res);
+  /**
+   * Addition (modulo 2**256).
+   *
+   * @param other The integer to add.
+   * @return The sum of this with other.
+   */
+  public UInt256 add(final UInt256 other) {
+    if (other.isZero()) return this;
+    if (this.isZero()) return other;
+    return new UInt256(addWithCarry(this.limbs, other.limbs));
   }
 
   /**
-   * Reduce modulo divisor.
+   * Reduce modulo modulus.
    *
-   * @param divisor The modulus of the reduction
-   * @return The remainder modulo {@code divisor}.
+   * @param modulus The modulus of the reduction
+   * @return The remainder modulo {@code modulus}.
    */
-  public UInt256 mod(final UInt256 divisor) {
-    if (divisor.isZero()) return ZERO;
-    int cmp = compare(this, divisor);
+  public UInt256 mod(final UInt256 modulus) {
+    int cmp = compare(this, modulus);
     if (cmp < 0) return this;
-    if (cmp == 0) return ZERO;
+    if (cmp == 0 || modulus.isZero() || this.isZero()) return ZERO;
+    return new UInt256(knuthRemainder(this.limbs, modulus.limbs));
+  }
 
-    int n = divisor.length;
-    int m = this.length - n;
-    if (n == 1) {
-      long d = divisor.limbs[0] & 0xFFFFFFFFL;
-      long rem = 0;
-      // Process from most significant limb downwards
-      for (int i = length - 1; i >= 0; i--) {
-        long cur = (rem << 32) | (limbs[i] & 0xFFFFFFFFL);
-        rem = Long.remainderUnsigned(cur, d);
-      }
-      return new UInt256(new int[] {(int) rem});
+  /**
+   * Modular addition.
+   *
+   * @param other The integer to add to this.
+   * @param modulus The modulus of the reduction.
+   * @return This integer this + other (mod modulus).
+   */
+  public UInt256 addMod(final UInt256 other, final UInt256 modulus) {
+    if (modulus.isZero()) return ZERO;
+    if (this.isZero()) return other.mod(modulus);
+    if (other.isZero()) return this.mod(modulus);
+    int[] sum = addWithCarry(this.limbs, other.limbs);
+    int[] rem = knuthRemainder(sum, modulus.limbs);
+    UInt256 res = new UInt256(rem);
+    return res;
+  }
+  //--------------------------------------------------------------------------
+  //endregion
+
+  //region Support (private) Algorithms
+  //--------------------------------------------------------------------------
+  private static int numberOfLeadingZeros(final int[] x, final int limit) {
+    int leadingIndex = limit - 1;
+    while ( (leadingIndex >= 0) && (x[leadingIndex] == 0) ) leadingIndex--;
+    return 32 * (limit - leadingIndex - 1) + Integer.numberOfLeadingZeros(x[leadingIndex]);
+  }
+
+  private static int numberOfLeadingZeros(final int[] x) {
+    return numberOfLeadingZeros(x, x.length);
+  }
+
+  private static void shiftLeftInto(final int[] result, final int[] x, final int shift) {
+    // Unchecked: result should be initialised with zeroes
+    int limbShift = shift / 32;
+    int bitShift = shift % 32;
+    int nLimbs = Math.min(x.length, result.length - limbShift);
+    if (shift > 32 * nLimbs) return;
+    if (bitShift == 0) {
+      System.arraycopy(x, 0, result, limbShift, nLimbs);
+      return;
     }
 
-    // --- Shortcut: divisor fits in 64 bits (2 limbs) ---
-    // if (n == 2) {
-    //   long d = ((long) divisor.limbs[1] << 32) | (divisor.limbs[0] & 0xFFFFFFFFL);
-    //  long rem = 0;
-    // Process from most significant limb downwards
-    // for (int i = length - 1; i >= 0; i--) {
-    //    long cur = (rem << 32) | (limbs[i] & 0xFFFFFFFFL);
-    //    rem = Long.remainderUnsigned(cur, d);
-    //  }
-    //  int lo = (int) rem;
-    //  int hi = (int) (rem >>> 32);
-    //  return new UInt256(new int[] {lo, hi});
-    // }
+    int j = limbShift;
+    int carry = 0;
+    for (int i = 0; i < nLimbs; ++i, ++j) {
+      result[j] = (x[i] << bitShift) | carry;
+      carry = x[i] >>> (32 - bitShift);
+    }
+    if (carry != 0) result[j] = carry; // last carry
+  }
 
-    // --- Knuth Division ---
+  private static void shiftRightInto(final int[] result, final int[] x, final int shift) {
+    int limbShift = shift / 32;
+    int bitShift = shift % 32;
+    int nLimbs = Math.min(x.length - limbShift, result.length);
 
+    if (shift > 32 * nLimbs) return;
+    if (bitShift == 0) {
+      System.arraycopy(x, limbShift, result, 0, nLimbs);
+      return;
+    }
+
+    int carry = 0;
+    for (int i = nLimbs - 1 + limbShift, j = nLimbs - 1; j >= 0; i--, j--) {
+      int r = (x[i] >>> bitShift) | carry;
+      result[j] = r;
+      carry = x[i] << (32 - bitShift);
+    }
+  }
+
+  private static int[] addWithCarry(final int[] x, final int[] y) {
+    // Step 1: Add with carry
+    int[] a;
+    int[] b;
+    if (x.length < y.length) {
+      a = y;
+      b = x;
+    } else {
+      a = x;
+      b = y;
+    }
+    int maxLen = a.length;
+    int minLen = b.length;
+    int[] sum = new int[maxLen + 1];
+    long carry = 0;
+    for (int i = 0; i < minLen; i++) {
+      long ai = a[i] & 0xFFFFFFFFL;
+      long bi = b[i] & 0xFFFFFFFFL;
+      long s = ai + bi + carry;
+      sum[i] = (int) s;
+      carry = s >>> 32;
+    }
+    int icarry = (int) carry;
+    for (int i = minLen; i < maxLen; i++) {
+      sum[i] = a[i] + icarry;
+      icarry = (a[i] != 0 && sum[i] == 0) ? 1 : 0;
+    }
+    sum[maxLen] = icarry;
+    return sum;
+  }
+
+  private static int[] knuthRemainder(final int[] dividend, final int[] modulus) {
+    int shift = numberOfLeadingZeros(modulus);
+    int limbShift = shift / 32;
+    int n = modulus.length - limbShift;
+    if (n == 0) return new int[0];
+    if (n == 1) {
+      long d = modulus[0] & 0xFFFFFFFFL;
+      long rem = 0;
+      // Process from most significant limb downwards
+      for (int i = dividend.length - 1; i >= 0; i--) {
+        long cur = (rem << 32) | (dividend[i] & 0xFFFFFFFFL);
+        rem = Long.remainderUnsigned(cur, d);
+      }
+      return (new int[] {(int) rem});
+    }
     // Normalize
-    // Makes 2 copies of limbs: optim ?
-    int shift = Integer.numberOfLeadingZeros(divisor.limbs[n - 1]);
-    int[] vLimbs = divisor.shiftLeftWithCarry(shift);
-    int[] uLimbs = this.shiftLeftWithCarry(shift);
+    int m = dividend.length - n;
+    int bitShift = shift % 32;
+    int[] vLimbs = new int[n];
+    shiftLeftInto(vLimbs, modulus, bitShift);
+    int[] uLimbs = new int[dividend.length + 1];
+    shiftLeftInto(uLimbs, dividend, bitShift);
 
     // Main division loop
     long vn1 = vLimbs[n - 1] & 0xFFFFFFFFL;
@@ -377,37 +510,11 @@ public final class UInt256 {
         uLimbs[j + n] = (int) (uLimbs[j + n] + carry);
       }
     }
-
     // Unnormalize remainder
-    return (new UInt256(uLimbs, n)).shiftRight(shift);
+    int[] shifted = new int[n];
+    shiftRightInto(shifted, uLimbs, bitShift);
+    return shifted;
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder("0x");
-    for (byte b : toBytesBE()) {
-      sb.append(String.format("%02x", b));
-    }
-    return sb.toString();
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
-    if (this == obj) return true;
-    if (!(obj instanceof UInt256)) return false;
-    UInt256 other = (UInt256) obj;
-
-    // Compare lengths after trimming leading zero limbs
-    int cmp = UInt256.compare(this, other);
-    return cmp == 0;
-  }
-
-  @Override
-  public int hashCode() {
-    int h = 1;
-    for (int i = 0; i < length; i++) {
-      h = 31 * h + limbs[i];
-    }
-    return h;
-  }
+  //--------------------------------------------------------------------------
+  //endregion
 }
