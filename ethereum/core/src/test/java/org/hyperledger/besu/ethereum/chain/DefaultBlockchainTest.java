@@ -977,7 +977,7 @@ public class DefaultBlockchainTest {
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain =
-        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512);
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512, 0);
 
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
@@ -1013,6 +1013,36 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(1);
     assertThat(blockchain.getTotalDifficultyCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getHeader().getDifficulty());
+  }
+
+  @Test
+  public void testCacheUsedWhenNumberOfBlockHHeadersToCacheNotZero() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 0, 10000);
+
+    final BlockDataGenerator.BlockOptions options =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(1L)
+            .setParentHash(genesisBlock.getHash());
+    final Block newBlock = gen.block(options);
+    final List<TransactionReceipt> receipts = gen.receipts(newBlock);
+
+    assertThat(blockchain.getBlockHeadersCache()).isNotEmpty();
+    assertThat(blockchain.getBlockBodiesCache()).isEmpty();
+    assertThat(blockchain.getTransactionReceiptsCache()).isEmpty();
+    assertThat(blockchain.getTotalDifficultyCache()).isEmpty();
+
+    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(0);
+
+    blockchain.appendBlock(newBlock, receipts);
+
+    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
+    assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(newBlock.getHeader());
   }
 
   /*
@@ -1106,7 +1136,8 @@ public class DefaultBlockchainTest {
       final KeyValueStorage kvStorageVariables,
       final Block genesisBlock,
       final String dataDirectory,
-      final int numberOfBlocksToCache) {
+      final int numberOfBlocksToCache,
+      final int numberOfBlockHeadersToCache) {
     return (DefaultBlockchain)
         DefaultBlockchain.createMutable(
             genesisBlock,
@@ -1114,7 +1145,8 @@ public class DefaultBlockchainTest {
             new NoOpMetricsSystem(),
             0,
             dataDirectory,
-            numberOfBlocksToCache);
+            numberOfBlocksToCache,
+            numberOfBlockHeadersToCache);
   }
 
   @Test
