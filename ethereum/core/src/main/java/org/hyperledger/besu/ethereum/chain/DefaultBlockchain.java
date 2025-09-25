@@ -151,7 +151,6 @@ public class DefaultBlockchain implements MutableBlockchain {
       ;
       transactionReceiptsCache =
           Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
-      ;
       totalDifficultyCache =
           Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
       blockAccessListCache =
