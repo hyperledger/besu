@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,24 +113,25 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   private Optional<EthPeer> selectNextPeer() {
-    final Optional<EthPeer> maybeNextPeer = remainingPeersToTry().findFirst();
+    final Optional<EthPeer> maybeNextPeer = nextPeerToTry();
 
     if (maybeNextPeer.isEmpty()) {
       // tried all the peers, restart from the best one but excluding the failed ones
       refreshPeers();
       triedPeers.retainAll(failedPeers);
-      return remainingPeersToTry().findFirst();
+      return nextPeerToTry();
     }
 
     return maybeNextPeer;
   }
 
-  protected Stream<EthPeer> remainingPeersToTry() {
-    return getEthContext()
-        .getEthPeers()
-        .streamBestPeers()
-        .filter(this::isSuitablePeer)
-        .filter(peer -> !triedPeers.contains(peer));
+  protected Optional<EthPeer> nextPeerToTry() {
+    for (EthPeer peer : getEthContext().getEthPeers().getBestPeers()) {
+      if (isSuitablePeer(peer) && !triedPeers.contains(peer)) {
+        return Optional.of(peer);
+      }
+    }
+    return Optional.empty();
   }
 
   private void refreshPeers() {

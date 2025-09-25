@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -64,6 +65,7 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
 
   @Override
   public boolean isExtendedTracing() {
+    checkInterrupt();
     return delegate.isExtendedTracing();
   }
 
@@ -96,17 +98,20 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
 
   @Override
   public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
+    checkInterrupt();
     delegate.tracePrepareTransaction(worldView, transaction);
   }
 
   @Override
   public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
+    checkInterrupt();
     delegate.traceStartTransaction(worldView, transaction);
   }
 
   @Override
   public void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {
+    checkInterrupt();
     delegate.traceBeforeRewardTransaction(worldView, tx, miningReward);
   }
 
@@ -120,6 +125,7 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
+    checkInterrupt();
     delegate.traceEndTransaction(
         worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
   }
@@ -140,6 +146,12 @@ public class InterruptibleOperationTracer implements BlockAwareOperationTracer {
   public void traceContextExit(final MessageFrame frame) {
     checkInterrupt();
     delegate.traceContextExit(frame);
+  }
+
+  @Override
+  public List<TraceFrame> getTraceFrames() {
+    checkInterrupt();
+    return delegate.getTraceFrames();
   }
 
   private void checkInterrupt() {
