@@ -387,22 +387,23 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
     ethScheduler.scheduleFutureTask(
         () -> {
-          if (txSelectionTask.isDone()) {
-            return;
+          if (!txSelectionTask.isDone()) {
+            if (currTxEvaluationContext != null) {
+              LOG.atDebug()
+                  .setMessage(
+                      "Transaction {} is still processing after the grace time, total processing time {}ms,"
+                          + " greater than max block selection time of {}ms, forcing an interrupt")
+                  .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+                  .addArgument(
+                      () ->
+                          currTxEvaluationContext
+                              .getEvaluationTimer()
+                              .elapsed(TimeUnit.MILLISECONDS))
+                  .addArgument(() -> nanosToMillis(blockTxsSelectionMaxTimeNanos))
+                  .log();
+            }
+            txSelectionTask.cancel(true);
           }
-          if (currTxEvaluationContext != null) {
-            LOG.atDebug()
-                .setMessage(
-                    "Transaction {} is still processing after the grace time, total processing time {}ms,"
-                        + " greater than max block selection time of {}ms, forcing an interrupt")
-                .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
-                .addArgument(
-                    () ->
-                        currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.MILLISECONDS))
-                .addArgument(() -> nanosToMillis(blockTxsSelectionMaxTimeNanos))
-                .log();
-          }
-          txSelectionTask.cancel(true);
         },
         Duration.ofNanos(txRemainingTime));
   }
