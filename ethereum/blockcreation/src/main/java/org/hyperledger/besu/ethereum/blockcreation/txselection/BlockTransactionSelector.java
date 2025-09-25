@@ -401,6 +401,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                               .elapsed(TimeUnit.MILLISECONDS))
                   .addArgument(() -> nanosToMillis(blockTxsSelectionMaxTimeNanos))
                   .log();
+            } else {
+              LOG.atDebug()
+                  .setMessage(
+                      "No transaction context when grace time expired, cancelling task anyway")
+                  .log();
             }
             txSelectionTask.cancel(true);
           }
