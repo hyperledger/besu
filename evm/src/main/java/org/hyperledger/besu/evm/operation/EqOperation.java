@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import java.util.Arrays;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -49,13 +51,24 @@ public class EqOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem().trimLeadingZeros();
-    final Bytes value1 = frame.popStackItem().trimLeadingZeros();
-
-    final Bytes result = (value0.equals(value1) ? UInt256.ONE : UInt256.ZERO);
+    final byte[] a = frame.popStackItem().toArrayUnsafe();
+    final byte[] b = frame.popStackItem().toArrayUnsafe();
+    final int nonZeroA = firstNonZeroIndex(a);
+    final int nonZeroB = firstNonZeroIndex(b);
+    Bytes result = UInt256.ZERO;
+    if (Arrays.equals(a, nonZeroA, a.length, b, nonZeroB, b.length)) {
+      result = UInt256.ONE;
+    }
 
     frame.pushStackItem(result);
-
     return eqSuccess;
+  }
+
+  private static int firstNonZeroIndex(final byte[] value) {
+    int i = 0;
+    while (i < value.length && value[i] == 0) {
+      i++;
+    }
+    return i;
   }
 }
