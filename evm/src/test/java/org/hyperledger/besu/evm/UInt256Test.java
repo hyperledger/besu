@@ -24,6 +24,13 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class UInt256Test {
+  final static int SAMPLE_SIZE = 30000;
+
+  private Bytes32 bigIntTo32B(final BigInteger x) {
+    byte[] a = x.toByteArray();
+    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
+    return Bytes32.leftPad(Bytes.wrap(a));
+  }
 
   @Test
   public void fromInts() {
@@ -49,19 +56,19 @@ public class UInt256Test {
 
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {-2147483648, 0, 0, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {-2147483648};
     assertThat(result.length()).as("4b-neg-length").isEqualTo(1);
     assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 0, 0, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {1 + 256 + 65536};
     assertThat(result.length()).as("3b-length").isEqualTo(1);
     assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {1, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 16777216, 0, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {1 + 256 + 65536, 16777216};
     assertThat(result.length()).as("8b-length").isEqualTo(2);
     assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
 
@@ -71,7 +78,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216, 0};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216};
     assertThat(result.length()).as("32b-length").isEqualTo(8);
     assertThat(result.limbs()).as("32b-limbs").isEqualTo(expectedLimbs);
 
@@ -81,7 +88,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257, 0, 0};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257};
     assertThat(result.length()).as("32b-padded-length").isEqualTo(7);
     assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
   }
@@ -209,7 +216,7 @@ public class UInt256Test {
   @Test
   public void modDiv8Mod8() {
     final ThreadLocalRandom random = ThreadLocalRandom.current();
-    for (int i = 0; i < 30000; i++) {
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
       final byte[] a = new byte[32];
       final byte[] b = new byte[32];
       random.nextBytes(a);
@@ -222,7 +229,45 @@ public class UInt256Test {
       UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
       UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-      Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+      Bytes32 expected = BigInteger.ZERO.compareTo(big_modulus) == 0 ? Bytes32.ZERO : bigIntTo32B(big_number.mod(big_modulus));
+      assertThat(remainder).isEqualTo(expected);
+    }
+  }
+
+  @Test
+  public void referenceTest459() {
+    BigInteger xbig = new BigInteger("000000010000000000000000000000000000000000000000", 16);
+    BigInteger ybig = new BigInteger("0000c350", 16);
+    BigInteger mbig = new BigInteger("000003e8", 16);
+    UInt256 x = UInt256.fromBytesBE(xbig.toByteArray());
+    UInt256 y = UInt256.fromBytesBE(ybig.toByteArray());
+    UInt256 m = UInt256.fromBytesBE(mbig.toByteArray());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(x.addMod(y, m).toBytesBE()));
+    Bytes32 expected = BigInteger.ZERO.compareTo(mbig) == 0 ? Bytes32.ZERO : bigIntTo32B(xbig.add(ybig).mod(mbig));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
+  public void addMod() {
+    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+      int aSize = random.nextInt(1, 33);
+      int bSize = random.nextInt(1, 33);
+      int cSize = random.nextInt(1, 33);
+      final byte[] aArray = new byte[aSize];
+      final byte[] bArray = new byte[bSize];
+      final byte[] cArray = new byte[cSize];
+      random.nextBytes(aArray);
+      random.nextBytes(bArray);
+      random.nextBytes(cArray);
+      BigInteger aInt = new BigInteger(1, aArray);
+      BigInteger bInt = new BigInteger(1, bArray);
+      BigInteger cInt = new BigInteger(1, cArray);
+      UInt256 a = UInt256.fromBytesBE(aInt.toByteArray());
+      UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
+      UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
+      Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.addMod(b, c).toBytesBE()));
+      Bytes32 expected = BigInteger.ZERO.compareTo(cInt) == 0 ? Bytes32.ZERO : bigIntTo32B(aInt.add(bInt).mod(cInt));
       assertThat(remainder).isEqualTo(expected);
     }
   }
