@@ -387,7 +387,21 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
     ethScheduler.scheduleFutureTask(
         () -> {
-          if (!txSelectionTask.isDone()) {
+          if (txSelectionTask.isDone()) {
+            if (currTxEvaluationContext != null) {
+              LOG.atDebug()
+                  .setMessage(
+                      "Transaction {} processed within the grace time, total processing time {}ms,"
+                          + " nothing to do and no penalization applied")
+                  .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+                  .addArgument(
+                      () ->
+                          currTxEvaluationContext
+                              .getEvaluationTimer()
+                              .elapsed(TimeUnit.MILLISECONDS))
+                  .log();
+            }
+          } else {
             if (currTxEvaluationContext != null) {
               LOG.atDebug()
                   .setMessage(
