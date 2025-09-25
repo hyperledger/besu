@@ -158,8 +158,8 @@ public class TransactionSelectionResult {
       new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
 
   /**
-   * There was an unhandled exception during the evaluation of the transaction. 
-   * never happen, otherwise it means there is a bug somewhere.
+   * There was an unhandled exception during the evaluation of the transaction. If this occurs, it
+   * indicates there is a bug somewhere.
    */
   public static final TransactionSelectionResult INTERNAL_ERROR =
       new TransactionSelectionResult(BaseStatus.INTERNAL_ERROR);
