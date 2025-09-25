@@ -133,7 +133,8 @@ public class BesuEventsImpl implements BesuEvents {
   public long addTransactionDroppedListener(
       final TransactionDroppedListener transactionDroppedListener) {
     return transactionPool.subscribeDroppedTransactions(
-        (transaction, reason) -> transactionDroppedListener.onTransactionDropped(transaction));
+        (transaction, reason) ->
+            transactionDroppedListener.onTransactionDropped(transaction, reason.label()));
   }
 
   @Override

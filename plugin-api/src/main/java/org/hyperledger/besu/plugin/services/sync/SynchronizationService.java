@@ -17,7 +17,10 @@ package org.hyperledger.besu.plugin.services.sync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuService;
+
+import java.util.Optional;
 
 /** Synchronization service wraps the sync state and sync event lifecycle. */
 public interface SynchronizationService extends BesuService {
@@ -65,4 +68,25 @@ public interface SynchronizationService extends BesuService {
 
   /** Starts the synchronizer. */
   void start();
+
+  /**
+   * Returns the current sync status.
+   *
+   * @return the current sync status, or empty if not syncing.
+   */
+  Optional<SyncStatus> getSyncStatus();
+
+  /**
+   * Checks if the node is in sync.
+   *
+   * @return true if the node is in sync, false otherwise.
+   */
+  boolean isInSync();
+
+  /**
+   * Returns the best peer chain head.
+   *
+   * @return the best peer chain head, or empty if no peers are connected.
+   */
+  Optional<Long> getBestPeerChainHead();
 }

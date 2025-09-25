@@ -32,9 +32,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +47,9 @@ import org.slf4j.LoggerFactory;
 public class SubscriptionManager extends AbstractVerticle {
 
   private static final Logger LOG = LoggerFactory.getLogger(SubscriptionManager.class);
+  private static final ObjectMapper jsonObjectMapper =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
   public static final String EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS =
       "SubscriptionManager::removeSubscriptions";
@@ -144,7 +149,13 @@ public class SubscriptionManager extends AbstractVerticle {
 
     if (subscription != null) {
       final SubscriptionResponse response = new SubscriptionResponse(subscription, msg);
-      vertx.eventBus().send(subscription.getConnectionId(), Json.encode(response));
+      try {
+        vertx
+            .eventBus()
+            .send(subscription.getConnectionId(), jsonObjectMapper.writeValueAsString(response));
+      } catch (JsonProcessingException e) {
+        LOG.error("Error streaming websocket JSON-RPC response", e);
+      }
     }
   }
 

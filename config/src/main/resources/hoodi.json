@@ -20,6 +20,9 @@
     "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
     "withdrawalRequestContractAddress": "0x00000961ef480eb55e80d19ad83579a64c007002",
     "consolidationRequestContractAddress": "0x0000bbddc7ce488642fb579f8b00f3a590007251",
+    "osakaTime": 1761677592,
+    "bpo1Time": 1762365720,
+    "bpo2Time": 1762955544,
     "blobSchedule": {
       "cancun": {
         "target": 3,
@@ -30,6 +33,21 @@
         "target": 6,
         "max": 9,
         "baseFeeUpdateFraction": 5007716
+      },
+      "osaka": {
+        "target": 6,
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo1": {
+        "target": 10,
+        "max": 15,
+        "baseFeeUpdateFraction": 8346193
+      },
+      "bpo2": {
+        "target": 14,
+        "max": 21,
+        "baseFeeUpdateFraction": 11684671
       }
     },
 
