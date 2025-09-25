@@ -140,8 +140,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       return;
     }
 
-    int headersSize =
-        (headersCacheSize != 0) ? Math.max(headersCacheSize, blocksCacheSize) : blocksCacheSize;
+    final int headersSize = Math.max(headersCacheSize, blocksCacheSize);
     blockHeadersCache =
         Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(headersSize).build());
     ;
