@@ -165,11 +165,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.pluginTransactionSelector = pluginTransactionSelector;
     this.operationTracer =
         new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
-    blockWorldStateUpdater = worldState.updater();
-    txWorldStateUpdater = blockWorldStateUpdater.updater();
-    blockTxsSelectionMaxTimeNanos = miningConfiguration.getBlockTxsSelectionMaxTime().toNanos();
-    pluginTxsSelectionMaxTimeNanos = miningConfiguration.getPluginTxsSelectionMaxTime().toNanos();
-    maybeBlockAccessListBuilder =
+    this.blockWorldStateUpdater = worldState.updater();
+    this.txWorldStateUpdater = blockWorldStateUpdater.updater();
+    final var blockTxsSelectionMaxTime =
+        miningConfiguration.getBlockTxsSelectionMaxTime(protocolSpec.isPoS());
+    this.blockTxsSelectionMaxTimeNanos = blockTxsSelectionMaxTime.toNanos();
+    this.pluginTxsSelectionMaxTimeNanos =
+        miningConfiguration.getPluginTxsSelectionMaxTime(blockTxsSelectionMaxTime).toNanos();
+    this.maybeBlockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
             .filter(BlockAccessListFactory::isForkActivated)
