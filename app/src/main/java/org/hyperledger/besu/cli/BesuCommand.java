@@ -1576,7 +1576,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
       } else if (genesisConfigOptions.isPoa()) {
-        Long epochLength = 0L;
+        long epochLength = 0L;
         String consensusMechanism = "";
         if (genesisConfigOptions.isIbft2()) {
           epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
