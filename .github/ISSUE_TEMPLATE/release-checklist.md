@@ -37,10 +37,12 @@ assignees: ''
 - [ ] Check binary SHAs are correct on the release page
 - [ ] Check artifacts exist in https://hyperledger.jfrog.io/ui/repos/tree/General/besu-maven
 - [ ] Update release notes in the GitHub draft release, save draft and sign-off with team
+- [ ] IMPORTANT: confirm the tag name is the ONLY text in the "Release title", otherwise it will break the Docker Promote workflow https://github.com/hyperledger/besu/actions/workflows/docker-promote.yml
 - [ ] Publish draft release ensuring it is marked as latest release (if appropriate)
     - this is now public and notifies subscribed users
     - makes the release "latest" in github
     - publishes the docker `latest` tag variants
+- [ ] Verify https://github.com/hyperledger/besu/actions/workflows/docker-promote.yml went green
 - [ ] Create homebrew release PR using [update-version workflow](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
   - If the PR has not been automatically created, create the PR manually using the created branch `update-<version>`
 - [ ] Verify homebrew release once the PR has merged using `brew tap hyperledger/besu && brew install besu` on MacOSX to verify latest version has been installed

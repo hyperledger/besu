@@ -441,7 +441,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventFiresAfterSubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    serviceImpl.addTransactionDroppedListener(result::set);
+    serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     // sending a replacement with higher gas should drop the previous one
@@ -455,7 +455,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    final long id = serviceImpl.addTransactionDroppedListener(result::set);
+    final long id = serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     transactionPool.addTransactionViaApi(TX1);

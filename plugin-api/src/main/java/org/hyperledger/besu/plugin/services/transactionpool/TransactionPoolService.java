@@ -28,6 +28,13 @@ public interface TransactionPoolService extends BesuService {
   void enableTransactionPool();
 
   /**
+   * Checks if the transaction pool is enabled.
+   *
+   * @return {@code true} if the transaction pool is enabled; otherwise {@code false}
+   */
+  boolean isTransactionPoolEnabled();
+
+  /**
    * Returns the collection of pending transactions.
    *
    * @return a collection of pending transactions
