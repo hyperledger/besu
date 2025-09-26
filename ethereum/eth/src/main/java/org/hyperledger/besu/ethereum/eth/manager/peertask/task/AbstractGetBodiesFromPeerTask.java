@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
@@ -77,9 +77,8 @@ public abstract class AbstractGetBodiesFromPeerTask<T> implements PeerTask<List<
   }
 
   @Override
-  public Predicate<EthPeer> getPeerRequirementFilter() {
-    return (ethPeer) ->
-        isPoS || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight;
+  public Predicate<EthPeerImmutableAttributes> getPeerRequirementFilter() {
+    return (ethPeer) -> isPoS || ethPeer.estimatedChainHeight() >= requiredBlockchainHeight;
   }
 
   @Override

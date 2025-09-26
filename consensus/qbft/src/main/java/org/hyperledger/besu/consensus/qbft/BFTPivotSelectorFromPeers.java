@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
@@ -120,6 +121,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
         ethContext
             .getEthPeers()
             .streamAllPeers()
+            .map(EthPeerImmutableAttributes::ethPeer)
             .forEach(
                 peer -> {
                   // If we are at block 0 and our block hash matches at least one of our peers we

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -89,7 +90,8 @@ public class AdminPeersTest {
     final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedPeerResults);
 
-    when(ethPeers.streamAllPeers()).thenReturn(peerList.stream());
+    when(ethPeers.streamAllPeers())
+        .thenReturn(peerList.stream().map(EthPeerImmutableAttributes::from));
 
     final JsonRpcResponse response = adminPeers.response(request);
 
