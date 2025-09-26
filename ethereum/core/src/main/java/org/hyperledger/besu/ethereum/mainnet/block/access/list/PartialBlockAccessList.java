@@ -24,12 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.vertx.core.impl.ConcurrentHashSet;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TransactionAccessList implements Eip7928AccessList {
+public class PartialBlockAccessList implements Eip7928AccessList {
 
   private final int blockAccessIndex;
   private final Map<Address, AccountAccessList> accounts = new ConcurrentHashMap<>();
 
-  public TransactionAccessList(final int blockAccessIndex) {
+  public PartialBlockAccessList(final int blockAccessIndex) {
     this.blockAccessIndex = blockAccessIndex;
   }
 

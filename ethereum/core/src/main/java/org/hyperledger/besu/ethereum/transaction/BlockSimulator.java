@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
@@ -220,7 +220,7 @@ public class BlockSimulator {
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    Optional<TransactionAccessList> preExecutionAccessList =
+    Optional<PartialBlockAccessList> preExecutionAccessList =
         blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
     final BlockProcessingContext blockProcessingContext =
@@ -247,7 +247,7 @@ public class BlockSimulator {
             simulationCumulativeGasUsed,
             blockAccessListBuilder);
 
-    Optional<TransactionAccessList> postExecutionAccessList =
+    Optional<PartialBlockAccessList> postExecutionAccessList =
         blockAccessListBuilder.map(
             b ->
                 BlockAccessListBuilder.createPostExecutionAccessList(
@@ -269,7 +269,8 @@ public class BlockSimulator {
     postExecutionAccessList.ifPresent(
         t ->
             blockAccessListBuilder.ifPresent(
-                b -> b.addTransactionAccessList(t, (StackedUpdater<?, ?>) ws.updater().updater())));
+                b ->
+                    b.addPartialBlockAccessList(t, (StackedUpdater<?, ?>) ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
@@ -325,7 +326,7 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final Optional<TransactionAccessList> transactionAccessList =
+      final Optional<PartialBlockAccessList> partialBlockAccessList =
           createTransactionAccessList(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
@@ -341,7 +342,7 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              transactionAccessList);
+              partialBlockAccessList);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
@@ -354,12 +355,12 @@ public class BlockSimulator {
 
       transactionSimulationResult
           .result()
-          .getTransactionAccessList()
+          .getPartialBlockAccessList()
           .ifPresent(
               t ->
                   blockAccessListBuilder.ifPresent(
                       b ->
-                          b.addTransactionAccessList(
+                          b.addPartialBlockAccessList(
                               t, (StackedUpdater<?, ?>) transactionUpdater)));
 
       transactionUpdater.commit();
@@ -372,7 +373,7 @@ public class BlockSimulator {
     return blockStateCallSimulationResult;
   }
 
-  private Optional<TransactionAccessList> createTransactionAccessList(
+  private Optional<PartialBlockAccessList> createTransactionAccessList(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(

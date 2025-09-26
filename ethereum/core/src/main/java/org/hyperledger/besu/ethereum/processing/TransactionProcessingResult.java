@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -59,7 +59,7 @@ public class TransactionProcessingResult
 
   public PathBasedWorldStateUpdateAccumulator<?> accumulator;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
-  private final Optional<TransactionAccessList> transactionAccessList;
+  private final Optional<PartialBlockAccessList> partialBlockAccessList;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -80,7 +80,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessList> partialBlockAccessList) {
     return new TransactionProcessingResult(
         Status.FAILED,
         List.of(),
@@ -90,7 +90,7 @@ public class TransactionProcessingResult
         validationResult,
         revertReason,
         exceptionalHaltReason,
-        transactionAccessList);
+        partialBlockAccessList);
   }
 
   public static TransactionProcessingResult successful(
@@ -98,7 +98,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final Optional<TransactionAccessList> transactionAccessList,
+      final Optional<PartialBlockAccessList> partialBlockAccessList,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -108,7 +108,7 @@ public class TransactionProcessingResult
         output,
         validationResult,
         Optional.empty(),
-        transactionAccessList);
+        partialBlockAccessList);
   }
 
   public TransactionProcessingResult(
@@ -119,7 +119,7 @@ public class TransactionProcessingResult
       final Bytes output,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessList> partialBlockAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -128,7 +128,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = Optional.empty();
-    this.transactionAccessList = transactionAccessList;
+    this.partialBlockAccessList = partialBlockAccessList;
   }
 
   public TransactionProcessingResult(
@@ -140,7 +140,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessList> partialBlockAccessList) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -149,7 +149,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = exceptionalHaltReason;
-    this.transactionAccessList = transactionAccessList;
+    this.partialBlockAccessList = partialBlockAccessList;
   }
 
   /**
@@ -240,8 +240,8 @@ public class TransactionProcessingResult
     return validationResult;
   }
 
-  public Optional<TransactionAccessList> getTransactionAccessList() {
-    return transactionAccessList;
+  public Optional<PartialBlockAccessList> getPartialBlockAccessList() {
+    return partialBlockAccessList;
   }
 
   /**

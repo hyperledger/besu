@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -29,7 +29,7 @@ public class FrontierPreExecutionProcessor implements PreExecutionProcessor {
   @Override
   public Void process(
       final BlockProcessingContext context,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessList> partialBlockAccessList) {
     // do nothing
     return null;
   }

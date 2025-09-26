@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -232,7 +232,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getBlockAccessListFactory()
               .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
-      final Optional<TransactionAccessList> preExecutionAccessList =
+      final Optional<PartialBlockAccessList> preExecutionAccessList =
           blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
       BlockProcessingContext blockProcessingContext =
@@ -265,7 +265,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("txsSelection");
       throwIfStopped();
 
-      final Optional<TransactionAccessList> postExecutionAccessList =
+      final Optional<PartialBlockAccessList> postExecutionAccessList =
           blockAccessListBuilder.map(
               b ->
                   BlockAccessListBuilder.createPostExecutionAccessList(
@@ -299,7 +299,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           t ->
               blockAccessListBuilder.ifPresent(
                   b ->
-                      b.addTransactionAccessList(
+                      b.addPartialBlockAccessList(
                           t, (StackedUpdater<?, ?>) disposableWorldState.updater().updater())));
 
       throwIfStopped();

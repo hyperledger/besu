@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList.AccountAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList.AccountAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
@@ -133,21 +133,22 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public static TransactionAccessList createPreExecutionAccessList() {
-      return new TransactionAccessList(0);
+    public static PartialBlockAccessList createPreExecutionAccessList() {
+      return new PartialBlockAccessList(0);
     }
 
-    public static TransactionAccessList createPostExecutionAccessList(
+    public static PartialBlockAccessList createPostExecutionAccessList(
         final int numberOfTransactions) {
-      return new TransactionAccessList(numberOfTransactions + 1);
+      return new PartialBlockAccessList(numberOfTransactions + 1);
     }
 
-    public static TransactionAccessList createTransactionAccessList(final int transactionLocation) {
-      return new TransactionAccessList(transactionLocation + 1);
+    public static PartialBlockAccessList createTransactionAccessList(
+        final int transactionLocation) {
+      return new PartialBlockAccessList(transactionLocation + 1);
     }
 
-    public void addTransactionAccessList(
-        final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
+    public void addPartialBlockAccessList(
+        final PartialBlockAccessList txList, final StackedUpdater<?, ?> updater) {
       for (Map.Entry<Address, AccountAccessList> accountAccessListEntry :
           txList.getAccounts().entrySet()) {
         final Address address = accountAccessListEntry.getKey();
