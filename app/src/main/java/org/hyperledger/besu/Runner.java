@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu;
 
+import static java.lang.Thread.sleep;
+
+import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
@@ -39,14 +43,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
@@ -79,6 +81,8 @@ public class Runner implements AutoCloseable {
   private final Path dataDir;
   private final Optional<AutoTransactionLogBloomCachingService>
       autoTransactionLogBloomCachingService;
+  private ScheduledExecutorService ephemeryService;
+  private final long ephemeryCycle = TimeUnit.DAYS.toSeconds(28);
 
   /**
    * Instantiates a new Runner.
@@ -185,8 +189,65 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  /** Stop services. */
-  public void stop() {
+  public void scheduleEphemeryRestart(BesuCommand besuCommand, long lastGenesisTimestamp) {
+    long currentTimestamp = Instant.now().getEpochSecond();
+    // next restart should be triggered in "lastGenesisTime + cycle - now" seconds
+    long restartTime = lastGenesisTimestamp + ephemeryCycle - currentTimestamp;
+
+    LOG.info("Scheduled Ephemery testnet restart in {} days", TimeUnit.SECONDS.toDays(restartTime));
+    ephemeryService =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread thread = new Thread(r, "ephemery-auto-restart");
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    ephemeryService.scheduleAtFixedRate(
+        () -> {
+          LOG.info("Scheduled Ephemery testnet restart triggered");
+          try {
+            besuCommand.getRunner().stopEphemery(besuCommand);
+            besuCommand.getRunner().startEphemery(besuCommand);
+            LOG.info("Ephemery testnet restarted successfully");
+          } catch (Exception e) {
+            LOG.error("Failed to restart Ephemery", e);
+          }
+          LOG.info(
+              "Next scheduled Ephemery testnet restart will be in {} days",
+              TimeUnit.SECONDS.toDays(ephemeryCycle));
+        },
+        restartTime,
+        ephemeryCycle,
+        TimeUnit.SECONDS);
+  }
+
+  private void stopEphemery(BesuCommand besuCommand) throws IOException, InterruptedException {
+    if (besuController != null) {
+      stopServices();
+      clearDirectory(dataDir);
+      besuCommand.setDataPathToParent();
+      besuCommand.clearAllocatedPorts();
+      sleep(10000);
+    }
+  }
+
+  void startEphemery(BesuCommand besuCommand) throws Exception {
+    ephemeryRestartPrepare(besuCommand);
+    besuCommand.initialProcess();
+  }
+
+  private void ephemeryRestartPrepare(BesuCommand besuCommand) {
+    besuCommand.getBesuPluginContext().resetState();
+    besuCommand.getRocksDBPlugin().reset();
+    besuCommand
+        .getBesuPluginContext()
+        .initialize(PluginsConfigurationOptions.fromCommandLine(besuCommand.getCommandLine()));
+    besuCommand.getBesuPluginContext().registerPlugins();
+  }
+
+  /** Stop services but not shutdown */
+  public void stopServices() {
     transactionPoolEvictionService.stop();
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
@@ -213,6 +274,14 @@ public class Runner implements AutoCloseable {
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);
+  }
+
+  /** Stop services. */
+  public void stop() {
+    stopServices();
+    if (ephemeryService != null) {
+      ephemeryService.close();
+    }
     shutdown.countDown();
   }
 
@@ -458,6 +527,24 @@ public class Runner implements AutoCloseable {
           String.format("%s. This file will be deleted after the node is shutdown.", fileHeader));
     } catch (final Exception e) {
       LOG.warn(String.format("Error writing %s file", fileName), e);
+    }
+  }
+
+  private void clearDirectory(final Path directory) throws IOException {
+    if (Files.exists(directory)) {
+      try (Stream<Path> pathStream = Files.walk(directory)) {
+        pathStream
+            .sorted((a, b) -> b.compareTo(a)) // Delete files before directories
+            .forEach(
+                path -> {
+                  try {
+                    Files.delete(path);
+                    LOG.debug("Deleted: {}", path);
+                  } catch (IOException e) {
+                    LOG.warn("Could not delete {}: {}", path, e.getMessage());
+                  }
+                });
+      }
     }
   }
 }
