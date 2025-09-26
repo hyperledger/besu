@@ -14,17 +14,14 @@
  */
 package org.hyperledger.besu.evm;
 
-
-import java.util.Arrays;
-
 /**
  * 256-bits wide unsigned integer class.
  *
  * <p>This class is an optimised version of BigInteger for fixed width 256-bits integers.
  */
 public final class UInt256 {
-  //region Internals
-  //--------------------------------------------------------------------------
+  // region Internals
+  // --------------------------------------------------------------------------
   // UInt256 is a big-endian up to 256-bits integer.
   // Internally, it is represented with int/long limbs in little-endian order.
   // Wraps a view over limbs array from 0..length.
@@ -45,11 +42,12 @@ public final class UInt256 {
   int[] limbs() {
     return limbs;
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Preallocating Small Integers
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Preallocating Small Integers
+  // --------------------------------------------------------------------------
   private static final int nSmallInts = 256;
   private static final UInt256[] smallInts = new UInt256[nSmallInts];
 
@@ -74,11 +72,12 @@ public final class UInt256 {
 
   /** The constant 16. */
   public static final UInt256 SIXTEEN = smallInts[16];
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Constructors
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Constructors
+  // --------------------------------------------------------------------------
 
   UInt256(final int[] limbs, final int length) {
     this.limbs = limbs;
@@ -158,11 +157,12 @@ public final class UInt256 {
     if (0 <= value && value < nSmallInts) return smallInts[(int) value];
     return new UInt256(new int[] {(int) value, (int) (value >>> 32)});
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Conversions
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Conversions
+  // --------------------------------------------------------------------------
 
   /**
    * Convert to int.
@@ -225,11 +225,12 @@ public final class UInt256 {
     }
     return sb.toString();
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Comparisons
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Comparisons
+  // --------------------------------------------------------------------------
 
   /**
    * Is the value 0 ?
@@ -280,11 +281,12 @@ public final class UInt256 {
     }
     return h;
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Bitwise Operations
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Bitwise Operations
+  // --------------------------------------------------------------------------
 
   /**
    * Shifts value to the left.
@@ -316,11 +318,12 @@ public final class UInt256 {
     shiftRightInto(shifted, this.limbs, shift);
     return new UInt256(shifted);
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Arithmetic Operations
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Arithmetic Operations
+  // --------------------------------------------------------------------------
 
   /**
    * Addition (modulo 2**256).
@@ -390,14 +393,15 @@ public final class UInt256 {
     result = knuthRemainder(result, modulus.limbs);
     return new UInt256(result);
   }
-  //--------------------------------------------------------------------------
-  //endregion
 
-  //region Support (private) Algorithms
-  //--------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region Support (private) Algorithms
+  // --------------------------------------------------------------------------
   private static int numberOfLeadingZeros(final int[] x, final int limit) {
     int leadingIndex = limit - 1;
-    while ( (leadingIndex >= 0) && (x[leadingIndex] == 0) ) leadingIndex--;
+    while ((leadingIndex >= 0) && (x[leadingIndex] == 0)) leadingIndex--;
     return 32 * (limit - leadingIndex - 1) + Integer.numberOfLeadingZeros(x[leadingIndex]);
   }
 
@@ -479,7 +483,7 @@ public final class UInt256 {
     // Shortest in outer loop, swap if needed
     int[] x;
     int[] y;
-    if (a.length < b.length) { 
+    if (a.length < b.length) {
       x = b;
       y = a;
     } else {
@@ -583,6 +587,6 @@ public final class UInt256 {
     shiftRightInto(shifted, uLimbs, bitShift);
     return shifted;
   }
-  //--------------------------------------------------------------------------
-  //endregion
+  // --------------------------------------------------------------------------
+  // endregion
 }

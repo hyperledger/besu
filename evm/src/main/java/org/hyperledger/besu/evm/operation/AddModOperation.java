@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Arrays;
-
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Add mod operation. */
