@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
@@ -93,6 +94,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             engineCallListener,
             new NoOpMetricsSystem());
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
+    lenient()
+        .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
+        .thenReturn(Optional.of(pragueHardfork.milestone() + 100L));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     mockAllowedRequestsValidator();
   }
@@ -112,6 +116,24 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final BlockHeader cancunHeader = createBlockHeaderFixtureForV3(Optional.empty()).buildHeader();
 
     var resp = resp(mockEnginePayload(cancunHeader, emptyList()));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterFutureEipsMilestone() {
+    when(protocolSchedule.milestoneFor(FUTURE_EIPS))
+        .thenReturn(Optional.of(pragueHardfork.milestone() + 10L));
+
+    final BlockHeader futureEipsHeader =
+        createBlockHeaderFixtureForV3(Optional.empty())
+            .timestamp(pragueHardfork.milestone() + 10L)
+            .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+            .buildHeader();
+
+    final JsonRpcResponse resp = resp(mockEnginePayload(futureEipsHeader, emptyList()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
