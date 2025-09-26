@@ -98,20 +98,17 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       if (chainHeadBlockHeader.getNumber() - queryParams.getBlockHeader().getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
         LOG.debug(
-            "Returning archive state without verifying state root",
+            "Returning archive state without verifying state root {}",
             trieLogManager.getMaxLayersToLoad());
-        Optional<MutableWorldState> cachedWorldState =
-            cachedWorldStorageManager
-                .getWorldState(chainHeadBlockHeader.getHash())
-                .map(MutableWorldState::disableTrie)
-                .flatMap(
-                    worldState ->
-                        rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
-                            // state
-                            (PathBasedWorldState) worldState,
-                            queryParams.getBlockHeader().getHash()))
-                .map(MutableWorldState::freezeStorage);
-        return cachedWorldState;
+        return cachedWorldStorageManager
+            .getWorldState(chainHeadBlockHeader.getHash())
+            .map(MutableWorldState::disableTrie)
+            .flatMap(
+                worldState ->
+                    rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
+                        // state
+                        (PathBasedWorldState) worldState, queryParams.getBlockHeader().getHash()))
+            .map(MutableWorldState::freezeStorage);
       }
       return super.getWorldState(queryParams);
     }
