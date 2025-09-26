@@ -32,6 +32,9 @@ public interface PoWHasher {
    */
   PoWSolution hash(long nonce, long number, EpochCalculator epochCalc, Bytes prePowHash);
 
+  /** Clears internally maintained cache used by this class. */
+  void cleanCache();
+
   /** Implementation of Ethash Hashimoto Light Implementation. */
   final class EthashLight implements PoWHasher {
 
@@ -51,6 +54,11 @@ public interface PoWHasher {
           EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), prePowHash, nonce);
       return solution;
     }
+
+    @Override
+    public void cleanCache() {
+      cacheFactory.cleanCache();
+    }
   }
 
   /** Implementation of an inoperative hasher. */
@@ -64,6 +72,11 @@ public interface PoWHasher {
         final long number,
         final EpochCalculator epochCalc,
         final Bytes prePowHash) {
+      throw new UnsupportedOperationException("Hashing is unsupported");
+    }
+
+    @Override
+    public void cleanCache() {
       throw new UnsupportedOperationException("Hashing is unsupported");
     }
   }
