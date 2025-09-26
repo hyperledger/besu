@@ -14,17 +14,19 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import java.util.Arrays;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Eq operation. */
 public class EqOperation extends AbstractFixedCostOperation {
+
+  private static final byte[] ZEROS = new byte[32];
 
   /** The Eq operation success result. */
   static final OperationResult eqSuccess = new OperationResult(3, null);
@@ -65,10 +67,7 @@ public class EqOperation extends AbstractFixedCostOperation {
   }
 
   private static int firstNonZeroIndex(final byte[] value) {
-    int i = 0;
-    while (i < value.length && value[i] == 0) {
-      i++;
-    }
-    return i;
+    final int m = Arrays.mismatch(value, 0, value.length, ZEROS, 0, value.length);
+    return m == -1 ? value.length : m;
   }
 }
