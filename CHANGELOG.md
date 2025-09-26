@@ -220,6 +220,7 @@
 - Support for block creation on networks running a pre-Byzantium fork is deprecated for removal in a future release, after that to update Besu on nodes that build blocks, your network needs to be upgraded at least to the Byzantium fork. The main reason is to simplify world state management during block creation, since before Byzantium for each selected transaction, the receipt must contain the root hash of the modified world state, and this does not play well with the new plugin features and future work on parallelism.
 
 ### Additions and Improvements
+- Let Non validators gossip QBFT messages [#8562](https://github.com/hyperledger/besu/pull/8562)
 - Add eth/69 protocol for optional use by using the `--Xeth-capability-max=69` flag (currently defaults to 68) [#8519](https://github.com/hyperledger/besu/pull/8519)
 - BlobDB GC early access config options:
   - `--Xplugin-rocksdb-blockchain-blob-garbage-collection-enabled` Adds ability to enable BlobDB GC for BLOCKCHAIN column family [#8599](https://github.com/hyperledger/besu/pull/8599)

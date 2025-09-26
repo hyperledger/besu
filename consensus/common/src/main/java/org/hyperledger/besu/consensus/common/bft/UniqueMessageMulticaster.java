@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.network.PeerMulticaster;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -24,8 +24,8 @@ import java.util.Collections;
 import com.google.common.annotations.VisibleForTesting;
 
 /** The Unique message multicaster. */
-public class UniqueMessageMulticaster implements ValidatorMulticaster {
-  private final ValidatorMulticaster multicaster;
+public class UniqueMessageMulticaster implements PeerMulticaster {
+  private final PeerMulticaster multicaster;
   private final MessageTracker gossipedMessageTracker;
 
   /**
@@ -34,8 +34,7 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
    * @param multicaster Network connections to the remote validators
    * @param gossipHistoryLimit Maximum messages to track as seen
    */
-  public UniqueMessageMulticaster(
-      final ValidatorMulticaster multicaster, final int gossipHistoryLimit) {
+  public UniqueMessageMulticaster(final PeerMulticaster multicaster, final int gossipHistoryLimit) {
     this.multicaster = multicaster;
     this.gossipedMessageTracker = new MessageTracker(gossipHistoryLimit);
   }
@@ -48,7 +47,7 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
    */
   @VisibleForTesting
   public UniqueMessageMulticaster(
-      final ValidatorMulticaster multicaster, final MessageTracker gossipedMessageTracker) {
+      final PeerMulticaster multicaster, final MessageTracker gossipedMessageTracker) {
     this.multicaster = multicaster;
     this.gossipedMessageTracker = gossipedMessageTracker;
   }
