@@ -16,18 +16,52 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
+import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
+
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugin {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AbstractTestTransactionSelectorPlugin.class);
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final AtomicLong NONCE = new AtomicLong(0);
+  private static final KeyPair SENDER_KEYS =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createKeyPair(
+              SIGNATURE_ALGORITHM
+                  .get()
+                  .createPrivateKey(
+                      Bytes32.fromHexString(Accounts.GENESIS_ACCOUNT_THREE_PRIVATE_KEY)));
+
   private ServiceManager serviceManager;
 
   private final int pluginNum;
@@ -61,6 +95,35 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
           .registerPluginTransactionSelectorFactory(
               new PluginTransactionSelectorFactory() {
                 @Override
+                public void selectPendingTransactions(
+                    final BlockTransactionSelectionService blockTransactionSelectionService,
+                    final ProcessableBlockHeader pendingBlockHeader) {
+                  if (pendingBlockHeader.getNumber() == preMultiple) {
+                    throw new RuntimeException(
+                        "Unhandled exception: block number is multiple of " + preMultiple);
+                  }
+
+                  final var pluginBurnTx =
+                      new TransactionTestFixture()
+                          .chainId(Optional.of(BigInteger.valueOf(4)))
+                          .nonce(NONCE.getAndIncrement())
+                          .gasLimit(21_000)
+                          .gasPrice(Wei.of(1_000_000_000L))
+                          .to(Optional.of(Address.ZERO))
+                          .createTransaction(SENDER_KEYS);
+
+                  final var pluginPendingTx = new PendingTransaction.Local(pluginBurnTx);
+
+                  final var result =
+                      blockTransactionSelectionService.evaluatePendingTransaction(pluginPendingTx);
+                  if (result.selected()) {
+                    blockTransactionSelectionService.commit();
+                  } else {
+                    blockTransactionSelectionService.rollback();
+                  }
+                }
+
+                @Override
                 public PluginTransactionSelector create(
                     final SelectorsStateManager selectorsStateManager) {
                   return new PluginTransactionSelector() {
@@ -68,14 +131,15 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
                     @Override
                     public TransactionSelectionResult evaluateTransactionPreProcessing(
                         final TransactionEvaluationContext evaluationContext) {
-                      if (evaluationContext
-                                  .getPendingTransaction()
-                                  .getTransaction()
-                                  .getValue()
-                                  .getAsBigInteger()
-                                  .longValue()
-                              % preMultiple
-                          == 0) {
+                      final var value =
+                          evaluationContext
+                              .getPendingTransaction()
+                              .getTransaction()
+                              .getValue()
+                              .getAsBigInteger()
+                              .longValueExact();
+                      LOG.info("Transaction value is {}", value);
+                      if (value % preMultiple == 0) {
                         return TransactionSelectionResult.invalid(
                             "value multiple of " + preMultiple);
                       }

@@ -45,6 +45,11 @@ public class TransactionPoolServiceImpl implements TransactionPoolService {
   }
 
   @Override
+  public boolean isTransactionPoolEnabled() {
+    return transactionPool.isEnabled();
+  }
+
+  @Override
   public Collection<? extends PendingTransaction> getPendingTransactions() {
     return transactionPool.getPendingTransactions();
   }

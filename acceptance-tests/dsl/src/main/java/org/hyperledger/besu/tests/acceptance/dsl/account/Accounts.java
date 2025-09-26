@@ -23,10 +23,13 @@ public class Accounts {
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
   public static final String GENESIS_ACCOUNT_TWO_PRIVATE_KEY =
       "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3";
+  public static final String GENESIS_ACCOUNT_THREE_PRIVATE_KEY =
+      "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f";
 
   private final EthTransactions eth;
   private final Account richBenefactorOne;
   private final Account richBenefactorTwo;
+  private final Account richBenefactorThree;
 
   public Accounts(final EthTransactions eth) {
     this.eth = eth;
@@ -34,6 +37,8 @@ public class Accounts {
         Account.fromPrivateKey(eth, "Rich Benefactor One", GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
     richBenefactorTwo =
         Account.fromPrivateKey(eth, "Rich Benefactor Two", GENESIS_ACCOUNT_TWO_PRIVATE_KEY);
+    richBenefactorThree =
+        Account.fromPrivateKey(eth, "Rich Benefactor Three", GENESIS_ACCOUNT_THREE_PRIVATE_KEY);
   }
 
   public Account getPrimaryBenefactor() {
@@ -42,6 +47,10 @@ public class Accounts {
 
   public Account getSecondaryBenefactor() {
     return richBenefactorTwo;
+  }
+
+  public Account getThirdBenefactor() {
+    return richBenefactorThree;
   }
 
   public Account createAccount(final String accountName) {

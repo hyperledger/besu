@@ -37,7 +37,7 @@ public interface TransactionsLayer {
 
   void reset();
 
-  Optional<Transaction> getByHash(Hash transactionHash);
+  Optional<PendingTransaction> getByHash(Hash transactionHash);
 
   boolean contains(Transaction transaction);
 
