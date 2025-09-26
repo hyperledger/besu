@@ -17,14 +17,14 @@ package org.hyperledger.besu.evm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class UInt256Test {
-  final static int SAMPLE_SIZE = 30000;
+  static final int SAMPLE_SIZE = 30000;
 
   private Bytes32 bigIntTo32B(final BigInteger x) {
     byte[] a = x.toByteArray();
@@ -215,7 +215,7 @@ public class UInt256Test {
 
   @Test
   public void modDiv8Mod8() {
-    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    final Random random = new Random(41335);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       final byte[] a = new byte[32];
       final byte[] b = new byte[32];
@@ -229,7 +229,10 @@ public class UInt256Test {
       UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
       UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-      Bytes32 expected = BigInteger.ZERO.compareTo(big_modulus) == 0 ? Bytes32.ZERO : bigIntTo32B(big_number.mod(big_modulus));
+      Bytes32 expected =
+          BigInteger.ZERO.compareTo(big_modulus) == 0
+              ? Bytes32.ZERO
+              : bigIntTo32B(big_number.mod(big_modulus));
       assertThat(remainder).isEqualTo(expected);
     }
   }
@@ -243,13 +246,14 @@ public class UInt256Test {
     UInt256 y = UInt256.fromBytesBE(ybig.toByteArray());
     UInt256 m = UInt256.fromBytesBE(mbig.toByteArray());
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(x.addMod(y, m).toBytesBE()));
-    Bytes32 expected = BigInteger.ZERO.compareTo(mbig) == 0 ? Bytes32.ZERO : bigIntTo32B(xbig.add(ybig).mod(mbig));
+    Bytes32 expected =
+        BigInteger.ZERO.compareTo(mbig) == 0 ? Bytes32.ZERO : bigIntTo32B(xbig.add(ybig).mod(mbig));
     assertThat(remainder).isEqualTo(expected);
   }
 
   @Test
   public void addMod() {
-    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    final Random random = new Random(42);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
@@ -267,14 +271,17 @@ public class UInt256Test {
       UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
       UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.addMod(b, c).toBytesBE()));
-      Bytes32 expected = BigInteger.ZERO.compareTo(cInt) == 0 ? Bytes32.ZERO : bigIntTo32B(aInt.add(bInt).mod(cInt));
+      Bytes32 expected =
+          BigInteger.ZERO.compareTo(cInt) == 0
+              ? Bytes32.ZERO
+              : bigIntTo32B(aInt.add(bInt).mod(cInt));
       assertThat(remainder).isEqualTo(expected);
     }
   }
 
   @Test
   public void mulMod() {
-    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    final Random random = new Random(123);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
@@ -292,7 +299,10 @@ public class UInt256Test {
       UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
       UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, c).toBytesBE()));
-      Bytes32 expected = BigInteger.ZERO.compareTo(cInt) == 0 ? Bytes32.ZERO : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
+      Bytes32 expected =
+          BigInteger.ZERO.compareTo(cInt) == 0
+              ? Bytes32.ZERO
+              : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
       assertThat(remainder).isEqualTo(expected);
     }
   }
