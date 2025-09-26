@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -223,6 +224,7 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -235,6 +237,9 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -340,7 +345,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
+  private Supplier<GenesisConfig> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
@@ -370,7 +375,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--data-path"},
       paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
-  final Path dataPath = getDefaultBesuDataPath(this);
+  private Path dataPath = getDefaultBesuDataPath(this);
 
   // Genesis file path with null default option.
   // This default is handled by Runner
@@ -638,10 +643,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
+  private Runner runner;
 
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private final long ephemeryCycle = TimeUnit.DAYS.toSeconds(28);
+  private ScheduledExecutorService ephemeryService;
+  private BigInteger chainId = BigInteger.ZERO;
 
   /**
    * Besu command constructor.
@@ -885,53 +894,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
     try {
-      configureLogging(true);
+      chainId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
 
-      if (printPathsAndExit) {
-        // Print configured paths requiring read/write permissions to be adjusted
-        checkPermissionsAndPrintPaths(besuUserName);
-        System.exit(0); // Exit before any services are started
+      initialProcess();
+
+      if (network.equals(EPHEMERY)) {
+        scheduleEphemeryRestart();
       }
-
-      // set merge config on the basis of genesis config
-      setMergeConfigOptions();
-
-      instantiateSignatureAlgorithmFactory();
-
-      logger.info("Starting Besu");
-
-      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
-
-      validateOptions();
-
-      configure();
-
-      setIgnorableStorageSegments();
-
-      // If we're not running against a named network, or if version compat protection has been
-      // explicitly enabled, perform compatibility check
-      VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
-
-      configureNativeLibs(Optional.ofNullable(network));
-      if (enablePrecompileCaching) {
-        configurePrecompileCaching();
-      }
-
-      besuController = buildController();
-
-      besuPluginContext.beforeExternalServices();
-
-      final var runner = buildRunner();
-      runner.startExternalServices();
-
-      startPlugins(runner);
-      setReleaseMetrics();
-      preSynchronization();
-
-      runner.startEthereumMainLoop();
-
-      besuPluginContext.afterExternalServicesMainLoop();
 
       runner.awaitStop();
 
@@ -939,6 +908,141 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.error("Failed to start Besu: {}", e.getMessage());
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
+    }
+  }
+
+  private void initialProcess() throws Exception {
+    if (network.equals(EPHEMERY)) {
+      genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
+      dataPath = dataPath.resolve("Ephemery-data-chain-" + chainId);
+    }
+
+    configureLogging(true);
+
+    if (printPathsAndExit) {
+      // Print configured paths requiring read/write permissions to be adjusted
+      checkPermissionsAndPrintPaths(besuUserName);
+      System.exit(0); // Exit before any services are started
+    }
+
+    // set merge config on the basis of genesis config
+    setMergeConfigOptions();
+
+    instantiateSignatureAlgorithmFactory();
+
+    logger.info("Starting Besu");
+
+    // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
+    vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+
+    validateOptions();
+
+    configure();
+
+    setIgnorableStorageSegments();
+
+    // If we're not running against a named network, or if version compat protection has been
+    // explicitly enabled, perform compatibility check
+    VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
+
+    configureNativeLibs(Optional.ofNullable(network));
+    if (enablePrecompileCaching) {
+      configurePrecompileCaching();
+    }
+
+    besuController = buildController();
+
+    besuPluginContext.beforeExternalServices();
+
+    runner = buildRunner();
+    runner.startExternalServices();
+
+    startPlugins(runner);
+    setReleaseMetrics();
+    preSynchronization();
+
+    runner.startEthereumMainLoop();
+
+    besuPluginContext.afterExternalServicesMainLoop();
+  }
+
+  private void scheduleEphemeryRestart() {
+    long restartTime = getEphemeryRestartTime();
+    logger.info(
+        "Scheduled Ephemery testnet restart in {} days", TimeUnit.SECONDS.toDays(restartTime));
+    ephemeryService =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread thread = new Thread(r, "ephemery-auto-restart");
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    ephemeryService.scheduleAtFixedRate(
+        this::restartEphemery, restartTime, ephemeryCycle, TimeUnit.SECONDS);
+  }
+
+  private void restartEphemery() {
+    logger.info("Scheduled Ephemery testnet restart triggered");
+    try {
+      stopEphemeryServices();
+      startEphemeryServices();
+
+      logger.info("Ephemery testnet restarted successfully");
+    } catch (Exception e) {
+      logger.error("Failed to restart Ephemery", e);
+    }
+    logger.info(
+        "Next scheduled Ephemery testnet restart will be in {} days",
+        TimeUnit.SECONDS.toDays(ephemeryCycle));
+  }
+
+  private void stopEphemeryServices() throws IOException {
+    if (besuController != null) {
+      runner.stopServices();
+      vertx.close();
+      besuController.getSynchronizer().stop();
+      besuController.getTransactionPool().setDisabled();
+      besuController.close();
+      clearDirectory(dataPath);
+      dataPath = dataPath.getParent();
+      chainId = chainId.add(BigInteger.ONE);
+      allocatedPorts.clear();
+    }
+  }
+
+  void startEphemeryServices() throws Exception {
+    ephemeryRestartPrepare();
+    initialProcess();
+  }
+
+  private void ephemeryRestartPrepare() {
+    besuPluginContext.resetState();
+    rocksDBPlugin.reset();
+    besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
+    besuPluginContext.registerPlugins();
+  }
+
+  private long getEphemeryRestartTime() {
+    long currentTimestamp = Instant.now().getEpochSecond();
+    long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
+    // next restart should be triggered in "lastGenesisTime + cycle - now" seconds
+    return lastGenesisTimestamp + ephemeryCycle - currentTimestamp;
+  }
+
+  private void clearDirectory(Path directory) throws IOException {
+    if (Files.exists(directory)) {
+      Files.walk(directory)
+          .sorted((a, b) -> b.compareTo(a)) // Delete files before directories
+          .forEach(
+              path -> {
+                try {
+                  Files.delete(path);
+                  logger.debug("Deleted: {}", path);
+                } catch (IOException e) {
+                  logger.warn("Could not delete {}: {}", path, e.getMessage());
+                }
+              });
     }
   }
 
@@ -2185,6 +2289,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     besuPluginContext.stopPlugins();
                     runner.close();
                     LogConfigurator.shutdown();
+                    ephemeryService.shutdownNow();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Besu");
                   }
