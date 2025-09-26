@@ -533,6 +533,10 @@ public class MainnetTransactionProcessor {
 
       final var cause = re.getCause();
       if (cause != null && cause instanceof InterruptedException) {
+        LOG.atDebug()
+            .setMessage("Interrupted while processing the transaction with hash {}")
+            .addArgument(transaction::getHash)
+            .log();
         return TransactionProcessingResult.invalid(
             ValidationResult.invalid(TransactionInvalidReason.EXECUTION_INTERRUPTED));
       }
