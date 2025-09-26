@@ -208,6 +208,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
   private int numberOfBlocksToCache = 0;
+  private int numberOfBlockHeadersToCache = 0;
 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
@@ -503,6 +504,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets the number of block headers to cache.
+   *
+   * @param numberOfBlockHeadersToCache the number of block headers to cache
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder cacheLastBlockHeaders(final Integer numberOfBlockHeadersToCache) {
+    this.numberOfBlockHeadersToCache = numberOfBlockHeadersToCache;
+    return this;
+  }
+
+  /**
    * sets the networkConfiguration in the builder
    *
    * @param networkingConfiguration the networking config
@@ -618,7 +630,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             reorgLoggingThreshold,
             dataDirectory.toString(),
-            numberOfBlocksToCache);
+            numberOfBlocksToCache,
+            numberOfBlockHeadersToCache);
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -747,8 +760,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration,
-            syncConfig.isPeerTaskSystemEnabled());
+            miningConfiguration);
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);

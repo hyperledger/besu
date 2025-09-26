@@ -61,6 +61,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacement
 import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -132,6 +133,8 @@ public abstract class AbstractIsolationTests {
   protected TransactionPoolMetrics txPoolMetrics =
       new TransactionPoolMetrics(new NoOpMetricsSystem());
 
+  protected SenderBalanceChecker senderBalanceChecker = new SenderBalanceChecker.NoOpChecker();
+
   protected final PendingTransactions sorter =
       new LayeredPendingTransactions(
           poolConfiguration,
@@ -142,7 +145,8 @@ public abstract class AbstractIsolationTests {
               txPoolMetrics,
               transactionReplacementTester,
               new BlobCache(),
-              MiningConfiguration.newDefault()),
+              MiningConfiguration.newDefault(),
+              senderBalanceChecker),
           ethScheduler);
 
   protected final List<GenesisAccount> accounts =
@@ -233,6 +237,11 @@ public abstract class AbstractIsolationTests {
 
               @Override
               public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
+              public long getConfiguredRpcHttpTimeoutSec() {
                 return 0;
               }
 

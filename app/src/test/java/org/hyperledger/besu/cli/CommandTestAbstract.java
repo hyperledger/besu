@@ -169,6 +169,17 @@ public abstract class CommandTestAbstract {
                       "clique",
                       new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
 
+  protected static final JsonObject VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("terminaltotaldifficulty", 10)
+                  .put(
+                      "clique",
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+
   protected static final JsonObject GENESIS_WITH_ZERO_BASE_FEE_MARKET =
       new JsonObject().put("config", new JsonObject().put("zeroBaseFee", true));
 
@@ -292,10 +303,10 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.cacheLastBlockHeaders(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.apiConfiguration(any())).thenReturn(mockControllerBuilder);
-
     when(mockControllerBuilder.build()).thenReturn(mockController);
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
     lenient().when(mockController.getProtocolSchedule()).thenReturn(mockProtocolSchedule);

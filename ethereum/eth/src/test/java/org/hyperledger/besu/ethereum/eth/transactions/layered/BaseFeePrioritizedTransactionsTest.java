@@ -73,7 +73,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         transactionReplacementTester,
         EIP1559_FEE_MARKET,
         new BlobCache(),
-        miningConfiguration);
+        miningConfiguration,
+        senderBalanceChecker);
   }
 
   @Override
