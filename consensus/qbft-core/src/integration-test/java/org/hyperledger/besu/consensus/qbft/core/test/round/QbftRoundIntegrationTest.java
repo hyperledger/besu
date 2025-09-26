@@ -48,6 +48,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -77,6 +78,7 @@ public class QbftRoundIntegrationTest {
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private final QbftBlockInterface blockInterface =
       new QbftBlockInterfaceAdaptor(new BftBlockInterface(bftExtraDataCodec));
+  private final Address localAddress = Address.ZERO;
   private MessageFactory peerMessageFactory;
   private MessageFactory peerMessageFactory2;
 
@@ -140,6 +142,7 @@ public class QbftRoundIntegrationTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             throwingMessageFactory,
             transmitter,
             roundTimer,
@@ -177,6 +180,7 @@ public class QbftRoundIntegrationTest {
             protocolSchedule,
             subscribers,
             nodeKey,
+            localAddress,
             throwingMessageFactory,
             transmitter,
             roundTimer,

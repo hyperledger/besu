@@ -53,7 +53,7 @@ public class MessageValidator {
         final QbftBlock proposalBlock,
         final QbftBlockInterface blockInterface) {
       final QbftBlock commitBlock =
-          blockInterface.replaceRoundInBlock(proposalBlock, targetRound.getRoundNumber());
+          blockInterface.replaceRoundForCommitBlock(proposalBlock, targetRound.getRoundNumber());
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
       commitValidator =
           new CommitValidator(

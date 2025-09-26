@@ -62,6 +62,6 @@ public class IntegrationTestHelpers {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
     final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    return qbftBlockInterface.replaceRoundInBlock(proposalBlock, round);
+    return qbftBlockInterface.replaceRoundForCommitBlock(proposalBlock, round);
   }
 }
