@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(rg:*)",
+      "mcp__github__get_issue",
+      "mcp__sonarqube__projects",
+      "mcp__github__add_issue_comment"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": false
+}
