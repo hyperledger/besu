@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   referenceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: besu-research-ubuntu-8
     permissions:
       statuses: write
       checks: write
