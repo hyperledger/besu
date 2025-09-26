@@ -1164,7 +1164,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertThat(slotChanges.changes()).isNotEmpty();
     final BlockAccessList.StorageChange last = slotChanges.changes().getLast();
-    assertThat(last.txIndex()).isEqualTo(txIndex);
+    assertThat(last.txIndex()).isEqualTo(txIndex + 1);
     assertThat(last.newValue()).isEqualTo(UInt256.valueOf(newValue));
   }
 }

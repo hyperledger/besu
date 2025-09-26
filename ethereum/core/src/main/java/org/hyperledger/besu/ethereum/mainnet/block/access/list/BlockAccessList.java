@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList.AccountAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList.AccountAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
@@ -39,8 +39,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessList {
-  private static final Set<Address> excludedAddresses =
-      Set.of(Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935"));
   private final List<AccountChanges> accountChanges;
 
   public BlockAccessList(final List<AccountChanges> accountChanges) {
@@ -135,15 +133,25 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(
-        final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
+    public static PartialBlockAccessList createPreExecutionAccessList() {
+      return new PartialBlockAccessList(0);
+    }
+
+    public static PartialBlockAccessList createPostExecutionAccessList(
+        final int numberOfTransactions) {
+      return new PartialBlockAccessList(numberOfTransactions + 1);
+    }
+
+    public static PartialBlockAccessList createTransactionAccessList(
+        final int transactionLocation) {
+      return new PartialBlockAccessList(transactionLocation + 1);
+    }
+
+    public void addPartialBlockAccessList(
+        final PartialBlockAccessList txList, final StackedUpdater<?, ?> updater) {
       for (Map.Entry<Address, AccountAccessList> accountAccessListEntry :
           txList.getAccounts().entrySet()) {
         final Address address = accountAccessListEntry.getKey();
-
-        if (excludedAddresses.contains(address)) {
-          continue;
-        }
 
         BlockAccessListBuilder.AccountBuilder builder =
             accountChangesBuilders.computeIfAbsent(
@@ -174,31 +182,35 @@ public class BlockAccessList {
             Wei newBalance = account.getBalance();
             Wei originalBalance = builder.getLastBalance().orElse(wrappedAccount.getBalance());
             if (!newBalance.equals(originalBalance)) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+              builder.addBalanceChange(txList.getBlockAccessIndex(), newBalance.toBytes());
             }
 
             long newNonce = account.getNonce();
             long originalNonce = builder.getLastNonce().orElse(wrappedAccount.getNonce());
             if (newNonce > 0 && newNonce > originalNonce) {
-              builder.addNonceChange(txList.getIndex(), newNonce);
+              builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
             }
 
             Bytes newCode = account.getCode();
             Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
-            if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
-              builder.addCodeChange(txList.getIndex(), newCode);
+            if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
+              builder.addCodeChange(txList.getBlockAccessIndex(), newCode);
             }
           } else {
             Wei newBalance = account.getBalance();
             if (!newBalance.isZero()) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
+              builder.addBalanceChange(txList.getBlockAccessIndex(), newBalance.toBytes());
+            }
+
+            final long newNonce = account.getNonce();
+            if (newNonce > 0){
+                builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
             }
 
             Bytes newCode = account.getCode();
-            if (!newCode.isEmpty() && !newCode.isZero()) {
-              long newNonce = account.getNonce();
-              builder.addCodeChange(txList.getIndex(), newCode);
-              builder.addNonceChange(txList.getIndex(), newNonce);
+            if (!newCode.isEmpty()) {
+              builder.addCodeChange(txList.getBlockAccessIndex(), newCode);
+
             }
           }
 
@@ -221,7 +233,7 @@ public class BlockAccessList {
               final boolean isWrite = isSet || isReset || isUpdate;
 
               if (isWrite) {
-                builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
+                builder.addStorageWrite(slotKeyObj, txList.getBlockAccessIndex(), updatedValue);
               } else {
                 builder.addStorageRead(slotKeyObj);
               }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockContextProcessor;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
@@ -46,12 +47,15 @@ public class SystemCallRequestProcessor
    * @return A {@link Request} request
    */
   @Override
-  public Request process(final RequestProcessingContext context) {
+  public Request process(
+      final RequestProcessingContext context,
+      final Optional<PartialBlockAccessList> partialBlockAccessList) {
 
     final SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
-    Bytes systemCallOutput = systemCallProcessor.process(callAddress, context, Bytes.EMPTY);
+    Bytes systemCallOutput =
+        systemCallProcessor.process(callAddress, context, Bytes.EMPTY, partialBlockAccessList);
 
     return new Request(requestType, systemCallOutput);
   }
