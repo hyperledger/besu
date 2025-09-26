@@ -103,6 +103,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -139,6 +140,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected ProtocolSchedule protocolSchedule;
   protected TransactionSelectionService transactionSelectionService;
   protected MiningConfiguration defaultTestMiningConfiguration;
+  protected AtomicBoolean cancelled = new AtomicBoolean(false);
 
   @Mock protected EthScheduler ethScheduler;
 
@@ -152,6 +154,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @BeforeEach
   public void setup() {
+    cancelled.set(false);
     genesisConfig = getGenesisConfig();
     protocolSchedule = createProtocolSchedule();
     transactionSelectionService = new TransactionSelectionServiceImpl();
@@ -207,11 +210,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected abstract TransactionPool createTransactionPool();
 
   private Boolean isCancelled() {
-    return false;
-  }
-
-  protected Wei getMinGasPrice() {
-    return Wei.ONE;
+    return cancelled.get();
   }
 
   protected ProcessableBlockHeader createBlock(final long gasLimit) {
@@ -290,6 +289,34 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(results.getNotSelectedTransactions()).isEmpty();
     assertThat(results.getReceipts().size()).isEqualTo(1);
     assertThat(results.getCumulativeGasUsed()).isEqualTo(99995L);
+  }
+
+  @Test
+  public void validPendingTransactionIsNotIncludedIfSelectionCancelled() {
+    final ProcessableBlockHeader blockHeader = createBlock(500_000);
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            defaultTestMiningConfiguration,
+            transactionProcessor,
+            blockHeader,
+            miningBeneficiary,
+            Wei.ZERO,
+            transactionSelectionService);
+
+    final Transaction transaction = createTransaction(1, Wei.of(7L), 100_000);
+    transactionPool.addRemoteTransactions(List.of(transaction));
+
+    ensureTransactionIsValid(transaction, 0, 5);
+
+    cancelled.set(true);
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
+
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(transaction, TransactionSelectionResult.SELECTION_CANCELLED));
+    assertThat(results.getReceipts().size()).isEqualTo(0);
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(0L);
   }
 
   @Test
