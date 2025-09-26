@@ -202,11 +202,14 @@ public class BlockAccessList {
               builder.addBalanceChange(txList.getBlockAccessIndex(), newBalance.toBytes());
             }
 
+            final long newNonce = account.getNonce();
+            if (newNonce > 0) {
+              builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
+            }
+
             Bytes newCode = account.getCode();
             if (!newCode.isEmpty()) {
-              long newNonce = account.getNonce();
               builder.addCodeChange(txList.getBlockAccessIndex(), newCode);
-              builder.addNonceChange(txList.getBlockAccessIndex(), newNonce);
             }
           }
 
