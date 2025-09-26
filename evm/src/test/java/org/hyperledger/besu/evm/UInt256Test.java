@@ -271,4 +271,29 @@ public class UInt256Test {
       assertThat(remainder).isEqualTo(expected);
     }
   }
+
+  @Test
+  public void mulMod() {
+    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+      int aSize = random.nextInt(1, 33);
+      int bSize = random.nextInt(1, 33);
+      int cSize = random.nextInt(1, 33);
+      final byte[] aArray = new byte[aSize];
+      final byte[] bArray = new byte[bSize];
+      final byte[] cArray = new byte[cSize];
+      random.nextBytes(aArray);
+      random.nextBytes(bArray);
+      random.nextBytes(cArray);
+      BigInteger aInt = new BigInteger(1, aArray);
+      BigInteger bInt = new BigInteger(1, bArray);
+      BigInteger cInt = new BigInteger(1, cArray);
+      UInt256 a = UInt256.fromBytesBE(aInt.toByteArray());
+      UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
+      UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
+      Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, c).toBytesBE()));
+      Bytes32 expected = BigInteger.ZERO.compareTo(cInt) == 0 ? Bytes32.ZERO : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
+      assertThat(remainder).isEqualTo(expected);
+    }
+  }
 }

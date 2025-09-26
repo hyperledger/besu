@@ -34,6 +34,8 @@ public final class UInt256 {
 
   // Maximum number of significant limbs
   private static final int N_LIMBS = 8;
+  // Mask for long values
+  private static final long MASK_L = 0xFFFFFFFFL;
 
   // Getters for testing
   int length() {
@@ -182,10 +184,10 @@ public final class UInt256 {
         return 0L;
       }
       case 1 -> {
-        return (limbs[0] & 0xFFFFFFFFL);
+        return (limbs[0] & MASK_L);
       }
       default -> {
-        return (limbs[0] & 0xFFFFFFFFL) | ((limbs[1] & 0xFFFFFFFFL) << 32);
+        return (limbs[0] & MASK_L) | ((limbs[1] & MASK_L) << 32);
       }
     }
   }
@@ -333,6 +335,19 @@ public final class UInt256 {
   }
 
   /**
+   * Multiplication (modulo 2**256).
+   *
+   * @param other The integer to add.
+   * @return The sum of this with other.
+   */
+  public UInt256 mul(final UInt256 other) {
+    if (this.isZero() || other.isZero()) return ZERO;
+    int[] result = new int[this.length + other.length + 1];
+    addMul(result, this.limbs, other.limbs);
+    return new UInt256(result);
+  }
+
+  /**
    * Reduce modulo modulus.
    *
    * @param modulus The modulus of the reduction
@@ -358,8 +373,22 @@ public final class UInt256 {
     if (other.isZero()) return this.mod(modulus);
     int[] sum = addWithCarry(this.limbs, other.limbs);
     int[] rem = knuthRemainder(sum, modulus.limbs);
-    UInt256 res = new UInt256(rem);
-    return res;
+    return new UInt256(rem);
+  }
+
+  /**
+   * Modular multiplication.
+   *
+   * @param other The integer to add to this.
+   * @param modulus The modulus of the reduction.
+   * @return This integer this + other (mod modulus).
+   */
+  public UInt256 mulMod(final UInt256 other, final UInt256 modulus) {
+    if (this.isZero() || other.isZero() || modulus.isZero()) return ZERO;
+    int[] result = new int[this.length + other.length + 1];
+    addMul(result, this.limbs, other.limbs);
+    result = knuthRemainder(result, modulus.limbs);
+    return new UInt256(result);
   }
   //--------------------------------------------------------------------------
   //endregion
@@ -431,8 +460,8 @@ public final class UInt256 {
     int[] sum = new int[maxLen + 1];
     long carry = 0;
     for (int i = 0; i < minLen; i++) {
-      long ai = a[i] & 0xFFFFFFFFL;
-      long bi = b[i] & 0xFFFFFFFFL;
+      long ai = a[i] & MASK_L;
+      long bi = b[i] & MASK_L;
       long s = ai + bi + carry;
       sum[i] = (int) s;
       carry = s >>> 32;
@@ -446,17 +475,56 @@ public final class UInt256 {
     return sum;
   }
 
+  private static void addMul(final int[] lhs, final int[] a, final int[] b) {
+    // Shortest in outer loop, swap if needed
+    int[] x;
+    int[] y;
+    if (a.length < b.length) { 
+      x = b;
+      y = a;
+    } else {
+      x = a;
+      y = b;
+    }
+    // x: widening int -> long
+    long[] xl = new long[x.length];
+    for (int i = 0; i < xl.length; i++) {
+      xl[i] = x[i] & MASK_L;
+    }
+    // Main algo
+    for (int i = 0; i < y.length; i++) {
+      long carry = 0;
+      long yi = y[i] & MASK_L;
+
+      int k = i;
+      for (int j = 0; j < x.length; j++, k++) {
+        long prod = yi * xl[j];
+        long sum = (lhs[k] & MASK_L) + prod + carry;
+        lhs[k] = (int) sum;
+        carry = sum >>> 32;
+      }
+
+      // propagate leftover carry
+      while (carry != 0 && k < lhs.length) {
+        long sum = (lhs[k] & MASK_L) + carry;
+        lhs[k] = (int) sum;
+        carry = sum >>> 32;
+        k++;
+      }
+    }
+  }
+
   private static int[] knuthRemainder(final int[] dividend, final int[] modulus) {
     int shift = numberOfLeadingZeros(modulus);
     int limbShift = shift / 32;
     int n = modulus.length - limbShift;
     if (n == 0) return new int[0];
     if (n == 1) {
-      long d = modulus[0] & 0xFFFFFFFFL;
+      long d = modulus[0] & MASK_L;
       long rem = 0;
       // Process from most significant limb downwards
       for (int i = dividend.length - 1; i >= 0; i--) {
-        long cur = (rem << 32) | (dividend[i] & 0xFFFFFFFFL);
+        long cur = (rem << 32) | (dividend[i] & MASK_L);
         rem = Long.remainderUnsigned(cur, d);
       }
       return (new int[] {(int) rem});
@@ -470,12 +538,12 @@ public final class UInt256 {
     shiftLeftInto(uLimbs, dividend, bitShift);
 
     // Main division loop
-    long vn1 = vLimbs[n - 1] & 0xFFFFFFFFL;
-    long vn2 = vLimbs[n - 2] & 0xFFFFFFFFL;
+    long vn1 = vLimbs[n - 1] & MASK_L;
+    long vn2 = vLimbs[n - 2] & MASK_L;
     for (int j = m; j >= 0; j--) {
-      long ujn = (uLimbs[j + n] & 0xFFFFFFFFL);
-      long ujn1 = (uLimbs[j + n - 1] & 0xFFFFFFFFL);
-      long ujn2 = (uLimbs[j + n - 2] & 0xFFFFFFFFL);
+      long ujn = (uLimbs[j + n] & MASK_L);
+      long ujn1 = (uLimbs[j + n - 1] & MASK_L);
+      long ujn2 = (uLimbs[j + n - 2] & MASK_L);
 
       long dividendPart = (ujn << 32) | ujn1;
       // Check that no need for Unsigned version of divrem.
@@ -491,19 +559,19 @@ public final class UInt256 {
       // Multiply-subtract qhat*v from u slice
       long borrow = 0;
       for (int i = 0; i < n; i++) {
-        long prod = (vLimbs[i] & 0xFFFFFFFFL) * qhat;
-        long sub = (uLimbs[i + j] & 0xFFFFFFFFL) - (prod & 0xFFFFFFFFL) - borrow;
+        long prod = (vLimbs[i] & MASK_L) * qhat;
+        long sub = (uLimbs[i + j] & MASK_L) - (prod & MASK_L) - borrow;
         uLimbs[i + j] = (int) sub;
         borrow = (prod >>> 32) - (sub >> 32);
       }
-      long sub = (uLimbs[j + n] & 0xFFFFFFFFL) - borrow;
+      long sub = (uLimbs[j + n] & MASK_L) - borrow;
       uLimbs[j + n] = (int) sub;
 
       if (sub < 0) {
         // Add back
         long carry = 0;
         for (int i = 0; i < n; i++) {
-          long sum = (uLimbs[i + j] & 0xFFFFFFFFL) + (vLimbs[i] & 0xFFFFFFFFL) + carry;
+          long sum = (uLimbs[i + j] & MASK_L) + (vLimbs[i] & MASK_L) + carry;
           uLimbs[i + j] = (int) sum;
           carry = sum >>> 32;
         }
