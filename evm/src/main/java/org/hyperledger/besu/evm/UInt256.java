@@ -85,6 +85,11 @@ public final class UInt256 {
     // Unchecked length: assumes length is properly set.
   }
 
+  /**
+   * Instantiates a new UInt256 from limbs (int[]).
+   *
+   * @param limbs integer limbs in little-endian order.
+   */
   public UInt256(final int[] limbs) {
     int i = Math.min(limbs.length, N_LIMBS) - 1;
     while ((i >= 0) && (limbs[i] == 0)) i--;
