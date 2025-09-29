@@ -63,6 +63,7 @@ public class TransactionSelectionResult {
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SIZE_ABOVE_THRESHOLD(true, false, false),
+    SELECTION_CANCELLED(true, false, false),
     BLOCK_SELECTION_TIMEOUT(true, false, false),
     BLOCK_SELECTION_TIMEOUT_INVALID_TX(true, true, true),
     PLUGIN_SELECTION_TIMEOUT(false, false, false),
@@ -122,6 +123,10 @@ public class TransactionSelectionResult {
   /** The block already contains the max number of allowed blobs. */
   public static final TransactionSelectionResult BLOBS_FULL =
       new TransactionSelectionResult(BaseStatus.BLOBS_FULL);
+
+  /** The block creation has been cancelled */
+  public static final TransactionSelectionResult SELECTION_CANCELLED =
+      new TransactionSelectionResult(BaseStatus.SELECTION_CANCELLED);
 
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
