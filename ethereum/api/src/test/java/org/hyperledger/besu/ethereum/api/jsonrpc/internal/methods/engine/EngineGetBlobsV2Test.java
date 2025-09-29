@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_CELL_PROOFS;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_PROOF;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,8 +37,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,11 +46,22 @@ import java.util.List;
 import io.vertx.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
+@ExtendWith({MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
 
   private TransactionPool transactionPool;
   private EngineGetBlobsV2 method;
+  private Long timestamp = osakaHardfork.milestone();
+
+  private Long timestampProvider() {
+    return timestamp;
+  }
 
   @BeforeEach
   public void setup() {
@@ -59,9 +71,11 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
         new EngineGetBlobsV2(
             mock(Vertx.class),
             protocolContext,
+            protocolSchedule,
             mock(EngineCallListener.class),
             transactionPool,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            this::timestampProvider);
   }
 
   @Test
@@ -131,6 +145,21 @@ public class EngineGetBlobsV2Test extends TrustedSetupClassLoaderExtension {
     JsonRpcErrorResponse error = (JsonRpcErrorResponse) response;
     assertThat(error.getError().getCode())
         .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getCode());
+  }
+
+  @Test
+  void shouldFailWhenOsakaNotActive() {
+    timestamp = osakaHardfork.milestone() - 1;
+    var response = method.syncResponse(buildRequestContext());
+    assertThat(fromErrorResp(response).getCode())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  void shouldSucceedWhenOsakaActive() {
+    timestamp = osakaHardfork.milestone();
+    var response = method.syncResponse(buildRequestContext());
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
   }
 
   private BlobProofBundle createBundleAndRegisterToPool() {
