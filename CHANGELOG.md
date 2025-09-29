@@ -31,6 +31,12 @@
 ### Breaking Changes
 - Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
 
+### Known issue 
+Affects users of eth_subscribe (WebSocket) eg SSV, and ethstats integration
+- symptom: `io.vertx.core.json.EncodeException: Failed to encode as JSON: Java 8 optional type`
+- fixes and more info [#9212](https://github.com/hyperledger/besu/pull/9212) and [#9220](https://github.com/hyperledger/besu/pull/9220)
+- if you experience this issue, you can downgrade to the previous released version of Besu, or build off main if that is an option for your environment.
+
 ### Upcoming Breaking Changes
 - Deprecated CLI options
   - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
