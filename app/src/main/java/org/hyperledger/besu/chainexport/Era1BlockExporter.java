@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.era1.Era1Type;
-import org.hyperledger.besu.util.ssz.Merkleizer;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +48,7 @@ public class Era1BlockExporter {
 
   private final Blockchain blockchain;
   private final Era1FileWriterFactory era1FileWriterFactory;
-  private final Merkleizer merkleizer;
+  private final Era1AccumulatorFactory era1AccumulatorFactory;
 
   /**
    * Instantiates a new ERA1 block exporter.
@@ -59,10 +57,12 @@ public class Era1BlockExporter {
    * @param era1FileWriterFactory a Era1FileWriterFactory
    */
   public Era1BlockExporter(
-      final Blockchain blockchain, final Era1FileWriterFactory era1FileWriterFactory) {
+      final Blockchain blockchain,
+      final Era1FileWriterFactory era1FileWriterFactory,
+      final Era1AccumulatorFactory era1AccumulatorFactory) {
     this.blockchain = blockchain;
     this.era1FileWriterFactory = era1FileWriterFactory;
-    this.merkleizer = new Merkleizer();
+    this.era1AccumulatorFactory = era1AccumulatorFactory;
   }
 
   /**
@@ -84,7 +84,7 @@ public class Era1BlockExporter {
       List<Block> blocksForFile = new ArrayList<>();
       Map<Block, List<TransactionReceipt>> transactionReceiptsForFile = new HashMap<>();
       Map<Block, Difficulty> difficultysForFile = new HashMap<>();
-      List<AccumulatorHeaderRecord> accumulatorHeaderRecords = new ArrayList<>();
+      Era1Accumulator accumulator = era1AccumulatorFactory.getEra1Accumulator();
       for (long blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
         blockchain
             .getBlockByNumber(blockNumber)
@@ -101,9 +101,7 @@ public class Era1BlockExporter {
                       .ifPresent(
                           (difficulty) -> {
                             difficultysForFile.put(block, difficulty);
-                            accumulatorHeaderRecords.add(
-                                new AccumulatorHeaderRecord(
-                                    block.getHash(), difficulty.toUInt256()));
+                            accumulator.addBlock(block.getHash(), difficulty.toUInt256());
                           });
                 });
       }
@@ -113,18 +111,7 @@ public class Era1BlockExporter {
             case SEPOLIA_GENESIS_HASH -> "sepolia";
             default -> throw new RuntimeException("Unable to export ERA1 files for this network");
           };
-      List<Bytes32> accumulatorBytesList =
-          accumulatorHeaderRecords.stream()
-              .map(
-                  (ahr) ->
-                      merkleizer.merkleizeChunks(
-                          List.of(
-                              ahr.blockHash,
-                              Bytes32.wrap(ahr.totalDifficulty.toArray(ByteOrder.LITTLE_ENDIAN)))))
-              .toList();
-      Bytes32 accumulatorHash = merkleizer.merkleizeChunks(accumulatorBytesList, ERA1_FILE_BLOCKS);
-      accumulatorHash =
-          merkleizer.mixinLength(accumulatorHash, UInt256.valueOf(accumulatorHeaderRecords.size()));
+      Bytes32 accumulatorHash = accumulator.accumulate();
 
       String filename =
           String.format(
@@ -182,7 +169,4 @@ public class Era1BlockExporter {
       }
     }
   }
-
-  private record AccumulatorHeaderRecord(Bytes32 blockHash, UInt256 totalDifficulty) {}
-  ;
 }
