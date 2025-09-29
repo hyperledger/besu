@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
-import static org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil.toBesuBlock;
+import static org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil.toBesuBlock;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
