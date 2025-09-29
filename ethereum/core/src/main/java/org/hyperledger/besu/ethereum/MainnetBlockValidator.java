@@ -286,6 +286,17 @@ public class MainnetBlockValidator implements BlockValidator {
           "Full body validation is not supported for syncing blocks");
     }
 
+    final int blockSize = block.getSize();
+    if (blockSize > maxRlpBlockSize) {
+      String description =
+          String.format(
+              "Block size of %s bytes exceeds limit of %s bytes", blockSize, maxRlpBlockSize);
+      context
+          .getBadBlockManager()
+          .addBadBlock(block, BadBlockCause.fromValidationFailure(description));
+      return false;
+    }
+
     final BlockHeader header = block.getHeader();
     if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
       String description = String.format("Failed header validation (%s)", headerValidationMode);

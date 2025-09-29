@@ -74,9 +74,9 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
           .log();
     }
     if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
+      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
-    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    final long lastBlock = blocksWithReceipts.getLast().getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
