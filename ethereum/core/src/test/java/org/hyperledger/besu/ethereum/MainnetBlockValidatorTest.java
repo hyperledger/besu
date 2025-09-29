@@ -427,6 +427,35 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
+  void validationForSyncingFailsForBlockGreaterThanMaxBlockSize() {
+    BlockDataGenerator generator = new BlockDataGenerator();
+    // local scope bad block manager
+    BadBlockManager badBlockManager = new BadBlockManager();
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
+    final BlockValidator blockValidator =
+        MainnetBlockValidatorBuilder.osaka(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
+    int maxRlpBlockSize = blockValidator.maxRlpBlockSize();
+
+    final Transaction transaction = generator.transaction(Bytes.random(maxRlpBlockSize + 1));
+    BlockDataGenerator.BlockOptions blockOptions =
+        new BlockDataGenerator.BlockOptions().setBlockNumber(1).addTransaction(transaction);
+    Block block = generator.block(blockOptions);
+
+    boolean isValid =
+        blockValidator.validateBlockForSyncing(
+            protocolContext,
+            block,
+            Collections.emptyList(),
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            BodyValidationMode.LIGHT);
+    assertThat(isValid).isFalse();
+    assertThat(badBlockManager.getBadBlock(block.getHash())).isPresent();
+    assertThat(badBlockManager.getBadBlocks()).containsExactly(block);
+  }
+
+  @Test
   public void validateBlockValidation_onFailedBodyForSyncing() {
     final HeaderValidationMode headerValidationMode = HeaderValidationMode.FULL;
     when(blockBodyValidator.validateBodyLight(
@@ -466,6 +495,7 @@ public class MainnetBlockValidatorTest {
   }
 
   private void assertBadBlockIsTracked(final Block badBlock) {
+    assertThat(badBlockManager.getBadBlocks()).hasSize(1);
     assertThat(badBlockManager.getBadBlocks()).containsExactly(badBlock);
     assertThat(badBlockManager.getBadBlock(badBlock.getHash())).contains(block);
   }
