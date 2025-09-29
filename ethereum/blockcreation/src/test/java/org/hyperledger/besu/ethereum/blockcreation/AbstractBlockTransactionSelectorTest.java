@@ -32,6 +32,7 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORI
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -191,8 +192,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(protocolContext.getWorldStateArchive().getWorldState(any(WorldStateQueryParams.class)))
         .thenReturn(Optional.of(worldState));
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
-    when(ethScheduler.scheduleBlockCreationTask(any(Runnable.class)))
-        .thenAnswer(invocation -> CompletableFuture.runAsync(invocation.getArgument(0)));
+    when(ethScheduler.scheduleBlockCreationTask(anyLong(), any(Runnable.class)))
+        .thenAnswer(invocation -> CompletableFuture.runAsync(invocation.getArgument(1)));
     when(ethScheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
         .thenAnswer(
             invocation -> {
