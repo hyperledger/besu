@@ -72,7 +72,7 @@ public class Era1FileWriter implements Closeable {
 
     byte[] typeCode = era1Type.getTypeCode();
     writer.write(typeCode);
-    byte[] length = convertLengthToLittleEndianByteArray(content.length);
+    byte[] length = convertLengthToLittleEndianByteArray(actualContent.length);
     writer.write(length);
     writer.write(actualContent);
 
