@@ -49,8 +49,8 @@ import org.hyperledger.besu.consensus.qbft.FutureMessageSynchronizerHandler;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.BftEventHandlerAdaptor;
-import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCodecAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockCreatorFactoryAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockInterfaceAdaptor;
@@ -60,7 +60,6 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
@@ -69,11 +68,13 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossiperImpl;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
@@ -240,7 +241,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
-    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster, blockEncoder);
+    final QbftGossiperImpl gossiper = new QbftGossiperImpl(uniqueMessageMulticaster, blockEncoder);
 
     final QbftFinalState finalState =
         new QbftFinalStateImpl(
@@ -264,16 +265,16 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(
-        qbftBlock -> ethProtocolManager.blockMined(BlockUtil.toBesuBlock(qbftBlock)));
+        qbftBlock -> ethProtocolManager.blockMined(AdaptorUtil.toBesuBlock(qbftBlock)));
     minedBlockObservers.subscribe(
         qbftBlock ->
             blockLogger(transactionPool, localAddress)
-                .blockMined(BlockUtil.toBesuBlock(qbftBlock)));
+                .blockMined(AdaptorUtil.toBesuBlock(qbftBlock)));
 
     final EthSynchronizerUpdater synchronizerUpdater =
         new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers());
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
+        new FutureMessageBuffer<>(
             qbftConfig.getFutureMessagesMaxDistance(),
             qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber(),

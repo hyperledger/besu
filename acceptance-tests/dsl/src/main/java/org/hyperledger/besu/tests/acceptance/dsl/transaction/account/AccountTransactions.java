@@ -45,6 +45,11 @@ public class AccountTransactions {
   }
 
   public TransferTransaction createTransfer(
+      final Account sender, final Account recipient, final Amount amount, final Amount gasPrice) {
+    return createFrontierBuilder(sender, recipient, amount).gasPrice(gasPrice).build();
+  }
+
+  public TransferTransaction createTransfer(
       final Account recipient, final int amount, final SignatureAlgorithm signatureAlgorithm) {
     return createFrontierBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
         .setSignatureAlgorithm(signatureAlgorithm)

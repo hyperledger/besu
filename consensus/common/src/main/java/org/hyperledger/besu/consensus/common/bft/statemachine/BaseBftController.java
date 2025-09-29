@@ -41,7 +41,7 @@ public abstract class BaseBftController implements BftEventHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseBftController.class);
   private final Blockchain blockchain;
   private final BftFinalState bftFinalState;
-  private final FutureMessageBuffer futureMessageBuffer;
+  private final FutureMessageBuffer<Message> futureMessageBuffer;
   private final Gossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
   private final SynchronizerUpdater synchronizerUpdater;
@@ -63,7 +63,7 @@ public abstract class BaseBftController implements BftEventHandler {
       final BftFinalState bftFinalState,
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
-      final FutureMessageBuffer futureMessageBuffer,
+      final FutureMessageBuffer<Message> futureMessageBuffer,
       final SynchronizerUpdater synchronizerUpdater) {
     this.blockchain = blockchain;
     this.bftFinalState = bftFinalState;

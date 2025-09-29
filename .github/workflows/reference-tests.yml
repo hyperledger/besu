@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   referenceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: besu-research-ubuntu-8 # since eest-v5.1.0 this job needs more disk space
     permissions:
       statuses: write
       checks: write

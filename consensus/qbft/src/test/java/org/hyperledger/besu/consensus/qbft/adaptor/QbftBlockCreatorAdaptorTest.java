@@ -80,7 +80,7 @@ class QbftBlockCreatorAdaptorTest {
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
     QbftBlock sealedBlock = qbftBlockCreator.createSealedBlock(block, 1, List.of(seal));
     BftExtraData sealedExtraData =
-        qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(sealedBlock.getHeader()));
+        qbftExtraDataCodec.decode(AdaptorUtil.toBesuBlockHeader(sealedBlock.getHeader()));
     assertThat(sealedExtraData.getVanityData()).isEqualTo(Bytes.wrap(new byte[32]));
     assertThat(sealedExtraData.getVote()).contains(Vote.authVote(Address.ZERO));
     assertThat(sealedExtraData.getValidators()).isEqualTo(List.of(Address.ZERO));

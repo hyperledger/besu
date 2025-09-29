@@ -201,6 +201,7 @@ public class CliqueBesuControllerBuilderTest {
   public void miningParametersBlockPeriodSecondsIsUpdatedOnTransition() {
     final var besuController = cliqueBesuControllerBuilder.build();
     final var protocolContext = besuController.getProtocolContext();
+    final var protocolSchedule = besuController.getProtocolSchedule();
 
     final BlockHeader header1 =
         new BlockHeader(
@@ -232,7 +233,9 @@ public class CliqueBesuControllerBuilderTest {
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
     assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime())
+    assertThat(
+            miningConfiguration.getBlockTxsSelectionMaxTime(
+                protocolSchedule.getByBlockHeader(header1).isPoS()))
         .isEqualTo(Duration.ofMillis(2000 * 75 / 100));
   }
 }
