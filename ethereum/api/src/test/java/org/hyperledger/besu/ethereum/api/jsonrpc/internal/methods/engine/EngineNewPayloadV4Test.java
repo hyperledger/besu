@@ -73,7 +73,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     return Set.of(pragueHardfork);
   }
 
-  private static final List<Request> VALID_REQUESTS =
+  protected static final List<Request> VALID_REQUESTS =
       List.of(
           new Request(RequestType.DEPOSIT, Bytes.of(1)),
           new Request(RequestType.WITHDRAWAL, Bytes.of(1)),
@@ -113,7 +113,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
-    final BlockHeader cancunHeader = createBlockHeaderFixtureForV3(Optional.empty()).buildHeader();
+    final BlockHeader cancunHeader = createPreActivationBlockHeader();
 
     var resp = resp(mockEnginePayload(cancunHeader, emptyList()));
 
@@ -128,7 +128,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         .thenReturn(Optional.of(pragueHardfork.milestone() + 10L));
 
     final BlockHeader futureEipsHeader =
-        createBlockHeaderFixtureForV3(Optional.empty())
+        createActivationBlockHeaderFixture(Optional.empty())
             .timestamp(pragueHardfork.milestone() + 10L)
             .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
             .buildHeader();
@@ -144,7 +144,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfRequestsIsNull_WhenRequestsAllowed() {
     var resp =
         respWithInvalidRequests(
-            mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList()));
+            mockEnginePayload(createValidBlockHeader(Optional.empty()), emptyList()));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(fromErrorResp(resp).getMessage())
@@ -173,7 +173,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfRequestsIsNotNull_WhenRequestsProhibited() {
     mockProhibitedRequestsValidator();
 
-    var resp = resp(mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList()));
+    var resp = resp(mockEnginePayload(createValidBlockHeader(Optional.empty()), emptyList()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -216,17 +216,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     assertThat(res.isValid()).isTrue();
   }
 
-  private BlockHeader createValidBlockHeaderForV4(
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
-    return createBlockHeaderFixtureForV3(maybeWithdrawals)
+  protected BlockHeader createValidBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
+    return createActivationBlockHeaderFixture(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
         .timestamp(pragueHardfork.milestone())
         .buildHeader();
   }
 
-  private BlockHeaderTestFixture createBlockHeaderFixtureForV3(
+  protected BlockHeaderTestFixture createActivationBlockHeaderFixture(
       final Optional<List<Withdrawal>> maybeWithdrawals) {
-    BlockHeader parentBlockHeader =
+    final BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
             .timestamp(pragueHardfork.milestone() - 2) // cancun parent
@@ -246,9 +245,15 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null);
   }
 
+  protected BlockHeader createPreActivationBlockHeader() {
+    return createActivationBlockHeaderFixture(Optional.empty())
+        .timestamp(pragueHardfork.milestone() - 1)
+        .buildHeader();
+  }
+
   @Override
   protected BlockHeader createBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
-    return createValidBlockHeaderForV4(maybeWithdrawals);
+    return createValidBlockHeader(maybeWithdrawals);
   }
 
   @Override
