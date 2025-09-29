@@ -60,12 +60,10 @@ public class TransactionSelectionResult {
   private enum BaseStatus implements Status {
     SELECTED,
     BLOCK_FULL(true, false, false),
-    FINALIZATION_REQUESTED(true, false, false),
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SIZE_ABOVE_THRESHOLD(true, false, false),
     BLOCK_SELECTION_TIMEOUT(true, false, false),
-    BLOCK_SELECTION_TIMEOUT_INVALID_TX(true, true, true),
     TX_EVALUATION_TOO_LONG(true, false, true),
     INVALID_TX_EVALUATION_TOO_LONG(true, true, true),
     INVALID_TRANSIENT(false, false, false),
@@ -117,13 +115,6 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
 
-  /**
-   * The transaction has not been selected since the finalization of the block building has been
-   * selected.
-   */
-  public static final TransactionSelectionResult FINALIZATION_REQUESTED =
-      new TransactionSelectionResult(BaseStatus.FINALIZATION_REQUESTED);
-
   /** The block already contains the max number of allowed blobs. */
   public static final TransactionSelectionResult BLOBS_FULL =
       new TransactionSelectionResult(BaseStatus.BLOBS_FULL);
@@ -131,10 +122,6 @@ public class TransactionSelectionResult {
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT);
-
-  /** There was no more time to add transaction to the block, and the transaction is invalid */
-  public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT_INVALID_TX =
-      new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT_INVALID_TX);
 
   /** Transaction took too much to evaluate, but it was valid */
   public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =

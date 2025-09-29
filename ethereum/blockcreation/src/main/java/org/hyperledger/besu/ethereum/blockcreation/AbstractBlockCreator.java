@@ -87,7 +87,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
-  private final AtomicBoolean shouldFinalize = new AtomicBoolean(false);
 
   protected AbstractBlockCreator(
       final MiningConfiguration miningConfiguration,
@@ -398,7 +397,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             processableBlockHeader,
             transactionReceiptFactory,
             isCancelled::get,
-            shouldFinalize::get,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,
@@ -435,16 +433,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   @Override
   public void cancel() {
+    LOG.debug("Block creation cancellation requested");
     isCancelled.set(true);
   }
 
   @Override
   public boolean isCancelled() {
     return isCancelled.get();
-  }
-
-  public void finalizeCurrentBlock() {
-    shouldFinalize.set(true);
   }
 
   private void throwIfStopped() throws CancellationException {

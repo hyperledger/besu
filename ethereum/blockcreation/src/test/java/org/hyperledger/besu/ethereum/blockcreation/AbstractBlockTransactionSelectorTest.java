@@ -27,7 +27,7 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXECUTION_INTERRUPTED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -207,10 +207,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected abstract TransactionPool createTransactionPool();
 
   private Boolean isCancelled() {
-    return false;
-  }
-
-  private Boolean shouldFinalize() {
     return false;
   }
 
@@ -1222,7 +1218,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         processingTooLate,
         postProcessingTooLate,
         500,
-        BLOCK_SELECTION_TIMEOUT_INVALID_TX,
+        INVALID_TX_EVALUATION_TOO_LONG,
         true,
         NONCE_TOO_LOW);
   }
@@ -1242,8 +1238,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
         processingTooLate,
         postProcessingTooLate,
         900,
-        TX_EVALUATION_TOO_LONG,
-        false,
+        INVALID_TX_EVALUATION_TOO_LONG,
+        true,
         NONCE_TOO_LOW);
   }
 
@@ -1418,7 +1414,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
             blockHeader,
             protocolSchedule.getByBlockHeader(blockHeader).getTransactionReceiptFactory(),
             this::isCancelled,
-            this::shouldFinalize,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,

@@ -374,12 +374,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
 
-    // Signal graceful finalization to the block creator
+    // Signal graceful cancellation to the block creator
     blockCreationTasks.computeIfPresent(
         payloadId,
         (pid, task) -> {
-          task.blockCreator.finalizeCurrentBlock();
-          LOG.debug("Signaled block creator to finalize gracefully for payload {}", payloadId);
+          task.blockCreator.cancel();
+          LOG.debug("Signaled block creator to cancel gracefully for payload {}", payloadId);
           return task;
         });
 

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -99,7 +98,6 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector implements BlockTransactionSelectionService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
   private final Supplier<Boolean> isCancelled;
-  private final Supplier<Boolean> shouldFinalize;
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
   //  private final WorldUpdater worldUpdater;
@@ -132,7 +130,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Supplier<Boolean> isCancelled,
-      final Supplier<Boolean> shouldFinalize,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final ProtocolSpec protocolSpec,
@@ -144,7 +141,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.worldState = worldState;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
-    this.shouldFinalize = shouldFinalize;
     this.ethScheduler = ethScheduler;
     this.blockSelectionContext =
         new BlockSelectionContext(
@@ -322,20 +318,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
    * provided transaction's gasLimit does not fit within the space remaining in the block.
    *
    * @param pendingTransaction The transaction to be evaluated.
-   * @return The result of the transaction evaluation process. Returns FINALIZATION_REQUESTED if the
-   *     transaction selection process is cancelled to allow graceful completion.
+   * @return The result of the transaction evaluation process.
    */
   @Override
   public TransactionSelectionResult evaluatePendingTransaction(
       final org.hyperledger.besu.datatypes.PendingTransaction pendingTransaction) {
-
-    // Check if we should finalize the block gracefully
-    if (shouldFinalize.get()) {
-      LOG.debug(
-          "Block finalization requested, stopping transaction selection with {} transactions",
-          transactionSelectionResults.getSelectedTransactions().size());
-      return TransactionSelectionResult.FINALIZATION_REQUESTED;
-    }
 
     checkCancellation();
 
@@ -604,7 +591,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       return selectionResult.discard() ? INVALID_TX_EVALUATION_TOO_LONG : TX_EVALUATION_TOO_LONG;
     }
 
-    return selectionResult.discard() ? BLOCK_SELECTION_TIMEOUT_INVALID_TX : BLOCK_SELECTION_TIMEOUT;
+    return selectionResult.discard() ? INVALID_TX_EVALUATION_TOO_LONG : BLOCK_SELECTION_TIMEOUT;
   }
 
   /**

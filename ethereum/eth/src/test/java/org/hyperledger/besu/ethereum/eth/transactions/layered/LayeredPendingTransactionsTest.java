@@ -30,7 +30,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.FINALIZATION_REQUESTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -416,15 +415,11 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   }
 
   static Stream<TransactionSelectionResult> selectTransactionsUntilSelectorRequestsNoMore() {
-    return Stream.of(
-        BLOCK_OCCUPANCY_ABOVE_THRESHOLD,
-        BLOCK_OCCUPANCY_ABOVE_THRESHOLD,
-        BLOCK_FULL,
-        FINALIZATION_REQUESTED);
+    return Stream.of(BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_FULL);
   }
 
   @Test
-  public void selectTransactionsStopsOnFinalizationRequested() {
+  public void selectTransactionsStopsOnBlockFull() {
     pendingTransactions.addTransaction(
         createRemotePendingTransaction(transaction0), Optional.empty());
     pendingTransactions.addTransaction(
@@ -434,7 +429,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         pendingTx -> {
           parsedTransactions.add(pendingTx.getTransaction());
-          return FINALIZATION_REQUESTED;
+          return BLOCK_FULL;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
@@ -444,7 +439,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   }
 
   @Test
-  public void finalizationRequestedPreservesSelectedTransactions() {
+  public void blockFullStopsSelectionImmediately() {
     // Add multiple transactions
     for (int i = 0; i < 5; i++) {
       final Transaction tx = createTransaction(i, SIGNATURE_ALGORITHM.get().generateKeyPair());
@@ -452,22 +447,18 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     }
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
-    final int transactionsToSelect = 3;
 
     pendingTransactions.selectTransactions(
         pendingTx -> {
           parsedTransactions.add(pendingTx.getTransaction());
-          // Stop gracefully after processing 3 transactions
-          if (parsedTransactions.size() >= transactionsToSelect) {
-            return FINALIZATION_REQUESTED;
-          }
-          return SELECTED;
+          // BLOCK_FULL stops selection immediately after the first transaction
+          return BLOCK_FULL;
         });
 
-    // Should have processed exactly 3 transactions
-    assertThat(parsedTransactions.size()).isEqualTo(transactionsToSelect);
+    // Should have processed exactly 1 transaction before stopping
+    assertThat(parsedTransactions.size()).isEqualTo(1);
 
-    // All 5 transactions should still be in the pool since finalization preserves state
+    // All 5 transactions should still be in the pool since no transactions are discarded
     assertThat(pendingTransactions.size()).isEqualTo(5);
   }
 
@@ -491,7 +482,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
           // Select first two transactions, then request finalization
           if (selectedTransactions.size() >= 2) {
-            return FINALIZATION_REQUESTED;
+            return BLOCK_FULL;
           }
           return SELECTED;
         });
