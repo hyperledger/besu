@@ -652,15 +652,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
     double mgasPerSec = (timeInNs != 0) ? (double) (block.getHeader().getGasUsed() * 1_000) / timeInNs : 0;
     double timeInMs = (double)  timeInNs/1_000_000;
-    message.append(
-        "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %03.1fms exec| %6.2f Mgas/s| %2d peers");
+    boolean timeOverOrEq1second = timeInMs >= 1_000;
+    if (timeOverOrEq1second) {
+      message.append("| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
+    } else {
+      message.append("| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %03.1fms exec| %6.2f Mgas/s| %2d peers");
+    }
     messageArgs.addAll(
         List.of(
             blobCount,
             block.getHeader().getBaseFee().map(Wei::toHumanReadablePaddedString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                timeInMs  ,
+                timeOverOrEq1second ? timeInMs / 1_000 :  timeInMs  ,
             mgasPerSec,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
