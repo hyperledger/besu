@@ -43,7 +43,8 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
     BYTES32_NOT_EQUAL_MOST_SIGNIFICANT,
     BYTES32_NOT_EQUAL_LEAST_SIGNIFICANT,
     BYTES32_RANDOM,
-    BYTES30_BYTES16_RANDOM
+    BYTES30_BYTES16_RANDOM,
+    BYTES32_EQUAL_BYTE_REPEAT
   }
 
   @Param private MODE mode;
@@ -138,6 +139,16 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
         BenchmarkHelper.fillPool(aPool, () -> 30, value -> value.get(0) != 0);
         BenchmarkHelper.fillPool(bPool, () -> 16, value -> value.get(0) != 0);
         break;
+      case BYTES32_EQUAL_BYTE_REPEAT:
+        BenchmarkHelper.fillPool(aPool, () -> 1);
+        aPool = Arrays.stream(aPool).map(
+          bytes -> {
+            final byte[] newPool = new byte[32];
+            Arrays.fill(newPool, bytes.get(0));
+            return Bytes.wrap(newPool);
+          }
+        ).toArray(Bytes[]::new);
+        bPool = aPool;
     }
     index = 0;
   }

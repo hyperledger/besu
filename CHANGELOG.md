@@ -15,6 +15,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Performance improvements to EQ opcode [#9229](https://github.com/hyperledger/besu/pull/9229)
 
 ### Bug fixes
 
