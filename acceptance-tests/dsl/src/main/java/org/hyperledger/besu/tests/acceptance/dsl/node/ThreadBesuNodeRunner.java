@@ -19,6 +19,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.Era1BlockExporter;
+import org.hyperledger.besu.chainexport.Era1FileWriterFactory;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -714,7 +715,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               Era1BlockImporter::new,
               RlpBlockExporter::new,
               (blockchain) ->
-                  new Era1BlockExporter(blockchain, new OutputStreamFactory(), new SnappyFactory()),
+                  new Era1BlockExporter(
+                      blockchain,
+                      new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory())),
               new RunnerBuilder(),
               new BesuController.Builder(),
               pluginContext,

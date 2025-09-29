@@ -17,6 +17,7 @@ package org.hyperledger.besu.components;
 import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.Era1BlockExporter;
+import org.hyperledger.besu.chainexport.Era1FileWriterFactory;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -57,7 +58,9 @@ public class BesuCommandModule {
             Era1BlockImporter::new,
             RlpBlockExporter::new,
             (blockchain) ->
-                new Era1BlockExporter(blockchain, new OutputStreamFactory(), new SnappyFactory()),
+                new Era1BlockExporter(
+                    blockchain,
+                    new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory())),
             new RunnerBuilder(),
             new BesuController.Builder(),
             new BesuPluginContextImpl(),

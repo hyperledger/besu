@@ -22,13 +22,9 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.era1.Era1Type;
-import org.hyperledger.besu.util.io.OutputStreamFactory;
-import org.hyperledger.besu.util.snappy.SnappyFactory;
 import org.hyperledger.besu.util.ssz.Merkleizer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -42,7 +38,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xerial.snappy.SnappyFramedOutputStream;
 
 /** A class to export ERA1 files */
 public class Era1BlockExporter {
@@ -54,24 +49,19 @@ public class Era1BlockExporter {
       "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
 
   private final Blockchain blockchain;
-  private final OutputStreamFactory outputStreamFactory;
-  private final SnappyFactory snappyFactory;
+  private final Era1FileWriterFactory era1FileWriterFactory;
   private final Merkleizer merkleizer;
 
   /**
    * Instantiates a new ERA1 block exporter.
    *
    * @param blockchain the blockchain
-   * @param outputStreamFactory an OutputStreamFactory
-   * @param snappyFactory a SnappyFactory
+   * @param era1FileWriterFactory a Era1FileWriterFactory
    */
   public Era1BlockExporter(
-      final Blockchain blockchain,
-      final OutputStreamFactory outputStreamFactory,
-      final SnappyFactory snappyFactory) {
+      final Blockchain blockchain, final Era1FileWriterFactory era1FileWriterFactory) {
     this.blockchain = blockchain;
-    this.outputStreamFactory = outputStreamFactory;
-    this.snappyFactory = snappyFactory;
+    this.era1FileWriterFactory = era1FileWriterFactory;
     this.merkleizer = new Merkleizer();
   }
 
@@ -140,96 +130,57 @@ public class Era1BlockExporter {
           String.format(
               "%s-%05d-%s.era1",
               network, fileNumber, accumulatorHash.toFastHex(false).substring(0, 8));
-      try (FileOutputStream writer =
-          outputStreamFactory.createFileOutputStream(
+      try (Era1FileWriter writer =
+          era1FileWriterFactory.era1FileWriter(
               outputDirectory.toPath().resolve(filename).toFile())) {
-        long position = 0;
-        position += writeSection(writer, Era1Type.VERSION, new byte[] {});
+        writer.writeSection(Era1Type.VERSION, new byte[] {});
 
         Map<Block, Long> blockPositions = new HashMap<>();
         for (Block block : blocksForFile) {
-          blockPositions.put(block, position);
-          position +=
-              writeCompressedSection(
-                  writer,
-                  Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
-                  RLP.encode(block.getHeader()::writeTo).toArray());
-          position +=
-              writeCompressedSection(
-                  writer,
-                  Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
-                  RLP.encode(block.getBody()::writeWrappedBodyTo).toArray());
-          position +=
-              writeCompressedSection(
-                  writer,
-                  Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
-                  RLP.encode(
-                          (rlpOutput) -> {
-                            List<TransactionReceipt> receipts =
-                                transactionReceiptsForFile.get(block);
-                            if (receipts.isEmpty()) {
-                              rlpOutput.writeEmptyList();
-                            } else {
-                              receipts.forEach(
-                                  (tr) ->
-                                      TransactionReceiptEncoder.writeTo(
-                                          tr,
-                                          rlpOutput,
-                                          TransactionReceiptEncodingConfiguration.DEFAULT));
-                            }
-                          })
-                      .toArray());
-          position +=
-              writeSection(
-                  writer,
-                  Era1Type.TOTAL_DIFFICULTY,
-                  difficultysForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
+          blockPositions.put(block, writer.getPosition());
+          writer.writeSection(
+              Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
+              RLP.encode(block.getHeader()::writeTo).toArray());
+          writer.writeSection(
+              Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
+              RLP.encode(block.getBody()::writeWrappedBodyTo).toArray());
+          writer.writeSection(
+              Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
+              RLP.encode(
+                      (rlpOutput) -> {
+                        List<TransactionReceipt> receipts = transactionReceiptsForFile.get(block);
+                        if (receipts.isEmpty()) {
+                          rlpOutput.writeEmptyList();
+                        } else {
+                          receipts.forEach(
+                              (tr) ->
+                                  TransactionReceiptEncoder.writeTo(
+                                      tr,
+                                      rlpOutput,
+                                      TransactionReceiptEncodingConfiguration.DEFAULT));
+                        }
+                      })
+                  .toArray());
+          writer.writeSection(
+              Era1Type.TOTAL_DIFFICULTY,
+              difficultysForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
         }
 
-        position += writeSection(writer, Era1Type.ACCUMULATOR, accumulatorHash.toArray());
+        writer.writeSection(Era1Type.ACCUMULATOR, accumulatorHash.toArray());
 
         ByteBuffer blockIndex = ByteBuffer.allocate(16 + blockPositions.size() * 8);
         blockIndex.put(Pack.longToLittleEndian(startBlock));
         for (Block block : blocksForFile) {
-          long relativePosition = blockPositions.get(block) - position;
+          long relativePosition = blockPositions.get(block) - writer.getPosition();
           blockIndex.put(Pack.longToLittleEndian(relativePosition));
         }
         blockIndex.put(Pack.longToLittleEndian(blocksForFile.size()));
-        position += writeSection(writer, Era1Type.BLOCK_INDEX, blockIndex.array());
-        LOG.info("Wrote {} bytes to {}", position, filename);
+        writer.writeSection(Era1Type.BLOCK_INDEX, blockIndex.array());
+        LOG.info("Wrote {} bytes to {}", writer.getPosition(), filename);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
-  }
-
-  private long writeSection(
-      final FileOutputStream writer, final Era1Type era1Type, final byte[] content)
-      throws IOException {
-    byte[] typeCode = era1Type.getTypeCode();
-    writer.write(typeCode);
-    byte[] length = convertLengthToLittleEndianByteArray(content.length);
-    writer.write(length);
-    writer.write(content);
-
-    return (long) (typeCode.length + length.length + content.length);
-  }
-
-  private long writeCompressedSection(
-      final FileOutputStream writer, final Era1Type era1Type, final byte[] content)
-      throws IOException {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    try (SnappyFramedOutputStream snappyOutputStream =
-        snappyFactory.createFramedOutputStream(byteArrayOutputStream)) {
-      snappyOutputStream.write(content);
-    }
-
-    return writeSection(writer, era1Type, byteArrayOutputStream.toByteArray());
-  }
-
-  private byte[] convertLengthToLittleEndianByteArray(final int length) {
-    byte[] lengthBytes = Pack.intToLittleEndian(length);
-    return new byte[] {lengthBytes[0], lengthBytes[1], lengthBytes[2], lengthBytes[3], 0, 0};
   }
 
   private record AccumulatorHeaderRecord(Bytes32 blockHash, UInt256 totalDifficulty) {}
