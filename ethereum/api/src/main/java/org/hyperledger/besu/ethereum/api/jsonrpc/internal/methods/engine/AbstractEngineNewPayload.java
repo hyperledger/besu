@@ -651,6 +651,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
     double mgasPerSec = (timeInNs != 0) ? (double) (block.getHeader().getGasUsed() * 1_000) / timeInNs : 0;
+    double timeInMs = (double)  timeInNs/1_000_000;
     message.append(
         "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %03.1fms exec| %6.2f Mgas/s| %2d peers");
     messageArgs.addAll(
@@ -659,7 +660,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             block.getHeader().getBaseFee().map(Wei::toHumanReadablePaddedString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                timeInNs/1_000_000,
+                timeInMs  ,
             mgasPerSec,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
