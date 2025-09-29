@@ -89,6 +89,7 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
   private static final Vertx vertx = Vertx.vertx();
 
   private Long timestamp = cancunHardfork.milestone();
+
   private Long timestampProvider() {
     return timestamp;
   }
