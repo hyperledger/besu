@@ -288,7 +288,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final long reorgLoggingThreshold,
       final String dataDirectory,
       final int numberOfBlocksToCache,
-      final int numberOgBlockHeadersToCache) {
+      final int numberOfBlockHeadersToCache) {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
         Optional.of(genesisBlock),
@@ -297,7 +297,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         reorgLoggingThreshold,
         dataDirectory,
         numberOfBlocksToCache,
-        numberOgBlockHeadersToCache);
+        numberOfBlockHeadersToCache);
   }
 
   public static Blockchain create(
@@ -376,9 +376,19 @@ public class DefaultBlockchain implements MutableBlockchain {
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
     return blockHeadersCache
         .map(
-            cache ->
-                Optional.ofNullable(cache.getIfPresent(blockHeaderHash))
-                    .or(() -> blockchainStorage.getBlockHeader(blockHeaderHash)))
+            cache -> {
+              final BlockHeader cached = cache.getIfPresent(blockHeaderHash);
+              if (cached != null) {
+                return Optional.of(cached);
+              }
+              return blockchainStorage
+                  .getBlockHeader(blockHeaderHash)
+                  .map(
+                      header -> {
+                        cache.put(blockHeaderHash, header);
+                        return header;
+                      });
+            })
         .orElseGet(() -> blockchainStorage.getBlockHeader(blockHeaderHash));
   }
 
