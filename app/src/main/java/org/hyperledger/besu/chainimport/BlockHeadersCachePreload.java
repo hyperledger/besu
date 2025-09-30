@@ -31,11 +31,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Service for preloading block headers from the blockchain into cache.
  *
- * <p>This class preloads a specified number of recent block headers
- * by processing them in chunks to avoid memory exhaustion while maximizing
- * concurrency. It uses a semaphore-based backpressure mechanism to control
- * resource usage.
- *
+ * <p>This class preloads a specified number of recent block headers by processing them in chunks to
+ * avoid memory exhaustion while maximizing concurrency. It uses a semaphore-based backpressure
+ * mechanism to control resource usage.
  */
 public class BlockHeadersCachePreload {
 
@@ -53,13 +51,12 @@ public class BlockHeadersCachePreload {
     this.numberOfBlockHeadersToCache = numberOfBlockHeadersToCache;
   }
 
-
   /**
    * Preloads block headers into the cache asynchronously.
    *
-   * @return a CompletableFuture that completes when all block headers have been
-   *         successfully loaded into cache, or completes exceptionally if the
-   *         process fails. The future returns null on successful completion.
+   * @return a CompletableFuture that completes when all block headers have been successfully loaded
+   *     into cache, or completes exceptionally if the process fails. The future returns null on
+   *     successful completion.
    */
   public CompletableFuture<Void> preloadCache() {
     final BlockHeader chainHead = blockchain.getChainHeadHeader();
@@ -100,10 +97,10 @@ public class BlockHeadersCachePreload {
    * @param startBlock the highest block number to process (inclusive)
    * @param endBlock the lowest block number to process (inclusive)
    * @param maxConcurrent the maximum number of concurrent block header retrievals
-   * @return a CompletableFuture that completes when all block headers in the chunk
-   *         have been processed (successfully or with failures logged)
-   * @throws InterruptedException if the current thread is interrupted while waiting
-   *                            for semaphore permits
+   * @return a CompletableFuture that completes when all block headers in the chunk have been
+   *     processed (successfully or with failures logged)
+   * @throws InterruptedException if the current thread is interrupted while waiting for semaphore
+   *     permits
    */
   private CompletableFuture<Void> processChunk(
       final long startBlock, final long endBlock, final int maxConcurrent) {
