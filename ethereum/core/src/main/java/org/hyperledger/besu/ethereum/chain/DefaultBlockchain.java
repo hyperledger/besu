@@ -113,7 +113,6 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.blockchainStorage = blockchainStorage;
     genesisBlock.ifPresent(block -> this.setGenesis(block, dataDirectory));
-
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();

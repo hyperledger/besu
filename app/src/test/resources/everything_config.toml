@@ -95,6 +95,7 @@ rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
 cache-last-block-headers=5000
+preload-block-headers-cache-enabled=true
 cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100

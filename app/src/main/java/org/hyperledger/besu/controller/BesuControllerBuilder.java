@@ -524,7 +524,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return this builder instance
    */
   public BesuControllerBuilder isPreloadBlockHeadersCacheEnabled(
-      final boolean isPreloadBlockHeadersCacheEnabled) {
+      final Boolean isPreloadBlockHeadersCacheEnabled) {
     this.isPreloadBlockHeadersCacheEnabled = isPreloadBlockHeadersCacheEnabled;
     return this;
   }
@@ -658,21 +658,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (isPreloadBlockHeadersCacheEnabled && numberOfBlockHeadersToCache > 0) {
       LOG.info(
           "--cache-last-block-headers and --preload-block-headers-cache-enabled are enabled, start preloading block headers cache");
-      final BlockHeadersCachePreload blockHeaderCachePreload =
-          new BlockHeadersCachePreload(blockchain, scheduler, numberOfBlockHeadersToCache);
-      long startTime = System.nanoTime();
-      blockHeaderCachePreload.preloadCache()
-              .thenRun(() -> {
-                long duration = System.nanoTime() - startTime;
-                LOG.info("Preloading block headers cache finished in {} seconds",
-                        duration / 1_000_000_000.0);
-              })
-              .exceptionally(throwable -> {
-                long duration = System.nanoTime() - startTime;
-                LOG.error("Preloading block headers cache failed after {} seconds",
-                        duration / 1_000_000_000.0, throwable);
-                return null;
-              });
+      preloadBlockHeaderCache(blockchain, scheduler);
     }
 
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
@@ -915,6 +901,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         storageProvider,
         dataStorageConfiguration,
         transactionSimulator);
+  }
+
+  private void preloadBlockHeaderCache(final MutableBlockchain blockchain, final EthScheduler scheduler) {
+    final BlockHeadersCachePreload blockHeaderCachePreload =
+        new BlockHeadersCachePreload(blockchain, scheduler, numberOfBlockHeadersToCache);
+    long startTime = System.nanoTime();
+    blockHeaderCachePreload.preloadCache()
+            .thenRun(() -> {
+              long duration = System.nanoTime() - startTime;
+              LOG.info("Preloading block headers cache finished in {} seconds",
+                      duration / 1_000_000_000);
+            })
+            .exceptionally(throwable -> {
+              long duration = System.nanoTime() - startTime;
+              LOG.error("Preloading block headers cache failed after {} seconds",
+                      duration / 1_000_000_000, throwable);
+              return null;
+            });
   }
 
   private GenesisState getGenesisState(
