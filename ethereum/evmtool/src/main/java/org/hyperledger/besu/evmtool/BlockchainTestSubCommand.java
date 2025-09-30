@@ -43,9 +43,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -92,6 +94,41 @@ public class BlockchainTestSubCommand implements Runnable {
   // picocli does it magically
   @Parameters private final List<Path> blockchainTestFiles = new ArrayList<>();
 
+  /** Helper class to track test execution results for summary reporting. */
+  private static class TestResults {
+    private final AtomicInteger totalTests = new AtomicInteger(0);
+    private final AtomicInteger passedTests = new AtomicInteger(0);
+    private final AtomicInteger failedTests = new AtomicInteger(0);
+    private final Map<String, String> failures = new LinkedHashMap<>();
+
+    void recordPass(final String testName) {
+      totalTests.incrementAndGet();
+      passedTests.incrementAndGet();
+    }
+
+    void recordFailure(final String testName, final String reason) {
+      totalTests.incrementAndGet();
+      failedTests.incrementAndGet();
+      failures.put(testName, reason);
+    }
+
+    void printSummary(final java.io.PrintWriter out) {
+      out.println("\n" + "=".repeat(80));
+      out.println("TEST SUMMARY");
+      out.println("=".repeat(80));
+      out.printf("Total tests:  %d%n", totalTests.get());
+      out.printf("Passed:       %d%n", passedTests.get());
+      out.printf("Failed:       %d%n", failedTests.get());
+
+      if (!failures.isEmpty()) {
+        out.println("\nFailed tests:");
+        failures.forEach(
+            (testName, reason) -> out.printf("  - %s: %s%n", testName, reason));
+      }
+      out.println("=".repeat(80));
+    }
+  }
+
   /**
    * Default constructor for the BlockchainTestSubCommand class. This constructor doesn't take any
    * arguments and initializes the parentCommand to null. PicoCLI requires this constructor.
@@ -111,6 +148,7 @@ public class BlockchainTestSubCommand implements Runnable {
     // presume ethereum mainnet for reference and state tests
     SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper blockchainTestMapper = JsonUtils.createObjectMapper();
+    final TestResults results = new TestResults();
 
     final JavaType javaType =
         blockchainTestMapper
@@ -132,7 +170,7 @@ public class BlockchainTestSubCommand implements Runnable {
           if (file.isFile()) {
             final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests =
                 blockchainTestMapper.readValue(file, javaType);
-            executeBlockchainTest(blockchainTests);
+            executeBlockchainTest(blockchainTests, results);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -145,7 +183,7 @@ public class BlockchainTestSubCommand implements Runnable {
           } else {
             blockchainTests = blockchainTestMapper.readValue(blockchainTestFile.toFile(), javaType);
           }
-          executeBlockchainTest(blockchainTests);
+          executeBlockchainTest(blockchainTests, results);
         }
       }
     } catch (final JsonProcessingException jpe) {
@@ -153,15 +191,22 @@ public class BlockchainTestSubCommand implements Runnable {
     } catch (final IOException e) {
       System.err.println("Unable to read state file");
       e.printStackTrace(System.err);
+    } finally {
+      // Always print summary, even if there were errors
+      if (results.totalTests.get() > 0) {
+        results.printSummary(parentCommand.out);
+      }
     }
   }
 
   private void executeBlockchainTest(
-      final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests) {
-    blockchainTests.forEach(this::traceTestSpecs);
+      final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
+      final TestResults results) {
+    blockchainTests.forEach((testName, spec) -> traceTestSpecs(testName, spec, results));
   }
 
-  private void traceTestSpecs(final String test, final BlockchainReferenceTestCaseSpec spec) {
+  private void traceTestSpecs(
+      final String test, final BlockchainReferenceTestCaseSpec spec, final TestResults results) {
     if (testName != null && !testName.equals(test)) {
       parentCommand.out.println("Skipping test: " + test);
       return;
@@ -181,6 +226,9 @@ public class BlockchainTestSubCommand implements Runnable {
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();
+
+    boolean testFailed = false;
+    String failureReason = "";
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {
@@ -205,6 +253,13 @@ public class BlockchainTestSubCommand implements Runnable {
             blockImporter.importBlock(context, block, validationMode, validationMode);
         timer.stop();
         if (importResult.isImported() != candidateBlock.isValid()) {
+          testFailed = true;
+          failureReason =
+              String.format(
+                  "Block %d (%s) %s",
+                  block.getHeader().getNumber(),
+                  block.getHash(),
+                  importResult.isImported() ? "Failed to be rejected" : "Failed to import");
           parentCommand.out.printf(
               "Block %d (%s) %s%n",
               block.getHeader().getNumber(),
@@ -227,6 +282,13 @@ public class BlockchainTestSubCommand implements Runnable {
         }
       } catch (final RLPException e) {
         if (candidateBlock.isValid()) {
+          testFailed = true;
+          failureReason =
+              String.format(
+                  "Block %d (%s) RLP exception: %s",
+                  candidateBlock.getBlock().getHeader().getNumber(),
+                  candidateBlock.getBlock().getHash(),
+                  e.getMessage());
           parentCommand.out.printf(
               "Block %d (%s) should have imported but had an RLP exception %s%n",
               candidateBlock.getBlock().getHeader().getNumber(),
@@ -236,11 +298,23 @@ public class BlockchainTestSubCommand implements Runnable {
       }
     }
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
+      testFailed = true;
+      failureReason =
+          String.format(
+              "Chain header mismatch, have %s want %s",
+              blockchain.getChainHeadHash(), spec.getLastBlockHash());
       parentCommand.out.printf(
           "Chain header mismatch, have %s want %s - %s%n",
           blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
     } else {
       parentCommand.out.println("Chain import successful - " + test);
+    }
+
+    // Record test result
+    if (testFailed) {
+      results.recordFailure(test, failureReason);
+    } else {
+      results.recordPass(test);
     }
   }
 
