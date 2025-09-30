@@ -903,20 +903,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         transactionSimulator);
   }
 
-  private void preloadBlockHeaderCache(final MutableBlockchain blockchain, final EthScheduler scheduler) {
+  private void preloadBlockHeaderCache(
+      final MutableBlockchain blockchain, final EthScheduler scheduler) {
     final BlockHeadersCachePreload blockHeaderCachePreload =
         new BlockHeadersCachePreload(blockchain, scheduler, numberOfBlockHeadersToCache);
     long startTime = System.nanoTime();
-    blockHeaderCachePreload.preloadCache()
-            .thenRun(() -> {
+    blockHeaderCachePreload
+        .preloadCache()
+        .thenRun(
+            () -> {
               long duration = System.nanoTime() - startTime;
-              LOG.info("Preloading block headers cache finished in {} ms",
-                      duration / 1_000_000);
+              LOG.info(
+                  "Preloading {} block headers to the cache finished in {} ms",
+                  numberOfBlockHeadersToCache,
+                  duration / 1_000_000);
             })
-            .exceptionally(throwable -> {
+        .exceptionally(
+            throwable -> {
               long duration = System.nanoTime() - startTime;
-              LOG.error("Preloading block headers cache failed after {} ms",
-                      duration / 1_000_000, throwable);
+              LOG.error(
+                  "Preloading {} block headers to the cache failed after {} ms",
+                  numberOfBlockHeadersToCache,
+                  duration / 1_000_000,
+                  throwable);
               return null;
             });
   }

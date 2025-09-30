@@ -305,7 +305,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlockHeaders(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.isPreloadBlockHeadersCacheEnabled(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isPreloadBlockHeadersCacheEnabled(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.apiConfiguration(any())).thenReturn(mockControllerBuilder);
