@@ -47,7 +47,13 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -189,7 +195,8 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  public void scheduleEphemeryRestart(BesuCommand besuCommand, long lastGenesisTimestamp) {
+  public void scheduleEphemeryRestart(
+      final BesuCommand besuCommand, final long lastGenesisTimestamp) {
     long currentTimestamp = Instant.now().getEpochSecond();
     // next restart should be triggered in "lastGenesisTime + cycle - now" seconds
     long restartTime = lastGenesisTimestamp + ephemeryCycle - currentTimestamp;
@@ -222,7 +229,8 @@ public class Runner implements AutoCloseable {
         TimeUnit.SECONDS);
   }
 
-  private void stopEphemery(BesuCommand besuCommand) throws IOException, InterruptedException {
+  private void stopEphemery(final BesuCommand besuCommand)
+      throws IOException, InterruptedException {
     if (besuController != null) {
       stopServices();
       clearDirectory(dataDir);
@@ -232,12 +240,12 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  void startEphemery(BesuCommand besuCommand) throws Exception {
+  void startEphemery(final BesuCommand besuCommand) throws Exception {
     ephemeryRestartPrepare(besuCommand);
     besuCommand.initialProcess();
   }
 
-  private void ephemeryRestartPrepare(BesuCommand besuCommand) {
+  private void ephemeryRestartPrepare(final BesuCommand besuCommand) {
     besuCommand.getBesuPluginContext().resetState();
     besuCommand.getRocksDBPlugin().reset();
     besuCommand
