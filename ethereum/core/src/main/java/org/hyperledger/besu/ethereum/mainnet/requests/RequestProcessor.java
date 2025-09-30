@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 
 import java.util.Optional;
 
 public interface RequestProcessor {
   Request process(
       final RequestProcessingContext context,
-      final Optional<PartialBlockAccessList> partialBlockAccessList);
+      final Optional<PendingBlockAccessList> partialBlockAccessList);
 
   Optional<String> getContractName();
 

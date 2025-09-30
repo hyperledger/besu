@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -44,7 +44,7 @@ public class DepositRequestProcessor implements RequestProcessor {
   @Override
   public Request process(
       final RequestProcessingContext context,
-      final Optional<PartialBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> partialBlockAccessList) {
     if (depositContractAddress.isEmpty()) {
       return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }

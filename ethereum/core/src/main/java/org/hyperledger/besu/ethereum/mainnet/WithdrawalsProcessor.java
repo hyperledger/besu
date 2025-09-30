@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -27,11 +27,11 @@ public class WithdrawalsProcessor {
   public void processWithdrawals(
       final List<Withdrawal> withdrawals,
       final WorldUpdater withdrawalsUpdater,
-      final Optional<PartialBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> partialBlockAccessList) {
     for (final Withdrawal withdrawal : withdrawals) {
       final MutableAccount account = withdrawalsUpdater.getOrCreate(withdrawal.getAddress());
       account.incrementBalance(withdrawal.getAmount().getAsWei());
-      partialBlockAccessList.ifPresent(t -> t.addAccount(account.getAddress()));
+      partialBlockAccessList.ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     }
     withdrawalsUpdater.clearAccountsThatAreEmpty();
     withdrawalsUpdater.commit();

@@ -27,7 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -201,7 +201,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice,
-      final Optional<PartialBlockAccessList> eip7928AccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -221,7 +221,7 @@ public class MainnetTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
-      eip7928AccessList.ifPresent(t -> t.addAccount(senderAddress));
+      pendingBlockAccessList.ifPresent(t -> t.addTouchedAccount(senderAddress));
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -266,7 +266,7 @@ public class MainnetTransactionProcessor {
         final CodeDelegationResult codeDelegationResult =
             maybeCodeDelegationProcessor
                 .get()
-                .process(delegationUpdater, transaction, eip7928AccessList);
+                .process(delegationUpdater, transaction, pendingBlockAccessList);
         eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
@@ -327,8 +327,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .eip2930AccessListWarmStorage(eip2930StorageList);
 
-      if (eip7928AccessList.isPresent()) {
-        commonMessageFrameBuilder.eip7928AccessList(eip7928AccessList.get());
+      if (pendingBlockAccessList.isPresent()) {
+        commonMessageFrameBuilder.eip7928AccessList(pendingBlockAccessList.get());
       }
 
       if (transaction.getVersionedHashes().isPresent()) {
@@ -342,7 +342,7 @@ public class MainnetTransactionProcessor {
       if (transaction.isContractCreation()) {
         final Address contractAddress =
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
-        eip7928AccessList.ifPresent(t -> t.addAccount(contractAddress));
+        pendingBlockAccessList.ifPresent(t -> t.addTouchedAccount(contractAddress));
 
         final Bytes initCodeBytes = transaction.getPayload();
         Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
@@ -358,10 +358,10 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        eip7928AccessList.ifPresent(t -> t.addAccount(to));
+        pendingBlockAccessList.ifPresent(t -> t.addTouchedAccount(to));
         final Code code =
             processCodeFromAccount(
-                worldState, eip2930WarmAddressList, worldState.get(to), eip7928AccessList);
+                worldState, eip2930WarmAddressList, worldState.get(to), pendingBlockAccessList);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -443,7 +443,7 @@ public class MainnetTransactionProcessor {
                     "transaction price must be greater than base fee"),
                 Optional.empty(),
                 Optional.empty(),
-                eip7928AccessList);
+                pendingBlockAccessList);
           }
           coinbaseCalculator = coinbaseFeePriceCalculator;
         }
@@ -457,9 +457,11 @@ public class MainnetTransactionProcessor {
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
       if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
         final var coinbase = worldState.getOrCreate(miningBeneficiary);
-        initialFrame.getEip7928AccessList().ifPresent(t -> t.addAccount(coinbase.getAddress()));
+        initialFrame
+            .getEip7928AccessList()
+            .ifPresent(t -> t.addTouchedAccount(coinbase.getAddress()));
         coinbase.incrementBalance(coinbaseWeiDelta);
-        eip7928AccessList.ifPresent(t -> t.addAccount(miningBeneficiary));
+        pendingBlockAccessList.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
       }
 
       operationTracer.traceEndTransaction(
@@ -484,7 +486,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
-            eip7928AccessList,
+            pendingBlockAccessList,
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
@@ -505,7 +507,7 @@ public class MainnetTransactionProcessor {
             validationResult,
             initialFrame.getRevertReason(),
             initialFrame.getExceptionalHaltReason(),
-            eip7928AccessList);
+            pendingBlockAccessList);
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
@@ -584,7 +586,7 @@ public class MainnetTransactionProcessor {
       final WorldUpdater worldUpdater,
       final Set<Address> warmAddressList,
       final Account contract,
-      final Optional<PartialBlockAccessList> eip7928AccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     if (contract == null) {
       return CodeV0.EMPTY_CODE;
     }
@@ -595,7 +597,7 @@ public class MainnetTransactionProcessor {
     }
 
     if (hasCodeDelegation(contract.getCode())) {
-      return delegationTargetCode(worldUpdater, warmAddressList, contract, eip7928AccessList);
+      return delegationTargetCode(worldUpdater, warmAddressList, contract, pendingBlockAccessList);
     }
 
     // Bonsai accounts may have a fully cached code, so we use that one
@@ -612,10 +614,10 @@ public class MainnetTransactionProcessor {
       final WorldUpdater worldUpdater,
       final Set<Address> warmAddressList,
       final Account contract,
-      final Optional<PartialBlockAccessList> eip7928AccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationHelper.Target target =
-        getTarget(worldUpdater, gasCalculator::isPrecompile, contract, eip7928AccessList);
+        getTarget(worldUpdater, gasCalculator::isPrecompile, contract, pendingBlockAccessList);
     warmAddressList.add(target.address());
 
     return target.code();

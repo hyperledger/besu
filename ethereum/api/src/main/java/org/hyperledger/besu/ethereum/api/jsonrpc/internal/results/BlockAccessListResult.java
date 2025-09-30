@@ -41,7 +41,7 @@ public class BlockAccessListResult {
 
   public static BlockAccessListResult fromBlockAccessList(final BlockAccessList list) {
     return new BlockAccessListResult(
-        list.getAccountChanges().stream().map(AccountChangesResult::new).toList());
+        list.accountChanges().stream().map(AccountChangesResult::new).toList());
   }
 
   public List<AccountChangesResult> getAccountChanges() {

@@ -49,7 +49,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
@@ -487,6 +487,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     final TransactionProcessingResult processingResult =
         processTransaction(evaluationContext.getTransaction());
 
+    txWorldStateUpdater.markTransactionBoundary();
+
     var postProcessingSelectionResult = evaluatePostProcessing(evaluationContext, processingResult);
 
     return postProcessingSelectionResult.selected()
@@ -508,7 +510,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         }
         selectorsStateManager.commit();
         txWorldStateUpdater.commit();
-        txWorldStateUpdater.markTransactionBoundary();
         blockWorldStateUpdater.commit();
         blockWorldStateUpdater.markTransactionBoundary();
       }
@@ -604,19 +605,23 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
-    final Optional<PartialBlockAccessList> partialBlockAccessList =
+    final Optional<PendingBlockAccessList> pendingBlockAccessList =
         maybeBlockAccessListBuilder.map(
-            b -> BlockAccessListBuilder.createTransactionAccessList(currentTxnLocation.get()));
-    return transactionProcessor.processTransaction(
-        txWorldStateUpdater,
-        blockSelectionContext.pendingBlockHeader(),
-        transaction,
-        blockSelectionContext.miningBeneficiary(),
-        operationTracer,
-        blockHashLookup,
-        TransactionValidationParams.mining(),
-        blockSelectionContext.blobGasPrice(),
-        partialBlockAccessList);
+            b -> BlockAccessListBuilder.createPendingBlockAccessList(currentTxnLocation.get()));
+    final TransactionProcessingResult result =
+        transactionProcessor.processTransaction(
+            txWorldStateUpdater,
+            blockSelectionContext.pendingBlockHeader(),
+            transaction,
+            blockSelectionContext.miningBeneficiary(),
+            operationTracer,
+            blockHashLookup,
+            TransactionValidationParams.mining(),
+            blockSelectionContext.blobGasPrice(),
+            pendingBlockAccessList);
+    pendingBlockAccessList.ifPresent(
+        pending -> pending.generateBlockAccessList((StackedUpdater<?, ?>) txWorldStateUpdater));
+    return result;
   }
 
   /**
@@ -650,12 +655,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           maybeBlockAccessListBuilder.ifPresent(
               blockAccessListBuilder ->
                   processingResult
-                      .getPartialBlockAccessList()
-                      .ifPresent(
-                          partialBlockAccessList -> {
-                            blockAccessListBuilder.addPartialBlockAccessList(
-                                partialBlockAccessList, (StackedUpdater<?, ?>) txWorldStateUpdater);
-                          }));
+                      .getPendingBlockAccessList()
+                      .ifPresent(blockAccessListBuilder::applyPendingBlockAccessList));
+
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 
           notifySelected(evaluationContext, processingResult);

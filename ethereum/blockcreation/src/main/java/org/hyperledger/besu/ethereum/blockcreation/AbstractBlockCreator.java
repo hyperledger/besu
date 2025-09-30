@@ -50,13 +50,12 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
@@ -232,7 +231,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getBlockAccessListFactory()
               .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
-      final Optional<PartialBlockAccessList> preExecutionAccessList =
+      final Optional<PendingBlockAccessList> preExecutionAccessList =
           blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
       BlockProcessingContext blockProcessingContext =
@@ -265,7 +264,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("txsSelection");
       throwIfStopped();
 
-      final Optional<PartialBlockAccessList> postExecutionAccessList =
+      final Optional<PendingBlockAccessList> postExecutionAccessList =
           blockAccessListBuilder.map(
               b ->
                   BlockAccessListBuilder.createPostExecutionAccessList(
@@ -296,11 +295,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               processor -> processor.process(requestProcessingContext, postExecutionAccessList));
 
       postExecutionAccessList.ifPresent(
-          t ->
+          pending ->
               blockAccessListBuilder.ifPresent(
-                  b ->
-                      b.addPartialBlockAccessList(
-                          t, (StackedUpdater<?, ?>) disposableWorldState.updater().updater())));
+                  bal ->
+                      bal.generateAndApplyPendingBlockAccessList(
+                          pending, disposableWorldState.updater().updater())));
 
       throwIfStopped();
 

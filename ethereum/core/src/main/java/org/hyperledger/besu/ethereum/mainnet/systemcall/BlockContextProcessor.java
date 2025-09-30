@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.systemcall;
 
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 
 import java.util.Optional;
 
 public interface BlockContextProcessor<T, C extends BlockProcessingContext> {
-  T process(final C context, final Optional<PartialBlockAccessList> partialBlockAccessList);
+  T process(final C context, final Optional<PendingBlockAccessList> partialBlockAccessList);
 }

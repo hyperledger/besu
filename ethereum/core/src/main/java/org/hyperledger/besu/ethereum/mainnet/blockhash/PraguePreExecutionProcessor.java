@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
@@ -59,7 +59,7 @@ public class PraguePreExecutionProcessor extends CancunPreExecutionProcessor {
   @Override
   public Void process(
       final BlockProcessingContext context,
-      final Optional<PartialBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> partialBlockAccessList) {
     super.process(context, partialBlockAccessList);
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());

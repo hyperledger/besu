@@ -346,7 +346,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
         blockCreationResult.getBlock().getBody().getBlockAccessList();
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
-    final List<AccountChanges> accountChanges = blockAccessList.getAccountChanges();
+    final List<AccountChanges> accountChanges = blockAccessList.accountChanges();
     assertThat(accountChanges.size()).isEqualTo(3);
     final AccountChanges accountChange1 = accountChanges.get(0);
     assertThat(accountChange1.address()).isIn(sender.address(), recipient.address(), coinbase);

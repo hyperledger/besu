@@ -26,7 +26,7 @@ public final class BlockAccessListEncoder {
 
   public static void encode(final BlockAccessList bal, final RLPOutput out) {
     out.writeList(
-        bal.getAccountChanges(),
+        bal.accountChanges(),
         (acct, acctOut) -> {
           acctOut.startList();
           acctOut.writeBytes(acct.address());
