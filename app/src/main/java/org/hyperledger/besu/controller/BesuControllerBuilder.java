@@ -210,7 +210,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private int numberOfBlocksToCache = 0;
   private int numberOfBlockHeadersToCache = 0;
-  private boolean isPreloadBlockHeadersCacheEnabled;
+  private boolean isCacheLastBlockHeadersPreloadEnabled;
 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
@@ -519,13 +519,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Sets whether the block header cache should be preloaded.
    *
-   * @param isPreloadBlockHeadersCacheEnabled {@code true} to enable preloading of the block header
+   * @param isCacheLastBlockHeadersPreloadEnabled {@code true} to enable preloading of the block header
    *     cache, {@code false} to disable it
    * @return this builder instance
    */
-  public BesuControllerBuilder isPreloadBlockHeadersCacheEnabled(
-      final Boolean isPreloadBlockHeadersCacheEnabled) {
-    this.isPreloadBlockHeadersCacheEnabled = isPreloadBlockHeadersCacheEnabled;
+  public BesuControllerBuilder isCacheLastBlockHeadersPreloadEnabled(
+      final Boolean isCacheLastBlockHeadersPreloadEnabled) {
+    this.isCacheLastBlockHeadersPreloadEnabled = isCacheLastBlockHeadersPreloadEnabled;
     return this;
   }
 
@@ -655,7 +655,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             numberOfBlocksToCache,
             numberOfBlockHeadersToCache);
 
-    if (isPreloadBlockHeadersCacheEnabled && numberOfBlockHeadersToCache > 0) {
+    if (isCacheLastBlockHeadersPreloadEnabled && numberOfBlockHeadersToCache > 0) {
       LOG.info(
           "--cache-last-block-headers and --preload-block-headers-cache-enabled are enabled, start preloading block headers cache");
       preloadBlockHeaderCache(blockchain, scheduler);

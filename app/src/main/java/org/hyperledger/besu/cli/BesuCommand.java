@@ -617,9 +617,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer numberOfBlockHeadersToCache = 0;
 
   @CommandLine.Option(
-      names = {"--preload-block-headers-cache-enabled"},
+      names = {"--cache-last-block-headers-preload-enabled"},
       description = "Enable preloading of the block header cache (default: ${DEFAULT-VALUE})")
-  private final Boolean isPreloadBlockHeadersCacheEnabled = false;
+  private final Boolean isCacheLastBlockHeadersPreloadEnabled = false;
 
   @CommandLine.Option(
       names = {"--cache-precompiles"},
@@ -1835,7 +1835,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
             .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
-            .isPreloadBlockHeadersCacheEnabled(isPreloadBlockHeadersCacheEnabled)
+            .isCacheLastBlockHeadersPreloadEnabled(isCacheLastBlockHeadersPreloadEnabled)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
