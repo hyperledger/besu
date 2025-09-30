@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.util.Arrays;
+
 /**
  * 256-bits wide unsigned integer class.
  *
@@ -142,6 +144,45 @@ public final class UInt256 {
   }
 
   /**
+   * Instantiates a new UInt256 from byte[].
+   *
+   * @param bytes raw bytes in BigEndian order.
+   * @return Big-endian UInt256 represented by the bytes.
+   */
+  public static UInt256 fromSignedBytesBE(final byte[] bytes) {
+    int nBytes = bytes.length;
+    if (nBytes == 0) return ZERO;
+    int len = (nBytes + 3) / 4;
+    int[] limbs = new int[len];
+    // int[] limbs = new int[N_LIMBS];
+
+    int i;
+    int base;
+    // Up to most significant limb take 4 bytes.
+    for (i = 0, base = bytes.length - 4; i < len - 1; ++i, base = base - 4) {
+      limbs[i] =
+          (bytes[base] << 24)
+              | ((bytes[base + 1] & 0xFF) << 16)
+              | ((bytes[base + 2] & 0xFF) << 8)
+              | ((bytes[base + 3] & 0xFF));
+    }
+    // Last effective limb
+    limbs[i] =
+        switch (nBytes - i * 4) {
+          case 1 -> ((bytes[0]));
+          case 2 -> (((bytes[0]) << 8) | (bytes[1] & 0xFF));
+          case 3 -> (((bytes[0]) << 16) | ((bytes[1] & 0xFF) << 8) | (bytes[2] & 0xFF));
+          case 4 ->
+              ((bytes[0] << 24)
+                  | ((bytes[1] & 0xFF) << 16)
+                  | ((bytes[2] & 0xFF) << 8)
+                  | (bytes[3] & 0xFF));
+          default -> throw new IllegalStateException("Unexpected value");
+        };
+    return new UInt256(limbs, len);
+  }
+
+  /**
    * Instantiates a new UInt256 from an int.
    *
    * @param value int value to convert to UInt256.
@@ -168,7 +209,6 @@ public final class UInt256 {
 
   // region Conversions
   // --------------------------------------------------------------------------
-
   /**
    * Convert to int.
    *
@@ -214,10 +254,74 @@ public final class UInt256 {
     return out;
   }
 
+  /**
+   * Convert to BigEndian byte array.
+   *
+   * @return Big-endian ordered bytes for this UInt256 value.
+   */
+  public byte[] toSignedBytesBE() {
+    byte[] out = new byte[32];
+    if (length > 0 && limbs[length - 1] < 0) Arrays.fill(out, (byte) 0xFF);
+    for (int i = 0, offset = 28; i < length; i++, offset -= 4) {
+      int v = limbs[i];
+      out[offset] = (byte) (v >>> 24);
+      out[offset + 1] = (byte) (v >>> 16);
+      out[offset + 2] = (byte) (v >>> 8);
+      out[offset + 3] = (byte) v;
+    }
+    return out;
+  }
+
+  /**
+   * Convert to BigEndian byte array.
+   *
+   * @param sign if sign is negative, pad with 1s, else pad with 0s.
+   * @return Big-endian ordered bytes for this UInt256 value.
+   */
+  public byte[] toSignedBytesBE(final int sign) {
+    byte[] out = new byte[32];
+    if (sign < 0) Arrays.fill(out, (byte) 0xFF);
+    for (int i = 0, offset = 28; i < length; i++, offset -= 4) {
+      int v = limbs[i];
+      out[offset] = (byte) (v >>> 24);
+      out[offset + 1] = (byte) (v >>> 16);
+      out[offset + 2] = (byte) (v >>> 8);
+      out[offset + 3] = (byte) v;
+    }
+    return out;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("0x");
     byte[] out = new byte[length * 4];
+    for (int i = 0, offset = 4 * (length - 1); i < length; i++, offset -= 4) {
+      int v = limbs[i];
+      out[offset] = (byte) (v >>> 24);
+      out[offset + 1] = (byte) (v >>> 16);
+      out[offset + 2] = (byte) (v >>> 8);
+      out[offset + 3] = (byte) v;
+    }
+    for (byte b : out) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Convert to hexstring according to sign.
+   *
+   * <p>If sign is negative, pad with 1s, else pad with 0s.
+   * </p>
+   *
+   * @param sign padding with 0s or 1s whether sign is non-negative.
+   * @return HexString
+   */
+  public String toString(final int sign) {
+    if (sign >= 0) return toString();
+    StringBuilder sb = new StringBuilder("0x");
+    byte[] out = new byte[length * 4];
+    Arrays.fill(out, (byte) 0xFF);
     for (int i = 0, offset = 4 * (length - 1); i < length; i++, offset -= 4) {
       int v = limbs[i];
       out[offset] = (byte) (v >>> 24);
@@ -331,6 +435,17 @@ public final class UInt256 {
   // --------------------------------------------------------------------------
 
   /**
+   * (Signed) absolute value
+   *
+   * @return The absolute value of this signed integer.
+   */
+  public UInt256 abs() {
+    int[] newLimbs = Arrays.copyOf(limbs, length);
+    absInplace(newLimbs);
+    return new UInt256(newLimbs, length);
+  }
+
+  /**
    * Addition (modulo 2**256).
    *
    * @param other The integer to add.
@@ -356,7 +471,7 @@ public final class UInt256 {
   }
 
   /**
-   * Reduce modulo modulus.
+   * Unsigned modulo reduction.
    *
    * @param modulus The modulus of the reduction
    * @return The remainder modulo {@code modulus}.
@@ -366,6 +481,28 @@ public final class UInt256 {
     if (cmp < 0) return this;
     if (cmp == 0 || modulus.isZero() || this.isZero()) return ZERO;
     return new UInt256(knuthRemainder(this.limbs, modulus.limbs));
+  }
+
+  /**
+   * Signed modulo reduction.
+   *
+   * @param modulus The modulus of the reduction
+   * @return The remainder modulo {@code modulus}.
+   */
+  public UInt256 signedMod(final UInt256 modulus) {
+    if (this.isZero() || modulus.isZero()) return ZERO;
+    int[] x = new int[this.length];
+    int[] y = new int[modulus.length];
+    absInto(x, this.limbs);
+    absInto(y, modulus.limbs);
+    int[] r = knuthRemainder(x, y);
+    if (isNegative(this.limbs)) {
+      int[] s = new int[N_LIMBS];
+      System.arraycopy(r, 0, s, 0, r.length);
+      negate(s);
+      return new UInt256(s);
+    }
+    return new UInt256(r);
   }
 
   /**
@@ -404,6 +541,27 @@ public final class UInt256 {
 
   // region Support (private) Algorithms
   // --------------------------------------------------------------------------
+  private static boolean isNegative(final int[] x) {
+    return x[x.length - 1] < 0;
+  }
+
+  private static void negate(final int[] x) {
+    int carry = 1;
+    for (int i = 0; i < x.length; i++) {
+      x[i] = ~x[i] + carry;
+      carry = (x[i] == 0 && carry == 1) ? 1 : 0;
+    }
+  }
+
+  private static void absInplace(final int[] x) {
+    if (isNegative(x)) negate(x);
+  }
+
+  private static void absInto(final int[] dst, final int[] src) {
+    System.arraycopy(src, 0, dst, 0, Math.min(dst.length, src.length));
+    absInplace(dst);
+  }
+
   private static int numberOfLeadingZeros(final int[] x, final int limit) {
     int leadingIndex = limit - 1;
     while ((leadingIndex >= 0) && (x[leadingIndex] == 0)) leadingIndex--;
@@ -529,6 +687,7 @@ public final class UInt256 {
     int n = modulus.length - limbShift;
     if (n == 0) return new int[0];
     if (n == 1) {
+      if (dividend.length == 1) return (new int[] {dividend[0] % modulus[0]});
       long d = modulus[0] & MASK_L;
       long rem = 0;
       // Process from most significant limb downwards

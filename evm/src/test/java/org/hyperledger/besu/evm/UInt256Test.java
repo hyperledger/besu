@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,6 +29,16 @@ public class UInt256Test {
 
   private Bytes32 bigIntTo32B(final BigInteger x) {
     byte[] a = x.toByteArray();
+    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
+    return Bytes32.leftPad(Bytes.wrap(a));
+  }
+
+  private Bytes32 bigIntTo32B(final BigInteger x, final int sign) {
+    if (sign >= 0) return bigIntTo32B(x);
+    byte[] a = new byte[32];
+    Arrays.fill(a, (byte) 0xFF);
+    byte[] b = x.toByteArray();
+    System.arraycopy(b, 0, a, 32 - b.length, b.length);
     if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
     return Bytes32.leftPad(Bytes.wrap(a));
   }
@@ -303,6 +314,37 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(cInt) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
+      assertThat(remainder).isEqualTo(expected);
+    }
+  }
+
+  @Test
+  public void signedMod() {
+    final Random random = new Random(432);
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+      int aSize = random.nextInt(1, 33);
+      int bSize = random.nextInt(1, 33);
+      final byte[] aArray = new byte[aSize];
+      final byte[] bArray = new byte[bSize];
+      random.nextBytes(aArray);
+      random.nextBytes(bArray);
+      BigInteger aInt = new BigInteger(aArray);
+      BigInteger bInt = new BigInteger(bArray);
+      UInt256 a = UInt256.fromSignedBytesBE(aArray);
+      UInt256 b = UInt256.fromSignedBytesBE(bArray);
+      Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.signedMod(b).toBytesBE()));
+      Bytes32 expected;
+      BigInteger rem = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(bInt) == 0) expected = Bytes32.ZERO;
+      else {
+        rem = aInt.abs().mod(bInt.abs());
+        if ((aInt.compareTo(BigInteger.ZERO) < 0) && (rem.compareTo(BigInteger.ZERO) != 0)) {
+          rem = rem.negate();
+          expected = bigIntTo32B(rem, -1);
+        } else {
+          expected = bigIntTo32B(rem, 1);
+        }
+      }
       assertThat(remainder).isEqualTo(expected);
     }
   }
