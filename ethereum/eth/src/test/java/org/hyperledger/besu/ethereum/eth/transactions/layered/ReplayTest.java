@@ -18,11 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -73,8 +75,10 @@ public class ReplayTest {
   private static final Logger LOG = LoggerFactory.getLogger(ReplayTest.class);
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
-  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
-
+  private final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
+  private final SenderBalanceChecker senderBalanceChecker = mock(SenderBalanceChecker.class);
+  private final Map<Address, Wei> recordedSenderBalances = new HashMap<>();
   private final Address senderToLog =
       Address.fromHexString("0xf7445f4b8a07921bf882175470dc8f7221c53996");
 
@@ -118,54 +122,106 @@ public class ReplayTest {
             new InputStreamReader(
                 new GZIPInputStream(getClass().getResourceAsStream("/tx.csv.gz")),
                 StandardCharsets.UTF_8))) {
-      currBlockHeader = mockBlockHeader(br.readLine());
-      final BaseFeeMarket baseFeeMarket = FeeMarket.london(0L);
 
-      final TransactionPoolConfiguration poolConfig =
-          ImmutableTransactionPoolConfiguration.builder()
-              .prioritySenders(readPrioritySenders(br.readLine()))
-              .maxPrioritizedTransactionsByType(readMaxPrioritizedByType(br.readLine()))
-              .build();
-
-      final AbstractPrioritizedTransactions prioritizedTransactions =
-          createLayers(poolConfig, txPoolMetrics, baseFeeMarket);
-      final LayeredPendingTransactions pendingTransactions =
-          new LayeredPendingTransactions(poolConfig, prioritizedTransactions, ethScheduler);
-      br.lines()
-          .forEach(
-              line -> {
-                try {
-                  final String[] commaSplit = line.split(",");
-                  final String type = commaSplit[0];
-                  switch (type) {
-                    case "T":
-                      System.out.println(
-                          "T:"
-                              + commaSplit[1]
-                              + " @ "
-                              + Instant.ofEpochMilli(Long.parseLong(commaSplit[2])));
-                      processTransaction(commaSplit, pendingTransactions, prioritizedTransactions);
-                      break;
-                    case "B":
-                      System.out.println("B:" + commaSplit[1]);
-                      processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
-                      break;
-                    case "S":
-                      // ToDo: commented since not always working, needs fix
-                      // System.out.println("S");
-                      // assertStats(line, pendingTransactions);
-                      break;
-                    case "D":
-                      System.out.println("D:" + commaSplit[1]);
-                      processInvalid(commaSplit, prioritizedTransactions);
-                      break;
-                    default:
-                      throw new IllegalArgumentException("Unexpected first field value " + type);
-                  }
-                } catch (Throwable throwable) {
-                  fail(line, throwable);
+      when(senderBalanceChecker.hasEnoughBalanceFor(any()))
+          .thenAnswer(
+              invocationOnMock -> {
+                final var pendingTransaction =
+                    invocationOnMock.getArgument(0, PendingTransaction.class);
+                final var senderBalance =
+                    recordedSenderBalances.get(pendingTransaction.getTransaction().getSender());
+                if (senderBalance == null) {
+                  // null means the sender balance was check during the initial validation phase
+                  return true;
                 }
+                final var txUpfrontCost = pendingTransaction.getTransaction().getUpfrontCost(0L);
+                return senderBalance.greaterOrEqualThan(txUpfrontCost);
               });
+
+      String startLine;
+      while ((startLine = br.readLine()) != null) {
+        if (startLine.equals("START")) {
+          currBlockHeader = mockBlockHeader(br.readLine());
+          final BaseFeeMarket baseFeeMarket = FeeMarket.london(0L);
+
+          final TransactionPoolConfiguration poolConfig =
+              ImmutableTransactionPoolConfiguration.builder()
+                  .prioritySenders(readPrioritySenders(br.readLine()))
+                  .maxPrioritizedTransactionsByType(readMaxPrioritizedByType(br.readLine()))
+                  .minScore(readMinScore(br.readLine()))
+                  .build();
+
+          final AbstractPrioritizedTransactions prioritizedTransactions =
+              createLayers(poolConfig, txPoolMetrics, baseFeeMarket);
+          final LayeredPendingTransactions pendingTransactions =
+              new LayeredPendingTransactions(poolConfig, prioritizedTransactions, ethScheduler);
+
+          String line;
+          while ((line = br.readLine()) != null) {
+            if (line.equals("STOP")) {
+              System.out.println("STOP");
+              break;
+            } else {
+              try {
+                final String[] commaSplit = line.split(",");
+                final String type = commaSplit[0];
+                switch (type) {
+                  case "T" -> {
+                    System.out.println(
+                        "T:"
+                            + commaSplit[1]
+                            + " @ "
+                            + Instant.ofEpochMilli(Long.parseLong(commaSplit[2])));
+                    processTransaction(commaSplit, pendingTransactions, prioritizedTransactions);
+                  }
+                  case "B" -> {
+                    System.out.println("B:" + commaSplit[1]);
+                    processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
+                    recordedSenderBalances.clear();
+                  }
+                  case "S" -> {
+                    // ToDo: commented since not always working, needs fix
+                    // System.out.println("S");
+                    // assertStats(line, pendingTransactions);
+                  }
+                  case "D" -> {
+                    System.out.println("D:" + commaSplit[1]);
+                    processInvalid(commaSplit, prioritizedTransactions);
+                  }
+                  case "PZ" -> {
+                    System.out.println("PZ:" + commaSplit[1]);
+                    processPenalized(commaSplit[1], prioritizedTransactions);
+                  }
+                  case "SB" -> {
+                    final var balance = Wei.fromHexString(commaSplit[2]);
+                    System.out.println(
+                        "SB:" + commaSplit[1] + " has " + balance.toHumanReadableString());
+                    recordedSenderBalances.put(Address.fromHexString(commaSplit[1]), balance);
+                  }
+                  case "MGP" -> {
+                    final var minTransactionGasPrice = Wei.fromHexString(commaSplit[1]);
+                    System.out.println("MGP:" + minTransactionGasPrice.toHumanReadableString());
+                    miningConfiguration.setMinTransactionGasPrice(minTransactionGasPrice);
+                  }
+                  case "MPF" -> {
+                    final var minPriorityFeePerGas = Wei.fromHexString(commaSplit[1]);
+                    System.out.println("MPF:" + minPriorityFeePerGas.toHumanReadableString());
+                    miningConfiguration.setMinPriorityFeePerGas(minPriorityFeePerGas);
+                  }
+                  default -> fail("Unexpected first field value " + type);
+                }
+              } catch (Throwable throwable) {
+                fail(line, throwable);
+              }
+            }
+          }
+        } else {
+          // skip stats lines that are between STOP and next START
+          if (!startLine.startsWith("S:")) {
+            fail("START not found");
+          }
+        }
+      }
     }
   }
 
@@ -182,6 +238,10 @@ public class ReplayTest {
 
   private List<Address> readPrioritySenders(final String line) {
     return Arrays.stream(line.split(",")).map(Address::fromHexString).toList();
+  }
+
+  private byte readMinScore(final String s) {
+    return Byte.parseByte(s);
   }
 
   private BlockHeader mockBlockHeader(final String line) {
@@ -233,7 +293,8 @@ public class ReplayTest {
         txReplacementTester,
         baseFeeMarket,
         new BlobCache(),
-        MiningConfiguration.newDefault());
+        miningConfiguration,
+        senderBalanceChecker);
   }
 
   // ToDo: commented since not always working, needs fix
@@ -327,6 +388,18 @@ public class ReplayTest {
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
     }
+  }
+
+  private void processPenalized(
+      final String hash, final AbstractPrioritizedTransactions prioritizedTransactions) {
+    final var txHash = Hash.fromHexString(hash);
+    final var pendingTransaction =
+        prioritizedTransactions
+            .getByHash(txHash)
+            .orElseThrow(
+                () -> new IllegalStateException("Not found penalized pending transaction " + hash));
+
+    prioritizedTransactions.penalize(pendingTransaction);
   }
 
   private boolean transactionReplacementTester(

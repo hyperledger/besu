@@ -94,6 +94,7 @@ rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
+cache-last-block-headers=5000
 cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100
@@ -190,6 +191,7 @@ tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
 tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
 tx-pool-max-future-by-sender=321
+tx-pool-enable-balance-check=false
 ## Legacy/Sequenced
 tx-pool-retention-hours=999
 tx-pool-max-size=1234

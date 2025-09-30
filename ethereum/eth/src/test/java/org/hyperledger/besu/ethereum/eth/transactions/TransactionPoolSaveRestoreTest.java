@@ -104,7 +104,8 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
             transactionReplacementTester,
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningConfiguration.newDefault()),
+            MiningConfiguration.newDefault(),
+            senderBalanceChecker),
         ethScheduler);
   }
 
@@ -175,11 +176,17 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
       addAndAssertRemoteTransactionsValid(transaction);
     }
 
+    // record blob map size before disabling
+    int originalBlobMapSize = transactionPool.getBlobMapSize();
+
     // disabling the txpool, forces a save to file
     transactionPool.setDisabled().get(10, TimeUnit.SECONDS);
 
     // after being disabled the txpool must be empty
     assertThat(transactionPool.getPendingTransactions()).isEmpty();
+
+    // after being disabled the blob map size must be zero
+    assertThat(transactionPool.getBlobMapSize()).isEqualTo(0);
 
     final var savedContent = Files.readString(saveFilePath, StandardCharsets.US_ASCII);
 
@@ -191,6 +198,8 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
     transactionPool.setEnabled().get(10, TimeUnit.SECONDS);
 
     assertThat(transactionPool.getPendingTransactions()).size().isEqualTo(1);
+    // after restore, blob map size must match (no leaks/duplicates)
+    assertThat(transactionPool.getBlobMapSize()).isEqualTo(originalBlobMapSize);
 
     final var restoredPendingTx = transactionPool.getPendingTransactions().iterator().next();
 

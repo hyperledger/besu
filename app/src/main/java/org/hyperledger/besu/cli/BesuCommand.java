@@ -612,6 +612,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer numberOfBlocksToCache = 0;
 
   @CommandLine.Option(
+      names = {"--cache-last-block-headers"},
+      description =
+          "Specifies the number of last block headers to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfBlockHeadersToCache = 0;
+
+  @CommandLine.Option(
       names = {"--cache-precompiles"},
       description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
   private final Boolean enablePrecompileCaching = false;
@@ -1700,8 +1706,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+    logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
+      logger.info("Engine JSON-RPC config: {}", engineJsonRpcConfiguration);
       // align JSON decoding limit with HTTP body limit
       // character count is close to size in bytes
       final long maxRequestContentLength =
@@ -1839,6 +1847,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
+            .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
@@ -1859,7 +1868,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             engineRPCConfig.engineHostsAllowlist(),
             p2PDiscoveryConfig.p2pHost(),
-            unstableRPCOptions.getWsTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec());
     engineConfig.setPort(engineRPCConfig.engineRpcPort());
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());
