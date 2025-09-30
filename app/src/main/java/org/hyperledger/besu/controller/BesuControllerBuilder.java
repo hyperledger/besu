@@ -657,7 +657,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     if (isCacheLastBlockHeadersPreloadEnabled && numberOfBlockHeadersToCache > 0) {
       LOG.info(
-          "--cache-last-block-headers and --preload-block-headers-cache-enabled are enabled, start preloading block headers cache");
+          "--cache-last-block-headers and --cache-last-block-headers-preload-enabled are enabled, start preloading block headers cache");
       preloadBlockHeaderCache(blockchain, scheduler);
     }
 
