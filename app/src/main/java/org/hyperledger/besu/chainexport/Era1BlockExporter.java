@@ -25,7 +25,6 @@ import org.hyperledger.besu.util.era1.Era1Type;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.util.Pack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +47,7 @@ public class Era1BlockExporter {
   private final Blockchain blockchain;
   private final Era1FileWriterFactory era1FileWriterFactory;
   private final Era1AccumulatorFactory era1AccumulatorFactory;
+  private final Era1BlockIndexConverter era1BlockIndexConverter;
 
   /**
    * Instantiates a new ERA1 block exporter.
@@ -59,10 +58,12 @@ public class Era1BlockExporter {
   public Era1BlockExporter(
       final Blockchain blockchain,
       final Era1FileWriterFactory era1FileWriterFactory,
-      final Era1AccumulatorFactory era1AccumulatorFactory) {
+      final Era1AccumulatorFactory era1AccumulatorFactory,
+      final Era1BlockIndexConverter era1BlockIndexConverter) {
     this.blockchain = blockchain;
     this.era1FileWriterFactory = era1FileWriterFactory;
     this.era1AccumulatorFactory = era1AccumulatorFactory;
+    this.era1BlockIndexConverter = era1BlockIndexConverter;
   }
 
   /**
@@ -154,15 +155,9 @@ public class Era1BlockExporter {
         }
 
         writer.writeSection(Era1Type.ACCUMULATOR, accumulatorHash.toArray());
-
-        ByteBuffer blockIndex = ByteBuffer.allocate(16 + blockPositions.size() * 8);
-        blockIndex.put(Pack.longToLittleEndian(startBlock));
-        for (Block block : blocksForFile) {
-          long relativePosition = blockPositions.get(block) - writer.getPosition();
-          blockIndex.put(Pack.longToLittleEndian(relativePosition));
-        }
-        blockIndex.put(Pack.longToLittleEndian(blocksForFile.size()));
-        writer.writeSection(Era1Type.BLOCK_INDEX, blockIndex.array());
+        writer.writeSection(
+            Era1Type.BLOCK_INDEX,
+            era1BlockIndexConverter.convert(blocksForFile, blockPositions, writer.getPosition()));
         LOG.info("Wrote {} bytes to {}", writer.getPosition(), filename);
       } catch (IOException e) {
         throw new RuntimeException(e);
