@@ -38,6 +38,6 @@ public class QbftValidatorModeTransitionLoggerAdaptor implements QbftValidatorMo
 
   @Override
   public void logTransitionChange(final QbftBlockHeader parentHeader) {
-    validatorModeTransitionLogger.logTransitionChange(BlockUtil.toBesuBlockHeader(parentHeader));
+    validatorModeTransitionLogger.logTransitionChange(AdaptorUtil.toBesuBlockHeader(parentHeader));
   }
 }

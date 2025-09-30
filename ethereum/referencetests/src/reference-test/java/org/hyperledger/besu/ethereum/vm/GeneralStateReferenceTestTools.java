@@ -106,7 +106,7 @@ public class GeneralStateReferenceTestTools {
     }
 
     // Consumes a huge amount of memory
-    params.ignore("static_Call1MB1024Calldepth-\\w");
+    params.ignore("static_Call1MB1024Calldepth");
     params.ignore("ShanghaiLove_.*");
 
     // Don't do time-consuming tests
@@ -118,9 +118,6 @@ public class GeneralStateReferenceTestTools {
 
     // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
-
-    // TODO remove this ignore once Osaka EIPs are merged to main
-    params.ignore("Osaka*");
 
   }
 

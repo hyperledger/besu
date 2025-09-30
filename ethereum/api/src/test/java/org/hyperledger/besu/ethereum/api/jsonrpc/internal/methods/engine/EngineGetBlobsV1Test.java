@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.math.BigInteger;
@@ -66,7 +65,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EngineGetBlobsV1Test extends TrustedSetupClassLoaderExtension {
+public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -89,11 +88,24 @@ public class EngineGetBlobsV1Test extends TrustedSetupClassLoaderExtension {
 
   private static final Vertx vertx = Vertx.vertx();
 
+  private Long timestamp = cancunHardfork.milestone();
+
+  private Long timestampProvider() {
+    return timestamp;
+  }
+
   @BeforeEach
-  public void before() {
+  public void beforeEach() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
-        spy(new EngineGetBlobsV1(vertx, protocolContext, engineCallListener, transactionPool));
+        spy(
+            new EngineGetBlobsV1(
+                vertx,
+                protocolContext,
+                protocolSchedule,
+                engineCallListener,
+                transactionPool,
+                this::timestampProvider));
   }
 
   @Test
@@ -218,6 +230,36 @@ public class EngineGetBlobsV1Test extends TrustedSetupClassLoaderExtension {
         .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getCode());
     assertThat(fromErrorResp(jsonRpcResponse).getMessage())
         .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getMessage());
+  }
+
+  @Test
+  void shouldFailWhenCancunNotActive() {
+    timestamp = cancunHardfork.milestone() - 1;
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(fromErrorResp(response).getCode())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  void shouldSucceedWhenCancunActive() {
+    timestamp = cancunHardfork.milestone();
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+  }
+
+  @Test
+  void shouldSucceedWhenOsakaNotActive() {
+    timestamp = osakaHardfork.milestone() - 1;
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+  }
+
+  @Test
+  void shouldFailWhenOsakaActive() {
+    timestamp = osakaHardfork.milestone();
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(fromErrorResp(response).getCode())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
   }
 
   Transaction createBlobTransaction() {

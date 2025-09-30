@@ -26,8 +26,12 @@ public class SignatureAlgorithmType {
   /** The constant DEFAULT_EC_CURVE_NAME. */
   public static final String DEFAULT_EC_CURVE_NAME = "secp256k1";
 
+  /** The constant SECP_256_R1_CURVE_NAME. */
+  public static final String SECP_256_R1_CURVE_NAME = "secp256r1";
+
   private static final ImmutableMap<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
-      ImmutableMap.of(DEFAULT_EC_CURVE_NAME, SECP256K1::new, "secp256r1", SECP256R1::new);
+      ImmutableMap.of(
+          DEFAULT_EC_CURVE_NAME, SECP256K1::new, SECP_256_R1_CURVE_NAME, SECP256R1::new);
 
   /** The constant DEFAULT_SIGNATURE_ALGORITHM_TYPE. */
   public static final Supplier<SignatureAlgorithm> DEFAULT_SIGNATURE_ALGORITHM_TYPE =

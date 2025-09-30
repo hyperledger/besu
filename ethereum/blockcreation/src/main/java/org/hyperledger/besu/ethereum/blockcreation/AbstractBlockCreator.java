@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -193,6 +194,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
+      final boolean includeBlockAccessList =
+          newProtocolSpec
+              .getBlockAccessListFactory()
+              .filter(BlockAccessListFactory::isForkActivated)
+              .isPresent();
 
       final ProcessableBlockHeader processableBlockHeader =
           createPending(
@@ -307,6 +313,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
+      if (includeBlockAccessList && transactionResults.getBlockAccessList().isPresent()) {
+        builder.balHash(BodyValidation.balHash(transactionResults.getBlockAccessList().get()));
+      }
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -318,7 +327,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
-          new BlockBody(transactionResults.getSelectedTransactions(), ommers, withdrawals);
+          new BlockBody(
+              transactionResults.getSelectedTransactions(),
+              ommers,
+              withdrawals,
+              includeBlockAccessList ? transactionResults.getBlockAccessList() : Optional.empty());
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

@@ -86,7 +86,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
-  private long lastExecutionTime = 0L;
+  private long lastExecutionTimeInNs = 0L;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
@@ -275,6 +275,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
+            null,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -354,10 +355,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     // execute block and return result response
-    final long startTimeMs = System.currentTimeMillis();
+    final long startTimeNs = System.nanoTime();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
     if (executionResult.isSuccessful()) {
-      lastExecutionTime = System.currentTimeMillis() - startTimeMs;
+      lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
           block,
           blobTransactions.stream()
@@ -365,7 +366,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .flatMap(Optional::stream)
               .mapToInt(List::size)
               .sum(),
-          lastExecutionTime / 1000.0,
+          lastExecutionTimeInNs,
           executionResult.getNbParallelizedTransactions());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
@@ -505,6 +506,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final ProtocolSpec protocolSpec) {
 
     final List<VersionedHash> transactionVersionedHashes = new ArrayList<>();
+    long transactionBlobGasLimitCap =
+        protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap();
+    long blockBlobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
     for (Transaction transaction : blobTransactions) {
       var versionedHashes = transaction.getVersionedHashes();
       // blob transactions must have at least one blob
@@ -512,11 +516,21 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
-      if (protocolSpec.getGasCalculator().blobGasCost(versionedHashes.get().size())
-          > protocolSpec.getGasLimitCalculator().transactionBlobGasLimitCap()) {
+      int totalBlobCount = versionedHashes.get().size();
+      long transactionBlobGasUsed = protocolSpec.getGasCalculator().blobGasCost(totalBlobCount);
+      // Check if blob gas used by tx exceeds block blob gas limit
+      if (transactionBlobGasUsed > blockBlobGasLimit) {
         return ValidationResult.invalid(
             RpcErrorType.INVALID_BLOB_COUNT,
-            String.format("Blob transaction has too many blobs: %d", versionedHashes.get().size()));
+            String.format(
+                "Blob transaction %s exceeds block blob gas limit: %d > %d",
+                transaction.getHash(), transactionBlobGasUsed, blockBlobGasLimit));
+      }
+      // Check if blob gas used by tx exceeds transaction cap
+      if (transactionBlobGasUsed > transactionBlobGasLimitCap) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_BLOB_COUNT,
+            String.format("Blob transaction has too many blobs: %d", totalBlobCount));
       }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }
@@ -617,7 +631,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private void logImportedBlockInfo(
       final Block block,
       final int blobCount,
-      final double timeInS,
+      final long timeInNs,
       final Optional<Integer> nbParallelizedTransactions) {
     final StringBuilder message = new StringBuilder();
     final int nbTransactions = block.getBody().getTransactions().size();
@@ -636,22 +650,30 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       message.append("| %2d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
-    double mgasPerSec = (timeInS != 0) ? block.getHeader().getGasUsed() / (timeInS * 1_000_000) : 0;
-    message.append(
-        "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
+    double mgasPerSec =
+        (timeInNs != 0) ? (double) (block.getHeader().getGasUsed() * 1_000) / timeInNs : 0;
+    double timeInMs = (double) timeInNs / 1_000_000;
+    boolean timeOverOrEq1second = timeInMs >= 1_000;
+    if (timeOverOrEq1second) {
+      message.append(
+          "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %01.3fs exec| %6.2f Mgas/s| %2d peers");
+    } else {
+      message.append(
+          "| %2d blobs| %s bfee| %,11d (%5.1f%%) gas used| %03.1fms exec| %6.2f Mgas/s| %2d peers");
+    }
     messageArgs.addAll(
         List.of(
             blobCount,
             block.getHeader().getBaseFee().map(Wei::toHumanReadablePaddedString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            timeInS,
+            timeOverOrEq1second ? timeInMs / 1_000 : timeInMs,
             mgasPerSec,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 
   private long getLastExecutionTime() {
-    return this.lastExecutionTime;
+    return this.lastExecutionTimeInNs;
   }
 }

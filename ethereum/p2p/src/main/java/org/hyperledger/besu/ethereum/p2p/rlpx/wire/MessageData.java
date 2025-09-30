@@ -25,12 +25,13 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A P2P Network Message's Data. */
-public interface MessageData {
+public interface MessageData extends org.hyperledger.besu.datatypes.p2p.MessageData {
   /**
    * Returns the size of the message.
    *
    * @return Number of bytes in this data.
    */
+  @Override
   int getSize();
 
   /**
@@ -38,6 +39,7 @@ public interface MessageData {
    *
    * @return Message Code
    */
+  @Override
   int getCode();
 
   /**
@@ -45,6 +47,7 @@ public interface MessageData {
    *
    * @return the serialized representation of this message
    */
+  @Override
   Bytes getData();
 
   default MessageData wrapMessageData(final BigInteger requestId) {

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -74,6 +75,9 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -84,6 +88,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
@@ -119,6 +124,12 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
 
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
+
+  protected final GenesisConfig genesisConfig =
+      GenesisConfig.fromResource("/block-creation-genesis.json");
+
+  protected final List<GenesisAccount> accounts =
+      genesisConfig.streamAllocations().filter(ga -> ga.privateKey() != null).toList();
 
   @Test
   void findDepositRequestsFromReceipts() {
@@ -286,6 +297,103 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
     return createBlockCreator(protocolSpecAdapters);
   }
 
+  private CreateOn blockCreatorWithBalSupport() {
+    final var alwaysValidTransactionValidatorFactory = mock(TransactionValidatorFactory.class);
+    when(alwaysValidTransactionValidatorFactory.get())
+        .thenReturn(new AlwaysValidTransactionValidator());
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0,
+            specBuilder -> {
+              specBuilder.isReplayProtectionSupported(true);
+              specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              specBuilder.blockAccessListFactory(new BlockAccessListFactory(true, true));
+              specBuilder.transactionValidatorFactoryBuilder(
+                  (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
+              return specBuilder;
+            });
+    return createBlockCreator(protocolSpecAdapters);
+  }
+
+  @Test
+  public void blockAccessListIncludesAccountChanges() {
+    final CreateOn miningOn = blockCreatorWithBalSupport();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
+    final GenesisAccount sender = accounts.get(1);
+    final GenesisAccount recipient = accounts.get(2);
+    final Address coinbase = Address.fromHexString(genesisConfig.getCoinbase().get());
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+    final BigInteger delta = Wei.fromEth(1).toBigInteger();
+    final Transaction txn =
+        new TransactionTestFixture()
+            .sender(sender.address())
+            .to(Optional.of(recipient.address()))
+            .value(Wei.of(delta))
+            .gasLimit(21_000L)
+            .nonce(sender.nonce())
+            .createTransaction(keyPair);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.of(List.of(txn)),
+            Optional.empty(),
+            System.currentTimeMillis(),
+            miningOn.parentHeader);
+    final Optional<BlockAccessList> maybeBlockAccessList =
+        blockCreationResult.getTransactionSelectionResults().getBlockAccessList();
+    assertThat(maybeBlockAccessList).isNotEmpty();
+    final BlockAccessList blockAccessList = maybeBlockAccessList.get();
+    final List<AccountChanges> accountChanges = blockAccessList.getAccountChanges();
+    assertThat(accountChanges.size()).isEqualTo(3);
+    final AccountChanges accountChange1 = accountChanges.get(0);
+    assertThat(accountChange1.address()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange1.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange1.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange1.balanceChanges().get(0).txIndex()).isNotNull();
+    final AccountChanges accountChange2 = accountChanges.get(1);
+    assertThat(accountChange2.address()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange2.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange2.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange2.balanceChanges().get(0).txIndex()).isNotNull();
+    final AccountChanges accountChange3 = accountChanges.get(2);
+    assertThat(accountChange3.address()).isIn(sender.address(), recipient.address(), coinbase);
+    assertThat(accountChange3.balanceChanges().size()).isEqualTo(1);
+    assertThat(accountChange3.balanceChanges().get(0).postBalance()).isNotEqualTo(Bytes.of(0));
+    assertThat(accountChange3.balanceChanges().get(0).txIndex()).isNotNull();
+  }
+
+  @Test
+  public void blockAccessListShouldNotIncludesAccountWithoutBalSupport() {
+    final CreateOn miningOn = blockCreatorWithBlobGasSupport();
+    final AbstractBlockCreator blockCreator = miningOn.blockCreator;
+    final GenesisAccount sender = accounts.get(1);
+    final GenesisAccount recipient = accounts.get(2);
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+    final BigInteger delta = Wei.fromEth(1).toBigInteger();
+    final Transaction txn =
+        new TransactionTestFixture()
+            .sender(sender.address())
+            .to(Optional.of(recipient.address()))
+            .value(Wei.of(delta))
+            .gasLimit(21_000L)
+            .nonce(sender.nonce())
+            .createTransaction(keyPair);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.of(List.of(txn)),
+            Optional.empty(),
+            System.currentTimeMillis(),
+            miningOn.parentHeader);
+    final Optional<BlockAccessList> maybeBlockAccessList =
+        blockCreationResult.getTransactionSelectionResults().getBlockAccessList();
+    assertThat(maybeBlockAccessList).isEmpty();
+  }
+
   private CreateOn blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
@@ -303,7 +411,6 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
 
   private CreateOn createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
 
-    final var genesisConfig = GenesisConfig.fromResource("/block-creation-genesis.json");
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder(genesisConfig)
             .protocolSchedule(
@@ -316,8 +423,10 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
+                        true,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
+            .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
 
     final MutableBlockchain blockchain = executionContextTestFixture.getBlockchain();

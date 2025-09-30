@@ -4,13 +4,16 @@ on:
   pull_request:
     branches:
       - main
+      - release-*
+      - verkle
+      - performance
 
 jobs:
   hadolint:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
@@ -60,7 +63,7 @@ jobs:
           echo "BUILD_TARGET_NAME=${BUILD_TARGET_NAME}" >> $GITHUB_ENV
 
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:

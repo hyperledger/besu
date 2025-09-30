@@ -45,4 +45,9 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "IbftLegacyVoteValidation";
+  }
 }

@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
+import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
 import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
 import org.hyperledger.besu.cli.options.EngineRPCOptions;
@@ -79,6 +80,8 @@ import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
+import org.hyperledger.besu.cli.util.BootnodeResolver;
+import org.hyperledger.besu.cli.util.BootnodeResolver.BootnodeResolutionException;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
@@ -93,6 +96,7 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
@@ -137,6 +141,7 @@ import org.hyperledger.besu.evm.precompile.AbstractBLS12PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.P256VerifyPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -304,6 +309,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
   private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
+  private final DebugTracerOptions unstableDebugTracerOptions = DebugTracerOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -603,6 +609,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
+
+  @CommandLine.Option(
+      names = {"--cache-last-block-headers"},
+      description =
+          "Specifies the number of last block headers to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfBlockHeadersToCache = 0;
 
   @CommandLine.Option(
       names = {"--cache-precompiles"},
@@ -1153,6 +1165,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
             .put("QBFT Options", unstableQbftOptions)
+            .put("Debug Tracer Options", unstableDebugTracerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1248,7 +1261,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     besuPluginContext.addService(
         WorldStateService.class,
-        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
+        new WorldStateServiceImpl(
+            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.getProtocolContext().getBlockchain()));
 
     besuPluginContext.addService(
         SynchronizationService.class,
@@ -1362,6 +1377,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       Blake2bfMessageDigest.Blake2bfDigest.disableNative();
       logger.info("Using the Java implementation of the blake2bf algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeP256Verify()
+        && P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL()) {
+      logger.info("Using the native BoringSSL implementation of p256verify");
+    } else {
+      P256VerifyPrecompiledContract.disableNativeBoringSSL();
+      if (SECP256R1.isNativeAvailable()) {
+        logger.info("Using the native secp256r1 signature algorithm implementation of p256verify");
+      } else {
+        logger.info("Using the Java secp256r1 implementation of p256verify");
+      }
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
@@ -1661,8 +1688,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+    logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
+      logger.info("Engine JSON-RPC config: {}", engineJsonRpcConfiguration);
       // align JSON decoding limit with HTTP body limit
       // character count is close to size in bytes
       final long maxRequestContentLength =
@@ -1800,6 +1829,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
+            .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
@@ -1809,6 +1839,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       besuControllerBuilder.isParallelTxProcessingEnabled(
           subStorageConfiguration.getParallelTxProcessingEnabled());
     }
+    besuControllerBuilder.isBlockAccessListEnabled(
+        apiConfigurationOptions.apiConfiguration().isBlockAccessListEnabled());
     return besuControllerBuilder;
   }
 
@@ -1818,7 +1850,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             engineRPCConfig.engineHostsAllowlist(),
             p2PDiscoveryConfig.p2pHost(),
-            unstableRPCOptions.getWsTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec());
     engineConfig.setPort(engineRPCConfig.engineRpcPort());
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());
@@ -2218,7 +2250,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     List<EnodeURL> listBootNodes = null;
     if (p2PDiscoveryOptions.bootNodes != null) {
       try {
-        listBootNodes = buildEnodes(p2PDiscoveryOptions.bootNodes, getEnodeDnsConfiguration());
+        final List<String> resolvedBootNodeArgs =
+            BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
+        listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+
+      } catch (final BootnodeResolutionException e) {
+        throw new ParameterException(commandLine, e.getMessage(), e);
+
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }

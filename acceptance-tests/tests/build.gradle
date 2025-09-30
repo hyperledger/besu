@@ -23,8 +23,8 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 solidity {
   resolvePackages = false
   // TODO: remove the forced version, when DEV network is upgraded to support latest forks
-  version '0.8.19'
-  evmVersion 'london'
+  version = '0.8.19'
+  evmVersion = 'london'
 }
 
 dependencies {
