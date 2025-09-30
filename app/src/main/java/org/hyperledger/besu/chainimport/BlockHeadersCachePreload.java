@@ -42,6 +42,13 @@ public class BlockHeadersCachePreload {
   private final EthScheduler ethScheduler;
   private final int numberOfBlockHeadersToCache;
 
+  /**
+   * Creates a new block headers cache preloader.
+   *
+   * @param blockchain the blockchain to retrieve block headers from disk
+   * @param ethScheduler the scheduler for executing preload tasks
+   * @param numberOfBlockHeadersToCache the number of recent block headers to cache
+   */
   public BlockHeadersCachePreload(
       final Blockchain blockchain,
       final EthScheduler ethScheduler,
