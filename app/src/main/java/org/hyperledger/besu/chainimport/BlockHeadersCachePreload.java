@@ -99,8 +99,6 @@ public class BlockHeadersCachePreload {
    * @param maxConcurrent the maximum number of concurrent block header retrievals
    * @return a CompletableFuture that completes when all block headers in the chunk have been
    *     processed (successfully or with failures logged)
-   * @throws InterruptedException if the current thread is interrupted while waiting for semaphore
-   *     permits
    */
   private CompletableFuture<Void> processChunk(
       final long startBlock, final long endBlock, final int maxConcurrent) {
