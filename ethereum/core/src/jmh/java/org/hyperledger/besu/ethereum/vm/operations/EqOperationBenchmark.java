@@ -68,7 +68,10 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case BYTES1_EQUAL:
         BenchmarkHelper.fillPool(aPool, () -> 1);
-        bPool = Arrays.stream(aPool).map(bytes -> Bytes.wrap(bytes.toArrayUnsafe())).toArray(Bytes[]::new);
+        bPool =
+            Arrays.stream(aPool)
+                .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
+                .toArray(Bytes[]::new);
         break;
       case BYTES1_NOT_EQUAL:
         BenchmarkHelper.fillPools(
@@ -77,7 +80,10 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
       case BYTES1_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPool(aPool, () -> 1);
         aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool = Arrays.stream(aPool).map(bytes -> Bytes.wrap(bytes.toArrayUnsafe())).toArray(Bytes[]::new);
+        bPool =
+            Arrays.stream(aPool)
+                .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
+                .toArray(Bytes[]::new);
         break;
       case BYTES1_NOT_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPools(
@@ -87,7 +93,10 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case BYTES16_EQUAL:
         BenchmarkHelper.fillPool(aPool, () -> 16);
-        bPool = Arrays.stream(aPool).map(bytes -> Bytes.wrap(bytes.toArrayUnsafe())).toArray(Bytes[]::new);
+        bPool =
+            Arrays.stream(aPool)
+                .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
+                .toArray(Bytes[]::new);
         break;
       case BYTES16_NOT_EQUAL:
         BenchmarkHelper.fillPools(
@@ -96,7 +105,10 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
       case BYTES16_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPool(aPool, () -> 16);
         aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool = Arrays.stream(aPool).map(bytes -> Bytes.wrap(bytes.toArrayUnsafe())).toArray(Bytes[]::new);
+        bPool =
+            Arrays.stream(aPool)
+                .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
+                .toArray(Bytes[]::new);
         break;
       case BYTES16_NOT_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPools(
@@ -141,14 +153,19 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case BYTES32_EQUAL_BYTE_REPEAT:
         BenchmarkHelper.fillPool(aPool, () -> 1);
-        aPool = Arrays.stream(aPool).map(
-          bytes -> {
-            final byte[] newPool = new byte[32];
-            Arrays.fill(newPool, bytes.get(0));
-            return Bytes.wrap(newPool);
-          }
-        ).toArray(Bytes[]::new);
-        bPool = Arrays.stream(aPool).map(bytes -> Bytes.wrap(bytes.toArrayUnsafe())).toArray(Bytes[]::new);
+        aPool =
+            Arrays.stream(aPool)
+                .map(
+                    bytes -> {
+                      final byte[] newPool = new byte[32];
+                      Arrays.fill(newPool, bytes.get(0));
+                      return Bytes.wrap(newPool);
+                    })
+                .toArray(Bytes[]::new);
+        bPool =
+            Arrays.stream(aPool)
+                .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
+                .toArray(Bytes[]::new);
     }
     index = 0;
   }
