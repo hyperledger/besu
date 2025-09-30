@@ -21,6 +21,7 @@
 - Add `--cache-last-block-headers` flag to cache the last n block headers persisted to the blockchain [#9223](https://github.com/hyperledger/besu/pull/9223)
 - Manage unexpected exceptions during block creation [#9208](https://github.com/hyperledger/besu/pull/9208)
 - Upgrade to execution-spec-tests v5.1.0 [#9226](https://github.com/hyperledger/besu/pull/9226)
+- Add `--preload-block-headers-cache-enabled` flag to enable preloading the block headers cache during startup time [#9248](https://github.com/hyperledger/besu/pull/9248)
 
 ### Bug fixes
 - Fix eth_subscribe RPC failing returning a block response [#9212](https://github.com/hyperledger/besu/pull/9212)
