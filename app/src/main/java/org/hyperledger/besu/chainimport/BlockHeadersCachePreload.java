@@ -28,6 +28,15 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service for preloading block headers from the blockchain into cache.
+ *
+ * <p>This class preloads a specified number of recent block headers
+ * by processing them in chunks to avoid memory exhaustion while maximizing
+ * concurrency. It uses a semaphore-based backpressure mechanism to control
+ * resource usage.
+ *
+ */
 public class BlockHeadersCachePreload {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockHeadersCachePreload.class);
@@ -44,6 +53,14 @@ public class BlockHeadersCachePreload {
     this.numberOfBlockHeadersToCache = numberOfBlockHeadersToCache;
   }
 
+
+  /**
+   * Preloads block headers into the cache asynchronously.
+   *
+   * @return a CompletableFuture that completes when all block headers have been
+   *         successfully loaded into cache, or completes exceptionally if the
+   *         process fails. The future returns null on successful completion.
+   */
   public CompletableFuture<Void> preloadCache() {
     final BlockHeader chainHead = blockchain.getChainHeadHeader();
     final long chainHeadNumber = chainHead.getNumber();
@@ -55,6 +72,15 @@ public class BlockHeadersCachePreload {
         chainHeadNumber - 1, lastBlockToCache, chunkSize, maxConcurrent);
   }
 
+  /**
+   * Processes block headers in sequential chunks to maintain constant memory usage.
+   *
+   * @param startBlock the highest block number to process in this and subsequent chunks
+   * @param endBlock the lowest block number to process (exclusive, will not be processed)
+   * @param chunkSize the maximum number of blocks to process in each chunk
+   * @param maxConcurrent the maximum number of concurrent operations within each chunk
+   * @return a CompletableFuture that completes when all chunks have been processed
+   */
   private CompletableFuture<Void> processChunksSequentially(
       final long startBlock, final long endBlock, final int chunkSize, final int maxConcurrent) {
     if (startBlock <= endBlock) {
@@ -68,6 +94,17 @@ public class BlockHeadersCachePreload {
             v -> processChunksSequentially(chunkEnd - 1, endBlock, chunkSize, maxConcurrent));
   }
 
+  /**
+   * Processes a single chunk of block headers with controlled concurrency.
+   *
+   * @param startBlock the highest block number to process (inclusive)
+   * @param endBlock the lowest block number to process (inclusive)
+   * @param maxConcurrent the maximum number of concurrent block header retrievals
+   * @return a CompletableFuture that completes when all block headers in the chunk
+   *         have been processed (successfully or with failures logged)
+   * @throws InterruptedException if the current thread is interrupted while waiting
+   *                            for semaphore permits
+   */
   private CompletableFuture<Void> processChunk(
       final long startBlock, final long endBlock, final int maxConcurrent) {
     final Semaphore semaphore = new Semaphore(maxConcurrent);
