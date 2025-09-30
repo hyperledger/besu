@@ -2689,7 +2689,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void isPreloadBlockHeadersCacheEnabledOptionShouldWork() {
     boolean isPreloadBlockHeadersCacheEnabled = true;
-    parseCommand("--preload-block-headers-cache-enabled=true");
+    parseCommand("--cache-last-block-headers-preload-enabled=true");
     verify(mockControllerBuilder)
         .isCacheLastBlockHeadersPreloadEnabled(booleanArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
