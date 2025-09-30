@@ -29,7 +29,9 @@ import org.slf4j.LoggerFactory;
  * it does not exceed the maximum RLP block size in EIP-7934
  */
 public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransactionSelector<Long> {
-  public static final long MAX_HEADER_SIZE = 1024L;
+  // The initial size is covering us for the header size, withdrawls size, and some rlp overhead, as well as
+  // some extra space for safety.
+  public static final long INITIAL_RLP_SIZE = 256L * 1024L;
   private static final Logger LOG = LoggerFactory.getLogger(BlockRlpSizeTransactionSelector.class);
 
   public BlockRlpSizeTransactionSelector(
@@ -37,7 +39,7 @@ public class BlockRlpSizeTransactionSelector extends AbstractStatefulTransaction
     super(
         context,
         selectorsStateManager,
-        MAX_HEADER_SIZE,
+        INITIAL_RLP_SIZE,
         SelectorsStateManager.StateDuplicator::duplicateLong);
   }
 
