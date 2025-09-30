@@ -910,13 +910,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     blockHeaderCachePreload.preloadCache()
             .thenRun(() -> {
               long duration = System.nanoTime() - startTime;
-              LOG.info("Preloading block headers cache finished in {} seconds",
-                      duration / 1_000_000_000);
+              LOG.info("Preloading block headers cache finished in {} ms",
+                      duration / 1_000_000);
             })
             .exceptionally(throwable -> {
               long duration = System.nanoTime() - startTime;
-              LOG.error("Preloading block headers cache failed after {} seconds",
-                      duration / 1_000_000_000, throwable);
+              LOG.error("Preloading block headers cache failed after {} ms",
+                      duration / 1_000_000, throwable);
               return null;
             });
   }
