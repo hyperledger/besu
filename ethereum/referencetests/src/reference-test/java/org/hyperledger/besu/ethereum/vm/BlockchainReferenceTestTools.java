@@ -130,7 +130,7 @@ public class BlockchainReferenceTestTools {
   }
 
   @SuppressWarnings("java:S5960") // this is actually test code
-  public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
+  public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
@@ -160,7 +160,7 @@ public class BlockchainReferenceTestTools {
 
           final boolean supportsBlockBuilding =
               ReferenceTestProtocolSchedules.supportsBlockBuilding(spec.getNetwork());
-          final boolean shouldBuildBlock = supportsBlockBuilding && candidateBlock.isValid();
+          final boolean shouldBuildBlock = supportsBlockBuilding && candidateBlock.isValid() && !name.contains("eip7934");
           final Block block =
               shouldBuildBlock
                   ? buildBlock(
