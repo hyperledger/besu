@@ -74,6 +74,7 @@ public class EqOperationTest {
                 Condition.NOT_EQUAL
               },
               {"0x321312", "0x320000321312", Condition.NOT_EQUAL},
+              {"0x00321312", "0x03213120", Condition.NOT_EQUAL}
             })
         .flatMap(
             inputs -> {
