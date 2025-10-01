@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,12 +31,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -49,14 +55,18 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   private final Counter availableCounter;
   private final Counter hitCounter;
   private final Counter missCounter;
+  private final Optional<Long> osakaMilestone;
+  private final Supplier<Long> timestampProvider;
 
   public EngineGetBlobsV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
       final TransactionPool transactionPool,
-      final MetricsSystem metricsSystem) {
-    super(vertx, protocolContext, engineCallListener);
+      final MetricsSystem metricsSystem,
+      final Supplier<Long> timestampProvider) {
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
     // create counters
     this.requestedCounter =
@@ -79,6 +89,8 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
             BesuMetricCategory.RPC,
             "execution_engine_getblobs_miss_total",
             "Number of calls to engine_getBlobsV2 that returned zero blobs");
+    this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
+    this.timestampProvider = timestampProvider;
   }
 
   @Override
@@ -88,6 +100,12 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(timestampProvider.get());
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
+    }
+
     final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
@@ -136,5 +154,10 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
         blobProofBundle.getKzgProof().stream()
             .map(proof -> proof.getData().toHexString())
             .toList());
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long currentTimestamp) {
+    return ForkSupportHelper.validateForkSupported(OSAKA, osakaMilestone, currentTimestamp);
   }
 }
