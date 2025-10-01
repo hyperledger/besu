@@ -15,6 +15,28 @@
   - Fast Sync
 
 ### Additions and Improvements
+
+### Bug fixes
+
+## 25.10.0-RC1
+This RC is a pre-release for Holesky and Sepolia users.
+Only upgrade to this release if you're experiencing the eth_subscribe or ethstats known issue from 25.9.0.
+- fixes and more info [#9212](https://github.com/hyperledger/besu/pull/9212) and [#9220](https://github.com/hyperledger/besu/pull/9220)
+This RC is still pending burn in for mainnet.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
 - Update spring security framework (toml parsing) [#9153](https://github.com/hyperledger/besu/pull/9153)
 - Update grpc and guava [#9150](https://github.com/hyperledger/besu/pull/9150)
 - Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
@@ -22,6 +44,7 @@
 - Manage unexpected exceptions during block creation [#9208](https://github.com/hyperledger/besu/pull/9208)
 - Upgrade to execution-spec-tests v5.1.0 [#9226](https://github.com/hyperledger/besu/pull/9226)
 - Add `--cache-last-block-headers-preload-enabled` flag to enable preloading the block headers cache during startup time [#9248](https://github.com/hyperledger/besu/pull/9248)
+- Upgrade to execution-spec-tests v5.2.0 [#9226](https://github.com/hyperledger/besu/pull/9226), [#9242](https://github.com/hyperledger/besu/pull/9242)
 
 ### Bug fixes
 - Fix eth_subscribe RPC failing returning a block response [#9212](https://github.com/hyperledger/besu/pull/9212)

@@ -227,7 +227,7 @@ public class BlockHeaderBuilder {
     }
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
-    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(Hash.ZERO);
 
     // For PoS, coinbase is always configured, but for PoA it is not configured,
     // rather generated for each block via MiningBeneficiaryCalculator.
