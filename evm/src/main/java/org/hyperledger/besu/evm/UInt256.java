@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -25,21 +27,18 @@ public final class UInt256 {
   // region Internals
   // --------------------------------------------------------------------------
   // UInt256 is a big-endian up to 256-bits integer.
-  // Internally, it is represented with int/long limbs in little-endian order.
-  // Wraps a view over limbs array from 0..length.
-  // Internally limbs are little-endian and can perhaps have more elements than length.
-  private final int[] limbs;
-  private final int length;
+  // Internally, it is represented with fixed-size int/long limbs in little-endian order.
 
   // Maximum number of significant limbs
+  private static final int N_BYTES = 32;
+  // private static final int N_BITS = 256;
   private static final int N_LIMBS = 8;
+  private static final int N_BYTES_PER_LIMB = 4;
   // Mask for long values
   private static final long MASK_L = 0xFFFFFFFFL;
 
-  // Getters for testing
-  int length() {
-    return length;
-  }
+  private final int[] limbs;
+  private final int length = 8;
 
   int[] limbs() {
     return limbs;
@@ -81,22 +80,9 @@ public final class UInt256 {
   // region Constructors
   // --------------------------------------------------------------------------
 
-  UInt256(final int[] limbs, final int length) {
+  UInt256(final int[] limbs) {
+    // Unchecked length: assumes limbs have length == N_LIMBS
     this.limbs = limbs;
-    this.length = length;
-    // Unchecked length: assumes length is properly set.
-  }
-
-  /**
-   * Instantiates a new UInt256 from limbs (int[]).
-   *
-   * @param limbs integer limbs in little-endian order.
-   */
-  public UInt256(final int[] limbs) {
-    int i = Math.min(limbs.length, N_LIMBS) - 1;
-    while ((i >= 0) && (limbs[i] == 0)) i--;
-    this.limbs = limbs;
-    this.length = i + 1;
   }
 
   /**
@@ -106,41 +92,15 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    int offset = 0;
-    while ((offset < bytes.length) && (bytes[offset] == 0x00)) ++offset;
-    int nBytes = bytes.length - offset;
-    if (nBytes == 0) return ZERO;
-    int len = (nBytes + 3) / 4;
-    int[] limbs = new int[len];
-    // int[] limbs = new int[N_LIMBS];
-
-    int i;
-    int base;
-    // Up to most significant limb take 4 bytes.
-    for (i = 0, base = bytes.length - 4; i < len - 1; ++i, base = base - 4) {
-      limbs[i] =
-          (bytes[base] << 24)
-              | ((bytes[base + 1] & 0xFF) << 16)
-              | ((bytes[base + 2] & 0xFF) << 8)
-              | ((bytes[base + 3] & 0xFF));
+    int nBytes = (bytes.length + N_BYTES_PER_LIMB - 1) / N_BYTES_PER_LIMB;
+    byte[] padded = new byte[N_BYTES];
+    System.arraycopy(bytes, 0, padded, N_BYTES - nBytes, nBytes);
+    ByteBuffer buf = ByteBuffer.wrap(padded).order(ByteOrder.BIG_ENDIAN);
+    int[] limbs = new int[N_LIMBS];
+    for (int i = 0; i < N_LIMBS; i++) {
+        limbs[N_LIMBS - 1 - i] = buf.getInt(); // reverse order for little-endian limbs
     }
-    // Last effective limb
-    limbs[i] =
-        switch (nBytes - i * 4) {
-          case 1 -> ((bytes[offset] & 0xFF));
-          case 2 -> (((bytes[offset] & 0xFF) << 8) | (bytes[offset + 1] & 0xFF));
-          case 3 ->
-              (((bytes[offset] & 0xFF) << 16)
-                  | ((bytes[offset + 1] & 0xFF) << 8)
-                  | (bytes[offset + 2] & 0xFF));
-          case 4 ->
-              ((bytes[offset] << 24)
-                  | ((bytes[offset + 1] & 0xFF) << 16)
-                  | ((bytes[offset + 2] & 0xFF) << 8)
-                  | (bytes[offset + 3] & 0xFF));
-          default -> throw new IllegalStateException("Unexpected value");
-        };
-    return new UInt256(limbs, len);
+    return new UInt256(limbs);
   }
 
   /**
@@ -179,7 +139,7 @@ public final class UInt256 {
                   | (bytes[3] & 0xFF));
           default -> throw new IllegalStateException("Unexpected value");
         };
-    return new UInt256(limbs, len);
+    return new UInt256(limbs);
   }
 
   /**
@@ -190,7 +150,7 @@ public final class UInt256 {
    */
   public static UInt256 fromInt(final int value) {
     if (0 <= value && value < nSmallInts) return smallInts[value];
-    return new UInt256(new int[] {value}, 1);
+    return new UInt256(new int[] {value});
   }
 
   /**
@@ -410,7 +370,7 @@ public final class UInt256 {
     int size = this.length + (nDiffBits + 31) / 32;
     int[] shifted = new int[size];
     shiftLeftInto(shifted, this.limbs, shift);
-    return new UInt256(shifted, size);
+    return new UInt256(shifted);
   }
 
   /**
@@ -441,7 +401,7 @@ public final class UInt256 {
   public UInt256 abs() {
     int[] newLimbs = Arrays.copyOf(limbs, length);
     absInplace(newLimbs);
-    return new UInt256(newLimbs, length);
+    return new UInt256(newLimbs);
   }
 
   /**

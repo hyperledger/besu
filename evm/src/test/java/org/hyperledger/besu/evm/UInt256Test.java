@@ -48,13 +48,11 @@ public class UInt256Test {
     UInt256 result;
 
     result = UInt256.fromInt(0);
-    assertThat(result.length()).as("Int 0 length").isEqualTo(0);
     assertThat(result.isZero()).as("Int 0, isZero").isTrue();
 
     int[] testInts = new int[] {130, -128, 32500};
     for (int i : testInts) {
       result = UInt256.fromInt(i);
-      assertThat(result.length()).as(String.format("Int %s length", i)).isEqualTo(1);
       assertThat(result.intValue()).as(String.format("Int %s value", i)).isEqualTo(i);
     }
   }
@@ -68,19 +66,16 @@ public class UInt256Test {
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
     expectedLimbs = new int[] {-2147483648};
-    assertThat(result.length()).as("4b-neg-length").isEqualTo(1);
     assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
     expectedLimbs = new int[] {1 + 256 + 65536};
-    assertThat(result.length()).as("3b-length").isEqualTo(1);
     assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {1, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
     expectedLimbs = new int[] {1 + 256 + 65536, 16777216};
-    assertThat(result.length()).as("8b-length").isEqualTo(2);
     assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -90,7 +85,6 @@ public class UInt256Test {
         };
     result = UInt256.fromBytesBE(input);
     expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216};
-    assertThat(result.length()).as("32b-length").isEqualTo(8);
     assertThat(result.limbs()).as("32b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -100,7 +94,6 @@ public class UInt256Test {
         };
     result = UInt256.fromBytesBE(input);
     expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257};
-    assertThat(result.length()).as("32b-padded-length").isEqualTo(7);
     assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
   }
 
