@@ -51,11 +51,15 @@ public class WeiTest {
     assertThat(Wei.ZERO.toHumanReadablePaddedString()).isEqualTo(String.format("     %d wei", 0));
     assertThat(Wei.ONE.toHumanReadablePaddedString()).isEqualTo(String.format("     %d wei", 1));
 
-    assertThat(Wei.of(999).toHumanReadablePaddedString()).isEqualTo(String.format("   %d wei", 999));
-    assertThat(Wei.of(1000).toHumanReadablePaddedString()).isEqualTo(String.format("  %.2f kwei", 1.0));
+    assertThat(Wei.of(999).toHumanReadablePaddedString())
+        .isEqualTo(String.format("   %d wei", 999));
+    assertThat(Wei.of(1000).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.0));
 
-    assertThat(Wei.of(1009).toHumanReadablePaddedString()).isEqualTo(String.format("  %.2f kwei", 1.01));
-    assertThat(Wei.of(1011).toHumanReadablePaddedString()).isEqualTo(String.format("  %.2f kwei", 1.01));
+    assertThat(Wei.of(1009).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.01));
+    assertThat(Wei.of(1011).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.01));
 
     assertThat(Wei.of(new BigInteger("1000000000")).toHumanReadablePaddedString())
         .isEqualTo(String.format("  %.2f gwei", 1.0));
