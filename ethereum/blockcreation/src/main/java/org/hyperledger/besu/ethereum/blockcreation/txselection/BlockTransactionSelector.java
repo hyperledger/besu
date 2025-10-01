@@ -604,9 +604,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .preExecutionProcessor()
             .createBlockHashLookup(blockchain, blockSelectionContext.pendingBlockHeader());
-    final Optional<AccessLocationTracker> accessLocationTracker =
+    final Optional<AccessLocationTracker> transactionLocationTracker =
         maybeBlockAccessListBuilder.map(
-            b -> BlockAccessListBuilder.createAccessLocationTracker(currentTxnLocation.get()));
+            b ->
+                BlockAccessListBuilder.createTransactionAccessLocationTracker(
+                    currentTxnLocation.get()));
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             txWorldStateUpdater,
@@ -617,7 +619,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             blockHashLookup,
             TransactionValidationParams.mining(),
             blockSelectionContext.blobGasPrice(),
-            accessLocationTracker);
+            transactionLocationTracker);
     return result;
   }
 
@@ -652,8 +654,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           maybeBlockAccessListBuilder.ifPresent(
               blockAccessListBuilder ->
                   processingResult
-                      .getTransactionBlockAccessView()
-                      .ifPresent(blockAccessListBuilder::applyPartialBlockAccessView));
+                      .getPartialBlockAccessView()
+                      .ifPresent(blockAccessListBuilder::apply));
 
           transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
 

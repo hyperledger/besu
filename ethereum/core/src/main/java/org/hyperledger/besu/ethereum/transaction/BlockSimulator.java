@@ -219,8 +219,9 @@ public class BlockSimulator {
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    Optional<AccessLocationTracker> preExecutionAccessList =
-        blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
+    Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+        blockAccessListBuilder.map(
+            b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
 
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
@@ -230,7 +231,9 @@ public class BlockSimulator {
             blockHashLookup,
             OperationTracer.NO_TRACING);
 
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, preExecutionAccessList);
+    protocolSpec
+        .getPreExecutionProcessor()
+        .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
@@ -246,10 +249,10 @@ public class BlockSimulator {
             simulationCumulativeGasUsed,
             blockAccessListBuilder);
 
-    Optional<AccessLocationTracker> postExecutionAccessList =
+    Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
             b ->
-                BlockAccessListBuilder.createPostExecutionAccessList(
+                BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
                     blockStateCallSimulationResult.getTransactions().size()));
 
     // EIP-7685: process EL requests
@@ -262,13 +265,15 @@ public class BlockSimulator {
               blockProcessingContext, blockStateCallSimulationResult.getReceipts());
       maybeRequests =
           Optional.of(
-              requestProcessor.get().process(requestProcessingContext, postExecutionAccessList));
+              requestProcessor
+                  .get()
+                  .process(requestProcessingContext, postExecutionAccessLocationTracker));
     }
 
-    postExecutionAccessList.ifPresent(
-        pending ->
+    postExecutionAccessLocationTracker.ifPresent(
+        tracker ->
             blockAccessListBuilder.ifPresent(
-                bal -> bal.generateAndApplyAccessLocationTracker(pending, ws.updater().updater())));
+                builder -> builder.apply(tracker, ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
@@ -324,8 +329,8 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final Optional<AccessLocationTracker> accessLocationTracker =
-          createAccessLocationTracker(blockAccessListBuilder, transactionLocation);
+      final Optional<AccessLocationTracker> transactionLocationTracker =
+          createTransactionAccessLocationTracker(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -340,7 +345,7 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              accessLocationTracker);
+              transactionLocationTracker);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
@@ -353,11 +358,8 @@ public class BlockSimulator {
 
       transactionSimulationResult
           .result()
-          .getTransactionBlockAccessView()
-          .ifPresent(
-              partial ->
-                  blockAccessListBuilder.ifPresent(
-                      bal -> bal.applyPartialBlockAccessView(partial)));
+          .getPartialBlockAccessView()
+          .ifPresent(view -> blockAccessListBuilder.ifPresent(builder -> builder.apply(view)));
 
       transactionUpdater.commit();
       blockUpdater.commit();
@@ -369,11 +371,11 @@ public class BlockSimulator {
     return blockStateCallSimulationResult;
   }
 
-  private Optional<AccessLocationTracker> createAccessLocationTracker(
+  private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(
-        b -> BlockAccessListBuilder.createAccessLocationTracker(transactionLocation));
+        b -> BlockAccessListBuilder.createTransactionAccessLocationTracker(transactionLocation));
   }
 
   private BlockSimulationResult createFinalBlock(

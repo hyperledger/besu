@@ -179,8 +179,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    final Optional<AccessLocationTracker> preExecutionAccessList =
-        blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
+    final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+        blockAccessListBuilder.map(
+            b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             blockHeader,
@@ -189,7 +190,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             blockHashLookup,
             blockTracer,
             blockAccessListBuilder);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, preExecutionAccessList);
+    protocolSpec
+        .getPreExecutionProcessor()
+        .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
@@ -227,8 +230,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
-      final Optional<AccessLocationTracker> accessLocationTracker =
-          createAccessLocationTracker(blockAccessListBuilder, i);
+      final Optional<AccessLocationTracker> transactionLocationTracker =
+          createTransactionAccessLocationTracker(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
@@ -239,10 +242,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transaction,
               i,
               blockHashLookup,
-              accessLocationTracker);
+              transactionLocationTracker);
 
-      applyPartialViewToBlockAccessListBuilder(
-          transactionProcessingResult.getTransactionBlockAccessView(), blockAccessListBuilder);
+      applyPartialBlockAccessView(
+          transactionProcessingResult.getPartialBlockAccessView(), blockAccessListBuilder);
 
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
@@ -300,9 +303,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final Optional<AccessLocationTracker> postExecutionAccessList =
+    final Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
-            b -> BlockAccessListBuilder.createPostExecutionAccessList(transactions.size()));
+            b ->
+                BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
+                    transactions.size()));
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
@@ -311,7 +316,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), worldState.updater(), postExecutionAccessList);
+                maybeWithdrawals.get(), worldState.updater(), postExecutionAccessLocationTracker);
       } catch (final Exception e) {
         LOG.error("failed processing withdrawals", e);
         if (worldState instanceof BonsaiWorldState) {
@@ -331,7 +336,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             new RequestProcessingContext(blockProcessingContext, receipts);
         maybeRequests =
             Optional.of(
-                requestProcessor.get().process(requestProcessingContext, postExecutionAccessList));
+                requestProcessor
+                    .get()
+                    .process(requestProcessingContext, postExecutionAccessLocationTracker));
       }
     } catch (final Exception e) {
       LOG.error("failed processing requests", e);
@@ -341,8 +348,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    applyAccessLocationTrackerViewToBlockAccessListBuilder(
-        postExecutionAccessList, blockAccessListBuilder, worldState.updater().updater());
+    applyAccessLocationTracker(
+        postExecutionAccessLocationTracker, blockAccessListBuilder, worldState.updater().updater());
 
     final var optionalRequestsHash = blockHeader.getRequestsHash();
     if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
@@ -474,31 +481,28 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return true;
   }
 
-  private Optional<AccessLocationTracker> createAccessLocationTracker(
+  private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(
-        b -> BlockAccessListBuilder.createAccessLocationTracker(transactionLocation));
+        b -> BlockAccessListBuilder.createTransactionAccessLocationTracker(transactionLocation));
   }
 
-  private void applyAccessLocationTrackerViewToBlockAccessListBuilder(
+  private void applyAccessLocationTracker(
       final Optional<AccessLocationTracker> accessLocationTracker,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final WorldUpdater updater) {
     accessLocationTracker.ifPresent(
         tracker ->
             blockAccessListBuilder.ifPresent(
-                bal ->
-                    bal.applyPartialBlockAccessView(
-                        tracker.createPartialBlockAccessView(updater))));
+                builder -> builder.apply(tracker.createPartialBlockAccessView(updater))));
   }
 
-  private void applyPartialViewToBlockAccessListBuilder(
+  private void applyPartialBlockAccessView(
       final Optional<PartialBlockAccessView> partialBlockAccessView,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     partialBlockAccessView.ifPresent(
-        partial ->
-            blockAccessListBuilder.ifPresent(bal -> bal.applyPartialBlockAccessView(partial)));
+        view -> blockAccessListBuilder.ifPresent(builder -> builder.apply(view)));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

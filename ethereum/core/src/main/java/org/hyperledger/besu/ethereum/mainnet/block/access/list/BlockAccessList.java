@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -122,16 +121,17 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public static AccessLocationTracker createPreExecutionAccessList() {
+    public static AccessLocationTracker createPreExecutionAccessLocationTracker() {
       return new AccessLocationTracker(0);
     }
 
-    public static AccessLocationTracker createPostExecutionAccessList(
+    public static AccessLocationTracker createPostExecutionAccessLocationTracker(
         final int numberOfTransactions) {
       return new AccessLocationTracker(numberOfTransactions + 1);
     }
 
-    public static AccessLocationTracker createAccessLocationTracker(final int transactionLocation) {
+    public static AccessLocationTracker createTransactionAccessLocationTracker(
+        final int transactionLocation) {
       return new AccessLocationTracker(transactionLocation + 1);
     }
 
@@ -139,13 +139,12 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
       return accountChangesBuilders.computeIfAbsent(address, __ -> new AccountBuilder(address));
     }
 
-    public void generateAndApplyAccessLocationTracker(
+    public void apply(
         final AccessLocationTracker accessLocationTracker, final WorldUpdater updater) {
-      applyPartialBlockAccessView(
-          accessLocationTracker.createPartialBlockAccessView(updater));
+      apply(accessLocationTracker.createPartialBlockAccessView(updater));
     }
 
-    public void applyPartialBlockAccessView(final PartialBlockAccessView partialBlockAccessView) {
+    public void apply(final PartialBlockAccessView partialBlockAccessView) {
       partialBlockAccessView
           .accountChanges()
           .forEach(

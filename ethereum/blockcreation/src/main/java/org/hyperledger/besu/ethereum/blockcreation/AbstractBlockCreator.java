@@ -231,8 +231,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getBlockAccessListFactory()
               .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
-      final Optional<AccessLocationTracker> preExecutionAccessList =
-          blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
+      final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+          blockAccessListBuilder.map(
+              b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
 
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
@@ -246,7 +247,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               blockAccessListBuilder);
       newProtocolSpec
           .getPreExecutionProcessor()
-          .process(blockProcessingContext, preExecutionAccessList);
+          .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
@@ -264,10 +265,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("txsSelection");
       throwIfStopped();
 
-      final Optional<AccessLocationTracker> postExecutionAccessList =
+      final Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
           blockAccessListBuilder.map(
               b ->
-                  BlockAccessListBuilder.createPostExecutionAccessList(
+                  BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
                       transactionResults.getSelectedTransactions().size()));
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
@@ -279,7 +280,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         maybeWithdrawalsProcessor
             .get()
             .processWithdrawals(
-                maybeWithdrawals.get(), disposableWorldState.updater(), postExecutionAccessList);
+                maybeWithdrawals.get(),
+                disposableWorldState.updater(),
+                postExecutionAccessLocationTracker);
       }
 
       throwIfStopped();
@@ -292,14 +295,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       Optional<List<Request>> maybeRequests =
           requestProcessor.map(
-              processor -> processor.process(requestProcessingContext, postExecutionAccessList));
+              processor ->
+                  processor.process(requestProcessingContext, postExecutionAccessLocationTracker));
 
-      postExecutionAccessList.ifPresent(
-          pending ->
+      postExecutionAccessLocationTracker.ifPresent(
+          tracker ->
               blockAccessListBuilder.ifPresent(
-                  bal ->
-                      bal.generateAndApplyAccessLocationTracker(
-                          pending, disposableWorldState.updater().updater())));
+                  builder -> builder.apply(tracker, disposableWorldState.updater().updater())));
 
       throwIfStopped();
 

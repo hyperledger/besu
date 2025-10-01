@@ -483,8 +483,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
-            accessLocationTracker.map(
-                tracker -> tracker.createPartialBlockAccessView(worldState)),
+            accessLocationTracker.map(tracker -> tracker.createPartialBlockAccessView(worldState)),
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {

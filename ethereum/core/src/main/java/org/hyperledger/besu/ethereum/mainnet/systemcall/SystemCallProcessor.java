@@ -106,11 +106,10 @@ public class SystemCallProcessor {
     }
 
     accessLocationTracker.ifPresent(
-        pending ->
+        tracker ->
             context
                 .getBlockAccessListBuilder()
-                .ifPresent(
-                    bal -> bal.generateAndApplyAccessLocationTracker(pending, systemCallUpdater)));
+                .ifPresent(builder -> builder.apply(tracker, systemCallUpdater)));
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       systemCallUpdater.commit();
