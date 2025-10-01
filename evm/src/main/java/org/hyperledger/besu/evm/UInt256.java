@@ -312,7 +312,6 @@ public final class UInt256 {
    * Convert to hexstring according to sign.
    *
    * <p>If sign is negative, pad with 1s, else pad with 0s.
-   * </p>
    *
    * @param sign padding with 0s or 1s whether sign is non-negative.
    * @return HexString
