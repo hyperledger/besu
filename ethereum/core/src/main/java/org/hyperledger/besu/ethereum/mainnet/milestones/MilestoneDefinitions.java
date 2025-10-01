@@ -183,6 +183,31 @@ public class MilestoneDefinitions {
    */
   private static List<MilestoneDefinition> createMainnetTimestampMilestones(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
+
+    // throw if BPO forks are not strictly in ascending timestamp order
+    var bpoTimestamps =
+        List.of(
+            config.getBpo1Time(),
+            config.getBpo2Time(),
+            config.getBpo3Time(),
+            config.getBpo4Time(),
+            config.getBpo5Time());
+
+    for (int i = 0; i < bpoTimestamps.size(); i++) {
+      // Check if non-empty follows empty timestamp
+      if (i > 0 && bpoTimestamps.get(i - 1).isEmpty() && bpoTimestamps.get(i).isPresent()) {
+        throw new IllegalArgumentException(
+            "Empty BPO timestamp cannot be followed by non-empty timestamp");
+      }
+
+      // Check ascending order for present timestamps
+      if (i > 0
+          && bpoTimestamps.get(i - 1).isPresent()
+          && bpoTimestamps.get(i).isPresent()
+          && bpoTimestamps.get(i - 1).getAsLong() >= bpoTimestamps.get(i).getAsLong()) {
+        throw new IllegalArgumentException("BPO fork timestamps must be in ascending order");
+      }
+    }
     return List.of(
         createTimestampMilestone(
             MainnetHardforkId.SHANGHAI,
@@ -204,6 +229,7 @@ public class MilestoneDefinitions {
             MainnetHardforkId.OSAKA,
             config.getOsakaTime(),
             () -> specFactory.osakaDefinition(config)),
+        // TODO validate that each fork has a blob schedule
         createTimestampMilestone(
             MainnetHardforkId.BPO1, config.getBpo1Time(), () -> specFactory.bpo1Definition(config)),
         createTimestampMilestone(
