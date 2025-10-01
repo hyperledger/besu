@@ -142,7 +142,7 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
     public void generateAndApplyAccessLocationTracker(
         final AccessLocationTracker accessLocationTracker, final WorldUpdater updater) {
       applyPartialBlockAccessView(
-          accessLocationTracker.createPartialBlockAccessView((StackedUpdater<?, ?>) updater));
+          accessLocationTracker.createPartialBlockAccessView(updater));
     }
 
     public void applyPartialBlockAccessView(final PartialBlockAccessView partialBlockAccessView) {
