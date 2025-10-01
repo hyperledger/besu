@@ -42,6 +42,8 @@ This RC is still pending burn in for mainnet.
 - Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
 - Add `--cache-last-block-headers` flag to cache the last n block headers persisted to the blockchain [#9223](https://github.com/hyperledger/besu/pull/9223)
 - Manage unexpected exceptions during block creation [#9208](https://github.com/hyperledger/besu/pull/9208)
+- Upgrade to execution-spec-tests v5.1.0 [#9226](https://github.com/hyperledger/besu/pull/9226)
+- Add `--cache-last-block-headers-preload-enabled` flag to enable preloading the block headers cache during startup time [#9248](https://github.com/hyperledger/besu/pull/9248)
 - Upgrade to execution-spec-tests v5.2.0 [#9226](https://github.com/hyperledger/besu/pull/9226), [#9242](https://github.com/hyperledger/besu/pull/9242)
 
 ### Bug fixes
