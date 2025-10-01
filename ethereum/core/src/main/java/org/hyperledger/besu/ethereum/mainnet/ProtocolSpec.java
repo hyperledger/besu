@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
+import java.time.Duration;
 import java.util.Optional;
 
 /** A protocol specification. */
@@ -83,6 +84,7 @@ public class ProtocolSpec {
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
   private final PreExecutionProcessor preExecutionProcessor;
   private final boolean isPoS;
+  private final Duration slotDuration;
   private final boolean isReplayProtectionSupported;
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
@@ -117,6 +119,7 @@ public class ProtocolSpec {
    * @param requestProcessorCoordinator the request processor to use
    * @param preExecutionProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
+   * @param slotDuration the slot duration when in PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
    */
@@ -148,6 +151,7 @@ public class ProtocolSpec {
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final PreExecutionProcessor preExecutionProcessor,
       final boolean isPoS,
+      final Duration slotDuration,
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
       final Optional<BlockAccessListFactory> blockAccessListFactory) {
@@ -178,6 +182,7 @@ public class ProtocolSpec {
     this.requestProcessorCoordinator = requestProcessorCoordinator;
     this.preExecutionProcessor = preExecutionProcessor;
     this.isPoS = isPoS;
+    this.slotDuration = slotDuration;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
     this.blockAccessListFactory = blockAccessListFactory;
@@ -395,6 +400,10 @@ public class ProtocolSpec {
    */
   public boolean isPoS() {
     return isPoS;
+  }
+
+  public Duration getSlotDuration() {
+    return slotDuration;
   }
 
   /**

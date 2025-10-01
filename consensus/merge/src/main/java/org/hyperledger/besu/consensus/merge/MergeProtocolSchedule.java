@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +43,7 @@ import java.util.function.Function;
 public class MergeProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
+  private static final Duration PARIS_SLOT_DURATION = Duration.ofSeconds(12);
 
   /** Default constructor. */
   MergeProtocolSchedule() {}
@@ -107,6 +109,7 @@ public class MergeProtocolSchedule {
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .slotDuration(PARIS_SLOT_DURATION)
         .hardforkId(PARIS);
   }
 
