@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -96,7 +96,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
@@ -126,7 +126,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           transaction,
           location,
           blockHashLookup,
-          pendingBlockAccessList);
+          accessLocationTracker);
     } else {
       return transactionProcessingResult;
     }

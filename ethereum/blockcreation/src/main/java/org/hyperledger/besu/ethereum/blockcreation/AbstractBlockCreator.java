@@ -47,10 +47,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -231,7 +231,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getBlockAccessListFactory()
               .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
-      final Optional<PendingBlockAccessList> preExecutionAccessList =
+      final Optional<AccessLocationTracker> preExecutionAccessList =
           blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
       BlockProcessingContext blockProcessingContext =
@@ -264,7 +264,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       timings.register("txsSelection");
       throwIfStopped();
 
-      final Optional<PendingBlockAccessList> postExecutionAccessList =
+      final Optional<AccessLocationTracker> postExecutionAccessList =
           blockAccessListBuilder.map(
               b ->
                   BlockAccessListBuilder.createPostExecutionAccessList(
@@ -298,7 +298,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           pending ->
               blockAccessListBuilder.ifPresent(
                   bal ->
-                      bal.generateAndApplyPendingBlockAccessList(
+                      bal.generateAndApplyAccessLocationTracker(
                           pending, disposableWorldState.updater().updater())));
 
       throwIfStopped();

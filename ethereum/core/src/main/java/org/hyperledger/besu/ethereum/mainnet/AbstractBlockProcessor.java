@@ -31,10 +31,11 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -178,7 +179,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    final Optional<PendingBlockAccessList> preExecutionAccessList =
+    final Optional<AccessLocationTracker> preExecutionAccessList =
         blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
@@ -226,8 +227,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
-      final Optional<PendingBlockAccessList> pendingBlockAccessList =
-          createPendingBlockAccessList(blockAccessListBuilder, i);
+      final Optional<AccessLocationTracker> accessLocationTracker =
+          createAccessLocationTracker(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
               preProcessingContext,
@@ -238,12 +239,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transaction,
               i,
               blockHashLookup,
-              pendingBlockAccessList);
+              accessLocationTracker);
 
-      applyPendingBlockAccessListToBlockAccessListBuilder(
-          transactionProcessingResult.getPendingBlockAccessList(),
-          blockAccessListBuilder,
-          transactionUpdater);
+      applyPartialViewToBlockAccessListBuilder(
+          transactionProcessingResult.getTransactionBlockAccessView(), blockAccessListBuilder);
 
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
@@ -301,7 +300,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final Optional<PendingBlockAccessList> postExecutionAccessList =
+    final Optional<AccessLocationTracker> postExecutionAccessList =
         blockAccessListBuilder.map(
             b -> BlockAccessListBuilder.createPostExecutionAccessList(transactions.size()));
 
@@ -342,7 +341,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    applyPendingBlockAccessListToBlockAccessListBuilder(
+    applyAccessLocationTrackerViewToBlockAccessListBuilder(
         postExecutionAccessList, blockAccessListBuilder, worldState.updater().updater());
 
     final var optionalRequestsHash = blockHeader.getRequestsHash();
@@ -443,7 +442,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     return transactionProcessor.processTransaction(
         transactionUpdater,
         blockProcessingContext.getBlockHeader(),
@@ -453,7 +452,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockHashLookup,
         TransactionValidationParams.processingBlock(),
         blobGasPrice,
-        pendingBlockAccessList);
+        accessLocationTracker);
   }
 
   @SuppressWarnings(
@@ -475,21 +474,31 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return true;
   }
 
-  private Optional<PendingBlockAccessList> createPendingBlockAccessList(
+  private Optional<AccessLocationTracker> createAccessLocationTracker(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(
-        b -> BlockAccessListBuilder.createPendingBlockAccessList(transactionLocation));
+        b -> BlockAccessListBuilder.createAccessLocationTracker(transactionLocation));
   }
 
-  private void applyPendingBlockAccessListToBlockAccessListBuilder(
-      final Optional<PendingBlockAccessList> pendingBlockAccessList,
+  private void applyAccessLocationTrackerViewToBlockAccessListBuilder(
+      final Optional<AccessLocationTracker> accessLocationTracker,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-      final WorldUpdater transactionUpdater) {
-    pendingBlockAccessList.ifPresent(
-        pending ->
+      final WorldUpdater updater) {
+    accessLocationTracker.ifPresent(
+        tracker ->
             blockAccessListBuilder.ifPresent(
-                bal -> bal.generateAndApplyPendingBlockAccessList(pending, transactionUpdater)));
+                bal ->
+                    bal.applyPartialBlockAccessView(
+                        tracker.createPartialBlockAccessView(updater))));
+  }
+
+  private void applyPartialViewToBlockAccessListBuilder(
+      final Optional<PartialBlockAccessView> partialBlockAccessView,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+    partialBlockAccessView.ifPresent(
+        partial ->
+            blockAccessListBuilder.ifPresent(bal -> bal.applyPartialBlockAccessView(partial)));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

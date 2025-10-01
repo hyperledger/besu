@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 
 import java.util.List;
 import java.util.Map;
@@ -42,9 +42,9 @@ public class RequestProcessorCoordinator {
 
   public List<Request> process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     return processors.values().stream()
-        .map(requestProcessor -> requestProcessor.process(context, pendingBlockAccessList))
+        .map(requestProcessor -> requestProcessor.process(context, accessLocationTracker))
         .toList();
   }
 

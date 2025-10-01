@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockContextProcessor;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 
@@ -49,13 +49,13 @@ public class SystemCallRequestProcessor
   @Override
   public Request process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
 
     final SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
     Bytes systemCallOutput =
-        systemCallProcessor.process(callAddress, context, Bytes.EMPTY, pendingBlockAccessList);
+        systemCallProcessor.process(callAddress, context, Bytes.EMPTY, accessLocationTracker);
 
     return new Request(requestType, systemCallOutput);
   }

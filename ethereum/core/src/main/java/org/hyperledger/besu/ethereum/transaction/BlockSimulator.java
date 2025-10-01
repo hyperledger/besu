@@ -45,9 +45,9 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
@@ -219,7 +219,7 @@ public class BlockSimulator {
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    Optional<PendingBlockAccessList> preExecutionAccessList =
+    Optional<AccessLocationTracker> preExecutionAccessList =
         blockAccessListBuilder.map(b -> BlockAccessListBuilder.createPreExecutionAccessList());
 
     final BlockProcessingContext blockProcessingContext =
@@ -246,7 +246,7 @@ public class BlockSimulator {
             simulationCumulativeGasUsed,
             blockAccessListBuilder);
 
-    Optional<PendingBlockAccessList> postExecutionAccessList =
+    Optional<AccessLocationTracker> postExecutionAccessList =
         blockAccessListBuilder.map(
             b ->
                 BlockAccessListBuilder.createPostExecutionAccessList(
@@ -268,8 +268,7 @@ public class BlockSimulator {
     postExecutionAccessList.ifPresent(
         pending ->
             blockAccessListBuilder.ifPresent(
-                bal ->
-                    bal.generateAndApplyPendingBlockAccessList(pending, ws.updater().updater())));
+                bal -> bal.generateAndApplyAccessLocationTracker(pending, ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
@@ -325,8 +324,8 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final Optional<PendingBlockAccessList> pendingBlockAccessList =
-          createPendingBlockAccessList(blockAccessListBuilder, transactionLocation);
+      final Optional<AccessLocationTracker> accessLocationTracker =
+          createAccessLocationTracker(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -341,7 +340,7 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              pendingBlockAccessList);
+              accessLocationTracker);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
@@ -354,12 +353,11 @@ public class BlockSimulator {
 
       transactionSimulationResult
           .result()
-          .getPendingBlockAccessList()
+          .getTransactionBlockAccessView()
           .ifPresent(
-              pending ->
+              partial ->
                   blockAccessListBuilder.ifPresent(
-                      bal ->
-                          bal.generateAndApplyPendingBlockAccessList(pending, transactionUpdater)));
+                      bal -> bal.applyPartialBlockAccessView(partial)));
 
       transactionUpdater.commit();
       blockUpdater.commit();
@@ -371,11 +369,11 @@ public class BlockSimulator {
     return blockStateCallSimulationResult;
   }
 
-  private Optional<PendingBlockAccessList> createPendingBlockAccessList(
+  private Optional<AccessLocationTracker> createAccessLocationTracker(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(
-        b -> BlockAccessListBuilder.createPendingBlockAccessList(transactionLocation));
+        b -> BlockAccessListBuilder.createAccessLocationTracker(transactionLocation));
   }
 
   private BlockSimulationResult createFinalBlock(

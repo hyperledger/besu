@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -70,7 +70,7 @@ public class SystemCallProcessor {
       final Address callAddress,
       final BlockProcessingContext context,
       final Bytes inputData,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     WorldUpdater blockUpdater = context.getWorldState().updater();
     WorldUpdater systemCallUpdater = blockUpdater.updater();
     final Account maybeContract = systemCallUpdater.get(callAddress);
@@ -93,7 +93,7 @@ public class SystemCallProcessor {
             context.getBlockHeader(),
             context.getBlockHashLookup(),
             inputData,
-            pendingBlockAccessList);
+            accessLocationTracker);
 
     if (!frame.getCode().isValid()) {
       throw new RuntimeException(
@@ -105,12 +105,12 @@ public class SystemCallProcessor {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
-    pendingBlockAccessList.ifPresent(
+    accessLocationTracker.ifPresent(
         pending ->
             context
                 .getBlockAccessListBuilder()
                 .ifPresent(
-                    bal -> bal.generateAndApplyPendingBlockAccessList(pending, systemCallUpdater)));
+                    bal -> bal.generateAndApplyAccessLocationTracker(pending, systemCallUpdater)));
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       systemCallUpdater.commit();
@@ -138,7 +138,7 @@ public class SystemCallProcessor {
       final ProcessableBlockHeader blockHeader,
       final BlockHashLookup blockHashLookup,
       final Bytes inputData,
-      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
@@ -164,8 +164,8 @@ public class SystemCallProcessor {
             .blockHashLookup(blockHashLookup)
             .code(getCode(worldUpdater.get(callAddress), processor));
 
-    if (pendingBlockAccessList.isPresent()) {
-      builder.eip7928AccessList(pendingBlockAccessList.get());
+    if (accessLocationTracker.isPresent()) {
+      builder.eip7928AccessList(accessLocationTracker.get());
     }
 
     return builder.build();

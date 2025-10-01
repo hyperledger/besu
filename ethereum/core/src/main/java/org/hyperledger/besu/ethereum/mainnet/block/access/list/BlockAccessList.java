@@ -122,81 +122,65 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public static PendingBlockAccessList createPreExecutionAccessList() {
-      return new PendingBlockAccessList(0);
+    public static AccessLocationTracker createPreExecutionAccessList() {
+      return new AccessLocationTracker(0);
     }
 
-    public static PendingBlockAccessList createPostExecutionAccessList(
+    public static AccessLocationTracker createPostExecutionAccessList(
         final int numberOfTransactions) {
-      return new PendingBlockAccessList(numberOfTransactions + 1);
+      return new AccessLocationTracker(numberOfTransactions + 1);
     }
 
-    public static PendingBlockAccessList createPendingBlockAccessList(
-        final int transactionLocation) {
-      return new PendingBlockAccessList(transactionLocation + 1);
+    public static AccessLocationTracker createAccessLocationTracker(final int transactionLocation) {
+      return new AccessLocationTracker(transactionLocation + 1);
     }
 
-    public AccountBuilder getAccountBuilder(final Address address) {
-      return accountChangesBuilders.computeIfAbsent(
-          address,
-          __ -> {
-            return new AccountBuilder(address);
-          });
+    public AccountBuilder getOrCreateAccountBuilder(final Address address) {
+      return accountChangesBuilders.computeIfAbsent(address, __ -> new AccountBuilder(address));
     }
 
-    public void generateAndApplyPendingBlockAccessList(
-        final PendingBlockAccessList pendingBlockAccessList, final WorldUpdater updater) {
-      pendingBlockAccessList.generateBlockAccessList((StackedUpdater<?, ?>) updater);
-      applyPendingBlockAccessList(pendingBlockAccessList);
+    public void generateAndApplyAccessLocationTracker(
+        final AccessLocationTracker accessLocationTracker, final WorldUpdater updater) {
+      applyPartialBlockAccessView(
+          accessLocationTracker.createPartialBlockAccessView((StackedUpdater<?, ?>) updater));
     }
 
-    public void applyPendingBlockAccessList(final PendingBlockAccessList pendingBlockAccessList) {
-      pendingBlockAccessList
-          .getMaybeGeneratedBlockAccessList()
-          .ifPresent(
-              toMerge -> {
-                toMerge
-                    .accountChanges()
+    public void applyPartialBlockAccessView(final PartialBlockAccessView partialBlockAccessView) {
+      partialBlockAccessView
+          .accountChanges()
+          .forEach(
+              account -> {
+                final AccountBuilder builder = getOrCreateAccountBuilder(account.getAddress());
+                account
+                    .getStorageChanges()
                     .forEach(
-                        account -> {
-                          final AccountBuilder builder = getAccountBuilder(account.address);
+                        slotChange -> {
+                          builder.addStorageWrite(
+                              slotChange.slot(),
+                              partialBlockAccessView.getTxIndex(),
+                              slotChange.newValue());
+                        });
 
-                          account
-                              .storageChanges()
-                              .forEach(
-                                  slotChange -> {
-                                    final StorageSlotKey slotKey = slotChange.slot();
-                                    final List<StorageChange> changes = slotChange.changes();
-                                    changes.forEach(
-                                        change ->
-                                            builder.addStorageWrite(
-                                                slotKey, change.txIndex(), change.newValue()));
-                                  });
+                account.getStorageReads().forEach(builder::addStorageRead);
 
-                          account
-                              .storageReads()
-                              .forEach(read -> builder.addStorageRead(read.slot()));
+                account
+                    .getPostBalance()
+                    .ifPresent(
+                        change -> {
+                          builder.addBalanceChange(partialBlockAccessView.getTxIndex(), change);
+                        });
 
-                          account
-                              .balanceChanges()
-                              .forEach(
-                                  balanceChange ->
-                                      builder.addBalanceChange(
-                                          balanceChange.txIndex(), balanceChange.postBalance()));
-
-                          account
-                              .nonceChanges()
-                              .forEach(
-                                  nonceChange ->
-                                      builder.addNonceChange(
-                                          nonceChange.txIndex(), nonceChange.newNonce()));
-
-                          account
-                              .codeChanges()
-                              .forEach(
-                                  codeChange ->
-                                      builder.addCodeChange(
-                                          codeChange.txIndex(), codeChange.newCode()));
+                account
+                    .getNonceChange()
+                    .ifPresent(
+                        change -> {
+                          builder.addNonceChange(partialBlockAccessView.getTxIndex(), change);
+                        });
+                account
+                    .getNewCode()
+                    .ifPresent(
+                        change -> {
+                          builder.addCodeChange(partialBlockAccessView.getTxIndex(), change);
                         });
               });
     }
