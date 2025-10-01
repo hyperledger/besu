@@ -59,14 +59,14 @@ public class PraguePreExecutionProcessor extends CancunPreExecutionProcessor {
   @Override
   public Void process(
       final BlockProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
-    super.process(context, partialBlockAccessList);
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
+    super.process(context, pendingBlockAccessList);
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
     Bytes inputData = context.getBlockHeader().getParentHash();
     try {
-      processor.process(historyStorageAddress, context, inputData, partialBlockAccessList);
+      processor.process(historyStorageAddress, context, inputData, pendingBlockAccessList);
     } catch (InvalidSystemCallAddressException e) {
       // According to EIP-2935, the system call should fail silently if no code exists at the
       // contract address

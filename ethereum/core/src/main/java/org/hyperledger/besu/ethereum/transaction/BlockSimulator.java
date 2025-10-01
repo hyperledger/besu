@@ -325,7 +325,7 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final Optional<PendingBlockAccessList> partialBlockAccessList =
+      final Optional<PendingBlockAccessList> pendingBlockAccessList =
           createPendingBlockAccessList(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
@@ -341,7 +341,7 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              partialBlockAccessList);
+              pendingBlockAccessList);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(

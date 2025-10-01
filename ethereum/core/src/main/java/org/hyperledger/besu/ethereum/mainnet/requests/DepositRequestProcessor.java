@@ -44,7 +44,7 @@ public class DepositRequestProcessor implements RequestProcessor {
   @Override
   public Request process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     if (depositContractAddress.isEmpty()) {
       return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }

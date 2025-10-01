@@ -365,7 +365,7 @@ public class TransactionSimulator {
       final ProcessableBlockHeader processableHeader,
       final WorldUpdater updater,
       final Address miningBeneficiary,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
 
     final long simulationGasCap =
         calculateSimulationGasCap(
@@ -406,7 +406,7 @@ public class TransactionSimulator {
         blobGasPricePerGasSupplier,
         blockHashLookup,
         () -> FAKE_SIGNATURE,
-        partialBlockAccessList);
+        pendingBlockAccessList);
   }
 
   @NotNull
@@ -423,7 +423,7 @@ public class TransactionSimulator {
       final BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasCalculator,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);
@@ -485,7 +485,7 @@ public class TransactionSimulator {
             blockHashLookup,
             transactionValidationParams,
             blobGasPrice,
-            partialBlockAccessList);
+            pendingBlockAccessList);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

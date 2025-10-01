@@ -98,7 +98,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final Optional<PendingBlockAccessList> partialBlockAccessList,
+      final Optional<PendingBlockAccessList> pendingBlockAccessList,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -108,7 +108,7 @@ public class TransactionProcessingResult
         output,
         validationResult,
         Optional.empty(),
-        partialBlockAccessList);
+        pendingBlockAccessList);
   }
 
   public TransactionProcessingResult(

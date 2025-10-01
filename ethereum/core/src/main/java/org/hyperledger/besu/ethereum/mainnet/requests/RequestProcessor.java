@@ -23,7 +23,7 @@ import java.util.Optional;
 public interface RequestProcessor {
   Request process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList);
+      final Optional<PendingBlockAccessList> pendingBlockAccessList);
 
   Optional<String> getContractName();
 

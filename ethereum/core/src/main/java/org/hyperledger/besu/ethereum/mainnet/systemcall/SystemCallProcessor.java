@@ -70,7 +70,7 @@ public class SystemCallProcessor {
       final Address callAddress,
       final BlockProcessingContext context,
       final Bytes inputData,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     WorldUpdater blockUpdater = context.getWorldState().updater();
     WorldUpdater systemCallUpdater = blockUpdater.updater();
     final Account maybeContract = systemCallUpdater.get(callAddress);
@@ -93,7 +93,7 @@ public class SystemCallProcessor {
             context.getBlockHeader(),
             context.getBlockHashLookup(),
             inputData,
-            partialBlockAccessList);
+            pendingBlockAccessList);
 
     if (!frame.getCode().isValid()) {
       throw new RuntimeException(
@@ -105,7 +105,7 @@ public class SystemCallProcessor {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
     }
 
-    partialBlockAccessList.ifPresent(
+    pendingBlockAccessList.ifPresent(
         pending ->
             context
                 .getBlockAccessListBuilder()
@@ -138,7 +138,7 @@ public class SystemCallProcessor {
       final ProcessableBlockHeader blockHeader,
       final BlockHashLookup blockHashLookup,
       final Bytes inputData,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
@@ -164,8 +164,8 @@ public class SystemCallProcessor {
             .blockHashLookup(blockHashLookup)
             .code(getCode(worldUpdater.get(callAddress), processor));
 
-    if (partialBlockAccessList.isPresent()) {
-      builder.eip7928AccessList(partialBlockAccessList.get());
+    if (pendingBlockAccessList.isPresent()) {
+      builder.eip7928AccessList(pendingBlockAccessList.get());
     }
 
     return builder.build();

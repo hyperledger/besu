@@ -42,9 +42,9 @@ public class RequestProcessorCoordinator {
 
   public List<Request> process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     return processors.values().stream()
-        .map(requestProcessor -> requestProcessor.process(context, partialBlockAccessList))
+        .map(requestProcessor -> requestProcessor.process(context, pendingBlockAccessList))
         .toList();
   }
 

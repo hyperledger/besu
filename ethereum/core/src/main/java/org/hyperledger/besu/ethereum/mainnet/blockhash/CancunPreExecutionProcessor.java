@@ -36,22 +36,22 @@ public class CancunPreExecutionProcessor extends FrontierPreExecutionProcessor {
   @Override
   public Void process(
       final BlockProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     ProcessableBlockHeader currentBlockHeader = context.getBlockHeader();
     currentBlockHeader
         .getParentBeaconBlockRoot()
-        .ifPresent(beaconRoot -> process(context, beaconRoot, partialBlockAccessList));
+        .ifPresent(beaconRoot -> process(context, beaconRoot, pendingBlockAccessList));
     return null;
   }
 
   private void process(
       final BlockProcessingContext context,
       final Bytes32 beaconRootsAddress,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
     try {
-      processor.process(BEACON_ROOTS_ADDRESS, context, beaconRootsAddress, partialBlockAccessList);
+      processor.process(BEACON_ROOTS_ADDRESS, context, beaconRootsAddress, pendingBlockAccessList);
     } catch (InvalidSystemCallAddressException e) {
       // According to EIP-4788, fail silently if no code exists
       LOG.warn("Invalid system call address: {}", BEACON_ROOTS_ADDRESS);

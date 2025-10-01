@@ -96,7 +96,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
@@ -126,7 +126,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           transaction,
           location,
           blockHashLookup,
-          partialBlockAccessList);
+          pendingBlockAccessList);
     } else {
       return transactionProcessingResult;
     }

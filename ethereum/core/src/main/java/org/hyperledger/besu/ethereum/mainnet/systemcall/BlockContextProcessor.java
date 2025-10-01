@@ -19,5 +19,5 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.PendingBlockAcces
 import java.util.Optional;
 
 public interface BlockContextProcessor<T, C extends BlockProcessingContext> {
-  T process(final C context, final Optional<PendingBlockAccessList> partialBlockAccessList);
+  T process(final C context, final Optional<PendingBlockAccessList> pendingBlockAccessList);
 }

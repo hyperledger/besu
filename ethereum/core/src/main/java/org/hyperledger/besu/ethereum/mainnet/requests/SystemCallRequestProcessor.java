@@ -49,13 +49,13 @@ public class SystemCallRequestProcessor
   @Override
   public Request process(
       final RequestProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
 
     final SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
     Bytes systemCallOutput =
-        systemCallProcessor.process(callAddress, context, Bytes.EMPTY, partialBlockAccessList);
+        systemCallProcessor.process(callAddress, context, Bytes.EMPTY, pendingBlockAccessList);
 
     return new Request(requestType, systemCallOutput);
   }

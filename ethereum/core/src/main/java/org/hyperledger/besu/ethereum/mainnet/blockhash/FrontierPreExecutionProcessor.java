@@ -29,7 +29,7 @@ public class FrontierPreExecutionProcessor implements PreExecutionProcessor {
   @Override
   public Void process(
       final BlockProcessingContext context,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     // do nothing
     return null;
   }

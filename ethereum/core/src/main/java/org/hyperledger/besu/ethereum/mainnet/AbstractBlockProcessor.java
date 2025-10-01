@@ -226,7 +226,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
-      final Optional<PendingBlockAccessList> partialBlockAccessList =
+      final Optional<PendingBlockAccessList> pendingBlockAccessList =
           createPendingBlockAccessList(blockAccessListBuilder, i);
       TransactionProcessingResult transactionProcessingResult =
           getTransactionProcessingResult(
@@ -238,7 +238,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transaction,
               i,
               blockHashLookup,
-              partialBlockAccessList);
+              pendingBlockAccessList);
 
       applyPendingBlockAccessListToBlockAccessListBuilder(
           transactionProcessingResult.getPendingBlockAccessList(),
@@ -443,7 +443,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<PendingBlockAccessList> partialBlockAccessList) {
+      final Optional<PendingBlockAccessList> pendingBlockAccessList) {
     return transactionProcessor.processTransaction(
         transactionUpdater,
         blockProcessingContext.getBlockHeader(),
@@ -453,7 +453,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockHashLookup,
         TransactionValidationParams.processingBlock(),
         blobGasPrice,
-        partialBlockAccessList);
+        pendingBlockAccessList);
   }
 
   @SuppressWarnings(
