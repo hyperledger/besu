@@ -403,11 +403,11 @@ public final class UInt256 {
    * @return Shifted UInt256 value.
    */
   public UInt256 shiftLeft(final int shift) {
-    if (shift >= length * 32) return ZERO;
+    if (shift >= 256) return ZERO;
     if (shift < 0) return shiftRight(-shift);
     if (shift == 0 || isZero()) return this;
     int nDiffBits = shift - numberOfLeadingZeros(this.limbs, this.length);
-    int size = this.length + (nDiffBits + 31) / 32;
+    int size = Math.min(this.length + (nDiffBits + 31) / 32, N_LIMBS);
     int[] shifted = new int[size];
     shiftLeftInto(shifted, this.limbs, shift);
     return new UInt256(shifted, size);
@@ -576,7 +576,7 @@ public final class UInt256 {
     int limbShift = shift / 32;
     int bitShift = shift % 32;
     int nLimbs = Math.min(x.length, result.length - limbShift);
-    if (shift > 32 * nLimbs) return;
+    if (limbShift >= result.length) return;
     if (bitShift == 0) {
       System.arraycopy(x, 0, result, limbShift, nLimbs);
       return;
@@ -588,7 +588,7 @@ public final class UInt256 {
       result[j] = (x[i] << bitShift) | carry;
       carry = x[i] >>> (32 - bitShift);
     }
-    if (carry != 0) result[j] = carry; // last carry
+    if (carry != 0 && j < result.length) result[j] = carry; // last carry
   }
 
   private static void shiftRightInto(final int[] result, final int[] x, final int shift) {
@@ -596,7 +596,7 @@ public final class UInt256 {
     int bitShift = shift % 32;
     int nLimbs = Math.min(x.length - limbShift, result.length);
 
-    if (shift > 32 * nLimbs) return;
+    if (limbShift >= x.length) return;
     if (bitShift == 0) {
       System.arraycopy(x, limbShift, result, 0, nLimbs);
       return;
@@ -686,7 +686,8 @@ public final class UInt256 {
     int n = modulus.length - limbShift;
     if (n == 0) return new int[0];
     if (n == 1) {
-      if (dividend.length == 1) return (new int[] {dividend[0] % modulus[0]});
+      if (dividend.length == 1)
+        return (new int[] {Integer.remainderUnsigned(dividend[0], modulus[0])});
       long d = modulus[0] & MASK_L;
       long rem = 0;
       // Process from most significant limb downwards
