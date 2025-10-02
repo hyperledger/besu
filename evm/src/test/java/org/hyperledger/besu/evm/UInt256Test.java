@@ -65,17 +65,17 @@ public class UInt256Test {
 
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {-2147483648};
+    expectedLimbs = new int[] {-2147483648, 0, 0, 0, 0, 0, 0, 0};
     assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536};
+    expectedLimbs = new int[] {1 + 256 + 65536, 0, 0, 0, 0, 0, 0, 0};
     assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {1, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 16777216};
+    expectedLimbs = new int[] {1 + 256 + 65536, 16777216, 0, 0, 0, 0, 0, 0};
     assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -93,7 +93,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257, 0};
     assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
   }
 
@@ -228,10 +228,21 @@ public class UInt256Test {
       BigInteger aInt = new BigInteger(1, a);
       BigInteger bInt = new BigInteger(1, b);
       int comp = aInt.compareTo(bInt);
-      BigInteger big_number = (comp >= 0) ? aInt : bInt;
-      BigInteger big_modulus = (comp >= 0) ? bInt : aInt;
-      UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
-      UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+      BigInteger big_number;
+      BigInteger big_modulus;
+      UInt256 number;
+      UInt256 modulus;
+      if (comp >= 0) {
+        big_number = aInt;
+        number = UInt256.fromBytesBE(a);
+        big_modulus = bInt;
+        modulus = UInt256.fromBytesBE(b);
+      } else {
+        big_number = bInt;
+        number = UInt256.fromBytesBE(b);
+        big_modulus = aInt;
+        modulus = UInt256.fromBytesBE(a);
+      }
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
       Bytes32 expected =
           BigInteger.ZERO.compareTo(big_modulus) == 0
@@ -271,9 +282,9 @@ public class UInt256Test {
       BigInteger aInt = new BigInteger(1, aArray);
       BigInteger bInt = new BigInteger(1, bArray);
       BigInteger cInt = new BigInteger(1, cArray);
-      UInt256 a = UInt256.fromBytesBE(aInt.toByteArray());
-      UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
-      UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
+      UInt256 a = UInt256.fromBytesBE(aArray);
+      UInt256 b = UInt256.fromBytesBE(bArray);
+      UInt256 c = UInt256.fromBytesBE(cArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.addMod(b, c).toBytesBE()));
       Bytes32 expected =
           BigInteger.ZERO.compareTo(cInt) == 0
@@ -299,9 +310,9 @@ public class UInt256Test {
       BigInteger aInt = new BigInteger(1, aArray);
       BigInteger bInt = new BigInteger(1, bArray);
       BigInteger cInt = new BigInteger(1, cArray);
-      UInt256 a = UInt256.fromBytesBE(aInt.toByteArray());
-      UInt256 b = UInt256.fromBytesBE(bInt.toByteArray());
-      UInt256 c = UInt256.fromBytesBE(cInt.toByteArray());
+      UInt256 a = UInt256.fromBytesBE(aArray);
+      UInt256 b = UInt256.fromBytesBE(bArray);
+      UInt256 c = UInt256.fromBytesBE(cArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, c).toBytesBE()));
       Bytes32 expected =
           BigInteger.ZERO.compareTo(cInt) == 0
@@ -317,14 +328,21 @@ public class UInt256Test {
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
-      final byte[] aArray = new byte[aSize];
-      final byte[] bArray = new byte[bSize];
+      boolean neg = random.nextBoolean();
+      byte[] aArray = new byte[aSize];
+      byte[] bArray = new byte[bSize];
       random.nextBytes(aArray);
       random.nextBytes(bArray);
-      BigInteger aInt = new BigInteger(aArray);
-      BigInteger bInt = new BigInteger(bArray);
-      UInt256 a = UInt256.fromSignedBytesBE(aArray);
-      UInt256 b = UInt256.fromSignedBytesBE(bArray);
+      if ((aSize < 32) && (neg)) {
+        byte[] tmp = new byte[32];
+        Arrays.fill(tmp, (byte) 0xFF);
+        System.arraycopy(aArray, 0, tmp, 32 - aArray.length, aArray.length);
+        aArray = tmp;
+      }
+      UInt256 a = UInt256.fromBytesBE(aArray);
+      UInt256 b = UInt256.fromBytesBE(bArray);
+      BigInteger aInt = a.isNegative() ? new BigInteger(aArray) : new BigInteger(1, aArray);
+      BigInteger bInt = b.isNegative() ? new BigInteger(bArray) : new BigInteger(1, bArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.signedMod(b).toBytesBE()));
       Bytes32 expected;
       BigInteger rem = BigInteger.ZERO;
