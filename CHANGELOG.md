@@ -15,6 +15,27 @@
   - Fast Sync
 
 ### Additions and Improvements
+
+### Bug fixes
+
+## 25.10.0-RC2
+This RC is a pre-release, recommended update for Holesky and Sepolia users for the Fusaka hardfork.
+This updates a dependency used for PeerDAS.
+This RC is still pending burn in for mainnet.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
 - Performance improvements to EQ opcode [#9229](https://github.com/hyperledger/besu/pull/9229)
 - Update jc-kzg dependency [#9261](https://github.com/hyperledger/besu/pull/9261)
 
