@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -104,6 +105,12 @@ public class AccessLocationTracker implements Eip7928AccessList {
           final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
           accountBuilder.addStorageRead(slotKeyObj);
         }
+        if (stackedUpdater.getDeletedAccountAddresses().contains(address)) {
+          final Optional<Account> originalAccount = findOriginalAccount(stackedUpdater, address);
+          if (originalAccount.isPresent() && !originalAccount.get().getBalance().isZero()) {
+            accountBuilder.withPostBalance(Wei.ZERO.toBytes());
+          }
+        }
         continue;
       }
 
@@ -179,5 +186,15 @@ public class AccessLocationTracker implements Eip7928AccessList {
       }
     }
     return builder.build();
+  }
+
+  private Optional<Account> findOriginalAccount(final WorldUpdater updater, final Address address) {
+    final Account account = updater.get(address);
+    if (account != null) {
+      return Optional.of(account);
+    }
+    return updater
+        .parentUpdater()
+        .flatMap(parentUpdater -> findOriginalAccount(parentUpdater, address));
   }
 }
