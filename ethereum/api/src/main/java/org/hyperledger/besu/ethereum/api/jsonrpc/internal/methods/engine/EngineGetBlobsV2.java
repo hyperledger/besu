@@ -40,7 +40,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -56,7 +55,6 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   private final Counter hitCounter;
   private final Counter missCounter;
   private final Optional<Long> osakaMilestone;
-  private final Supplier<Long> timestampProvider;
 
   public EngineGetBlobsV2(
       final Vertx vertx,
@@ -64,8 +62,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
       final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
       final TransactionPool transactionPool,
-      final MetricsSystem metricsSystem,
-      final Supplier<Long> timestampProvider) {
+      final MetricsSystem metricsSystem) {
     super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
     // create counters
@@ -90,7 +87,6 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
             "execution_engine_getblobs_miss_total",
             "Number of calls to engine_getBlobsV2 that returned zero blobs");
     this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
-    this.timestampProvider = timestampProvider;
   }
 
   @Override
@@ -100,8 +96,8 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(timestampProvider.get());
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
     }

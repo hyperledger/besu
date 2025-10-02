@@ -34,7 +34,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -47,6 +49,7 @@ import io.vertx.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -54,19 +57,19 @@ import org.mockito.quality.Strictness;
 @ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
+  @Mock private BlockHeader blockHeader;
+  @Mock private MutableBlockchain blockchain;
 
   private TransactionPool transactionPool;
   private EngineGetBlobsV2 method;
-  private Long timestamp = osakaHardfork.milestone();
-
-  private Long timestampProvider() {
-    return timestamp;
-  }
 
   @BeforeEach
   public void setup() {
     transactionPool = mock(TransactionPool.class);
     ProtocolContext protocolContext = mock(ProtocolContext.class);
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     method =
         new EngineGetBlobsV2(
             mock(Vertx.class),
@@ -74,8 +77,7 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
             protocolSchedule,
             mock(EngineCallListener.class),
             transactionPool,
-            new NoOpMetricsSystem(),
-            this::timestampProvider);
+            new NoOpMetricsSystem());
   }
 
   @Test
@@ -149,7 +151,7 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
 
   @Test
   void shouldFailWhenOsakaNotActive() {
-    timestamp = osakaHardfork.milestone() - 1;
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone() - 1);
     var response = method.syncResponse(buildRequestContext());
     assertThat(fromErrorResp(response).getCode())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
@@ -157,7 +159,7 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
 
   @Test
   void shouldSucceedWhenOsakaActive() {
-    timestamp = osakaHardfork.milestone();
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
     var response = method.syncResponse(buildRequestContext());
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
   }
