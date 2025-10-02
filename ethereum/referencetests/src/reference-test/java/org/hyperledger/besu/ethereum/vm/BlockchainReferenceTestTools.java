@@ -208,7 +208,7 @@ public class BlockchainReferenceTestTools {
     miningConfiguration.setMinPriorityFeePerGas(Wei.ZERO);
     miningConfiguration.setTargetGasLimit(blockFromReference.getHeader().getGasLimit());
 
-    final List<Transaction> transactions = List.copyOf(blockFromReference.getBody().getTransactions());
+    final List<Transaction> transactions = blockFromReference.getBody().getTransactions();
     final Optional<List<Withdrawal>> withdrawals = blockFromReference.getBody().getWithdrawals();
     final List<BlockHeader> ommers = blockFromReference.getBody().getOmmers();
     final BlockHeader parentHeader =
