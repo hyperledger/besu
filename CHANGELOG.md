@@ -16,6 +16,7 @@
 
 ### Additions and Improvements
 - Performance improvements to EQ opcode [#9229](https://github.com/hyperledger/besu/pull/9229)
+- Update jc-kzg dependency [#9261](https://github.com/hyperledger/besu/pull/9261)
 
 ### Bug fixes
 
