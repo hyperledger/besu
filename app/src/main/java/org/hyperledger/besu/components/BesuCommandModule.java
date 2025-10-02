@@ -28,6 +28,9 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.core.rlp.BlockBodyRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.BlockHeaderRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.TransactionReceiptRlpEncoder;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -64,7 +67,10 @@ public class BesuCommandModule {
                     blockchain,
                     new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory()),
                     new Era1AccumulatorFactory(),
-                    new Era1BlockIndexConverter()),
+                    new Era1BlockIndexConverter(),
+                    new BlockHeaderRlpEncoder(),
+                    new BlockBodyRlpEncoder(),
+                    new TransactionReceiptRlpEncoder()),
             new RunnerBuilder(),
             new BesuController.Builder(),
             new BesuPluginContextImpl(),

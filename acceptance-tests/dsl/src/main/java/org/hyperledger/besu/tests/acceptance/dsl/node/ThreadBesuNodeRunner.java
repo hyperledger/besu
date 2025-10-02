@@ -45,6 +45,9 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
+import org.hyperledger.besu.ethereum.core.rlp.BlockBodyRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.BlockHeaderRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.TransactionReceiptRlpEncoder;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
@@ -721,7 +724,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                       blockchain,
                       new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory()),
                       new Era1AccumulatorFactory(),
-                      new Era1BlockIndexConverter()),
+                      new Era1BlockIndexConverter(),
+                      new BlockHeaderRlpEncoder(),
+                      new BlockBodyRlpEncoder(),
+                      new TransactionReceiptRlpEncoder()),
               new RunnerBuilder(),
               new BesuController.Builder(),
               pluginContext,
