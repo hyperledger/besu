@@ -208,6 +208,17 @@ configure(allprojects - project(':platform')) {
     // for validation annotations like @NotNull
     implementation 'jakarta.validation:jakarta.validation-api'
 
+    // Remove legacy org.apache.tuweni pulled by discovery only (we use io.consensys.tuweni)
+    components {
+      withModule("tech.pegasys.discovery:discovery") {
+        allVariants {
+          withDependencies {
+            removeAll { it.group == "org.apache.tuweni" }
+          }
+        }
+      }
+    }
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
