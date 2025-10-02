@@ -180,8 +180,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   protocolSchedule,
                   engineQosTimer,
-                  transactionPool,
-                  System::currentTimeMillis)));
+                  transactionPool)));
       if (protocolSchedule.milestoneFor(CANCUN).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV3(
@@ -230,8 +229,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 protocolSchedule,
                 engineQosTimer,
                 transactionPool,
-                metricsSystem,
-                System::currentTimeMillis));
+                metricsSystem));
       }
 
       return mapOf(executionEngineApisSupported);
