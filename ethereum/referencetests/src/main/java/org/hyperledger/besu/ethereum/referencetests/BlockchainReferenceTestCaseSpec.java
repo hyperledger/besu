@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -69,8 +69,9 @@ public class BlockchainReferenceTestCaseSpec {
   private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+      final Map<String, ReferenceTestWorldState.AccountMock> accounts,
+      final MutableBlockchain blockchain) {
+    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive(blockchain);
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -104,8 +105,9 @@ public class BlockchainReferenceTestCaseSpec {
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
+    this.worldStateArchive = buildWorldStateArchive(accounts, blockchain);
+    this.worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
     this.sealEngine = sealEngine;
     this.protocolContext =
         new ProtocolContext.Builder()
