@@ -312,7 +312,7 @@ public class PeerDiscoveryTestHelper {
 
       final ForkIdManager mockForkIdManager = mock(ForkIdManager.class);
       final ForkId forkId = new ForkId(Bytes.EMPTY, Bytes.EMPTY);
-      when(mockForkIdManager.getForkIdForChainHead()).thenReturn(forkId);
+      when(mockForkIdManager.getLatestForkId()).thenReturn(forkId);
       when(mockForkIdManager.peerCheck(forkId)).thenReturn(true);
       final RlpxAgent rlpxAgent = mock(RlpxAgent.class);
       when(rlpxAgent.connect(any()))
