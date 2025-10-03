@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -433,6 +434,9 @@ public class MainnetTransactionProcessor {
               gasPriceBelowBaseFee ? (a, b, c) -> Wei.ZERO : coinbaseFeePriceCalculator;
         } else {
           if (gasPriceBelowBaseFee) {
+            final Optional<PartialBlockAccessView> partialBlockAccessView =
+                accessLocationTracker.map(
+                    tracker -> tracker.createPartialBlockAccessView(worldState));
             return TransactionProcessingResult.failed(
                 gasUsedByTransaction,
                 refundedGas,
@@ -440,7 +444,8 @@ public class MainnetTransactionProcessor {
                     TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                     "transaction price must be greater than base fee"),
                 Optional.empty(),
-                Optional.empty());
+                Optional.empty(),
+                partialBlockAccessView);
           }
           coinbaseCalculator = coinbaseFeePriceCalculator;
         }
@@ -477,13 +482,16 @@ public class MainnetTransactionProcessor {
         worldState.clearAccountsThatAreEmpty();
       }
 
+      final Optional<PartialBlockAccessView> partialBlockAccessView =
+          accessLocationTracker.map(tracker -> tracker.createPartialBlockAccessView(worldState));
+
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
-            accessLocationTracker.map(tracker -> tracker.createPartialBlockAccessView(worldState)),
+            partialBlockAccessView,
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
@@ -503,7 +511,8 @@ public class MainnetTransactionProcessor {
             refundedGas,
             validationResult,
             initialFrame.getRevertReason(),
-            initialFrame.getExceptionalHaltReason());
+            initialFrame.getExceptionalHaltReason(),
+            partialBlockAccessView);
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
