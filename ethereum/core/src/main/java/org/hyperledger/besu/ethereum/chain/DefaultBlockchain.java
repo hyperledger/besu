@@ -1134,6 +1134,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void removeAllBlockAddedObservers() {
+    blockAddedObservers.unsubscribeAll();
+  }
+
+  @Override
   public boolean removeObserver(final long observerId) {
     return blockAddedObservers.unsubscribe(observerId);
   }
