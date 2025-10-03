@@ -247,11 +247,15 @@ public class BlockchainReferenceTestTools {
   private static final class BlockCreationFixture implements AutoCloseable {
     private final EthScheduler ethScheduler;
     private final TransactionPool transactionPool;
+    private final MutableBlockchain blockchain;
 
     private BlockCreationFixture(
-        final EthScheduler ethScheduler, final TransactionPool transactionPool) {
+        final EthScheduler ethScheduler,
+        final TransactionPool transactionPool,
+        final MutableBlockchain blockchain) {
       this.ethScheduler = ethScheduler;
       this.transactionPool = transactionPool;
+      this.blockchain = blockchain;
     }
 
     static BlockCreationFixture create(
@@ -292,7 +296,7 @@ public class BlockchainReferenceTestTools {
               new BlobCache(),
               MiningConfiguration.newDefault());
 
-      return new BlockCreationFixture(ethScheduler, transactionPool);
+      return new BlockCreationFixture(ethScheduler, transactionPool, blockchain);
     }
 
     TransactionPool transactionPool() {
@@ -306,6 +310,7 @@ public class BlockchainReferenceTestTools {
     @Override
     public void close() {
       ethScheduler.stop();
+      blockchain.removeAllBlockAddedObservers();
     }
   }
 }
