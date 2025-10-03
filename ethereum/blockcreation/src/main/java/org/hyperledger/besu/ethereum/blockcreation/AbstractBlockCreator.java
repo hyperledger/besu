@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -177,7 +178,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         parentHeader);
   }
 
-  protected BlockCreationResult createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
@@ -194,7 +195,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
       final boolean includeBlockAccessList =
-          newProtocolSpec.getBlockAccessListFactory().isPresent();
+          newProtocolSpec
+              .getBlockAccessListFactory()
+              .filter(BlockAccessListFactory::isForkActivated)
+              .isPresent();
 
       final ProcessableBlockHeader processableBlockHeader =
           createPending(

@@ -237,8 +237,9 @@ public interface BesuEvents extends BesuService {
      * Invoked when a transaction is dropped from the node.
      *
      * @param transaction the dropped transaction.
+     * @param reason the reason for dropping the transaction.
      */
-    void onTransactionDropped(Transaction transaction);
+    void onTransactionDropped(Transaction transaction, String reason);
   }
 
   /** The listener interface for receiving sync status events. */

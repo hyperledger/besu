@@ -44,6 +44,20 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
+  /**
+   * Returns true if the node is considered to be in sync with the network.
+   *
+   * @return true if the node is in sync
+   */
+  boolean isInSync();
+
+  /**
+   * Returns the best known block height of the network.
+   *
+   * @return the best known block height of the network, or empty if not known
+   */
+  Optional<Long> getBestPeerChainHead();
+
   boolean resyncWorldState();
 
   boolean healWorldState(final Optional<Address> maybeAccountToRepair, final Bytes location);

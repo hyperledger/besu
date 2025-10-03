@@ -171,4 +171,24 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", methodName, new Object[] {pid.serialize()})));
   }
+
+  protected PayloadIdentifier setupPayload(final long timestamp) {
+    PayloadIdentifier payloadIdentifier =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO,
+            timestamp,
+            Bytes32.random(),
+            Address.fromHexString("0x42"),
+            Optional.empty(),
+            Optional.empty());
+    final BlockHeader mockHeader = new BlockHeaderTestFixture().timestamp(timestamp).buildHeader();
+    final Block mockBlock =
+        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    BlockWithReceipts mockBlockWithReceipts =
+        new BlockWithReceipts(mockBlock, Collections.emptyList());
+    final PayloadWrapper mockPayload =
+        new PayloadWrapper(payloadIdentifier, mockBlockWithReceipts, Optional.empty());
+    when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(mockPayload));
+    return payloadIdentifier;
+  }
 }

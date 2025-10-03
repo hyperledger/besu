@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,26 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-pragma solidity ^0.5.0;
+package org.hyperledger.besu.consensus.qbft.core.types;
 
-contract Migrations {
-  address public owner;
-  uint public last_completed_migration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
+/** Represents a QBFT message */
+public interface QbftMessage {
 
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  function setCompleted(uint completed) public restricted {
-    last_completed_migration = completed;
-  }
-
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
-  }
+  /**
+   * Gets message data.
+   *
+   * @return the message data
+   */
+  MessageData getData();
 }

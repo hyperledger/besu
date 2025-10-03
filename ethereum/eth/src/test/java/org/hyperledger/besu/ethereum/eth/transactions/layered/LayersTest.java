@@ -33,7 +33,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP2;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -185,6 +188,12 @@ public class LayersTest extends BaseTransactionPoolTest {
   @ParameterizedTest
   @MethodSource("providerConfirmedEIP7702")
   void confirmedEIP7702(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
+  @ParameterizedTest
+  @MethodSource("providerSenderBalance")
+  void senderBalance(final Scenario scenario) {
     assertScenario(scenario);
   }
 
@@ -1374,6 +1383,34 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSenders()));
   }
 
+  static Stream<Arguments> providerSenderBalance() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("not enough balance not added to prioritized")
+                .hasSenderEnoughBalance(S1, false)
+                .addForSender(S1, 0)
+                .expectedReadyForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("first enough balance then not")
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                // sender hasn't enough balance for 2nd tx, so it goes to ready
+                .hasSenderEnoughBalance(S1, false)
+                .addForSender(S1, 1)
+                .expectedReadyForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("first no balance then yes")
+                // sender hasn't enough balance for tx, so it goes to ready
+                .hasSenderEnoughBalance(S1, false)
+                .addForSender(S1, 0)
+                .expectedReadyForSender(S1, 0)
+                // now sender has balance and new block is imported and the tx is promoted
+                .hasSenderEnoughBalance(S1, true)
+                .confirmedForSenders()
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedReadyForSenders()));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(BASE_FEE));
@@ -1399,7 +1436,6 @@ public class LayersTest extends BaseTransactionPoolTest {
     final ReadyTransactions ready;
     final AbstractPrioritizedTransactions prio;
     final LayeredPendingTransactions pending;
-
     final NotificationsChecker notificationsChecker = new NotificationsChecker();
     final List<Runnable> actions = new ArrayList<>();
     List<PendingTransaction> lastExpectedPrioritized = new ArrayList<>();
@@ -1438,6 +1474,7 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.poolConfig = poolConfig;
 
       final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+      when(senderBalanceChecker.hasEnoughBalanceFor(any())).thenReturn(true);
 
       this.dropped = new EvictCollectorLayer(txPoolMetrics);
       final EthScheduler ethScheduler = new DeterministicEthScheduler();
@@ -1469,7 +1506,8 @@ public class LayersTest extends BaseTransactionPoolTest {
               (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
               FeeMarket.london(0L),
               new BlobCache(),
-              MiningConfiguration.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
+              MiningConfiguration.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE),
+              senderBalanceChecker);
 
       this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
 
@@ -2018,6 +2056,22 @@ public class LayersTest extends BaseTransactionPoolTest {
             assertThat(prio.getBySender())
                 .flatExtracting(SenderPendingTransactions::pendingTransactions)
                 .containsExactlyElementsOf(expectedSelected);
+          });
+      return this;
+    }
+
+    public Scenario hasSenderEnoughBalance(final Sender sender, final boolean hasEnoughBalance) {
+      actions.add(
+          () -> {
+            reset(senderBalanceChecker);
+            when(senderBalanceChecker.hasEnoughBalanceFor(
+                    argThat(
+                        pendingTransaction ->
+                            pendingTransaction
+                                .getTransaction()
+                                .getSender()
+                                .equals(sender.address))))
+                .thenReturn(hasEnoughBalance);
           });
       return this;
     }

@@ -61,7 +61,7 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public Optional<Transaction> getByHash(final Hash transactionHash) {
+  public Optional<PendingTransaction> getByHash(final Hash transactionHash) {
     return Optional.empty();
   }
 

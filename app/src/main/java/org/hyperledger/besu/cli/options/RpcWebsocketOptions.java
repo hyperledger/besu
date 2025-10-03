@@ -343,11 +343,11 @@ public class RpcWebsocketOptions {
    *
    * @param hostsAllowlist List of allowed hosts
    * @param defaultHostAddress Default host address
-   * @param wsTimoutSec WebSocket timeout in seconds
+   * @param wsTimeoutSec WebSocket timeout in seconds
    * @return WebSocketConfiguration instance
    */
   public WebSocketConfiguration webSocketConfiguration(
-      final List<String> hostsAllowlist, final String defaultHostAddress, final Long wsTimoutSec) {
+      final List<String> hostsAllowlist, final String defaultHostAddress, final Long wsTimeoutSec) {
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(
@@ -363,7 +363,7 @@ public class RpcWebsocketOptions {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
-    webSocketConfiguration.setTimeoutSec(wsTimoutSec);
+    webSocketConfiguration.setTimeoutSec(wsTimeoutSec);
     webSocketConfiguration.setSslEnabled(isRpcWsSslEnabled);
     webSocketConfiguration.setKeyStorePath(rpcWsKeyStoreFile);
     webSocketConfiguration.setKeyStoreType(rpcWsKeyStoreType);

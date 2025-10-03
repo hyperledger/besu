@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
@@ -124,6 +125,15 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
               + " To be only used on PoA networks, for other networks see block-txs-selection-max-time."
               + " (default: ${DEFAULT-VALUE})")
   private PositiveNumber poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+
+  @Option(
+      names = {"--plugin-block-txs-selection-max-time"},
+      converter = PositiveNumberConverter.class,
+      description =
+          "Specifies the maximum time that plugins could spent selecting transactions to be included in the block, as a percentage of the max block selection time."
+              + " (default: ${DEFAULT-VALUE})")
+  private PositiveNumber pluginBlockTxsSelectionMaxTime =
+      DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
@@ -262,21 +272,19 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
-    if (genesisConfigOptions.isPoa()) {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--block-txs-selection-max-time can't be used with PoA networks,"
-              + " see poa-block-txs-selection-max-time instead",
-          false,
-          singletonList("--block-txs-selection-max-time"));
-    } else {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--poa-block-txs-selection-max-time can be only used with PoA networks,"
-              + " see --block-txs-selection-max-time instead",
-          false,
-          singletonList("--poa-block-txs-selection-max-time"));
-    }
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--block-txs-selection-max-time can only be used on networks with PoS support in the genesis file,"
+            + " see --poa-block-txs-selection-max-time instead",
+        genesisConfigOptions.hasPos(),
+        singletonList("--block-txs-selection-max-time"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--poa-block-txs-selection-max-time can be only used with PoA networks,"
+            + " see --block-txs-selection-max-time instead",
+        genesisConfigOptions.isPoa(),
+        singletonList("--poa-block-txs-selection-max-time"));
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
@@ -292,6 +300,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
+    miningOptions.pluginBlockTxsSelectionMaxTime =
+        miningConfiguration.getPluginBlockTxsSelectionMaxTime();
 
     miningOptions.unstableOptions.remoteSealersLimit =
         miningConfiguration.getUnstable().getRemoteSealersLimit();
@@ -337,6 +347,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         .mutableInitValues(updatableInitValuesBuilder.build())
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
+        .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
         .unstable(
             ImmutableMiningConfiguration.Unstable.builder()
                 .remoteSealersLimit(unstableOptions.remoteSealersLimit)

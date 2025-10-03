@@ -49,6 +49,11 @@ import java.util.stream.IntStream;
 import com.google.common.collect.Iterables;
 
 public class SparseTransactions extends AbstractTransactionsLayer {
+  private static final String SENDER_MIXED_PRIORITY_ERROR =
+      "Sender %s cannot simultaneously have and not have priority."
+          + " Probably you need to set --tx-pool-no-local-priority=true and/or configure"
+          + " the list of priority senders with --tx-pool-priority-senders";
+
   /**
    * Order sparse tx by priority flag and sequence asc, so that we pick for eviction txs that have
    * no priority and with the lowest sequence number (oldest) first.
@@ -484,14 +489,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     public void add(final Address sender, final boolean hasPriority) {
       if (hasPriority) {
         if (standardSenders.contains(sender)) {
-          throw new IllegalStateException(
-              "Sender " + sender + " cannot simultaneously have and not have priority");
+          throw new IllegalStateException(SENDER_MIXED_PRIORITY_ERROR.formatted(sender));
         }
         prioritySenders.add(sender);
       } else {
         if (prioritySenders.contains(sender)) {
-          throw new IllegalStateException(
-              "Sender " + sender + " cannot simultaneously have and not have priority");
+          throw new IllegalStateException(SENDER_MIXED_PRIORITY_ERROR.formatted(sender));
         }
         standardSenders.add(sender);
       }

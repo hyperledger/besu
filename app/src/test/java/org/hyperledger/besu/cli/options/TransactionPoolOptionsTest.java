@@ -456,6 +456,33 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void balanceCheckWorks() {
+    final boolean balanceCheck = true;
+    internalTestSuccess(
+        config -> assertThat(config.getEnableBalanceCheck()).isEqualTo(balanceCheck),
+        "--tx-pool-enable-balance-check",
+        Boolean.toString(balanceCheck));
+  }
+
+  @Test
+  public void balanceCheckWorksConfigFile() throws IOException {
+    final boolean balanceCheck = true;
+    final Path tempConfigFilePath =
+        createTempFile(
+            "config",
+            String.format(
+                """
+              tx-pool-enable-balance-check=%s
+              """,
+                balanceCheck));
+
+    internalTestSuccess(
+        config -> assertThat(config.getEnableBalanceCheck()).isEqualTo(balanceCheck),
+        "--config-file",
+        tempConfigFilePath.toString());
+  }
+
+  @Test
   public void defaultForgetEvictedTxsWithSequencedIsTrue() {
     internalTestSuccess(
         config -> assertThat(config.getUnstable().getPeerTrackerForgetEvictedTxs()).isTrue(),
