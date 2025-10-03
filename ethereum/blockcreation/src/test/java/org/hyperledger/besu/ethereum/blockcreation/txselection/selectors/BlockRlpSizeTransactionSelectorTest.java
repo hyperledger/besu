@@ -37,8 +37,6 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +46,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockRlpSizeTransactionSelectorTest {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.generateKeyPair();
 
   @Mock(answer = RETURNS_DEEP_STUBS)
   BlockSelectionContext blockSelectionContext;
