@@ -18,10 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -75,6 +78,71 @@ public class UInt256ParameterisedTest {
     cases.addAll(generateRandomUnsigned(RANDOM_TEST_COUNT));
 
     return cases.stream();
+  }
+
+  /** Provides unary test cases with signed interpretation (for SMod tests). */
+  static Stream<BigInteger> provideSignedUnaryTestCases() {
+    List<BigInteger> cases = new ArrayList<>();
+
+    // Basic values
+    cases.add(BigInteger.ZERO);
+    cases.add(BigInteger.ONE);
+    cases.add(BigInteger.TWO);
+    cases.add(BigInteger.valueOf(3));
+
+    // Boundary values
+    cases.add(BigInteger.valueOf(Short.MAX_VALUE));
+    cases.add(BigInteger.valueOf(0xFFFF)); // UnsignedShort.MAX_VALUE
+    cases.add(BigInteger.valueOf(Integer.MAX_VALUE));
+    cases.add(BigInteger.valueOf(0xFFFFFFFFL)); // UnsignedInteger.MAX_VALUE
+    cases.add(BigInteger.valueOf(Long.MAX_VALUE));
+
+    // Critical test cases: Values with MSB of top limb set, but positive in 256-bit space
+    // These expose bugs in isNegative() when stored in fewer than 8 limbs
+    cases.add(new BigInteger("80000000", 16)); // 32-bit: bit 31 set, but bit 255 clear
+    cases.add(new BigInteger("80000001", 16)); // 32-bit: bit 31 set, but bit 255 clear
+    cases.add(new BigInteger("8000000000000000", 16)); // 64-bit: bit 63 set, but bit 255 clear
+    cases.add(new BigInteger("8000000000000001", 16)); // 64-bit: bit 63 set, but bit 255 clear
+
+    // Large values - unsigned interpretation
+    cases.add(new BigInteger("FFFFFFFFFFFFFFFF", 16)); // UnsignedLong.MAX_VALUE
+    cases.add(new BigInteger("080000000000000008000000000000001", 16));
+    cases.add(
+        new BigInteger("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe", 16));
+    cases.add(
+        new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
+    cases.add(TWO_TO_64);
+    cases.add(TWO_TO_128);
+    cases.add(TWO_TO_192);
+    cases.add(TWO_TO_128.subtract(BigInteger.ONE)); // UInt128Max
+    cases.add(TWO_TO_192.subtract(BigInteger.ONE)); // UInt192Max
+
+    // Int256 boundaries
+    BigInteger INT256_MAX = BigInteger.ONE.shiftLeft(255).subtract(BigInteger.ONE); // 2^255 - 1
+    BigInteger INT256_MIN = INT256_MAX.negate(); // -(2^255 - 1)
+    cases.add(INT256_MAX);
+    cases.add(INT256_MIN);
+
+    cases.add(UINT256_MAX);
+
+    // Add random signed values
+    cases.addAll(generateRandomSigned(RANDOM_TEST_COUNT));
+
+    return cases.stream();
+  }
+
+  /** Provides signed binary test cases (pairs of BigInteger values for signed operations). */
+  static Stream<Arguments> provideSignedBinaryTestCases() {
+    List<BigInteger> unary = provideSignedUnaryTestCases().toList();
+    List<Arguments> binary = new ArrayList<>();
+
+    for (BigInteger a : unary) {
+      for (BigInteger b : unary) {
+        binary.add(Arguments.of(a, b));
+      }
+    }
+
+    return binary.stream();
   }
 
   /** Provides binary test cases (pairs of BigInteger values). */
@@ -185,6 +253,21 @@ public class UInt256ParameterisedTest {
     return randoms;
   }
 
+  /** Generates random signed 256-bit BigInteger values (can be positive or negative). */
+  private static List<BigInteger> generateRandomSigned(final int count) {
+    List<BigInteger> randoms = new ArrayList<>();
+    Random rand = new Random(12345); // Same seed as unsigned for consistency
+    byte[] data = new byte[32]; // 256 bits = 32 bytes
+
+    for (int i = 0; i < count; i++) {
+      rand.nextBytes(data);
+      // Don't clear sign bit - allow negative values
+      randoms.add(new BigInteger(data));
+    }
+
+    return randoms;
+  }
+
   /** Wraps result to 256-bit range. */
   private static BigInteger wrap256(final BigInteger value) {
     return value.mod(TWO_TO_256);
@@ -232,6 +315,49 @@ public class UInt256ParameterisedTest {
     UInt256 result = uint256a.mod(uint256b);
 
     assertThat(toBigInteger(result)).isEqualTo(expected);
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideSignedBinaryTestCases")
+  void testSMod(final BigInteger a, final BigInteger b) {
+    if (b.equals(BigInteger.ZERO)) {
+      return; // Skip division by zero
+    }
+
+    Bytes32 expected;
+    BigInteger rem;
+    if (BigInteger.ZERO.compareTo(b) == 0) expected = Bytes32.ZERO;
+    else {
+      rem = a.abs().mod(b.abs());
+      if ((a.compareTo(BigInteger.ZERO) < 0) && (rem.compareTo(BigInteger.ZERO) != 0)) {
+        rem = rem.negate();
+        expected = bigIntTo32B(rem, -1);
+      } else {
+        expected = bigIntTo32B(rem, 1);
+      }
+    }
+
+    UInt256 uint256a = UInt256.fromSignedBytesBE(a.toByteArray());
+    UInt256 uint256b = UInt256.fromSignedBytesBE(b.toByteArray());
+    Bytes32 result = Bytes32.leftPad(Bytes.wrap(uint256a.signedMod(uint256b).toBytesBE()));
+
+    assertThat(result).as("testSMod(%s, %s)", a, b).isEqualTo(expected);
+  }
+
+  private Bytes32 bigIntTo32B(final BigInteger x, final int sign) {
+    if (sign >= 0) return bigIntTo32B(x);
+    byte[] a = new byte[32];
+    Arrays.fill(a, (byte) 0xFF);
+    byte[] b = x.toByteArray();
+    System.arraycopy(b, 0, a, 32 - b.length, b.length);
+    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
+    return Bytes32.leftPad(Bytes.wrap(a));
+  }
+
+  private Bytes32 bigIntTo32B(final BigInteger x) {
+    byte[] a = x.toByteArray();
+    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
+    return Bytes32.leftPad(Bytes.wrap(a));
   }
 
   @ParameterizedTest
