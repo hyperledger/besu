@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -170,6 +171,15 @@ public final class UInt256 {
     return buf.array();
   }
 
+  /**
+   * Convert to BigInteger.
+   *
+   * @return BigInteger representing the integer.
+   */
+  public BigInteger toBigInteger() {
+    return new BigInteger(1, toBytesBE());
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("0x");
@@ -276,7 +286,7 @@ public final class UInt256 {
    */
   public UInt256 shiftRight(final int shift) {
     if (shift < 0) return shiftLeft(-shift);
-    if (shift >= BITSIZE) return ZERO;
+    if (shift >= length * N_BITS_PER_LIMB) return ZERO;
     if (shift == 0 || isZero()) return this;
     int[] shifted = new int[N_LIMBS];
     shiftRightInto(shifted, this.limbs, this.length, shift);
