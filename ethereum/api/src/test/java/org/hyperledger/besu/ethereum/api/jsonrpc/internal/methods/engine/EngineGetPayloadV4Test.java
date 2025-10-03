@@ -94,8 +94,26 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
+    PayloadIdentifier cancunPayload = setupPayload(pragueHardfork.milestone() - 1);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), cancunPayload);
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
 
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOsakaMilestone() {
+    PayloadIdentifier osakaPayload = setupPayload(osakaHardfork.milestone());
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), osakaPayload);
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterOsakaMilestone() {
+    PayloadIdentifier osakaPayload = setupPayload(osakaHardfork.milestone() + 1);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), osakaPayload);
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);

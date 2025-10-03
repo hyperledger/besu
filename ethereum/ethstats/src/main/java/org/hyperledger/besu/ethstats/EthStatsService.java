@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketClientOptions;
@@ -366,7 +367,8 @@ public class EthStatsService {
   }
 
   /** Sends a block report concerning the last block */
-  private void sendBlockReport() {
+  @VisibleForTesting
+  protected void sendBlockReport() {
     blockchainQueries
         .latestBlock()
         .map(tx -> blockResultFactory.transactionComplete(tx, false))

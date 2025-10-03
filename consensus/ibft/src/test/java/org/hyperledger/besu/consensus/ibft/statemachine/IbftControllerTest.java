@@ -96,7 +96,7 @@ public class IbftControllerTest {
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(4, 0);
   private final ConsensusRoundIdentifier pastRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
   @Mock private IbftGossip ibftGossip;
-  @Mock private FutureMessageBuffer futureMessageBuffer;
+  @Mock private FutureMessageBuffer<Message> futureMessageBuffer;
   private IbftController ibftController;
 
   @BeforeEach

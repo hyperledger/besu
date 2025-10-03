@@ -176,7 +176,11 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EngineGetClientVersionV1(
                   consensusEngineServer, protocolContext, engineQosTimer, clientVersion, commit),
               new EngineGetBlobsV1(
-                  consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
+                  consensusEngineServer,
+                  protocolContext,
+                  protocolSchedule,
+                  engineQosTimer,
+                  transactionPool)));
       if (protocolSchedule.milestoneFor(CANCUN).isPresent()) {
         executionEngineApisSupported.add(
             new EngineGetPayloadV3(
@@ -222,6 +226,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new EngineGetBlobsV2(
                 consensusEngineServer,
                 protocolContext,
+                protocolSchedule,
                 engineQosTimer,
                 transactionPool,
                 metricsSystem));

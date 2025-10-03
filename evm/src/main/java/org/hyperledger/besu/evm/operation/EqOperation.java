@@ -18,11 +18,15 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Arrays;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Eq operation. */
 public class EqOperation extends AbstractFixedCostOperation {
+
+  private static final byte[] ZEROS = new byte[32];
 
   /** The Eq operation success result. */
   static final OperationResult eqSuccess = new OperationResult(3, null);
@@ -49,13 +53,21 @@ public class EqOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem().trimLeadingZeros();
-    final Bytes value1 = frame.popStackItem().trimLeadingZeros();
-
-    final Bytes result = (value0.equals(value1) ? UInt256.ONE : UInt256.ZERO);
+    final byte[] a = frame.popStackItem().toArrayUnsafe();
+    final byte[] b = frame.popStackItem().toArrayUnsafe();
+    final int nonZeroA = firstNonZeroIndex(a);
+    final int nonZeroB = firstNonZeroIndex(b);
+    Bytes result = UInt256.ZERO;
+    if (Arrays.equals(a, nonZeroA, a.length, b, nonZeroB, b.length)) {
+      result = UInt256.ONE;
+    }
 
     frame.pushStackItem(result);
-
     return eqSuccess;
+  }
+
+  private static int firstNonZeroIndex(final byte[] value) {
+    final int m = Arrays.mismatch(value, 0, value.length, ZEROS, 0, value.length);
+    return m == -1 ? value.length : m;
   }
 }

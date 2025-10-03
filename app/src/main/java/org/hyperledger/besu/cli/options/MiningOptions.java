@@ -272,21 +272,19 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
-    if (genesisConfigOptions.isPoa()) {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--block-txs-selection-max-time can't be used with PoA networks,"
-              + " see poa-block-txs-selection-max-time instead",
-          false,
-          singletonList("--block-txs-selection-max-time"));
-    } else {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--poa-block-txs-selection-max-time can be only used with PoA networks,"
-              + " see --block-txs-selection-max-time instead",
-          false,
-          singletonList("--poa-block-txs-selection-max-time"));
-    }
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--block-txs-selection-max-time can only be used on networks with PoS support in the genesis file,"
+            + " see --poa-block-txs-selection-max-time instead",
+        genesisConfigOptions.hasPos(),
+        singletonList("--block-txs-selection-max-time"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--poa-block-txs-selection-max-time can be only used with PoA networks,"
+            + " see --block-txs-selection-max-time instead",
+        genesisConfigOptions.isPoa(),
+        singletonList("--poa-block-txs-selection-max-time"));
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -36,13 +37,19 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Holds the current set of executable pending transactions, that are candidate for inclusion on
  * next block. The pending transactions are kept sorted by paid fee descending.
  */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
+  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   protected final TreeSet<PendingTransaction> orderByFee;
-  protected final MiningConfiguration miningConfiguration;
+  private final MiningConfiguration miningConfiguration;
+  private volatile Wei lastRecordedMinTransactionGasPrice = Wei.ZERO;
+  private volatile Wei lastRecordedMinPriorityFeePerGas = Wei.ZERO;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -62,6 +69,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
         blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningConfiguration = miningConfiguration;
+    getAndLogMinPriorityFeePerGas();
+    getAndLogMinTransactionGasPrice();
   }
 
   @Override
@@ -275,5 +284,25 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     }
 
     assert itCurrent.hasNext() == false : "orderByFee has more elements that pendingTransactions";
+  }
+
+  protected Wei getAndLogMinTransactionGasPrice() {
+    final var currMinTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
+    if (LOG_FOR_REPLAY.isTraceEnabled()
+        && !lastRecordedMinTransactionGasPrice.equals(currMinTransactionGasPrice)) {
+      LOG_FOR_REPLAY.trace("MGP,{}", currMinTransactionGasPrice.toShortHexString());
+      lastRecordedMinTransactionGasPrice = currMinTransactionGasPrice;
+    }
+    return currMinTransactionGasPrice;
+  }
+
+  protected Wei getAndLogMinPriorityFeePerGas() {
+    final var currMinPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
+    if (LOG_FOR_REPLAY.isTraceEnabled()
+        && !lastRecordedMinPriorityFeePerGas.equals(currMinPriorityFeePerGas)) {
+      LOG_FOR_REPLAY.trace("MPF,{}", currMinPriorityFeePerGas.toShortHexString());
+      lastRecordedMinPriorityFeePerGas = currMinPriorityFeePerGas;
+    }
+    return currMinPriorityFeePerGas;
   }
 }

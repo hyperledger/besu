@@ -1,0 +1,34 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_forkchoiceUpdatedV3",
+    "params": [
+      {
+        "headBlockHash": "0xdb6d76ff4c50498f8c701172dbabbbd31650177de40d761caf5fb60a08bd013d",
+        "safeBlockHash": "0xdb6d76ff4c50498f8c701172dbabbbd31650177de40d761caf5fb60a08bd013d",
+        "finalizedBlockHash": "0xdb6d76ff4c50498f8c701172dbabbbd31650177de40d761caf5fb60a08bd013d"
+      },
+      {
+        "timestamp": "0x30",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "withdrawals": [],
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "payloadStatus": {
+        "status": "VALID",
+        "latestValidHash": "0xdb6d76ff4c50498f8c701172dbabbbd31650177de40d761caf5fb60a08bd013d",
+        "validationError": null
+      },
+      "payloadId": "0x282643cebe091b31"
+    }
+  },
+  "statusCode": 200
+}

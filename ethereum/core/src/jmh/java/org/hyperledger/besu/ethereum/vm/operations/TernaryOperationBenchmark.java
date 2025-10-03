@@ -59,18 +59,6 @@ public abstract class TernaryOperationBenchmark {
   }
 
   @Benchmark
-  public void baseline() {
-    frame.pushStackItem(cPool[index]);
-    frame.pushStackItem(bPool[index]);
-    frame.pushStackItem(aPool[index]);
-    frame.popStackItem();
-    frame.popStackItem();
-    frame.popStackItem();
-
-    index = (index + 1) % SAMPLE_SIZE;
-  }
-
-  @Benchmark
   public void executeOperation(final Blackhole blackhole) {
     frame.pushStackItem(cPool[index]);
     frame.pushStackItem(bPool[index]);

@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.TransactionTestFixture.createSignedCodeDelegation;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -50,6 +53,7 @@ import java.util.stream.IntStream;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 
 public class BaseTransactionPoolTest extends TrustedSetupClassLoaderExtension {
 
@@ -72,6 +76,12 @@ public class BaseTransactionPoolTest extends TrustedSetupClassLoaderExtension {
 
   protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
+  protected final SenderBalanceChecker senderBalanceChecker = mock(SenderBalanceChecker.class);
+
+  @BeforeEach
+  public void setupSenderBalanceChecker() {
+    when(senderBalanceChecker.hasEnoughBalanceFor(any())).thenReturn(true);
+  }
 
   protected Transaction createTransaction(final long nonce) {
     return createTransaction(nonce, Wei.of(5000L), KEYS1);

@@ -25,47 +25,52 @@ public class WeiTest {
 
   @Test
   public void toHumanReadableString() {
-    assertThat(Wei.ZERO.toHumanReadableString()).isEqualTo("0 wei");
-    assertThat(Wei.ONE.toHumanReadableString()).isEqualTo("1 wei");
+    assertThat(Wei.ZERO.toHumanReadableString()).isEqualTo(String.format("%d wei", 0));
+    assertThat(Wei.ONE.toHumanReadableString()).isEqualTo(String.format("%d wei", 1));
 
-    assertThat(Wei.of(999).toHumanReadableString()).isEqualTo("999 wei");
-    assertThat(Wei.of(1000).toHumanReadableString()).isEqualTo("1.00 kwei");
+    assertThat(Wei.of(999).toHumanReadableString()).isEqualTo(String.format("%d wei", 999));
+    assertThat(Wei.of(1000).toHumanReadableString()).isEqualTo(String.format("%.2f kwei", 1.0));
 
-    assertThat(Wei.of(1009).toHumanReadableString()).isEqualTo("1.01 kwei");
-    assertThat(Wei.of(1011).toHumanReadableString()).isEqualTo("1.01 kwei");
+    assertThat(Wei.of(1009).toHumanReadableString()).isEqualTo(String.format("%.2f kwei", 1.01));
+    assertThat(Wei.of(1011).toHumanReadableString()).isEqualTo(String.format("%.2f kwei", 1.01));
 
-    assertThat(Wei.of(new BigInteger("1000000000")).toHumanReadableString()).isEqualTo("1.00 gwei");
+    assertThat(Wei.of(new BigInteger("1000000000")).toHumanReadableString())
+        .isEqualTo(String.format("%.2f gwei", 1.0));
 
     assertThat(Wei.of(new BigInteger("1000000000000000000")).toHumanReadableString())
-        .isEqualTo("1.00 ether");
+        .isEqualTo(String.format("%.2f ether", 1.0));
 
     final char[] manyZeros = new char[32];
     Arrays.fill(manyZeros, '0');
     assertThat(Wei.of(new BigInteger("1" + String.valueOf(manyZeros))).toHumanReadableString())
-        .isEqualTo("100.00 tether");
+        .isEqualTo(String.format("%.2f tether", 100.0));
   }
 
   @Test
   public void toHumanReadablePaddedString() {
-    assertThat(Wei.ZERO.toHumanReadablePaddedString()).isEqualTo("     0 wei");
-    assertThat(Wei.ONE.toHumanReadablePaddedString()).isEqualTo("     1 wei");
+    assertThat(Wei.ZERO.toHumanReadablePaddedString()).isEqualTo(String.format("     %d wei", 0));
+    assertThat(Wei.ONE.toHumanReadablePaddedString()).isEqualTo(String.format("     %d wei", 1));
 
-    assertThat(Wei.of(999).toHumanReadablePaddedString()).isEqualTo("   999 wei");
-    assertThat(Wei.of(1000).toHumanReadablePaddedString()).isEqualTo("  1.00 kwei");
+    assertThat(Wei.of(999).toHumanReadablePaddedString())
+        .isEqualTo(String.format("   %d wei", 999));
+    assertThat(Wei.of(1000).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.0));
 
-    assertThat(Wei.of(1009).toHumanReadablePaddedString()).isEqualTo("  1.01 kwei");
-    assertThat(Wei.of(1011).toHumanReadablePaddedString()).isEqualTo("  1.01 kwei");
+    assertThat(Wei.of(1009).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.01));
+    assertThat(Wei.of(1011).toHumanReadablePaddedString())
+        .isEqualTo(String.format("  %.2f kwei", 1.01));
 
     assertThat(Wei.of(new BigInteger("1000000000")).toHumanReadablePaddedString())
-        .isEqualTo("  1.00 gwei");
+        .isEqualTo(String.format("  %.2f gwei", 1.0));
 
     assertThat(Wei.of(new BigInteger("1000000000000000000")).toHumanReadablePaddedString())
-        .isEqualTo("  1.00 ether");
+        .isEqualTo(String.format("  %.2f ether", 1.0));
 
     final char[] manyZeros = new char[32];
     Arrays.fill(manyZeros, '0');
     assertThat(
             Wei.of(new BigInteger("1" + String.valueOf(manyZeros))).toHumanReadablePaddedString())
-        .isEqualTo("100.00 tether");
+        .isEqualTo(String.format("%.2f tether", 100.0));
   }
 }

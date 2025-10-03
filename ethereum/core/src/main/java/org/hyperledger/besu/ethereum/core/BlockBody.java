@@ -185,12 +185,13 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     BlockBody blockBody = (BlockBody) o;
     return Objects.equals(transactions, blockBody.transactions)
         && Objects.equals(ommers, blockBody.ommers)
-        && Objects.equals(withdrawals, blockBody.withdrawals);
+        && Objects.equals(withdrawals, blockBody.withdrawals)
+        && Objects.equals(blockAccessList, blockBody.blockAccessList);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals);
+    return Objects.hash(transactions, ommers, withdrawals, blockAccessList);
   }
 
   public boolean isEmpty() {
