@@ -45,8 +45,4 @@ public class BlockAccessListFactory {
   public BlockAccessListBuilder newBlockAccessListBuilder() {
     return BlockAccessList.builder();
   }
-
-  public TransactionAccessList newTransactionAccessList(final int transactionIndex) {
-    return new TransactionAccessList(transactionIndex);
-  }
 }

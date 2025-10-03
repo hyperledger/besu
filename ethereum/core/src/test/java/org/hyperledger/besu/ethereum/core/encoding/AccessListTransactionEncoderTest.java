@@ -68,8 +68,8 @@ public class AccessListTransactionEncoderTest {
     final BytesValueRLPInput input = new BytesValueRLPInput(encoded, false);
     final BlockAccessList decodedAccessList = BlockAccessListDecoder.decode(input);
 
-    assertThat(decodedAccessList.getAccountChanges()).hasSize(1);
-    final AccountChanges decoded = decodedAccessList.getAccountChanges().get(0);
+    assertThat(decodedAccessList.accountChanges()).hasSize(1);
+    final AccountChanges decoded = decodedAccessList.accountChanges().get(0);
 
     assertThat(decoded.address()).isEqualTo(address);
 
@@ -98,6 +98,6 @@ public class AccessListTransactionEncoderTest {
     final BytesValueRLPInput input = new BytesValueRLPInput(encoded, false);
     final BlockAccessList decoded = BlockAccessListDecoder.decode(input);
 
-    assertThat(decoded.getAccountChanges()).isEmpty();
+    assertThat(decoded.accountChanges()).isEmpty();
   }
 }

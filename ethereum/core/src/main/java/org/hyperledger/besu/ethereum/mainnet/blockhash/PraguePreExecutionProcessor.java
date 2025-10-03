@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddressException;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
@@ -56,14 +57,16 @@ public class PraguePreExecutionProcessor extends CancunPreExecutionProcessor {
   }
 
   @Override
-  public Void process(final BlockProcessingContext context) {
-    super.process(context);
+  public Void process(
+      final BlockProcessingContext context,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
+    super.process(context, accessLocationTracker);
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
     Bytes inputData = context.getBlockHeader().getParentHash();
     try {
-      processor.process(historyStorageAddress, context, inputData);
+      processor.process(historyStorageAddress, context, inputData, accessLocationTracker);
     } catch (InvalidSystemCallAddressException e) {
       // According to EIP-2935, the system call should fail silently if no code exists at the
       // contract address

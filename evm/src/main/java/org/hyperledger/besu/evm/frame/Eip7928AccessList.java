@@ -32,7 +32,7 @@ public interface Eip7928AccessList {
    *
    * @param address the {@link Address} of the account that was accessed
    */
-  void addAccount(final Address address);
+  void addTouchedAccount(final Address address);
 
   /**
    * Adds a specific storage slot access for the given account to the access list.
