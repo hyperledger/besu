@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -107,6 +108,7 @@ public class MergeProtocolSchedule {
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .blockPeriodPoS(Duration.ofSeconds(12))
         .hardforkId(PARIS);
   }
 

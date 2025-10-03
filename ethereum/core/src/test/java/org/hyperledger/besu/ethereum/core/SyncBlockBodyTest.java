@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -216,6 +217,7 @@ public class SyncBlockBodyTest {
         Optional.empty(),
         null,
         true,
+        Duration.ofSeconds(12),
         true,
         Optional.empty(),
         Optional.empty());

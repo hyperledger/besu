@@ -108,6 +108,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -658,6 +659,7 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .blockPeriodPoS(Duration.ofSeconds(12))
         .hardforkId(PARIS);
   }
 
