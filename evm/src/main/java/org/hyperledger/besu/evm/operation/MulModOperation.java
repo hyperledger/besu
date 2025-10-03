@@ -15,11 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -54,25 +52,17 @@ public class MulModOperation extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
     final Bytes value2 = frame.popStackItem();
 
+    Bytes resultBytes;
     if (value2.isZero()) {
-      frame.pushStackItem(Bytes.EMPTY);
+      resultBytes = Bytes.EMPTY;
     } else {
-      BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
-      BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());
-      BigInteger b2 = new BigInteger(1, value2.toArrayUnsafe());
-
-      BigInteger result = b0.multiply(b1).mod(b2);
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
+      UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
+      UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
+      UInt256 b2 = UInt256.fromBytesBE(value2.toArrayUnsafe());
+      resultBytes = Bytes.wrap(b0.mulMod(b1, b2).toBytesBE());
     }
 
+    frame.pushStackItem(resultBytes);
     return mulModSuccess;
   }
 }

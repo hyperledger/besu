@@ -15,13 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The SMod operation. */
 public class SModOperation extends AbstractFixedCostOperation {
@@ -53,32 +52,15 @@ public class SModOperation extends AbstractFixedCostOperation {
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
+    Bytes resultBytes;
     if (value1.isZero()) {
-      frame.pushStackItem(Bytes.EMPTY);
+      resultBytes = (Bytes) Bytes32.ZERO;
     } else {
-      final BigInteger b1 =
-          value0.size() < 32
-              ? new BigInteger(1, value0.toArrayUnsafe())
-              : new BigInteger(value0.toArrayUnsafe());
-      final BigInteger b2 =
-          value1.size() < 32
-              ? new BigInteger(1, value1.toArrayUnsafe())
-              : new BigInteger(value1.toArrayUnsafe());
-      BigInteger result = b1.abs().mod(b2.abs());
-      if (b1.signum() < 0) {
-        result = result.negate();
-      }
-
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
+      UInt256 b0 = UInt256.fromSignedBytesBE(value0.toArrayUnsafe());
+      UInt256 b1 = UInt256.fromSignedBytesBE(value1.toArrayUnsafe());
+      resultBytes = Bytes.wrap(b0.signedMod(b1).toBytesBE());
     }
+    frame.pushStackItem(resultBytes);
 
     return smodSuccess;
   }
