@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -44,8 +45,11 @@ public class BlockBroadcasterTest {
   @Test
   public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes.ethPeer()).thenReturn(ethPeer);
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer));
+    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeerImmutableAttributes));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -63,12 +67,19 @@ public class BlockBroadcasterTest {
   @Test
   public void blockPropagationUnitTestSeenUnseen() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer0 = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes0 =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes0.ethPeer()).thenReturn(ethPeer0);
     when(ethPeer0.hasSeenBlock(any())).thenReturn(true);
 
     final EthPeer ethPeer1 = mock(EthPeer.class);
+    final EthPeerImmutableAttributes ethPeerImmutableAttributes1 =
+        mock(EthPeerImmutableAttributes.class);
+    when(ethPeerImmutableAttributes1.ethPeer()).thenReturn(ethPeer1);
 
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer0, ethPeer1));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(Stream.of(ethPeerImmutableAttributes0, ethPeerImmutableAttributes1));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);

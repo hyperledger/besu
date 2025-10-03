@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.Collection;
@@ -154,7 +155,10 @@ public class PeerTransactionTracker
         .log();
 
     final Set<EthPeer> connectedPeers =
-        ethPeers.streamAllPeers().collect(Collectors.toUnmodifiableSet());
+        ethPeers
+            .streamAllPeers()
+            .map(EthPeerImmutableAttributes::ethPeer)
+            .collect(Collectors.toUnmodifiableSet());
 
     final var disconnectedPeers = trackedPeers;
     disconnectedPeers.removeAll(connectedPeers);

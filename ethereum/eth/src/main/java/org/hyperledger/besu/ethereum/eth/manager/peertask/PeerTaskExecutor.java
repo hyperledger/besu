@@ -98,7 +98,7 @@ public class PeerTaskExecutor {
           peerSelector.getPeer(
               (candidatePeer) ->
                   peerTask.getPeerRequirementFilter().test(candidatePeer)
-                      && !usedEthPeers.contains(candidatePeer));
+                      && !usedEthPeers.contains(candidatePeer.ethPeer()));
       if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
