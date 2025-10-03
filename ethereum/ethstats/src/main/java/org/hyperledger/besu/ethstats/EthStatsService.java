@@ -88,7 +88,7 @@ public class EthStatsService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EthStatsService.class);
 
-  private static final Duration SEND_REPORT_DELAY = Duration.ofSeconds(5);
+  private static final Duration SEND_REPORT_DELAY = Duration.ofSeconds(1);
   private static final int HISTORY_RANGE = 50;
 
   private final AtomicBoolean retryInProgress = new AtomicBoolean(false);
