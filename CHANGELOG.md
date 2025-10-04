@@ -15,6 +15,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Added `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval
 
 ### Bug fixes
 
