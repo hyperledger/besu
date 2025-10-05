@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -144,6 +145,7 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
               @Override
               public void onFailure(Call call, IOException e) {
                 // Expected: HTTP timeout
+                assertThat(e instanceof SocketTimeoutException).isTrue();
                 traceCompleted.set(false);
                 traceLatch.countDown();
               }
