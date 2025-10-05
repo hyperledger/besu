@@ -22,7 +22,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
@@ -48,9 +47,9 @@ public final class DiscoveryV5Config {
     this.nodeKey = b.nodeKey;
     this.udpBindAddress = b.udpBindAddress;
     this.tcpAdvertised = Optional.ofNullable(b.tcpAdvertised);
-    this.bootEnrs = Collections.unmodifiableList(new ArrayList<>(b.bootEnrs));
-    this.bindInterfaces = Collections.unmodifiableList(new ArrayList<>(b.bindInterfaces));
-    this.advertisedIps = Collections.unmodifiableList(new ArrayList<>(b.advertisedIps));
+    this.bootEnrs = List.copyOf(b.bootEnrs);
+    this.bindInterfaces = List.copyOf(b.bindInterfaces);
+    this.advertisedIps = List.copyOf(b.advertisedIps);
     this.preferIpv6 = b.preferIpv6;
   }
 
@@ -190,7 +189,7 @@ public final class DiscoveryV5Config {
 
       // Can happen on containers or when no interfaces are up; safe to ignore.
       // We log at debug to satisfy Error Prone and keep behavior.
-      LOG.debug("Ignoring SocketException while enumerating network interfaces: {}", e.toString());
+      LOG.debug("Ignoring SocketException while enumerating network interfaces", e);
     }
     return null;
   }
