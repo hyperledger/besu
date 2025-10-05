@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -113,6 +115,27 @@ public class MainnetBlobsValidatorTest {
         result,
         TransactionInvalidReason.INVALID_BLOBS,
         "transaction blobs commitment version is not supported. Expected 1, found 9");
+  }
+
+  @Test
+  void shouldRejectWhenVersionedHashesAndCommitmentsCountsDiffer() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo()).thenReturn(Optional.of(mock(Address.class)));
+    Blob blob = mock(Blob.class);
+    KZGCommitment commitment = mock(KZGCommitment.class);
+    when(commitment.getData()).thenReturn(Bytes48.random());
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(blob));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(commitment));
+    VersionedHash hash1 = MainnetBlobsValidator.hashCommitment(commitment);
+    // Add the same hash twice to create a size mismatch
+    when(transaction.getVersionedHashes()).thenReturn(Optional.of(List.of(hash1, hash1)));
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    var result = blobsValidator.validate(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction versioned hashes and commitments are not the same size");
   }
 
   @Test

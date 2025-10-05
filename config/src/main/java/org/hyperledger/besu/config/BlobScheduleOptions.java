@@ -146,6 +146,11 @@ public class BlobScheduleOptions {
     getCancun().ifPresent(bs -> builder.put(CANCUN_KEY, bs.asMap()));
     getPrague().ifPresent(bs -> builder.put(PRAGUE_KEY, bs.asMap()));
     getOsaka().ifPresent(bs -> builder.put(OSAKA_KEY, bs.asMap()));
+    getBpo1().ifPresent(bs -> builder.put(BPO1_KEY, bs.asMap()));
+    getBpo2().ifPresent(bs -> builder.put(BPO2_KEY, bs.asMap()));
+    getBpo3().ifPresent(bs -> builder.put(BPO3_KEY, bs.asMap()));
+    getBpo4().ifPresent(bs -> builder.put(BPO4_KEY, bs.asMap()));
+    getBpo5().ifPresent(bs -> builder.put(BPO5_KEY, bs.asMap()));
     getFutureEips().ifPresent(bs -> builder.put(FUTURE_EIPS_KEY, bs.asMap()));
     return builder.build();
   }

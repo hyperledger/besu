@@ -1,0 +1,24 @@
+Engine Flow Test: Prague → Osaka Transition
+
+Step | Method                  | Description / Expected Result
+-----+--------------------------+----------------------------------------------------
+ 1   | get_genesis_block_info   | Initialize test at Prague fork
+ 2   | sendRawTransaction       | Send Blob Tx V0 → Accepted
+ 3   | sendRawTransaction       | Send Blob Tx V1 → Rejected ("blobs failed kzg validation")
+ 4   | getBlobsV1               | Returns data from Step 2
+ 5   | getBlobsV2               | Fails → "Fork not supported" (since V2 is Osaka+)
+ 6   | forkchoiceUpdatedV3      | Start preparing payloads (Prague time)
+ 7   | getPayloadV4             | Returns payload with blob from Step 2
+ 8   | getPayloadV5             | Fails → "Osaka not enabled"
+ 9   | forkchoiceUpdatedV3      | Switch to Osaka time, start new payloads
+10   | getPayloadV4             | Fails (Prague fork expired)
+11   | getPayloadV5             | Returns payload with blob from Step 2
+12   | newPayloadV4             | Send new payload with blob from Step 2 → Accepted
+13   | sendRawTransaction       | Send another Blob Tx V0 → Accepted
+14   | forkchoiceUpdatedV3      | Finalize fork choice, confirm Osaka
+15   | getBlobsV1               | Fails "Fork not supported" (since V1 is Cancun+ and Osaka-)
+16   | getBlobsV2               | Query blob from Step 12 → Returns null (Tx Blob V0, no conversion)
+17   | sendRawTransaction       | Send Blob Tx V1 → Accepted (Osaka is live)
+18   | getBlobsV2               | Returns blob data from Step 17
+19   | forkchoiceUpdatedV3      | Prepare payload including blob from Step 17
+20   | getPayloadV5             | Returns payload with blob from Step 17

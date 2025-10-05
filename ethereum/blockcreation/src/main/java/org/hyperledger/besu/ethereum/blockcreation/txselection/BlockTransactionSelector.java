@@ -257,7 +257,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
             },
             null);
-    ethScheduler.scheduleBlockCreationTask(txSelectionTask);
+    ethScheduler.scheduleBlockCreationTask(
+        blockSelectionContext.pendingBlockHeader().getNumber(), txSelectionTask);
 
     try {
       txSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
@@ -305,7 +306,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             },
             null);
 
-    ethScheduler.scheduleBlockCreationTask(pluginTxSelectionTask);
+    ethScheduler.scheduleBlockCreationTask(
+        blockSelectionContext.pendingBlockHeader().getNumber(), pluginTxSelectionTask);
 
     try {
       pluginTxSelectionTask.get(pluginTxsSelectionMaxTimeNanos, TimeUnit.NANOSECONDS);

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,17 @@ public class ReferenceTestProtocolSchedules {
 
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
+
+  private static final Set<String> FORKS_WITHOUT_BLOCK_BUILDING =
+      Set.of(
+          "frontier",
+          "frontiertohomesteadat5",
+          "homestead",
+          "homesteadtoeip150at5",
+          "homesteadtodaoat5",
+          "eip150",
+          "eip158",
+          "eip158tobyzantiumat5");
 
   private static ReferenceTestProtocolSchedules instance;
 
@@ -158,5 +170,9 @@ public class ReferenceTestProtocolSchedules {
 
   public static boolean shouldClearEmptyAccounts(final String fork) {
     return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(fork);
+  }
+
+  public static boolean supportsBlockBuilding(final String fork) {
+    return !FORKS_WITHOUT_BLOCK_BUILDING.contains(fork.toLowerCase(Locale.ROOT));
   }
 }

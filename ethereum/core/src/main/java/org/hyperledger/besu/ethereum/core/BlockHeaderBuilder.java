@@ -66,6 +66,9 @@ public class BlockHeaderBuilder {
   private long gasUsed = -1L;
 
   private long timestamp = -1L;
+  // Some reference tests are setting a negative timestamp so we can't use the sign to decide
+  // whether a timestamp has been set
+  private boolean timestampSet = false;
 
   private Bytes extraData;
 
@@ -227,7 +230,7 @@ public class BlockHeaderBuilder {
     }
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
-    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(Hash.ZERO);
 
     // For PoS, coinbase is always configured, but for PoA it is not configured,
     // rather generated for each block via MiningBeneficiaryCalculator.
@@ -260,7 +263,7 @@ public class BlockHeaderBuilder {
         number,
         gasLimit,
         gasUsed,
-        timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
+        timestampSet ? timestamp : Instant.now().getEpochSecond(),
         extraData,
         baseFee,
         mixHashOrPrevRandao,
@@ -450,6 +453,7 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder timestamp(final long timestamp) {
     this.timestamp = timestamp;
+    this.timestampSet = true;
     return this;
   }
 

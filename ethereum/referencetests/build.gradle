@@ -186,6 +186,9 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':consensus:merge')
   implementation project(':metrics:core')
   implementation project(':util')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -202,6 +205,9 @@ dependencies {
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
   referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':ethereum:eth')
+  referenceTestImplementation project(path: ':ethereum:blockcreation')
+  referenceTestImplementation project(path: ':consensus:merge')
   referenceTestImplementation project(path: ':metrics:core')
   referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:rlp')
@@ -212,7 +218,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:5.1.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:5.2.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
