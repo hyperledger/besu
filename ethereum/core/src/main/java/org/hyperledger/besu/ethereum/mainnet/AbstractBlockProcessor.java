@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -378,6 +379,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final Optional<BlockAccessList> maybeBlockAccessList;
+    final Optional<Hash> maybeStateRootFromBal;
     try {
       if (blockAccessListBuilder.isPresent()) {
         final BlockAccessList bal = blockAccessListBuilder.get().build();
@@ -398,8 +400,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           }
         }
         maybeBlockAccessList = Optional.of(bal);
+        maybeStateRootFromBal =
+            Optional.of(
+                new BlockAccessListStateRootHashCalculator((BonsaiWorldState) worldState)
+                    .calculateRootHash(bal));
       } else {
         maybeBlockAccessList = Optional.empty();
+        maybeStateRootFromBal = Optional.empty();
       }
     } catch (Exception e) {
       LOG.error("Error validating BAL hash", e);
@@ -432,6 +439,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
       return new BlockProcessingResult(Optional.empty(), e);
+    }
+
+    if (maybeStateRootFromBal.isPresent()) {
+      final Hash persistedStateRoot = worldState.rootHash();
+      final Hash balStateRoot = maybeStateRootFromBal.get();
+      if (!balStateRoot.equals(persistedStateRoot)) {
+        LOG.error(
+            "State root mismatch between block access list ({}) and persisted world state ({})",
+            balStateRoot.toHexString(),
+            persistedStateRoot.toHexString());
+      }
     }
 
     return new BlockProcessingResult(
