@@ -16,8 +16,17 @@ package org.hyperledger.besu.chainexport;
 
 import org.hyperledger.besu.util.ssz.Merkleizer;
 
+/** A factory for producing Era1Accumulator objects */
 public class Era1AccumulatorFactory {
 
+  /** Default constructor */
+  public Era1AccumulatorFactory() {}
+
+  /**
+   * Creates an Era1Accumulator object with the default Merkleizer
+   *
+   * @return an Era1Accumulator object
+   */
   public Era1Accumulator getEra1Accumulator() {
     return new Era1Accumulator(new Merkleizer());
   }

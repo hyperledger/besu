@@ -28,7 +28,7 @@ import org.xerial.snappy.SnappyFramedOutputStream;
 
 /** A helper class for writing ERA1 files */
 public class Era1FileWriter implements Closeable {
-  public static final List<Era1Type> COMPRESSED_ERA1_TYPES =
+  private static final List<Era1Type> COMPRESSED_ERA1_TYPES =
       List.of(
           Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
           Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,

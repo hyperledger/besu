@@ -22,7 +22,20 @@ import java.util.Map;
 
 import org.bouncycastle.util.Pack;
 
+/** Converts Besu block types from an ERA1 file to an ERA1 Block Index section */
 public class Era1BlockIndexConverter {
+
+  /** Default constructor */
+  public Era1BlockIndexConverter() {}
+
+  /**
+   * Converts Besu block types from an ERA1 file to an ERA1 Block Index section
+   *
+   * @param blocks An ordered list of all of the blocks in the file
+   * @param blockPositionByBlock A map of blocks to their position in the file
+   * @param positionInFile The intended position of the block index in the file
+   * @return an ERA1 Block Index section containing the supplied block information
+   */
   public byte[] convert(
       final List<Block> blocks,
       final Map<Block, Long> blockPositionByBlock,

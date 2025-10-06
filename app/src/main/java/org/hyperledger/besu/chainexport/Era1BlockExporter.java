@@ -56,7 +56,12 @@ public class Era1BlockExporter {
    * Instantiates a new ERA1 block exporter.
    *
    * @param blockchain the blockchain
-   * @param era1FileWriterFactory a Era1FileWriterFactory
+   * @param era1FileWriterFactory an Era1FileWriterFactory
+   * @param era1AccumulatorFactory an Era1AccumulatorFactory
+   * @param era1BlockIndexConverter an Era1BlockIndexConverter
+   * @param blockHeaderRlpEncoder a BlockHeaderRlpEncoder
+   * @param blockBodyRlpEncoder a BlockBodyRlpEncoder
+   * @param transactionReceiptRlpEncoder a TransactionReceiptRlpEncoder
    */
   public Era1BlockExporter(
       final Blockchain blockchain,
