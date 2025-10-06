@@ -143,6 +143,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public boolean hasPos() {
+    return false;
+  }
+
+  @Override
   public CheckpointConfigOptions getCheckpointOptions() {
     return CheckpointConfigOptions.DEFAULT;
   }

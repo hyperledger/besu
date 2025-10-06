@@ -42,7 +42,8 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
   @Override
   public boolean importBlock(final QbftBlock block) {
     final BlockImportResult blockImportResult =
-        blockImporter.importBlock(context, BlockUtil.toBesuBlock(block), HeaderValidationMode.FULL);
+        blockImporter.importBlock(
+            context, AdaptorUtil.toBesuBlock(block), HeaderValidationMode.FULL);
     return blockImportResult.isImported();
   }
 }

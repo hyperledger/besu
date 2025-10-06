@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -49,6 +50,23 @@ public class BlockAccessList {
 
   public List<AccountChanges> getAccountChanges() {
     return accountChanges;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BlockAccessList)) {
+      return false;
+    }
+    final BlockAccessList that = (BlockAccessList) o;
+    return Objects.equals(accountChanges, that.accountChanges);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(accountChanges);
   }
 
   public void writeTo(final RLPOutput out) {

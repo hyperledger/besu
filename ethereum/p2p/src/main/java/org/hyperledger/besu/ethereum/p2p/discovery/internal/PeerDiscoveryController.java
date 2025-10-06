@@ -460,7 +460,14 @@ public class PeerDiscoveryController {
                   peer.setFirstDiscovered(System.currentTimeMillis());
                   addToPeerTable(peer);
                 } else {
-                  LOG.debug("Handshake timed out with peer {}", peer.getLoggableId(), th);
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace(
+                        "Handshake timed out with peer {}: {}",
+                        peer.getLoggableId(),
+                        th.getMessage());
+                  } else {
+                    LOG.debug("Handshake timed out with peer {}", peer.getLoggableId());
+                  }
                   peerTable.invalidateIP(peer.getEndpoint());
                 }
               });
