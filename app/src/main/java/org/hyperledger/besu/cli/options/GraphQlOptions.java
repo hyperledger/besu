@@ -131,11 +131,11 @@ public class GraphQlOptions {
    *
    * @param hostsAllowlist List of hosts allowed
    * @param defaultHostAddress Default host address
-   * @param timoutSec Timeout in seconds
+   * @param timeoutSec Timeout in seconds
    * @return A GraphQLConfiguration instance
    */
   public GraphQLConfiguration graphQLConfiguration(
-      final List<String> hostsAllowlist, final String defaultHostAddress, final Long timoutSec) {
+      final List<String> hostsAllowlist, final String defaultHostAddress, final Long timeoutSec) {
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
     graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(
@@ -143,7 +143,7 @@ public class GraphQlOptions {
     graphQLConfiguration.setPort(graphQLHttpPort);
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
-    graphQLConfiguration.setHttpTimeoutSec(timoutSec);
+    graphQLConfiguration.setHttpTimeoutSec(timeoutSec);
     graphQLConfiguration.setTlsEnabled(graphqlTlsEnabled);
     graphQLConfiguration.setTlsKeyStorePath(graphqlTlsKeystoreFile);
     graphQLConfiguration.setTlsKeyStorePasswordFile(graphqlTlsKeystorePasswordFile);

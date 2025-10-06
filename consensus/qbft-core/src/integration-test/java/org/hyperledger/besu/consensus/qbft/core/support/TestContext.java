@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.adaptor.BlockUtil;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockHeaderAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockchainAdaptor;
@@ -158,7 +158,7 @@ public class TestContext {
         finalState.getBlockCreatorFactory().create(roundNumber).createBlock(timestamp, parent);
 
     final BlockHeaderBuilder headerBuilder =
-        BlockHeaderBuilder.fromHeader(BlockUtil.toBesuBlockHeader(block.getHeader()));
+        BlockHeaderBuilder.fromHeader(AdaptorUtil.toBesuBlockHeader(block.getHeader()));
     headerBuilder
         .coinbase(proposer)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
@@ -180,7 +180,7 @@ public class TestContext {
       final Collection<SECPSignature> commitSeals) {
     final Block sealedBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, BlockUtil.toBesuBlock(block), roundNumber, commitSeals);
+            bftExtraDataCodec, AdaptorUtil.toBesuBlock(block), roundNumber, commitSeals);
     return new QbftBlockAdaptor(sealedBlock);
   }
 
@@ -209,7 +209,7 @@ public class TestContext {
 
   public void appendBlock(final QbftBlock signedCurrentHeightBlock) {
     blockchain.appendBlock(
-        BlockUtil.toBesuBlock(signedCurrentHeightBlock), Collections.emptyList());
+        AdaptorUtil.toBesuBlock(signedCurrentHeightBlock), Collections.emptyList());
   }
 
   public QbftBlockHeader getBlockHeader(final int blockNumber) {

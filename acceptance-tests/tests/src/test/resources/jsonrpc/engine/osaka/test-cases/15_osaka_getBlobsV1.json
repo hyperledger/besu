@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_getBlobsV1",
+    "params": [
+      [
+        "0x01c4cb8adb8a6f2830dc923dfe047de2abf7b666cc731d2a8d602a850422dd9b"
+      ]
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 67,
+    "error" : {
+      "code" : -38005,
+      "message" : "Unsupported fork",
+      "data" : "block timestamp 32 is after the first unsupported milestone: OSAKA at timestamp 32"
+    }
+  },
+  "statusCode": 200
+}

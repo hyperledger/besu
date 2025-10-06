@@ -22,8 +22,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -43,6 +49,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -224,6 +233,67 @@ public class EthStatsServiceTest {
     textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
 
     verify(ethScheduler, times(1)).scheduleFutureTaskWithFixedDelay(any(), any(), any());
+  }
+
+  @Test
+  public void shouldSendBlockMessage() throws Exception {
+    ethStatsService =
+        new EthStatsService(
+            ethStatsConnectOptions,
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block testBlock = blockDataGenerator.block();
+    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
+        new BlockWithMetadata<>(
+            testBlock.getHeader(),
+            List.of(),
+            List.of(),
+            testBlock.getHeader().getDifficulty(),
+            testBlock.getSize(),
+            Optional.empty());
+
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    when(blockchainQueries.latestBlock()).thenReturn(Optional.of(blockWithMetadata));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    // send block message
+    ethStatsService.sendBlockReport();
+    final ArgumentCaptor<String> messagesCaptor = ArgumentCaptor.forClass(String.class);
+    verify(webSocket, times(2)).writeTextMessage(messagesCaptor.capture(), any(Handler.class));
+
+    final List<String> sentMessages = messagesCaptor.getAllValues();
+    assertThat(sentMessages.get(0)).contains("hello");
+
+    final String blockMessage = sentMessages.get(1);
+    assertThat(blockMessage).contains("\"block\"");
+
+    // verify block message
+    final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Jdk8Module());
+    final var jsonNode = objectMapper.readTree(blockMessage);
+    final var blockReportData = jsonNode.get("emit").get(1);
+    final var blockDataNode = blockReportData.get("block");
+
+    final var expectedBlockResult = new BlockResultFactory().transactionComplete(blockWithMetadata);
+    final JsonNode expectedBlockResultNode = objectMapper.valueToTree(expectedBlockResult);
+
+    assertThat(blockDataNode).isEqualTo(expectedBlockResultNode);
   }
 
   private <T> AsyncResult<T> succeededWebSocketEvent(final Optional<T> object) {

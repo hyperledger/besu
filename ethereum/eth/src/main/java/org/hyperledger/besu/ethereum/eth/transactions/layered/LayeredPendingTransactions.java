@@ -243,11 +243,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   private void logPenalizedTransaction(final PendingTransaction pendingTransaction) {
     LOG_FOR_REPLAY.atTrace().setMessage("PZ,{}").addArgument(pendingTransaction::getHash).log();
-
-    LOG.atTrace()
-        .setMessage("Transaction {} penalized")
-        .addArgument(pendingTransaction::toTraceLog)
-        .log();
   }
 
   private void logDiscardedTransaction(
@@ -347,18 +342,26 @@ public class LayeredPendingTransactions implements PendingTransactions {
               .log();
 
           if (selectionResult.discard()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
                     prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} remove by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
             logDiscardedTransaction(candidatePendingTx, selectionResult);
           } else if (selectionResult.penalize()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
                     prioritizedTransactions.penalize(candidatePendingTx);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} penalized by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
             logPenalizedTransaction(candidatePendingTx);
