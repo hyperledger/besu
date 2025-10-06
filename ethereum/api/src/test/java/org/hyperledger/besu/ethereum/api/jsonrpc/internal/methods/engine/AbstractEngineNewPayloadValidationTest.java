@@ -33,7 +33,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,7 +76,7 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   @Test
-  void validateExcessBlobGas_valid_returnsEmpty() throws Exception {
+  void validateExcessBlobGas_valid_returnsEmpty() {
     final BlobGas expected = BlobGas.of(1000);
     when(mockHeader.getExcessBlobGas()).thenReturn(Optional.of(BlobGas.of(1000)));
 
@@ -96,7 +95,7 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   @Test
-  void validateExcessBlobGas_invalid_returnsCalculated() throws Exception {
+  void validateExcessBlobGas_invalid_returnsCalculated() {
     final BlobGas calculated = BlobGas.of(1000);
     when(mockHeader.getExcessBlobGas()).thenReturn(Optional.of(BlobGas.of(800)));
 
@@ -115,7 +114,7 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   @Test
-  void validateBlobGasUsed_validSingleBlob_returnsEmpty() throws Exception {
+  void validateBlobGasUsed_validSingleBlob_returnsEmpty() {
     when(mockProtocolSpec.getGasCalculator()).thenReturn(mockGasCalculator);
     when(mockGasCalculator.blobGasCost(1)).thenReturn(131072L);
     when(mockHeader.getBlobGasUsed()).thenReturn(Optional.of(131072L));
@@ -128,7 +127,7 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   @Test
-  void validateBlobGasUsed_invalid_returnsCalculated() throws Exception {
+  void validateBlobGasUsed_invalid_returnsCalculated() {
     when(mockProtocolSpec.getGasCalculator()).thenReturn(mockGasCalculator);
     when(mockGasCalculator.blobGasCost(1)).thenReturn(131072L);
     when(mockHeader.getBlobGasUsed()).thenReturn(Optional.of(100000L));
@@ -141,7 +140,7 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   @Test
-  void validateBlobGasUsed_invalidMultipleBlobs_returnsCalculated() throws Exception {
+  void validateBlobGasUsed_invalidMultipleBlobs_returnsCalculated() {
     when(mockProtocolSpec.getGasCalculator()).thenReturn(mockGasCalculator);
     when(mockGasCalculator.blobGasCost(3)).thenReturn(131072L * 3);
     when(mockHeader.getBlobGasUsed()).thenReturn(Optional.of(200000L));
@@ -249,27 +248,13 @@ public class AbstractEngineNewPayloadValidationTest {
   }
 
   private Optional<BlobGas> invokeValidateExcessBlobGas(
-      final BlockHeader header, final BlockHeader parent, final ProtocolSpec spec)
-      throws Exception {
-    Method m =
-        AbstractEngineNewPayload.class.getDeclaredMethod(
-            "validateExcessBlobGas", BlockHeader.class, BlockHeader.class, ProtocolSpec.class);
-    m.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    Optional<BlobGas> out = (Optional<BlobGas>) m.invoke(method, header, parent, spec);
-    return out;
+      final BlockHeader header, final BlockHeader parent, final ProtocolSpec spec) {
+    return method.validateExcessBlobGas(header, parent, spec);
   }
 
   private Optional<Long> invokeValidateBlobGasUsed(
-      final BlockHeader header, final List<VersionedHash> hashes, final ProtocolSpec spec)
-      throws Exception {
-    Method m =
-        AbstractEngineNewPayload.class.getDeclaredMethod(
-            "validateBlobGasUsed", BlockHeader.class, List.class, ProtocolSpec.class);
-    m.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    Optional<Long> out = (Optional<Long>) m.invoke(method, header, hashes, spec);
-    return out;
+      final BlockHeader header, final List<VersionedHash> hashes, final ProtocolSpec spec) {
+    return method.validateBlobGasUsed(header, hashes, spec);
   }
 
   private static class TestableAbstractEngineNewPayload extends AbstractEngineNewPayload {
