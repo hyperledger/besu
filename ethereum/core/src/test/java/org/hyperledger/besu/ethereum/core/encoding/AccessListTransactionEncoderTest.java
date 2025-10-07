@@ -46,7 +46,7 @@ public class AccessListTransactionEncoderTest {
     final SlotChanges slotChanges = new SlotChanges(slotKey, List.of(write));
     final SlotRead slotRead = new SlotRead(slotKey);
 
-    final BalanceChange balanceChange = new BalanceChange(0, Wei.fromEth(3).toMinimalBytes());
+    final BalanceChange balanceChange = new BalanceChange(0, Wei.fromEth(3));
     final CodeChange codeChange = new CodeChange(1, Bytes.fromHexString("0x6001600101"));
     final NonceChange nonceChange = new NonceChange(2, 42L);
 
