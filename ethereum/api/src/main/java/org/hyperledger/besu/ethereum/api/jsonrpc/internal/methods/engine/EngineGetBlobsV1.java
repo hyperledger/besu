@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
@@ -71,20 +70,17 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
   private final TransactionPool transactionPool;
   private final Optional<Long> cancunMilestone;
   private final Optional<Long> osakaMilestone;
-  private final Supplier<Long> timestampProvider;
 
   public EngineGetBlobsV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
-      final TransactionPool transactionPool,
-      final Supplier<Long> timestampProvider) {
+      final TransactionPool transactionPool) {
     super(vertx, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
     this.cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
     this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
-    this.timestampProvider = timestampProvider;
   }
 
   @Override
@@ -94,8 +90,8 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(timestampProvider.get());
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
     }
