@@ -55,8 +55,8 @@ public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   @Override
   public QbftBlock replaceRoundAndProposerForProposalBlock(
       final QbftBlock proposalBlock, final int roundNumber, final Address proposer) {
-    // We don't want to update the proposer in the block as this would break compatibility with
-    // selecting proposers
+    // Only update the round number, we don't want to update the proposer as this would make this
+    // incompatible for other Besu versions of QBFT for the proposer selection
     return replaceRoundForCommitBlock(proposalBlock, roundNumber);
   }
 }
