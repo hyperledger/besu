@@ -41,7 +41,7 @@ public class ClassicEVMs {
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-        spiralOperations(gasCalculator, chainId),
+        spiralOperations(gasCalculator, chainId, evmConfiguration),
         gasCalculator,
         evmConfiguration,
         EvmSpecVersion.SHANGHAI);
@@ -55,9 +55,11 @@ public class ClassicEVMs {
    * @return the operation registry
    */
   public static OperationRegistry spiralOperations(
-      final GasCalculator gasCalculator, final BigInteger chainId) {
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
     OperationRegistry registry = new OperationRegistry();
-    registerIstanbulOperations(registry, gasCalculator, chainId);
+    registerIstanbulOperations(registry, gasCalculator, chainId, evmConfiguration);
     registry.put(new Push0Operation(gasCalculator));
     return registry;
   }
