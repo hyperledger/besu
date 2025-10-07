@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,23 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Represents a partial view of a Block Access List (BAL) for a single transaction within a block.
+ *
+ * <p>This class captures the subset of account and storage access information that results from the
+ * execution of a single transaction. Each {@link PartialBlockAccessView} instance corresponds to
+ * one transaction (identified by its transaction index) and contains the state changes and reads
+ * made by that transaction, such as account balance updates, nonce changes, code updates, and
+ * storage slot reads/writes.
+ *
+ * <p>Because it only reflects the access list from one transaction, it does not represent the
+ * complete block access list. To reconstruct the full block-level access list, all partial views
+ * from each transaction in the block must be merged together.
+ *
+ * <p>This class is primarily used as an intermediate representation when building or aggregating
+ * access lists at the block level, and it supports convenient construction through the {@link
+ * PartialBlockAccessViewBuilder}.
+ */
 public final class PartialBlockAccessView {
 
   private final int txIndex;
