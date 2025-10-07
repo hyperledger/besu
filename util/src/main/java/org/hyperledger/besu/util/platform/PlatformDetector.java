@@ -126,7 +126,7 @@ public class PlatformDetector {
     final String detectedOS = normalizeOS(normalize("os.name"));
     final String detectedArch = normalizeArch(normalize("os.arch"));
     final String detectedVM = normalizeVM(normalize("java.vendor"), normalize("java.vm.name"));
-    final String detectedJavaVersion = normalizeJavaVersion("java.specification.version");
+    final String detectedJavaVersion = getJavaVersionProperty("java.specification.version");
 
     _os = detectedOS + '-' + detectedArch;
     _arch = detectedArch;
@@ -278,7 +278,7 @@ public class PlatformDetector {
    * @param javaVersionProperty the java version system property key
    * @return the java version string from system properties
    */
-  static String normalizeJavaVersion(final String javaVersionProperty) {
+  static String getJavaVersionProperty(final String javaVersionProperty) {
     // Get the java version from system properties using the provided key
     return System.getProperty(javaVersionProperty);
   }
