@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
@@ -72,7 +73,7 @@ public final class BlockAccessListDecoder {
               bcIn -> {
                 bcIn.enterList();
                 int txIndex = bcIn.readIntScalar();
-                Bytes postBalance = bcIn.readBytes();
+                Wei postBalance = Wei.of(UInt256.fromBytes(bcIn.readBytes()));
                 bcIn.leaveList();
                 return new BalanceChange(txIndex, postBalance);
               });
