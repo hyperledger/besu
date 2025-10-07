@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
@@ -118,6 +119,7 @@ public class TransactionBroadcaster
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .forEach(
             peer -> {
               if (peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES)) {
