@@ -61,7 +61,7 @@ public class ProposalValidator {
    * @param quorumMessageCount the quorum message count
    * @param validators the validators
    * @param roundIdentifier the round identifier
-   * @param proposerSelector the expected proposer
+   * @param proposerSelector the proposer selector
    */
   public ProposalValidator(
       final QbftBlockInterface blockInterface,
