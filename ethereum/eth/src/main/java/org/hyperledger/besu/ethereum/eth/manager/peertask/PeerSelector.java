@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Optional;
@@ -27,18 +28,18 @@ public interface PeerSelector {
   /**
    * Gets a peer matching the supplied filter
    *
-   * @param filter a Predicate\<EthPeer\> matching desirable peers
+   * @param filter a Predicate\<EthPeerImmutableAttributes\> matching desirable peers
    * @return a peer matching the supplied conditions
    */
-  Optional<EthPeer> getPeer(final Predicate<EthPeer> filter);
+  Optional<EthPeer> getPeer(final Predicate<EthPeerImmutableAttributes> filter);
 
   /**
    * Waits for a peer matching the supplied filter
    *
-   * @param filter a Predicate\<EthPeer\> matching desirable peers
+   * @param filter a Predicate\<EthPeerImmutableAttributes\> matching desirable peers
    * @return a CompletableFuture into which a peer will be placed
    */
-  CompletableFuture<EthPeer> waitForPeer(final Predicate<EthPeer> filter);
+  CompletableFuture<EthPeer> waitForPeer(final Predicate<EthPeerImmutableAttributes> filter);
 
   /**
    * Attempts to get the EthPeer identified by peerId
