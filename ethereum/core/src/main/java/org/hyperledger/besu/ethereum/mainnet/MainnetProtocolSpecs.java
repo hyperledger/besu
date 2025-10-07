@@ -150,6 +150,7 @@ public abstract class MainnetProtocolSpecs {
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder frontierDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -218,11 +219,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return frontierDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -242,11 +245,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -282,11 +287,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return daoRecoveryInitDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -299,11 +306,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -314,11 +323,13 @@ public abstract class MainnetProtocolSpecs {
 
   public static ProtocolSpecBuilder spuriousDragonDefinition(
       final Optional<BigInteger> chainId,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -367,12 +378,14 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return spuriousDragonDefinition(
             chainId,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -389,6 +402,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -396,6 +410,7 @@ public abstract class MainnetProtocolSpecs {
     return byzantiumDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -410,6 +425,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -417,6 +433,7 @@ public abstract class MainnetProtocolSpecs {
     return constantinopleDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -428,6 +445,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder istanbulDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -435,6 +453,7 @@ public abstract class MainnetProtocolSpecs {
     return petersburgDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -459,6 +478,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder muirGlacierDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -466,6 +486,7 @@ public abstract class MainnetProtocolSpecs {
     return istanbulDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -477,6 +498,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder berlinDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -484,6 +506,7 @@ public abstract class MainnetProtocolSpecs {
     return muirGlacierDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -515,6 +538,7 @@ public abstract class MainnetProtocolSpecs {
     return berlinDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
