@@ -57,7 +57,9 @@ final class WireKeepAlive extends ChannelDuplexHandler {
     }
 
     try {
-      LOG.debug("Idle connection detected, sending Wire PING to peer.");
+      LOG.trace(
+          "Idle connection detected, sending Wire PING to peer {}",
+          connection.getPeer().getLoggableId());
       connection.send(null, PingMessage.get());
       waitingForPong.set(true);
     } catch (final PeerConnection.PeerNotConnected ignored) {

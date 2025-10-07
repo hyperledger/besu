@@ -189,6 +189,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
             .map(
                 simulation ->
                     new TransactionSimulationResult(simulation.transaction(), simulation.result()))
-            .toList());
+            .toList(),
+        result.getTrieLog());
   }
 }

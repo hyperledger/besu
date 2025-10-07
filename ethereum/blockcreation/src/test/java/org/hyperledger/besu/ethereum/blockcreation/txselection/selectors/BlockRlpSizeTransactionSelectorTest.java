@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockRlpSizeTransactionSelector.MAX_HEADER_SIZE;
+import static org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockRlpSizeTransactionSelector.INITIAL_RLP_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -72,7 +72,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(80));
     final int maxRlpBlockSize =
         (int)
-                (MAX_HEADER_SIZE
+                (INITIAL_RLP_SIZE
                     + tx1.getTransaction().getSizeForBlockInclusion()
                     + tx2.getTransaction().getSizeForBlockInclusion())
             + 20; // ensure there's some room left
@@ -100,7 +100,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx3 = createEIP1559PendingTransaction(Bytes.random(20));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx3.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
@@ -134,7 +134,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(50));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
@@ -160,7 +160,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);

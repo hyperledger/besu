@@ -16,14 +16,16 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-/** Utility class to convert between Besu and QBFT blocks. */
-public class BlockUtil {
+/** Utility class to convert between Besu and QBFT types. */
+public class AdaptorUtil {
 
   /** Private constructor to prevent instantiation. */
-  private BlockUtil() {}
+  private AdaptorUtil() {}
 
   /**
    * Convert a QBFT block to a Besu block.
@@ -50,6 +52,20 @@ public class BlockUtil {
       return ((QbftBlockHeaderAdaptor) header).getBesuBlockHeader();
     } else {
       throw new IllegalArgumentException("Unsupported block header type");
+    }
+  }
+
+  /**
+   * Convert a QBFT message to a Besu message.
+   *
+   * @param message the QBFT message
+   * @return the Besu message
+   */
+  public static Message toBesuMessage(final QbftMessage message) {
+    if (message instanceof QbftMessageAdaptor) {
+      return ((QbftMessageAdaptor) message).getBesuMessage();
+    } else {
+      throw new IllegalArgumentException("Unsupported message type");
     }
   }
 }
