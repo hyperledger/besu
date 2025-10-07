@@ -33,8 +33,8 @@ public class UInt256Test {
     return Bytes32.leftPad(Bytes.wrap(a));
   }
 
-  private Bytes32 bigIntTo32B(final BigInteger x, final int sign) {
-    if (sign >= 0) return bigIntTo32B(x);
+  private Bytes32 bigIntToSigned32B(final BigInteger x) {
+    if (x.signum() >= 0) return bigIntTo32B(x);
     byte[] a = new byte[32];
     Arrays.fill(a, (byte) 0xFF);
     byte[] b = x.toByteArray();
@@ -343,21 +343,14 @@ public class UInt256Test {
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
-      boolean neg = random.nextBoolean();
       byte[] aArray = new byte[aSize];
       byte[] bArray = new byte[bSize];
       random.nextBytes(aArray);
       random.nextBytes(bArray);
-      if ((aSize < 32) && (neg)) {
-        byte[] tmp = new byte[32];
-        Arrays.fill(tmp, (byte) 0xFF);
-        System.arraycopy(aArray, 0, tmp, 32 - aArray.length, aArray.length);
-        aArray = tmp;
-      }
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
-      BigInteger aInt = a.isNegative() ? new BigInteger(aArray) : new BigInteger(1, aArray);
-      BigInteger bInt = b.isNegative() ? new BigInteger(bArray) : new BigInteger(1, bArray);
+      BigInteger aInt = aArray.length < 32 ? new BigInteger(1, aArray) : new BigInteger(aArray);
+      BigInteger bInt = bArray.length < 32 ? new BigInteger(1, bArray) : new BigInteger(bArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.signedMod(b).toBytesBE()));
       Bytes32 expected;
       BigInteger rem = BigInteger.ZERO;
@@ -366,9 +359,9 @@ public class UInt256Test {
         rem = aInt.abs().mod(bInt.abs());
         if ((aInt.compareTo(BigInteger.ZERO) < 0) && (rem.compareTo(BigInteger.ZERO) != 0)) {
           rem = rem.negate();
-          expected = bigIntTo32B(rem, -1);
+          expected = bigIntToSigned32B(rem);
         } else {
-          expected = bigIntTo32B(rem, 1);
+          expected = bigIntTo32B(rem);
         }
       }
       assertThat(remainder).isEqualTo(expected);
