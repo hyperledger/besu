@@ -18,8 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_CELL_PROOFS;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_PROOF;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -39,7 +42,9 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Arrays;
@@ -63,6 +68,12 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
   private TransactionPool transactionPool;
   private EngineGetBlobsV2 method;
 
+  @Mock Counter requestedCounter;
+  @Mock Counter availableCounter;
+  @Mock Counter hitCounter;
+  @Mock Counter missCounter;
+  @Mock ObservableMetricsSystem metricsSystem;
+
   @BeforeEach
   public void setup() {
     transactionPool = mock(TransactionPool.class);
@@ -70,6 +81,24 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+
+    when(metricsSystem.createCounter(
+            eq(BesuMetricCategory.RPC),
+            eq("execution_engine_getblobs_requested_total"),
+            anyString()))
+        .thenReturn(requestedCounter);
+    when(metricsSystem.createCounter(
+            eq(BesuMetricCategory.RPC),
+            eq("execution_engine_getblobs_available_total"),
+            anyString()))
+        .thenReturn(availableCounter);
+    when(metricsSystem.createCounter(
+            eq(BesuMetricCategory.RPC), eq("execution_engine_getblobs_hit_total"), anyString()))
+        .thenReturn(hitCounter);
+    when(metricsSystem.createCounter(
+            eq(BesuMetricCategory.RPC), eq("execution_engine_getblobs_miss_total"), anyString()))
+        .thenReturn(missCounter);
+
     method =
         new EngineGetBlobsV2(
             mock(Vertx.class),
@@ -77,7 +106,7 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
             protocolSchedule,
             mock(EngineCallListener.class),
             transactionPool,
-            new NoOpMetricsSystem());
+            metricsSystem);
   }
 
   @Test
@@ -91,6 +120,11 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     JsonRpcSuccessResponse response =
         getSuccessResponse(buildRequestContext(bundle.getVersionedHash()));
     assertSingleValidBlob(response, bundle);
+
+    verify(requestedCounter).inc(1);
+    verify(availableCounter).inc(1);
+    verify(hitCounter).inc();
+    verifyNoInteractions(missCounter);
   }
 
   @Test
@@ -98,8 +132,12 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     VersionedHash unknown = new VersionedHash((byte) 1, Hash.ZERO);
     JsonRpcSuccessResponse response = getSuccessResponse(buildRequestContext(unknown));
     List<BlobAndProofV2> result = extractResult(response);
-
     assertThat(result).isNull();
+
+    verify(requestedCounter).inc(1);
+    verify(availableCounter).inc(0);
+    verify(missCounter).inc();
+    verifyNoInteractions(hitCounter);
   }
 
   @Test
@@ -113,6 +151,10 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     List<BlobAndProofV2> result = extractResult(response);
 
     assertThat(result).isNull();
+    verify(requestedCounter).inc(3);
+    verify(availableCounter).inc(2);
+    verify(missCounter).inc();
+    verifyNoInteractions(hitCounter);
   }
 
   @Test
@@ -127,6 +169,10 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     List<BlobAndProofV2> result = extractResult(response);
 
     assertThat(result).isNull();
+    verify(requestedCounter).inc(1);
+    verify(availableCounter).inc(0);
+    verify(missCounter).inc();
+    verifyNoInteractions(hitCounter);
   }
 
   @Test
