@@ -138,6 +138,7 @@ public class ValidatorContractControllerTest {
                 0,
                 ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()));
 
     when(transactionSimulator.process(
