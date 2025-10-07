@@ -109,28 +109,44 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
     requestedCounter.inc(versionedHashes.length);
-    List<BlobAndProofV2> result = new ArrayList<>(versionedHashes.length);
-    for (VersionedHash versionedHash : versionedHashes) {
-      BlobProofBundle blobProofBundle = transactionPool.getBlobProofBundle(versionedHash);
-      if (blobProofBundle == null) {
-        // no partial responses. this is a miss
-        missCounter.inc();
-        LOG.trace("No BlobProofBundle found for versioned hash: {}", versionedHash);
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    List<BlobProofBundle> validBundles = new ArrayList<>(versionedHashes.length);
+    int missingBlobs = 0;
+    int unsupportedBlobs = 0;
+    for (VersionedHash hash : versionedHashes) {
+      final BlobProofBundle bundle = transactionPool.getBlobProofBundle(hash);
+      if (bundle == null) {
+        LOG.trace("No BlobProofBundle found for versioned hash: {}", hash);
+        missingBlobs++;
+        continue;
       }
-      if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-        // wrong blob type. this is a miss
-        missCounter.inc();
-        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            null); // KZG_PROOF type is not supported in this method
+      if (bundle.getBlobType() == BlobType.KZG_PROOF) {
+        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", hash);
+        unsupportedBlobs++;
+        continue;
       }
-      result.add(createBlobAndProofV2(blobProofBundle));
+      validBundles.add(bundle);
     }
-    availableCounter.inc(versionedHashes.length);
+    // count how many of the requested blobs are actually available
+    availableCounter.inc(validBundles.size());
+
+    LOG.debug(
+        "Requested {} bundles, found {} valid bundles, {} missing, {} unsupported",
+        versionedHashes.length,
+        validBundles.size(),
+        missingBlobs,
+        unsupportedBlobs);
+
+    // V2 returns null if any requested blobs are missing or unsupported
+    if (missingBlobs > 0 || unsupportedBlobs > 0) {
+      missCounter.inc();
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+
+    final List<BlobAndProofV2> results =
+        validBundles.stream().map(this::createBlobAndProofV2).toList();
+
     hitCounter.inc();
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 
   private VersionedHash[] extractVersionedHashes(final JsonRpcRequestContext requestContext) {
