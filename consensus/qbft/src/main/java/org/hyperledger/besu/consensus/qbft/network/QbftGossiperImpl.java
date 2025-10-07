@@ -12,17 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.core.network;
+package org.hyperledger.besu.consensus.qbft.network;
 
-import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftGossiper;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -32,7 +34,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 /** Class responsible for rebroadcasting QBFT messages to known validators */
-public class QbftGossip implements Gossiper {
+public class QbftGossiperImpl implements QbftGossiper {
 
   private final ValidatorMulticaster multicaster;
   private final QbftBlockCodec blockEncoder;
@@ -43,7 +45,8 @@ public class QbftGossip implements Gossiper {
    * @param multicaster Network connections to the remote validators
    * @param blockEncoder the block encoder
    */
-  public QbftGossip(final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
+  public QbftGossiperImpl(
+      final ValidatorMulticaster multicaster, final QbftBlockCodec blockEncoder) {
     this.multicaster = multicaster;
     this.blockEncoder = blockEncoder;
   }
@@ -52,9 +55,15 @@ public class QbftGossip implements Gossiper {
    * Retransmit a given QBFT message to other known validators nodes
    *
    * @param message The raw message to be gossiped
+   * @param isReplay Whether this message is being replayed from the future message buffer
    */
   @Override
-  public void send(final Message message) {
+  public void send(final QbftMessage message, final boolean isReplay) {
+    // The isReplay flag is ignored in Besu as the behavior is the same for DevP2P
+    send(AdaptorUtil.toBesuMessage(message));
+  }
+
+  private void send(final Message message) {
     final MessageData messageData = message.getData();
     final Authored decodedMessage =
         switch (messageData.getCode()) {

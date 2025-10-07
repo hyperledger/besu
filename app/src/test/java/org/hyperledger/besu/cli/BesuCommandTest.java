@@ -2675,6 +2675,31 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void cacheLastBlockHeadersOptionShouldWork() {
+    int numberOfBlockHeaderToCache = 5000;
+    parseCommand("--cache-last-block-headers", String.valueOf(numberOfBlockHeaderToCache));
+    verify(mockControllerBuilder).cacheLastBlockHeaders(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(numberOfBlockHeaderToCache);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void isPreloadBlockHeadersCacheEnabledOptionShouldWork() {
+    boolean isPreloadBlockHeadersCacheEnabled = true;
+    parseCommand("--cache-last-block-headers-preload-enabled=true");
+    verify(mockControllerBuilder)
+        .isCacheLastBlockHeadersPreloadEnabled(booleanArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(booleanArgumentCaptor.getValue()).isEqualTo(isPreloadBlockHeadersCacheEnabled);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void genesisStateHashCacheEnabledShouldWork() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final ArgumentCaptor<EthNetworkConfig> networkArg =

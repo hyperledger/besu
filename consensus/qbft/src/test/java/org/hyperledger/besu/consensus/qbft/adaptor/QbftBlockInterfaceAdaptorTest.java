@@ -52,7 +52,7 @@ class QbftBlockInterfaceAdaptorTest {
     QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
     QbftBlock updatedBlock = qbftBlockInterface.replaceRoundForCommitBlock(block, 1);
     BftExtraData extraData =
-        qbftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(updatedBlock.getHeader()));
+        qbftExtraDataCodec.decode(AdaptorUtil.toBesuBlockHeader(updatedBlock.getHeader()));
     assertThat(extraData.getRound()).isEqualTo(1);
   }
 }

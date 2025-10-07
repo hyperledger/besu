@@ -240,6 +240,9 @@ public interface Blockchain {
    */
   long observeBlockAdded(BlockAddedObserver observer);
 
+  /** Removes all observers previously added via {@link #observeBlockAdded(BlockAddedObserver)}. */
+  default void removeAllBlockAddedObservers() {}
+
   /**
    * Adds an observer that will get called on for every added and removed log when a new block is
    * added.
