@@ -180,7 +180,7 @@ dependencies {
 
     api 'org.xerial.snappy:snappy-java:1.1.10.7'
 
-    api 'io.consensys.protocols:jc-kzg-4844:2.1.1'
+    api 'io.consensys.protocols:jc-kzg-4844:2.1.5'
 
     api 'tech.pegasys.discovery:discovery:25.4.0'
   }

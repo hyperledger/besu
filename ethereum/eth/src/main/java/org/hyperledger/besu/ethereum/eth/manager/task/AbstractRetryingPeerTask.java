@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
@@ -75,7 +76,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
    * @return True if the peer was assigned, false otherwise.
    */
   public boolean assignPeer(final EthPeer peer) {
-    if (isSuitablePeer(peer)) {
+    if (isSuitablePeer(EthPeerImmutableAttributes.from(peer))) {
       assignedPeer = Optional.of(peer);
       return true;
     } else {
@@ -180,7 +181,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     return maxRetries;
   }
 
-  protected boolean isSuitablePeer(final EthPeer peer) {
+  protected boolean isSuitablePeer(final EthPeerImmutableAttributes peer) {
     return true;
   }
 }
