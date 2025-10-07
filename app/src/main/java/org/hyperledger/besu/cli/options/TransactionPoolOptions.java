@@ -157,6 +157,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         "--tx-pool-max-prioritized-by-type";
     private static final String TX_POOL_MAX_FUTURE_BY_SENDER = "--tx-pool-max-future-by-sender";
     private static final String TX_POOL_MIN_SCORE = "--tx-pool-min-score";
+    private static final String TX_POOL_ENABLE_BALANCE_CHECK = "--tx-pool-enable-balance-check";
 
     @CommandLine.Option(
         names = {TX_POOL_LAYER_MAX_CAPACITY},
@@ -202,6 +203,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
                 + "Accepts values between -128 and 127 (default: ${DEFAULT-VALUE})",
         arity = "1")
     Byte minScore = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_SCORE;
+
+    @CommandLine.Option(
+        names = {TX_POOL_ENABLE_BALANCE_CHECK},
+        paramLabel = "<Boolean>",
+        description =
+            "If enabled a pending transaction can stay in the prioritized layer, only if its sender has enough balance (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    Boolean balanceCheckEnabled = TransactionPoolConfiguration.DEFAULT_TX_POOL_ENABLE_BALANCE_CHECK;
   }
 
   @CommandLine.ArgGroup(
@@ -345,6 +355,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getMaxPrioritizedTransactionsByType();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
     options.layeredOptions.minScore = config.getMinScore();
+    options.layeredOptions.balanceCheckEnabled = config.getEnableBalanceCheck();
     options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
     options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
@@ -407,6 +418,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .maxPrioritizedTransactionsByType(layeredOptions.txPoolMaxPrioritizedByType)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
         .minScore(layeredOptions.minScore)
+        .enableBalanceCheck(layeredOptions.balanceCheckEnabled)
         .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
         .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)

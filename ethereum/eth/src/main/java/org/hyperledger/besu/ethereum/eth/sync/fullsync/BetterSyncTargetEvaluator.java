@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
@@ -40,7 +41,12 @@ public class BetterSyncTargetEvaluator {
     return maybeBestPeer
         .map(
             bestPeer -> {
-              if (ethPeers.getBestPeerComparator().compare(bestPeer, currentSyncTarget) <= 0) {
+              if (ethPeers
+                      .getBestPeerComparator()
+                      .compare(
+                          EthPeerImmutableAttributes.from(bestPeer),
+                          EthPeerImmutableAttributes.from(currentSyncTarget))
+                  <= 0) {
                 // Our current target is better or equal to the best peer
                 return false;
               }

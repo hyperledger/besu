@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BftEventHandlerAdaptorTest {
   @Mock private QbftEventHandler qbftEventHandler;
+  @Mock private Message message;
   @Mock private BftReceivedMessageEvent bftReceivedMessageEvent;
   @Mock private BlockTimerExpiry blockTimerExpiry;
   @Mock private RoundExpiry roundExpiry;
@@ -56,12 +58,6 @@ class BftEventHandlerAdaptorTest {
   void stopDelegatesToQbftEventHandler() {
     handler.stop();
     verify(qbftEventHandler).stop();
-  }
-
-  @Test
-  void handleMessageEventDelegatesToQbftEventHandler() {
-    handler.handleMessageEvent(bftReceivedMessageEvent);
-    verify(qbftEventHandler).handleMessageEvent(bftReceivedMessageEvent);
   }
 
   @Test
@@ -89,5 +85,17 @@ class BftEventHandlerAdaptorTest {
                     ((QbftBlockHeaderAdaptor) argument.newChainHeadHeader())
                         .getBesuBlockHeader()
                         .equals(header)));
+  }
+
+  @Test
+  void handleMessageEventDelegatesToQbftEventHandler() {
+    when(bftReceivedMessageEvent.getMessage()).thenReturn(message);
+
+    handler.handleMessageEvent(bftReceivedMessageEvent);
+    verify(qbftEventHandler)
+        .handleMessageEvent(
+            argThat(
+                argument ->
+                    ((QbftMessageAdaptor) argument.getMessage()).getBesuMessage().equals(message)));
   }
 }

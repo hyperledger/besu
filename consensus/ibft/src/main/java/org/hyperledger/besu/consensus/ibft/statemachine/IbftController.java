@@ -54,7 +54,7 @@ public class IbftController extends BaseBftController {
       final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
-      final FutureMessageBuffer futureMessageBuffer,
+      final FutureMessageBuffer<Message> futureMessageBuffer,
       final SynchronizerUpdater synchronizerUpdater) {
 
     super(
