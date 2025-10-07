@@ -617,6 +617,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer numberOfBlockHeadersToCache = 0;
 
   @CommandLine.Option(
+      names = {"--cache-last-block-headers-preload-enabled"},
+      description = "Enable preloading of the block header cache (default: ${DEFAULT-VALUE})")
+  private final Boolean isCacheLastBlockHeadersPreloadEnabled = false;
+
+  @CommandLine.Option(
       names = {"--cache-precompiles"},
       description = "Specifies whether to cache precompile results (default: ${DEFAULT-VALUE})")
   private final Boolean enablePrecompileCaching = false;
@@ -1576,7 +1581,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
       } else if (genesisConfigOptions.isPoa()) {
-        Long epochLength = 0L;
+        long epochLength = 0L;
         String consensusMechanism = "";
         if (genesisConfigOptions.isIbft2()) {
           epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
@@ -1688,8 +1693,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+    logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
+      logger.info("Engine JSON-RPC config: {}", engineJsonRpcConfiguration);
       // align JSON decoding limit with HTTP body limit
       // character count is close to size in bytes
       final long maxRequestContentLength =
@@ -1828,6 +1835,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
             .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
+            .isCacheLastBlockHeadersPreloadEnabled(isCacheLastBlockHeadersPreloadEnabled)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
@@ -1848,7 +1856,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             engineRPCConfig.engineHostsAllowlist(),
             p2PDiscoveryConfig.p2pHost(),
-            unstableRPCOptions.getWsTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec());
     engineConfig.setPort(engineRPCConfig.engineRpcPort());
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());

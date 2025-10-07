@@ -21,6 +21,7 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALI
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTION_CANCELLED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -248,7 +249,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
             },
             null);
-    ethScheduler.scheduleBlockCreationTask(txSelectionTask);
+    ethScheduler.scheduleBlockCreationTask(
+        blockSelectionContext.pendingBlockHeader().getNumber(), txSelectionTask);
 
     try {
       txSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
@@ -296,7 +298,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             },
             null);
 
-    ethScheduler.scheduleBlockCreationTask(pluginTxSelectionTask);
+    ethScheduler.scheduleBlockCreationTask(
+        blockSelectionContext.pendingBlockHeader().getNumber(), pluginTxSelectionTask);
 
     try {
       pluginTxSelectionTask.get(pluginTxsSelectionMaxTimeNanos, TimeUnit.NANOSECONDS);
@@ -464,19 +467,20 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
    *
    * @param pendingTransaction The transaction to be evaluated.
    * @return The result of the transaction evaluation process.
-   * @throws CancellationException if the transaction selection process is cancelled.
    */
   @Override
   public TransactionSelectionResult evaluatePendingTransaction(
       final org.hyperledger.besu.datatypes.PendingTransaction pendingTransaction) {
-
-    checkCancellation();
 
     LOG.atTrace().setMessage("Starting evaluation of {}").addArgument(pendingTransaction).log();
 
     final TransactionEvaluationContext evaluationContext =
         createTransactionEvaluationContext(pendingTransaction);
     currTxEvaluationContext = evaluationContext;
+
+    if (isCancelled.get()) {
+      return handleTransactionNotSelected(evaluationContext, SELECTION_CANCELLED);
+    }
 
     TransactionSelectionResult selectionResult = evaluatePreProcessing(evaluationContext);
     if (!selectionResult.selected()) {
@@ -801,12 +805,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       selector.onTransactionNotSelected(evaluationContext, selectionResult);
     }
     pluginTransactionSelector.onTransactionNotSelected(evaluationContext, selectionResult);
-  }
-
-  private void checkCancellation() {
-    if (isCancelled.get()) {
-      throw new CancellationException("Cancelled during transaction selection.");
-    }
   }
 
   private long nanosToMillis(final long nanos) {

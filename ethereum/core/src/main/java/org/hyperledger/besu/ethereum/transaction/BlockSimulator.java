@@ -54,6 +54,8 @@ import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -161,6 +163,7 @@ public class BlockSimulator {
               worldState,
               simulationParameter.isValidation(),
               simulationParameter.isTraceTransfers(),
+              simulationParameter.isReturnTrieLog(),
               simulationParameter::getFakeSignature,
               blockHashCache,
               simulationCumulativeGasUsed);
@@ -187,6 +190,7 @@ public class BlockSimulator {
       final MutableWorldState ws,
       final boolean shouldValidate,
       final boolean isTraceTransfers,
+      final boolean returnTrieLog,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
       final long simulationCumulativeGasUsed) {
@@ -280,7 +284,8 @@ public class BlockSimulator {
         blockStateCallSimulationResult,
         blockOverrides,
         ws,
-        maybeRequests);
+        maybeRequests,
+        returnTrieLog);
   }
 
   protected BlockStateCallSimulationResult processTransactions(
@@ -380,13 +385,14 @@ public class BlockSimulator {
 
   private BlockSimulationResult createFinalBlock(
       final BlockHeader blockHeader,
-      final BlockStateCallSimulationResult blockStateCallSimulationResult,
+      final BlockStateCallSimulationResult simResult,
       final BlockOverrides blockOverrides,
       final MutableWorldState ws,
-      final Optional<List<Request>> maybeRequests) {
+      final Optional<List<Request>> maybeRequests,
+      final boolean returnTrieLog) {
 
-    List<Transaction> transactions = blockStateCallSimulationResult.getTransactions();
-    List<TransactionReceipt> receipts = blockStateCallSimulationResult.getReceipts();
+    List<Transaction> transactions = simResult.getTransactions();
+    List<TransactionReceipt> receipts = simResult.getReceipts();
 
     BlockHeader finalBlockHeader =
         BlockHeaderBuilder.createDefault()
@@ -396,14 +402,10 @@ public class BlockSimulator {
             .transactionsRoot(BodyValidation.transactionsRoot(transactions))
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
-            .gasUsed(blockStateCallSimulationResult.getCumulativeGasUsed())
+            .gasUsed(simResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
-            .balHash(
-                blockStateCallSimulationResult
-                    .getBlockAccessList()
-                    .map(BodyValidation::balHash)
-                    .orElse(null))
+            .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
@@ -412,12 +414,20 @@ public class BlockSimulator {
         new Block(
             finalBlockHeader,
             new BlockBody(
-                transactions,
-                List.of(),
-                Optional.of(List.of()),
-                blockStateCallSimulationResult.getBlockAccessList()));
+                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
 
-    return new BlockSimulationResult(block, blockStateCallSimulationResult);
+    if (returnTrieLog && ws instanceof PathBasedWorldState) {
+      // if requested and path-based worldstate, return result with trielog and serializer:
+      var pathBasedArchive = (PathBasedWorldStateProvider) worldStateArchive;
+      var pathBasedAccumulator = ((PathBasedWorldState) ws).getAccumulator();
+      var trieLogFactory = pathBasedArchive.getTrieLogManager().getTrieLogFactory();
+      var trieLog = trieLogFactory.create(pathBasedAccumulator, finalBlockHeader);
+      return new BlockSimulationResult(
+          block, simResult, trieLog, log -> Bytes.wrap(trieLogFactory.serialize(log)));
+    } else {
+      // otherwise return result w/o trielog
+      return new BlockSimulationResult(block, simResult);
+    }
   }
 
   /**

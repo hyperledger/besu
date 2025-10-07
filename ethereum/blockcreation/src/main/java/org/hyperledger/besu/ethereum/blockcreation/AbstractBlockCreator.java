@@ -181,7 +181,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         parentHeader);
   }
 
-  protected BlockCreationResult createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,

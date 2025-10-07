@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -32,8 +33,8 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrailingPeerLimiter.class);
 
-  private static final Comparator<EthPeer> BY_CHAIN_HEIGHT =
-      Comparator.comparing(peer -> peer.chainState().getEstimatedHeight());
+  private static final Comparator<EthPeerImmutableAttributes> BY_CHAIN_HEIGHT =
+      Comparator.comparing(peer -> peer.estimatedChainHeight());
   // Note rechecking only on blocks that are a multiple of 100 is just a simple way of limiting
   // how often we rerun the check.
   private static final int RECHECK_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF = 100;
@@ -57,9 +58,10 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
     final List<EthPeer> trailingPeers =
         ethPeers
             .streamAvailablePeers()
-            .filter(peer -> peer.chainState().hasEstimatedHeight())
-            .filter(peer -> peer.chainState().getEstimatedHeight() < minimumHeightToBeUpToDate)
+            .filter(peer -> peer.hasEstimatedChainHeight())
+            .filter(peer -> peer.estimatedChainHeight() < minimumHeightToBeUpToDate)
             .sorted(BY_CHAIN_HEIGHT)
+            .map(EthPeerImmutableAttributes::ethPeer)
             .collect(Collectors.toList());
 
     while (!trailingPeers.isEmpty() && trailingPeers.size() > maxTrailingPeers) {

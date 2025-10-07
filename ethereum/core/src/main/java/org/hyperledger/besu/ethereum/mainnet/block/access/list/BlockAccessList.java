@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -36,6 +37,23 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public record BlockAccessList(List<AccountChanges> accountChanges) {
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BlockAccessList)) {
+      return false;
+    }
+    final BlockAccessList that = (BlockAccessList) o;
+    return Objects.equals(accountChanges, that.accountChanges);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(accountChanges);
+  }
 
   public void writeTo(final RLPOutput out) {
     BlockAccessListEncoder.encode(this, out);
