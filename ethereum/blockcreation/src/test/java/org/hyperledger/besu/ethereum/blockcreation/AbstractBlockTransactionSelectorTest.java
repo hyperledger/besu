@@ -1470,7 +1470,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             protocolSpec,
             transactionSelectionService.createPluginTransactionSelector(selectorsStateManager),
             ethScheduler,
-            selectorsStateManager);
+            selectorsStateManager,
+            Optional.empty());
 
     return selector;
   }

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -246,6 +247,7 @@ public class CheckPointSyncChainDownloaderTest {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(
@@ -278,6 +280,7 @@ public class CheckPointSyncChainDownloaderTest {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(
@@ -315,6 +318,7 @@ public class CheckPointSyncChainDownloaderTest {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(
@@ -348,6 +352,7 @@ public class CheckPointSyncChainDownloaderTest {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(

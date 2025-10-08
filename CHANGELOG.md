@@ -15,8 +15,11 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
+- Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
 
 ### Bug fixes
+- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 
 ## 25.10.0-RC2
 This RC is a pre-release, recommended update for Holesky and Sepolia users for the Fusaka hardfork.

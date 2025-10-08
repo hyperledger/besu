@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.ethereum.eth.manager.EthPeers.CHAIN_HEIGHT;
 
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -26,23 +26,23 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 /** The Transition best peer comparator. */
-public class TransitionBestPeerComparator implements Comparator<EthPeer>, MergeStateHandler {
+public class TransitionBestPeerComparator
+    implements Comparator<EthPeerImmutableAttributes>, MergeStateHandler {
 
   private static final AtomicReference<Difficulty> terminalTotalDifficulty =
       new AtomicReference<>();
 
   /** The Distance from ttd. */
-  static final BiFunction<EthPeer, Difficulty, BigInteger> distanceFromTTD =
+  static final BiFunction<EthPeerImmutableAttributes, Difficulty, BigInteger> distanceFromTTD =
       (a, ttd) ->
-          a.chainState()
-              .getEstimatedTotalDifficulty()
-              .getAsBigInteger()
+          a.estimatedTotalDifficulty()
+              .toBigInteger()
               .subtract(ttd.getAsBigInteger())
               .abs()
               .negate();
 
   /** The constant EXACT_DIFFICULTY. */
-  public static final Comparator<EthPeer> EXACT_DIFFICULTY =
+  public static final Comparator<EthPeerImmutableAttributes> EXACT_DIFFICULTY =
       (a, b) -> {
         var ttd = terminalTotalDifficulty.get();
         var aDelta = distanceFromTTD.apply(a, ttd);
@@ -51,7 +51,7 @@ public class TransitionBestPeerComparator implements Comparator<EthPeer>, MergeS
       };
 
   /** The constant BEST_MERGE_CHAIN. */
-  public static final Comparator<EthPeer> BEST_MERGE_CHAIN =
+  public static final Comparator<EthPeerImmutableAttributes> BEST_MERGE_CHAIN =
       EXACT_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   /**
@@ -74,7 +74,7 @@ public class TransitionBestPeerComparator implements Comparator<EthPeer>, MergeS
   }
 
   @Override
-  public int compare(final EthPeer o1, final EthPeer o2) {
+  public int compare(final EthPeerImmutableAttributes o1, final EthPeerImmutableAttributes o2) {
     return BEST_MERGE_CHAIN.compare(o1, o2);
   }
 }

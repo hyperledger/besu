@@ -62,6 +62,7 @@
                 "removed": false,
                 "blockNumber": "0x2e",
                 "blockHash": "0x8efc6e2cd98b5991173ed588214020bcb2c968db6da9090308871aaeb52177e1",
+                "blockTimestamp" : "0x1ce",
                 "transactionHash": "0x6f6b50a44465cef78cbedece0b0b519c88e1159d6bbc420095c8ad94f253a218",
                 "transactionIndex": "0x0",
                 "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
