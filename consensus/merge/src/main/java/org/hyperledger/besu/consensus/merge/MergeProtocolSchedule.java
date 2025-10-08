@@ -43,7 +43,6 @@ import java.util.function.Function;
 public class MergeProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
-  private static final Duration PARIS_SLOT_DURATION = Duration.ofSeconds(12);
 
   /** Default constructor. */
   MergeProtocolSchedule() {}
@@ -73,7 +72,7 @@ public class MergeProtocolSchedule {
         0L,
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
-                specBuilder, config.getChainId()));
+                specBuilder, config.getChainId(), miningConfiguration));
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -97,7 +96,9 @@ public class MergeProtocolSchedule {
    * via a blockNumber so it can't be looked up in the schedule.
    */
   private static ProtocolSpecBuilder applyParisSpecificModifications(
-      final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
+      final ProtocolSpecBuilder specBuilder,
+      final Optional<BigInteger> chainId,
+      final MiningConfiguration miningConfiguration) {
 
     return specBuilder
         .evmBuilder(
@@ -109,7 +110,7 @@ public class MergeProtocolSchedule {
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
-        .slotDuration(PARIS_SLOT_DURATION)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 

@@ -119,7 +119,7 @@ public class ProtocolSpec {
    * @param requestProcessorCoordinator the request processor to use
    * @param preExecutionProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
-   * @param slotDuration the slot duration when in PoS
+   * @param slotDuration the slot duration
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
    */

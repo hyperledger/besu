@@ -274,8 +274,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder slotDuration(final Duration duration) {
-    this.slotDuration = duration;
+  public ProtocolSpecBuilder slotDuration(final Duration slotDuration) {
+    this.slotDuration = slotDuration;
     return this;
   }
 
@@ -327,6 +327,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(feeMarketBuilder, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
+    checkNotNull(slotDuration, "Missing slot duration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();

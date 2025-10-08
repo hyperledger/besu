@@ -146,9 +146,8 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
 
-  private static final Duration PARIS_SLOT_DURATION = Duration.ofSeconds(12);
-
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
+  private static final int POW_SLOT_TIME_ESTIMATION = 13;
 
   private MainnetProtocolSpecs() {}
 
@@ -217,20 +216,23 @@ public abstract class MainnetProtocolSpecs {
 
   private static Duration getSlotDurationFromGenesis(
       final GenesisConfigOptions genesisConfigOptions) {
+
     if (genesisConfigOptions.isIbft2()) {
       return Duration.ofSeconds(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
     }
     if (genesisConfigOptions.isQbft()) {
-      return Duration.ofSeconds(genesisConfigOptions.getQbftConfigOptions().getEpochLength());
+      return Duration.ofSeconds(
+          genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
     }
     if (genesisConfigOptions.isClique()) {
-      return Duration.ofSeconds(genesisConfigOptions.getCliqueConfigOptions().getEpochLength());
+      return Duration.ofSeconds(
+          genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
     }
     // if no hints are present in the genesis file, then we are in PoW and there is not predefined
-    // block period, so just return the min possible interval between blocks.
+    // block period, so just return an estimation.
     // We also get here if we are in PoS mode, but the right value for PoS slot duration will
     // override this value.
-    return Duration.ofSeconds(1);
+    return Duration.ofSeconds(POW_SLOT_TIME_ESTIMATION);
   }
 
   public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
@@ -704,7 +706,7 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
-        .slotDuration(PARIS_SLOT_DURATION)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 
