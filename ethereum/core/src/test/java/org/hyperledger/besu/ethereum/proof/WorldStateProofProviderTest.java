@@ -99,7 +99,7 @@ public class WorldStateProofProviderTest {
             Hash.wrap(worldStateTrie.getRootHash()), address, storageKeys);
 
     assertThat(accountProof).isPresent();
-    Assertions.assertThat(accountProof.get().getStateTrieAccountValue()).containsSame(accountValue);
+    Assertions.assertThat(accountProof.get().getStateTrieAccountValue()).contains(accountValue);
     assertThat(accountProof.get().getAccountProof().size()).isGreaterThanOrEqualTo(1);
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);
