@@ -86,6 +86,7 @@ public class ModOperationBenchmark extends BinaryOperationBenchmark {
     "FULL_RANDOM"
   })
   private String caseName;
+
   private ModOperationOptimized operation;
   private EVM evm;
 

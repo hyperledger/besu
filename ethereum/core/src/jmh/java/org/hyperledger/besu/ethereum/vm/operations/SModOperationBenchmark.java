@@ -86,6 +86,7 @@ public class SModOperationBenchmark extends BinaryOperationBenchmark {
     "FULL_RANDOM"
   })
   private String caseName;
+
   private SModOperationOptimized operation;
   private EVM evm;
 

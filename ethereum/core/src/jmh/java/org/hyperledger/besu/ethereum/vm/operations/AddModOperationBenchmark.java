@@ -128,6 +128,7 @@ public class AddModOperationBenchmark extends TernaryOperationBenchmark {
     "FULL_RANDOM"
   })
   private String caseName;
+
   private AddModOperationOptimized operation;
   private EVM evm;
 
