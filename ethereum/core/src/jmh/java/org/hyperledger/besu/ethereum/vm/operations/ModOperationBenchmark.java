@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.ModOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 
@@ -82,11 +86,15 @@ public class ModOperationBenchmark extends BinaryOperationBenchmark {
     "FULL_RANDOM"
   })
   private String caseName;
+  private ModOperationOptimized operation;
+  private EVM evm;
 
   @Setup(Level.Iteration)
   @Override
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
+    operation = new ModOperationOptimized(mock(GasCalculator.class));
+    evm = mock(EVM.class);
 
     Case scenario = Case.valueOf(caseName);
     aPool = new Bytes[SAMPLE_SIZE];
@@ -128,6 +136,6 @@ public class ModOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return ModOperationOptimized.staticOperation(frame);
+    return operation.executeFixedCostOperation(frame, evm);
   }
 }

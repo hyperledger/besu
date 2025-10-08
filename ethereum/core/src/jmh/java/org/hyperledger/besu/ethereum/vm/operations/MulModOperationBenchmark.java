@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 
@@ -124,11 +128,15 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
     "FULL_RANDOM"
   })
   private String caseName;
+  private MulModOperationOptimized operation;
+  private EVM evm;
 
   @Setup(Level.Iteration)
   @Override
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
+    operation = new MulModOperationOptimized(mock(GasCalculator.class));
+    evm = mock(EVM.class);
 
     Case scenario = Case.valueOf(caseName);
     aPool = new Bytes[SAMPLE_SIZE];
@@ -163,6 +171,6 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return MulModOperationOptimized.staticOperation(frame);
+    return operation.executeFixedCostOperation(frame, evm);
   }
 }
