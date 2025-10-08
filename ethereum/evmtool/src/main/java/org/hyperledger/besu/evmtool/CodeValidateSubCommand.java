@@ -17,7 +17,6 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -91,9 +90,12 @@ public class CodeValidateSubCommand implements Runnable {
     evm =
         Suppliers.memoize(
             () -> {
-              ProtocolSpec protocolSpec =
-                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
-              return protocolSpec.getEvm();
+              if (parentCommand == null) {
+                return ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
+              }
+              return ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+                  .geSpecByName(fork)
+                  .getEvm();
             });
   }
 

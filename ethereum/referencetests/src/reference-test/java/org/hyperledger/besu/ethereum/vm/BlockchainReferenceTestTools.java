@@ -138,7 +138,7 @@ public class BlockchainReferenceTestTools {
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
+        ReferenceTestProtocolSchedules.create().getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();

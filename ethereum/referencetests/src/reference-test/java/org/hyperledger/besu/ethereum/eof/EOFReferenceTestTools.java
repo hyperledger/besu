@@ -103,7 +103,7 @@ public class EOFReferenceTestTools {
       final Bytes code,
       final String containerKind,
       final EOFTestCaseSpec.TestResult expected) {
-    EVM evm = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork).getEvm();
+    EVM evm = ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
     assertThat(evm).isNotNull();
 
     // hardwire in the magic byte transaction checks
