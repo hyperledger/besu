@@ -227,8 +227,16 @@ public class EthScheduler {
     return promise;
   }
 
-  public CompletableFuture<Void> scheduleBlockCreationTask(final Runnable task) {
-    return CompletableFuture.runAsync(task, blockCreationExecutor);
+  public CompletableFuture<Void> scheduleBlockCreationTask(
+      final long blockNumber, final Runnable task) {
+    return CompletableFuture.runAsync(
+        () -> {
+          final var originalName = Thread.currentThread().getName();
+          Thread.currentThread().setName(originalName + "-" + blockNumber);
+          task.run();
+          Thread.currentThread().setName(originalName);
+        },
+        blockCreationExecutor);
   }
 
   public <T> CompletableFuture<T> timeout(final EthTask<T> task, final Duration timeout) {

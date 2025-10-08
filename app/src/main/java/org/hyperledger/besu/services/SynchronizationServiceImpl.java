@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
 
 import java.util.Optional;
@@ -167,13 +168,45 @@ public class SynchronizationServiceImpl implements SynchronizationService {
         });
   }
 
+  /** Stops the synchronizer. */
   @Override
   public void stop() {
     synchronizer.stop();
   }
 
+  /** Starts the synchronizer. */
   @Override
   public void start() {
     synchronizer.start();
+  }
+
+  /**
+   * Returns the current sync status.
+   *
+   * @return the current sync status, or empty if not syncing.
+   */
+  @Override
+  public Optional<SyncStatus> getSyncStatus() {
+    return synchronizer.getSyncStatus();
+  }
+
+  /**
+   * Returns true if the node is in sync.
+   *
+   * @return true if the node is in sync.
+   */
+  @Override
+  public boolean isInSync() {
+    return synchronizer.isInSync();
+  }
+
+  /**
+   * Returns the best peer chain head.
+   *
+   * @return the best peer chain head, or empty if no peers are connected.
+   */
+  @Override
+  public Optional<Long> getBestPeerChainHead() {
+    return synchronizer.getBestPeerChainHead();
   }
 }

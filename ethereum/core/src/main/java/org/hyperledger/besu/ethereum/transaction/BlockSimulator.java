@@ -45,21 +45,22 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
@@ -162,6 +163,7 @@ public class BlockSimulator {
               worldState,
               simulationParameter.isValidation(),
               simulationParameter.isTraceTransfers(),
+              simulationParameter.isReturnTrieLog(),
               simulationParameter::getFakeSignature,
               blockHashCache,
               simulationCumulativeGasUsed);
@@ -188,6 +190,7 @@ public class BlockSimulator {
       final MutableWorldState ws,
       final boolean shouldValidate,
       final boolean isTraceTransfers,
+      final boolean returnTrieLog,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
       final long simulationCumulativeGasUsed) {
@@ -214,6 +217,16 @@ public class BlockSimulator {
         createBlockHashLookup(
             blockOverrides, protocolSpec, overridenBaseBlockHeader, blockHashCache);
 
+    Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .filter(BlockAccessListFactory::isEnabled)
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
+    Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+        blockAccessListBuilder.map(
+            b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
+
     final BlockProcessingContext blockProcessingContext =
         new BlockProcessingContext(
             overridenBaseBlockHeader,
@@ -221,7 +234,10 @@ public class BlockSimulator {
             protocolSpec,
             blockHashLookup,
             OperationTracer.NO_TRACING);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+
+    protocolSpec
+        .getPreExecutionProcessor()
+        .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         processTransactions(
@@ -234,7 +250,14 @@ public class BlockSimulator {
             transactionProcessor,
             blockHashLookup,
             signatureSupplier,
-            simulationCumulativeGasUsed);
+            simulationCumulativeGasUsed,
+            blockAccessListBuilder);
+
+    Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
+        blockAccessListBuilder.map(
+            b ->
+                BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
+                    blockStateCallSimulationResult.getTransactions().size()));
 
     // EIP-7685: process EL requests
     final Optional<RequestProcessorCoordinator> requestProcessor =
@@ -244,15 +267,25 @@ public class BlockSimulator {
       RequestProcessingContext requestProcessingContext =
           new RequestProcessingContext(
               blockProcessingContext, blockStateCallSimulationResult.getReceipts());
-      maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
+      maybeRequests =
+          Optional.of(
+              requestProcessor
+                  .get()
+                  .process(requestProcessingContext, postExecutionAccessLocationTracker));
     }
+
+    postExecutionAccessLocationTracker.ifPresent(
+        tracker ->
+            blockAccessListBuilder.ifPresent(
+                builder -> builder.apply(tracker, ws.updater().updater())));
 
     return createFinalBlock(
         overridenBaseBlockHeader,
         blockStateCallSimulationResult,
         blockOverrides,
         ws,
-        maybeRequests);
+        maybeRequests,
+        returnTrieLog);
   }
 
   protected BlockStateCallSimulationResult processTransactions(
@@ -265,7 +298,8 @@ public class BlockSimulator {
       final MainnetTransactionProcessor transactionProcessor,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -280,13 +314,6 @@ public class BlockSimulator {
             .getFeeRecipient()
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
-
-    final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
-    final boolean includeBlockAccessList =
-        protocolSpec
-            .getBlockAccessListFactory()
-            .map(BlockAccessListFactory::isEnabled)
-            .orElse(false);
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
@@ -307,8 +334,8 @@ public class BlockSimulator {
           getBlobGasPricePerGasSupplier(
               blockStateCall.getBlockOverrides(), transactionValidationParams);
 
-      final TransactionAccessList transactionAccessList =
-          new TransactionAccessList(transactionLocation);
+      final Optional<AccessLocationTracker> transactionLocationTracker =
+          createTransactionAccessLocationTracker(blockAccessListBuilder, transactionLocation);
       final Optional<TransactionSimulatorResult> transactionSimulatorResult =
           transactionSimulator.processWithWorldUpdater(
               callParameter,
@@ -323,24 +350,21 @@ public class BlockSimulator {
               blobGasPricePerGasSupplier,
               blockHashLookup,
               signatureSupplier,
-              Optional.of(transactionAccessList));
+              transactionLocationTracker);
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
               () -> new BlockStateCallException("Transaction simulator result is empty"));
 
-      if (includeBlockAccessList
-          && transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-        transactionSimulationResult
-            .result()
-            .getTransactionAccessList()
-            .ifPresent(t -> balBuilder.addTransactionLevelAccessList(t, stackedUpdater));
-      }
-
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
             "Transaction simulator result is invalid", transactionSimulationResult);
       }
+
+      transactionSimulationResult
+          .result()
+          .getPartialBlockAccessView()
+          .ifPresent(view -> blockAccessListBuilder.ifPresent(builder -> builder.apply(view)));
 
       transactionUpdater.commit();
       blockUpdater.commit();
@@ -348,21 +372,27 @@ public class BlockSimulator {
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
     }
 
-    if (includeBlockAccessList) {
-      blockStateCallSimulationResult.set(balBuilder.build());
-    }
+    blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
     return blockStateCallSimulationResult;
+  }
+
+  private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final int transactionLocation) {
+    return blockAccessListBuilder.map(
+        b -> BlockAccessListBuilder.createTransactionAccessLocationTracker(transactionLocation));
   }
 
   private BlockSimulationResult createFinalBlock(
       final BlockHeader blockHeader,
-      final BlockStateCallSimulationResult blockStateCallSimulationResult,
+      final BlockStateCallSimulationResult simResult,
       final BlockOverrides blockOverrides,
       final MutableWorldState ws,
-      final Optional<List<Request>> maybeRequests) {
+      final Optional<List<Request>> maybeRequests,
+      final boolean returnTrieLog) {
 
-    List<Transaction> transactions = blockStateCallSimulationResult.getTransactions();
-    List<TransactionReceipt> receipts = blockStateCallSimulationResult.getReceipts();
+    List<Transaction> transactions = simResult.getTransactions();
+    List<TransactionReceipt> receipts = simResult.getReceipts();
 
     BlockHeader finalBlockHeader =
         BlockHeaderBuilder.createDefault()
@@ -372,14 +402,10 @@ public class BlockSimulator {
             .transactionsRoot(BodyValidation.transactionsRoot(transactions))
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
-            .gasUsed(blockStateCallSimulationResult.getCumulativeGasUsed())
+            .gasUsed(simResult.getCumulativeGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
-            .balHash(
-                blockStateCallSimulationResult
-                    .getBlockAccessList()
-                    .map(BodyValidation::balHash)
-                    .orElse(null))
+            .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
             .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
             .buildBlockHeader();
@@ -388,12 +414,20 @@ public class BlockSimulator {
         new Block(
             finalBlockHeader,
             new BlockBody(
-                transactions,
-                List.of(),
-                Optional.of(List.of()),
-                blockStateCallSimulationResult.getBlockAccessList()));
+                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
 
-    return new BlockSimulationResult(block, blockStateCallSimulationResult);
+    if (returnTrieLog && ws instanceof PathBasedWorldState) {
+      // if requested and path-based worldstate, return result with trielog and serializer:
+      var pathBasedArchive = (PathBasedWorldStateProvider) worldStateArchive;
+      var pathBasedAccumulator = ((PathBasedWorldState) ws).getAccumulator();
+      var trieLogFactory = pathBasedArchive.getTrieLogManager().getTrieLogFactory();
+      var trieLog = trieLogFactory.create(pathBasedAccumulator, finalBlockHeader);
+      return new BlockSimulationResult(
+          block, simResult, trieLog, log -> Bytes.wrap(trieLogFactory.serialize(log)));
+    } else {
+      // otherwise return result w/o trielog
+      return new BlockSimulationResult(block, simResult);
+    }
   }
 
   /**

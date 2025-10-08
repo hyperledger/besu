@@ -421,6 +421,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     ethScheduler
         .scheduleBlockCreationTask(
+            parentHeader.getNumber() + 1,
             () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
         .orTimeout(
             miningConfiguration.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)

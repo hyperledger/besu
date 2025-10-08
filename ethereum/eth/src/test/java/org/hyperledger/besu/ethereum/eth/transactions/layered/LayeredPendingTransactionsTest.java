@@ -160,7 +160,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             transactionReplacementTester,
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE));
+            MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE),
+            senderBalanceChecker);
     return new CreatedLayers(
         prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }

@@ -214,10 +214,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    when(ethScheduler.scheduleBlockCreationTask(any()))
+    when(ethScheduler.scheduleBlockCreationTask(anyLong(), any()))
         .thenAnswer(
             invocation -> {
-              final Runnable runnable = invocation.getArgument(0);
+              final Runnable runnable = invocation.getArgument(1);
               if (!invocation.toString().contains("MergeCoordinator")) {
                 return CompletableFuture.runAsync(runnable);
               }

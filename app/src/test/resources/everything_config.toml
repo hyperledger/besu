@@ -94,6 +94,8 @@ rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
+cache-last-block-headers=5000
+cache-last-block-headers-preload-enabled=true
 cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100
@@ -164,6 +166,7 @@ min-priority-fee=0
 min-block-occupancy-ratio=0.7
 block-txs-selection-max-time=5000
 poa-block-txs-selection-max-time=75
+plugin-block-txs-selection-max-time=50
 Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
@@ -189,6 +192,7 @@ tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
 tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
 tx-pool-max-future-by-sender=321
+tx-pool-enable-balance-check=false
 ## Legacy/Sequenced
 tx-pool-retention-hours=999
 tx-pool-max-size=1234
@@ -212,6 +216,7 @@ auto-log-bloom-caching-enabled=true
 ethstats="nodename:secret@host:1234"
 ethstats-contact="contact@mail.n"
 ethstats-cacert-file="./root.cert"
+ethstats-report-interval=10
 
 # Data storage
 data-storage-format="BONSAI"
