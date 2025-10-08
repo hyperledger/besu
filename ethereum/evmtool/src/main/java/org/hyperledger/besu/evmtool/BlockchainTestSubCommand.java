@@ -96,6 +96,7 @@ public class BlockchainTestSubCommand implements Runnable {
 
   /** Helper class to track test execution results for summary reporting. */
   private static class TestResults {
+    private static final String SEPARATOR = "\n" + "=".repeat(80);
     private final AtomicInteger totalTests = new AtomicInteger(0);
     private final AtomicInteger passedTests = new AtomicInteger(0);
     private final AtomicInteger failedTests = new AtomicInteger(0);
@@ -113,19 +114,18 @@ public class BlockchainTestSubCommand implements Runnable {
     }
 
     void printSummary(final java.io.PrintWriter out) {
-      out.println("\n" + "=".repeat(80));
+      out.println(SEPARATOR);
       out.println("TEST SUMMARY");
-      out.println("=".repeat(80));
+      out.println(SEPARATOR.substring(1)); // Skip leading newline for middle separator
       out.printf("Total tests:  %d%n", totalTests.get());
       out.printf("Passed:       %d%n", passedTests.get());
       out.printf("Failed:       %d%n", failedTests.get());
 
       if (!failures.isEmpty()) {
         out.println("\nFailed tests:");
-        failures.forEach(
-            (testName, reason) -> out.printf("  - %s: %s%n", testName, reason));
+        failures.forEach((testName, reason) -> out.printf("  - %s: %s%n", testName, reason));
       }
-      out.println("=".repeat(80));
+      out.println(SEPARATOR.substring(1)); // Skip leading newline for bottom separator
     }
   }
 
@@ -260,11 +260,7 @@ public class BlockchainTestSubCommand implements Runnable {
                   block.getHeader().getNumber(),
                   block.getHash(),
                   importResult.isImported() ? "Failed to be rejected" : "Failed to import");
-          parentCommand.out.printf(
-              "Block %d (%s) %s%n",
-              block.getHeader().getNumber(),
-              block.getHash(),
-              importResult.isImported() ? "Failed to be rejected" : "Failed to import");
+          parentCommand.out.println(failureReason);
         } else {
           if (importResult.isImported()) {
             final long gasUsed = block.getHeader().getGasUsed();
@@ -289,11 +285,7 @@ public class BlockchainTestSubCommand implements Runnable {
                   candidateBlock.getBlock().getHeader().getNumber(),
                   candidateBlock.getBlock().getHash(),
                   e.getMessage());
-          parentCommand.out.printf(
-              "Block %d (%s) should have imported but had an RLP exception %s%n",
-              candidateBlock.getBlock().getHeader().getNumber(),
-              candidateBlock.getBlock().getHash(),
-              e.getMessage());
+          parentCommand.out.println(failureReason);
         }
       }
     }
