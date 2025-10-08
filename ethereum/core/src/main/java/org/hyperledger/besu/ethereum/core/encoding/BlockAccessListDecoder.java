@@ -50,13 +50,13 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               scIn -> {
                 scIn.enterList();
-                StorageSlotKey slot = new StorageSlotKey(scIn.readUInt256Scalar());
+                StorageSlotKey slot = new StorageSlotKey(UInt256.fromBytes(scIn.readBytes()));
                 List<StorageChange> changes =
                     scIn.readList(
                         changeIn -> {
                           changeIn.enterList();
-                          int txIndex = changeIn.readInt();
-                          UInt256 newVal = changeIn.readUInt256Scalar();
+                          int txIndex = changeIn.readIntScalar();
+                          UInt256 newVal = UInt256.fromBytes(changeIn.readBytes());
                           changeIn.leaveList();
                           return new StorageChange(txIndex, newVal);
                         });
@@ -65,13 +65,13 @@ public final class BlockAccessListDecoder {
               });
 
       List<SlotRead> reads =
-          acctIn.readList(r -> new SlotRead(new StorageSlotKey(r.readUInt256Scalar())));
+          acctIn.readList(r -> new SlotRead(new StorageSlotKey(UInt256.fromBytes(r.readBytes()))));
 
       List<BalanceChange> balances =
           acctIn.readList(
               bcIn -> {
                 bcIn.enterList();
-                int txIndex = bcIn.readInt();
+                int txIndex = bcIn.readIntScalar();
                 Bytes postBalance = bcIn.readBytes();
                 bcIn.leaveList();
                 return new BalanceChange(txIndex, postBalance);
@@ -81,8 +81,8 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ncIn -> {
                 ncIn.enterList();
-                int txIndex = ncIn.readInt();
-                long newNonce = ncIn.readLongScalar();
+                int txIndex = ncIn.readIntScalar();
+                long newNonce = ncIn.readUInt64Scalar().toLong();
                 ncIn.leaveList();
                 return new NonceChange(txIndex, newNonce);
               });
@@ -91,7 +91,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ccIn -> {
                 ccIn.enterList();
-                int txIndex = ccIn.readInt();
+                int txIndex = ccIn.readIntScalar();
                 Bytes newCode = ccIn.readBytes();
                 ccIn.leaveList();
                 return new CodeChange(txIndex, newCode);

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
-import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
@@ -32,7 +31,7 @@ public interface QbftEventHandler {
    *
    * @param msg the msg
    */
-  void handleMessageEvent(BftReceivedMessageEvent msg);
+  void handleMessageEvent(QbftReceivedMessageEvent msg);
 
   /**
    * Handle new block event.

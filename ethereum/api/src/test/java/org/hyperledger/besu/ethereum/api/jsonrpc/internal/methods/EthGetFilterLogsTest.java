@@ -133,6 +133,7 @@ public class EthGetFilterLogsTest {
             0,
             100L,
             Hash.ZERO,
+            0L,
             Hash.ZERO,
             0,
             Address.fromHexString("0x0"),

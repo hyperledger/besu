@@ -44,7 +44,7 @@ public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
     final BlockProcessingResult blockProcessingResult =
         blockValidator.validateAndProcessBlock(
             protocolContext,
-            BlockUtil.toBesuBlock(block),
+            AdaptorUtil.toBesuBlock(block),
             HeaderValidationMode.LIGHT,
             HeaderValidationMode.FULL,
             false);

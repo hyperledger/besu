@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,17 +18,15 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList.AccountAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
-import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -38,17 +36,23 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BlockAccessList {
-  private static final Set<Address> excludedAddresses =
-      Set.of(Address.fromHexString("0x0000f90827f1c53a10cb7a02335b175320002935"));
-  private final List<AccountChanges> accountChanges;
+public record BlockAccessList(List<AccountChanges> accountChanges) {
 
-  public BlockAccessList(final List<AccountChanges> accountChanges) {
-    this.accountChanges = accountChanges;
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BlockAccessList)) {
+      return false;
+    }
+    final BlockAccessList that = (BlockAccessList) o;
+    return Objects.equals(accountChanges, that.accountChanges);
   }
 
-  public List<AccountChanges> getAccountChanges() {
-    return accountChanges;
+  @Override
+  public int hashCode() {
+    return Objects.hash(accountChanges);
   }
 
   public void writeTo(final RLPOutput out) {
@@ -135,107 +139,67 @@ public class BlockAccessList {
   public static class BlockAccessListBuilder {
     final Map<Address, AccountBuilder> accountChangesBuilders = new HashMap<>();
 
-    public void addTransactionLevelAccessList(
-        final TransactionAccessList txList, final StackedUpdater<?, ?> updater) {
-      for (Map.Entry<Address, AccountAccessList> accountAccessListEntry :
-          txList.getAccounts().entrySet()) {
-        final Address address = accountAccessListEntry.getKey();
+    public static AccessLocationTracker createPreExecutionAccessLocationTracker() {
+      return new AccessLocationTracker(0);
+    }
 
-        if (excludedAddresses.contains(address)) {
-          continue;
-        }
+    public static AccessLocationTracker createPostExecutionAccessLocationTracker(
+        final int numberOfTransactions) {
+      return new AccessLocationTracker(numberOfTransactions + 1);
+    }
 
-        BlockAccessListBuilder.AccountBuilder builder =
-            accountChangesBuilders.computeIfAbsent(
-                address,
-                __ -> {
-                  return new AccountBuilder(address);
-                });
+    public static AccessLocationTracker createTransactionAccessLocationTracker(
+        final int transactionLocation) {
+      return new AccessLocationTracker(transactionLocation + 1);
+    }
 
-        if (updater.getDeletedAccountAddresses().contains(address)
-            || updater.getUpdatedAccounts().stream()
-                .map(s -> s.getAddress())
-                .filter(a -> a.equals(address))
-                .findAny()
-                .isEmpty()) {
-          for (UInt256 slot : accountAccessListEntry.getValue().getSlots()) {
-            final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
-            builder.addStorageRead(slotKeyObj);
-          }
-          continue;
-        }
+    public AccountBuilder getOrCreateAccountBuilder(final Address address) {
+      return accountChangesBuilders.computeIfAbsent(address, __ -> new AccountBuilder(address));
+    }
 
-        final UpdateTrackingAccount<?> account = (UpdateTrackingAccount<?>) updater.get(address);
+    public void apply(
+        final AccessLocationTracker accessLocationTracker, final WorldUpdater updater) {
+      apply(accessLocationTracker.createPartialBlockAccessView(updater));
+    }
 
-        if (account != null) {
-          final Account wrappedAccount = account.getWrappedAccount();
+    public void apply(final PartialBlockAccessView partialBlockAccessView) {
+      partialBlockAccessView
+          .accountChanges()
+          .forEach(
+              account -> {
+                final AccountBuilder builder = getOrCreateAccountBuilder(account.getAddress());
+                account
+                    .getStorageChanges()
+                    .forEach(
+                        slotChange -> {
+                          builder.addStorageWrite(
+                              slotChange.slot(),
+                              partialBlockAccessView.getTxIndex(),
+                              slotChange.newValue());
+                        });
 
-          if (wrappedAccount != null) {
-            Wei newBalance = account.getBalance();
-            Wei originalBalance = builder.getLastBalance().orElse(wrappedAccount.getBalance());
-            if (!newBalance.equals(originalBalance)) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
-            }
+                account.getStorageReads().forEach(builder::addStorageRead);
 
-            long newNonce = account.getNonce();
-            long originalNonce = builder.getLastNonce().orElse(wrappedAccount.getNonce());
-            if (newNonce > 0 && newNonce > originalNonce) {
-              builder.addNonceChange(txList.getIndex(), newNonce);
-            }
+                account
+                    .getPostBalance()
+                    .ifPresent(
+                        change -> {
+                          builder.addBalanceChange(partialBlockAccessView.getTxIndex(), change);
+                        });
 
-            Bytes newCode = account.getCode();
-            Bytes originalCode = builder.getLastCode().orElse(wrappedAccount.getCode());
-            if (!newCode.isEmpty() && !newCode.isZero() && !newCode.equals(originalCode)) {
-              builder.addCodeChange(txList.getIndex(), newCode);
-            }
-          } else {
-            Wei newBalance = account.getBalance();
-            if (!newBalance.isZero()) {
-              builder.addBalanceChange(txList.getIndex(), newBalance.toBytes());
-            }
-
-            Bytes newCode = account.getCode();
-            if (!newCode.isEmpty() && !newCode.isZero()) {
-              long newNonce = account.getNonce();
-              builder.addCodeChange(txList.getIndex(), newCode);
-              builder.addNonceChange(txList.getIndex(), newNonce);
-            }
-          }
-
-          final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
-          final Set<UInt256> txListTouchedSlots = accountAccessListEntry.getValue().getSlots();
-          for (UInt256 touchedSlot : txListTouchedSlots) {
-            StorageSlotKey slotKeyObj = new StorageSlotKey(touchedSlot);
-
-            if (updatedStorage.containsKey(touchedSlot)) {
-              final UInt256 originalValue =
-                  builder
-                      .getLastWriteValue(touchedSlot)
-                      .orElse(account.getOriginalStorageValue(touchedSlot));
-              final UInt256 updatedValue = updatedStorage.get(touchedSlot);
-
-              final boolean isSet = originalValue == null;
-              final boolean isReset = updatedValue == null;
-              final boolean isUpdate =
-                  originalValue == null ? false : !originalValue.equals(updatedValue);
-              final boolean isWrite = isSet || isReset || isUpdate;
-
-              if (isWrite) {
-                builder.addStorageWrite(slotKeyObj, txList.getIndex(), updatedValue);
-              } else {
-                builder.addStorageRead(slotKeyObj);
-              }
-            } else {
-              builder.addStorageRead(slotKeyObj);
-            }
-          }
-        } else {
-          for (UInt256 slot : accountAccessListEntry.getValue().getSlots()) {
-            final StorageSlotKey slotKeyObj = new StorageSlotKey(slot);
-            builder.addStorageRead(slotKeyObj);
-          }
-        }
-      }
+                account
+                    .getNonceChange()
+                    .ifPresent(
+                        change -> {
+                          builder.addNonceChange(partialBlockAccessView.getTxIndex(), change);
+                        });
+                account
+                    .getNewCode()
+                    .ifPresent(
+                        change -> {
+                          builder.addCodeChange(partialBlockAccessView.getTxIndex(), change);
+                        });
+              });
     }
 
     public BlockAccessList build() {
@@ -247,7 +211,7 @@ public class BlockAccessList {
               .toList());
     }
 
-    private static class AccountBuilder {
+    public static class AccountBuilder {
       final Address address;
       final Map<StorageSlotKey, List<StorageChange>> slotWrites = new TreeMap<>();
       final Set<StorageSlotKey> slotReads = new TreeSet<>();
