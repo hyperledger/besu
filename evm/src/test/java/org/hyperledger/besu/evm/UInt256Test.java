@@ -338,6 +338,22 @@ public class UInt256Test {
   }
 
   @Test
+  public void signedMod_no_padding() {
+    Bytes aBytes =
+        Bytes.fromHexString("0xe8e8e8e2000100000009ea02000000000000ff3ffffff80000001000220000");
+    Bytes bBytes =
+        Bytes.fromHexString("0x8000000000000000000000000000000000000000000000000000000000000000");
+    Bytes32 expected =
+        Bytes32.leftPad(
+            Bytes.fromHexString(
+                "0x00e8e8e8e2000100000009ea02000000000000ff3ffffff80000001000220000"));
+    UInt256 a = UInt256.fromBytesBE(aBytes.toArrayUnsafe());
+    UInt256 b = UInt256.fromBytesBE(bBytes.toArrayUnsafe());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.signedMod(b).toBytesBE()));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
   public void signedMod() {
     final Random random = new Random(432);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
