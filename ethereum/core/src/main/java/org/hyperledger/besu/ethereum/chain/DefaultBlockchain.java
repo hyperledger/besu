@@ -799,7 +799,12 @@ public class DefaultBlockchain implements MutableBlockchain {
         newBlock.getHeader(),
         () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
         LogWithMetadata.generate(
-            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes, receipts, false),
+            newBlock.getHeader().getNumber(),
+            newBlock.getHash(),
+            newBlock.getHeader().getTimestamp(),
+            listOfTxHashes,
+            receipts,
+            false),
         receipts);
   }
 

@@ -81,7 +81,14 @@ public interface EthStatsConnectOptions {
   Path getCaCert();
 
   /**
-   * Creates an EthStatsConnectOptions from the given parameters.
+   * Gets the ethstats report interval.
+   *
+   * @return the ethstats report interval
+   */
+  Integer getEthStatsReportInterval();
+
+  /**
+   * Creates an EthStatsConnectOptions from the given parameters with default report interval.
    *
    * @param url the url of the connection
    * @param contact the contact of the connection
@@ -90,6 +97,23 @@ public interface EthStatsConnectOptions {
    */
   static EthStatsConnectOptions fromParams(
       final String url, final String contact, final Path caCert) {
+    return fromParams(url, contact, caCert, 5); // Default to 5 seconds
+  }
+
+  /**
+   * Creates an EthStatsConnectOptions from the given parameters.
+   *
+   * @param url the url of the connection
+   * @param contact the contact of the connection
+   * @param caCert the CA certificate of the connection
+   * @param ethStatsReportInterval the ethstats report interval
+   * @return the EthStatsConnectOptions
+   */
+  static EthStatsConnectOptions fromParams(
+      final String url,
+      final String contact,
+      final Path caCert,
+      final Integer ethStatsReportInterval) {
     try {
       checkArgument(url != null && !url.trim().isEmpty(), "Invalid empty value.");
 
@@ -130,6 +154,7 @@ public interface EthStatsConnectOptions {
           .port(uri.getPort())
           .contact(contact)
           .caCert(caCert)
+          .ethStatsReportInterval(ethStatsReportInterval)
           .build();
     } catch (IllegalArgumentException e) {
       LoggerFactory.getLogger(EthStatsConnectOptions.class).error(e.getMessage());

@@ -93,6 +93,7 @@ public class EthStatsServiceTest {
           .host("127.0.0.1")
           .port(1111)
           .contact("contact@test.net")
+          .ethStatsReportInterval(5)
           .build();
 
   final EnodeURL node =
@@ -342,5 +343,105 @@ public class EthStatsServiceTest {
         return true;
       }
     };
+  }
+
+  @Test
+  public void shouldUseCustomReportInterval() {
+    // Test with custom 10-second interval
+    final EthStatsConnectOptions customIntervalOptions =
+        ImmutableEthStatsConnectOptions.builder()
+            .nodeName("besu-node")
+            .secret("secret")
+            .host("127.0.0.1")
+            .port(1111)
+            .contact("contact@test.net")
+            .ethStatsReportInterval(10) // Custom 10-second interval
+            .build();
+
+    ethStatsService =
+        new EthStatsService(
+            customIntervalOptions,
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket, times(1)).textMessageHandler(textMessageHandlerCaptor.capture());
+
+    textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
+
+    // Verify that scheduleFutureTaskWithFixedDelay is called with the custom 10-second interval
+    final ArgumentCaptor<Duration> initialDelayCaptor = ArgumentCaptor.forClass(Duration.class);
+    final ArgumentCaptor<Duration> intervalCaptor = ArgumentCaptor.forClass(Duration.class);
+    verify(ethScheduler, times(1))
+        .scheduleFutureTaskWithFixedDelay(
+            any(Runnable.class), initialDelayCaptor.capture(), intervalCaptor.capture());
+
+    // Verify the interval is 10 seconds (custom value)
+    assertThat(intervalCaptor.getValue()).isEqualTo(Duration.ofSeconds(10));
+    // Verify initial delay is 0 seconds
+    assertThat(initialDelayCaptor.getValue()).isEqualTo(Duration.ofSeconds(0));
+  }
+
+  @Test
+  public void shouldUseDefaultReportIntervalWhenNotSpecified() {
+    // Test with default 5-second interval (backward compatibility)
+    ethStatsService =
+        new EthStatsService(
+            ethStatsConnectOptions, // This uses the default 5-second interval
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket, times(1)).textMessageHandler(textMessageHandlerCaptor.capture());
+
+    textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
+
+    // Verify that scheduleFutureTaskWithFixedDelay is called with the default 5-second interval
+    final ArgumentCaptor<Duration> initialDelayCaptor = ArgumentCaptor.forClass(Duration.class);
+    final ArgumentCaptor<Duration> intervalCaptor = ArgumentCaptor.forClass(Duration.class);
+    verify(ethScheduler, times(1))
+        .scheduleFutureTaskWithFixedDelay(
+            any(Runnable.class), initialDelayCaptor.capture(), intervalCaptor.capture());
+
+    // Verify the interval is 5 seconds (default value)
+    assertThat(intervalCaptor.getValue()).isEqualTo(Duration.ofSeconds(5));
+    // Verify initial delay is 0 seconds
+    assertThat(initialDelayCaptor.getValue()).isEqualTo(Duration.ofSeconds(0));
   }
 }

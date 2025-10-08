@@ -46,7 +46,7 @@ public class AccessListTransactionEncoderTest {
     final SlotChanges slotChanges = new SlotChanges(slotKey, List.of(write));
     final SlotRead slotRead = new SlotRead(slotKey);
 
-    final BalanceChange balanceChange = new BalanceChange(0, Wei.fromEth(3).toMinimalBytes());
+    final BalanceChange balanceChange = new BalanceChange(0, Wei.fromEth(3));
     final CodeChange codeChange = new CodeChange(1, Bytes.fromHexString("0x6001600101"));
     final NonceChange nonceChange = new NonceChange(2, 42L);
 
@@ -68,8 +68,8 @@ public class AccessListTransactionEncoderTest {
     final BytesValueRLPInput input = new BytesValueRLPInput(encoded, false);
     final BlockAccessList decodedAccessList = BlockAccessListDecoder.decode(input);
 
-    assertThat(decodedAccessList.getAccountChanges()).hasSize(1);
-    final AccountChanges decoded = decodedAccessList.getAccountChanges().get(0);
+    assertThat(decodedAccessList.accountChanges()).hasSize(1);
+    final AccountChanges decoded = decodedAccessList.accountChanges().get(0);
 
     assertThat(decoded.address()).isEqualTo(address);
 
@@ -98,6 +98,6 @@ public class AccessListTransactionEncoderTest {
     final BytesValueRLPInput input = new BytesValueRLPInput(encoded, false);
     final BlockAccessList decoded = BlockAccessListDecoder.decode(input);
 
-    assertThat(decoded.getAccountChanges()).isEmpty();
+    assertThat(decoded.accountChanges()).isEmpty();
   }
 }

@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -41,7 +42,9 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Request process(final RequestProcessingContext context) {
+  public Request process(
+      final RequestProcessingContext context,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     if (depositContractAddress.isEmpty()) {
       return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }

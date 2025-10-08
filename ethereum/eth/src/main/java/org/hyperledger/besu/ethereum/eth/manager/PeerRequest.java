@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 public interface PeerRequest {
   ResponseStream sendRequest(EthPeer peer) throws PeerNotConnected;
 
-  default boolean isEthPeerSuitable(final EthPeer ethPeer) {
+  default boolean isEthPeerSuitable(final EthPeerImmutableAttributes ethPeer) {
     return true;
   }
 }

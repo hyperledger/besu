@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,8 +40,6 @@ public class TransactionSelectionResults {
   private final Map<TransactionType, List<Transaction>> transactionsByType =
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
-
-  private Optional<BlockAccessList> blockAccessList = Optional.empty();
 
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
@@ -75,10 +71,6 @@ public class TransactionSelectionResults {
     notSelectedTransactions.put(transaction, res);
   }
 
-  public void setBlockAccessList(final BlockAccessList blockAccessList) {
-    this.blockAccessList = Optional.of(blockAccessList);
-  }
-
   public List<Transaction> getSelectedTransactions() {
     return selectedTransactions;
   }
@@ -97,10 +89,6 @@ public class TransactionSelectionResults {
 
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
     return Map.copyOf(notSelectedTransactions);
-  }
-
-  public Optional<BlockAccessList> getBlockAccessList() {
-    return blockAccessList;
   }
 
   public void logSelectionStats() {
@@ -139,8 +127,7 @@ public class TransactionSelectionResults {
     return cumulativeGasUsed == that.cumulativeGasUsed
         && selectedTransactions.equals(that.selectedTransactions)
         && notSelectedTransactions.equals(that.notSelectedTransactions)
-        && receipts.equals(that.receipts)
-        && blockAccessList.equals(that.blockAccessList);
+        && receipts.equals(that.receipts);
   }
 
   @Override
