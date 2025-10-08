@@ -28,6 +28,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
   private static final String ETHSTATS_CACERT_FILE = "--ethstats-cacert-file";
+  private static final String ETHSTATS_REPORT_INTERVAL = "--ethstats-report-interval";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -52,6 +53,14 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
           "Specifies the path to the root CA (Certificate Authority) certificate file that has signed ethstats server certificate. This option is optional.")
   private Path ethstatsCaCert = null;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @CommandLine.Option(
+      names = {ETHSTATS_REPORT_INTERVAL},
+      paramLabel = "<SECONDS>",
+      description = "Interval in seconds between ethstats reports.",
+      arity = "1")
+  private Integer ethstatsReportInterval = 5;
+
   private EthstatsOptions() {}
 
   /**
@@ -65,7 +74,8 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   @Override
   public EthStatsConnectOptions toDomainObject() {
-    return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsCaCert);
+    return EthStatsConnectOptions.fromParams(
+        ethstatsUrl, ethstatsContact, ethstatsCaCert, ethstatsReportInterval);
   }
 
   /**
@@ -95,6 +105,15 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
     return ethstatsCaCert;
   }
 
+  /**
+   * Gets ethstats report interval.
+   *
+   * @return the ethstats report interval
+   */
+  public Integer getEthstatsReportInterval() {
+    return ethstatsReportInterval;
+  }
+
   @Override
   public List<String> getCLIOptions() {
     final List<String> options = new ArrayList<>();
@@ -103,6 +122,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
     if (ethstatsCaCert != null) {
       options.add(ETHSTATS_CACERT_FILE + "=" + ethstatsCaCert);
     }
+    options.add(ETHSTATS_REPORT_INTERVAL + "=" + ethstatsReportInterval);
     return options;
   }
 }
