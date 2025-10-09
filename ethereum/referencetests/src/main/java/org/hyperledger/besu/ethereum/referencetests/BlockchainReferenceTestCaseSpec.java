@@ -33,7 +33,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -290,13 +292,18 @@ public class BlockchainReferenceTestCaseSpec {
       input.enterList();
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-      final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
+      final List<Transaction> transactions = input.readList(Transaction::readFrom);
+      final List<BlockHeader> ommers =
+          input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions));
+      final Optional<List<Withdrawal>> withdrawals =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(input.readList(Withdrawal::readFrom));
+      final Optional<BlockAccessList> blockAccessList =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(BlockAccessListDecoder.decode(input));
+      final BlockBody body = new BlockBody(transactions, ommers, withdrawals, blockAccessList);
       return new Block(header, body);
     }
   }
