@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.UInt256Arith;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -49,13 +50,26 @@ public class DivOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(Bytes.EMPTY);
     } else {
-      frame.pushStackItem(UInt256Arith.divide(false, value0, value1));
+      BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
+      BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());
+      final BigInteger result = b1.divide(b2);
+
+      // because it's unsigned there is a change a 33 byte result will occur
+      // there is no toByteArrayUnsigned so we have to check and trim
+      byte[] resultArray = result.toByteArray();
+      int length = resultArray.length;
+      if (length > 32) {
+        frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
+      } else {
+        frame.pushStackItem(Bytes.wrap(resultArray));
+      }
     }
 
     return divSuccess;
