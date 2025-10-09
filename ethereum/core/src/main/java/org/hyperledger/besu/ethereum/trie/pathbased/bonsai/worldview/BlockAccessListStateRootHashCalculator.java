@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.C
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
@@ -32,16 +35,10 @@ import java.util.Optional;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockAccessListStateRootHashCalculator {
-
-  private final BonsaiWorldState worldState;
-
-  public BlockAccessListStateRootHashCalculator(final BonsaiWorldState worldState) {
-    this.worldState = worldState;
-  }
-
-  public Hash calculateRootHash(final BlockAccessList blockAccessList) {
+  public static Hash calculateRootHash(
+      final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
     final BonsaiWorldStateUpdateAccumulator accumulator =
-        (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator().copy();
+        (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
 
     for (AccountChanges accountChanges : blockAccessList.accountChanges()) {
       final Address address = accountChanges.address();
@@ -79,6 +76,25 @@ public class BlockAccessListStateRootHashCalculator {
       }
     }
 
+    accumulator.commit();
     return worldState.calculateRootHash(Optional.empty(), accumulator);
+  }
+
+  public static BonsaiWorldState prepareWorldState(
+      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
+    if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
+      final BonsaiWorldState ws =
+          (BonsaiWorldState)
+              protocolContext
+                  .getWorldStateArchive()
+                  .getWorldState(
+                      WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
+                  .orElseThrow();
+      ws.disableCacheMerkleTrieLoader();
+      return ws;
+    } else {
+      throw new IllegalStateException("Chain head is not the parent of the processed block");
+    }
   }
 }
