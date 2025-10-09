@@ -24,6 +24,7 @@ import net.jqwik.api.Arbitrary;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class UInt256Prop {
@@ -115,6 +116,7 @@ public class UInt256Prop {
   void property_mod_singleLimb_matchesBigInteger(
       @ForAll("singleLimbUnsigned1to4") final byte[] a,
       @ForAll("singleLimbUnsigned1to4") final byte[] m) {
+
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     final UInt256 um = UInt256.fromBytesBE(m);
@@ -134,10 +136,12 @@ public class UInt256Prop {
       @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] m) {
 
     // Arrange
-    BigInteger A = new BigInteger(a);
-    BigInteger M = new BigInteger(m);
-    UInt256 ua = UInt256.fromSignedBytesBE(a);
-    UInt256 um = UInt256.fromSignedBytesBE(m);
+    final byte[] a32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+    final byte[] m32 = Bytes32.leftPad(Bytes.wrap(m)).toArrayUnsafe();
+    final BigInteger A = new BigInteger(a32);
+    final BigInteger M = new BigInteger(m32);
+    final UInt256 ua = UInt256.fromBytesBE(a32);
+    final UInt256 um = UInt256.fromBytesBE(m32);
 
     // Act
     byte[] got = ua.signedMod(um).toBytesBE();
