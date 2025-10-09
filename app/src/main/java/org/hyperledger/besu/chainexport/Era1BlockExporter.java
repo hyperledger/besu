@@ -91,7 +91,14 @@ public class Era1BlockExporter {
     if (endFile < startFile) {
       throw new IllegalArgumentException("End of export range must be after start of export range");
     }
-    LOG.info("Exporting ERA1 files {} to {} inclusive", startFile, endFile);
+    String network =
+        switch (blockchain.getGenesisBlockHeader().getHash().toString()) {
+          case MAINNET_GENESIS_HASH -> "mainnet";
+          case SEPOLIA_GENESIS_HASH -> "sepolia";
+          default -> throw new RuntimeException("Unable to export ERA1 files for this network");
+        };
+    LOG.info(
+        "Exporting ERA1 files {} to {} inclusive for network: {}", startFile, endFile, network);
     for (long fileNumber = startFile; fileNumber <= endFile; fileNumber++) {
       long startBlock = fileNumber * ERA1_FILE_BLOCKS;
       long endBlock = startBlock + ERA1_FILE_BLOCKS - 1;
@@ -120,12 +127,6 @@ public class Era1BlockExporter {
                           });
                 });
       }
-      String network =
-          switch (blockchain.getGenesisBlockHeader().getHash().toString()) {
-            case MAINNET_GENESIS_HASH -> "mainnet";
-            case SEPOLIA_GENESIS_HASH -> "sepolia";
-            default -> throw new RuntimeException("Unable to export ERA1 files for this network");
-          };
       Bytes32 accumulatorHash = accumulator.accumulate();
 
       String filename =
