@@ -273,7 +273,7 @@ public final class UInt256 {
     if (shift < 0) return shiftRight(-shift);
     if (shift >= BITSIZE) return ZERO;
     if (shift == 0 || isZero()) return this;
-    int[] shifted = new int[N_LIMBS];
+    int[] shifted = new int[N_LIMBS + (shift + N_BITS_PER_LIMB - 1) / N_BITS_PER_LIMB];
     shiftLeftInto(shifted, this.limbs, this.length, shift);
     return new UInt256(shifted);
   }
@@ -466,7 +466,6 @@ public final class UInt256 {
     // Unchecked: result length should be at least x.length + limbShift
     int limbShift = shift / N_BITS_PER_LIMB;
     int bitShift = shift % N_BITS_PER_LIMB;
-    if (limbShift >= xLen) return;
     if (bitShift == 0) {
       System.arraycopy(x, 0, result, limbShift, xLen);
       return;

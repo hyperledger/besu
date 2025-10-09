@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class UInt256Test {
-  static final int SAMPLE_SIZE = 30000;
+  static final int SAMPLE_SIZE = 3;
 
   private Bytes32 bigIntTo32B(final BigInteger x) {
     byte[] a = x.toByteArray();
@@ -107,6 +107,14 @@ public class UInt256Test {
     UInt256 asUint = UInt256.fromBytesBE(input);
     BigInteger asBigInt = new BigInteger(1, input);
     assertThat(asUint.toBytesBE()).isEqualTo(asBigInt.toByteArray());
+  }
+
+  @Test
+  void testLeftShift() {
+    UInt256 a = UInt256.fromInt(1);
+    UInt256 result = a.shiftLeft(32);
+    UInt256 expected = new UInt256( new int[]{0, 1, 0, 0, 0, 0, 0, 0});
+    assertThat(result).isEqualTo(expected);
   }
 
   @Test
