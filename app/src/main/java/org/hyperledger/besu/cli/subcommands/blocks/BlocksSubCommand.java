@@ -350,7 +350,6 @@ public class BlocksSubCommand implements Runnable {
 
     @Option(
         names = "--format",
-        hidden = true,
         description =
             "The format to export, possible values are: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).",
         arity = "1..1")
