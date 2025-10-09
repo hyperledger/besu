@@ -40,7 +40,7 @@ public class WorldStateProof {
       final PmtStateTrieAccountValue stateTrieAccountValue,
       final Proof<Bytes> accountProof,
       final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
-    this.stateTrieAccountValue = Optional.of(stateTrieAccountValue);
+    this.stateTrieAccountValue = Optional.ofNullable(stateTrieAccountValue);
     this.accountProof = accountProof;
     this.storageProofs = storageProofs;
   }
