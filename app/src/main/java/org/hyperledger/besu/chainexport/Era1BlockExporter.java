@@ -98,7 +98,7 @@ public class Era1BlockExporter {
 
       List<Block> blocksForFile = new ArrayList<>();
       Map<Block, List<TransactionReceipt>> transactionReceiptsForFile = new HashMap<>();
-      Map<Block, Difficulty> difficultysForFile = new HashMap<>();
+      Map<Block, Difficulty> difficultiesForFile = new HashMap<>();
       Era1Accumulator accumulator = era1AccumulatorFactory.getEra1Accumulator();
       for (long blockNumber = startBlock; blockNumber <= endBlock; blockNumber++) {
         blockchain
@@ -115,7 +115,7 @@ public class Era1BlockExporter {
                       .getTotalDifficultyByHash(block.getHash())
                       .ifPresent(
                           (difficulty) -> {
-                            difficultysForFile.put(block, difficulty);
+                            difficultiesForFile.put(block, difficulty);
                             accumulator.addBlock(block.getHash(), difficulty.toUInt256());
                           });
                 });
@@ -151,7 +151,7 @@ public class Era1BlockExporter {
               transactionReceiptRlpEncoder.encode(transactionReceiptsForFile.get(block)).toArray());
           writer.writeSection(
               Era1Type.TOTAL_DIFFICULTY,
-              difficultysForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
+              difficultiesForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));
         }
 
         writer.writeSection(Era1Type.ACCUMULATOR, accumulatorHash.toArray());
