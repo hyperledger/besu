@@ -108,6 +108,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -146,6 +147,7 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
+  private static final int POW_SLOT_TIME_ESTIMATION = 13;
 
   private MainnetProtocolSpecs() {}
 
@@ -208,7 +210,29 @@ public abstract class MainnetProtocolSpecs {
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
         .preExecutionProcessor(new FrontierPreExecutionProcessor())
+        .slotDuration(getSlotDurationFromGenesis(genesisConfigOptions))
         .hardforkId(FRONTIER);
+  }
+
+  private static Duration getSlotDurationFromGenesis(
+      final GenesisConfigOptions genesisConfigOptions) {
+
+    if (genesisConfigOptions.isIbft2()) {
+      return Duration.ofSeconds(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
+    }
+    if (genesisConfigOptions.isQbft()) {
+      return Duration.ofSeconds(
+          genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
+    }
+    if (genesisConfigOptions.isClique()) {
+      return Duration.ofSeconds(
+          genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
+    }
+    // if no hints are present in the genesis file, then we are in PoW and there is not predefined
+    // block period, so just return an estimation.
+    // We also get here if we are in PoS mode, but the right value for PoS slot duration will
+    // override this value.
+    return Duration.ofSeconds(POW_SLOT_TIME_ESTIMATION);
   }
 
   public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
@@ -682,6 +706,7 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 
