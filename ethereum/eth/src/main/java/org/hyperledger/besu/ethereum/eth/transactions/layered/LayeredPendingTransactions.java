@@ -241,6 +241,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
+  private void logPenalizedTransaction(final PendingTransaction pendingTransaction) {
+    LOG_FOR_REPLAY.atTrace().setMessage("PZ,{}").addArgument(pendingTransaction::getHash).log();
+  }
+
   private void logDiscardedTransaction(
       final PendingTransaction pendingTransaction, final TransactionSelectionResult result) {
     // csv fields: sequence, addedAt, sender, nonce, type, hash, rlp
@@ -338,24 +342,29 @@ public class LayeredPendingTransactions implements PendingTransactions {
               .log();
 
           if (selectionResult.discard()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
                     prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} remove by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
             logDiscardedTransaction(candidatePendingTx, selectionResult);
           } else if (selectionResult.penalize()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
                     prioritizedTransactions.penalize(candidatePendingTx);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} penalized by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
-            LOG.atTrace()
-                .setMessage("Transaction {} penalized")
-                .addArgument(candidatePendingTx::toTraceLog)
-                .log();
+            logPenalizedTransaction(candidatePendingTx);
           }
 
           if (selectionResult.stop()) {
@@ -384,7 +393,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public synchronized Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
-    return prioritizedTransactions.getByHash(transactionHash);
+    return prioritizedTransactions
+        .getByHash(transactionHash)
+        .map(PendingTransaction::getTransaction);
   }
 
   @Override
@@ -430,8 +441,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final var maxConfirmedNonceBySender = maxNonceBySender(confirmedTransactions);
 
-    final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
-
     synchronized (this) {
       try {
         prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
@@ -445,43 +454,48 @@ public class LayeredPendingTransactions implements PendingTransactions {
         LOG.warn("Stack trace", throwable);
       }
 
-      logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+      logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgTransactions);
     }
   }
 
   private void logBlockHeaderForReplay(
       final BlockHeader blockHeader,
       final Map<Address, Long> maxConfirmedNonceBySender,
-      final Map<Address, LongRange> reorgNonceRangeBySender) {
-    // block number, block hash, sender, max nonce ..., rlp
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("B,{},{},{},R,{},{}")
-        .addArgument(blockHeader.getNumber())
-        .addArgument(blockHeader.getBlockHash())
-        .addArgument(
-            () ->
-                maxConfirmedNonceBySender.entrySet().stream()
-                    .map(e -> e.getKey().toHexString() + "," + e.getValue())
-                    .collect(Collectors.joining(",")))
-        .addArgument(
-            () ->
-                reorgNonceRangeBySender.entrySet().stream()
-                    .map(
-                        e ->
-                            e.getKey().toHexString()
-                                + ","
-                                + e.getValue().getStart()
-                                + ","
-                                + e.getValue().getEndInclusive())
-                    .collect(Collectors.joining(",")))
-        .addArgument(
-            () -> {
-              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-              blockHeader.writeTo(rlp);
-              return rlp.encoded().toHexString();
-            })
-        .log();
+      final List<Transaction> reorgTransactions) {
+
+    if (LOG_FOR_REPLAY.isTraceEnabled()) {
+      final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
+
+      // block number, block hash, sender, max nonce ..., rlp
+      LOG_FOR_REPLAY
+          .atTrace()
+          .setMessage("B,{},{},{},R,{},{}")
+          .addArgument(blockHeader.getNumber())
+          .addArgument(blockHeader.getBlockHash())
+          .addArgument(
+              () ->
+                  maxConfirmedNonceBySender.entrySet().stream()
+                      .map(e -> e.getKey().toHexString() + "," + e.getValue())
+                      .collect(Collectors.joining(",")))
+          .addArgument(
+              () ->
+                  reorgNonceRangeBySender.entrySet().stream()
+                      .map(
+                          e ->
+                              e.getKey().toHexString()
+                                  + ","
+                                  + e.getValue().getStart()
+                                  + ","
+                                  + e.getValue().getEndInclusive())
+                      .collect(Collectors.joining(",")))
+          .addArgument(
+              () -> {
+                final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+                blockHeader.writeTo(rlp);
+                return rlp.encoded().toHexString();
+              })
+          .log();
+    }
   }
 
   private Map<Address, Long> maxNonceBySender(final List<Transaction> confirmedTransactions) {

@@ -61,7 +61,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 will set block")
   public void canUpdateFinalizedBlock() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     // RPC Call. Set the safe block number to 3
     final ObjectNode resultJson = callTestMethod("updater_updateSafeBlockV1", List.of(3L));
@@ -85,7 +85,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with non-existing block number returns error")
   public void nonExistingBlockNumberReturnsError() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(250L));
@@ -103,7 +103,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @ValueSource(longs = {-1, 0})
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with block number <= 0 returns error")
   public void invalidBlockNumberReturnsError(final long blockNumber) throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(blockNumber));
@@ -120,7 +120,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with invalid block number type returns error")
   public void invalidBlockNumberTypeReturnsError() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of("testblock"));

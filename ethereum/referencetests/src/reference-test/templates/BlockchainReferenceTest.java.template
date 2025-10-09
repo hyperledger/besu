@@ -31,6 +31,6 @@ public class %%TESTS_NAME%% {
   public void execution(
       final String name, final BlockchainReferenceTestCaseSpec spec, final boolean runTest) {
     assumeTrue(runTest, "Test " + name + " was ignored");
-    executeTest(spec);
+    executeTest(name, spec);
   }
 }

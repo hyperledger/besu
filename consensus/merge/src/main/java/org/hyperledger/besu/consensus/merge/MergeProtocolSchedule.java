@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +72,7 @@ public class MergeProtocolSchedule {
         0L,
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
-                specBuilder, config.getChainId()));
+                specBuilder, config.getChainId(), miningConfiguration));
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -95,7 +96,9 @@ public class MergeProtocolSchedule {
    * via a blockNumber so it can't be looked up in the schedule.
    */
   private static ProtocolSpecBuilder applyParisSpecificModifications(
-      final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
+      final ProtocolSpecBuilder specBuilder,
+      final Optional<BigInteger> chainId,
+      final MiningConfiguration miningConfiguration) {
 
     return specBuilder
         .evmBuilder(
@@ -107,6 +110,7 @@ public class MergeProtocolSchedule {
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 

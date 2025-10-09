@@ -27,6 +27,7 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInit
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_SLOT_DURATION_SECS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
@@ -44,6 +45,7 @@ import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
 
+import jakarta.validation.constraints.Positive;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import picocli.CommandLine;
@@ -186,6 +188,14 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
                 + " then it waits before next repetition. Must be positive and ≤ 2000 (default: ${DEFAULT-VALUE} milliseconds)")
     private Long posBlockCreationRepetitionMinDuration =
         DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xpos-slot-duration"},
+        description = "The slot duration in PoS in seconds (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    @Positive
+    Integer posSlotDuration = DEFAULT_POS_SLOT_DURATION_SECS;
   }
 
   private TransactionSelectionService transactionSelectionService;
@@ -272,21 +282,19 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
-    if (genesisConfigOptions.isPoa()) {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--block-txs-selection-max-time can't be used with PoA networks,"
-              + " see poa-block-txs-selection-max-time instead",
-          false,
-          singletonList("--block-txs-selection-max-time"));
-    } else {
-      CommandLineUtils.failIfOptionDoesntMeetRequirement(
-          commandLine,
-          "--poa-block-txs-selection-max-time can be only used with PoA networks,"
-              + " see --block-txs-selection-max-time instead",
-          false,
-          singletonList("--poa-block-txs-selection-max-time"));
-    }
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--block-txs-selection-max-time can only be used on networks with PoS support in the genesis file,"
+            + " see --poa-block-txs-selection-max-time instead",
+        genesisConfigOptions.hasPos(),
+        singletonList("--block-txs-selection-max-time"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--poa-block-txs-selection-max-time can be only used with PoA networks,"
+            + " see --block-txs-selection-max-time instead",
+        genesisConfigOptions.isPoa(),
+        singletonList("--poa-block-txs-selection-max-time"));
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
@@ -317,6 +325,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
         miningConfiguration.getUnstable().getPosBlockCreationRepetitionMinDuration();
+    miningOptions.unstableOptions.posSlotDuration =
+        miningConfiguration.getUnstable().getPosSlotDuration();
 
     miningConfiguration.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningConfiguration.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
@@ -359,6 +369,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
                 .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
                 .posBlockCreationRepetitionMinDuration(
                     unstableOptions.posBlockCreationRepetitionMinDuration)
+                .posSlotDuration(unstableOptions.posSlotDuration)
                 .build())
         .build();
   }

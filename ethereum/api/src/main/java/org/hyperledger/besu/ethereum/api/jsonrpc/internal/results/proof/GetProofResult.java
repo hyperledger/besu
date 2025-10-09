@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -61,31 +63,41 @@ public class GetProofResult {
     this.storageEntries = storageEntries;
   }
 
-  public static GetProofResult buildGetProofResult(
-      final Address address, final WorldStateProof worldStateProof) {
+  public static GetProofResult build(final Address address, final WorldStateProof worldStateProof) {
 
-    final PmtStateTrieAccountValue stateTrieAccountValue =
+    final Optional<PmtStateTrieAccountValue> maybeStateTrieAccountValue =
         worldStateProof.getStateTrieAccountValue();
-
-    final List<StorageEntryProof> storageEntries = new ArrayList<>();
-    worldStateProof
-        .getStorageKeys()
-        .forEach(
-            key ->
-                storageEntries.add(
-                    new StorageEntryProof(
-                        key,
-                        worldStateProof.getStorageValue(key),
-                        worldStateProof.getStorageProof(key))));
-
-    return new GetProofResult(
-        address,
-        stateTrieAccountValue.getBalance(),
-        stateTrieAccountValue.getCodeHash(),
-        stateTrieAccountValue.getNonce(),
-        stateTrieAccountValue.getStorageRoot(),
-        worldStateProof.getAccountProof(),
-        storageEntries);
+    return maybeStateTrieAccountValue
+        .map(
+            pmtStateTrieAccountValue -> {
+              final List<StorageEntryProof> storageEntries = new ArrayList<>();
+              worldStateProof
+                  .getStorageKeys()
+                  .forEach(
+                      key ->
+                          storageEntries.add(
+                              new StorageEntryProof(
+                                  key,
+                                  worldStateProof.getStorageValue(key),
+                                  worldStateProof.getStorageProof(key))));
+              return new GetProofResult(
+                  address,
+                  pmtStateTrieAccountValue.getBalance(),
+                  pmtStateTrieAccountValue.getCodeHash(),
+                  pmtStateTrieAccountValue.getNonce(),
+                  pmtStateTrieAccountValue.getStorageRoot(),
+                  worldStateProof.getAccountProof(),
+                  storageEntries);
+            })
+        .orElse(
+            new GetProofResult(
+                address,
+                Wei.ZERO,
+                Hash.EMPTY,
+                0L,
+                Hash.EMPTY_TRIE_HASH,
+                worldStateProof.getAccountProof(),
+                new ArrayList<>()));
   }
 
   @JsonGetter(value = "address")
@@ -121,5 +133,25 @@ public class GetProofResult {
   @JsonGetter(value = "storageProof")
   public List<StorageEntryProof> getStorageProof() {
     return storageEntries;
+  }
+
+  @Override
+  public String toString() {
+    return "GetProofResult{"
+        + "accountProof="
+        + accountProof
+        + ", address="
+        + address
+        + ", balance="
+        + balance
+        + ", codeHash="
+        + codeHash
+        + ", nonce="
+        + nonce
+        + ", storageHash="
+        + storageHash
+        + ", storageEntries="
+        + storageEntries
+        + '}';
   }
 }

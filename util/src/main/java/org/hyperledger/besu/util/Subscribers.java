@@ -111,6 +111,11 @@ public class Subscribers<T> {
     return subscribers.remove(subscriberId) != null;
   }
 
+  /** Remove all subscribers from the list. */
+  public void unsubscribeAll() {
+    subscribers.clear();
+  }
+
   /**
    * Iterate through the current list of subscribers. This is typically used to deliver events e.g.:
    *

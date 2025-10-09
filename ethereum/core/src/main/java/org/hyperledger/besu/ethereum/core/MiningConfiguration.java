@@ -179,20 +179,23 @@ public abstract class MiningConfiguration {
     };
   }
 
-  public Duration getBlockTxsSelectionMaxTime() {
-    final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
-    if (maybeBlockPeriodSeconds.isPresent()) {
-      return Duration.ofMillis(
-          (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
-                  * getPoaBlockTxsSelectionMaxTime().getValue())
-              / 100);
+  public Duration getBlockTxsSelectionMaxTime(final boolean isPoS) {
+    if (!isPoS) {
+      final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
+      if (maybeBlockPeriodSeconds.isPresent()) {
+        return Duration.ofMillis(
+            (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
+                    * getPoaBlockTxsSelectionMaxTime().getValue())
+                / 100);
+      }
     }
+
     return Duration.ofMillis(getNonPoaBlockTxsSelectionMaxTime().getValue());
   }
 
-  public Duration getPluginTxsSelectionMaxTime() {
+  public Duration getPluginTxsSelectionMaxTime(final Duration blockTxsSelectionMaxTime) {
     return Duration.ofMillis(
-        (getBlockTxsSelectionMaxTime().toMillis() * getPluginBlockTxsSelectionMaxTime().getValue())
+        (blockTxsSelectionMaxTime.toMillis() * getPluginBlockTxsSelectionMaxTime().getValue())
             / 100);
   }
 
@@ -347,6 +350,7 @@ public abstract class MiningConfiguration {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
+    Integer DEFAULT_POS_SLOT_DURATION_SECS = 12;
 
     MiningConfiguration.Unstable DEFAULT = ImmutableMiningConfiguration.Unstable.builder().build();
 
@@ -378,6 +382,11 @@ public abstract class MiningConfiguration {
     @Value.Default
     default long getPosBlockCreationRepetitionMinDuration() {
       return DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+    }
+
+    @Value.Default
+    default Integer getPosSlotDuration() {
+      return DEFAULT_POS_SLOT_DURATION_SECS;
     }
   }
 }

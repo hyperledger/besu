@@ -291,11 +291,11 @@ public abstract class PendingTransaction
   @Override
   public String toString() {
     return "Hash="
-        + transaction.getHash().toShortHexString()
+        + transaction.getHash()
         + ", nonce="
         + transaction.getNonce()
         + ", sender="
-        + transaction.getSender().toShortHexString()
+        + transaction.getSender()
         + ", addedAt="
         + addedAt
         + ", sequence="

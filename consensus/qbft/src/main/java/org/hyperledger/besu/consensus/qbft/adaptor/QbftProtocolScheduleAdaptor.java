@@ -55,6 +55,6 @@ public class QbftProtocolScheduleAdaptor implements QbftProtocolSchedule {
   }
 
   private ProtocolSpec getProtocolSpecByBlockHeader(final QbftBlockHeader header) {
-    return besuProtocolSchedule.getByBlockHeader(BlockUtil.toBesuBlockHeader(header));
+    return besuProtocolSchedule.getByBlockHeader(AdaptorUtil.toBesuBlockHeader(header));
   }
 }
