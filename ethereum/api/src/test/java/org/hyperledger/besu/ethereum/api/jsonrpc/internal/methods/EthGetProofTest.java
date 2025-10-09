@@ -73,9 +73,6 @@ class EthGetProofTest {
 
   @BeforeEach
   public void setUp() {
-    // As we build the block from RLP in DebugTraceBlock, we need to have non mocked
-    // protocolSchedule (and ProtocolSpec)
-    // to be able to get the hash of the block
     final BlockchainSetupUtil blockchainSetupUtil =
         BlockchainSetupUtil.forSnapTesting(DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks(
