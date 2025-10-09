@@ -105,6 +105,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -1121,7 +1122,21 @@ public abstract class AbstractBlockTransactionSelectorTest {
   @Test
   public void shouldHandleTimeoutBeforeAnyTransactionIsEvaluated() {
     // set a very short max time for tx selection to force the timeout before evaluation of the tx
-    int txsSelectionMaxTime = 1;
+    final int txsSelectionMaxTime = 1;
+    final AtomicReference<TransactionSelectionResults> selectionResults = new AtomicReference<>();
+
+    // delay the start of the selection after we get the selection results
+    // since it means the timeout happened
+    when(ethScheduler.scheduleBlockCreationTask(anyLong(), any(Runnable.class)))
+        .thenAnswer(
+            invocation ->
+                CompletableFuture.runAsync(
+                    () -> {
+                      await()
+                          .atMost(Duration.ofSeconds(2))
+                          .until(() -> selectionResults.get() != null);
+                      invocation.getArgument(1);
+                    }));
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
@@ -1135,10 +1150,116 @@ public abstract class AbstractBlockTransactionSelectorTest {
             AddressHelpers.ofValue(1),
             Wei.ZERO,
             transactionSelectionService);
-    transactionPool.addRemoteTransactions(List.of(createTransaction(2, Wei.of(7), 100_000)));
+    final var tx = createTransaction(0, Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx);
+    transactionPool.addRemoteTransactions(List.of(tx));
 
-    var results = selector.buildTransactionListForBlock();
+    final var results = selector.buildTransactionListForBlock();
+    selectionResults.set(results);
     assertThat(results.getSelectedTransactions()).isEmpty();
+  }
+
+  @Test
+  public void txEvaluationContextIsCancelledReturnsTrueOnTimeout() {
+    // set a very short max time for tx selection to force the timeout before evaluation of the tx
+    final AtomicBoolean tecIsCancelled = new AtomicBoolean(false);
+    final int txsSelectionMaxTime = 1;
+
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    when(transactionSelectorFactory.create(any()))
+        .thenReturn(
+            new PluginTransactionSelector() {
+              @Override
+              public TransactionSelectionResult evaluateTransactionPreProcessing(
+                  final TransactionEvaluationContext evaluationContext) {
+                tecIsCancelled.set(evaluationContext.isCancelled());
+                return SELECTED;
+              }
+
+              @Override
+              public TransactionSelectionResult evaluateTransactionPostProcessing(
+                  final TransactionEvaluationContext evaluationContext,
+                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                      processingResult) {
+                tecIsCancelled.set(evaluationContext.isCancelled());
+                return SELECTED;
+              }
+            });
+
+    transactionSelectionService.registerPluginTransactionSelectorFactory(
+        transactionSelectorFactory);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                transactionSelectionService,
+                Wei.ZERO,
+                MIN_OCCUPANCY_100_PERCENT,
+                PositiveNumber.fromInt(txsSelectionMaxTime)),
+            transactionProcessor,
+            createBlock(301_000),
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            transactionSelectionService);
+
+    final var tx = createTransaction(0, Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx);
+    transactionPool.addRemoteTransactions(List.of(tx));
+
+    selector.buildTransactionListForBlock();
+    assertThat(tecIsCancelled).isTrue();
+  }
+
+  @Test
+  public void txEvaluationContextIsCancelledReturnsTrueOnCancellation() {
+    final AtomicBoolean tecIsCancelled = new AtomicBoolean(false);
+
+    final PluginTransactionSelectorFactory transactionSelectorFactory =
+        mock(PluginTransactionSelectorFactory.class);
+    when(transactionSelectorFactory.create(any()))
+        .thenReturn(
+            new PluginTransactionSelector() {
+              @Override
+              public TransactionSelectionResult evaluateTransactionPreProcessing(
+                  final TransactionEvaluationContext evaluationContext) {
+                // cancell selection middle the evaluation of the tx
+                cancelled.set(true);
+                return SELECTED;
+              }
+
+              @Override
+              public TransactionSelectionResult evaluateTransactionPostProcessing(
+                  final TransactionEvaluationContext evaluationContext,
+                  final org.hyperledger.besu.plugin.data.TransactionProcessingResult
+                      processingResult) {
+                tecIsCancelled.set(evaluationContext.isCancelled());
+                return SELECTED;
+              }
+            });
+
+    transactionSelectionService.registerPluginTransactionSelectorFactory(
+        transactionSelectorFactory);
+
+    final BlockTransactionSelector selector =
+        createBlockSelectorAndSetupTxPool(
+            createMiningParameters(
+                transactionSelectionService,
+                Wei.ZERO,
+                MIN_OCCUPANCY_100_PERCENT,
+                PositiveNumber.fromInt(1000)),
+            transactionProcessor,
+            createBlock(301_000),
+            AddressHelpers.ofValue(1),
+            Wei.ZERO,
+            transactionSelectionService);
+
+    final var tx = createTransaction(0, Wei.of(7), 100_000);
+    ensureTransactionIsValid(tx);
+    transactionPool.addRemoteTransactions(List.of(tx));
+
+    selector.buildTransactionListForBlock();
+    assertThat(tecIsCancelled).isTrue();
   }
 
   private void internalBlockSelectionTimeoutSimulation(
