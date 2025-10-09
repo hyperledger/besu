@@ -96,28 +96,31 @@ public class BlockchainTestSubCommand implements Runnable {
 
   /** Helper class to track test execution results for summary reporting. */
   private static class TestResults {
-    private static final String SEPARATOR = "\n" + "=".repeat(80);
-    private final AtomicInteger totalTests = new AtomicInteger(0);
+    private static final String SEPARATOR = "=".repeat(80);
     private final AtomicInteger passedTests = new AtomicInteger(0);
     private final AtomicInteger failedTests = new AtomicInteger(0);
     private final Map<String, String> failures = new LinkedHashMap<>();
 
-    void recordPass(final String testName) {
-      totalTests.incrementAndGet();
+    void recordPass() {
       passedTests.incrementAndGet();
     }
 
     void recordFailure(final String testName, final String reason) {
-      totalTests.incrementAndGet();
       failedTests.incrementAndGet();
       failures.put(testName, reason);
     }
 
+    boolean hasTests() {
+      return passedTests.get() + failedTests.get() > 0;
+    }
+
     void printSummary(final java.io.PrintWriter out) {
+      final int totalTests = passedTests.get() + failedTests.get();
+      out.println();
       out.println(SEPARATOR);
       out.println("TEST SUMMARY");
-      out.println(SEPARATOR.substring(1)); // Skip leading newline for middle separator
-      out.printf("Total tests:  %d%n", totalTests.get());
+      out.println(SEPARATOR);
+      out.printf("Total tests:  %d%n", totalTests);
       out.printf("Passed:       %d%n", passedTests.get());
       out.printf("Failed:       %d%n", failedTests.get());
 
@@ -125,7 +128,7 @@ public class BlockchainTestSubCommand implements Runnable {
         out.println("\nFailed tests:");
         failures.forEach((testName, reason) -> out.printf("  - %s: %s%n", testName, reason));
       }
-      out.println(SEPARATOR.substring(1)); // Skip leading newline for bottom separator
+      out.println(SEPARATOR);
     }
   }
 
@@ -193,7 +196,7 @@ public class BlockchainTestSubCommand implements Runnable {
       e.printStackTrace(System.err);
     } finally {
       // Always print summary, even if there were errors
-      if (results.totalTests.get() > 0) {
+      if (results.hasTests()) {
         results.printSummary(parentCommand.out);
       }
     }
@@ -306,7 +309,7 @@ public class BlockchainTestSubCommand implements Runnable {
     if (testFailed) {
       results.recordFailure(test, failureReason);
     } else {
-      results.recordPass(test);
+      results.recordPass();
     }
   }
 
