@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class UInt256Test {
-  static final int SAMPLE_SIZE = 3;
+  static final int SAMPLE_SIZE = 300;
 
   private Bytes32 bigIntTo32B(final BigInteger x) {
     byte[] a = x.toByteArray();
