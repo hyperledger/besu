@@ -389,6 +389,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                     && vsf.getVersion() == versionedStorageFormat.getVersion());
   }
 
+  public void reset() {
+    if (segmentedStorage != null) {
+      segmentedStorage = null;
+    }
+  }
+
   @Override
   public void close() throws IOException {
     if (segmentedStorage != null) {
