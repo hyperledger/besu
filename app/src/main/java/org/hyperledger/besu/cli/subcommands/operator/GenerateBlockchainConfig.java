@@ -49,8 +49,6 @@ import java.util.stream.IntStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
@@ -68,8 +66,7 @@ import picocli.CommandLine.ParentCommand;
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(GenerateBlockchainConfig.class);
 
-  private final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithmFactory.getInstance();
 
   @NotBlank
   @Option(
@@ -177,13 +174,13 @@ class GenerateBlockchainConfig implements Runnable {
 
     try {
       final SECPPublicKey publicKey =
-          SIGNATURE_ALGORITHM.get().createPublicKey(Bytes.fromHexString(publicKeyText));
+          SIGNATURE_ALGORITHM.createPublicKey(Bytes.fromHexString(publicKeyText));
 
-      if (!SIGNATURE_ALGORITHM.get().isValidPublicKey(publicKey)) {
+      if (!SIGNATURE_ALGORITHM.isValidPublicKey(publicKey)) {
         throw new IllegalArgumentException(
             publicKeyText
                 + " is not a valid public key for elliptic curve "
-                + SIGNATURE_ALGORITHM.get().getCurveName());
+                + SIGNATURE_ALGORITHM.getCurveName());
       }
 
       writeKeypair(publicKey, null);
@@ -208,7 +205,7 @@ class GenerateBlockchainConfig implements Runnable {
   private void generateNodeKeypair(final int node) {
     try {
       LOG.info("Generating keypair for node {}.", node);
-      final KeyPair keyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      final KeyPair keyPair = SIGNATURE_ALGORITHM.generateKeyPair();
       writeKeypair(keyPair.getPublicKey(), keyPair.getPrivateKey());
 
     } catch (final IOException e) {
