@@ -719,9 +719,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               JsonBlockImporter::new,
               Era1BlockImporter::new,
               RlpBlockExporter::new,
-              (blockchain) ->
+              (blockchain, networkName) ->
                   new Era1BlockExporter(
                       blockchain,
+                      networkName,
                       new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory()),
                       new Era1AccumulatorFactory(),
                       new Era1BlockIndexConverter(),

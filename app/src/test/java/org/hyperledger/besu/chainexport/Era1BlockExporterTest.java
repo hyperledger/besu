@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.chainexport;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -47,8 +48,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class Era1BlockExporterTest {
-  private static final String MAINNET_GENESIS_HASH =
-      "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
 
   private @Mock Blockchain blockchain;
   private @Mock Era1FileWriterFactory era1FileWriterFactory;
@@ -67,6 +66,7 @@ public class Era1BlockExporterTest {
     era1BlockExporter =
         new Era1BlockExporter(
             blockchain,
+            NetworkName.MAINNET,
             era1FileWriterFactory,
             era1AccumulatorFactory,
             era1BlockIndexConverter,
@@ -135,11 +135,6 @@ public class Era1BlockExporterTest {
           });
     }
 
-    BlockHeader genesisBlockHeader = Mockito.mock(BlockHeader.class);
-    Hash genesisBlockHash = Hash.fromHexString(MAINNET_GENESIS_HASH);
-    Mockito.when(blockchain.getGenesisBlockHeader()).thenReturn(genesisBlockHeader);
-    Mockito.when(genesisBlockHeader.getHash()).thenReturn(genesisBlockHash);
-
     Hash accumulatorHash = Hash.wrap(Bytes32.random());
     Mockito.when(era1Accumulator.accumulate()).thenReturn(accumulatorHash);
 
@@ -159,8 +154,6 @@ public class Era1BlockExporterTest {
     File tempFile = File.createTempFile("era1", "test");
     era1BlockExporter.export(0, 0, tempFile);
 
-    Mockito.verify(blockchain).getGenesisBlockHeader();
-    Mockito.verify(genesisBlockHeader).getHash();
     Mockito.verify(era1Accumulator).accumulate();
     ArgumentCaptor<File> fileArgumentCaptor = ArgumentCaptor.forClass(File.class);
     Mockito.verify(era1FileWriterFactory).era1FileWriter(fileArgumentCaptor.capture());

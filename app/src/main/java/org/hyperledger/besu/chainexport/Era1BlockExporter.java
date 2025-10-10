@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.chainexport;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -29,6 +30,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -39,12 +41,9 @@ import org.slf4j.LoggerFactory;
 public class Era1BlockExporter {
   private static final Logger LOG = LoggerFactory.getLogger(Era1BlockExporter.class);
   private static final int ERA1_FILE_BLOCKS = 8192;
-  private static final String MAINNET_GENESIS_HASH =
-      "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
-  private static final String SEPOLIA_GENESIS_HASH =
-      "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
 
   private final Blockchain blockchain;
+  private final String network;
   private final Era1FileWriterFactory era1FileWriterFactory;
   private final Era1AccumulatorFactory era1AccumulatorFactory;
   private final Era1BlockIndexConverter era1BlockIndexConverter;
@@ -56,6 +55,7 @@ public class Era1BlockExporter {
    * Instantiates a new ERA1 block exporter.
    *
    * @param blockchain the blockchain
+   * @param networkName the network
    * @param era1FileWriterFactory an Era1FileWriterFactory
    * @param era1AccumulatorFactory an Era1AccumulatorFactory
    * @param era1BlockIndexConverter an Era1BlockIndexConverter
@@ -65,6 +65,7 @@ public class Era1BlockExporter {
    */
   public Era1BlockExporter(
       final Blockchain blockchain,
+      final NetworkName networkName,
       final Era1FileWriterFactory era1FileWriterFactory,
       final Era1AccumulatorFactory era1AccumulatorFactory,
       final Era1BlockIndexConverter era1BlockIndexConverter,
@@ -72,6 +73,13 @@ public class Era1BlockExporter {
       final BlockBodyRlpEncoder blockBodyRlpEncoder,
       final TransactionReceiptRlpEncoder transactionReceiptRlpEncoder) {
     this.blockchain = blockchain;
+    this.network =
+        switch (networkName) {
+          case MAINNET, SEPOLIA -> networkName.name().toLowerCase(Locale.getDefault());
+          default ->
+              throw new RuntimeException(
+                  "Unable to export ERA1 files for " + networkName + " network");
+        };
     this.era1FileWriterFactory = era1FileWriterFactory;
     this.era1AccumulatorFactory = era1AccumulatorFactory;
     this.era1BlockIndexConverter = era1BlockIndexConverter;
@@ -91,12 +99,6 @@ public class Era1BlockExporter {
     if (endFile < startFile) {
       throw new IllegalArgumentException("End of export range must be after start of export range");
     }
-    String network =
-        switch (blockchain.getGenesisBlockHeader().getHash().toString()) {
-          case MAINNET_GENESIS_HASH -> "mainnet";
-          case SEPOLIA_GENESIS_HASH -> "sepolia";
-          default -> throw new RuntimeException("Unable to export ERA1 files for this network");
-        };
     LOG.info(
         "Exporting ERA1 files {} to {} inclusive for network: {}", startFile, endFile, network);
     for (long fileNumber = startFile; fileNumber <= endFile; fileNumber++) {

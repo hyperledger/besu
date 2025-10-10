@@ -24,6 +24,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -97,7 +99,7 @@ public class BlocksSubCommand implements Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
-  private final Function<Blockchain, Era1BlockExporter> era1BlockExporterFactory;
+  private final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory;
 
   private final PrintWriter out;
 
@@ -116,7 +118,7 @@ public class BlocksSubCommand implements Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final Function<Blockchain, Era1BlockExporter> era1BlockExporterFactory,
+      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
       final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -424,7 +426,9 @@ public class BlocksSubCommand implements Runnable {
 
       parentCommand
           .era1BlockExporterFactory
-          .apply(controller.getProtocolContext().getBlockchain())
+          .apply(
+              controller.getProtocolContext().getBlockchain(),
+              parentCommand.parentCommand.getNetwork())
           .export(startFile, endFile, blocksExportFile);
     }
 
