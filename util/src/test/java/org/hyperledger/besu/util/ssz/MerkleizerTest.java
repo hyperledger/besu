@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.util.ssz;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -51,6 +52,39 @@ public class MerkleizerTest {
     Bytes32 result = merkleizer.merkleizeChunks(chunks, 4);
     Assertions.assertEquals(
         "0xdfea42101f94476e3b2e26f2a3e23505a696a6fd3d3ded213cece4adb19cb9ac", result.toHexString());
+  }
+
+  @Test
+  public void testMerkleizeChunksWithSingleChunk() {
+    Merkleizer merkleizer = new Merkleizer();
+    List<Bytes32> chunks = List.of(Bytes32.leftPad(Bytes.fromHexString("01"), (byte) 0x00));
+
+    Bytes32 result = merkleizer.merkleizeChunks(chunks);
+    Assertions.assertEquals(
+        "0x58e8f2a1f78f0a591feb75aebecaaa81076e4290894b1c445cc32953604db089", result.toHexString());
+  }
+
+  @Test
+  public void testMerkleizeChunksWithEmptyChunkList() {
+    Merkleizer merkleizer = new Merkleizer();
+    List<Bytes32> chunks = Collections.emptyList();
+
+    Assertions.assertThrows(RuntimeException.class, () -> merkleizer.merkleizeChunks(chunks));
+  }
+
+  @Test
+  public void testMerkleizeChunksPadToPowerOfTwo() {
+    Merkleizer merkleizer = new Merkleizer();
+    List<Bytes32> chunks =
+        List.of(
+            Bytes32.leftPad(Bytes.fromHexString("01"), (byte) 0x00),
+            Bytes32.leftPad(Bytes.fromHexString("02"), (byte) 0x00),
+            Bytes32.leftPad(Bytes.fromHexString("03"), (byte) 0x00),
+            Bytes32.leftPad(Bytes.fromHexString("04"), (byte) 0x00));
+
+    Bytes32 result = merkleizer.merkleizeChunks(chunks, 8);
+    Assertions.assertEquals(
+        "0x99a14dcf7a31540072bc8be5d9fdae0e740788d9b6fac6d4cddf890939c21534", result.toHexString());
   }
 
   @Test

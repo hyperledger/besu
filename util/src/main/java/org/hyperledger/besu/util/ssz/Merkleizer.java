@@ -52,6 +52,9 @@ public class Merkleizer {
    * @return the root hash from merkle tree produced by the supplied leaves
    */
   public Bytes32 merkleizeChunks(final List<Bytes32> leaves, final int padToSize) {
+    if (leaves.isEmpty()) {
+      throw new RuntimeException("Unable to merkleize empty list of leaves");
+    }
     // take a copy to ensure our chunk storage is mutable, and original input remains untouched
     final List<Bytes32> chunks = new ArrayList<>(leaves);
 
@@ -98,6 +101,9 @@ public class Merkleizer {
   }
 
   private int nextPowerOfTwo(final int number) {
+    if (number == 1) {
+      return 2;
+    }
     int power = 1;
     while (power < number) {
       power *= 2;
