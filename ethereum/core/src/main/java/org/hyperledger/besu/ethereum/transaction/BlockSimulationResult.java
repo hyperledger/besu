@@ -81,6 +81,7 @@ public class BlockSimulationResult {
                     transactionSimulation.logs(),
                     block.getHeader().getNumber(),
                     block.getHash(),
+                    block.getHeader().getTimestamp(),
                     transactionSimulation.result().transaction().getHash(),
                     block
                         .getBody()

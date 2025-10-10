@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ class WithdrawalsProcessorTest {
     final WorldUpdater updater = worldState.updater();
 
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-    withdrawalsProcessor.processWithdrawals(Collections.emptyList(), updater);
+    withdrawalsProcessor.processWithdrawals(Collections.emptyList(), updater, Optional.empty());
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance()).isEqualTo(Wei.of(1));
     assertThat(worldState.get(Address.fromHexString("0x2")).getBalance()).isEqualTo(Wei.of(2));
@@ -70,7 +71,7 @@ class WithdrawalsProcessorTest {
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater, Optional.empty());
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
         .isEqualTo(GWei.of(100).getAsWei().add(1));
@@ -97,7 +98,7 @@ class WithdrawalsProcessorTest {
                 Address.fromHexString("0x2"),
                 GWei.of(200)));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater, Optional.empty());
 
     assertThat(worldState.get(Address.fromHexString("0x1")).getBalance())
         .isEqualTo(GWei.of(100).getAsWei());
@@ -120,7 +121,7 @@ class WithdrawalsProcessorTest {
                 Address.fromHexString("0x2"),
                 GWei.ZERO));
     final WithdrawalsProcessor withdrawalsProcessor = new WithdrawalsProcessor();
-    withdrawalsProcessor.processWithdrawals(withdrawals, updater);
+    withdrawalsProcessor.processWithdrawals(withdrawals, updater, Optional.empty());
 
     assertThat(worldState.get(Address.fromHexString("0x1"))).isNull();
     assertThat(worldState.get(Address.fromHexString("0x2"))).isNull();
