@@ -988,28 +988,6 @@ public abstract class MainnetProtocolSpecs {
         .hardforkId(OSAKA);
   }
 
-  static ProtocolSpecBuilder amsterdamDefinition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
-      final MetricsSystem metricsSystem) {
-    return osakaDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
-            metricsSystem)
-        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
-        .hardforkId(AMSTERDAM);
-  }
-
   static ProtocolSpecBuilder bpo1Definition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1118,6 +1096,28 @@ public abstract class MainnetProtocolSpecs {
             isBlockAccessListEnabled,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, BPO5);
+  }
+
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
+        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+        .hardforkId(AMSTERDAM);
   }
 
   private static ProtocolSpecBuilder applyBlobSchedule(
