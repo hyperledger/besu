@@ -16,6 +16,10 @@ package org.hyperledger.besu.components;
 
 import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1AccumulatorFactory;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
+import org.hyperledger.besu.chainexport.Era1BlockIndexConverter;
+import org.hyperledger.besu.chainexport.Era1FileWriterFactory;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -24,9 +28,14 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
 import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.core.rlp.BlockBodyRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.BlockHeaderRlpEncoder;
+import org.hyperledger.besu.ethereum.core.rlp.TransactionReceiptRlpEncoder;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.util.io.OutputStreamFactory;
+import org.hyperledger.besu.util.snappy.SnappyFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -53,6 +62,15 @@ public class BesuCommandModule {
             JsonBlockImporter::new,
             Era1BlockImporter::new,
             RlpBlockExporter::new,
+            (blockchain) ->
+                new Era1BlockExporter(
+                    blockchain,
+                    new Era1FileWriterFactory(new OutputStreamFactory(), new SnappyFactory()),
+                    new Era1AccumulatorFactory(),
+                    new Era1BlockIndexConverter(),
+                    new BlockHeaderRlpEncoder(),
+                    new BlockBodyRlpEncoder(),
+                    new TransactionReceiptRlpEncoder()),
             new RunnerBuilder(),
             new BesuController.Builder(),
             new BesuPluginContextImpl(),

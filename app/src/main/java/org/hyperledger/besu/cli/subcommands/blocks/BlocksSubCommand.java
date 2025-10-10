@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -96,6 +97,7 @@ public class BlocksSubCommand implements Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
+  private final Function<Blockchain, Era1BlockExporter> era1BlockExporterFactory;
 
   private final PrintWriter out;
 
@@ -106,6 +108,7 @@ public class BlocksSubCommand implements Runnable {
    * @param jsonBlockImporterFactory the Json block importer factory
    * @param era1BlockImporter the era1 block importer supplier
    * @param rlpBlockExporterFactory the RLP block exporter factory
+   * @param era1BlockExporterFactory the ERA1 block exporter factory
    * @param out Instance of PrintWriter where command usage will be written.
    */
   public BlocksSubCommand(
@@ -113,11 +116,13 @@ public class BlocksSubCommand implements Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+      final Function<Blockchain, Era1BlockExporter> era1BlockExporterFactory,
       final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
     this.era1BlockImporter = era1BlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
+    this.era1BlockExporterFactory = era1BlockExporterFactory;
     this.out = out;
   }
 
@@ -322,6 +327,8 @@ public class BlocksSubCommand implements Runnable {
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class ExportSubCommand implements Runnable {
+    private static final long ERA1_FILE_BLOCKS = 8192;
+
     @SuppressWarnings("unused")
     @ParentCommand
     private BlocksSubCommand parentCommand; // Picocli injects reference to parent command
@@ -354,7 +361,8 @@ public class BlocksSubCommand implements Runnable {
         names = "--to",
         required = true,
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-        description = "File to write the block list to.",
+        description =
+            "File (or directory, in the case of ERA1 format export) to write the block list to.",
         arity = "1..1")
     private final File blocksExportFile = null;
 
@@ -372,11 +380,12 @@ public class BlocksSubCommand implements Runnable {
 
       final BesuController controller = createBesuController();
       try {
-        if (format == BlockExportFormat.RLP) {
-          exportRlpFormat(controller);
-        } else {
-          throw new ParameterException(
-              spec.commandLine(), "Unsupported format: " + format.toString());
+        switch (format) {
+          case RLP -> exportRlpFormat(controller);
+          case ERA1 -> exportEra1Format(controller);
+          default ->
+              throw new ParameterException(
+                  spec.commandLine(), "Unsupported format: " + format.toString());
         }
       } catch (final IOException e) {
         throw new ExecutionException(
@@ -399,6 +408,29 @@ public class BlocksSubCommand implements Runnable {
       final RlpBlockExporter exporter =
           parentCommand.rlpBlockExporterFactory.apply(context.getBlockchain());
       exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());
+    }
+
+    private void exportEra1Format(final BesuController controller) {
+      long startFile = getStartBlock().map(this::convertBlockNumberToFileNumber).orElse(0L);
+      long endFile =
+          getEndBlock()
+              .map(this::convertBlockNumberToFileNumber)
+              .orElse(
+                  convertBlockNumberToFileNumber(
+                      controller
+                          .getGenesisConfigOptions()
+                          .getCheckpointOptions()
+                          .getNumber()
+                          .orElseThrow()));
+
+      parentCommand
+          .era1BlockExporterFactory
+          .apply(controller.getProtocolContext().getBlockchain())
+          .export(startFile, endFile, blocksExportFile);
+    }
+
+    private long convertBlockNumberToFileNumber(final long blockNumber) {
+      return blockNumber / ERA1_FILE_BLOCKS;
     }
 
     private void checkCommand(
