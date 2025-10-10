@@ -39,6 +39,7 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -83,6 +84,7 @@ public class ProtocolSpecBuilder {
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
+  private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
   private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
@@ -272,6 +274,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder slotDuration(final Duration slotDuration) {
+    this.slotDuration = slotDuration;
+    return this;
+  }
+
   public ProtocolSpecBuilder isReplayProtectionSupported(
       final boolean isReplayProtectionSupported) {
     this.isReplayProtectionSupported = isReplayProtectionSupported;
@@ -320,6 +327,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(feeMarketBuilder, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
+    checkNotNull(slotDuration, "Missing slot duration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
@@ -402,6 +410,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         preExecutionProcessor,
         isPoS,
+        slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
         Optional.ofNullable(finalBalFactory));
