@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
@@ -122,10 +122,10 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  public Predicate<EthPeer> getPeerRequirementFilter() {
+  public Predicate<EthPeerImmutableAttributes> getPeerRequirementFilter() {
     return (ethPeer) ->
         (protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-            || ethPeer.chainState().getEstimatedHeight() >= requiredBlockchainHeight);
+            || ethPeer.estimatedChainHeight() >= requiredBlockchainHeight);
   }
 
   @Override

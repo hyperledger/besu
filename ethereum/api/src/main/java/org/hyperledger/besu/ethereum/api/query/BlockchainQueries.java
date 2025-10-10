@@ -929,6 +929,7 @@ public class BlockchainQueries {
       final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
       final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
+      final long blockTimestamp = blockHeader.get().getTimestamp();
       final boolean removed = getRemoved(blockHash, isQueryAlive);
 
       final AtomicInteger logIndexOffset = new AtomicInteger();
@@ -943,6 +944,7 @@ public class BlockchainQueries {
                           receipts.get(i),
                           number,
                           blockHash,
+                          blockTimestamp,
                           transactions.get(i).getHash(),
                           i,
                           removed);
@@ -980,6 +982,7 @@ public class BlockchainQueries {
       final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
       final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
+      final long blockTimestamp = blockHeader.get().getTimestamp();
       final boolean removed = getRemoved(blockHash, isQueryAlive);
 
       final int transactionIndex = transactionWithMetaData.getTransactionIndex().get();
@@ -992,6 +995,7 @@ public class BlockchainQueries {
           receipts.get(transactionIndex),
           number,
           blockHash,
+          blockTimestamp,
           transactions.get(transactionIndex).getHash(),
           transactionIndex,
           removed);
