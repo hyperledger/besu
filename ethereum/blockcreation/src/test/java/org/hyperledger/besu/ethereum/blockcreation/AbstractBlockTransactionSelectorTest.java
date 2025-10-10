@@ -1223,7 +1223,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final TransactionEvaluationContext evaluationContext) {
-                // cancell selection middle the evaluation of the tx
+                // cancel selection during the evaluation of the tx
                 cancelled.set(true);
                 return SELECTED;
               }
