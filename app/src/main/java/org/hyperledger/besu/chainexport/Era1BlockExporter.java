@@ -89,13 +89,17 @@ public class Era1BlockExporter {
   }
 
   /**
-   * Exports ERA1 files starting from file startFile and ending at EndFile
+   * Exports ERA1 files starting from the file containing requestedStartBlock and ending at the file
+   * containing requestedEndBlock
    *
-   * @param startFile The first ERA1 file to be exported
-   * @param endFile The last ERA1 file to be exported
+   * @param requestedStartBlock The requested start block
+   * @param requestedEndBlock The requested end block
    * @param outputDirectory The directory in which to put the exported files
    */
-  public void export(final long startFile, final long endFile, final File outputDirectory) {
+  public void export(
+      final long requestedStartBlock, final long requestedEndBlock, final File outputDirectory) {
+    long startFile = convertBlockNumberToFileNumber(requestedStartBlock);
+    long endFile = convertBlockNumberToFileNumber(requestedEndBlock);
     if (endFile < startFile) {
       throw new IllegalArgumentException("End of export range must be after start of export range");
     }
@@ -166,5 +170,9 @@ public class Era1BlockExporter {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  private long convertBlockNumberToFileNumber(final long blockNumber) {
+    return blockNumber / ERA1_FILE_BLOCKS;
   }
 }

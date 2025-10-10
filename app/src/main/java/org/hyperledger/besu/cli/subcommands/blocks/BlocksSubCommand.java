@@ -329,7 +329,6 @@ public class BlocksSubCommand implements Runnable {
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class ExportSubCommand implements Runnable {
-    private static final long ERA1_FILE_BLOCKS = 8192;
 
     @SuppressWarnings("unused")
     @ParentCommand
@@ -412,28 +411,19 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private void exportEra1Format(final BesuController controller) {
-      long startFile = getStartBlock().map(this::convertBlockNumberToFileNumber).orElse(0L);
-      long endFile =
-          getEndBlock()
-              .map(this::convertBlockNumberToFileNumber)
-              .orElse(
-                  convertBlockNumberToFileNumber(
-                      controller
-                          .getGenesisConfigOptions()
-                          .getCheckpointOptions()
-                          .getNumber()
-                          .orElseThrow()));
-
+      long maximumEndBlock =
+          controller.getGenesisConfigOptions().getCheckpointOptions().getNumber().orElseThrow();
       parentCommand
           .era1BlockExporterFactory
           .apply(
               controller.getProtocolContext().getBlockchain(),
               parentCommand.parentCommand.getNetwork())
-          .export(startFile, endFile, blocksExportFile);
-    }
-
-    private long convertBlockNumberToFileNumber(final long blockNumber) {
-      return blockNumber / ERA1_FILE_BLOCKS;
+          .export(
+              getStartBlock().orElse(0L),
+              getEndBlock()
+                  .filter((endBlock) -> endBlock <= maximumEndBlock)
+                  .orElse(maximumEndBlock),
+              blocksExportFile);
     }
 
     private void checkCommand(
