@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 /**
  * 256-bits wide unsigned integer class.
@@ -248,92 +247,11 @@ public final class UInt256 {
     return h;
   }
 
-  /**
-   * Is the two complements signed representation of this integer negative.
-   *
-   * @return True if the two complements representation of this integer is negative.
-   */
-  public boolean isNegative() {
-    return (length == 8) && (isNeg(limbs, 8));
-  }
-
-  // --------------------------------------------------------------------------
-  // endregion
-
-  // region Bitwise Operations
-  // --------------------------------------------------------------------------
-
-  /**
-   * Shifts value to the left.
-   *
-   * @param shift number of bits to shift. If negative, shift right instead.
-   * @return Shifted UInt256 value.
-   */
-  public UInt256 shiftLeft(final int shift) {
-    if (shift < 0) return shiftRight(-shift);
-    if (shift >= BITSIZE) return ZERO;
-    if (shift == 0 || isZero()) return this;
-    int[] shifted = new int[N_LIMBS + (shift + N_BITS_PER_LIMB - 1) / N_BITS_PER_LIMB];
-    shiftLeftInto(shifted, this.limbs, this.length, shift);
-    return new UInt256(shifted);
-  }
-
-  /**
-   * Shifts value to the right.
-   *
-   * @param shift number of bits to shift. If negative, shift left instead.
-   * @return Shifted UInt256 value.
-   */
-  public UInt256 shiftRight(final int shift) {
-    if (shift < 0) return shiftLeft(-shift);
-    if (shift >= length * N_BITS_PER_LIMB) return ZERO;
-    if (shift == 0 || isZero()) return this;
-    int[] shifted = new int[N_LIMBS];
-    shiftRightInto(shifted, this.limbs, this.length, shift);
-    return new UInt256(shifted);
-  }
-
   // --------------------------------------------------------------------------
   // endregion
 
   // region Arithmetic Operations
   // --------------------------------------------------------------------------
-
-  /**
-   * (Signed) absolute value
-   *
-   * @return The absolute value of this signed integer.
-   */
-  public UInt256 abs() {
-    int[] newLimbs = Arrays.copyOf(limbs, N_LIMBS);
-    absInplace(newLimbs, N_LIMBS);
-    return new UInt256(newLimbs);
-  }
-
-  /**
-   * Addition (modulo 2**256).
-   *
-   * @param other The integer to add.
-   * @return The sum of this with other.
-   */
-  public UInt256 add(final UInt256 other) {
-    if (other.isZero()) return this;
-    if (this.isZero()) return other;
-    return new UInt256(addWithCarry(this.limbs, this.length, other.limbs, other.length));
-  }
-
-  /**
-   * Multiplication (modulo 2**256).
-   *
-   * @param other The integer to add.
-   * @return The sum of this with other.
-   */
-  public UInt256 mul(final UInt256 other) {
-    if (this.isZero() || other.isZero()) return ZERO;
-    int[] prod = addMul(this.limbs, this.length, other.limbs, other.length);
-    int[] result = Arrays.copyOf(prod, N_LIMBS);
-    return new UInt256(result);
-  }
 
   /**
    * Unsigned modulo reduction.
@@ -406,12 +324,6 @@ public final class UInt256 {
     while ((offset >= 0) && (x[offset] == 0)) offset--;
     return offset + 1;
   }
-
-  // private static int nSetLimbs(final int[] x, final int maxLength) {
-  //   int offset = maxLength - 1;
-  //   while ((offset >= 0) && (x[offset] == 0)) offset--;
-  //   return offset + 1;
-  // }
 
   private static int compareLimbs(final int[] a, final int aLen, final int[] b, final int bLen) {
     int cmp;

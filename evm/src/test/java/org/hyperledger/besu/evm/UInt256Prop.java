@@ -200,41 +200,6 @@ public class UInt256Prop {
   }
 
   @Property
-  void property_shiftLeft_matchesBigIntegerMod2p256(
-      @ForAll("unsigned1to32") final byte[] a, @ForAll("shifts") final int k) {
-    // Arrange
-    final UInt256 ua = UInt256.fromBytesBE(a);
-
-    // Act
-    UInt256 shifted = ua.shiftLeft(k);
-    byte[] got = shifted.toBytesBE();
-
-    // Assert
-    BigInteger A = toBigUnsigned(a);
-    BigInteger expBI = (k < 0) ? A.shiftRight(-k) : A.shiftLeft(k);
-    byte[] exp = bigUnsignedToBytes32(expBI);
-    assertThat(got).containsExactly(exp);
-  }
-
-  @Property
-  void property_shiftRight_matchesBigInteger(
-      @ForAll("unsigned1to32") final byte[] a, @ForAll("shifts") final int k) {
-    // Arrange
-    final UInt256 ua = UInt256.fromBytesBE(a);
-
-    // Act
-    UInt256 shifted = ua.shiftRight(k);
-    byte[] got = shifted.toBytesBE();
-
-    // Assert
-    BigInteger A = toBigUnsigned(a);
-    BigInteger expBI =
-        (k < 0) ? A.shiftLeft(-k).mod(BigInteger.ONE.shiftLeft(256)) : A.shiftRight(k);
-    byte[] exp = bigUnsignedToBytes32(expBI);
-    assertThat(got).containsExactly(exp);
-  }
-
-  @Property
   void property_divByZero_invariants() {
     // Arrange
     UInt256 x = UInt256.fromBytesBE(new byte[] {1, 2, 3, 4});

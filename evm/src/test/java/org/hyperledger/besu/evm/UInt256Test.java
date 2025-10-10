@@ -110,29 +110,6 @@ public class UInt256Test {
   }
 
   @Test
-  void testLeftShift() {
-    UInt256 a = UInt256.fromInt(1);
-    UInt256 result = a.shiftLeft(32);
-    UInt256 expected = new UInt256( new int[]{0, 1, 0, 0, 0, 0, 0, 0});
-    assertThat(result).isEqualTo(expected);
-  }
-
-  @Test
-  void testRightShiftCase() {
-    final BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
-    int shift = 33;
-
-    final BigInteger TWO_TO_256 = BigInteger.valueOf(2).pow(256);
-    BigInteger expectedUnwrapped = maxLong.shiftRight(shift);
-    BigInteger expected = expectedUnwrapped.mod(TWO_TO_256);
-
-    UInt256 uint256 = UInt256.fromBytesBE(maxLong.toByteArray());
-
-    UInt256 result = uint256.shiftRight(shift);
-    assertThat(result.toBigInteger()).isEqualTo(expected);
-  }
-
-  @Test
   public void smallInts() {
     UInt256 number = UInt256.fromInt(523);
     UInt256 modulus = UInt256.fromInt(27);
