@@ -1161,9 +1161,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @Test
   public void txEvaluationContextIsCancelledReturnsTrueOnTimeout() {
-    // set a very short max time for tx selection to force the timeout before evaluation of the tx
     final AtomicBoolean tecIsCancelled = new AtomicBoolean(false);
-    final int txsSelectionMaxTime = 1;
+    final int txsSelectionMaxTime = 200;
+    final int txProcessingTime = txsSelectionMaxTime * 2;
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
@@ -1173,7 +1173,13 @@ public abstract class AbstractBlockTransactionSelectorTest {
               @Override
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final TransactionEvaluationContext evaluationContext) {
-                tecIsCancelled.set(evaluationContext.isCancelled());
+                try {
+                  // pretend the tx is taking a long time to process
+                  // so the timeout happens mid-processing
+                  Thread.sleep(txProcessingTime);
+                } catch (InterruptedException e) {
+                  // ignore
+                }
                 return SELECTED;
               }
 
@@ -1207,8 +1213,13 @@ public abstract class AbstractBlockTransactionSelectorTest {
     ensureTransactionIsValid(tx);
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    selector.buildTransactionListForBlock();
-    assertThat(tecIsCancelled).isTrue();
+    final var results = selector.buildTransactionListForBlock();
+    // since there was a timeout we expected not selected txs
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    // the processing txs will check for cancellation asynchronously from the
+    // results, so we wait a reasonable max amount of time for it to eventually
+    // check that the selection is cancelled
+    await().atMost(Duration.ofMillis(txProcessingTime * 2)).until(tecIsCancelled::get);
   }
 
   @Test
