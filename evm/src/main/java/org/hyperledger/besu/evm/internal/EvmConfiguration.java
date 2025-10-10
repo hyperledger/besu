@@ -57,6 +57,7 @@ public record EvmConfiguration(
    *
    * @param jumpDestCacheWeightKilobytes the jump dest cache weight (in kibibytes)
    * @param worldstateUpdateMode the workd update mode
+   * @param enableOptimizedOpcodes enabled opcode optimizations
    */
   public EvmConfiguration(
       final Long jumpDestCacheWeightKilobytes,

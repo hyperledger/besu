@@ -52,6 +52,7 @@ public class ClassicEVMs {
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
    * @return the operation registry
    */
   public static OperationRegistry spiralOperations(
