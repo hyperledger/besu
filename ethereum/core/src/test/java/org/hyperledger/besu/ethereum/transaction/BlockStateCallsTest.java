@@ -20,8 +20,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,12 +32,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class BlockStateCallsTest {
-  private BlockHeader mockBlockHeader;
+  private static final Duration SLOT_DURATION = Duration.ofSeconds(12);
   private static final long MAX_BLOCK_CALL_SIZE = 256;
+  private ProtocolSpec mockProtocolSpec;
+  private BlockHeader mockBlockHeader;
   private final long headerTimestamp = 1000L;
 
   @BeforeEach
   void setUp() {
+    mockProtocolSpec = mock(ProtocolSpec.class);
+    when(mockProtocolSpec.getSlotDuration()).thenReturn(SLOT_DURATION);
     mockBlockHeader = mock(BlockHeader.class);
     when(mockBlockHeader.getTimestamp()).thenReturn(headerTimestamp);
     when(mockBlockHeader.getNumber()).thenReturn(1L);
@@ -51,7 +57,8 @@ class BlockStateCallsTest {
     BlockStateCall blockStateCall = createBlockStateCall(4L, 1036L);
 
     List<BlockStateCall> blockStateCalls =
-        BlockStateCalls.fillBlockStateCalls(List.of(blockStateCall), mockBlockHeader);
+        BlockStateCalls.fillBlockStateCalls(
+            mockProtocolSpec, List.of(blockStateCall), mockBlockHeader);
     assertEquals(3, blockStateCalls.size());
     assertEquals(2L, blockStateCalls.get(0).getBlockOverrides().getBlockNumber().orElseThrow());
     assertEquals(1012L, blockStateCalls.get(0).getBlockOverrides().getTimestamp().orElseThrow());
@@ -73,7 +80,8 @@ class BlockStateCallsTest {
     long expectedBlockNumber = 2L;
     BlockStateCall blockStateCall = createBlockStateCall(null, null);
     List<BlockStateCall> blockStateCalls =
-        BlockStateCalls.fillBlockStateCalls(List.of(blockStateCall), mockBlockHeader);
+        BlockStateCalls.fillBlockStateCalls(
+            mockProtocolSpec, List.of(blockStateCall), mockBlockHeader);
 
     assertEquals(1, blockStateCalls.size());
     assertEquals(
@@ -92,7 +100,8 @@ class BlockStateCallsTest {
     long expectedTimestamp = headerTimestamp + (blockNumber - 1L) * 12;
     BlockStateCall blockStateCall = createBlockStateCall(blockNumber, null);
     List<BlockStateCall> blockStateCalls =
-        BlockStateCalls.fillBlockStateCalls(List.of(blockStateCall), mockBlockHeader);
+        BlockStateCalls.fillBlockStateCalls(
+            mockProtocolSpec, List.of(blockStateCall), mockBlockHeader);
     assertEquals(
         expectedTimestamp,
         blockStateCalls.getLast().getBlockOverrides().getTimestamp().orElseThrow());
@@ -112,7 +121,8 @@ class BlockStateCallsTest {
     blockStateCalls.add(createBlockStateCall(3L, 1024L));
     blockStateCalls.add(createBlockStateCall(5L, 1048L));
 
-    var normalizedCalls = BlockStateCalls.fillBlockStateCalls(blockStateCalls, mockBlockHeader);
+    var normalizedCalls =
+        BlockStateCalls.fillBlockStateCalls(mockProtocolSpec, blockStateCalls, mockBlockHeader);
 
     assertEquals(4, normalizedCalls.size());
     assertEquals(2L, normalizedCalls.get(0).getBlockOverrides().getBlockNumber().orElseThrow());
@@ -139,7 +149,7 @@ class BlockStateCallsTest {
             IllegalArgumentException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
-                    List.of(createBlockStateCall(1L, 1012L)), mockBlockHeader));
+                    mockProtocolSpec, List.of(createBlockStateCall(1L, 1012L)), mockBlockHeader));
     String expectedMessage =
         String.format(
             "Block number is invalid. Trying to add a call at block number %s, while current block number is %s.",
@@ -161,7 +171,9 @@ class BlockStateCallsTest {
             IllegalArgumentException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
-                    List.of(createBlockStateCall(2L, headerTimestamp)), mockBlockHeader));
+                    mockProtocolSpec,
+                    List.of(createBlockStateCall(2L, headerTimestamp)),
+                    mockBlockHeader));
     String expectedMessage =
         String.format(
             "Timestamp is invalid. Trying to add a call at timestamp %s, while current timestamp is %s.",
@@ -183,7 +195,7 @@ class BlockStateCallsTest {
             IllegalArgumentException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
-                    List.of(createBlockStateCall(3L, 1012L)), mockBlockHeader));
+                    mockProtocolSpec, List.of(createBlockStateCall(3L, 1012L)), mockBlockHeader));
     assertEquals(
         "Timestamp is invalid. Trying to add a call at timestamp 1012, while current timestamp is 1012.",
         exception.getMessage());
@@ -198,7 +210,9 @@ class BlockStateCallsTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> BlockStateCalls.fillBlockStateCalls(List.of(blockStateCall), mockBlockHeader));
+            () ->
+                BlockStateCalls.fillBlockStateCalls(
+                    mockProtocolSpec, List.of(blockStateCall), mockBlockHeader));
     String expectedMessage =
         String.format(
             "Block number %d exceeds the limit of %d (header: %d + MAX_BLOCK_CALL_SIZE: %d)",
@@ -216,7 +230,9 @@ class BlockStateCallsTest {
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> BlockStateCalls.fillBlockStateCalls(blockStateCalls, mockBlockHeader));
+            () ->
+                BlockStateCalls.fillBlockStateCalls(
+                    mockProtocolSpec, blockStateCalls, mockBlockHeader));
     assertEquals(
         "Block number 258 exceeds the limit of 257 (header: 1 + MAX_BLOCK_CALL_SIZE: 256)",
         exception.getMessage());
