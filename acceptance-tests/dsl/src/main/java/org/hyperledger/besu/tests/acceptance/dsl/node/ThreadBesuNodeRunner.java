@@ -288,7 +288,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
     besuPluginContext.addService(
         WorldStateService.class,
-        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
+        new WorldStateServiceImpl(
+            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.getProtocolContext().getBlockchain()));
   }
 
   private void killRunner(final String name) {

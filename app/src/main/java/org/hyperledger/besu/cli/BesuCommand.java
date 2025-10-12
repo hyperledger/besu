@@ -81,6 +81,8 @@ import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
+import org.hyperledger.besu.cli.util.BootnodeResolver;
+import org.hyperledger.besu.cli.util.BootnodeResolver.BootnodeResolutionException;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
@@ -610,6 +612,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--cache-last-blocks"},
       description = "Specifies the number of last blocks to cache  (default: ${DEFAULT-VALUE})")
   private final Integer numberOfBlocksToCache = 0;
+
+  @CommandLine.Option(
+      names = {"--cache-last-block-headers"},
+      description =
+          "Specifies the number of last block headers to cache  (default: ${DEFAULT-VALUE})")
+  private final Integer numberOfBlockHeadersToCache = 0;
+
+  @CommandLine.Option(
+      names = {"--cache-last-block-headers-preload-enabled"},
+      description = "Enable preloading of the block header cache (default: ${DEFAULT-VALUE})")
+  private final Boolean isCacheLastBlockHeadersPreloadEnabled = false;
 
   @CommandLine.Option(
       names = {"--cache-precompiles"},
@@ -1263,7 +1276,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     besuPluginContext.addService(
         WorldStateService.class,
-        new WorldStateServiceImpl(besuController.getProtocolContext().getWorldStateArchive()));
+        new WorldStateServiceImpl(
+            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.getProtocolContext().getBlockchain()));
 
     besuPluginContext.addService(
         SynchronizationService.class,
@@ -1576,7 +1591,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
       } else if (genesisConfigOptions.isPoa()) {
-        Long epochLength = 0L;
+        long epochLength = 0L;
         String consensusMechanism = "";
         if (genesisConfigOptions.isIbft2()) {
           epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
@@ -1688,8 +1703,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+    logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
+      logger.info("Engine JSON-RPC config: {}", engineJsonRpcConfiguration);
       // align JSON decoding limit with HTTP body limit
       // character count is close to size in bytes
       final long maxRequestContentLength =
@@ -1827,6 +1844,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .randomPeerPriority(p2PDiscoveryOptions.randomPeerPriority)
             .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
             .cacheLastBlocks(numberOfBlocksToCache)
+            .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
+            .isCacheLastBlockHeadersPreloadEnabled(isCacheLastBlockHeadersPreloadEnabled)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfigurationSupplier.get())
             .besuComponent(besuComponent);
@@ -1847,7 +1866,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             engineRPCConfig.engineHostsAllowlist(),
             p2PDiscoveryConfig.p2pHost(),
-            unstableRPCOptions.getWsTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec());
     engineConfig.setPort(engineRPCConfig.engineRpcPort());
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());
@@ -2247,7 +2266,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     List<EnodeURL> listBootNodes = null;
     if (p2PDiscoveryOptions.bootNodes != null) {
       try {
-        listBootNodes = buildEnodes(p2PDiscoveryOptions.bootNodes, getEnodeDnsConfiguration());
+        final List<String> resolvedBootNodeArgs =
+            BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
+        listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+
+      } catch (final BootnodeResolutionException e) {
+        throw new ParameterException(commandLine, e.getMessage(), e);
+
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }

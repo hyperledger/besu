@@ -1,2 +1,2 @@
 Xplugin-rocksdb-high-spec-enabled=true
-Xbonsai-parallel-tx-processing-enabled=true
+bonsai-parallel-tx-processing-enabled=true

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -72,7 +73,7 @@ public class RetryingGetBytecodeFromPeerTask
   }
 
   @Override
-  protected boolean isSuitablePeer(final EthPeer peer) {
+  protected boolean isSuitablePeer(final EthPeerImmutableAttributes peer) {
     return peer.isServingSnap();
   }
 }

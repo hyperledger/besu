@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketClientOptions;
@@ -87,7 +88,6 @@ public class EthStatsService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EthStatsService.class);
 
-  private static final Duration SEND_REPORT_DELAY = Duration.ofSeconds(5);
   private static final int HISTORY_RANGE = 50;
 
   private final AtomicBoolean retryInProgress = new AtomicBoolean(false);
@@ -338,7 +338,7 @@ public class EthStatsService {
                   sendNodeStatsReport();
                 },
                 Duration.ofSeconds(0),
-                SEND_REPORT_DELAY);
+                Duration.ofSeconds(ethStatsConnectOptions.getEthStatsReportInterval()));
   }
 
   /** Sends a ping request to the ethstats server */
@@ -366,7 +366,8 @@ public class EthStatsService {
   }
 
   /** Sends a block report concerning the last block */
-  private void sendBlockReport() {
+  @VisibleForTesting
+  protected void sendBlockReport() {
     blockchainQueries
         .latestBlock()
         .map(tx -> blockResultFactory.transactionComplete(tx, false))
