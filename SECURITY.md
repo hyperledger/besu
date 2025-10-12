@@ -18,5 +18,5 @@ description of the flaw and any related information (e.g. reproduction steps, ve
 use).
 
 The process by which the Hyperledger Security Team handles security bugs is documented further in
-our [Defect Response page](https://wiki.hyperledger.org/display/SEC/Defect+Response) on our
-[wiki](https://wiki.hyperledger.org).
+our [Defect Response page](https://lf-hyperledger.atlassian.net/wiki/spaces/SEC/pages/20283618/Defect+Response) on our
+[wiki](https://lf-hyperledger.atlassian.net/wiki).
