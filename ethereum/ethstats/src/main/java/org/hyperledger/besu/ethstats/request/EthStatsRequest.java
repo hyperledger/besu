@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 /**
  * This class represents an Ethereum statistics request. It provides methods to get the type of the
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class EthStatsRequest {
 
   /** The constant MAPPER. */
-  public static final ObjectMapper MAPPER = new ObjectMapper();
+  public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
   /** The constant EMIT_FIELD. */
   public static final String EMIT_FIELD = "emit";

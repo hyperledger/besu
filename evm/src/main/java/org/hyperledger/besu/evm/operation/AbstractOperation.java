@@ -99,7 +99,7 @@ public abstract class AbstractOperation implements Operation {
    */
   protected Account getAccount(final Address address, final MessageFrame frame) {
     final Account account = frame.getWorldUpdater().get(address);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
   }
 
@@ -114,7 +114,7 @@ public abstract class AbstractOperation implements Operation {
    */
   protected MutableAccount getMutableAccount(final Address address, final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
   }
 
@@ -130,7 +130,7 @@ public abstract class AbstractOperation implements Operation {
    */
   protected MutableAccount getOrCreateAccount(final Address address, final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getOrCreate(address);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(address));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
   }
 
@@ -144,7 +144,7 @@ public abstract class AbstractOperation implements Operation {
    */
   protected MutableAccount getSenderAccount(final MessageFrame frame) {
     final MutableAccount account = frame.getWorldUpdater().getSenderAccount(frame);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(account.getAddress()));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     return account;
   }
 

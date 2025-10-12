@@ -160,6 +160,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean hasPos() {
+    return getTerminalTotalDifficulty().isPresent();
+  }
+
+  @Override
   public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
         .map(IbftLegacyConfigOptions::new)

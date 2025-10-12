@@ -28,7 +28,8 @@ public class SimulateV1Parameter extends BlockSimulationParameter {
       @JsonProperty("blockStateCalls") final List<JsonBlockStateCallParameter> blockStateCalls,
       @JsonProperty("validation") final boolean validation,
       @JsonProperty("traceTransfers") final boolean traceTransfers,
-      @JsonProperty("returnFullTransactions") final boolean returnFullTransactions) {
-    super(blockStateCalls, validation, traceTransfers, returnFullTransactions);
+      @JsonProperty("returnFullTransactions") final boolean returnFullTransactions,
+      @JsonProperty("returnTrieLog") final boolean returnTrieLog) {
+    super(blockStateCalls, validation, traceTransfers, returnFullTransactions, returnTrieLog);
   }
 }

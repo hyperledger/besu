@@ -143,16 +143,26 @@ public class TransitionProtocolScheduleTest {
   @Test
   public void getByBlockHeader_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
-
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
   }
 
   @Test
-  public void getByBlockHeader_delegatesToPostMergeSchedule() {
+  public void getByBlockHeader_CorrectlyDelegatesToLinkedPreSchedule_AroundTransitionBoundary() {
     when(mergeContext.isPostMerge()).thenReturn(true);
 
+    when(blockHeader.getDifficulty()).thenReturn(Difficulty.of(2));
+    transitionProtocolSchedule.getByBlockHeader(blockHeader);
+
+    verifyPreMergeProtocolScheduleReturnedUsingBlockHeader();
+  }
+
+  @Test
+  public void getByBlockHeader_CorrectlyDelegatesToLinkedPostSchedule_AroundTransitionBoundary() {
+    when(mergeContext.isPostMerge()).thenReturn(true);
+
+    when(blockHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
     transitionProtocolSchedule.getByBlockHeader(blockHeader);
 
     verifyPostMergeProtocolScheduleReturnedUsingBlockHeader();
@@ -181,7 +191,6 @@ public class TransitionProtocolScheduleTest {
   @Test
   public void isOnMilestoneBoundary_delegatesToPreMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(false);
-
     when(preMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
     assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();
@@ -191,7 +200,7 @@ public class TransitionProtocolScheduleTest {
   @Test
   public void isOnMilestoneBoundary_delegatesToPostMergeSchedule() {
     when(mergeContext.isPostMerge()).thenReturn(true);
-
+    when(blockHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
     when(postMergeProtocolSchedule.isOnMilestoneBoundary(any(BlockHeader.class))).thenReturn(true);
 
     assertThat(transitionProtocolSchedule.isOnMilestoneBoundary(blockHeader)).isTrue();

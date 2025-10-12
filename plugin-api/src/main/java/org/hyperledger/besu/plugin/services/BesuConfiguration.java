@@ -49,6 +49,13 @@ public interface BesuConfiguration extends BesuService {
   String getConfiguredRpcHttpHost();
 
   /**
+   * Get the configured RPC http timeout in second.
+   *
+   * @return the configured RPC http timeout in second.
+   */
+  long getConfiguredRpcHttpTimeoutSec();
+
+  /**
    * Get the configured RPC http port.
    *
    * @return the configured RPC http port.
