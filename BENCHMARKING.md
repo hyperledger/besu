@@ -83,4 +83,4 @@ SomeBenchmark.benchmark                  avgt   20  8.951 ± 0.149  ns/op
 
 - [JMH Gradle plugin documentation](https://github.com/melix/jmh-gradle-plugin)
 - [JMH Documentation](https://openjdk.org/projects/code-tools/jmh/)
-- [Async Profiler GitHub](https://github.com/jvm-profiling-tools/async-profiler)
+- [Async Profiler GitHub](https://github.com/async-profiler/async-profiler)
