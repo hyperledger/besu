@@ -6,7 +6,7 @@ Besu includes [JMH](https://openjdk.org/projects/code-tools/jmh/) microbenchmark
 
 - Java 21+ (ensure `JAVA_HOME` is set)
 - Gradle (you can use the wrapper: `./gradlew`)
-- Optional: [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler) for low-overhead profiling
+- Optional: [Async Profiler](https://github.com/async-profiler/async-profiler) for low-overhead profiling
 
 ---
 
@@ -56,7 +56,7 @@ For other configuration options run:
 
 ## 🔥 Async Profiler Integration (Optional)
 
-To profile benchmarks with [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler):
+To profile benchmarks with [Async Profiler](https://github.com/async-profiler/async-profiler):
 
 ```bash
 ./gradlew :ethereum:core:jmh \
