@@ -88,9 +88,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "  -V, --version              Print version information and exit.\n";
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
-      "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
+      "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--format=<format>]"
           + System.lineSeparator()
-          + "                          --to=<FILE>"
+          + "                          [--start-block=<LONG>] --to=<FILE>"
           + System.lineSeparator()
           + "This command exports a specific block, or list of blocks from storage."
           + System.lineSeparator()
@@ -99,6 +99,10 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + "                               (exclusive). If not specified a single block"
           + System.lineSeparator()
           + "                               will be exported."
+          + System.lineSeparator()
+          + "      --format=<format>      The format to export, possible values are: RLP,"
+          + System.lineSeparator()
+          + "                               ERA1 (default: RLP)."
           + System.lineSeparator()
           + "  -h, --help                 Show this help message and exit."
           + System.lineSeparator()
