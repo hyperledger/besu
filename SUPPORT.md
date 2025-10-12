@@ -13,7 +13,7 @@ Having Github, Discord, and Linux Foundation accounts is necessary for obtaining
 
 * [Besu User Documentation]
 * [Besu channel on Discord]
-* [I just have a quick question](https://wiki.hyperledger.org/display/BESU/I+just+have+a+quick+question)
+* [I just have a quick question](https://lf-hyperledger.atlassian.net/wiki/spaces/BESU/pages/22154239/I+just+have+a+quick+question)
 * [Did you find a bug?](https://wiki.hyperledger.org/display/BESU/Reporting+Bugs)
 * [Issues](https://wiki.hyperledger.org/display/BESU/Issues)
 * [Contributing Guidelines]
