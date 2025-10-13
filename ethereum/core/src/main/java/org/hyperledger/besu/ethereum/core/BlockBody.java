@@ -207,6 +207,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + ommers
         + ", withdrawals="
         + withdrawals
+        + ", blockAccessList="
+        + blockAccessList
         + '}';
   }
 }
