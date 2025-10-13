@@ -18,6 +18,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * 256-bits wide unsigned integer class.
  *
@@ -29,7 +31,7 @@ public final class UInt256 {
   // UInt256 is a big-endian up to 256-bits integer.
   // Internally, it is represented with fixed-size int/long limbs in little-endian order.
   // Length is used to optimise algorithms, skipping leading zeroes.
-  // Nonetheless, 256bits are always allocated.
+  // Nonetheless, 256bits are always allocated and initialised to zeroes.
 
   /** Fixed size in bytes. */
   public static final int BYTESIZE = 32;
@@ -49,6 +51,7 @@ public final class UInt256 {
   private final int[] limbs;
   private final int length;
 
+  @VisibleForTesting
   int[] limbs() {
     return limbs;
   }
@@ -267,6 +270,9 @@ public final class UInt256 {
   /**
    * Signed modulo reduction.
    *
+   * <p>In signed modulo reduction, integers are interpretated as fixed 256 bits width two's
+   * complement signed integers.
+   *
    * @param modulus The modulus of the reduction
    * @return The remainder modulo {@code modulus}.
    */
@@ -293,8 +299,6 @@ public final class UInt256 {
    */
   public UInt256 addMod(final UInt256 other, final UInt256 modulus) {
     if (modulus.isZero()) return ZERO;
-    // if (this.isZero()) return other.mod(modulus);
-    // if (other.isZero()) return this.mod(modulus);
     int[] sum = addWithCarry(this.limbs, this.length, other.limbs, other.length);
     int[] rem = knuthRemainder(sum, modulus.limbs);
     return new UInt256(rem, modulus.length);

@@ -39,7 +39,6 @@ public class UInt256Test {
     Arrays.fill(a, (byte) 0xFF);
     byte[] b = x.toByteArray();
     System.arraycopy(b, 0, a, 32 - b.length, b.length);
-    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
     return Bytes32.leftPad(Bytes.wrap(a));
   }
 
