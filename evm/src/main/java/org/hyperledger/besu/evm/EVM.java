@@ -244,21 +244,21 @@ public class EVM {
               case 0x04 -> DivOperation.staticOperation(frame);
               case 0x05 -> SDivOperation.staticOperation(frame);
               case 0x06 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? ModOperationOptimized.staticOperation(frame)
-                  : ModOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? ModOperationOptimized.staticOperation(frame)
+                      : ModOperation.staticOperation(frame);
               case 0x07 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? SModOperationOptimized.staticOperation(frame)
-                  : SModOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SModOperationOptimized.staticOperation(frame)
+                      : SModOperation.staticOperation(frame);
               case 0x08 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? AddModOperationOptimized.staticOperation(frame)
-                  : AddModOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddModOperationOptimized.staticOperation(frame)
+                      : AddModOperation.staticOperation(frame);
               case 0x09 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? MulModOperationOptimized.staticOperation(frame)
-                  : MulModOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? MulModOperationOptimized.staticOperation(frame)
+                      : MulModOperation.staticOperation(frame);
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
               case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
