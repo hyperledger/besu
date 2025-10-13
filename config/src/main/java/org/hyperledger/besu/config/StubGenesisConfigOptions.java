@@ -809,7 +809,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return this;
   }
 
-
   /**
    * Future EIPs Time block.
    *

@@ -111,7 +111,6 @@ public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(
-        AMSTERDAM, amsterdamMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
   }
 }

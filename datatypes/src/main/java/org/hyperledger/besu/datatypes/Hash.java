@@ -56,8 +56,10 @@ public class Hash extends DelegatingBytes32 {
    */
   public static final Hash EMPTY_REQUESTS_HASH = Hash.wrap(sha256(Bytes.EMPTY));
 
-  /** Hash of empty block access list or
-   * "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347" */
+  /**
+   * Hash of empty block access list or
+   * "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+   */
   public static final Hash EMPTY_BAL_HASH = EMPTY_LIST_HASH;
 
   /**
