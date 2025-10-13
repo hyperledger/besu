@@ -20,13 +20,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 public class MinerGetMinPriorityFee implements JsonRpcMethod {
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
-  public MinerGetMinPriorityFee(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public MinerGetMinPriorityFee(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
   }
 
   @Override
@@ -38,6 +38,6 @@ public class MinerGetMinPriorityFee implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        Quantity.create(miningParameters.getMinPriorityFeePerGas()));
+        Quantity.create(miningConfiguration.getMinPriorityFeePerGas()));
   }
 }

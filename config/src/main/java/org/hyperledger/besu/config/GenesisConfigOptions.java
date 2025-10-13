@@ -78,7 +78,7 @@ public interface GenesisConfigOptions {
    * @return the boolean
    */
   default boolean isConsensusMigration() {
-    return isIbft2() && isQbft();
+    return (isIbft2() || isIbftLegacy()) && isQbft();
   }
 
   /**
@@ -87,6 +87,13 @@ public interface GenesisConfigOptions {
    * @return the consensus engine
    */
   String getConsensusEngine();
+
+  /**
+   * Gets ibft legacy config options.
+   *
+   * @return the ibft legacy config options
+   */
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   /**
    * Gets checkpoint options.
@@ -257,11 +264,11 @@ public interface GenesisConfigOptions {
   OptionalLong getPragueTime();
 
   /**
-   * Gets Prague EOF time.
+   * Gets Osaka time.
    *
-   * @return the prague time
+   * @return the osaka time
    */
-  OptionalLong getPragueEOFTime();
+  OptionalLong getOsakaTime();
 
   /**
    * Gets future eips time.
@@ -539,4 +546,18 @@ public interface GenesisConfigOptions {
    * @return the deposit address
    */
   Optional<Address> getDepositContractAddress();
+
+  /**
+   * The consolidation request contract address
+   *
+   * @return the consolidation request contract address
+   */
+  Optional<Address> getConsolidationRequestContractAddress();
+
+  /**
+   * The blob schedule is a list of hardfork names and their associated target and max blob values.
+   *
+   * @return the blob schedule
+   */
+  Optional<BlobScheduleOptions> getBlobScheduleOptions();
 }

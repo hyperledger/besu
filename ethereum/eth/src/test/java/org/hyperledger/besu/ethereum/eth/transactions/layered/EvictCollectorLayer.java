@@ -35,8 +35,9 @@ public class EvictCollectorLayer extends EndLayer {
   }
 
   @Override
-  public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
-    final var res = super.add(pendingTransaction, gap);
+  public TransactionAddedResult add(
+      final PendingTransaction pendingTransaction, final int gap, final AddReason addReason) {
+    final var res = super.add(pendingTransaction, gap, addReason);
     evictedTxs.add(pendingTransaction);
     return res;
   }

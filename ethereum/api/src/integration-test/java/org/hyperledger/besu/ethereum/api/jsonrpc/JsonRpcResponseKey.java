@@ -38,5 +38,5 @@ public enum JsonRpcResponseKey {
   TRANSACTION_ROOT,
   BASEFEE,
   WITHDRAWALS_ROOT,
-  REQUESTS_ROOT
+  REQUESTS_HASH
 }

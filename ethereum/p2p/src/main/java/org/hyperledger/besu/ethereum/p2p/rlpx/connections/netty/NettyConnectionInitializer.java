@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -173,10 +172,6 @@ public class NettyConnectionInitializer
   @Override
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
-
-    if (peer instanceof DiscoveryPeer) {
-      ((DiscoveryPeer) peer).setLastAttemptedConnection(System.currentTimeMillis());
-    }
 
     final EnodeURL enode = peer.getEnodeURL();
     new Bootstrap()

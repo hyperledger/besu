@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -27,6 +28,9 @@ public class JumpFOperation extends AbstractOperation {
 
   /** The Jump F success operation result. */
   static final OperationResult jumpfSuccess = new OperationResult(5, null);
+
+  static final OperationResult jumpfStackOverflow =
+      new OperationResult(5, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
 
   /**
    * Instantiates a new Jump F operation.
@@ -46,6 +50,10 @@ public class JumpFOperation extends AbstractOperation {
     int pc = frame.getPC();
     int section = code.readBigEndianU16(pc + 1);
     var info = code.getCodeSection(section);
+    int operandStackSize = frame.stackSize();
+    if (operandStackSize > 1024 - info.getMaxStackHeight() + info.getInputs()) {
+      return jumpfStackOverflow;
+    }
     frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop
     frame.setSection(section);
     return jumpfSuccess;

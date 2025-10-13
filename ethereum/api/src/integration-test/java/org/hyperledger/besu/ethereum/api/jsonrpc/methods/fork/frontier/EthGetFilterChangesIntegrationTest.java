@@ -45,11 +45,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -121,14 +122,15 @@ public class EthGetFilterChangesIntegrationTest {
             batchAddedListener,
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            TransactionPoolConfiguration.DEFAULT);
+            TransactionPoolConfiguration.DEFAULT,
+            new BlobCache());
     transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             executionContext.getProtocolSchedule(),
             blockchain,
             protocolContext.getWorldStateArchive(),
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault());
     filterManager =
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)

@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.VersionedHash.DEFAULT_VERSIONED_HASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -30,7 +32,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -45,20 +46,51 @@ class TransactionBuilderTest {
   @Test
   void guessTypeCanGuessAllTypes() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final Transaction.Builder frontierBuilder = Transaction.builder();
-    final Transaction.Builder eip1559Builder = Transaction.builder().maxFeePerGas(Wei.of(5));
-    final Transaction.Builder accessListBuilder =
-        Transaction.builder()
-            .accessList(List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32()))));
+    final List<AccessListEntry> accessList =
+        List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32())));
 
-    final Set<TransactionType> guessedTypes =
-        Stream.of(frontierBuilder, eip1559Builder, accessListBuilder)
+    final Transaction.Builder frontierBuilder = Transaction.builder();
+    final Transaction.Builder accessListBuilder = Transaction.builder().accessList(accessList);
+
+    final Transaction.Builder eip1559Builder =
+        Transaction.builder().accessList(accessList).maxFeePerGas(Wei.of(5));
+
+    final Transaction.Builder blobBuilder =
+        Transaction.builder()
+            .accessList(accessList)
+            .maxFeePerGas(Wei.of(5))
+            .versionedHashes(List.of(DEFAULT_VERSIONED_HASH));
+
+    final CodeDelegation codeDelegation =
+        new CodeDelegation(
+            BigInteger.ZERO,
+            Address.ZERO,
+            0,
+            new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0));
+
+    final Transaction.Builder delegateCodeBuilder =
+        Transaction.builder()
+            .accessList(accessList)
+            .maxFeePerGas(Wei.of(5))
+            .codeDelegations(List.of(codeDelegation));
+
+    final List<TransactionType> guessedTypes =
+        Stream.of(
+                frontierBuilder,
+                accessListBuilder,
+                eip1559Builder,
+                blobBuilder,
+                delegateCodeBuilder)
             .map(transactionBuilder -> transactionBuilder.guessType().getTransactionType())
-            .collect(toUnmodifiableSet());
+            .toList();
 
     assertThat(guessedTypes)
-        .containsExactlyInAnyOrder(
-            TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
+        .containsExactly(
+            TransactionType.FRONTIER,
+            TransactionType.ACCESS_LIST,
+            TransactionType.EIP1559,
+            TransactionType.BLOB,
+            TransactionType.DELEGATE_CODE);
   }
 
   @Test

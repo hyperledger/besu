@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.AbstractVerticle;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

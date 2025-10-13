@@ -56,7 +56,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
     try {
 
       db =
-          TransactionDB.open(
+          RocksDBOpener.openTransactionDBWithWarning(
               options,
               txOptions,
               configuration.getDatabaseDir().toString(),

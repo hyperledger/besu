@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetClientVersionResultV1;
 
+import java.util.List;
+
 import io.vertx.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,9 +63,18 @@ class EngineGetClientVersionV1Test {
 
     assertThat(actualResult).isInstanceOf(JsonRpcSuccessResponse.class);
     JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) actualResult;
-    assertThat(successResponse.getResult()).isInstanceOf(EngineGetClientVersionResultV1.class);
+
+    assertThat(successResponse.getResult()).isInstanceOf(List.class);
+
+    List<?> resultList = (List<?>) successResponse.getResult();
+    assertThat(resultList).hasSize(1);
+
+    Object firstElement = resultList.get(0);
+    assertThat(firstElement).isInstanceOf(EngineGetClientVersionResultV1.class);
+
     EngineGetClientVersionResultV1 actualEngineGetClientVersionResultV1 =
-        (EngineGetClientVersionResultV1) successResponse.getResult();
+        (EngineGetClientVersionResultV1) firstElement;
+
     assertThat(actualEngineGetClientVersionResultV1.getName()).isEqualTo(ENGINE_CLIENT_NAME);
     assertThat(actualEngineGetClientVersionResultV1.getCode()).isEqualTo(ENGINE_CLIENT_CODE);
     assertThat(actualEngineGetClientVersionResultV1.getVersion()).isEqualTo(CLIENT_VERSION);

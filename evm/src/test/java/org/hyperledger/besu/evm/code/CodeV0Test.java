@@ -47,7 +47,7 @@ class CodeV0Test {
 
   @BeforeEach
   void startUp() {
-    evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   }
 
   @Test
@@ -89,7 +89,7 @@ class CodeV0Test {
             .blockValues(mock(BlockValues.class))
             .completer(f -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(l -> Hash.EMPTY)
+            .blockHashLookup((__, ___) -> Hash.EMPTY)
             .build();
 
     frame.setPC(CURRENT_PC);

@@ -223,10 +223,11 @@ public class PrivacyQueriesTest {
       final BlockHeader blockHeader,
       final List<PrivateTransactionMetadata> transactionMetadataList) {
 
-    for (int i = 0; i < transactionMetadataList.size(); i++) {
-      final PrivateTransactionMetadata privateTransactionMetadata = transactionMetadataList.get(i);
+    for (int index = 0; index < transactionMetadataList.size(); index++) {
+      final PrivateTransactionMetadata privateTransactionMetadata =
+          transactionMetadataList.get(index);
       final Hash pmtHash = privateTransactionMetadata.getPrivateMarkerTransactionHash();
-      final TransactionLocation pmtLocation = new TransactionLocation(blockHeader.getHash(), i);
+      final TransactionLocation pmtLocation = new TransactionLocation(blockHeader.getHash(), index);
       when(blockchainQueries.transactionLocationByHash(pmtHash))
           .thenReturn(Optional.of(pmtLocation));
     }

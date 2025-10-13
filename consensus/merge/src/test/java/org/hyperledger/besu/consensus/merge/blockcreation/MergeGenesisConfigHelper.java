@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.config.GenesisAccount;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -30,33 +30,33 @@ import java.util.stream.Stream;
 
 public interface MergeGenesisConfigHelper {
 
-  default GenesisConfigFile getPosGenesisConfigFile() {
+  default GenesisConfig getPosGenesisConfig() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/posAtGenesis.json").toURI();
-      return GenesisConfigFile.fromSource(uri.toURL());
+      return GenesisConfig.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  default GenesisConfigFile getPowGenesisConfigFile() {
+  default GenesisConfig getPowGenesisConfig() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/powAtGenesis.json").toURI();
-      return GenesisConfigFile.fromSource(uri.toURL());
+      return GenesisConfig.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  default Stream<Address> genesisAllocations(final GenesisConfigFile configFile) {
+  default Stream<Address> genesisAllocations(final GenesisConfig configFile) {
     return configFile.streamAllocations().map(GenesisAccount::address);
   }
 
   default ProtocolSchedule getMergeProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        getPosGenesisConfigFile().getConfigOptions(),
+        getPosGenesisConfig().getConfigOptions(),
         false,
-        MiningParameters.MINING_DISABLED,
+        MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
         new NoOpMetricsSystem());

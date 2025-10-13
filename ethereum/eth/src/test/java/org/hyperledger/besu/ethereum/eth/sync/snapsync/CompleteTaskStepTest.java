@@ -116,7 +116,7 @@ public class CompleteTaskStepTest {
 
   @Test
   public void shouldMarkSnapsyncTaskCompleteWhenData() {
-    final List<Task<SnapDataRequest>> requests = TaskGenerator.createAccountRequest(true);
+    final List<Task<SnapDataRequest>> requests = TaskGenerator.createAccountRequest(true, false);
     requests.stream()
         .map(StubTask.class::cast)
         .forEach(
@@ -132,7 +132,7 @@ public class CompleteTaskStepTest {
 
   @Test
   public void shouldMarkSnapsyncTaskAsFailedWhenNoData() {
-    final List<Task<SnapDataRequest>> requests = TaskGenerator.createAccountRequest(false);
+    final List<Task<SnapDataRequest>> requests = TaskGenerator.createAccountRequest(false, false);
     requests.stream()
         .map(StubTask.class::cast)
         .forEach(

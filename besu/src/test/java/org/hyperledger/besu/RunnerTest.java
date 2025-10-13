@@ -26,15 +26,14 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -46,7 +45,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -151,20 +150,37 @@ public final class RunnerTest {
   @Test
   public void fullSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), false);
+  }
+
+  @Test
+  public void fullSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis(), true);
   }
 
   @Test
   public void fastSyncFromGenesis() throws Exception {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
-    MergeConfigOptions.setMergeEnabled(false);
+    MergeConfiguration.setMergeEnabled(false);
 
-    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), false);
   }
 
-  private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
+  @Test
+  public void fastSyncFromGenesisUsingPeerTaskSystem() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfiguration.setMergeEnabled(false);
+
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis(), true);
+  }
+
+  private void syncFromGenesis(
+      final SyncMode mode, final GenesisConfig genesisConfig, final boolean isPeerTaskSystemEnabled)
       throws Exception {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
@@ -172,9 +188,12 @@ public final class RunnerTest {
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
-        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
+        SynchronizerConfiguration.builder()
+            .syncMode(SyncMode.FULL)
+            .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
+            .build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final var miningParameters = MiningParameters.newDefault();
+    final var miningParameters = MiningConfiguration.newDefault();
     final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
@@ -195,7 +214,7 @@ public final class RunnerTest {
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
-            .discovery(true)
+            .discoveryEnabled(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
             .metricsSystem(noOpMetricsSystem)
@@ -248,7 +267,7 @@ public final class RunnerTest {
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              GenesisConfigFile.fromResource(DEV.getGenesisFile()),
+              GenesisConfig.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -373,11 +392,10 @@ public final class RunnerTest {
         .build();
   }
 
-  private GenesisConfigFile getFastSyncGenesis() throws IOException {
+  private GenesisConfig getFastSyncGenesis() throws IOException {
     final ObjectNode jsonNode =
         (ObjectNode)
-            new ObjectMapper()
-                .readTree(GenesisConfigFile.class.getResource(MAINNET.getGenesisFile()));
+            new ObjectMapper().readTree(GenesisConfig.class.getResource(MAINNET.getGenesisFile()));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {
@@ -386,18 +404,18 @@ public final class RunnerTest {
           // remove merge terminal difficulty for fast sync in the absence of a CL mock
           node.remove("terminalTotalDifficulty");
         });
-    return GenesisConfigFile.fromConfig(jsonNode);
+    return GenesisConfig.fromConfig(jsonNode);
   }
 
   private StorageProvider createKeyValueStorageProvider(
       final Path dataDir,
       final Path dbDir,
       final DataStorageConfiguration dataStorageConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     final var besuConfiguration = new BesuConfigurationImpl();
     besuConfiguration
         .init(dataDir, dbDir, dataStorageConfiguration)
-        .withMiningParameters(miningParameters);
+        .withMiningParameters(miningConfiguration);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -460,20 +478,20 @@ public final class RunnerTest {
   }
 
   private BesuController getController(
-      final GenesisConfigFile genesisConfig,
+      final GenesisConfig genesisConfig,
       final SynchronizerConfiguration syncConfig,
       final Path dataDir,
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
       final ObservableMetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     return new MainnetBesuControllerBuilder()
-        .genesisConfigFile(genesisConfig)
+        .genesisConfig(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(miningParameters)
+        .miningParameters(miningConfiguration)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)
@@ -481,13 +499,13 @@ public final class RunnerTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
-        .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
         .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)
         .maxRemotelyInitiatedPeers(15)
+        .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();
   }
 }

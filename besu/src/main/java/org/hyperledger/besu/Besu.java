@@ -16,6 +16,7 @@ package org.hyperledger.besu;
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.DaggerBesuComponent;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -36,13 +37,15 @@ public final class Besu {
    */
   public static void main(final String... args) {
     setupLogging();
-    final BesuCommand besuCommand = DaggerBesuComponent.create().getBesuCommand();
+    final BesuComponent besuComponent = DaggerBesuComponent.create();
+    final BesuCommand besuCommand = besuComponent.getBesuCommand();
     int exitCode =
         besuCommand.parse(
             new RunLast(),
             besuCommand.parameterExceptionHandler(),
             besuCommand.executionExceptionHandler(),
             System.in,
+            besuComponent,
             args);
 
     System.exit(exitCode);

@@ -33,7 +33,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldParsePluginOptionForSinglePlugin() {
     parseCommand("--plugins", "pluginA");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of("pluginA"));
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -43,7 +43,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldParsePluginOptionForMultiplePlugins() {
     parseCommand("--plugins", "pluginA,pluginB");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of("pluginA", "pluginB"));
 
@@ -54,7 +54,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldNotUsePluginOptionWhenNoPluginsSpecified() {
     parseCommand();
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -64,7 +64,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldNotParseAnyPluginsWhenPluginOptionIsEmpty() {
     parseCommand("--plugins", "");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -74,7 +74,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldParsePluginsExternalEnabledOptionWhenFalse() {
     parseCommand("--Xplugins-external-enabled=false");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(false);
@@ -86,7 +86,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldParsePluginsExternalEnabledOptionWhenTrue() {
     parseCommand("--Xplugins-external-enabled=true");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(true);
@@ -98,7 +98,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldEnablePluginsExternalByDefault() {
     parseCommand();
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(true);
 
@@ -109,10 +109,43 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldFailWhenPluginsIsDisabledAndPluginsExplicitlyRequested() {
     parseCommand("--Xplugins-external-enabled=false", "--plugins", "pluginA");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--plugins option can only be used when --Xplugins-external-enabled is true");
+        .contains(
+            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
+  }
+
+  @Test
+  public void shouldHaveContinueOnErrorFalseByDefault() {
+    parseCommand();
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
+        .isEqualTo(false);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldUseContinueOnErrorWhenTrue() {
+    parseCommand("--plugin-continue-on-error=true");
+    verify(mockBesuPluginContext).initialize(pluginConfigurationArgumentCaptor.capture());
+
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
+        .isEqualTo(true);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldFailWhenPluginsIsDisabledAnHaltOnErrorTrue() {
+    parseCommand("--Xplugins-external-enabled=false", "--plugin-continue-on-error=true");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
   }
 }

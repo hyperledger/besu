@@ -18,10 +18,13 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * <pre>{@code
  * JsonCallParameter param = new JsonCallParameter.JsonCallParameterBuilder()
+ *     .withChainId(Optional.of(BigInteger.ONE))
  *     .withFrom(Address.fromHexString("0x..."))
  *     .withTo(Address.fromHexString("0x..."))
  *     .withGas(21000L)
@@ -53,6 +57,7 @@ import org.slf4j.LoggerFactory;
  *     .withMaxPriorityFeePerGas(Wei.of(1)) // Optional
  *     .withMaxFeePerBlobGas(Wei.of(3)) // Optional
  *     .withBlobVersionedHashes(blobVersionedHashes) // Optional
+ *     .withNonce(new UnsignedLongParameter(1L)) // Optional
  *     .build();
  * }</pre>
  *
@@ -71,6 +76,7 @@ public class JsonCallParameter extends CallParameter {
   private final Optional<Boolean> strict;
 
   private JsonCallParameter(
+      final Optional<BigInteger> chainId,
       final Address from,
       final Address to,
       final Long gasLimit,
@@ -82,9 +88,11 @@ public class JsonCallParameter extends CallParameter {
       final Optional<Boolean> strict,
       final Optional<List<AccessListEntry>> accessList,
       final Optional<Wei> maxFeePerBlobGas,
-      final Optional<List<VersionedHash>> blobVersionedHashes) {
+      final Optional<List<VersionedHash>> blobVersionedHashes,
+      final Optional<Long> nonce) {
 
     super(
+        chainId,
         from,
         to,
         gasLimit,
@@ -95,7 +103,8 @@ public class JsonCallParameter extends CallParameter {
         payload,
         accessList,
         maxFeePerBlobGas,
-        blobVersionedHashes);
+        blobVersionedHashes,
+        nonce);
 
     this.strict = strict;
   }
@@ -115,6 +124,7 @@ public class JsonCallParameter extends CallParameter {
    */
   public static final class JsonCallParameterBuilder {
     private Optional<Boolean> strict = Optional.empty();
+    private Optional<BigInteger> chainId = Optional.empty();
     private Address from;
     private Address to;
     private long gas = -1;
@@ -127,6 +137,7 @@ public class JsonCallParameter extends CallParameter {
     private Bytes input;
     private Optional<List<AccessListEntry>> accessList = Optional.empty();
     private Optional<List<VersionedHash>> blobVersionedHashes = Optional.empty();
+    private Optional<Long> nonce = Optional.empty();
 
     /** Default constructor. */
     public JsonCallParameterBuilder() {}
@@ -142,6 +153,18 @@ public class JsonCallParameter extends CallParameter {
      */
     public JsonCallParameterBuilder withStrict(final Boolean strict) {
       this.strict = Optional.ofNullable(strict);
+      return this;
+    }
+
+    /**
+     * Sets the optional "chainId" for the {@link JsonCallParameter}.
+     *
+     * @param chainId the chainId
+     * @return the {@link JsonCallParameterBuilder} instance for chaining
+     */
+    @JsonDeserialize(using = ChainIdDeserializer.class)
+    public JsonCallParameterBuilder withChainId(final BigInteger chainId) {
+      this.chainId = Optional.of(chainId);
       return this;
     }
 
@@ -310,6 +333,18 @@ public class JsonCallParameter extends CallParameter {
     }
 
     /**
+     * Sets the nonce for the {@link JsonCallParameter}. It is an optional parameter, and if not
+     * specified, it defaults to an empty {@link Optional}.
+     *
+     * @param nonce the nonce, can be {@code null} to indicate no nonce is provided
+     * @return the {@link JsonCallParameterBuilder} instance for chaining
+     */
+    public JsonCallParameterBuilder withNonce(final UnsignedLongParameter nonce) {
+      this.nonce = Optional.ofNullable(nonce).map(UnsignedLongParameter::getValue);
+      return this;
+    }
+
+    /**
      * Handles unknown JSON properties during deserialization. This method is invoked when an
      * unknown property is encountered in the JSON being deserialized into a {@link
      * JsonCallParameter} object. It logs the unknown property's key, value, and the value's type if
@@ -346,6 +381,7 @@ public class JsonCallParameter extends CallParameter {
       final Bytes payload = input != null ? input : data;
 
       return new JsonCallParameter(
+          chainId,
           from,
           to,
           gas,
@@ -357,7 +393,8 @@ public class JsonCallParameter extends CallParameter {
           strict,
           accessList,
           maxFeePerBlobGas,
-          blobVersionedHashes);
+          blobVersionedHashes,
+          nonce);
     }
   }
 }

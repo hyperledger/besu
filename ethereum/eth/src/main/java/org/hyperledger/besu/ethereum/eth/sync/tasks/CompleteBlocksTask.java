@@ -19,7 +19,6 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toMap;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -75,7 +74,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     this.headers = headers;
     this.blocks =
         headers.stream()
-            .filter(this::hasEmptyBody)
+            .filter(BlockHeader::hasEmptyBlock)
             .collect(
                 toMap(
                     BlockHeader::getNumber,
@@ -93,22 +92,12 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
         Collections.emptyList(),
         isWithdrawalsEnabled(protocolSchedule, header)
             ? Optional.of(Collections.emptyList())
-            : Optional.empty(),
-        Optional.empty());
+            : Optional.empty());
   }
 
   private boolean isWithdrawalsEnabled(
       final ProtocolSchedule protocolSchedule, final BlockHeader header) {
     return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
-  }
-
-  private boolean hasEmptyBody(final BlockHeader header) {
-    return header.getOmmersHash().equals(Hash.EMPTY_LIST_HASH)
-        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH)
-        && header
-            .getWithdrawalsRoot()
-            .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
-            .orElse(true);
   }
 
   public static CompleteBlocksTask forHeaders(

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
@@ -49,12 +49,14 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -98,18 +100,6 @@ public class CliqueBlockCreatorTest {
 
   @BeforeEach
   void setup() {
-    protocolSchedule =
-        CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(),
-            new ForksSchedule<>(List.of()),
-            proposerNodeKey,
-            false,
-            EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
-            new BadBlockManager(),
-            false,
-            new NoOpMetricsSystem());
-
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
 
@@ -117,10 +107,25 @@ public class CliqueBlockCreatorTest {
     voteProvider = mock(VoteProvider.class);
     when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+
+    protocolSchedule =
+        CliqueProtocolSchedule.create(
+            GenesisConfig.DEFAULT.getConfigOptions(),
+            new ForksSchedule<>(List.of()),
+            proposerNodeKey,
+            PrivacyParameters.DEFAULT,
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
+
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
 
     final Block genesis =
-        GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
+        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
         new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
@@ -145,21 +150,21 @@ public class CliqueBlockCreatorTest {
 
     final Address coinbase = AddressHelpers.ofValue(1);
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(5L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(5L, blockchain.getChainHeadHeader()).getBlock();
 
     assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
@@ -174,21 +179,21 @@ public class CliqueBlockCreatorTest {
     when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
@@ -208,21 +213,21 @@ public class CliqueBlockCreatorTest {
     when(mockVoteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
-    final MiningParameters miningParameters = createMiningParameters(extraData, coinbase);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(extraData, coinbase);
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
-            miningParameters,
+            miningConfiguration,
             parent -> extraData,
             createTransactionPool(),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }
@@ -245,15 +250,16 @@ public class CliqueBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            conf);
+            conf,
+            new BlobCache());
     transactionPool.setEnabled();
     return transactionPool;
   }
 
-  private static MiningParameters createMiningParameters(
+  private static MiningConfiguration createMiningConfiguration(
       final Bytes extraData, final Address coinbase) {
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
                     .extraData(extraData)
@@ -262,6 +268,6 @@ public class CliqueBlockCreatorTest {
                     .coinbase(coinbase)
                     .build())
             .build();
-    return miningParameters;
+    return miningConfiguration;
   }
 }

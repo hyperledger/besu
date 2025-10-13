@@ -48,27 +48,20 @@ public class TransactionSelectionResults {
       new ConcurrentHashMap<>();
 
   private long cumulativeGasUsed = 0;
-  private long cumulativeBlobGasUsed = 0;
 
   void updateSelected(
-      final Transaction transaction,
-      final TransactionReceipt receipt,
-      final long gasUsed,
-      final long blobGasUsed) {
+      final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
     selectedTransactions.add(transaction);
     transactionsByType
         .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
         .add(transaction);
     receipts.add(receipt);
     cumulativeGasUsed += gasUsed;
-    cumulativeBlobGasUsed += blobGasUsed;
     LOG.atTrace()
-        .setMessage(
-            "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative blob gas used {}")
+        .setMessage("New selected transaction {}, total transactions {}, cumulative gas used {}")
         .addArgument(transaction::toTraceLog)
         .addArgument(selectedTransactions::size)
         .addArgument(cumulativeGasUsed)
-        .addArgument(cumulativeBlobGasUsed)
         .log();
   }
 
@@ -91,10 +84,6 @@ public class TransactionSelectionResults {
 
   public long getCumulativeGasUsed() {
     return cumulativeGasUsed;
-  }
-
-  public long getCumulativeBlobGasUsed() {
-    return cumulativeBlobGasUsed;
   }
 
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
@@ -135,7 +124,6 @@ public class TransactionSelectionResults {
     }
     TransactionSelectionResults that = (TransactionSelectionResults) o;
     return cumulativeGasUsed == that.cumulativeGasUsed
-        && cumulativeBlobGasUsed == that.cumulativeBlobGasUsed
         && selectedTransactions.equals(that.selectedTransactions)
         && notSelectedTransactions.equals(that.notSelectedTransactions)
         && receipts.equals(that.receipts);
@@ -143,19 +131,12 @@ public class TransactionSelectionResults {
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        selectedTransactions,
-        notSelectedTransactions,
-        receipts,
-        cumulativeGasUsed,
-        cumulativeBlobGasUsed);
+    return Objects.hash(selectedTransactions, notSelectedTransactions, receipts, cumulativeGasUsed);
   }
 
   public String toTraceLog() {
     return "cumulativeGasUsed="
         + cumulativeGasUsed
-        + ", cumulativeBlobGasUsed="
-        + cumulativeBlobGasUsed
         + ", selectedTransactions="
         + selectedTransactions.stream()
             .map(Transaction::toTraceLog)

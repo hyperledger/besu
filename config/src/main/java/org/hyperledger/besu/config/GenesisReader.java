@@ -53,12 +53,12 @@ interface GenesisReader {
     private final ObjectNode rootWithoutAllocations;
 
     public FromObjectNode(final ObjectNode root) {
-      final var removedAllocations = root.remove(ALLOCATION_FIELD);
       this.allocations =
-          removedAllocations != null
-              ? (ObjectNode) removedAllocations
+          root.get(ALLOCATION_FIELD) != null
+              ? (ObjectNode) root.get(ALLOCATION_FIELD)
               : JsonUtil.createEmptyObjectNode();
-      this.rootWithoutAllocations = normalizeKeys(root);
+      this.rootWithoutAllocations =
+          normalizeKeys(root, field -> !field.getKey().equals(ALLOCATION_FIELD));
     }
 
     @Override
@@ -80,7 +80,9 @@ interface GenesisReader {
                 final var on = normalizeKeys((ObjectNode) entry.getValue());
                 return new GenesisAccount(
                     Address.fromHexString(entry.getKey()),
-                    JsonUtil.getString(on, "nonce").map(ParserUtils::parseUnsignedLong).orElse(0L),
+                    JsonUtil.getValueAsString(on, "nonce")
+                        .map(ParserUtils::parseUnsignedLong)
+                        .orElse(0L),
                     JsonUtil.getString(on, "balance")
                         .map(ParserUtils::parseBalance)
                         .orElse(Wei.ZERO),
@@ -119,7 +121,7 @@ interface GenesisReader {
       try {
         parser.nextToken();
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-          if (ALLOCATION_FIELD.equals(parser.getCurrentName())) {
+          if (ALLOCATION_FIELD.equals(parser.currentName())) {
             parser.nextToken();
             parser.nextToken();
             break;

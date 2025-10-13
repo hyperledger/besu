@@ -173,38 +173,38 @@ public class CodeV1Validation implements EOFValidator {
           }
           break;
         case PushOperation.PUSH_BASE,
-            PushOperation.PUSH_BASE + 1,
-            PushOperation.PUSH_BASE + 2,
-            PushOperation.PUSH_BASE + 3,
-            PushOperation.PUSH_BASE + 4,
-            PushOperation.PUSH_BASE + 5,
-            PushOperation.PUSH_BASE + 6,
-            PushOperation.PUSH_BASE + 7,
-            PushOperation.PUSH_BASE + 8,
-            PushOperation.PUSH_BASE + 9,
-            PushOperation.PUSH_BASE + 10,
-            PushOperation.PUSH_BASE + 11,
-            PushOperation.PUSH_BASE + 12,
-            PushOperation.PUSH_BASE + 13,
-            PushOperation.PUSH_BASE + 14,
-            PushOperation.PUSH_BASE + 15,
-            PushOperation.PUSH_BASE + 16,
-            PushOperation.PUSH_BASE + 17,
-            PushOperation.PUSH_BASE + 18,
-            PushOperation.PUSH_BASE + 19,
-            PushOperation.PUSH_BASE + 20,
-            PushOperation.PUSH_BASE + 21,
-            PushOperation.PUSH_BASE + 22,
-            PushOperation.PUSH_BASE + 23,
-            PushOperation.PUSH_BASE + 24,
-            PushOperation.PUSH_BASE + 25,
-            PushOperation.PUSH_BASE + 26,
-            PushOperation.PUSH_BASE + 27,
-            PushOperation.PUSH_BASE + 28,
-            PushOperation.PUSH_BASE + 29,
-            PushOperation.PUSH_BASE + 30,
-            PushOperation.PUSH_BASE + 31,
-            PushOperation.PUSH_BASE + 32:
+        PushOperation.PUSH_BASE + 1,
+        PushOperation.PUSH_BASE + 2,
+        PushOperation.PUSH_BASE + 3,
+        PushOperation.PUSH_BASE + 4,
+        PushOperation.PUSH_BASE + 5,
+        PushOperation.PUSH_BASE + 6,
+        PushOperation.PUSH_BASE + 7,
+        PushOperation.PUSH_BASE + 8,
+        PushOperation.PUSH_BASE + 9,
+        PushOperation.PUSH_BASE + 10,
+        PushOperation.PUSH_BASE + 11,
+        PushOperation.PUSH_BASE + 12,
+        PushOperation.PUSH_BASE + 13,
+        PushOperation.PUSH_BASE + 14,
+        PushOperation.PUSH_BASE + 15,
+        PushOperation.PUSH_BASE + 16,
+        PushOperation.PUSH_BASE + 17,
+        PushOperation.PUSH_BASE + 18,
+        PushOperation.PUSH_BASE + 19,
+        PushOperation.PUSH_BASE + 20,
+        PushOperation.PUSH_BASE + 21,
+        PushOperation.PUSH_BASE + 22,
+        PushOperation.PUSH_BASE + 23,
+        PushOperation.PUSH_BASE + 24,
+        PushOperation.PUSH_BASE + 25,
+        PushOperation.PUSH_BASE + 26,
+        PushOperation.PUSH_BASE + 27,
+        PushOperation.PUSH_BASE + 28,
+        PushOperation.PUSH_BASE + 29,
+        PushOperation.PUSH_BASE + 30,
+        PushOperation.PUSH_BASE + 31,
+        PushOperation.PUSH_BASE + 32:
           final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
           pcPostInstruction += multiByteDataLen;
           break;
@@ -648,12 +648,12 @@ public class CodeV1Validation implements EOFValidator {
                     targetCs.inputs);
               }
             }
-            // fall through for terminal op handling
+          // fall through for terminal op handling
           case StopOperation.OPCODE,
-              ReturnContractOperation.OPCODE,
-              ReturnOperation.OPCODE,
-              RevertOperation.OPCODE,
-              InvalidOperation.OPCODE:
+          ReturnContractOperation.OPCODE,
+          ReturnOperation.OPCODE,
+          RevertOperation.OPCODE,
+          InvalidOperation.OPCODE:
             // terminal op, reset currentMin and currentMax to forward set values
             if (nextPC < codeLength) {
               currentMax = stack_max[nextPC];

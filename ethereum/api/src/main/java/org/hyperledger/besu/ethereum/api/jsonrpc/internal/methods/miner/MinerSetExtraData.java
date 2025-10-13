@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import java.nio.charset.StandardCharsets;
 
@@ -35,10 +35,10 @@ import org.slf4j.LoggerFactory;
 public class MinerSetExtraData implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MinerSetExtraData.class);
 
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
-  public MinerSetExtraData(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public MinerSetExtraData(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
   }
 
   @Override
@@ -53,7 +53,7 @@ public class MinerSetExtraData implements JsonRpcMethod {
       Bytes32.fromHexStringLenient(
           rawParam); // done for validation, we want a hex string and max 32 bytes
       final var extraData = Bytes.fromHexStringLenient(rawParam);
-      miningParameters.setExtraData(extraData);
+      miningConfiguration.setExtraData(extraData);
       LOG.atDebug()
           .setMessage("set extra data, raw=[{}] parsed=[{}], UTF-8=[{}]")
           .addArgument(rawParam)

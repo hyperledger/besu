@@ -47,11 +47,14 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
+  private static final String BLOB_SCHEDULE_CONFIG_KEY = "blobschedule";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
   private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
   private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
       "withdrawalrequestcontractaddress";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
+  private static final String CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY =
+      "consolidationrequestcontractaddress";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -115,6 +118,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return ETHASH_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
+    } else if (isIbftLegacy()) {
+      return IBFT_LEGACY_CONFIG_KEY;
     } else if (isQbft()) {
       return QBFT_CONFIG_KEY;
     } else if (isClique()) {
@@ -152,6 +157,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isPoa() {
     return isQbft() || isClique() || isIbft2() || isIbftLegacy();
+  }
+
+  @Override
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
+        .map(IbftLegacyConfigOptions::new)
+        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
@@ -195,6 +207,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public Optional<BlobScheduleOptions> getBlobScheduleOptions() {
+    return JsonUtil.getObjectNode(configRoot, BLOB_SCHEDULE_CONFIG_KEY)
+        .map(BlobScheduleOptions::new);
   }
 
   @Override
@@ -306,8 +324,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getPragueEOFTime() {
-    return getOptionalLong("pragueeoftime");
+  public OptionalLong getOsakaTime() {
+    return getOptionalLong("osakatime");
   }
 
   @Override
@@ -454,6 +472,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<Address> getConsolidationRequestContractAddress() {
+    Optional<String> inputAddress =
+        JsonUtil.getString(configRoot, CONSOLIDATION_REQUEST_CONTRACT_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -477,7 +502,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
-    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
+    getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -504,12 +529,17 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getWithdrawalRequestContractAddress()
         .ifPresent(l -> builder.put("withdrawalRequestContractAddress", l));
     getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
+    getConsolidationRequestContractAddress()
+        .ifPresent(l -> builder.put("consolidationRequestContractAddress", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isIbftLegacy()) {
+      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
@@ -524,6 +554,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isFixedBaseFee()) {
       builder.put("fixedBaseFee", true);
+    }
+
+    if (getBlobScheduleOptions().isPresent()) {
+      builder.put("blobSchedule", getBlobScheduleOptions().get().asMap());
     }
 
     return builder.build();
@@ -629,7 +663,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getCancunTime(),
             getCancunEOFTime(),
             getPragueTime(),
-            getPragueEOFTime(),
+            getOsakaTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json

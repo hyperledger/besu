@@ -19,6 +19,7 @@ import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
+import org.hyperledger.besu.evmtool.benchmarks.BLS12Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
@@ -56,7 +57,9 @@ public class BenchmarkSubCommand implements Runnable {
     // blake2f
     EcRecover(new ECRecoverBenchmark()),
     ModExp(new ModExpBenchmark()),
-    Secp256k1(new Secp256k1Benchmark());
+    Secp256k1(new Secp256k1Benchmark()),
+    // bls12
+    Bls12(new BLS12Benchmark());
 
     final BenchmarkExecutor benchmarkExecutor;
 

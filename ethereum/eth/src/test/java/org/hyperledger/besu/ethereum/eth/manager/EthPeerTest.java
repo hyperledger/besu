@@ -477,7 +477,6 @@ public class EthPeerTest {
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(
         peerConnection,
-        "foo",
         onPeerReady,
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
@@ -513,7 +512,6 @@ public class EthPeerTest {
     // that extend the sub-protocol work correctly
     return new EthPeer(
         peerConnection,
-        "foo",
         onPeerReady,
         peerValidators,
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,

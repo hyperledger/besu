@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public record BlockSelectionContext(
-    MiningParameters miningParameters,
+    MiningConfiguration miningConfiguration,
     GasCalculator gasCalculator,
     GasLimitCalculator gasLimitCalculator,
     BlockHashProcessor blockHashProcessor,

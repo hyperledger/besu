@@ -27,7 +27,7 @@ import org.hyperledger.besu.components.EnclaveModule;
 import org.hyperledger.besu.components.MockBesuCommandModule;
 import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -39,15 +39,15 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -64,7 +64,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -534,7 +534,7 @@ public class PrivacyReorgTest {
     @SuppressWarnings("CloseableProvides")
     BesuController provideBesuController(
         final PrivacyParameters privacyParameters,
-        final GenesisConfigFile genesisConfigFile,
+        final GenesisConfig genesisConfig,
         final PrivacyReorgTestComponent context,
         final @Named("dataDir") Path dataDir) {
 
@@ -542,22 +542,22 @@ public class PrivacyReorgTest {
       // named privacyReorgParams
       BesuController retval =
           new BesuController.Builder()
-              .fromGenesisFile(genesisConfigFile, SyncMode.FULL)
+              .fromGenesisFile(genesisConfig, SyncMode.FULL)
               .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .storageProvider(new InMemoryKeyValueStorageProvider())
               .networkId(BigInteger.ONE)
-              .miningParameters(MiningParameters.newDefault())
+              .miningParameters(MiningConfiguration.newDefault())
               .nodeKey(NodeKeyUtils.generate())
               .metricsSystem(new NoOpMetricsSystem())
               .dataDirectory(dataDir)
               .clock(TestClock.fixed())
               .privacyParameters(privacyParameters)
               .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-              .gasLimitCalculator(GasLimitCalculator.constant())
               .evmConfiguration(EvmConfiguration.DEFAULT)
               .networkConfiguration(NetworkingConfiguration.create())
               .besuComponent(context)
+              .apiConfiguration(ImmutableApiConfiguration.builder().build())
               .build();
       return retval;
     }
@@ -566,8 +566,8 @@ public class PrivacyReorgTest {
   @Module
   static class PrivacyReorgTestGenesisConfigModule {
     @Provides
-    GenesisConfigFile providePrivacyReorgGenesisConfigFile() {
-      return GenesisConfigFile.fromResource("/privacy_reorg_genesis.json");
+    GenesisConfig providePrivacyReorgGenesisConfig() {
+      return GenesisConfig.fromResource("/privacy_reorg_genesis.json");
     }
   }
 }

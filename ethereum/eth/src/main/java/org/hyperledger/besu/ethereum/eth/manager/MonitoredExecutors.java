@@ -153,13 +153,13 @@ public class MonitoredExecutors {
         "Current number of threads in the thread pool",
         executor::getPoolSize);
 
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.EXECUTORS,
         metricName + "_completed_tasks_total",
         "Total number of tasks executed",
         executor::getCompletedTaskCount);
 
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.EXECUTORS,
         metricName + "_submitted_tasks_total",
         "Total number of tasks executed",

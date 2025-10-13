@@ -23,15 +23,15 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.25.0'
-  id 'com.github.ben-manes.versions' version '0.51.0'
-  id 'com.github.jk1.dependency-license-report' version '2.7'
-  id 'com.jfrog.artifactory' version '5.2.0'
-  id 'io.spring.dependency-management' version '1.1.5'
+  id 'com.diffplug.spotless' version '7.0.2'
+  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '3.1.0'
+  id 'net.ltgt.errorprone' version '4.1.0'
   id 'maven-publish'
-  id 'org.sonarqube' version '4.4.1.3373'
+  id 'jacoco'
+  id 'jacoco-report-aggregation'
+  id 'org.sonarqube' version '6.0.1.5171'
 }
 
 sonarqube {
@@ -40,12 +40,12 @@ sonarqube {
     property "sonar.organization", "$System.env.SONAR_ORGANIZATION"
     property "sonar.gradle.skipCompile", "true"
     property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
   }
 }
 
-project.tasks["sonarqube"].dependsOn "jacocoRootReport"
+project.tasks["sonar"].dependsOn "testCodeCoverageReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
@@ -118,12 +118,10 @@ licenseReport {
   ]
 }
 
-allprojects {
+configure(allprojects - project(':platform')) {
   apply plugin: 'java-library'
-  apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
-  apply from: "${rootDir}/gradle/versions.gradle"
 
   version = calculateVersion()
 
@@ -147,8 +145,11 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 21
-  targetCompatibility = 21
+
+  java {
+    sourceCompatibility = 21
+    targetCompatibility = 21
+  }
 
   repositories {
     maven {
@@ -183,6 +184,12 @@ allprojects {
   }
 
   dependencies {
+    api platform(project(':platform'))
+
+    annotationProcessor(platform(project(':platform')))
+
+    testAnnotationProcessor(platform(project(':platform')))
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
@@ -196,6 +203,12 @@ allprojects {
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
     }
+
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
   }
 
 
@@ -206,14 +219,14 @@ allprojects {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.22.0')
+      googleJavaFormat('1.25.2')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
       // apply appropriate license header files.
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
     }
     // spotless check applied to build.gradle (groovy) files
     groovyGradle {
@@ -238,7 +251,7 @@ allprojects {
 
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
     }
   }
 
@@ -360,6 +373,7 @@ allprojects {
       }
     }
     useJUnitPlatform {}
+    finalizedBy jacocoTestReport // report is always generated after tests run
   }
 
   javadoc {
@@ -412,9 +426,6 @@ allprojects {
       '-org.hyperledger.besu.ethereum.permissioning.*,' +
       // referencetests module
       '-org.hyperledger.besu.ethereum.referencetests,' +
-      // retesteth module
-      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
-      '-org.hyperledger.besu.ethereum.retesteth,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
       // stratum module
@@ -439,14 +450,16 @@ task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
-      if (it.properties.containsKey('publishing') && it.jar?.enabled) {
-        def coordinate = it.publishing?.publications[0].coordinates
-        if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
-          throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
-          "both ${coordinates[coordinate]} and ${it.path}.\n" +
-          "Please add a `publishing` script block to one or both subprojects.")
+      if (it.properties.containsKey('publishing')) {
+        if(!it.properties.containsKey('jar') || it.jar.enabled) {
+          def coordinate = it.publishing?.publications[0].coordinates
+          if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
+            throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
+            "both ${coordinates[coordinate]} and ${it.path}.\n" +
+            "Please add a `publishing` script block to one or both subprojects.")
+          }
+          coordinates[coordinate] = it.path
         }
-        coordinates[coordinate] = it.path
       }
     }
   }
@@ -519,7 +532,8 @@ subprojects {
     return result
   }
 
-  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+
+  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport") || project.name == "platform") {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 
@@ -574,7 +588,7 @@ subprojects {
           password = artifactoryKey
         }
         defaults {
-          publications('mavenJava')
+          publications('mavenJava', 'mavenJavaPlatform')
           publishArtifacts = true
           publishPom = true
         }
@@ -594,7 +608,9 @@ subprojects {
 
 
   configurations {
+    testSupportAnnotationProcessor.extendsFrom annotationProcessor
     testSupportImplementation.extendsFrom implementation
+    integrationTestAnnotationProcessor.extendsFrom annotationProcessor
     integrationTestImplementation.extendsFrom implementation
     testSupportArtifacts
   }
@@ -619,7 +635,10 @@ subprojects {
       duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
-    dependencies { jmh 'org.slf4j:slf4j-api' }
+    dependencies {
+      jmhAnnotationProcessor(platform(project(':platform')))
+      jmh 'org.slf4j:slf4j-api'
+    }
   }
 
   // making sure assemble task invokes integration test compile
@@ -633,32 +652,34 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = 'org.hyperledger.besu.Besu'
-applicationDefaultJvmArgs = [
-  '-Dvertx.disableFileCPResolving=true',
-  // BESU_HOME is replaced by a doFirst block in the run task.
-  '-Dbesu.home=BESU_HOME',
-  // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
-  // happens during shutdown is not logged.
-  '-Dlog4j.shutdownHookEnabled=false',
-  // Disable JNI lookups in log4j messages to improve security
-  '-Dlog4j2.formatMsgNoLookups=true',
-  // Redirect java.util.logging loggers to use log4j2.
-  '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
-  // Suppress Java JPMS warnings.  Document the reason for each suppression.
-  // Bouncy Castle needs access to sun.security.provider, which is not open by default.
-  '--add-opens',
-  'java.base/sun.security.provider=ALL-UNNAMED',
-  // Jackson likes to access java.util.OptionalLong's constructor
-  '--add-opens',
-  'java.base/java.util=ALL-UNNAMED',
-  // suppress netty specific module warnings in debug
-  "-Dio.netty.tryReflectionSetAccessible=true",
-  "--add-exports",
-  "java.base/jdk.internal.misc=ALL-UNNAMED",
-  "--add-opens",
-  "java.base/java.nio=ALL-UNNAMED"
-]
+application {
+  mainClass = 'org.hyperledger.besu.Besu'
+  applicationDefaultJvmArgs = [
+    '-Dvertx.disableFileCPResolving=true',
+    // BESU_HOME is replaced by a doFirst block in the run task.
+    '-Dbesu.home=BESU_HOME',
+    // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
+    // happens during shutdown is not logged.
+    '-Dlog4j.shutdownHookEnabled=false',
+    // Disable JNI lookups in log4j messages to improve security
+    '-Dlog4j2.formatMsgNoLookups=true',
+    // Redirect java.util.logging loggers to use log4j2.
+    '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
+    // Suppress Java JPMS warnings.  Document the reason for each suppression.
+    // Bouncy Castle needs access to sun.security.provider, which is not open by default.
+    '--add-opens',
+    'java.base/sun.security.provider=ALL-UNNAMED',
+    // Jackson likes to access java.util.OptionalLong's constructor
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    // suppress netty specific module warnings in debug
+    "-Dio.netty.tryReflectionSetAccessible=true",
+    "--add-exports",
+    "java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens",
+    "java.base/java.nio=ALL-UNNAMED"
+  ]
+}
 
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
@@ -686,11 +707,11 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
-  defaultJvmOpts = applicationDefaultJvmArgs + [
+  defaultJvmOpts = application.applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
     "-XX:MaxGCPauseMillis=100",
-    "-XX:StartFlightRecording,dumponexit=true,settings=default.jfc",
+    "-XX:StartFlightRecording,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
@@ -703,7 +724,6 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
@@ -962,19 +982,6 @@ jacocoTestReport {
   }
 }
 
-task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
-  executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
-  reports {
-    xml.required = true
-    csv.required = true
-    html.destination file("build/reports/jacocoHtml")
-  }
-  onlyIf = { true }
-}
-
 // http://label-schema.org/rc1/
 // using the RFC3339 format "2016-04-12T23:20:50.52Z"
 def buildTime() {
@@ -1097,6 +1104,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }
   }

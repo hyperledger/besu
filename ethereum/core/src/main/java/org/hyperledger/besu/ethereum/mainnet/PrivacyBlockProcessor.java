@@ -21,6 +21,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -83,6 +84,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
   @Override
   public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -102,6 +104,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
     final BlockProcessingResult result =
         blockProcessor.processBlock(
+            protocolContext,
             blockchain,
             worldState,
             blockHeader,

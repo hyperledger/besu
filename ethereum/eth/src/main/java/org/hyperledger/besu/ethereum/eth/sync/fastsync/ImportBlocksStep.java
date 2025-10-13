@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
@@ -45,6 +46,8 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
+  private final BodyValidationMode bodyValidationMode;
+  private final boolean transactionIndexingEnabled;
 
   public ImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -52,13 +55,19 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
       final ValidationPolicy headerValidationPolicy,
       final ValidationPolicy ommerValidationPolicy,
       final EthContext ethContext,
-      final BlockHeader pivotHeader) {
+      final BlockHeader pivotHeader,
+      final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.headerValidationPolicy = headerValidationPolicy;
     this.ommerValidationPolicy = ommerValidationPolicy;
     this.ethContext = ethContext;
     this.pivotHeader = pivotHeader;
+    this.bodyValidationMode =
+        protocolSchedule.anyMatch(scheduledProtocolSpec -> scheduledProtocolSpec.spec().isPoS())
+            ? BodyValidationMode.NONE
+            : BodyValidationMode.LIGHT;
+    this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
   @Override
@@ -106,20 +115,21 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     if (totalBlocks == 0) {
       return 0;
     }
-    final long blocksPercent = (100 * lastBlock / totalBlocks);
-    return blocksPercent;
+    return (100 * lastBlock / totalBlocks);
   }
 
   protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {
     final BlockImporter importer =
         protocolSchedule.getByBlockHeader(blockWithReceipts.getHeader()).getBlockImporter();
     final BlockImportResult blockImportResult =
-        importer.fastImportBlock(
+        importer.importBlockForSyncing(
             protocolContext,
             blockWithReceipts.getBlock(),
             blockWithReceipts.getReceipts(),
             headerValidationPolicy.getValidationModeForNextBlock(),
-            ommerValidationPolicy.getValidationModeForNextBlock());
+            ommerValidationPolicy.getValidationModeForNextBlock(),
+            bodyValidationMode,
+            transactionIndexingEnabled);
     return blockImportResult.isImported();
   }
 }

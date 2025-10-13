@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +32,10 @@ import org.slf4j.LoggerFactory;
 public class MinerSetMinPriorityFee implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MinerSetMinPriorityFee.class);
 
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
-  public MinerSetMinPriorityFee(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public MinerSetMinPriorityFee(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
   }
 
   @Override
@@ -48,7 +48,7 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
     try {
       final Wei minPriorityFeePerGas =
           Wei.fromHexString(requestContext.getRequiredParameter(0, String.class));
-      miningParameters.setMinPriorityFeePerGas(minPriorityFeePerGas);
+      miningConfiguration.setMinPriorityFeePerGas(minPriorityFeePerGas);
       LOG.debug(
           "min priority fee per gas changed to {}", minPriorityFeePerGas.toHumanReadableString());
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

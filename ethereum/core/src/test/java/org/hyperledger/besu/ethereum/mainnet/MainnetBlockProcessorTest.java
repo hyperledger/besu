@@ -23,12 +23,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -46,12 +46,11 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
 
   @BeforeEach
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(RequestsValidatorCoordinator.empty());
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
   }
 
@@ -75,7 +74,8 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             .transactionsRoot(Hash.EMPTY_LIST_HASH)
             .ommersHash(Hash.EMPTY_LIST_HASH)
             .buildHeader();
-    blockProcessor.processBlock(blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
+    blockProcessor.processBlock(
+        protocolContext, blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
 
     // An empty block with 0 reward should not change the world state
     assertThat(worldState.rootHash()).isEqualTo(initialHash);
@@ -104,7 +104,8 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
                     "0xa6b5d50f7b3c39b969c2fe8fed091939c674fef49b4826309cb6994361e39b71"))
             .ommersHash(Hash.EMPTY_LIST_HASH)
             .buildHeader();
-    blockProcessor.processBlock(blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
+    blockProcessor.processBlock(
+        protocolContext, blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
 
     // An empty block with 0 reward should change the world state prior to EIP158
     assertThat(worldState.rootHash()).isNotEqualTo(initialHash);

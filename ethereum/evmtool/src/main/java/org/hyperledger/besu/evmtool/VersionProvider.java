@@ -19,11 +19,10 @@ import org.hyperledger.besu.BesuInfo;
 import picocli.CommandLine;
 
 /**
- * The VersionProvider class is responsible for providing the version of the Hyperledger Besu EVM
- * tool. It implements the IVersionProvider interface from the picocli library.
+ * The VersionProvider class is responsible for providing the version of the Besu EVM tool. It
+ * implements the IVersionProvider interface from the picocli library.
  *
- * <p>The getVersion method returns a string array containing the version of the Hyperledger Besu
- * EVM tool.
+ * <p>The getVersion method returns a string array containing the version of the Besu EVM tool.
  */
 public class VersionProvider implements CommandLine.IVersionProvider {
 
@@ -34,12 +33,12 @@ public class VersionProvider implements CommandLine.IVersionProvider {
   public VersionProvider() {}
 
   /**
-   * This method returns the version of the Hyperledger Besu EVM tool.
+   * This method returns the version of the Besu EVM tool.
    *
-   * @return A string array containing the version of the Hyperledger Besu EVM tool.
+   * @return A string array containing the version of the Besu EVM tool.
    */
   @Override
   public String[] getVersion() {
-    return new String[] {"Hyperledger Besu evm " + BesuInfo.shortVersion()};
+    return new String[] {"Besu evm " + BesuInfo.shortVersion()};
   }
 }

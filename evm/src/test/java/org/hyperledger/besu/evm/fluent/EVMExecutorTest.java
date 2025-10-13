@@ -49,7 +49,7 @@ class EVMExecutorTest {
   @Test
   void currentEVM() {
     var subject = EVMExecutor.evm();
-    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.CANCUN);
+    assertThat(subject.getEVMVersion()).isEqualTo(EvmSpecVersion.PRAGUE);
   }
 
   @ParameterizedTest
@@ -131,8 +131,12 @@ class EVMExecutorTest {
     assertThat(cancunEOFEVM.getChainId()).contains(defaultChainId);
 
     EVMExecutor pragueEVM =
-        EVMExecutor.pragueEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+        EVMExecutor.prague(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
     assertThat(pragueEVM.getChainId()).contains(defaultChainId);
+
+    EVMExecutor osakaEVM =
+        EVMExecutor.osaka(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
+    assertThat(osakaEVM.getChainId()).contains(defaultChainId);
 
     EVMExecutor futureEipsVM = EVMExecutor.futureEips(EvmConfiguration.DEFAULT);
     assertThat(futureEipsVM.getChainId()).contains(defaultChainId);
@@ -178,7 +182,7 @@ class EVMExecutorTest {
             .number(1)
             .timestamp(100L)
             .gasLimit(15_000_000L)
-            .blockHashLookup(number -> Hash.ZERO)
+            .blockHashLookup((__, ___) -> Hash.ZERO)
             .versionedHashes(Optional.empty())
             .precompileContractRegistry(new PrecompileContractRegistry())
             .requireDeposit(false)

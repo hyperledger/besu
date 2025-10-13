@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -331,6 +331,41 @@ public class BlockchainQueriesTest {
   }
 
   @Test
+  public void getTransactionReceiptsByHash() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final Block targetBlock = data.blockData.get(1).block;
+
+    final Optional<List<TransactionReceiptWithMetadata>> receipts =
+        queries.transactionReceiptsByBlockHash(
+            targetBlock.getHash(), Mockito.mock(ProtocolSchedule.class));
+    assertThat(receipts).isNotEmpty();
+
+    receipts
+        .get()
+        .forEach(
+            receipt -> {
+              final long gasUsed = receipt.getGasUsed();
+
+              assertThat(gasUsed)
+                  .isEqualTo(
+                      targetBlock.getHeader().getGasUsed()
+                          / targetBlock.getBody().getTransactions().size());
+            });
+  }
+
+  @Test
+  public void getTransactionReceiptsByInvalidHash() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final Optional<List<TransactionReceiptWithMetadata>> result =
+        queries.transactionReceiptsByBlockHash(gen.hash(), Mockito.mock(ProtocolSchedule.class));
+    assertThat(result).isEmpty();
+  }
+
+  @Test
   public void logsShouldBeFlaggedAsRemovedWhenBlockIsNotInCanonicalChain() {
     // create initial blockchain
     final BlockchainWithData data = setupBlockchain(3);
@@ -599,7 +634,7 @@ public class BlockchainQueriesTest {
               blockchain,
               worldStateArchive,
               scheduler,
-              MiningParameters.newDefault());
+              MiningConfiguration.newDefault());
     }
   }
 

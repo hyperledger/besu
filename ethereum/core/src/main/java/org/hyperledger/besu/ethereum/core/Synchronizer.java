@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -81,6 +82,22 @@ public interface Synchronizer {
    * @return {@code true} if a subscription was cancelled
    */
   boolean unsubscribeInSync(final long listenerId);
+
+  /**
+   * Add a listener that will be notified when this node initial sync status changes.
+   *
+   * @param listener The callback to invoke when the initial sync status changes
+   * @return A subscription id that can be used to unsubscribe from these events
+   */
+  long subscribeInitialSync(final InitialSyncCompletionListener listener);
+
+  /**
+   * Unsubscribe from initial sync events.
+   *
+   * @param listenerId The id returned when subscribing
+   * @return {@code true} if a subscription was cancelled
+   */
+  boolean unsubscribeInitialSync(final long listenerId);
 
   @FunctionalInterface
   interface InSyncListener {

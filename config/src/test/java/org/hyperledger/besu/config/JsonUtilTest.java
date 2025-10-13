@@ -148,6 +148,36 @@ public class JsonUtilTest {
   }
 
   @Test
+  public void normalizeKeys_predicate() {
+    final ObjectNode originalObj =
+        mapper
+            .createObjectNode()
+            .put("Ant", "Tiny")
+            .put("Ape", "Smart")
+            .put("Armadillo", "Armored")
+            .put("Cat", "Meow")
+            .put("Bat", "Flying")
+            .put("Cow", "Moo")
+            .put("Crocodile", "Snap")
+            .put("Bear", "Strong")
+            .put("Cheetah", "Fast")
+            .put("Beaver", "Builder");
+
+    final ObjectNode expectedObj =
+        mapper
+            .createObjectNode()
+            .put("cat", "Meow")
+            .put("cow", "Moo")
+            .put("cheetah", "Fast")
+            .put("crocodile", "Snap");
+
+    final ObjectNode normalizedObj =
+        JsonUtil.normalizeKeys(originalObj, s -> s.getKey().startsWith("C"));
+
+    assertThat(normalizedObj).isEqualTo(expectedObj);
+  }
+
+  @Test
   public void getLong_nonExistentKey() {
     final ObjectNode node = mapper.createObjectNode();
     final OptionalLong result = JsonUtil.getLong(node, "test");

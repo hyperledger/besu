@@ -43,9 +43,10 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
 
   @Override
   public void exec(final EthMessage message) {
-    final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message.getData());
-    final Instant startedAt = now();
     if (isEnabled.get()) {
+      final TransactionsMessage transactionsMessage =
+          TransactionsMessage.readFrom(message.getData());
+      final Instant startedAt = now();
       scheduler.scheduleTxWorkerTask(
           () ->
               transactionsMessageProcessor.processTransactionsMessage(

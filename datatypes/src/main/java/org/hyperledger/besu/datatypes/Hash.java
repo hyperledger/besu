@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.crypto.Hash.sha256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -49,6 +50,11 @@ public class Hash extends DelegatingBytes32 {
    * "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
    */
   public static final Hash EMPTY = hash(Bytes.EMPTY);
+
+  /**
+   * Hash of empty requests or "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+   */
+  public static final Hash EMPTY_REQUESTS_HASH = Hash.wrap(sha256(Bytes.EMPTY));
 
   /**
    * Instantiates a new Hash.
@@ -105,5 +111,17 @@ public class Hash extends DelegatingBytes32 {
    */
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
+  }
+
+  /***
+   * For logging purposes, this method returns a shortened hex representation
+   *
+   * @return shortened string with only the beginning and the end of the hex representation
+   */
+  public String toShortLogString() {
+    final var hexRepresentation = toFastHex(false);
+    String firstPart = hexRepresentation.substring(0, 5);
+    String lastPart = hexRepresentation.substring(hexRepresentation.length() - 5);
+    return firstPart + "....." + lastPart;
   }
 }

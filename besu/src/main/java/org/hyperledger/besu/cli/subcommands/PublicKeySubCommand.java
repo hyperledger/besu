@@ -20,7 +20,7 @@ import static org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.COMMAND_N
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
+import org.hyperledger.besu.cli.options.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;

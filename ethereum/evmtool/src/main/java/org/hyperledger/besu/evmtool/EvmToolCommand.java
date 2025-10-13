@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
@@ -98,7 +97,7 @@ import picocli.CommandLine.Option;
     descriptionHeading = "%nDescription:%n%n",
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
-    footer = "Hyperledger Besu is licensed under the Apache License 2.0",
+    footer = "Besu is licensed under the Apache License 2.0",
     subcommands = {
       BenchmarkSubCommand.class,
       B11rSubCommand.class,
@@ -403,16 +402,20 @@ public class EvmToolCommand implements Runnable {
 
       long txGas = gas;
       if (chargeIntrinsicGas) {
-        final long intrinsicGasCost =
-            protocolSpec
-                .getGasCalculator()
-                .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-        txGas -= intrinsicGasCost;
         final long accessListCost =
             tx.getAccessList()
                 .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
                 .orElse(0L);
-        txGas -= accessListCost;
+
+        final long delegateCodeCost =
+            protocolSpec.getGasCalculator().delegateCodeGasCost(tx.codeDelegationListSize());
+
+        final long intrinsicGasCost =
+            protocolSpec
+                .getGasCalculator()
+                .transactionIntrinsicGasCost(
+                    tx.getPayload(), tx.isContractCreation(), accessListCost + delegateCodeCost);
+        txGas -= intrinsicGasCost;
       }
 
       final EVM evm = protocolSpec.getEvm();
@@ -464,9 +467,9 @@ public class EvmToolCommand implements Runnable {
                 .coinbase(coinbase)
                 .difficulty(
                     Difficulty.fromHexString(
-                        genesisFileModule.providesGenesisConfigFile().getDifficulty()))
+                        genesisFileModule.providesGenesisConfig().getDifficulty()))
                 .number(0)
-                .gasLimit(genesisFileModule.providesGenesisConfigFile().getGasLimit())
+                .gasLimit(genesisFileModule.providesGenesisConfig().getGasLimit())
                 .timestamp(0)
                 .ommersHash(Hash.EMPTY_LIST_HASH)
                 .stateRoot(Hash.EMPTY_TRIE_HASH)
@@ -483,7 +486,7 @@ public class EvmToolCommand implements Runnable {
                         .getBlockchain()
                         .getChainHeadHeader()
                         .getBaseFee()
-                        .or(() -> genesisFileModule.providesGenesisConfigFile().getBaseFeePerGas())
+                        .or(() -> genesisFileModule.providesGenesisConfig().getBaseFeePerGas())
                         .orElse(
                             protocolSpec.getFeeMarket().implementsBaseFee() ? Wei.of(0xa) : null))
                 .buildBlockHeader();
@@ -511,7 +514,10 @@ public class EvmToolCommand implements Runnable {
                 .blockValues(blockHeader)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
-                .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
+                .blockHashLookup(
+                    protocolSpec
+                        .getBlockHashProcessor()
+                        .createBlockHashLookup(component.getBlockchain(), blockHeader))
                 .accessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
@@ -529,9 +535,7 @@ public class EvmToolCommand implements Runnable {
               messageFrame
                   .getExceptionalHaltReason()
                   .ifPresent(haltReason -> out.println(haltReason));
-              messageFrame
-                  .getRevertReason()
-                  .ifPresent(bytes -> out.println(new String(bytes.toArrayUnsafe(), UTF_8)));
+              messageFrame.getRevertReason().ifPresent(bytes -> out.println(bytes.toHexString()));
             }
           }
         }

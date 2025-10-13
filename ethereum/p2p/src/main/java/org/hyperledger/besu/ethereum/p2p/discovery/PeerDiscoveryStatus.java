@@ -35,10 +35,7 @@ public enum PeerDiscoveryStatus {
    * We have successfully bonded with this {@link DiscoveryPeer}, and we are able to exchange
    * messages with them.
    */
-  BONDED,
-
-  /** We have requested the ENR record from this {@link DiscoveryPeer} */
-  ENR_REQUESTED;
+  BONDED;
 
   @Override
   public String toString() {

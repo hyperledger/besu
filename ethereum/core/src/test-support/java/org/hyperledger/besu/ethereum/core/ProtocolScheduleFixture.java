@@ -16,16 +16,16 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -36,21 +36,25 @@ public class ProtocolScheduleFixture {
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),
-          PrivacyParameters.DEFAULT,
-          false,
-          EvmConfiguration.DEFAULT,
-          MiningParameters.newDefault(),
+          Optional.empty(),
+          Optional.empty(),
+          Optional.empty(),
+          MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
+    return getGenesisConfigOptions("/mainnet.json");
+  }
+
+  public static GenesisConfigOptions getGenesisConfigOptions(final String genesisConfig) {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
     try (final JsonParser jsonParser =
-        new JsonFactory().createParser(GenesisConfigFile.class.getResource("/mainnet.json"))) {
+        new JsonFactory().createParser(GenesisConfig.class.getResource(genesisConfig))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-        if ("config".equals(jsonParser.getCurrentName())) {
+        if ("config".equals(jsonParser.currentName())) {
           jsonParser.nextToken();
           return JsonGenesisConfigOptions.fromJsonObject(
               normalizeKeys(new ObjectMapper().readTree(jsonParser)));

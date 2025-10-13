@@ -14,23 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogAddedEvent;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogAddedEvent;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -38,6 +38,8 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -47,18 +49,23 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     implements ReferenceTestWorldState {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiReferenceTestWorldState.class);
+
   private final BonsaiReferenceTestWorldStateStorage refTestStorage;
   private final BonsaiPreImageProxy preImageProxy;
   private final EvmConfiguration evmConfiguration;
+  private final Collection<Exception> exceptionCollector = new ArrayList<>();
 
   protected BonsaiReferenceTestWorldState(
       final BonsaiReferenceTestWorldStateStorage worldStateKeyValueStorage,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
+      final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final BonsaiPreImageProxy preImageProxy,
       final EvmConfiguration evmConfiguration) {
@@ -68,7 +75,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         cachedWorldStorageManager,
         trieLogManager,
         evmConfiguration,
-        new DiffBasedWorldStateConfig());
+        createStatefulConfigWithTrie());
     this.refTestStorage = worldStateKeyValueStorage;
     this.preImageProxy = preImageProxy;
     this.evmConfiguration = evmConfiguration;
@@ -110,7 +117,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   }
 
   @Override
-  public void processExtraStateStorageFormatValidation(final BlockHeader blockHeader) {
+  public Collection<Exception> processExtraStateStorageFormatValidation(
+      final BlockHeader blockHeader) {
     if (blockHeader != null) {
       final Hash parentStateRoot = getWorldStateRootHash();
       final BonsaiReferenceTestUpdateAccumulator originalUpdater =
@@ -121,6 +129,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       // validate trielog generation with frozen state
       validateStateRolling(parentStateRoot, originalUpdater, blockHeader, true);
     }
+    return exceptionCollector;
   }
 
   /**
@@ -156,9 +165,12 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       bonsaiWorldState.persist(blockHeader);
       Hash generatedRootHash = bonsaiWorldState.rootHash();
       if (!bonsaiWorldState.rootHash().equals(blockHeader.getStateRoot())) {
-        throw new RuntimeException(
+        final String msg =
             "state root becomes invalid following a rollForward %s != %s"
-                .formatted(blockHeader.getStateRoot(), generatedRootHash));
+                .formatted(blockHeader.getStateRoot(), generatedRootHash);
+        final RuntimeException e = new RuntimeException(msg);
+        exceptionCollector.add(e);
+        LOG.atError().setMessage(msg).setCause(e).log();
       }
 
       updaterForState = (BonsaiWorldStateUpdateAccumulator) bonsaiWorldState.updater();
@@ -167,9 +179,12 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
       bonsaiWorldState.persist(null);
       generatedRootHash = bonsaiWorldState.rootHash();
       if (!bonsaiWorldState.rootHash().equals(parentStateRoot)) {
-        throw new RuntimeException(
+        final String msg =
             "state root becomes invalid following a rollBackward %s != %s"
-                .formatted(parentStateRoot, generatedRootHash));
+                .formatted(parentStateRoot, generatedRootHash);
+        final RuntimeException e = new RuntimeException(msg);
+        exceptionCollector.add(e);
+        LOG.atError().setMessage(msg).setCause(e).log();
       }
     }
   }
@@ -189,19 +204,11 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
   }
 
   private BonsaiWorldState createBonsaiWorldState(final boolean isFrozen) {
-    BonsaiWorldState bonsaiWorldState =
-        new BonsaiWorldState(
-            new BonsaiWorldStateLayerStorage(
-                (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage),
-            bonsaiCachedMerkleTrieLoader,
-            cachedWorldStorageManager,
-            trieLogManager,
-            evmConfiguration,
-            new DiffBasedWorldStateConfig());
+    final BonsaiReferenceTestWorldState copy = (BonsaiReferenceTestWorldState) this.copy();
     if (isFrozen) {
-      bonsaiWorldState.freeze(); // freeze state
+      copy.freezeStorage();
     }
-    return bonsaiWorldState;
+    return copy;
   }
 
   @JsonCreator
@@ -269,10 +276,10 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
     @Override
     public synchronized void saveTrieLog(
-        final DiffBasedWorldStateUpdateAccumulator<?> localUpdater,
+        final PathBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
         final BlockHeader forBlockHeader,
-        final DiffBasedWorldState forWorldState) {
+        final PathBasedWorldState forWorldState) {
       // notify trie log added observers, synchronously
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
       trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));

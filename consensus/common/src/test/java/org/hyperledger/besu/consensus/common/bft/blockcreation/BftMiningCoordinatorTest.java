@@ -19,6 +19,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
@@ -80,6 +81,28 @@ public class BftMiningCoordinatorTest {
     bftMiningCoordinator.start();
     bftMiningCoordinator.stop();
     verify(bftProcessor).stop();
+  }
+
+  @Test
+  public void restartsMiningAfterStop() {
+    assertThat(bftMiningCoordinator.isMining()).isFalse();
+    bftMiningCoordinator.stop();
+    verify(bftProcessor, never()).stop();
+
+    bftMiningCoordinator.enable();
+    bftMiningCoordinator.start();
+    assertThat(bftMiningCoordinator.isMining()).isTrue();
+
+    bftMiningCoordinator.stop();
+    assertThat(bftMiningCoordinator.isMining()).isFalse();
+    verify(bftProcessor).stop();
+
+    bftMiningCoordinator.start();
+    assertThat(bftMiningCoordinator.isMining()).isTrue();
+
+    // BFT processor should be started once for every time the mining
+    // coordinator is restarted
+    verify(bftProcessor, times(2)).start();
   }
 
   @Test

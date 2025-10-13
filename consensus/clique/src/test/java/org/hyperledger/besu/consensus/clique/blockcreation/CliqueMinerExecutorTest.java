@@ -20,12 +20,13 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
+import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -39,12 +40,14 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -71,7 +74,7 @@ public class CliqueMinerExecutorTest {
 
   private static final int EPOCH_LENGTH = 10;
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
-      GenesisConfigFile.fromConfig("{}").getConfigOptions();
+      GenesisConfig.fromConfig("{}").getConfigOptions();
   private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Random random = new Random(21341234L);
   private Address localAddress;
@@ -96,15 +99,17 @@ public class CliqueMinerExecutorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS,
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
+            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -116,7 +121,7 @@ public class CliqueMinerExecutorTest {
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -124,7 +129,7 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
@@ -149,10 +154,10 @@ public class CliqueMinerExecutorTest {
   }
 
   @Test
-  public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
+  public void extraDataForNonEpochBlocksDoesNotContainValidators() {
     final Bytes vanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(vanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(vanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -160,7 +165,7 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
@@ -188,7 +193,7 @@ public class CliqueMinerExecutorTest {
     final Bytes initialVanityData = generateRandomVanityData();
     final Bytes modifiedVanityData = generateRandomVanityData();
 
-    final MiningParameters miningParameters = createMiningParameters(initialVanityData);
+    final MiningConfiguration miningConfiguration = createMiningConfiguration(initialVanityData);
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -196,13 +201,13 @@ public class CliqueMinerExecutorTest {
             cliqueProtocolSchedule,
             createTransactionPool(),
             proposerNodeKey,
-            miningParameters,
+            miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             null,
             ethScheduler);
 
-    miningParameters.setExtraData(modifiedVanityData);
+    miningConfiguration.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =
@@ -233,7 +238,8 @@ public class CliqueMinerExecutorTest {
             mock(TransactionBroadcaster.class),
             cliqueEthContext,
             new TransactionPoolMetrics(metricsSystem),
-            conf);
+            conf,
+            new BlobCache());
 
     transactionPool.setEnabled();
     return transactionPool;
@@ -251,8 +257,8 @@ public class CliqueMinerExecutorTest {
     return Bytes.wrap(vanityData);
   }
 
-  private static MiningParameters createMiningParameters(final Bytes vanityData) {
-    return ImmutableMiningParameters.builder()
+  private static MiningConfiguration createMiningConfiguration(final Bytes vanityData) {
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .extraData(vanityData)

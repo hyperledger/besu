@@ -78,7 +78,7 @@ public class BftExecutors {
 
   /** Start. */
   public synchronized void start() {
-    if (state != State.IDLE) {
+    if (state != State.IDLE && state != State.STOPPED) {
       // Nothing to do
       return;
     }

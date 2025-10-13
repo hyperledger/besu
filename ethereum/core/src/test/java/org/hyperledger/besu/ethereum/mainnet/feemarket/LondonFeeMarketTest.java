@@ -40,7 +40,7 @@ public class LondonFeeMarketTest {
             .gasPrice(Wei.of(7))
             .createTransaction(KEY_PAIR1);
 
-    final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0);
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london(0);
     assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
@@ -54,7 +54,7 @@ public class LondonFeeMarketTest {
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
 
-    final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0);
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london(0);
     assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isFalse();
   }
 
@@ -68,7 +68,7 @@ public class LondonFeeMarketTest {
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
 
-    final LondonFeeMarket londonFeeMarket = new LondonFeeMarket(0, Optional.of(Wei.ZERO));
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london(0, Optional.of(Wei.ZERO));
     assertThat(londonFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 }

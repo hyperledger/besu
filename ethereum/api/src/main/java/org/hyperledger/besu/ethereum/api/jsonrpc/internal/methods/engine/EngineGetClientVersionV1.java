@@ -22,6 +22,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetClientVersionResultV1;
 
+import java.util.Collections;
+import java.util.List;
+
 import io.vertx.core.Vertx;
 
 public class EngineGetClientVersionV1 extends ExecutionEngineJsonRpcMethod {
@@ -49,9 +52,12 @@ public class EngineGetClientVersionV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
-    return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
-        new EngineGetClientVersionResultV1(
-            ENGINE_CLIENT_CODE, ENGINE_CLIENT_NAME, clientVersion, commit.substring(0, 8)));
+    String safeCommit =
+        (commit != null && commit.length() >= 8) ? commit.substring(0, 8) : "unknown";
+    List<EngineGetClientVersionResultV1> versions =
+        Collections.singletonList(
+            new EngineGetClientVersionResultV1(
+                ENGINE_CLIENT_CODE, ENGINE_CLIENT_NAME, clientVersion, safeCommit));
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), versions);
   }
 }

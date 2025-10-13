@@ -15,12 +15,16 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Request;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -56,5 +60,29 @@ public final class BodyValidationTest {
       final Bytes32 withdrawalsRoot = BodyValidation.withdrawalsRoot(body.getWithdrawals().get());
       Assertions.assertThat(header.getWithdrawalsRoot()).hasValue(Hash.wrap(withdrawalsRoot));
     }
+  }
+
+  @Test
+  public void calculateRequestsHash() {
+    List<Request> requests =
+        List.of(
+            new Request(
+                RequestType.DEPOSIT,
+                Bytes.fromHexString(
+                    "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100405973070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000")),
+            new Request(
+                RequestType.WITHDRAWAL,
+                Bytes.fromHexString(
+                    "0x6389e7f33ce3b1e94e4325ef02829cd12297ef710000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000")),
+            new Request(
+                RequestType.CONSOLIDATION,
+                Bytes.fromHexString(
+                    "0x8a0a19589531694250d570040a0c4b74576919b8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001")));
+
+    Bytes32 requestHash = BodyValidation.requestsHash(requests);
+    Assertions.assertThat(requestHash)
+        .isEqualTo(
+            Bytes32.fromHexString(
+                "0x0e53a6857da18cf29c6ae28be10a333fc0eaafbd3f425f09e5e81f29e4d3d766"));
   }
 }

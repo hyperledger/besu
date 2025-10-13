@@ -30,7 +30,7 @@ class CodeCacheTest {
 
   @Test
   void testScale() {
-    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     final Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     final CodeScale scale = new CodeScale();

@@ -25,7 +25,7 @@ public interface FuzzTarget {
   /**
    * The target to fuzz
    *
-   * @param data data proviced by the fuzzer
+   * @param data data provided by the fuzzer
    */
   void fuzz(byte[] data);
 }

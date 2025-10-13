@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
@@ -103,7 +103,8 @@ public class PrivateStorageMigration {
                 .getBlockHeader(blockHeader.getParentHash())
                 .flatMap(
                     header ->
-                        publicWorldStateArchive.getMutable(header.getStateRoot(), header.getHash()))
+                        publicWorldStateArchive.getWorldState(
+                            withBlockHeaderAndUpdateNodeHead(header)))
                 .orElseThrow(PrivateStorageMigrationException::new);
 
         final List<Transaction> transactionsToProcess =
@@ -113,7 +114,7 @@ public class PrivateStorageMigration {
         privateMigrationBlockProcessor.processBlock(
             blockchain,
             publicWorldState,
-            new CachingBlockHashLookup(blockHeader, blockchain),
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
             blockHeader,
             transactionsToProcess,
             ommers);

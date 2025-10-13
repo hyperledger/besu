@@ -32,7 +32,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
@@ -47,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigFile() throws JsonProcessingException {
+  public void setupBftGenesisConfig() throws JsonProcessingException {
 
     // qbft prepForBuild setup
     lenient()
@@ -71,7 +71,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         .thenReturn(new TransitionsConfigOptions(jsonTransitions));
 
     lenient()
-        .when(genesisConfigFile.getExtraData())
+        .when(genesisConfig.getExtraData())
         .thenReturn(
             QbftExtraDataCodec.createGenesisExtraDataString(List.of(Address.fromHexString("1"))));
   }
@@ -107,7 +107,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
     assertThatThrownBy(
             () ->
                 bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(
-                    protocolContext, protocolSchedule, MiningParameters.newDefault()))
+                    protocolContext, protocolSchedule, MiningConfiguration.newDefault()))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("transactionValidatorProvider should have been initialised");
   }

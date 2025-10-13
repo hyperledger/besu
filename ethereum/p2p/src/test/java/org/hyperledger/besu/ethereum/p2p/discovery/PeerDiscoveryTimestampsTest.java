@@ -18,38 +18,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.DaggerPacketPackage;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.packet.PacketPackage;
 
 import java.util.Collections;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+  private PacketPackage packetPackage;
+
+  @BeforeEach
+  public void beforeTest() {
+    packetPackage = DaggerPacketPackage.create();
+  }
 
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
-    final Packet testAgentPing = helper.createPingPacket(testAgent, agent);
+    final Packet testAgentPing = helper.createPingPacket(testAgent, agent, packetPackage);
     helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
 
-    final Packet agentPing = helper.createPingPacket(agent, testAgent);
+    final Packet agentPing = helper.createPingPacket(agent, testAgent, packetPackage);
     helper.sendMessageBetweenAgents(agent, testAgent, agentPing);
 
-    final Packet pong = helper.createPongPacket(agent, Hash.hash(agentPing.getHash()));
+    final Packet pong =
+        helper.createPongPacket(agent, Hash.hash(agentPing.getHash()), packetPackage);
     helper.sendMessageBetweenAgents(testAgent, agent, pong);
 
-    long lastSeen;
     long firstDiscovered;
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
     DiscoveryPeer p = agent.streamDiscoveredPeers().iterator().next();
-    assertThat(p.getLastSeen()).isGreaterThan(0);
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
 
-    lastSeen = p.getLastSeen();
     firstDiscovered = p.getFirstDiscovered();
 
     helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
@@ -57,52 +64,6 @@ public class PeerDiscoveryTimestampsTest {
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
     p = agent.streamDiscoveredPeers().iterator().next();
-    assertThat(p.getLastSeen()).isGreaterThan(lastSeen);
     assertThat(p.getFirstDiscovered()).isEqualTo(firstDiscovered);
-  }
-
-  @Test
-  public void lastContactedTimestampUpdatedOnOutboundMessage() {
-    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
-    assertThat(agent.streamDiscoveredPeers()).hasSize(0);
-
-    // Start a test peer and send a PING packet to the agent under test.
-    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
-    final Packet ping = helper.createPingPacket(testAgent, agent);
-    helper.sendMessageBetweenAgents(testAgent, agent, ping);
-
-    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-
-    final long lastContacted;
-    final long lastSeen;
-    final long firstDiscovered;
-
-    DiscoveryPeer peer = agent.streamDiscoveredPeers().iterator().next();
-    final long lc = peer.getLastContacted();
-    final long ls = peer.getLastSeen();
-    final long fd = peer.getFirstDiscovered();
-
-    assertThat(lc).isGreaterThan(0);
-    assertThat(ls).isGreaterThan(0);
-    assertThat(fd).isGreaterThan(0);
-
-    lastContacted = lc;
-    lastSeen = ls;
-    firstDiscovered = fd;
-
-    // Send another packet and ensure that timestamps are updated accordingly.
-    // Sleep beforehand to make sure timestamps will be different.
-    try {
-      Thread.sleep(1);
-    } catch (InterruptedException e) {
-      // Swallow exception because we only want to pause the test.
-    }
-    helper.sendMessageBetweenAgents(testAgent, agent, ping);
-
-    peer = agent.streamDiscoveredPeers().iterator().next();
-
-    assertThat(peer.getLastContacted()).isGreaterThan(lastContacted);
-    assertThat(peer.getLastSeen()).isGreaterThan(lastSeen);
-    assertThat(peer.getFirstDiscovered()).isEqualTo(firstDiscovered);
   }
 }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +36,14 @@ public interface BlockchainService extends BesuService {
    * @return the BlockContext
    */
   Optional<BlockContext> getBlockByNumber(final long number);
+
+  /**
+   * Gets block by hash
+   *
+   * @param hash the block hash
+   * @return the BlockContext
+   */
+  Optional<BlockContext> getBlockByHash(final Hash hash);
 
   /**
    * Get the hash of the chain head
@@ -58,7 +67,8 @@ public interface BlockchainService extends BesuService {
    * @param blockBody the block body
    * @param receipts the transaction receipts
    */
-  void storeBlock(BlockHeader blockHeader, BlockBody blockBody, List<TransactionReceipt> receipts);
+  void storeBlock(
+      BlockHeader blockHeader, BlockBody blockBody, List<? extends TransactionReceipt> receipts);
 
   /**
    * Get the block header of the chain head
@@ -106,5 +116,11 @@ public interface BlockchainService extends BesuService {
    * @throws UnsupportedOperationException if the network is a PoS network
    */
   void setSafeBlock(Hash blockHash) throws IllegalArgumentException, UnsupportedOperationException;
-  ;
+
+  /**
+   * Get the chain id
+   *
+   * @return the chain id
+   */
+  Optional<BigInteger> getChainId();
 }

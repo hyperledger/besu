@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueNoEmptyBlockValidationRule;
@@ -69,7 +69,7 @@ public class BlockHeaderValidationRulesetFactory {
         createEmptyBlocks,
         epochManager,
         baseFeeMarket,
-        MergeConfigOptions.isMergeEnabled());
+        MergeConfiguration.isMergeEnabled());
   }
 
   /**

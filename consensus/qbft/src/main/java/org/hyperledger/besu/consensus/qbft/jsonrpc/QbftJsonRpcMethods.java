@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext context;
   private final ValidatorProvider readOnlyValidatorProvider;
   private final ProtocolSchedule protocolSchedule;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final BftConfigOptions bftConfig;
 
   /**
@@ -49,20 +49,20 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
    *
    * @param context the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param readOnlyValidatorProvider the read only validator provider
    * @param bftConfig the BFT config options, containing QBFT-specific settings
    */
   public QbftJsonRpcMethods(
       final ProtocolContext context,
       final ProtocolSchedule protocolSchedule,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ValidatorProvider readOnlyValidatorProvider,
       final BftConfigOptions bftConfig) {
     this.context = context;
     this.readOnlyValidatorProvider = readOnlyValidatorProvider;
     this.protocolSchedule = protocolSchedule;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.bftConfig = bftConfig;
   }
 
@@ -78,7 +78,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
             protocolSchedule,
             context.getBlockchain(),
             context.getWorldStateArchive(),
-            miningParameters);
+            miningConfiguration);
     final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();

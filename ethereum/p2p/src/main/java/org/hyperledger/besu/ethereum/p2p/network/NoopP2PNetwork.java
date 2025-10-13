@@ -91,6 +91,11 @@ public class NoopP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public boolean isStopped() {
+    return true;
+  }
+
+  @Override
   public Optional<EnodeURL> getLocalEnode() {
     return Optional.empty();
   }

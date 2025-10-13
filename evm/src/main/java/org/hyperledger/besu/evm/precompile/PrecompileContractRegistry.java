@@ -16,8 +16,10 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.datatypes.Address;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Encapsulates a group of {@link PrecompiledContract}s used together. */
 public class PrecompileContractRegistry {
@@ -47,5 +49,14 @@ public class PrecompileContractRegistry {
    */
   public void put(final Address address, final PrecompiledContract precompile) {
     precompiles.put(address, precompile);
+  }
+
+  /**
+   * Gets the addresses of the precompiled contracts.
+   *
+   * @return the addresses
+   */
+  public Set<Address> getPrecompileAddresses() {
+    return Collections.unmodifiableSet(precompiles.keySet());
   }
 }

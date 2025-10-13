@@ -51,10 +51,12 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.CompressionType;
+import org.rocksdb.ConfigOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
+import org.rocksdb.OptionsUtil;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -75,9 +77,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
-
-  /** RocksDb memtable size when using the high spec option */
-  protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 536_870_912L;
 
   /** Max total size of all WAL file, after which a flush is triggered */
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
@@ -186,15 +185,47 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
    */
   private ColumnFamilyDescriptor createColumnDescriptor(
       final SegmentIdentifier segment, final RocksDBConfiguration configuration) {
+    boolean dynamicLevelBytes = true;
+    try {
+      ConfigOptions configOptions = new ConfigOptions();
+      DBOptions dbOptions = new DBOptions();
+      List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
 
+      String latestOptionsFileName =
+          OptionsUtil.getLatestOptionsFileName(
+              configuration.getDatabaseDir().toString(), Env.getDefault());
+      LOG.trace("Latest OPTIONS file detected: " + latestOptionsFileName);
+
+      String optionsFilePath =
+          configuration.getDatabaseDir().toString() + "/" + latestOptionsFileName;
+      OptionsUtil.loadOptionsFromFile(configOptions, optionsFilePath, dbOptions, cfDescriptors);
+
+      LOG.trace("RocksDB options loaded successfully from: " + optionsFilePath);
+
+      if (!cfDescriptors.isEmpty()) {
+        Optional<ColumnFamilyOptions> matchedCfOptions = Optional.empty();
+        for (ColumnFamilyDescriptor descriptor : cfDescriptors) {
+          if (Arrays.equals(descriptor.getName(), segment.getId())) {
+            matchedCfOptions = Optional.of(descriptor.getOptions());
+            break;
+          }
+        }
+        if (matchedCfOptions.isPresent()) {
+          dynamicLevelBytes = matchedCfOptions.get().levelCompactionDynamicLevelBytes();
+          LOG.trace("dynamicLevelBytes is set to an existing value : " + dynamicLevelBytes);
+        }
+      }
+    } catch (RocksDBException ex) {
+      // Options file is not found in the database
+    }
     BlockBasedTableConfig basedTableConfig = createBlockBasedTableConfig(segment, configuration);
 
     final var options =
         new ColumnFamilyOptions()
             .setTtl(0)
             .setCompressionType(CompressionType.LZ4_COMPRESSION)
-            .setTableFormatConfig(basedTableConfig);
-
+            .setTableFormatConfig(basedTableConfig)
+            .setLevelCompactionDynamicLevelBytes(dynamicLevelBytes);
     if (segment.containsStaticData()) {
       options
           .setEnableBlobFiles(true)

@@ -99,10 +99,29 @@ public class ProposerSelector {
     final Collection<Address> validatorsForRound =
         validatorProvider.getValidatorsAfterBlock(blockHeader);
 
+    return selectProposerForRound(
+        roundIdentifier, prevBlockProposer, validatorsForRound, changeEachBlock);
+  }
+
+  /**
+   * Determines which validator should be acting as the proposer for a given sequence/round.
+   *
+   * @param roundIdentifier The round for which a proposer is required.
+   * @param prevBlockProposer The proposer of the previous block.
+   * @param validatorsForRound The validators for the round.
+   * @param changeEachBlock Whether the proposer should change each block.
+   * @return The address of the node which is to propose a block for the provided Round.
+   */
+  public static Address selectProposerForRound(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Address prevBlockProposer,
+      final Collection<Address> validatorsForRound,
+      final boolean changeEachBlock) {
     if (!validatorsForRound.contains(prevBlockProposer)) {
       return handleMissingProposer(prevBlockProposer, validatorsForRound, roundIdentifier);
     } else {
-      return handleWithExistingProposer(prevBlockProposer, validatorsForRound, roundIdentifier);
+      return handleWithExistingProposer(
+          prevBlockProposer, validatorsForRound, roundIdentifier, changeEachBlock);
     }
   }
 
@@ -112,7 +131,7 @@ public class ProposerSelector {
    *
    * <p>And validators will change from there.
    */
-  private Address handleMissingProposer(
+  private static Address handleMissingProposer(
       final Address prevBlockProposer,
       final Collection<Address> validatorsForRound,
       final ConsensusRoundIdentifier roundIdentifier) {
@@ -135,10 +154,11 @@ public class ProposerSelector {
    * If the previous Proposer is still a validator - determine what offset should be applied for the
    * given round - factoring in a proposer change on the new block.
    */
-  private Address handleWithExistingProposer(
+  private static Address handleWithExistingProposer(
       final Address prevBlockProposer,
       final Collection<Address> validatorsForRound,
-      final ConsensusRoundIdentifier roundIdentifier) {
+      final ConsensusRoundIdentifier roundIdentifier,
+      final boolean changeEachBlock) {
     int indexOffsetFromPrevBlock = roundIdentifier.getRoundNumber();
     if (changeEachBlock) {
       indexOffsetFromPrevBlock += 1;
@@ -151,7 +171,7 @@ public class ProposerSelector {
    * Given Round 0 of the given height should start from given proposer (baseProposer) - determine
    * which validator should be used given the indexOffset.
    */
-  private Address calculateRoundSpecificValidator(
+  private static Address calculateRoundSpecificValidator(
       final Address baseProposer,
       final Collection<Address> validatorsForRound,
       final int indexOffset) {

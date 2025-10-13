@@ -17,7 +17,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32000,"message":"Total blob gas too high"}
+    "error":{"code":-32000,"message":"Total blob gas too high (total blob gas 917504 exceeds max blob gas per block 786432)"}
   },
   "statusCode": 200
 }

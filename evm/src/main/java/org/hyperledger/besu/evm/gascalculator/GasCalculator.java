@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -542,10 +543,21 @@ public interface GasCalculator {
    * encoded binary representation when stored on-chain.
    *
    * @param transactionPayload The encoded transaction, as bytes
-   * @param isContractCreate Is this transaction a contract creation transaction?
+   * @param isContractCreation Is this transaction a contract creation transaction?
+   * @param baselineGas The gas used by access lists and code delegation authorizations
    * @return the transaction's intrinsic gas cost
    */
-  long transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+  long transactionIntrinsicGasCost(
+      Bytes transactionPayload, boolean isContractCreation, long baselineGas);
+
+  /**
+   * Returns the floor gas cost of a transaction payload, i.e. the minimum gas cost that a
+   * transaction will be charged based on its calldata. Introduced in EIP-7623 in Prague.
+   *
+   * @param transactionPayload The encoded transaction, as bytes
+   * @return the transaction's floor gas cost
+   */
+  long transactionFloorCost(final Bytes transactionPayload);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -580,15 +592,6 @@ public interface GasCalculator {
   }
 
   /**
-   * Maximum Cost of a Transaction of a certain length.
-   *
-   * @param size the length of the transaction, in bytes
-   * @return the maximum gas cost
-   */
-  // what would be the gas for a PMT with hash of all non-zeros
-  long getMaximumTransactionCost(int size);
-
-  /**
    * Minimum gas cost of a transaction.
    *
    * @return the minimum gas cost
@@ -614,24 +617,22 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the blob gas cost per blob. This is the gas cost for each blob of data that is added to
+   * the block.
+   *
+   * @return the blob gas cost per blob
+   */
+  default long getBlobGasPerBlob() {
+    return 0L;
+  }
+
+  /**
    * Return the gas cost given the number of blobs
    *
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long blobGasCost(final int blobCount) {
-    return 0L;
-  }
-
-  /**
-   * Compute the new value for the excess blob gas, given the parent value and the count of new
-   * blobs
-   *
-   * @param parentExcessBlobGas excess blob gas from the parent
-   * @param newBlobs count of new blobs
-   * @return the new excess blob gas value
-   */
-  default long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
+  default long blobGasCost(final long blobCount) {
     return 0L;
   }
 
@@ -647,12 +648,34 @@ public interface GasCalculator {
   }
 
   /**
-   * Returns the upfront gas cost for EIP 7702 operation.
+   * Returns the upfront gas cost for EIP 7702 authorization processing.
    *
-   * @param authorizationListLength The length of the authorization list
+   * @param delegateCodeListLength The length of the code delegation list
    * @return the gas cost
    */
-  default long setCodeListGasCost(final int authorizationListLength) {
+  default long delegateCodeGasCost(final int delegateCodeListLength) {
     return 0L;
   }
+
+  /**
+   * Calculates the refund for processing the 7702 code delegation list if a delegator account
+   * already exists in the trie.
+   *
+   * @param alreadyExistingAccountSize The number of accounts already in the trie
+   * @return the gas refund
+   */
+  default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
+    return 0L;
+  }
+
+  /**
+   * Calculate the gas refund for a transaction.
+   *
+   * @param transaction the transaction
+   * @param initialFrame the initial frame
+   * @param codeDelegationRefund the code delegation refund
+   * @return the gas refund
+   */
+  long calculateGasRefund(
+      Transaction transaction, MessageFrame initialFrame, long codeDelegationRefund);
 }

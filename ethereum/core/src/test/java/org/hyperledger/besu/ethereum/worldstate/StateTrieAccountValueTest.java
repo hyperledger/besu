@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -41,11 +42,11 @@ public class StateTrieAccountValueTest {
   private void roundTripMainNetAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
 
-    StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
+    PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(nonce, balance, storageRoot, codeHash);
     Bytes encoded = RLP.encode(accountValue::writeTo);
     final RLPInput in = RLP.input(encoded);
-    StateTrieAccountValue roundTripAccountValue = StateTrieAccountValue.readFrom(in);
+    PmtStateTrieAccountValue roundTripAccountValue = PmtStateTrieAccountValue.readFrom(in);
 
     assertThat(nonce).isEqualTo(roundTripAccountValue.getNonce());
     assertThat(balance).isEqualTo(roundTripAccountValue.getBalance());

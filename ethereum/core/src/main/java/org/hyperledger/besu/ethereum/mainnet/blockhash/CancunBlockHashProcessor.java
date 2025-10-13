@@ -14,30 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 /** Processes the beacon block storage if it is present in the block header. */
-public class CancunBlockHashProcessor implements BlockHashProcessor {
+public class CancunBlockHashProcessor extends FrontierBlockHashProcessor {
 
   @Override
-  public void processBlockHashes(
-      final Blockchain blockchain,
-      final MutableWorldState mutableWorldState,
-      final ProcessableBlockHeader currentBlockHeader) {
+  public Void process(final BlockProcessingContext context) {
+    ProcessableBlockHeader currentBlockHeader = context.getBlockHeader();
     currentBlockHeader
         .getParentBeaconBlockRoot()
         .ifPresent(
             beaconBlockRoot -> {
               if (!beaconBlockRoot.isEmpty()) {
-                WorldUpdater worldUpdater = mutableWorldState.updater();
+                WorldUpdater worldUpdater = context.getWorldState().updater();
                 ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
                     worldUpdater, currentBlockHeader.getTimestamp(), beaconBlockRoot);
                 worldUpdater.commit();
               }
             });
+    return null;
   }
 }

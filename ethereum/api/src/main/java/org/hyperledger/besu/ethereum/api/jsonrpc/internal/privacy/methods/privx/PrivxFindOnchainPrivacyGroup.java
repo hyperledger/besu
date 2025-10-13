@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 // Use PrivxFindFlexiblePrivacyGroup instead
-@Deprecated
+@Deprecated(since = "21.10.3")
 public class PrivxFindOnchainPrivacyGroup extends PrivxFindFlexiblePrivacyGroup {
 
   public PrivxFindOnchainPrivacyGroup(

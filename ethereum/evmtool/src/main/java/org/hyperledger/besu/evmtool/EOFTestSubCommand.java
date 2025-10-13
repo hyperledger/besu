@@ -94,7 +94,7 @@ public class EOFTestSubCommand implements Runnable {
     }
     ProtocolSpec protocolSpec =
         ReferenceTestProtocolSchedules.getInstance()
-            .geSpecByName(fork == null ? EvmSpecVersion.PRAGUE.getName() : fork);
+            .geSpecByName(fork == null ? EvmSpecVersion.OSAKA.getName() : fork);
     evm = protocolSpec.getEvm();
 
     final JavaType javaType =
@@ -181,7 +181,7 @@ public class EOFTestSubCommand implements Runnable {
             continue;
           }
           TestResult actualResult;
-          if (evmVersion.ordinal() < EvmSpecVersion.PRAGUE_EOF.ordinal()) {
+          if (evmVersion.ordinal() < EvmSpecVersion.OSAKA.ordinal()) {
             actualResult = failed("EOF_InvalidCode");
           } else {
             actualResult = considerCode(code);
@@ -224,7 +224,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed(re.getMessage());
     }
     if (codeBytes.isEmpty()) {
-      return passed();
+      return failed("invalid_magic code is zero-length");
     }
 
     var layout = EOFLayout.parseEOF(codeBytes);

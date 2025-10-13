@@ -20,11 +20,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -36,16 +36,16 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TestMessageFrameBuilder {
 
-  public static final Address DEFAUT_ADDRESS = Address.fromHexString("0xe8f1b89");
+  public static final Address DEFAULT_ADDRESS = Address.fromHexString("0xe8f1b89");
   private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private Optional<BlockValues> blockValues = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
   private long initialGas = Long.MAX_VALUE;
-  private Address address = DEFAUT_ADDRESS;
-  private Address sender = DEFAUT_ADDRESS;
-  private Address originator = DEFAUT_ADDRESS;
-  private Address contract = DEFAUT_ADDRESS;
+  private Address address = DEFAULT_ADDRESS;
+  private Address sender = DEFAULT_ADDRESS;
+  private Address originator = DEFAULT_ADDRESS;
+  private Address contract = DEFAULT_ADDRESS;
   private Wei gasPrice = Wei.ZERO;
   private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
@@ -167,7 +167,8 @@ public class TestMessageFrameBuilder {
             .blockValues(blockValues.orElseGet(() -> new FakeBlockValues(1337)))
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))
+            .blockHashLookup(
+                blockHashLookup.orElse((__, number) -> Hash.hash(Words.longBytes(number))))
             .maxStackSize(maxStackSize)
             .isStatic(isStatic)
             .build();

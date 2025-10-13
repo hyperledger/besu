@@ -19,17 +19,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
@@ -53,8 +60,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
-  @Mock private DepositRequestValidator depositRequestValidator;
-  @Mock private RequestsValidatorCoordinator requestValidator;
+  @Mock private RequestsValidator requestValidator;
 
   @BeforeEach
   public void setUp() {
@@ -64,12 +70,8 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
-    lenient()
-        .when(depositRequestValidator.validateDepositRequests(any(), any(), any()))
-        .thenReturn(true);
-
-    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
-    lenient().when(requestValidator.validate(any(), any(), any())).thenReturn(true);
+    lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
+    lenient().when(requestValidator.validate(any())).thenReturn(true);
   }
 
   @Test
@@ -93,7 +95,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isTrue();
   }
 
@@ -117,7 +119,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isFalse();
   }
 
@@ -141,13 +143,94 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
         .isFalse();
   }
 
   @Test
-  public void validationFailsIfWithdrawalRequestsValidationFails() {
-    final Block block =
+  @SuppressWarnings("unchecked")
+  public void noneValidationModeDoesNothing() {
+    final Block block = mock(Block.class);
+    final List<TransactionReceipt> receipts = mock(List.class);
+
+    final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
+
+    assertThat(
+            bodyValidator.validateBody(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                receipts,
+                Hash.ZERO,
+                NONE,
+                BodyValidationMode.NONE))
+        .isTrue();
+    verifyNoInteractions(block);
+    verifyNoInteractions(receipts);
+  }
+
+  @Test
+  public void lightValidationDoesNotCheckRoots() {
+    final Block block = setupBlock();
+
+    final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
+    final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
+
+    assertThat(
+            bodyValidatorSpy.validateBody(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                emptyList(),
+                Hash.ZERO,
+                NONE,
+                BodyValidationMode.LIGHT))
+        .isTrue();
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, never()).validateBodyRoots(any(), any(), any());
+  }
+
+  @Test
+  public void hashOnlyValidationChecksOnlyRoots() {
+    final Block block = setupBlock();
+
+    final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
+    final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
+
+    assertThat(
+            bodyValidatorSpy.validateBody(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                emptyList(),
+                block.getHeader().getStateRoot(),
+                NONE,
+                BodyValidationMode.ROOT_ONLY))
+        .isTrue();
+
+    verify(bodyValidatorSpy, never()).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
+  }
+
+  @Test
+  public void fullValidationChecksRootsAndContent() {
+    final Block block = setupBlock();
+
+    final MainnetBlockBodyValidator bodyValidator = new MainnetBlockBodyValidator(protocolSchedule);
+    final MainnetBlockBodyValidator bodyValidatorSpy = spy(bodyValidator);
+
+    assertThat(
+            bodyValidatorSpy.validateBody(
+                blockchainSetupUtil.getProtocolContext(),
+                block,
+                emptyList(),
+                block.getHeader().getStateRoot(),
+                NONE,
+                BodyValidationMode.FULL))
+        .isTrue();
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
+  }
+
+  private Block setupBlock() {
+    Block block =
         blockDataGenerator.block(
             new BlockOptions()
                 .setBlockNumber(1)
@@ -157,15 +240,8 @@ class MainnetBlockBodyValidatorTest {
                 .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setRequests(Optional.of(List.of())));
+                .setWithdrawals(Optional.of(withdrawals)));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
-
-    when(requestValidator.validate(any(), any(), any())).thenReturn(false);
-
-    assertThat(
-            new MainnetBlockBodyValidator(protocolSchedule)
-                .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
-        .isFalse();
+    return block;
   }
 }

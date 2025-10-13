@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,9 +41,16 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
     super(
-        vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+        vertx,
+        timestampSchedule,
+        protocolContext,
+        mergeCoordinator,
+        ethPeers,
+        engineCallListener,
+        metricsSystem);
     pragueMilestone = timestampSchedule.milestoneFor(PRAGUE);
   }
 
@@ -55,7 +63,8 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
   protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
+      final Optional<String> maybeBeaconBlockRootParam,
+      final Optional<List<String>> maybeRequestsParam) {
     if (payloadParameter.getBlobGasUsed() == null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
@@ -69,8 +78,9 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
           "Missing parent beacon block root field");
-    } else if (payloadParameter.getDepositRequests() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit field");
+    } else if (maybeRequestsParam.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS, "Missing execution requests field");
     } else {
       return ValidationResult.valid();
     }

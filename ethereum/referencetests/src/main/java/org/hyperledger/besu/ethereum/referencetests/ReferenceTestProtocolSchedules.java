@@ -19,7 +19,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -105,8 +106,8 @@ public class ReferenceTestProtocolSchedules {
                 Map.entry(
                     "CancunToPragueAtTime15k",
                     createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000))),
-                Map.entry("Prague", createSchedule(genesisStub.clone().pragueEOFTime(0))),
-                Map.entry("Osaka", createSchedule(genesisStub.clone().futureEipsTime(0))),
+                Map.entry("Prague", createSchedule(genesisStub.clone().pragueTime(0))),
+                Map.entry("Osaka", createSchedule(genesisStub.clone().osakaTime(0))),
                 Map.entry("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry("Bogota", createSchedule(genesisStub.clone().futureEipsTime(0))),
                 Map.entry("Polis", createSchedule(genesisStub.clone().futureEipsTime(0))),
@@ -144,12 +145,12 @@ public class ReferenceTestProtocolSchedules {
   private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder(
             options,
-            CHAIN_ID,
+            Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem())

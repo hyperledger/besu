@@ -1,4 +1,4 @@
-Besu user documentation was moved to as separate repository to help manage versions and releases.
+Besu user documentation was moved to a separate repository to help manage versions and releases.
 
 If you want to contribute to the doc site, make a pull request against https://github.com/hyperledger/besu-docs
 

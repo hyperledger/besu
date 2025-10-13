@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
@@ -64,6 +66,25 @@ public class TransactionAdapter extends AdapterBase {
     this.transactionWithMetadata = transactionWithMetadata;
   }
 
+  /**
+   * Constructs a new TransactionAdapter object with receipt.
+   *
+   * @param transactionWithMetadata the TransactionWithMetadata object to adapt.
+   * @param transactionReceiptWithMetadata the TransactionReceiptWithMetadata object to adapt.
+   */
+  public TransactionAdapter(
+      final @Nonnull TransactionWithMetadata transactionWithMetadata,
+      final @Nullable TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
+    this.transactionWithMetadata = transactionWithMetadata;
+    this.transactionReceiptWithMetadata = Optional.ofNullable(transactionReceiptWithMetadata);
+  }
+
+  /**
+   * Reurns the receipt of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return the receipt of the transaction.
+   */
   private Optional<TransactionReceiptWithMetadata> getReceipt(
       final DataFetchingEnvironment environment) {
     if (transactionReceiptWithMetadata == null) {
@@ -290,6 +311,23 @@ public class TransactionAdapter extends AdapterBase {
                 receipt.getStatus() == -1
                     ? Optional.empty()
                     : Optional.of((long) receipt.getStatus()));
+  }
+
+  /**
+   * Retrieves the revert reason of the transaction, if any.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then checks
+   * the revert reason of the receipt. It would be an empty Optional for successful transactions.
+   * Otherwise, it returns an Optional containing the revert reason.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Bytes object representing the revert reason of the
+   *     transaction, or an empty Optional .
+   */
+  public Optional<Bytes> getRevertReason(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(TransactionReceiptWithMetadata::getReceipt)
+        .flatMap(TransactionReceipt::getRevertReason);
   }
 
   /**

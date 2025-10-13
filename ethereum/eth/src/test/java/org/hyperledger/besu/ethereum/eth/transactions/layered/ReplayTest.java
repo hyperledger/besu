@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,7 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -232,7 +233,7 @@ public class ReplayTest {
         txReplacementTester,
         baseFeeMarket,
         new BlobCache(),
-        MiningParameters.newDefault());
+        MiningConfiguration.newDefault());
   }
 
   // ToDo: commented since not always working, needs fix
@@ -307,7 +308,7 @@ public class ReplayTest {
     }
     assertThat(
             pendingTransactions.addTransaction(
-                PendingTransaction.newPendingTransaction(tx, false, false),
+                PendingTransaction.newPendingTransaction(tx, false, false, MAX_SCORE),
                 Optional.of(mockAccount)))
         .isNotEqualTo(TransactionAddedResult.INTERNAL_ERROR);
     if (tx.getSender().equals(senderToLog)) {

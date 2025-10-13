@@ -1,10 +1,12 @@
 name: integration-tests
 on:
   workflow_dispatch:
+  merge_group:
   pull_request:
     branches:
       - main
       - release-*
+      - verkle
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

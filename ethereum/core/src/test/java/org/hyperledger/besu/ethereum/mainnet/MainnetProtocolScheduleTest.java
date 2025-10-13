@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -71,9 +71,9 @@ public class MainnetProtocolScheduleTest {
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig("{}").getConfigOptions(),
+            GenesisConfig.fromConfig("{}").getConfigOptions(),
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -88,9 +88,9 @@ public class MainnetProtocolScheduleTest {
         "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"petersburgBlock\": 19, \"chainId\":1234}}";
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(),
+            GenesisConfig.fromConfig(json).getConfigOptions(),
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -122,9 +122,9 @@ public class MainnetProtocolScheduleTest {
         .isThrownBy(
             () ->
                 MainnetProtocolSchedule.fromConfig(
-                    GenesisConfigFile.fromConfig(json).getConfigOptions(),
+                    GenesisConfig.fromConfig(json).getConfigOptions(),
                     EvmConfiguration.DEFAULT,
-                    MiningParameters.MINING_DISABLED,
+                    MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
                     new NoOpMetricsSystem()));

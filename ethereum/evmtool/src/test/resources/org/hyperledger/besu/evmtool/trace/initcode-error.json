@@ -7,7 +7,7 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "CancunEOF"
+    "Osaka"
   ],
   "stdin": "",
   "stdout": "To evaluate INITCODE mode EOF code use the --create flag\n"

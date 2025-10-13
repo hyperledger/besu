@@ -23,8 +23,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -43,9 +41,7 @@ public class CliqueDifficultyCalculatorTest {
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();
-  private ProtocolContext cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
-  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @BeforeEach
   public void setup() {
@@ -56,9 +52,7 @@ public class CliqueDifficultyCalculatorTest {
 
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
-
-    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
+    CliqueHelpers.setCliqueContext(new CliqueContext(validatorProvider, null, null));
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 
@@ -68,8 +62,7 @@ public class CliqueDifficultyCalculatorTest {
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(1).buildHeader();
 
-    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
-        .isEqualTo(BigInteger.valueOf(2));
+    assertThat(calculator.nextDifficulty(0, parentHeader)).isEqualTo(BigInteger.valueOf(2));
   }
 
   @Test
@@ -78,7 +71,6 @@ public class CliqueDifficultyCalculatorTest {
 
     final BlockHeader parentHeader = blockHeaderBuilder.number(2).buildHeader();
 
-    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
-        .isEqualTo(BigInteger.valueOf(1));
+    assertThat(calculator.nextDifficulty(0, parentHeader)).isEqualTo(BigInteger.valueOf(1));
   }
 }

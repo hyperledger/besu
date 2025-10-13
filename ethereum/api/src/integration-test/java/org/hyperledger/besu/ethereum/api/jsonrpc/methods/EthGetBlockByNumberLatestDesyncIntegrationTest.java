@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
@@ -66,8 +67,9 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
     MutableBlockchain chain =
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
-    importer.getGenesisState().writeStateTo(state.getMutable());
-    ProtocolContext context = new ProtocolContext(chain, state, null, new BadBlockManager());
+    importer.getGenesisState().writeStateTo(state.getWorldState());
+    ProtocolContext context =
+        new ProtocolContext(chain, state, mock(ConsensusContext.class), new BadBlockManager());
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();

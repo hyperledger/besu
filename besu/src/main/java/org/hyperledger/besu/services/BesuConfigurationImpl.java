@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
+import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -31,9 +32,9 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private DataStorageConfiguration dataStorageConfiguration;
 
   // defaults
-  private MiningParameters miningParameters = MiningParameters.newDefault();
-  private Optional<String> rpcHttpHost = Optional.of("http://localhost");
-  private Optional<Integer> rpcHttpPort = Optional.of(8545);
+  private MiningConfiguration miningConfiguration;
+  private String rpcHttpHost = JsonRpcConfiguration.DEFAULT_JSON_RPC_HOST;
+  private Integer rpcHttpPort = JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 
   /** Default Constructor. */
   public BesuConfigurationImpl() {}
@@ -59,11 +60,11 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   /**
    * Set the mining parameters
    *
-   * @param miningParameters configured mining parameters
+   * @param miningConfiguration configured mining parameters
    * @return BesuConfigurationImpl instance
    */
-  public BesuConfigurationImpl withMiningParameters(final MiningParameters miningParameters) {
-    this.miningParameters = miningParameters;
+  public BesuConfigurationImpl withMiningParameters(final MiningConfiguration miningConfiguration) {
+    this.miningConfiguration = miningConfiguration;
     return this;
   }
 
@@ -74,18 +75,30 @@ public class BesuConfigurationImpl implements BesuConfiguration {
    * @return BesuConfigurationImpl instance
    */
   public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
-    this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
-    this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());
+    this.rpcHttpHost = rpcHttpOptions.getRpcHttpHost();
+    this.rpcHttpPort = rpcHttpOptions.getRpcHttpPort();
     return this;
   }
 
+  @Deprecated
   @Override
   public Optional<String> getRpcHttpHost() {
+    return Optional.of(rpcHttpHost);
+  }
+
+  @Deprecated
+  @Override
+  public Optional<Integer> getRpcHttpPort() {
+    return Optional.of(rpcHttpPort);
+  }
+
+  @Override
+  public String getConfiguredRpcHttpHost() {
     return rpcHttpHost;
   }
 
   @Override
-  public Optional<Integer> getRpcHttpPort() {
+  public Integer getConfiguredRpcHttpPort() {
     return rpcHttpPort;
   }
 
@@ -106,7 +119,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
 
   @Override
   public Wei getMinGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningConfiguration.getMinTransactionGasPrice();
   }
 
   @Override

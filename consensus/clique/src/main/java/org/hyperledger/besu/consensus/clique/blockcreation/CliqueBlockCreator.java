@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -48,34 +48,31 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Clique block creator.
    *
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param nodeKey the node key
-   * @param parentHeader the parent header
    * @param epochManager the epoch manager
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
-      final BlockHeader parentHeader,
       final EpochManager epochManager,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters,
-        __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
+        miningConfiguration,
+        (__, ___) -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         ethScheduler);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;
@@ -112,6 +109,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
 
   private Optional<ValidatorVote> determineCliqueVote(
       final SealableBlockHeader sealableBlockHeader) {
+    BlockHeader parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(sealableBlockHeader.getParentHash()).get();
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {

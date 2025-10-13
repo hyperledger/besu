@@ -48,13 +48,15 @@ public class NewPooledTransactionHashesMessageProcessor {
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final TransactionPoolMetrics metrics;
+  private final boolean isPeerTaskSystemEnabled;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
-      final TransactionPoolMetrics metrics) {
+      final TransactionPoolMetrics metrics,
+      final boolean isPeerTaskSystemEnabled) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -62,6 +64,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     this.metrics = metrics;
     metrics.initExpiredMessagesCounter(METRIC_LABEL);
     this.scheduledTasks = new ConcurrentHashMap<>();
+    this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
   }
 
   void processNewPooledTransactionHashesMessage(
@@ -114,7 +117,8 @@ public class NewPooledTransactionHashesMessageProcessor {
                     transactionPool,
                     transactionTracker,
                     metrics,
-                    METRIC_LABEL);
+                    METRIC_LABEL,
+                    isPeerTaskSystemEnabled);
               });
 
       bufferedTask.addHashes(

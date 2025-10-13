@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -33,9 +33,10 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -130,7 +131,7 @@ public final class MainnetBlockHeaderValidator {
 
   public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
       final BaseFeeMarket baseFeeMarket) {
-    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfiguration.isMergeEnabled());
   }
 
   @VisibleForTesting
@@ -197,8 +198,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new IncrementalTimestampRule());
   }
 
-  public static BlockHeaderValidator.Builder cancunBlockHeaderValidator(final FeeMarket feeMarket) {
+  public static BlockHeaderValidator.Builder blobAwareBlockHeaderValidator(
+      final FeeMarket feeMarket, final Supplier<GasCalculator> gasCalculator) {
     return mergeBlockHeaderValidator(feeMarket)
-        .addRule(new BlobGasValidationRule(new CancunGasCalculator()));
+        .addRule(new BlobGasValidationRule(gasCalculator.get()));
   }
 }

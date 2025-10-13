@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -59,11 +58,7 @@ public final class ValidationTestUtils {
         input.isEndOfCurrentList()
             ? Optional.empty()
             : Optional.of(input.readList(Withdrawal::readFrom));
-    final Optional<List<Request>> requests =
-        input.isEndOfCurrentList()
-            ? Optional.empty()
-            : Optional.of(input.readList(Request::readFrom));
-    return new BlockBody(transactions, ommers, withdrawals, requests);
+    return new BlockBody(transactions, ommers, withdrawals);
   }
 
   public static Block readBlock(final long num) throws IOException {

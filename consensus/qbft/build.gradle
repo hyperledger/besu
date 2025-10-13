@@ -31,6 +31,8 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
+  implementation project(':consensus:qbft-core')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:api')
@@ -40,14 +42,12 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
   implementation project(':evm')
-  implementation project(':pki')
-  implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.protocols:tuweni-bytes'
+  implementation 'io.consensys.protocols:tuweni-units'
   implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -69,20 +69,4 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-
-  integrationTestImplementation project(':crypto:algorithms')
-  integrationTestImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(':evm')
-  integrationTestImplementation project(':metrics:core')
-  integrationTestImplementation project(':testutil')
-
-  integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
-
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
-
-  testSupportImplementation 'org.mockito:mockito-core'
 }

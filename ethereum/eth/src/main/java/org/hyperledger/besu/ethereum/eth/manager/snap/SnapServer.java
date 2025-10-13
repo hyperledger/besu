@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -26,15 +27,15 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
-import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -46,9 +47,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -63,7 +64,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** See https://github.com/ethereum/devp2p/blob/master/caps/snap.md */
+/** See <a href="https://github.com/ethereum/devp2p/blob/master/caps/snap.md">snap</a> */
 class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SnapServer.class);
   private static final int PRIME_STATE_ROOT_CACHE_LIMIT = 128;
@@ -83,7 +84,6 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   static final Hash HASH_LAST = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("FF"), (byte) 0xFF));
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
-  private final AtomicLong listenerId = new AtomicLong();
   private final EthMessages snapMessages;
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
@@ -100,7 +100,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       final SnapSyncConfiguration snapConfig,
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final Synchronizer synchronizer) {
     this.snapServerEnabled =
         Optional.ofNullable(snapConfig)
             .map(SnapSyncConfiguration::isSnapServerEnabled)
@@ -110,14 +111,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     this.protocolContext = Optional.of(protocolContext);
     registerResponseConstructors();
 
-    // subscribe to initial sync completed events to start/stop snap server:
-    this.protocolContext
-        .flatMap(ProtocolContext::getSynchronizer)
-        .filter(z -> z instanceof DefaultSynchronizer)
-        .map(DefaultSynchronizer.class::cast)
-        .ifPresentOrElse(
-            z -> this.listenerId.set(z.subscribeInitialSync(this)),
-            () -> LOGGER.warn("SnapServer created without reference to sync status"));
+    // subscribe to initial sync completed events to start/stop snap server,
+    // not saving the listenerId since we never need to unsubscribe.
+    synchronizer.subscribeInitialSync(this);
   }
 
   /**
@@ -240,12 +236,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                         stopWatch,
                         maxResponseBytes,
                         (pair) -> {
-                          var rlpOutput = new BytesValueRLPOutput();
-                          rlpOutput.startList();
-                          rlpOutput.writeBytes(pair.getFirst());
-                          rlpOutput.writeRLPBytes(pair.getSecond());
-                          rlpOutput.endList();
-                          return rlpOutput.encodedSize();
+                          Bytes bytes =
+                              AccountRangeMessage.toSlimAccount(RLP.input(pair.getSecond()));
+                          return Hash.SIZE + bytes.size();
                         });
 
                 final Bytes32 endKeyBytes = range.endKeyHash();
@@ -257,11 +250,15 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     storage.streamFlatAccounts(range.startKeyHash(), shouldContinuePredicate);
 
                 if (accounts.isEmpty() && shouldContinuePredicate.shouldContinue.get()) {
+                  var fromNextHash =
+                      range.endKeyHash().compareTo(range.startKeyHash()) >= 0
+                          ? range.endKeyHash()
+                          : range.startKeyHash();
                   // fetch next account after range, if it exists
                   LOGGER.debug(
                       "found no accounts in range, taking first value starting from {}",
-                      asLogHash(range.endKeyHash()));
-                  accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+                      asLogHash(fromNextHash));
+                  accounts = storage.streamFlatAccounts(fromNextHash, UInt256.MAX_VALUE, 1L);
                 }
 
                 final var worldStateProof =
@@ -528,7 +525,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     var trieNode = optStorage.orElse(Bytes.EMPTY);
                     if (!trieNodes.isEmpty()
                         && (sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes
-                            || stopWatch.getTime()
+                            || stopWatch.getTime(TimeUnit.MILLISECONDS)
                                 > ResponseSizePredicate.MAX_MILLIS_PER_REQUEST)) {
                       break;
                     }

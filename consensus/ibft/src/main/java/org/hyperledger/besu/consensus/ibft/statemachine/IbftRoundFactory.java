@@ -100,7 +100,7 @@ public class IbftRoundFactory {
   public IbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final BlockCreator blockCreator =
-        blockCreatorFactory.create(parentHeader, roundState.getRoundIdentifier().getRoundNumber());
+        blockCreatorFactory.create(roundState.getRoundIdentifier().getRoundNumber());
 
     final IbftMessageTransmitter messageTransmitter =
         new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
@@ -115,6 +115,7 @@ public class IbftRoundFactory {
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        parentHeader);
   }
 }

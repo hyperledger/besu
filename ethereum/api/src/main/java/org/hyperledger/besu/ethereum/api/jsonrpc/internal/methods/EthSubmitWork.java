@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated(since = "24.12.0")
 public class EthSubmitWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;

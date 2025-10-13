@@ -145,7 +145,7 @@ public class EthScheduler {
     servicesExecutor.execute(command);
   }
 
-  public <T> CompletableFuture<Void> scheduleServiceTask(final Runnable task) {
+  public CompletableFuture<Void> scheduleServiceTask(final Runnable task) {
     return CompletableFuture.runAsync(task, servicesExecutor);
   }
 
@@ -154,6 +154,19 @@ public class EthScheduler {
     pendingFutures.add(serviceFuture);
     serviceFuture.whenComplete((r, t) -> pendingFutures.remove(serviceFuture));
     return serviceFuture;
+  }
+
+  public <T> CompletableFuture<T> scheduleServiceTask(final Supplier<CompletableFuture<T>> future) {
+    final CompletableFuture<T> promise = new CompletableFuture<>();
+    final Future<?> workerFuture = servicesExecutor.submit(() -> propagateResult(future, promise));
+    // If returned promise is cancelled, cancel the worker future
+    promise.whenComplete(
+        (r, t) -> {
+          if (t instanceof CancellationException) {
+            workerFuture.cancel(false);
+          }
+        });
+    return promise;
   }
 
   public CompletableFuture<Void> startPipeline(final Pipeline<?> pipeline) {

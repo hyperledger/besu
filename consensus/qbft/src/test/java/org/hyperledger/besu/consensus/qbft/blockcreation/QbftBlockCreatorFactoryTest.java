@@ -30,9 +30,9 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -50,8 +50,8 @@ public class QbftBlockCreatorFactoryTest {
   @BeforeEach
   @SuppressWarnings("unchecked")
   public void setUp() {
-    final MiningParameters miningParams =
-        ImmutableMiningParameters.builder()
+    final MiningConfiguration miningParams =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
                     .extraData(Bytes.wrap("Qbft tests".getBytes(UTF_8)))

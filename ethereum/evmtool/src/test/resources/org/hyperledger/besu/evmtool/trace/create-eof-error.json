@@ -8,7 +8,7 @@
     "--coinbase",
     "4444588443C3A91288C5002483449ABA1054192B",
     "--fork",
-    "CancunEOF"
+    "Osaka"
   ],
   "stdin": "",
   "stdout": "EOF Code Invalid : incompatible_container_kind opcode STOP is only valid for runtime.\n"

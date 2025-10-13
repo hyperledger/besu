@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -69,6 +70,7 @@ import org.junit.jupiter.api.Test;
 
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
+  private BlockchainQueries blockchainQueries;
   private MutableBlockchain blockchain;
   private EthFeeHistory method;
   private ProtocolSchedule protocolSchedule;
@@ -82,14 +84,15 @@ public class EthFeeHistoryTest {
     gen.blockSequence(genesisBlock, 10)
         .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
     miningCoordinator = mock(MergeCoordinator.class);
-    when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ONE);
+
+    blockchainQueries = mockBlockchainQueries(blockchain, Wei.of(7));
 
     mockFork();
 
     method =
         new EthFeeHistory(
             protocolSchedule,
-            blockchain,
+            blockchainQueries,
             miningCoordinator,
             ImmutableApiConfiguration.builder().build());
   }
@@ -139,11 +142,16 @@ public class EthFeeHistoryTest {
     Block block = mock(Block.class);
     Blockchain blockchain = mockBlockchainTransactionsWithPriorityFee(block);
 
+    final var blockchainQueries = mockBlockchainQueries(blockchain, Wei.of(7));
+
     EthFeeHistory ethFeeHistory =
         new EthFeeHistory(
-            null, blockchain, miningCoordinator, ImmutableApiConfiguration.builder().build());
+            null,
+            blockchainQueries,
+            miningCoordinator,
+            ImmutableApiConfiguration.builder().build());
 
-    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block);
+    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block, Wei.of(7));
 
     // Define the expected rewards for each percentile
     // The expected rewards match the fees of the transactions at each percentile in the
@@ -179,14 +187,51 @@ public class EthFeeHistoryTest {
             .upperBoundGasAndPriorityFeeCoefficient(500L)
             .build(); // Max reward = Wei.One * 500L / 100 = 5.0
 
-    EthFeeHistory ethFeeHistory =
-        new EthFeeHistory(null, blockchain, miningCoordinator, apiConfiguration);
+    final var blockchainQueries = mockBlockchainQueries(blockchain, Wei.of(7));
+    when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ONE);
 
-    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block);
+    EthFeeHistory ethFeeHistory =
+        new EthFeeHistory(null, blockchainQueries, miningCoordinator, apiConfiguration);
+
+    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block, Wei.of(7));
 
     // Define the expected bounded rewards for each percentile
     List<Wei> expectedBoundedRewards = Stream.of(2, 2, 2, 4, 5, 5, 5, 5, 5).map(Wei::of).toList();
-    assertThat(expectedBoundedRewards).isEqualTo(rewards);
+    assertThat(rewards).isEqualTo(expectedBoundedRewards);
+  }
+
+  @Test
+  public void shouldApplyLowerBoundRewardsCorrectly() {
+    // This test checks that the rewards are correctly bounded by the lower and upper limits,
+    // when the calculated lower bound for the priority fee is greater than the configured one.
+    // Configured minPriorityFeePerGas is 0 wei, minGasPrice is 10 wei and baseFee is 8 wei,
+    // so for a tx to be mined the minPriorityFeePerGas is raised to 2 wei before applying the
+    // coefficients.
+
+    List<Double> rewardPercentiles =
+        Arrays.asList(0.0, 5.0, 10.0, 27.50, 31.0, 59.0, 60.0, 61.0, 100.0);
+
+    Block block = mock(Block.class);
+    Blockchain blockchain = mockBlockchainTransactionsWithPriorityFee(block);
+
+    ApiConfiguration apiConfiguration =
+        ImmutableApiConfiguration.builder()
+            .isGasAndPriorityFeeLimitingEnabled(true)
+            .lowerBoundGasAndPriorityFeeCoefficient(200L) // Min reward = 2 * 200L / 100 = 4.0
+            .upperBoundGasAndPriorityFeeCoefficient(300L)
+            .build(); // Max reward = 2 * 300L / 100 = 6.0
+
+    final var blockchainQueries = mockBlockchainQueries(blockchain, Wei.of(10));
+    when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ZERO);
+
+    EthFeeHistory ethFeeHistory =
+        new EthFeeHistory(null, blockchainQueries, miningCoordinator, apiConfiguration);
+
+    List<Wei> rewards = ethFeeHistory.computeRewards(rewardPercentiles, block, Wei.of(8));
+
+    // Define the expected bounded rewards for each percentile
+    List<Wei> expectedBoundedRewards = Stream.of(4, 4, 4, 4, 5, 6, 6, 6, 6).map(Wei::of).toList();
+    assertThat(rewards).isEqualTo(expectedBoundedRewards);
   }
 
   private Blockchain mockBlockchainTransactionsWithPriorityFee(final Block block) {
@@ -398,5 +443,13 @@ public class EthFeeHistoryTest {
   private JsonRpcResponse feeHistoryRequest(final Object... params) {
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_feeHistory", params)));
+  }
+
+  private BlockchainQueries mockBlockchainQueries(
+      final Blockchain blockchain, final Wei gasPriceLowerBound) {
+    final var blockchainQueries = mock(BlockchainQueries.class);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.gasPriceLowerBound()).thenReturn(gasPriceLowerBound);
+    return blockchainQueries;
   }
 }

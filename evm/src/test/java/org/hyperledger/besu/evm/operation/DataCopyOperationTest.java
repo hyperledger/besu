@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -36,7 +36,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class DataCopyOperationTest {
 
-  static EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  static EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
   static Collection<Object[]> datacopyTestVector() {
     return Arrays.asList(
@@ -136,7 +136,7 @@ class DataCopyOperationTest {
         "0xef0001010004020001001d04%04x000080000367%016x67%016x67%016xd300%s"
             .formatted(data.size(), dst, src, len, data.toUnprefixedHexString());
     Code code = evm.getCodeUncached(Bytes.fromHexString(eofCode));
-    assumeThat(code.isValid()).isTrue();
+    assumeTrue(code.isValid());
 
     MessageFrame frame =
         new TestMessageFrameBuilder()
@@ -158,7 +158,7 @@ class DataCopyOperationTest {
   void legacyCallFails() {
     DataCopyOperation subject = new DataCopyOperation(new PragueGasCalculator());
     Code code = evm.getCodeUncached(Bytes.fromHexString("0x600460046004d3"));
-    assumeThat(code.isValid()).isTrue();
+    assumeTrue(code.isValid());
 
     MessageFrame frame =
         new TestMessageFrameBuilder()

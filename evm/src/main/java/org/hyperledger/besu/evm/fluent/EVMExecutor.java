@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.fluent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -72,7 +72,7 @@ public class EVMExecutor {
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
-  private BlockHashLookup blockHashLookup = n -> null;
+  private BlockHashLookup blockHashLookup = (__, ___) -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
@@ -164,7 +164,6 @@ public class EVMExecutor {
       case CANCUN -> cancun(chainId, evmConfiguration);
       case CANCUN_EOF -> cancunEOF(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
-      case PRAGUE_EOF -> pragueEOF(chainId, evmConfiguration);
       case OSAKA -> osaka(chainId, evmConfiguration);
       case AMSTERDAM -> amsterdam(chainId, evmConfiguration);
       case BOGOTA -> bogota(chainId, evmConfiguration);
@@ -520,21 +519,6 @@ public class EVMExecutor {
   public static EVMExecutor prague(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.prague(chainId, evmConfiguration));
-    executor.precompileContractRegistry =
-        MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
-    return executor;
-  }
-
-  /**
-   * Instantiate PragueEOF evm executor.
-   *
-   * @param chainId the chain ID
-   * @param evmConfiguration the evm configuration
-   * @return the evm executor
-   */
-  public static EVMExecutor pragueEOF(
-      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.pragueEOF(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.prague(executor.evm.getGasCalculator());
     return executor;

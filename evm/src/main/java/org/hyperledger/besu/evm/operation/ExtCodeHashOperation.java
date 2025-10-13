@@ -78,23 +78,25 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final long cost = cost(accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        final Account account = frame.getWorldUpdater().get(address);
-        if (account == null || account.isEmpty()) {
-          frame.pushStackItem(Bytes.EMPTY);
-        } else {
-          final Bytes code = account.getCode();
-          if (enableEIP3540
-              && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-              && code.get(1) == 0) {
-            frame.pushStackItem(EOF_REPLACEMENT_HASH);
-          } else {
-            frame.pushStackItem(account.getCodeHash());
-          }
-        }
-        return new OperationResult(cost, null);
       }
+
+      final Account account = frame.getWorldUpdater().get(address);
+
+      if (account == null || account.isEmpty()) {
+        frame.pushStackItem(Bytes.EMPTY);
+      } else {
+        final Bytes code = account.getCode();
+        if (enableEIP3540
+            && code.size() >= 2
+            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+            && code.get(1) == 0) {
+          frame.pushStackItem(EOF_REPLACEMENT_HASH);
+        } else {
+          frame.pushStackItem(account.getCodeHash());
+        }
+      }
+      return new OperationResult(cost, null);
+
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {

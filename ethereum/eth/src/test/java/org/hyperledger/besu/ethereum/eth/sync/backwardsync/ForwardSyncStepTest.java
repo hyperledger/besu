@@ -28,12 +28,18 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -46,6 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import org.assertj.core.api.Assertions;
@@ -69,13 +76,16 @@ public class ForwardSyncStepTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private BackwardSyncContext context;
 
+  @Mock private SynchronizerConfiguration syncConfig;
+  @Mock private PeerTaskExecutor peerTaskExecutor;
+
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           new StubGenesisConfigOptions(),
-          MiningParameters.MINING_DISABLED,
+          MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
           new NoOpMetricsSystem());
@@ -127,7 +137,12 @@ public class ForwardSyncStepTest {
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(2);
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    when(context.getSynchronizerConfiguration()).thenReturn(syncConfig);
+    EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setSynchronizerConfiguration(syncConfig)
+            .setPeerTaskExecutor(peerTaskExecutor)
+            .build();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     EthContext ethContext = ethProtocolManager.ethContext();
@@ -146,10 +161,28 @@ public class ForwardSyncStepTest {
                           ForestReferenceTestWorldState.create(Collections.emptyMap()),
                           blockDataGenerator.receipts(block))));
             });
+
+    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetBodiesFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetBodiesFromPeerTask.class);
+              List<Block> blocks =
+                  task.getBlockHeaders().stream()
+                      .map(
+                          (bh) ->
+                              new Block(bh, remoteBlockchain.getBlockBody(bh.getBlockHash()).get()))
+                      .collect(Collectors.toList());
+              return new PeerTaskExecutorResult<List<Block>>(
+                  Optional.of(blocks),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Optional.of(peer.getEthPeer()));
+            });
   }
 
   @Test
   public void shouldExecuteForwardSyncWhenPossible() throws Exception {
+    when(syncConfig.isPeerTaskSystemEnabled()).thenReturn(false);
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
     ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
 
@@ -168,6 +201,17 @@ public class ForwardSyncStepTest {
           }
           return !completableFuture.isDone();
         });
+
+    completableFuture.get();
+  }
+
+  @Test
+  public void shouldExecuteForwardSyncWhenPossibleUsingPeerTaskSystem() throws Exception {
+    when(syncConfig.isPeerTaskSystemEnabled()).thenReturn(true);
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
+    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
+
+    final CompletableFuture<Void> completableFuture = step.executeAsync();
 
     completableFuture.get();
   }
@@ -195,6 +239,20 @@ public class ForwardSyncStepTest {
     final CompletableFuture<List<Block>> future =
         step.requestBodies(List.of(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader()));
     peer.respondWhile(responder, () -> !future.isDone());
+    final List<Block> blocks = future.get();
+    Assertions.assertThat(blocks)
+        .hasSize(1)
+        .containsExactlyInAnyOrder(getBlockByNumber(LOCAL_HEIGHT + 1));
+  }
+
+  @Test
+  public void shouldFindBlockWhenRequestedUsingPeerTaskSystem() throws Exception {
+    when(syncConfig.isPeerTaskSystemEnabled()).thenReturn(true);
+    ForwardSyncStep step =
+        new ForwardSyncStep(context, createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 3));
+
+    final CompletableFuture<List<Block>> future =
+        step.requestBodies(List.of(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader()));
     final List<Block> blocks = future.get();
     Assertions.assertThat(blocks)
         .hasSize(1)

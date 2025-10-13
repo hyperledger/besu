@@ -275,7 +275,7 @@ final class GenesisStateTest {
     assertThat(last).isNotNull();
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
-    assertThat(header.getRequestsRoot().isPresent()).isFalse();
+    assertThat(header.getRequestsHash().isPresent()).isFalse();
   }
 
   @ParameterizedTest
@@ -290,7 +290,7 @@ final class GenesisStateTest {
     assertThat(header.getHash())
         .isEqualTo(
             Hash.fromHexString(
-                "0xaad700fd347070b47165c299dd5b843d0a47d4eaee12d3414a5cb58c5c8a8fe4"));
+                "0x5d2d02fce02d1b7ca635ec91a4fe6f7aa36f9b3997ec4304e8c68d8f6f15d266"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isZero();
     assertThat(header.getNumber()).isZero();
@@ -326,11 +326,11 @@ final class GenesisStateTest {
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
 
-    assertThat(header.getRequestsRoot().isPresent()).isTrue();
-    assertThat(header.getRequestsRoot().get())
+    assertThat(header.getRequestsHash().isPresent()).isTrue();
+    assertThat(header.getRequestsHash().get())
         .isEqualTo(
             Hash.fromHexString(
-                "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+                "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
   }
 
   @Test

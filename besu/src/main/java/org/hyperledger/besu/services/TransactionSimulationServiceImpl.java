@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.services;
 
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulator;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowExceedingBalance;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionSimulatorAllowFutureNonce;
+
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -26,6 +30,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 
@@ -34,11 +39,6 @@ import java.util.Optional;
 /** TransactionSimulationServiceImpl */
 @Unstable
 public class TransactionSimulationServiceImpl implements TransactionSimulationService {
-  private static final TransactionValidationParams SIMULATOR_ALLOWING_EXCEEDING_BALANCE =
-      ImmutableTransactionValidationParams.builder()
-          .from(TransactionValidationParams.transactionSimulator())
-          .isAllowExceedingBalance(true)
-          .build();
   private Blockchain blockchain;
   private TransactionSimulator transactionSimulator;
 
@@ -57,8 +57,14 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   }
 
   @Override
+  public ProcessableBlockHeader simulatePendingBlockHeader() {
+    return transactionSimulator.simulatePendingBlockHeader();
+  }
+
+  @Override
   public Optional<TransactionSimulationResult> simulate(
       final Transaction transaction,
+      final Optional<StateOverrideMap> maybeStateOverrides,
       final Hash blockHash,
       final OperationTracer operationTracer,
       final boolean isAllowExceedingBalance) {
@@ -80,10 +86,37 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
         .process(
             callParameter,
             isAllowExceedingBalance
-                ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
-                : TransactionValidationParams.transactionSimulator(),
+                ? transactionSimulatorAllowExceedingBalance()
+                : transactionSimulator(),
             operationTracer,
             maybeBlockHeader.get())
+        .map(res -> new TransactionSimulationResult(transaction, res.result()));
+  }
+
+  @Override
+  public Optional<TransactionSimulationResult> simulate(
+      final Transaction transaction,
+      final Optional<StateOverrideMap> maybeStateOverrides,
+      final ProcessableBlockHeader pendingBlockHeader,
+      final OperationTracer operationTracer,
+      final boolean isAllowExceedingBalance,
+      final boolean isAllowFutureNonce) {
+
+    final CallParameter callParameter = CallParameter.fromTransaction(transaction);
+
+    return transactionSimulator
+        .processOnPending(
+            callParameter,
+            maybeStateOverrides,
+            isAllowExceedingBalance
+                ? isAllowFutureNonce
+                    ? transactionSimulatorAllowExceedingBalanceAndFutureNonce()
+                    : transactionSimulatorAllowExceedingBalance()
+                : isAllowFutureNonce
+                    ? transactionSimulatorAllowFutureNonce()
+                    : transactionSimulator(),
+            operationTracer,
+            (org.hyperledger.besu.ethereum.core.ProcessableBlockHeader) pendingBlockHeader)
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
   }
 }

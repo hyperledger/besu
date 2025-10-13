@@ -21,9 +21,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Arrays;
@@ -530,12 +530,12 @@ public class PoWSolverTest {
     powThread1.interrupt();
   }
 
-  private MiningParameters createMiningParameters(
+  private MiningConfiguration createMiningParameters(
       final List<Long> nonceToTry, final int powJobTimeToLive, final int maxOmmerDepth) {
-    return ImmutableMiningParameters.builder()
+    return ImmutableMiningConfiguration.builder()
         .mutableInitValues(MutableInitValues.builder().nonceGenerator(nonceToTry).build())
         .unstable(
-            ImmutableMiningParameters.Unstable.builder()
+            ImmutableMiningConfiguration.Unstable.builder()
                 .maxOmmerDepth(maxOmmerDepth)
                 .powJobTimeToLive(powJobTimeToLive)
                 .build())

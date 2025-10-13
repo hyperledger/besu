@@ -91,37 +91,37 @@ public class SnapSyncMetricsManager {
     nbFlatAccountsHealed = new AtomicLong(0);
     nbFlatSlotsHealed = new AtomicLong(0);
     nbTrieNodesHealed = new AtomicLong(0);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_generated_nodes_total",
         "Total number of data nodes generated as part of snap sync world state download",
         nbTrieNodesGenerated::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_healed_nodes_total",
         "Total number of data nodes healed as part of snap sync world state heal process",
         nbTrieNodesHealed::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_accounts_total",
         "Total number of accounts downloaded as part of snap sync world state",
         nbAccountsDownloaded::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_slots_total",
         "Total number of slots downloaded as part of snap sync world state",
         nbSlotsDownloaded::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_flat_accounts_healed_total",
         "Total number of accounts healed in the flat database as part of snap sync world state",
         nbFlatAccountsHealed::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_flat_slots_healed_total",
         "Total number of slots healed in the flat database as part of snap sync world state",
         nbFlatSlotsHealed::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createCounter(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_codes_total",
         "Total number of codes downloaded as part of snap sync world state",

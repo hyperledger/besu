@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -75,7 +74,7 @@ public class PendingStateAdapter extends AdapterBase {
     return transactionPool.getPendingTransactions().stream()
         .map(PendingTransaction::getTransaction)
         .map(TransactionWithMetadata::new)
-        .map(TransactionAdapter::new)
+        .map(tx -> new TransactionAdapter(tx, null))
         .toList();
   }
 
@@ -145,10 +144,8 @@ public class PendingStateAdapter extends AdapterBase {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
         environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
-    final long gasCap = environment.getGraphQlContext().get(GraphQLContextType.GAS_CAP);
     final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(
-            query.getBlockchain(), query.getWorldStateArchive(), protocolSchedule, gasCap);
+        environment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_SIMULATOR);
 
     long gasParam = -1;
     Wei gasPriceParam = null;
@@ -165,14 +162,9 @@ public class PendingStateAdapter extends AdapterBase {
     final CallParameter param =
         new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
 
-    ImmutableTransactionValidationParams.Builder transactionValidationParams =
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator());
-    transactionValidationParams.isAllowExceedingBalance(true);
-
     return transactionSimulator.process(
         param,
-        transactionValidationParams.build(),
+        TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) ->
             transactionSimulatorResult.map(

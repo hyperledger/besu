@@ -39,6 +39,7 @@ dependencies {
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
+  implementation 'org.bouncycastle:bcpkix-jdk18on'
   implementation 'org.xerial.snappy:snappy-java'
 
   testImplementation 'org.mockito:mockito-junit-jupiter'

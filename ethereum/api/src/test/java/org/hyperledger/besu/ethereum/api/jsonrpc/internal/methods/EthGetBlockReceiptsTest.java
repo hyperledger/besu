@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -86,7 +86,7 @@ public class EthGetBlockReceiptsTest {
     blockchainQueries =
         spy(
             new BlockchainQueries(
-                protocolSchedule, blockchain, worldStateArchive, MiningParameters.newDefault()));
+                protocolSchedule, blockchain, worldStateArchive, MiningConfiguration.newDefault()));
     protocolSchedule = mock(ProtocolSchedule.class);
     method = new EthGetBlockReceipts(blockchainQueries, protocolSchedule);
   }

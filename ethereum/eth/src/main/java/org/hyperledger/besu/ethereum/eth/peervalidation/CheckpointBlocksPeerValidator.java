@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth.peervalidation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -24,20 +26,37 @@ public class CheckpointBlocksPeerValidator extends RequiredBlocksPeerValidator {
 
   public CheckpointBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash,
       final long chainHeightEstimationBuffer) {
-    super(protocolSchedule, metricsSystem, blockNumber, hash, chainHeightEstimationBuffer);
+    super(
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        metricsSystem,
+        blockNumber,
+        hash,
+        chainHeightEstimationBuffer);
   }
 
   public CheckpointBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash) {
     this(
-        protocolSchedule, metricsSystem, blockNumber, hash, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        metricsSystem,
+        blockNumber,
+        hash,
+        DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override

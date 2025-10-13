@@ -1,0 +1,10 @@
+---
+# runtime docker tests
+file:
+  /var/lib/besu:
+    exists: true
+    owner: besu
+    mode: "0755"
+process:
+  java:
+    running: true

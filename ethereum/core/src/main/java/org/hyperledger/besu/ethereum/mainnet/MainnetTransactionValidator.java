@@ -15,11 +15,14 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -49,6 +52,8 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator implements TransactionValidator {
+
+  public static final BigInteger TWO_POW_256 = BigInteger.TWO.pow(256);
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -129,7 +134,67 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
+    if (transactionType == TransactionType.DELEGATE_CODE) {
+      ValidationResult<TransactionInvalidReason> codeDelegationValidation =
+          validateCodeDelegation(transaction);
+      if (!codeDelegationValidation.isValid()) {
+        return codeDelegationValidation;
+      }
+    }
+
     return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
+  }
+
+  private static ValidationResult<TransactionInvalidReason> validateCodeDelegation(
+      final Transaction transaction) {
+    if (isDelegateCodeEmpty(transaction)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EMPTY_CODE_DELEGATION,
+          "transaction code delegation transactions must have a non-empty code delegation list");
+    }
+
+    if (transaction.getTo().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "transaction code delegation transactions must have a to address");
+    }
+
+    final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
+        transaction
+            .getCodeDelegationList()
+            .map(
+                codeDelegations -> {
+                  for (CodeDelegation codeDelegation : codeDelegations) {
+                    if (codeDelegation.chainId().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 'chainId' value, should be < 2^256 but got "
+                              + codeDelegation.chainId());
+                    }
+
+                    if (codeDelegation.r().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 'r' value, should be < 2^256 but got " + codeDelegation.r());
+                    }
+
+                    if (codeDelegation.s().compareTo(TWO_POW_256) >= 0) {
+                      throw new IllegalArgumentException(
+                          "Invalid 's' value, should be < 2^256 but got " + codeDelegation.s());
+                    }
+                  }
+
+                  return ValidationResult.valid();
+                });
+
+    if (validationResult.isPresent() && !validationResult.get().isValid()) {
+      return validationResult.get();
+    }
+
+    return ValidationResult.valid();
+  }
+
+  private static boolean isDelegateCodeEmpty(final Transaction transaction) {
+    return transaction.getCodeDelegationList().isEmpty()
+        || transaction.getCodeDelegationList().get().isEmpty();
   }
 
   private ValidationResult<TransactionInvalidReason> validateCostAndFee(
@@ -186,17 +251,22 @@ public class MainnetTransactionValidator implements TransactionValidator {
       }
     }
 
-    final long intrinsicGasCost =
-        gasCalculator.transactionIntrinsicGasCost(
-                transaction.getPayload(), transaction.isContractCreation())
-            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
-            + gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
-    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
+    final long baselineGas =
+        clampedAdd(
+            transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L),
+            gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize()));
+    final long intrinsicGasCostOrFloor =
+        Math.max(
+            gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation(), baselineGas),
+            gasCalculator.transactionFloorCost(transaction.getPayload()));
+
+    if (Long.compareUnsigned(intrinsicGasCostOrFloor, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
               "intrinsic gas cost %s exceeds gas limit %s",
-              intrinsicGasCost, transaction.getGasLimit()));
+              intrinsicGasCostOrFloor, transaction.getGasLimit()));
     }
 
     if (transaction.calculateUpfrontGasCost(transaction.getMaxGasPrice(), Wei.ZERO, 0).bitLength()
@@ -250,7 +320,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender()
+        && !canSendTransaction(sender, codeHash)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(
@@ -259,6 +330,10 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     return ValidationResult.valid();
+  }
+
+  private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
+    return codeHash.equals(Hash.EMPTY) || hasCodeDelegation(sender.getCode());
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static java.util.Comparator.comparing;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -43,7 +43,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     super(
         poolConfig,
         ethScheduler,
@@ -51,7 +51,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         metrics,
         transactionReplacementTester,
         blobCache,
-        miningParameters);
+        miningConfiguration);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         || pendingTransaction
             .getTransaction()
             .getGasPrice()
-            .map(miningParameters.getMinTransactionGasPrice()::lessThan)
+            .map(miningConfiguration.getMinTransactionGasPrice()::lessThan)
             .orElse(false);
   }
 

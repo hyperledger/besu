@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
+public class PeerTransactionTracker
+    implements EthPeer.DisconnectCallback, PendingTransactionDroppedListener {
   private static final Logger LOG = LoggerFactory.getLogger(PeerTransactionTracker.class);
 
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
@@ -122,13 +123,14 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   }
 
   private <T> Set<T> createTransactionsSet() {
-    return Collections.newSetFromMap(
-        new LinkedHashMap<>(1 << 4, 0.75f, true) {
-          @Override
-          protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
-            return size() > MAX_TRACKED_SEEN_TRANSACTIONS;
-          }
-        });
+    return Collections.synchronizedSet(
+        Collections.newSetFromMap(
+            new LinkedHashMap<>(16, 0.75f, true) {
+              @Override
+              protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
+                return size() > MAX_TRACKED_SEEN_TRANSACTIONS;
+              }
+            }));
   }
 
   @Override
@@ -174,5 +176,12 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
 
   private String logPeerSet(final Set<EthPeer> peers) {
     return peers.stream().map(EthPeer::getLoggableId).collect(Collectors.joining(","));
+  }
+
+  @Override
+  public void onTransactionDropped(final Transaction transaction, final RemovalReason reason) {
+    if (reason.stopTracking()) {
+      seenTransactions.values().stream().forEach(st -> st.remove(transaction.getHash()));
+    }
   }
 }

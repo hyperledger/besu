@@ -26,7 +26,6 @@ security-module="localfile"
 identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
-Xnat-kube-service-name="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
 poa-discovery-retry-bootnodes=true
@@ -44,7 +43,6 @@ max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
 random-peer-priority-enabled=false
-host-whitelist=["all"]
 host-allowlist=["all"]
 engine-host-allowlist=["all"]
 engine-rpc-enabled=true
@@ -85,6 +83,8 @@ rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
+rpc-http-tls-truststore-file="none.pfx"
+rpc-http-tls-truststore-password-file="none.passwd"
 rpc-http-authentication-jwt-algorithm="RS256"
 rpc-ws-authentication-jwt-algorithm="RS256"
 rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
@@ -108,6 +108,12 @@ graphql-http-enabled=false
 graphql-http-host="6.7.8.9"
 graphql-http-port=6789
 graphql-http-cors-origins=["none"]
+graphql-tls-enabled=false
+graphql-tls-keystore-file="none.pfx"
+graphql-tls-keystore-password-file="none.passwd"
+graphql-mtls-enabled=false
+graphql-tls-truststore-file="none.pfx"
+graphql-tls-truststore-password-file="none.passwd"
 
 # WebSockets API
 rpc-ws-enabled=false
@@ -120,6 +126,21 @@ rpc-ws-max-frame-size=65535
 rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
 rpc-ws-authentication-jwt-public-key-file="none"
+rpc-ws-ssl-enabled=false
+rpc-ws-ssl-keystore-file="none.pfx"
+rpc-ws-ssl-keystore-password="none.passwd"
+rpc-ws-ssl-keystore-password-file="none.txt"
+rpc-ws-ssl-keystore-type="none"
+rpc-ws-ssl-client-auth-enabled=false
+rpc-ws-ssl-truststore-file="none.pfx"
+rpc-ws-ssl-truststore-password="none.passwd"
+rpc-ws-ssl-truststore-password-file="none.txt"
+rpc-ws-ssl-truststore-type="none"
+rpc-ws-ssl-key-file="none.pfx"
+rpc-ws-ssl-cert-file="none.pfx"
+rpc-ws-ssl-trustcert-file="none.pfx"
+
+
 
 # API
 api-gas-price-blocks=100
@@ -195,6 +216,7 @@ tx-pool-retention-hours=999
 tx-pool-max-size=1234
 tx-pool-limit-by-account-percentage=0.017
 tx-pool-min-gas-price=1000
+tx-pool-min-score=100
 
 # Revert Reason
 revert-reason-enabled=false
@@ -225,20 +247,10 @@ Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
 Xsnapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
+Xpeertask-system-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
-
-#p2p over ssl
-Xp2p-tls-enabled=false
-Xp2p-tls-keystore-type="none"
-Xp2p-tls-keystore-file="none.file"
-Xp2p-tls-truststore-password-file="none"
-Xp2p-tls-truststore-type="none"
-Xp2p-tls-truststore-file="none.file"
-Xp2p-tls-keystore-password-file="none"
-Xp2p-tls-crl-file="none.file"
-Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
@@ -246,3 +258,4 @@ Xevm-jumpdest-cache-weight-kb=32000
 # plugins
 Xplugins-external-enabled=true
 plugins=["none"]
+plugin-continue-on-error=false

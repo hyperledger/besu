@@ -57,7 +57,7 @@ public class GetHeadersFromPeerByNumberTaskTest extends PeerMessageTaskTest<List
   protected List<BlockHeader> generateDataToBeRequested() {
     final int count = 3;
     final List<BlockHeader> requestedHeaders = new ArrayList<>(count);
-    for (long i = 0; i < count; i++) {
+    for (long i = count - 1; i >= 0; i--) {
       requestedHeaders.add(blockchain.getBlockHeader(5 + i).get());
     }
     return requestedHeaders;
@@ -66,9 +66,13 @@ public class GetHeadersFromPeerByNumberTaskTest extends PeerMessageTaskTest<List
   @Override
   protected EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> createTask(
       final List<BlockHeader> requestedData) {
-    final BlockHeader firstHeader = requestedData.get(0);
-    return GetHeadersFromPeerByNumberTask.startingAtNumber(
-        protocolSchedule, ethContext, firstHeader.getNumber(), requestedData.size(), metricsSystem);
+    return GetHeadersFromPeerByNumberTask.endingAtNumber(
+        protocolSchedule,
+        ethContext,
+        requestedData.getFirst().getNumber(),
+        requestedData.size(),
+        0,
+        metricsSystem);
   }
 
   @Test

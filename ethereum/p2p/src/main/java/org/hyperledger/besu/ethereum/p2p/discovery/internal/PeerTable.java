@@ -26,16 +26,17 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.BloomFilter;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -54,10 +55,7 @@ public class PeerTable {
   private final Map<Bytes, Integer> distanceCache;
   private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
-  private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
-      new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
-  private final CircularFifoQueue<String> invalidIPs =
-      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
+  private final Cache<String, Integer> unresponsiveIPs;
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
@@ -72,6 +70,11 @@ public class PeerTable {
             .toArray(Bucket[]::new);
     this.distanceCache = new ConcurrentHashMap<>();
     this.maxEntriesCnt = N_BUCKETS * DEFAULT_BUCKET_SIZE;
+    this.unresponsiveIPs =
+        CacheBuilder.newBuilder()
+            .maximumSize(maxEntriesCnt)
+            .expireAfterWrite(15L, TimeUnit.MINUTES)
+            .build();
 
     // A bloom filter with 4096 expected insertions of 64-byte keys with a 0.1% false positive
     // probability yields a memory footprint of ~7.5kb.
@@ -112,7 +115,7 @@ public class PeerTable {
    * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
-    if (ipAddressIsInvalid(peer.getEndpoint())) {
+    if (isIpAddressInvalid(peer.getEndpoint())) {
       return AddResult.invalid();
     }
     final Bytes id = peer.getId();
@@ -140,7 +143,6 @@ public class PeerTable {
     if (!res.isPresent()) {
       idBloom.put(id);
       distanceCache.put(id, distance);
-      ipAddressCheckMap.put(getKey(peer.getEndpoint()), peer.getEndpoint().getUdpPort());
       return AddResult.added();
     }
 
@@ -212,32 +214,18 @@ public class PeerTable {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
-  boolean ipAddressIsInvalid(final Endpoint endpoint) {
+  public boolean isIpAddressInvalid(final Endpoint endpoint) {
     final String key = getKey(endpoint);
-    if (invalidIPs.contains(key)) {
-      return true;
-    }
-    if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
-      // This peer has multiple discovery services on the same IP address + TCP port.
-      invalidIPs.add(key);
-      for (final Bucket bucket : table) {
-        bucket.getPeers().stream()
-            .filter(p -> p.getEndpoint().getHost().equals(endpoint.getHost()))
-            .forEach(p -> evictAndStore(p, bucket, key));
-      }
-      return true;
-    } else {
-      return false;
-    }
+    return unresponsiveIPs.getIfPresent(key) != null;
   }
 
-  private void evictAndStore(final DiscoveryPeer peer, final Bucket bucket, final String key) {
-    bucket.evict(peer);
-    invalidIPs.add(key);
+  public void invalidateIP(final Endpoint endpoint) {
+    final String key = getKey(endpoint);
+    unresponsiveIPs.put(key, Integer.MAX_VALUE);
   }
 
   private static String getKey(final Endpoint endpoint) {
-    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
+    return endpoint.getHost() + ":" + endpoint.getFunctionalTcpPort();
   }
 
   /**
@@ -310,20 +298,6 @@ public class PeerTable {
 
     public Peer getEvictionCandidate() {
       return evictionCandidate;
-    }
-  }
-
-  private static class LinkedHashMapWithMaximumSize<K, V> extends LinkedHashMap<K, V> {
-    private final int maxSize;
-
-    public LinkedHashMapWithMaximumSize(final int maxSize) {
-      super(maxSize, 0.75f, false);
-      this.maxSize = maxSize;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
-      return size() > maxSize;
     }
   }
 

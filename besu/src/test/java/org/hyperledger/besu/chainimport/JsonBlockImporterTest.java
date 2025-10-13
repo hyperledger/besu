@@ -17,31 +17,36 @@ package org.hyperledger.besu.chainimport;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.components.BesuCommandModule;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.components.BesuPluginContextModule;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.components.MiningParametersModule;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -52,9 +57,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import javax.inject.Singleton;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,14 +77,14 @@ public abstract class JsonBlockImporterTest {
   @TempDir public Path dataDir;
 
   protected String consensusEngine;
-  protected GenesisConfigFile genesisConfigFile;
+  protected GenesisConfig genesisConfig;
   protected boolean isEthash;
 
   protected void setup(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
-    this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);
-    this.isEthash = genesisConfigFile.getConfigOptions().isEthHash();
+    this.genesisConfig = GenesisConfig.fromConfig(genesisData);
+    this.isEthash = genesisConfig.getConfigOptions().isEthHash();
   }
 
   public static class SingletonTests extends JsonBlockImporterTest {
@@ -96,7 +105,7 @@ public abstract class JsonBlockImporterTest {
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage(
               "Unable to create block using current consensus engine: "
-                  + genesisConfigFile.getConfigOptions().getConsensusEngine());
+                  + genesisConfig.getConfigOptions().getConsensusEngine());
     }
   }
 
@@ -409,7 +418,7 @@ public abstract class JsonBlockImporterTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage(
                 "Some fields (coinbase, extraData) are unsupported by the current consensus engine: "
-                    + genesisConfigFile.getConfigOptions().getConsensusEngine());
+                    + genesisConfig.getConfigOptions().getConsensusEngine());
       }
     }
 
@@ -438,18 +447,18 @@ public abstract class JsonBlockImporterTest {
   }
 
   protected BesuController createController() throws IOException {
-    return createController(genesisConfigFile);
+    return createController(genesisConfig);
   }
 
-  protected BesuController createController(final GenesisConfigFile genesisConfigFile) {
+  protected BesuController createController(final GenesisConfig genesisConfig) {
     return new BesuController.Builder()
-        .fromGenesisFile(genesisConfigFile, SyncMode.FAST)
+        .fromGenesisFile(genesisConfig, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
-            ImmutableMiningParameters.builder()
+            ImmutableMiningConfiguration.builder()
                 .mutableInitValues(
                     MutableInitValues.builder()
                         .isMiningEnabled(true)
@@ -462,10 +471,31 @@ public abstract class JsonBlockImporterTest {
         .dataDirectory(dataDir)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-        .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
-        .besuComponent(mock(BesuComponent.class))
+        .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.builder().build())
+        .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();
   }
+
+  @Module
+  public static class JsonBlockImporterModule {
+
+    @Provides
+    BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule() {
+      return new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    }
+  }
+
+  @Singleton
+  @Component(
+      modules = {
+        BesuCommandModule.class,
+        MiningParametersModule.class,
+        MetricsSystemModule.class,
+        JsonBlockImporterModule.class,
+        BesuPluginContextModule.class,
+        BlobCacheModule.class
+      })
+  interface JsonBlockImportComponent extends BesuComponent {}
 }

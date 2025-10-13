@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ContractCreationProcessorTest
     extends AbstractMessageProcessorTest<ContractCreationProcessor> {
 
-  EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
   private ContractCreationProcessor processor;
 

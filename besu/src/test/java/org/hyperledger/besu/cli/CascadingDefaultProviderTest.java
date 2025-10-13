@@ -28,12 +28,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -108,7 +108,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     parseCommand("--config-file", toml.toString());
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
     verify(mockRunnerBuilder).p2pListenPort(eq(1234));
@@ -128,8 +128,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfigFile(
-                GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
+            .setGenesisConfig(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
             .setBootNodes(nodes)
             .setDnsDiscoveryUrl(null)
             .build();
@@ -162,11 +161,11 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).discoveryEnabled(eq(true));
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfigFile.fromResource(MAINNET.getGenesisFile()),
+                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -200,7 +199,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
     parseCommand("--config-file", configFile);
 
-    final var captMiningParameters = ArgumentCaptor.forClass(MiningParameters.class);
+    final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
     assertThat(captMiningParameters.getValue().getCoinbase())
@@ -219,7 +218,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
     parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
 
-    final var captMiningParameters = ArgumentCaptor.forClass(MiningParameters.class);
+    final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
     assertThat(captMiningParameters.getValue().getCoinbase())

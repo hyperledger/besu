@@ -23,8 +23,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -1025,72 +1025,70 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
-
-    // TODO add EOF operations here once PragueEOF is collapsed into Prague
   }
 
   /**
-   * PragueEOF evm.
+   * Osaka evm.
    *
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
-  public static EVM pragueEOF(final EvmConfiguration evmConfiguration) {
-    return pragueEOF(DEV_NET_CHAIN_ID, evmConfiguration);
+  public static EVM osaka(final EvmConfiguration evmConfiguration) {
+    return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
   /**
-   * PragueEOF evm.
+   * Osaka evm.
    *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
-  public static EVM pragueEOF(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return pragueEOF(new PragueEOFGasCalculator(), chainId, evmConfiguration);
+  public static EVM osaka(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return osaka(new OsakaGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
-   * PragueEOF evm.
+   * Osaka evm.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
-  public static EVM pragueEOF(
+  public static EVM osaka(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
     return new EVM(
-        pragueEOFOperations(gasCalculator, chainId),
+        osakaOperations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
-        EvmSpecVersion.PRAGUE_EOF);
+        EvmSpecVersion.OSAKA);
   }
 
   /**
-   * Operation registry for PragueEOF's operations.
+   * Operation registry for Osaka's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @return the operation registry
    */
-  public static OperationRegistry pragueEOFOperations(
+  public static OperationRegistry osakaOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerPragueEOFOperations(operationRegistry, gasCalculator, chainId);
+    registerOsakaOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
   /**
-   * Register PragueEOF's operations.
+   * Register Osaka's operations.
    *
    * @param registry the registry
    * @param gasCalculator the gas calculator
    * @param chainID the chain id
    */
-  public static void registerPragueEOFOperations(
+  public static void registerOsakaOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
@@ -1138,74 +1136,6 @@ public class MainnetEVMs {
     // EIP-7620 EOF Create and Return Contract operation
     registry.put(new EOFCreateOperation(gasCalculator));
     registry.put(new ReturnContractOperation(gasCalculator));
-  }
-
-  /**
-   * Osaka evm.
-   *
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM osaka(final EvmConfiguration evmConfiguration) {
-    return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
-  }
-
-  /**
-   * Osaka evm.
-   *
-   * @param chainId the chain id
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM osaka(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return osaka(new PragueGasCalculator(), chainId, evmConfiguration);
-  }
-
-  /**
-   * Osaka evm.
-   *
-   * @param gasCalculator the gas calculator
-   * @param chainId the chain id
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM osaka(
-      final GasCalculator gasCalculator,
-      final BigInteger chainId,
-      final EvmConfiguration evmConfiguration) {
-    return new EVM(
-        osakaOperations(gasCalculator, chainId),
-        gasCalculator,
-        evmConfiguration,
-        EvmSpecVersion.OSAKA);
-  }
-
-  /**
-   * Operation registry for osaka's operations.
-   *
-   * @param gasCalculator the gas calculator
-   * @param chainId the chain id
-   * @return the operation registry
-   */
-  public static OperationRegistry osakaOperations(
-      final GasCalculator gasCalculator, final BigInteger chainId) {
-    OperationRegistry operationRegistry = new OperationRegistry();
-    registerOsakaOperations(operationRegistry, gasCalculator, chainId);
-    return operationRegistry;
-  }
-
-  /**
-   * Register osaka operations.
-   *
-   * @param registry the registry
-   * @param gasCalculator the gas calculator
-   * @param chainID the chain id
-   */
-  public static void registerOsakaOperations(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final BigInteger chainID) {
-    registerPragueEOFOperations(registry, gasCalculator, chainID);
   }
 
   /**

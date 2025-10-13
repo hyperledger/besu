@@ -90,6 +90,7 @@ public class IbftRoundIntegrationTest {
   private MessageFactory throwingMessageFactory;
   private IbftMessageTransmitter transmitter;
   @Mock private StubValidatorMulticaster multicaster;
+  @Mock BlockHeader parentHeader;
 
   private Block proposedBlock;
 
@@ -145,7 +146,8 @@ public class IbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            parentHeader);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
@@ -172,7 +174,8 @@ public class IbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            parentHeader);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

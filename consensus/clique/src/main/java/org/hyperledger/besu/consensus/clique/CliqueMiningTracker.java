@@ -42,10 +42,7 @@ public class CliqueMiningTracker {
    * @return the boolean
    */
   public boolean isProposerAfter(final BlockHeader header) {
-    final Address nextProposer =
-        CliqueHelpers.getProposerForBlockAfter(
-            header,
-            protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider());
+    final Address nextProposer = CliqueHelpers.getProposerForBlockAfter(header);
     return localAddress.equals(nextProposer);
   }
 

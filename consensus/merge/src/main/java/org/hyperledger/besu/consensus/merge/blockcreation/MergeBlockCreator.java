@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -39,7 +39,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
   /**
    * Instantiates a new Merge block creator.
    *
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param extraDataCalculator the extra data calculator
    * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
@@ -47,7 +47,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final ExtraDataCalculator extraDataCalculator,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
@@ -55,13 +55,12 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final BlockHeader parentHeader,
       final EthScheduler ethScheduler) {
     super(
-        miningParameters,
-        __ -> miningParameters.getCoinbase().orElseThrow(),
+        miningConfiguration,
+        (__, ___) -> miningConfiguration.getCoinbase().orElseThrow(),
         extraDataCalculator,
         transactionPool,
         protocolContext,
         protocolSchedule,
-        parentHeader,
         ethScheduler);
   }
 
@@ -80,7 +79,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final BlockHeader parentHeader) {
 
     return createBlock(
         maybeTransactions,
@@ -89,14 +89,16 @@ class MergeBlockCreator extends AbstractBlockCreator {
         Optional.of(random),
         parentBeaconBlockRoot,
         timestamp,
-        false);
+        false,
+        parentHeader);
   }
 
   @Override
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp) {
+      final long timestamp,
+      final BlockHeader parentHeader) {
     throw new UnsupportedOperationException("random is required");
   }
 

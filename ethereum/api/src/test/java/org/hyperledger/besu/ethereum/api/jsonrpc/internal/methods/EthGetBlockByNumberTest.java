@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -93,7 +93,7 @@ public class EthGetBlockByNumberTest {
     blockchainQueries =
         spy(
             new BlockchainQueries(
-                protocolSchedule, blockchain, worldStateArchive, MiningParameters.newDefault()));
+                protocolSchedule, blockchain, worldStateArchive, MiningConfiguration.newDefault()));
 
     method = new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer);
   }
@@ -106,14 +106,17 @@ public class EthGetBlockByNumberTest {
   @Test
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenNoNumberSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("false")))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
+
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -129,7 +132,8 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid block parameter (index 0)");
+        .hasMessage("Invalid block parameter (index 0)")
+        .hasFieldOrPropertyWithValue("rpcErrorType", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     verifyNoMoreInteractions(blockchainQueries);
   }
 

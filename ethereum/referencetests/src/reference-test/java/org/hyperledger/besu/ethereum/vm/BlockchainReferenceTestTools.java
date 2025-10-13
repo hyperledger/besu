@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
@@ -91,8 +92,8 @@ public class BlockchainReferenceTestTools {
     // EOF tests don't have Prague stuff like deposits right now
     params.ignore("/stEOF/");
 
-    // None of the Prague tests have withdrawals and deposits handling
-    params.ignore("\\[Prague\\]");
+    // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
+    params.ignore("/stEIP2537/");
   }
 
   private BlockchainReferenceTestTools() {
@@ -108,7 +109,7 @@ public class BlockchainReferenceTestTools {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
     final ProtocolSchedule schedule =
@@ -148,18 +149,15 @@ public class BlockchainReferenceTestTools {
   }
 
   static void verifyJournaledEVMAccountCompatability(
-      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
+          final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
     EVM evm = protocolSpec.getEvm();
     if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-      assumeThat(
+      assumeFalse(
               worldState
-                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                  .anyMatch(AccountState::isEmpty))
-          .withFailMessage("Journaled account configured and empty account detected")
-          .isFalse();
-      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
-          .withFailMessage("Journaled account configured and fork prior to the merge specified")
-          .isFalse();
+                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE).anyMatch(AccountState::isEmpty),
+              "Journaled account configured and empty account detected");
+      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,
+              "Journaled account configured and fork prior to the merge specified");
     }
   }
 }

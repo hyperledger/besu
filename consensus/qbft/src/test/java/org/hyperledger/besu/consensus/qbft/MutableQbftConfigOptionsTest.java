@@ -37,4 +37,24 @@ public class MutableQbftConfigOptionsTest {
 
     assertThat(mutableQbftConfigOptions.getValidatorContractAddress()).hasValue("0xabc");
   }
+
+  @Test
+  public void checkBlockPeriodSeconds() {
+    when(qbftConfigOptions.getBlockPeriodSeconds()).thenReturn(2);
+
+    final MutableQbftConfigOptions mutableQbftConfigOptions =
+        new MutableQbftConfigOptions(qbftConfigOptions);
+
+    assertThat(mutableQbftConfigOptions.getBlockPeriodSeconds()).isEqualTo(2);
+  }
+
+  @Test
+  public void checkEmptyBlockPeriodSeconds() {
+    when(qbftConfigOptions.getEmptyBlockPeriodSeconds()).thenReturn(60);
+
+    final MutableQbftConfigOptions mutableQbftConfigOptions =
+        new MutableQbftConfigOptions(qbftConfigOptions);
+
+    assertThat(mutableQbftConfigOptions.getEmptyBlockPeriodSeconds()).isEqualTo(60);
+  }
 }

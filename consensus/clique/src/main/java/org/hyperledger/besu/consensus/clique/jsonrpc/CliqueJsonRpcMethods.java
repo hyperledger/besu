@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -41,22 +41,22 @@ import java.util.Map;
 public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext context;
   private final ProtocolSchedule protocolSchedule;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
 
   /**
    * Instantiates a new Clique json rpc methods.
    *
    * @param context the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    */
   public CliqueJsonRpcMethods(
       final ProtocolContext context,
       final ProtocolSchedule protocolSchedule,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     this.context = context;
     this.protocolSchedule = protocolSchedule;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
   }
 
   @Override
@@ -69,7 +69,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain blockchain = context.getBlockchain();
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(protocolSchedule, blockchain, worldStateArchive, miningParameters);
+        new BlockchainQueries(protocolSchedule, blockchain, worldStateArchive, miningConfiguration);
     final ValidatorProvider validatorProvider =
         context.getConsensusContext(CliqueContext.class).getValidatorProvider();
 

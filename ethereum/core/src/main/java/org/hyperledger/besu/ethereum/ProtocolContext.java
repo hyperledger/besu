@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -30,10 +28,8 @@ import java.util.Optional;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final BadBlockManager badBlockManager;
   private final ConsensusContext consensusContext;
-
-  private Optional<Synchronizer> synchronizer;
+  private final BadBlockManager badBlockManager;
 
   /**
    * Constructs a new ProtocolContext with the given blockchain, world state archive, consensus
@@ -41,7 +37,7 @@ public class ProtocolContext {
    *
    * @param blockchain the blockchain of the protocol context
    * @param worldStateArchive the world state archive of the protocol context
-   * @param consensusContext the consensus context of the protocol context
+   * @param consensusContext the consensus context
    * @param badBlockManager the bad block manager of the protocol context
    */
   public ProtocolContext(
@@ -52,50 +48,7 @@ public class ProtocolContext {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
-    this.synchronizer = Optional.empty();
     this.badBlockManager = badBlockManager;
-  }
-
-  /**
-   * Initializes a new ProtocolContext with the given blockchain, world state archive, protocol
-   * schedule, consensus context factory, and bad block manager.
-   *
-   * @param blockchain the blockchain of the protocol context
-   * @param worldStateArchive the world state archive of the protocol context
-   * @param protocolSchedule the protocol schedule of the protocol context
-   * @param consensusContextFactory the consensus context factory of the protocol context
-   * @param badBlockManager the bad block manager of the protocol context
-   * @return the initialized ProtocolContext
-   */
-  public static ProtocolContext init(
-      final MutableBlockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final BadBlockManager badBlockManager) {
-    return new ProtocolContext(
-        blockchain,
-        worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
-        badBlockManager);
-  }
-
-  /**
-   * Gets the synchronizer of the protocol context.
-   *
-   * @return the synchronizer of the protocol context
-   */
-  public Optional<Synchronizer> getSynchronizer() {
-    return synchronizer;
-  }
-
-  /**
-   * Sets the synchronizer of the protocol context.
-   *
-   * @param synchronizer the synchronizer to set
-   */
-  public void setSynchronizer(final Optional<Synchronizer> synchronizer) {
-    this.synchronizer = synchronizer;
   }
 
   /**
@@ -133,6 +86,19 @@ public class ProtocolContext {
    * @return the consensus context of the protocol context
    */
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
+    return consensusContext.as(klass);
+  }
+
+  /**
+   * Gets the consensus context of the protocol context.
+   *
+   * @param <C> the type of the consensus context
+   * @param klass the klass
+   * @param blockNumber the block number
+   * @return the consensus context of the protocol context
+   */
+  public <C extends ConsensusContext> C getConsensusContext(
+      final Class<C> klass, final long blockNumber) {
     return consensusContext.as(klass);
   }
 

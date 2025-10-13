@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -64,6 +65,7 @@ public class RestoreState implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RestoreState.class);
 
+  @NotBlank
   @Option(
       names = "--backup-path",
       required = true,
@@ -190,8 +192,8 @@ public class RestoreState implements Runnable {
         final Bytes accountRlp = accountInput.readBytes();
         final Bytes code = accountInput.readBytes();
 
-        final StateTrieAccountValue trieAccount =
-            StateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false, true));
+        final PmtStateTrieAccountValue trieAccount =
+            PmtStateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false, true));
         if (!trieAccount.getCodeHash().equals(Hash.hash(code))) {
           throw new RuntimeException("Code hash doesn't match");
         }

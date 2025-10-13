@@ -23,8 +23,6 @@ import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +34,8 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 
 public class BlobTestFixture {
 
+  private byte byteValue = 0x00;
+
   public BlobTestFixture() {
     try {
       // optimistically tear down a potential previous loaded trusted setup
@@ -46,7 +46,7 @@ public class BlobTestFixture {
     try {
       CKZG4844JNI.loadNativeLibrary();
       CKZG4844JNI.loadTrustedSetupFromResource(
-          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class);
+          "/kzg-trusted-setups/mainnet.txt", BlobTestFixture.class, 0);
 
     } catch (Exception e) {
       fail("Failed to compute commitment", e);
@@ -58,14 +58,8 @@ public class BlobTestFixture {
   ;
 
   public BlobTriplet createBlobTriplet() {
-    byte[] rawMaterial = {};
-    try (InputStream readme =
-        BlobTestFixture.class.getResourceAsStream(
-            "/org/hyperledger/besu/ethereum/core/encoding/BlobDataFixture.bin")) {
-      rawMaterial = readme.readAllBytes();
-    } catch (IOException e) {
-      fail("Failed to read blob file", e);
-    }
+    byte[] rawMaterial = new byte[131072];
+    rawMaterial[0] = byteValue++;
 
     Bytes48 commitment = Bytes48.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
 

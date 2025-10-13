@@ -161,11 +161,31 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
    * @return the string
    */
   public String toHumanReadableString() {
+    return toHumanReadableStringWithPadding(1);
+  }
+
+  /**
+   * Wei to human-readable string, with padding
+   *
+   * @return the string
+   */
+  public String toHumanReadablePaddedString() {
+    return toHumanReadableStringWithPadding(6);
+  }
+
+  /**
+   * Returns a human-readable String, the number of returned characters depends on the width
+   * parameter
+   *
+   * @param width the number of digits to use
+   * @return a human-readable String
+   */
+  private String toHumanReadableStringWithPadding(final int width) {
     final BigInteger amount = toBigInteger();
     final int numOfDigits = amount.toString().length();
     final Unit preferredUnit = Unit.getPreferred(numOfDigits);
     final double res = amount.doubleValue() / preferredUnit.divisor;
-    return String.format("%1." + preferredUnit.decimals + "f %s", res, preferredUnit);
+    return String.format("%" + width + "." + preferredUnit.decimals + "f %s", res, preferredUnit);
   }
 
   /** The enum Unit. */

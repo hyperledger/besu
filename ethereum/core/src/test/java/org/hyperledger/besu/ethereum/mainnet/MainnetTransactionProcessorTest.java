@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -30,11 +29,13 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -67,8 +68,8 @@ class MainnetTransactionProcessorTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TransactionValidatorFactory transactionValidatorFactory;
 
-  @Mock private AbstractMessageProcessor contractCreationProcessor;
-  @Mock private AbstractMessageProcessor messageCallProcessor;
+  @Mock private ContractCreationProcessor contractCreationProcessor;
+  @Mock private MessageCallProcessor messageCallProcessor;
 
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
@@ -79,17 +80,19 @@ class MainnetTransactionProcessorTest {
   @Mock private MutableAccount receiverAccount;
 
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
-    return new MainnetTransactionProcessor(
-        gasCalculator,
-        transactionValidatorFactory,
-        contractCreationProcessor,
-        messageCallProcessor,
-        false,
-        warmCoinbase,
-        MAX_STACK_SIZE,
-        FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier(),
-        new AuthorityProcessor(Optional.of(BigInteger.ONE)));
+    return MainnetTransactionProcessor.builder()
+        .gasCalculator(gasCalculator)
+        .transactionValidatorFactory(transactionValidatorFactory)
+        .contractCreationProcessor(contractCreationProcessor)
+        .messageCallProcessor(messageCallProcessor)
+        .clearEmptyAccounts(false)
+        .warmCoinbase(warmCoinbase)
+        .maxStackSize(MAX_STACK_SIZE)
+        .feeMarket(FeeMarket.legacy())
+        .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+        .codeDelegationProcessor(
+            new CodeDelegationProcessor(Optional.of(BigInteger.ONE), BigInteger.TEN))
+        .build();
   }
 
   @Test
@@ -108,7 +111,6 @@ class MainnetTransactionProcessorTest {
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(worldState.getOrCreate(any())).thenReturn(senderAccount);
     when(worldState.getOrCreateSenderAccount(any())).thenReturn(senderAccount);
     when(worldState.updater()).thenReturn(worldState);
 

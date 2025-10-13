@@ -38,7 +38,7 @@ public class RlpConverterServiceImplTest {
         new BlockHeaderTestFixture()
             .timestamp(1710338135 + 1)
             .baseFeePerGas(Wei.of(1000))
-            .requestsRoot(Hash.ZERO)
+            .requestsHash(Hash.ZERO)
             .withdrawalsRoot(Hash.ZERO)
             .blobGasUsed(500L)
             .excessBlobGas(BlobGas.of(500L))

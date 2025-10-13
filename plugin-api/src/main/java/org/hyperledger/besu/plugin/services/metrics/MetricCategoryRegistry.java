@@ -29,5 +29,13 @@ public interface MetricCategoryRegistry extends BesuService {
    *
    * @param newMetricCategory The {@link MetricCategory} that is being registered.
    */
-  public void addMetricCategory(final MetricCategory newMetricCategory);
+  void addMetricCategory(final MetricCategory newMetricCategory);
+
+  /**
+   * Return true if the metrics are enabled and the metric category is enabled
+   *
+   * @param metricCategory the metric category
+   * @return true if the metrics are enabled and the metric category is enabled
+   */
+  boolean isMetricCategoryEnabled(final MetricCategory metricCategory);
 }

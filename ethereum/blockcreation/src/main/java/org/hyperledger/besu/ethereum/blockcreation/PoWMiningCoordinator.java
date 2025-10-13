@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
  */
+@Deprecated(since = "24.12.0")
 public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMiner>
     implements BlockAddedObserver {
 

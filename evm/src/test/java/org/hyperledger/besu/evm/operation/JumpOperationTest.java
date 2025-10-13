@@ -56,7 +56,7 @@ class JumpOperationTest {
 
   @BeforeEach
   void init() {
-    evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
   }
 
   @Test

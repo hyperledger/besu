@@ -267,14 +267,19 @@ public class RlpBlockImporter implements Closeable {
 
   private BlockHeader lookupPreviousHeader(
       final MutableBlockchain blockchain, final BlockHeader header) {
-    return blockchain
-        .getBlockHeader(header.getParentHash())
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    String.format(
-                        "Block %s does not connect to the existing chain. Current chain head %s",
-                        header.getNumber(), blockchain.getChainHeadBlockNumber())));
+    try {
+      return blockchain
+          .getBlockHeader(header.getParentHash())
+          .orElseThrow(
+              () ->
+                  new IllegalStateException(
+                      String.format(
+                          "Block %s does not connect to the existing chain. Current chain head %s",
+                          header.getNumber(), blockchain.getChainHeadBlockNumber())));
+    } catch (IllegalStateException e) {
+      LOG.info("Block {} does not connect to the existing chain.", header.getNumber());
+    }
+    return null;
   }
 
   @Override

@@ -15,21 +15,24 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.DepositRequest;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.DepositRequestDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
 
 public class DepositRequestProcessor implements RequestProcessor {
-
-  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
+  private static final LogTopic DEPOSIT_EVENT_TOPIC =
+      LogTopic.wrap(
+          Bytes.fromHexString(
+              "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5"));
 
   private final Optional<Address> depositContractAddress;
 
@@ -38,26 +41,28 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Optional<List<? extends Request>> process(final ProcessRequestContext context) {
+  public Request process(final RequestProcessingContext context) {
     if (depositContractAddress.isEmpty()) {
-      return Optional.empty();
+      return new Request(RequestType.DEPOSIT, Bytes.EMPTY);
     }
-    List<DepositRequest> depositRequests =
-        findDepositRequestsFromReceipts(context.transactionReceipts());
-    return Optional.of(depositRequests);
+    Optional<Bytes> depositRequests = getDepositRequestData(context.transactionReceipts());
+    return new Request(RequestType.DEPOSIT, depositRequests.orElse(Bytes.EMPTY));
   }
 
   @VisibleForTesting
-  List<DepositRequest> findDepositRequestsFromReceipts(
-      final List<TransactionReceipt> transactionReceipts) {
-    return depositContractAddress
-        .map(
-            address ->
-                transactionReceipts.stream()
-                    .flatMap(receipt -> receipt.getLogsList().stream())
-                    .filter(log -> address.equals(log.getLogger()))
-                    .map(DepositRequestDecoder::decodeFromLog)
-                    .toList())
-        .orElse(Collections.emptyList());
+  Optional<Bytes> getDepositRequestData(final List<TransactionReceipt> transactionReceipts) {
+    return depositContractAddress.flatMap(
+        address ->
+            transactionReceipts.stream()
+                .flatMap(receipt -> receipt.getLogsList().stream())
+                .filter(log -> isDepositEvent(address, log))
+                .map(DepositLogDecoder::decodeFromLog)
+                .reduce(Bytes::concatenate));
+  }
+
+  private boolean isDepositEvent(final Address depositContractAddress, final Log log) {
+    return depositContractAddress.equals(log.getLogger())
+        && !log.getTopics().isEmpty()
+        && log.getTopics().getFirst().equals(DEPOSIT_EVENT_TOPIC);
   }
 }

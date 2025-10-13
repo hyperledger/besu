@@ -48,7 +48,7 @@ public class AbstractPreexistingNodeTest extends AcceptanceTestBase {
         new TarArchiveInputStream(
             new GzipCompressorInputStream(new FileInputStream(path.toAbsolutePath().toString())))) {
       TarArchiveEntry entry;
-      while ((entry = fin.getNextTarEntry()) != null) {
+      while ((entry = fin.getNextEntry()) != null) {
         if (entry.isDirectory()) {
           continue;
         }

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -42,11 +42,12 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -63,6 +64,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
@@ -104,12 +106,11 @@ public class BftBlockCreatorTest {
           public BlockHeaderValidator.Builder createBlockHeaderRuleset(
               final BftConfigOptions config, final FeeMarket feeMarket) {
             return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                5, Optional.empty());
+                Duration.ofSeconds(5), Optional.empty());
           }
         };
     final GenesisConfigOptions configOptions =
-        GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
-            .getConfigOptions();
+        GenesisConfig.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}").getConfigOptions();
     final ForksSchedule<BftConfigOptions> forksSchedule =
         new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
     final ProtocolSchedule protocolSchedule =
@@ -120,7 +121,7 @@ public class BftBlockCreatorTest {
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
@@ -152,12 +153,13 @@ public class BftBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            new BlobCache());
 
     transactionPool.setEnabled();
 
-    final MiningParameters miningParameters =
-        ImmutableMiningParameters.builder()
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(
                 MutableInitValues.builder()
                     .extraData(
@@ -175,7 +177,7 @@ public class BftBlockCreatorTest {
 
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
-            miningParameters,
+            miningConfiguration,
             forksSchedule,
             initialValidatorList.get(0),
             parent ->
@@ -189,16 +191,16 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
-            parentHeader,
             bftExtraDataEncoder,
             new DeterministicEthScheduler());
 
     final int secondsBetweenBlocks = 1;
-    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
+    final Block block =
+        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                secondsBetweenBlocks, Optional.empty())
+                Duration.ofSeconds(secondsBetweenBlocks), Optional.empty())
             .build();
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.

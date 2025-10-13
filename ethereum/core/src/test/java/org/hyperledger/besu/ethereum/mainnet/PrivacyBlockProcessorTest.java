@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -65,6 +67,7 @@ class PrivacyBlockProcessorTest {
   private AbstractBlockProcessor blockProcessor;
   private WorldStateArchive privateWorldStateArchive;
   private Enclave enclave;
+  private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
 
@@ -74,6 +77,7 @@ class PrivacyBlockProcessorTest {
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
     privateWorldStateArchive = mock(WorldStateArchive.class);
     enclave = mock(Enclave.class);
+    protocolContext = mock(ProtocolContext.class);
     protocolSchedule = mock(ProtocolSchedule.class);
     this.privacyBlockProcessor =
         new PrivacyBlockProcessor(
@@ -100,16 +104,17 @@ class PrivacyBlockProcessorTest {
     final Block secondBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create().setParentHash(firstBlock.getHash()));
-    privacyBlockProcessor.processBlock(blockchain, mutableWorldState, firstBlock);
+    privacyBlockProcessor.processBlock(protocolContext, blockchain, mutableWorldState, firstBlock);
     privateStateStorage
         .updater()
         .putPrivacyGroupHeadBlockMap(firstBlock.getHash(), expected)
         .commit();
-    privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
+    privacyBlockProcessor.processBlock(protocolContext, blockchain, mutableWorldState, secondBlock);
     assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash()))
         .contains(expected);
     verify(blockProcessor)
         .processBlock(
+            eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
             eq(firstBlock.getHeader()),
@@ -119,6 +124,7 @@ class PrivacyBlockProcessorTest {
             any());
     verify(blockProcessor)
         .processBlock(
+            eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
             eq(secondBlock.getHeader()),
@@ -156,10 +162,9 @@ class PrivacyBlockProcessorTest {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(firstBlock.getHeader()));
     final ProtocolSpec protocolSpec = mockProtocolSpec();
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(publicWorldStateArchive.getMutable(any(), any()))
-        .thenReturn(Optional.of(mutableWorldState));
+    when(publicWorldStateArchive.getWorldState(any())).thenReturn(Optional.of(mutableWorldState));
     final MutableWorldState mockPrivateStateArchive = mockPrivateStateArchive();
-    when(privateWorldStateArchive.getMutable(any(), any()))
+    when(privateWorldStateArchive.getWorldState(any()))
         .thenReturn(Optional.of(mockPrivateStateArchive));
 
     final PrivacyGroupHeadBlockMap expected =
@@ -172,9 +177,10 @@ class PrivacyBlockProcessorTest {
             firstBlock.getHash(), VALID_BASE64_ENCLAVE_KEY, PrivateBlockMetadata.empty())
         .commit();
 
-    privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
+    privacyBlockProcessor.processBlock(protocolContext, blockchain, mutableWorldState, secondBlock);
     verify(blockProcessor)
         .processBlock(
+            eq(protocolContext),
             eq(blockchain),
             eq(mutableWorldState),
             eq(secondBlock.getHeader()),
@@ -221,6 +227,8 @@ class PrivacyBlockProcessorTest {
     when(protocolSpec.getMiningBeneficiaryCalculator())
         .thenReturn(mock(MiningBeneficiaryCalculator.class));
     when(protocolSpec.isSkipZeroBlockRewards()).thenReturn(true);
+    final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
     return protocolSpec;
   }
 }

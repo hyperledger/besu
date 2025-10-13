@@ -30,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -40,8 +41,6 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
   private final int MIN_TEST_TIME_MINS = 60;
 
   private static final long ONE_MINUTE = Duration.of(1, ChronoUnit.MINUTES).toMillis();
-
-  private static final long THREE_MINUTES = Duration.of(1, ChronoUnit.MINUTES).toMillis();
 
   private static final long TEN_SECONDS = Duration.of(10, ChronoUnit.SECONDS).toMillis();
 
@@ -95,7 +94,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     } catch (RuntimeException e) {
       assertThat(e.getMessage())
           .contains(
-              "Revert reason: 'Transaction processing could not be completed due to an exception'");
+              "Revert reason: 'Transaction processing could not be completed due to an exception (Invalid opcode: 0x5f)'");
     }
 
     // Should initially be set to 0
@@ -156,9 +155,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     lastChainHeight = chainHeight;
 
-    // Leave the chain stalled for 3 minutes. Check no new blocks are mined. Then
+    // Leave the chain stalled for 1 minute. Check no new blocks are mined. Then
     // resume the other validators.
-    nextStepEndTime = previousStepEndTime.plus(3, ChronoUnit.MINUTES);
+    nextStepEndTime = previousStepEndTime.plus(1, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -212,6 +211,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
 
+    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
+
     previousStepEndTime = Instant.now();
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -240,7 +241,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     upgradeToShanghai(
         minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
 
-    Thread.sleep(THREE_MINUTES);
+    cluster.verify(blockchain.reachesHeight(minerNode4, 1, 180));
 
     SimpleStorageShanghai simpleStorageContractShanghai =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
@@ -344,6 +345,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     Thread.sleep(TEN_SECONDS);
   }
 
+  @AfterEach
   @Override
   public void tearDownAcceptanceTestBase() {
     cluster.stop();

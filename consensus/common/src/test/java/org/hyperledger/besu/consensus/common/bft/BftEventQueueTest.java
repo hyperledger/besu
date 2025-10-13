@@ -135,6 +135,40 @@ public class BftEventQueueTest {
   }
 
   @Test
+  public void supportsStopAndRestart() throws InterruptedException {
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+    queue.start();
+
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+    final DummyBftEvent dummyMessageEvent = new DummyBftEvent();
+    final DummyRoundExpiryBftEvent dummyRoundTimerEvent = new DummyRoundExpiryBftEvent();
+    final DummyNewChainHeadBftEvent dummyNewChainHeadEvent = new DummyNewChainHeadBftEvent();
+
+    queue.add(dummyMessageEvent);
+    queue.add(dummyRoundTimerEvent);
+    queue.add(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+
+    queue.stop();
+    queue.add(dummyMessageEvent);
+    queue.add(dummyRoundTimerEvent);
+    queue.add(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+
+    queue.start();
+    queue.add(dummyMessageEvent);
+    queue.add(dummyRoundTimerEvent);
+    queue.add(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNotNull();
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+  }
+
+  @Test
   public void alwaysAddBlockTimerExpiryEvents() throws InterruptedException {
     final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
 

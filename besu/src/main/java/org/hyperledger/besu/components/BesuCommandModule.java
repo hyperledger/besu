@@ -17,13 +17,17 @@ package org.hyperledger.besu.components;
 import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
+import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.options.P2PDiscoveryOptions;
+import org.hyperledger.besu.cli.options.RPCOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -42,18 +46,18 @@ public class BesuCommandModule {
 
   @Provides
   @Singleton
-  BesuCommand provideBesuCommand(final BesuComponent besuComponent) {
+  BesuCommand provideBesuCommand(final @Named("besuCommandLogger") Logger commandLogger) {
     final BesuCommand besuCommand =
         new BesuCommand(
-            besuComponent,
             RlpBlockImporter::new,
             JsonBlockImporter::new,
+            Era1BlockImporter::new,
             RlpBlockExporter::new,
             new RunnerBuilder(),
             new BesuController.Builder(),
-            Optional.ofNullable(besuComponent.getBesuPluginContext()).orElse(null),
-            System.getenv());
-    besuCommand.toCommandLine();
+            new BesuPluginContextImpl(),
+            System.getenv(),
+            commandLogger);
     return besuCommand;
   }
 
@@ -64,9 +68,27 @@ public class BesuCommandModule {
   }
 
   @Provides
+  @Singleton
+  RPCOptions provideRPCOptions() {
+    return RPCOptions.create();
+  }
+
+  @Provides
+  @Singleton
+  P2PDiscoveryConfiguration provideP2PDiscoveryConfiguration() {
+    return new P2PDiscoveryOptions().toDomainObject();
+  }
+
+  @Provides
   @Named("besuCommandLogger")
   @Singleton
   Logger provideBesuCommandLogger() {
     return Besu.getFirstLogger();
+  }
+
+  @Provides
+  @Singleton
+  BesuPluginContextImpl provideBesuPluginContextImpl(final BesuCommand provideFrom) {
+    return provideFrom.getBesuPluginContext();
   }
 }

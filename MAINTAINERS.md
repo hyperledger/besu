@@ -9,26 +9,25 @@
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
-| Adrian Sutton    | ajsutton         | ajsutton         |
-| Antony Denyer    | antonydenyer     | antonydenyer     |
-| Antoine Toulme   | atoulme          | atoulme          |
+| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
-| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
+| Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
+| Matilda Clerke   | Matilda-Clerke   | MatildaClerke    |
 | Karim Taam       | matkt            | matkt            |
 | Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
-| Danno Ferrin     | shemnon          | shemnon          |
+| Bhanu Pulluri    | pullurib         | bpulluri         |
 | Simon Dudley     | siladu           | siladu           |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
@@ -38,11 +37,15 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
+| Adrian Sutton    | ajsutton         | ajsutton         |
+| Antony Denyer    | antonydenyer     | antonydenyer     |
+| Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
@@ -52,6 +55,7 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Danno Ferrin     | shemnon          | shemnon          |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
@@ -82,7 +86,7 @@ The following steps must occur for a contributor to be "upgraded" as a maintaine
   - The proposed maintainer accepts the nomination and expresses a willingness
     to be a long-term (more than 6 month) committer by adding a comment in the proposal PR.
   - The PR will be communicated in all appropriate communication channels
-    including at least [besu-contributors channel on Hyperledger Discord](https://discord.gg/hyperledger),
+    including at least [besu-contributors channel on Discord](https://discord.com/invite/hyperledger),
     the [mailing list](https://lists.hyperledger.org/g/besu)
     and any maintainer/community call.
 - Approval by at least 3 current maintainers within two weeks of the proposal or

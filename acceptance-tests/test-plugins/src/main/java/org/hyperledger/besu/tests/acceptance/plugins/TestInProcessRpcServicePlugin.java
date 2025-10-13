@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
@@ -36,7 +36,7 @@ public class TestInProcessRpcServicePlugin implements BesuPlugin {
   long minGasPrice = -1;
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     final PicoCLIOptions cmdlineOptions =
         context
             .getService(PicoCLIOptions.class)

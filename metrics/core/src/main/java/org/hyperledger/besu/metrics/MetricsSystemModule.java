@@ -36,10 +36,4 @@ public class MetricsSystemModule {
   MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
     return MetricsSystemFactory.create(metricsConfig);
   }
-
-  @Provides
-  @Singleton
-  ObservableMetricsSystem provideObservableMetricsSystem(final MetricsConfiguration metricsConfig) {
-    return MetricsSystemFactory.create(metricsConfig);
-  }
 }

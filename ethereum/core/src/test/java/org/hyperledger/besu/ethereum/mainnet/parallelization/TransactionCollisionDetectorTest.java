@@ -19,17 +19,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,14 +94,14 @@ class TransactionCollisionDetectorTest {
     // Simulate that the address was already modified in the block
     bonsaiUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, nextAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, nextAccountValue));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the address is read in the next transaction
     trxUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -119,14 +123,14 @@ class TransactionCollisionDetectorTest {
     // Simulate that the address was already modified in the block
     bonsaiUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, nextAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, nextAccountValue));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the address is read in the next transaction
     trxUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -148,14 +152,14 @@ class TransactionCollisionDetectorTest {
     // Simulate that the address was already modified in the block
     bonsaiUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, nextAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, nextAccountValue));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the address is read in the next transaction
     trxUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -168,23 +172,35 @@ class TransactionCollisionDetectorTest {
   }
 
   @Test
-  void testCollisionWithModifiedStorageRoot() {
+  void testCollisionWithModifiedStorageRootAndSameSlot() {
     final Address address = Address.fromHexString("0x1");
     final BonsaiAccount priorAccountValue = createAccount(address);
     final BonsaiAccount nextAccountValue = new BonsaiAccount(priorAccountValue, worldState, true);
     nextAccountValue.setStorageRoot(Hash.EMPTY);
-
-    // Simulate that the address was already modified in the block
+    final StorageSlotKey updateStorageSlotKey = new StorageSlotKey(UInt256.ONE);
+    // Simulate that the address slot was already modified in the block
     bonsaiUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, nextAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, nextAccountValue));
+    bonsaiUpdater
+        .getStorageToUpdate()
+        .computeIfAbsent(
+            address,
+            __ -> new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), (___, ____) -> {}))
+        .put(updateStorageSlotKey, new PathBasedValue<>(UInt256.ONE, UInt256.ZERO));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the address is read in the next transaction
     trxUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
+    trxUpdater
+        .getStorageToUpdate()
+        .computeIfAbsent(
+            address,
+            __ -> new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), (___, ____) -> {}))
+        .put(updateStorageSlotKey, new PathBasedValue<>(UInt256.ONE, UInt256.ONE));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -194,6 +210,48 @@ class TransactionCollisionDetectorTest {
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the modified address");
+  }
+
+  @Test
+  void testCollisionWithModifiedStorageRootNotSameSlot() {
+    final Address address = Address.fromHexString("0x1");
+    final BonsaiAccount priorAccountValue = createAccount(address);
+    final BonsaiAccount nextAccountValue = new BonsaiAccount(priorAccountValue, worldState, true);
+    nextAccountValue.setStorageRoot(Hash.EMPTY);
+    // Simulate that the address slot was already modified in the block
+    bonsaiUpdater
+        .getAccountsToUpdate()
+        .put(address, new PathBasedValue<>(priorAccountValue, nextAccountValue));
+    bonsaiUpdater
+        .getStorageToUpdate()
+        .computeIfAbsent(
+            address,
+            __ -> new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), (___, ____) -> {}))
+        .put(new StorageSlotKey(UInt256.ZERO), new PathBasedValue<>(UInt256.ONE, UInt256.ZERO));
+
+    final Transaction transaction = createTransaction(address, address);
+
+    // Simulate that the address is read in the next transaction
+    trxUpdater
+        .getAccountsToUpdate()
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
+    trxUpdater
+        .getStorageToUpdate()
+        .computeIfAbsent(
+            address,
+            __ -> new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), (___, ____) -> {}))
+        .put(new StorageSlotKey(UInt256.ONE), new PathBasedValue<>(UInt256.ONE, UInt256.ONE));
+
+    boolean hasCollision =
+        collisionDetector.hasCollision(
+            transaction,
+            Address.ZERO,
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO),
+            bonsaiUpdater);
+
+    assertFalse(
+        hasCollision,
+        "Expected no collision when storage roots are modified but different slots are updated.");
   }
 
   @Test
@@ -226,7 +284,7 @@ class TransactionCollisionDetectorTest {
         .getAccountsToUpdate()
         .put(
             miningBeneficiary,
-            new DiffBasedValue<>(miningBeneficiaryValue, miningBeneficiaryValue));
+            new PathBasedValue<>(miningBeneficiaryValue, miningBeneficiaryValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -244,12 +302,12 @@ class TransactionCollisionDetectorTest {
     final BonsaiAccount accountValue = createAccount(address);
 
     // Simulate that the address was deleted in the block
-    bonsaiUpdater.getDeletedAccountAddresses().add(address);
+    bonsaiUpdater.getAccountsToUpdate().put(address, new PathBasedValue<>(accountValue, null));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the deleted address is read in the next transaction
-    trxUpdater.getAccountsToUpdate().put(address, new DiffBasedValue<>(accountValue, accountValue));
+    trxUpdater.getAccountsToUpdate().put(address, new PathBasedValue<>(accountValue, accountValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(
@@ -269,14 +327,14 @@ class TransactionCollisionDetectorTest {
     // Simulate that the address was already read in the block
     bonsaiUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
 
     final Transaction transaction = createTransaction(address, address);
 
     // Simulate that the address is read in the next transaction
     trxUpdater
         .getAccountsToUpdate()
-        .put(address, new DiffBasedValue<>(priorAccountValue, priorAccountValue));
+        .put(address, new PathBasedValue<>(priorAccountValue, priorAccountValue));
 
     boolean hasCollision =
         collisionDetector.hasCollision(

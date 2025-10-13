@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
@@ -192,7 +191,10 @@ public class TransactionTracer {
         transaction,
         header.getCoinbase(),
         tracer,
-        new CachingBlockHashLookup(header, blockchain),
+        blockReplay
+            .getProtocolSpec(header)
+            .getBlockHashProcessor()
+            .createBlockHashLookup(blockchain, header),
         false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
         blobGasPrice);

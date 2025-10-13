@@ -34,6 +34,6 @@ public class FixedDifficultyCalculators {
 
   public static DifficultyCalculator calculator(final GenesisConfigOptions config) {
     long difficulty = config.getEthashConfigOptions().getFixedDifficulty().getAsLong();
-    return (time, parent, context) -> BigInteger.valueOf(difficulty);
+    return (time, parent) -> BigInteger.valueOf(difficulty);
   }
 }

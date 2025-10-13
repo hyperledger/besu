@@ -264,7 +264,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
             List.of());
     store.close();
 
-    // Create new db without ignoring experimental colum family will add column to db
+    // Create new db without ignoring experimental column family will add column to db
     store =
         createSegmentedStore(
             testPath,

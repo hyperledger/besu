@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +54,6 @@ public class QbftPivotSelectorTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private BftContext bftContext;
   @Mock private SyncState syncState;
-  @Mock private MetricsSystem metricsSystem;
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private ValidatorProvider validatorProvider;
@@ -80,13 +78,7 @@ public class QbftPivotSelectorTest {
     when(validatorProvider.getValidatorsAtHead()).thenReturn(validatorList);
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
-            ethContext,
-            syncConfig,
-            syncState,
-            metricsSystem,
-            protocolContext,
-            nodeKey,
-            blockHeader);
+            ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
     Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();
   }
@@ -104,13 +96,7 @@ public class QbftPivotSelectorTest {
     when(validatorProvider.getValidatorsAtHead()).thenReturn(validatorList);
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
-            ethContext,
-            syncConfig,
-            syncState,
-            metricsSystem,
-            protocolContext,
-            nodeKey,
-            blockHeader);
+            ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
     try {
       Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
@@ -126,13 +112,7 @@ public class QbftPivotSelectorTest {
     when(validatorProvider.nodeIsValidator(any())).thenReturn(false);
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
-            ethContext,
-            syncConfig,
-            syncState,
-            metricsSystem,
-            protocolContext,
-            nodeKey,
-            blockHeader);
+            ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
     Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();
@@ -145,13 +125,7 @@ public class QbftPivotSelectorTest {
     when(blockHeader.getNumber()).thenReturn(10L);
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
-            ethContext,
-            syncConfig,
-            syncState,
-            metricsSystem,
-            protocolContext,
-            nodeKey,
-            blockHeader);
+            ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
     Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
     assertThat(pivotState.isEmpty()).isTrue();

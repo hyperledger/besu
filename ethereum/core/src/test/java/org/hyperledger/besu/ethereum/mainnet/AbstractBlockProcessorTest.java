@@ -27,13 +27,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -50,6 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractBlockProcessorTest {
 
+  @Mock private ProtocolContext protocolContext;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   @Mock private ProtocolSchedule protocolSchedule;
@@ -69,9 +70,6 @@ abstract class AbstractBlockProcessorTest {
   void baseSetup() {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient()
-        .when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(RequestsValidatorCoordinator.empty());
-    lenient()
         .when(protocolSpec.getBlockHashProcessor())
         .thenReturn(new FrontierBlockHashProcessor());
     blockProcessor =
@@ -88,7 +86,14 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
+        protocolContext,
+        blockchain,
+        worldState,
+        emptyBlockHeader,
+        emptyList(),
+        emptyList(),
+        Optional.empty(),
+        null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -96,7 +101,14 @@ abstract class AbstractBlockProcessorTest {
   void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
+        protocolContext,
+        blockchain,
+        worldState,
+        emptyBlockHeader,
+        emptyList(),
+        emptyList(),
+        Optional.empty(),
+        null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -106,6 +118,7 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
+        protocolContext,
         blockchain,
         worldState,
         emptyBlockHeader,
@@ -123,6 +136,7 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
+        protocolContext,
         blockchain,
         worldState,
         emptyBlockHeader,

@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMinerExecutor;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.Optional;
 
 /** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
@@ -44,7 +46,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
@@ -53,7 +55,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext,
             protocolSchedule,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             new DefaultBlockScheduler(
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
@@ -66,11 +68,11 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext.getBlockchain(),
             executor,
             syncState,
-            miningParameters.getUnstable().getRemoteSealersLimit(),
-            miningParameters.getUnstable().getRemoteSealersTimeToLive());
+            miningConfiguration.getUnstable().getRemoteSealersLimit(),
+            miningConfiguration.getUnstable().getRemoteSealersTimeToLive());
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
-    miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
-    if (miningParameters.isMiningEnabled()) {
+    miningCoordinator.setStratumMiningEnabled(miningConfiguration.isStratumMiningEnabled());
+    if (miningConfiguration.isMiningEnabled()) {
       miningCoordinator.enable();
     }
 
@@ -95,10 +97,10 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfigOptions,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
+        Optional.of(privacyParameters),
+        Optional.of(isRevertReasonEnabled),
+        Optional.of(evmConfiguration),
+        super.miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem);

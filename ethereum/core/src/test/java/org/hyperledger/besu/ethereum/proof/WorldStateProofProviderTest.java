@@ -21,9 +21,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -82,8 +82,9 @@ public class WorldStateProofProviderTest {
 
     // Define account value
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
-    final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
+    final PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(
+            1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
     worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));

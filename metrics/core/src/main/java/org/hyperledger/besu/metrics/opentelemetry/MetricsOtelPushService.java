@@ -26,9 +26,16 @@ import org.slf4j.LoggerFactory;
 public class MetricsOtelPushService implements MetricsService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsOtelPushService.class);
+  private final OpenTelemetrySystem metricsSystem;
 
-  /** Instantiates a new Metrics open telemetry push service. */
-  public MetricsOtelPushService() {}
+  /**
+   * Instantiates a new Metrics open telemetry push service.
+   *
+   * @param metricsSystem The OpenTelemetry metrics system
+   */
+  public MetricsOtelPushService(final OpenTelemetrySystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
+  }
 
   @Override
   public CompletableFuture<?> start() {
@@ -39,6 +46,7 @@ public class MetricsOtelPushService implements MetricsService {
 
   @Override
   public CompletableFuture<?> stop() {
+    metricsSystem.shutdown();
     return CompletableFuture.completedFuture(null);
   }
 

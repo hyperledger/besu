@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class DiscoveryConfiguration {
 
-  private boolean active = true;
+  private boolean enabled = true;
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private String advertisedHost = "127.0.0.1";
@@ -70,12 +70,12 @@ public class DiscoveryConfiguration {
     return this;
   }
 
-  public boolean isActive() {
-    return active;
+  public boolean isEnabled() {
+    return enabled;
   }
 
-  public DiscoveryConfiguration setActive(final boolean active) {
-    this.active = active;
+  public DiscoveryConfiguration setEnabled(final boolean enabled) {
+    this.enabled = enabled;
     return this;
   }
 
@@ -151,7 +151,7 @@ public class DiscoveryConfiguration {
       return false;
     }
     final DiscoveryConfiguration that = (DiscoveryConfiguration) o;
-    return active == that.active
+    return enabled == that.enabled
         && bindPort == that.bindPort
         && bucketSize == that.bucketSize
         && Objects.equals(bindHost, that.bindHost)
@@ -163,14 +163,14 @@ public class DiscoveryConfiguration {
   @Override
   public int hashCode() {
     return Objects.hash(
-        active, bindHost, bindPort, advertisedHost, bucketSize, bootnodes, dnsDiscoveryURL);
+        enabled, bindHost, bindPort, advertisedHost, bucketSize, bootnodes, dnsDiscoveryURL);
   }
 
   @Override
   public String toString() {
     return "DiscoveryConfiguration{"
-        + "active="
-        + active
+        + "enabled="
+        + enabled
         + ", bindHost='"
         + bindHost
         + '\''

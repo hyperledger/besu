@@ -20,8 +20,10 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedSummary;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
@@ -41,7 +43,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
+import javax.inject.Singleton;
 
+import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -62,11 +66,12 @@ import io.opentelemetry.sdk.metrics.data.PointData;
 import io.opentelemetry.sdk.metrics.data.SummaryPointData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Metrics system relying on the native OpenTelemetry format. */
+@Singleton
 public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpenTelemetrySystem.class);
@@ -110,7 +115,9 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         Resource.getDefault()
             .merge(
                 Resource.create(
-                    Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
+                    Attributes.builder()
+                        .put(ServiceIncubatingAttributes.SERVICE_NAME, jobName)
+                        .build()));
     AutoConfiguredOpenTelemetrySdkBuilder autoSdkBuilder =
         AutoConfiguredOpenTelemetrySdk.builder()
             .addMeterProviderCustomizer(
@@ -129,7 +136,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public Stream<Observation> streamObservations(final MetricCategory category) {
-    return streamObservations().filter(metricData -> metricData.getCategory().equals(category));
+    return streamObservations().filter(metricData -> metricData.category().equals(category));
   }
 
   @Override
@@ -241,6 +248,16 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public LabelledSuppliedSummary createLabelledSuppliedSummary(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    // not yet supported
+    return (LabelledSuppliedSummary) NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
       final MetricCategory category,
       final String name,
@@ -276,7 +293,36 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public LabelledGauge createLabelledGauge(
+  public LabelledMetric<Histogram> createLabelledHistogram(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final double[] buckets,
+      final String... labelNames) {
+    // not yet supported
+    return NoOpMetricsSystem.getHistogramLabelledMetric(labelNames.length);
+  }
+
+  @Override
+  public void createGuavaCacheCollector(
+      final MetricCategory category, final String name, final Cache<?, ?> cache) {}
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedCounter(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    LOG.trace("Creating a labelled supplied counter {}", name);
+    if (isCategoryEnabled(category)) {
+      return new OpenTelemetrySuppliedCounter(
+          name, help, sdkMeterProvider.get(category.getName()), List.of(labelNames));
+    }
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
+  }
+
+  @Override
+  public LabelledSuppliedMetric createLabelledSuppliedGauge(
       final MetricCategory category,
       final String name,
       final String help,
@@ -286,7 +332,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       return new OpenTelemetryGauge(
           name, help, sdkMeterProvider.get(category.getName()), List.of(labelNames));
     }
-    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+    return NoOpMetricsSystem.getLabelledSuppliedMetric(labelNames.length);
   }
 
   @Override
@@ -374,6 +420,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   /** Shuts down the OpenTelemetry exporters, blocking until they have completed orderly. */
+  @Override
   public void shutdown() {
     final CompletableResultCode result =
         CompletableResultCode.ofAll(

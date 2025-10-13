@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -125,7 +126,9 @@ public class PrivateGroupRehydrationBlockProcessor {
             privateStateRootResolver.resolveLastStateRoot(privacyGroupId, metadataUpdater);
 
         final MutableWorldState disposablePrivateState =
-            privateWorldStateArchive.getMutable(lastRootHash, null).get();
+            privateWorldStateArchive
+                .getWorldState(withStateRootAndUpdateNodeHead(lastRootHash))
+                .get();
         final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
         if (lastRootHash.equals(EMPTY_ROOT_HASH)) {

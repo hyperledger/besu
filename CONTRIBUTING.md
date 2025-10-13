@@ -8,8 +8,11 @@ Welcome to the Besu repository! The following links are a set of guidelines for 
 Having the following accounts is necessary for contributing code/issues to Besu.  
 * If you want to contribute code, you can make a [github account here](https://github.com).  
 * If you want to raise an issue, do so [in the issues tab](https://github.com/hyperledger/besu/issues).
-* To ask questions or chat with us, join our [Discord](https://discord.gg/hyperledger)
+* To ask questions or chat with us, join our [Discord](https://discord.com/invite/hyperledger)
 * To edit pages in our wiki, you'll need a [Linux Foundation (LF) account].
+
+### Guidelines for Non-Code and other Trivial Contributions
+Please keep in mind that we do not accept non-code contributions like fixing comments, typos or some other trivial fixes. Although we appreciate the extra help, managing lots of these small contributions is unfeasible, and puts extra pressure in our continuous delivery systems (running all tests, etc). Feel free to open an issue pointing any of those errors, and we will batch them into a single change.
 
 ### Useful contributing links
 

@@ -46,17 +46,17 @@ public class ConfigurationOverviewBuilder {
   private String customGenesisFileName;
   private String dataStorage;
   private String syncMode;
+  private Integer syncMinPeers;
   private Integer rpcPort;
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isBonsaiLimitTrieLogsEnabled = false;
+  private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
   private boolean isSnapServerEnabled = false;
-  private boolean isSnapSyncBftEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -149,6 +149,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets sync min peers.
+   *
+   * @param syncMinPeers number of min peers for sync
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSyncMinPeers(final int syncMinPeers) {
+    this.syncMinPeers = syncMinPeers;
+    return this;
+  }
+
+  /**
    * Sets rpc port.
    *
    * @param rpcPort the rpc port
@@ -208,7 +219,7 @@ public class ConfigurationOverviewBuilder {
    * @return the builder
    */
   public ConfigurationOverviewBuilder setLimitTrieLogsEnabled() {
-    isBonsaiLimitTrieLogsEnabled = true;
+    isLimitTrieLogsEnabled = true;
     return this;
   }
 
@@ -231,17 +242,6 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setSnapServerEnabled(final boolean snapServerEnabled) {
     isSnapServerEnabled = snapServerEnabled;
-    return this;
-  }
-
-  /**
-   * Sets snap sync BFT enabled/disabled
-   *
-   * @param snapSyncBftEnabled bool to indicate if snap sync for BFT is enabled
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setSnapSyncBftEnabled(final boolean snapSyncBftEnabled) {
-    isSnapSyncBftEnabled = snapSyncBftEnabled;
     return this;
   }
 
@@ -337,7 +337,12 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (syncMode != null) {
-      lines.add("Sync mode: " + syncMode);
+      lines.add(
+          "Sync mode: " + syncMode + (syncMode.equalsIgnoreCase("FAST") ? " (Deprecated)" : ""));
+    }
+
+    if (syncMinPeers != null) {
+      lines.add("Sync min peers: " + syncMinPeers);
     }
 
     if (rpcHttpApis != null) {
@@ -369,11 +374,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental Snap Sync server enabled");
     }
 
-    if (isSnapSyncBftEnabled) {
-      lines.add("Experimental Snap Sync for BFT enabled");
-    }
-
-    if (isBonsaiLimitTrieLogsEnabled) {
+    if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")
@@ -417,14 +418,18 @@ public class ConfigurationOverviewBuilder {
   private void detectJemalloc(final List<String> lines) {
     Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
         .ifPresentOrElse(
-            t -> {
+            jemallocEnabled -> {
               try {
-                final String version = PlatformDetector.getJemalloc();
-                lines.add("jemalloc: " + version);
+                if (Boolean.parseBoolean(jemallocEnabled)) {
+                  final String version = PlatformDetector.getJemalloc();
+                  lines.add("jemalloc: " + version);
+                } else {
+                  logger.warn(
+                      "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded");
+                }
               } catch (final Throwable throwable) {
                 logger.warn(
-                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version",
-                    throwable);
+                    "besu_using_jemalloc is present but we failed to load jemalloc library to get the version");
               }
             },
             () -> {

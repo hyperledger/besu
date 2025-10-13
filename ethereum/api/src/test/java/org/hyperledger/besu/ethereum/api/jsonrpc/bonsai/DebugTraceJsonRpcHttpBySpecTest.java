@@ -39,7 +39,8 @@ public class DebugTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTe
   }
 
   public static Object[][] specs() {
-    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(new String[] {"debug/trace-call"});
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
+        new String[] {"debug/trace-call", "debug/trace-block"});
   }
 
   @Test

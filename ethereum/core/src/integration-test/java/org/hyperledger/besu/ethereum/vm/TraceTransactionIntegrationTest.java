@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -34,11 +34,13 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
@@ -70,17 +72,19 @@ public class TraceTransactionIntegrationTest {
   @BeforeEach
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(GenesisConfigFile.fromResource("/genesis-it.json"))
-            .build();
+        ExecutionContextTestFixture.builder(GenesisConfig.fromResource("/genesis-it.json")).build();
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    transactionProcessor =
-        protocolSchedule
-            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-            .getTransactionProcessor();
-    blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+
+    transactionProcessor = protocolSpec.getTransactionProcessor();
+    blockHashLookup =
+        protocolSpec
+            .getBlockHashProcessor()
+            .createBlockHashLookup(blockchain, genesisBlock.getHeader());
   }
 
   @Test
@@ -99,7 +103,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     final MutableWorldState worldState =
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
     TransactionProcessingResult result =
@@ -150,7 +156,6 @@ public class TraceTransactionIntegrationTest {
     // No storage changes before the SSTORE call.
     TraceFrame frame = tracer.getTraceFrames().get(170);
     assertThat(frame.getOpcode()).isEqualTo("DUP6");
-    assertStorageContainsExactly(frame);
 
     // Storage changes show up in the SSTORE frame.
     frame = tracer.getTraceFrames().get(171);
@@ -175,7 +180,9 @@ public class TraceTransactionIntegrationTest {
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         worldStateArchive
-            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(
+                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .get()
             .updater(),
         genesisBlockHeader,
@@ -198,8 +205,6 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(0);
     assertStackContainsExactly(frame);
-    assertMemoryContainsExactly(frame);
-    assertStorageContainsExactly(frame);
 
     frame = traceFrames.get(1);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
@@ -208,8 +213,6 @@ public class TraceTransactionIntegrationTest {
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(2);
     assertStackContainsExactly(frame, "0x80");
-    assertMemoryContainsExactly(frame);
-    assertStorageContainsExactly(frame);
 
     frame = traceFrames.get(2);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
@@ -223,7 +226,6 @@ public class TraceTransactionIntegrationTest {
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000080");
-    assertStorageContainsExactly(frame);
     // Reference implementation actually records the memory after expansion but before the store.
     //    assertMemoryContainsExactly(frame,
     //        "0000000000000000000000000000000000000000000000000000000000000000",
@@ -242,7 +244,6 @@ public class TraceTransactionIntegrationTest {
         "0000000000000000000000000000000000000000000000000000000000000000",
         "0000000000000000000000000000000000000000000000000000000000000000",
         "0000000000000000000000000000000000000000000000000000000000000080");
-    assertStorageContainsExactly(frame);
   }
 
   private void assertStackContainsExactly(

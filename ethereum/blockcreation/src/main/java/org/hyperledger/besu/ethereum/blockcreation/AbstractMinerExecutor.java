@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
@@ -47,7 +47,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected final ProtocolSchedule protocolSchedule;
   protected final TransactionPool transactionPool;
   protected final AbstractBlockScheduler blockScheduler;
-  protected final MiningParameters miningParameters;
+  protected final MiningConfiguration miningConfiguration;
   protected final EthScheduler ethScheduler;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -55,14 +55,14 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
-      final MiningParameters miningParams,
+      final MiningConfiguration miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EthScheduler ethScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.transactionPool = transactionPool;
     this.blockScheduler = blockScheduler;
-    this.miningParameters = miningParams;
+    this.miningConfiguration = miningParams;
     this.ethScheduler = ethScheduler;
   }
 
@@ -98,15 +98,15 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final BlockHeader parentHeader);
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
+    miningConfiguration.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
   public Wei getMinTransactionGasPrice() {
-    return miningParameters.getMinTransactionGasPrice();
+    return miningConfiguration.getMinTransactionGasPrice();
   }
 
   public Wei getMinPriorityFeePerGas() {
-    return miningParameters.getMinPriorityFeePerGas();
+    return miningConfiguration.getMinPriorityFeePerGas();
   }
 
   public abstract Optional<Address> getCoinbase();

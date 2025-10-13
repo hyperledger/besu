@@ -24,6 +24,8 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -56,8 +58,10 @@ public class ForestReferenceTestWorldState extends ForestMutableWorldState
    * root has been validated, to ensure the integrity of other aspects of the state.
    */
   @Override
-  public void processExtraStateStorageFormatValidation(final BlockHeader blockHeader) {
+  public Collection<Exception> processExtraStateStorageFormatValidation(
+      final BlockHeader blockHeader) {
     // nothing more to verify with forest
+    return Collections.emptyList();
   }
 
   @JsonCreator

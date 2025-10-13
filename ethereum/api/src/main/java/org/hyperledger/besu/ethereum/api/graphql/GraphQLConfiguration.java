@@ -18,6 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +46,13 @@ public class GraphQLConfiguration {
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", DEFAULT_GRAPHQL_HTTP_HOST);
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+
+  private String tlsKeyStorePath;
+  private String tlsKeyStorePasswordFile;
+  private String tlsTrustStorePath;
+  private String tlsTrustStorePasswordFile;
+  private boolean tlsEnabled;
+  private boolean mtlsEnabled;
 
   /**
    * Creates a default configuration for GraphQL.
@@ -172,6 +182,120 @@ public class GraphQLConfiguration {
    */
   public void setHttpTimeoutSec(final long httpTimeoutSec) {
     this.httpTimeoutSec = httpTimeoutSec;
+  }
+
+  /**
+   * Retrieves the TLS key store path.
+   *
+   * @return the TLS key store path
+   */
+  public String getTlsKeyStorePath() {
+    return tlsKeyStorePath;
+  }
+
+  /**
+   * Sets the TLS key store path.
+   *
+   * @param tlsKeyStorePath the path to the TLS key store
+   */
+  public void setTlsKeyStorePath(final String tlsKeyStorePath) {
+    this.tlsKeyStorePath = tlsKeyStorePath;
+  }
+
+  /**
+   * Retrieves the TLS key store password.
+   *
+   * @return the TLS key store password
+   * @throws Exception if an error occurs while reading the password file
+   */
+  public String getTlsKeyStorePassword() throws Exception {
+    return new String(
+            Files.readAllBytes(Paths.get(tlsKeyStorePasswordFile)), Charset.defaultCharset())
+        .trim();
+  }
+
+  /**
+   * Sets the TLS key store password file.
+   *
+   * @param tlsKeyStorePasswordFile the path to the TLS key store password file
+   */
+  public void setTlsKeyStorePasswordFile(final String tlsKeyStorePasswordFile) {
+    this.tlsKeyStorePasswordFile = tlsKeyStorePasswordFile;
+  }
+
+  /**
+   * Retrieves the TLS trust store path.
+   *
+   * @return the TLS trust store path
+   */
+  public String getTlsTrustStorePath() {
+    return tlsTrustStorePath;
+  }
+
+  /**
+   * Sets the TLS trust store path.
+   *
+   * @param tlsTrustStorePath the path to the TLS trust store
+   */
+  public void setTlsTrustStorePath(final String tlsTrustStorePath) {
+    this.tlsTrustStorePath = tlsTrustStorePath;
+  }
+
+  /**
+   * Retrieves the TLS trust store password.
+   *
+   * @return the TLS trust store password
+   * @throws Exception if an error occurs while reading the password file
+   */
+  public String getTlsTrustStorePassword() throws Exception {
+    return new String(
+            Files.readAllBytes(Paths.get(tlsTrustStorePasswordFile)), Charset.defaultCharset())
+        .trim();
+  }
+
+  /**
+   * Sets the TLS trust store password file.
+   *
+   * @param tlsTrustStorePasswordFile the path to the TLS trust store password file
+   */
+  public void setTlsTrustStorePasswordFile(final String tlsTrustStorePasswordFile) {
+    this.tlsTrustStorePasswordFile = tlsTrustStorePasswordFile;
+  }
+
+  /**
+   * Retrieves the TLS enabled status.
+   *
+   * @return true if TLS is enabled, false otherwise
+   */
+  public boolean isTlsEnabled() {
+    return tlsEnabled;
+  }
+
+  /**
+   * Sets the TLS enabled status.
+   *
+   * @param tlsEnabled the status to set. true to enable TLS, false to disable it
+   */
+  public void setTlsEnabled(final boolean tlsEnabled) {
+    this.tlsEnabled = tlsEnabled;
+  }
+
+  /**
+   * Retrieves the mTLS enabled status.
+   *
+   * @return true if mTLS is enabled, false otherwise
+   */
+  public boolean isMtlsEnabled() {
+    return mtlsEnabled;
+  }
+
+  /**
+   * Sets the mTLS enabled status.
+   *
+   * @param mtlsEnabled the status to set. true to enable mTLS, false to disable it
+   */
+  public void setMtlsEnabled(final boolean mtlsEnabled) {
+    this.mtlsEnabled = mtlsEnabled;
   }
 
   @Override

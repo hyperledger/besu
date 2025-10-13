@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintWriter;
 
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -75,6 +76,7 @@ public class PasswordSubCommand implements Runnable {
   static class HashSubCommand implements Runnable {
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @NotEmpty
     @Option(
         names = "--password",
         arity = "1..1",

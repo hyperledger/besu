@@ -37,24 +37,20 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
-  private final Optional<List<Request>> requests;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
-    this.requests = Optional.empty();
   }
 
   public BlockBody(
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Request>> requests) {
+      final Optional<List<Withdrawal>> withdrawals) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
-    this.requests = requests;
   }
 
   public static BlockBody empty() {
@@ -88,16 +84,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   /**
-   * Returns the withdrawal requests of the block.
-   *
-   * @return The optional list of withdrawal requests included in the block.
-   */
-  @Override
-  public Optional<List<Request>> getRequests() {
-    return requests;
-  }
-
-  /**
    * Writes Block to {@link RLPOutput}.
    *
    * @param output Output to write to
@@ -112,7 +98,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    requests.ifPresent(requests -> output.writeList(requests, Request::writeTo));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -161,10 +146,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(Withdrawal::readFrom)),
-        input.isEndOfCurrentList()
-            ? Optional.empty()
-            : Optional.of(input.readList(Request::readFrom)));
+            : Optional.of(input.readList(Withdrawal::readFrom)));
   }
 
   @Override
@@ -174,20 +156,16 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     BlockBody blockBody = (BlockBody) o;
     return Objects.equals(transactions, blockBody.transactions)
         && Objects.equals(ommers, blockBody.ommers)
-        && Objects.equals(withdrawals, blockBody.withdrawals)
-        && Objects.equals(requests, blockBody.requests);
+        && Objects.equals(withdrawals, blockBody.withdrawals);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals, requests);
+    return Objects.hash(transactions, ommers, withdrawals);
   }
 
   public boolean isEmpty() {
-    return transactions.isEmpty()
-        && ommers.isEmpty()
-        && withdrawals.isEmpty()
-        && requests.isEmpty();
+    return transactions.isEmpty() && ommers.isEmpty() && withdrawals.isEmpty();
   }
 
   @Override
@@ -199,8 +177,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + ommers
         + ", withdrawals="
         + withdrawals
-        + ", withdrawal_requests="
-        + requests
         + '}';
   }
 }

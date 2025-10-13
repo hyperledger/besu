@@ -31,7 +31,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
-
   private static final String errorMessageSuffix = " (at bytes %d-%d: %s%s[%s]%s%s)";
 
   private final boolean lenient;

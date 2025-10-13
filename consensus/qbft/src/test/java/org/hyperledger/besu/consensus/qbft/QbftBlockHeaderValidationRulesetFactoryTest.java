@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -92,7 +93,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
     final BlockHeaderValidator validator =
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                5, false, Optional.of(FeeMarket.london(1)))
+                Duration.ofSeconds(5), false, Optional.of(FeeMarket.london(1)))
             .build();
 
     assertThat(
@@ -366,7 +367,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   public BlockHeaderValidator getBlockHeaderValidator() {
-    return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false, Optional.empty())
+    return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+            Duration.ofSeconds(5), false, Optional.empty())
         .build();
   }
 }

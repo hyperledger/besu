@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,15 +31,16 @@ public class MinerGetMinGasPriceTest {
 
   @Test
   public void shouldReturnDefaultMinGasPrice() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.newDefault();
-    final MinerGetMinGasPrice method = new MinerGetMinGasPrice(miningParameters);
+    final MiningConfiguration miningConfiguration = ImmutableMiningConfiguration.newDefault();
+    final MinerGetMinGasPrice method = new MinerGetMinGasPrice(miningConfiguration);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
 
     final JsonRpcResponse expected =
         new JsonRpcSuccessResponse(
             request.getRequest().getId(),
-            Quantity.create(MiningParameters.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE));
+            Quantity.create(
+                MiningConfiguration.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE));
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -47,12 +48,12 @@ public class MinerGetMinGasPriceTest {
 
   @Test
   public void shouldReturnSetAtRuntimeMinGasPrice() {
-    final MiningParameters miningParameters = ImmutableMiningParameters.newDefault();
-    final MinerGetMinGasPrice method = new MinerGetMinGasPrice(miningParameters);
+    final MiningConfiguration miningConfiguration = ImmutableMiningConfiguration.newDefault();
+    final MinerGetMinGasPrice method = new MinerGetMinGasPrice(miningConfiguration);
 
     final Wei minGasPriceAtRuntime = Wei.of(2000);
 
-    miningParameters.setMinTransactionGasPrice(minGasPriceAtRuntime);
+    miningConfiguration.setMinTransactionGasPrice(minGasPriceAtRuntime);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));

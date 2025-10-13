@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -34,15 +34,15 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -67,10 +67,10 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  private final MergeContext mergeContext = new PostMergeContext();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPowGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPowGenesisConfig(), mockProtocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -78,25 +78,25 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final ProtocolContext protocolContext =
       new ProtocolContext(blockchain, worldStateArchive, mergeContext, new BadBlockManager());
 
-  private final Address coinbase = genesisAllocations(getPowGenesisConfigFile()).findFirst().get();
+  private final Address coinbase = genesisAllocations(getPowGenesisConfig()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
-      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
+      FeeMarket.london(0, genesisState.getBlock().getHeader().getBaseFee());
 
   @BeforeEach
   public void setUp() {
-    var mutable = worldStateArchive.getMutable();
+    var mutable = worldStateArchive.getWorldState();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
     mergeContext.setTerminalTotalDifficulty(Difficulty.of(1001));
-    MergeConfigOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
             mockProtocolSchedule,
             ethScheduler,
             mockTransactionPool,
-            ImmutableMiningParameters.builder()
+            ImmutableMiningConfiguration.builder()
                 .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
                 .build(),
             mock(BackwardSyncContext.class),
@@ -132,7 +132,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     Difficulty tdd = blockchain.getTotalDifficultyByHash(ttdA.getHash()).get();
     assertThat(tdd.getAsBigInteger())
         .isGreaterThan(
-            getPosGenesisConfigFile()
+            getPosGenesisConfig()
                 .getConfigOptions()
                 .getTerminalTotalDifficulty()
                 .get()

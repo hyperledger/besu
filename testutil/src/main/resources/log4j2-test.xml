@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration level="WARN">
+  <Properties>
+    <Property name="root.log.level">INFO</Property>
+    <Property name="console.pattern">%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg</Property>
+    <Property name="console.msgdata.maxlen">1000</Property>
+  </Properties>
+
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout alwaysWriteExceptions="false">
+        <MarkerPatternSelector defaultPattern="${console.pattern}%n">
+          <PatternMatch key="P2PMSG" pattern="${console.pattern} rawData=%maxLen{%X{rawData}}{${console.msgdata.maxlen}} decodedData=%maxLen{%X{decodedData}}{${console.msgdata.maxlen}}%n"/>
+        </MarkerPatternSelector>
+      </PatternLayout>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="${sys:root.log.level}">
+      <AppenderRef ref="Console" />
+    </Root>
+  </Loggers>
+</Configuration>

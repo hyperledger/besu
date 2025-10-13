@@ -116,19 +116,14 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final Block block1 =
         new Block(
             header1,
-            new BlockBody(
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Optional.empty(),
-                Optional.empty()));
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
     final Block block2 =
         new Block(
             header2,
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.of(Collections.emptyList()),
-                Optional.empty()));
+                Optional.of(Collections.emptyList())));
 
     final List<Block> expectedBlocks = asList(block1, block2);
     final EthTask<List<Block>> task =
@@ -164,18 +159,14 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         new Block(
             header2,
             new BlockBody(
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Optional.of(withdrawals),
-                Optional.empty()));
+                Collections.emptyList(), Collections.emptyList(), Optional.of(withdrawals)));
     final Block block3 =
         new Block(
             header3,
             new BlockBody(
                 Collections.emptyList(),
                 Collections.emptyList(),
-                Optional.of(Collections.emptyList()),
-                Optional.empty()));
+                Optional.of(Collections.emptyList())));
     final List<Block> expected = asList(block1, block2, block3);
 
     final RespondingEthPeer respondingPeer =

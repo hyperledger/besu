@@ -63,6 +63,8 @@ public class QbftForksSchedulesFactoryTest
                 List.of("1", "2", "3"),
                 BftFork.BLOCK_PERIOD_SECONDS_KEY,
                 10,
+                BftFork.EMPTY_BLOCK_PERIOD_SECONDS_KEY,
+                60,
                 BftFork.BLOCK_REWARD_KEY,
                 "5",
                 QbftFork.VALIDATOR_SELECTION_MODE_KEY,
@@ -78,6 +80,7 @@ public class QbftForksSchedulesFactoryTest
 
     final Map<String, Object> forkOptions = new HashMap<>(configOptions.asMap());
     forkOptions.put(BftFork.BLOCK_PERIOD_SECONDS_KEY, 10);
+    forkOptions.put(BftFork.EMPTY_BLOCK_PERIOD_SECONDS_KEY, 60);
     forkOptions.put(BftFork.BLOCK_REWARD_KEY, "5");
     forkOptions.put(QbftFork.VALIDATOR_SELECTION_MODE_KEY, "5");
     forkOptions.put(QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY, "10");

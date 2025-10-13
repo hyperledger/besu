@@ -22,8 +22,10 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -36,12 +38,21 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
+        ProtocolScheduleFixture.MAINNET,
+        null,
+        SynchronizerConfiguration.builder().build(),
+        new NoOpMetricsSystem(),
+        blockNumber,
+        Hash.ZERO,
+        buffer);
   }
 
   @Test
   public void validatePeer_responsivePeerWithRequiredBlock() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long requiredBlockNumber = 500;
     final Block requiredBlock =
@@ -50,6 +61,8 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             requiredBlock.getHash(),
@@ -73,7 +86,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
   @Test
   public void validatePeer_responsivePeerWithBadRequiredBlock() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long requiredBlockNumber = 500;
     final Block requiredBlock =
@@ -82,6 +95,8 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             Hash.ZERO,
@@ -105,11 +120,16 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
   @Test
   public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
-    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), 1, Hash.ZERO);
+            ProtocolScheduleFixture.MAINNET,
+            null,
+            SynchronizerConfiguration.builder().build(),
+            new NoOpMetricsSystem(),
+            1,
+            Hash.ZERO);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
 

@@ -21,14 +21,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -40,7 +41,7 @@ public class BesuNodeConfiguration {
 
   private final String name;
   private final Optional<Path> dataPath;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
@@ -56,7 +57,6 @@ public class BesuNodeConfiguration {
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
   private final int p2pPort;
-  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -64,6 +64,7 @@ public class BesuNodeConfiguration {
   private final boolean secp256k1Native;
   private final boolean altbn128Native;
   private final List<String> plugins;
+  private final List<String> requestedPlugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
@@ -73,11 +74,13 @@ public class BesuNodeConfiguration {
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final SynchronizerConfiguration synchronizerConfiguration;
+  private final Optional<KeyValueStorageFactory> storageFactory;
 
   BesuNodeConfiguration(
       final String name,
       final Optional<Path> dataPath,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
@@ -94,7 +97,6 @@ public class BesuNodeConfiguration {
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
-      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -102,6 +104,7 @@ public class BesuNodeConfiguration {
       final boolean secp256k1Native,
       final boolean altbn128Native,
       final List<String> plugins,
+      final List<String> requestedPlugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
       final boolean isDnsEnabled,
@@ -109,9 +112,11 @@ public class BesuNodeConfiguration {
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final Optional<KeyValueStorageFactory> storageFactory) {
     this.name = name;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
@@ -129,7 +134,6 @@ public class BesuNodeConfiguration {
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
     this.p2pPort = p2pPort;
-    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -137,6 +141,7 @@ public class BesuNodeConfiguration {
     this.secp256k1Native = secp256k1Native;
     this.altbn128Native = altbn128Native;
     this.plugins = plugins;
+    this.requestedPlugins = requestedPlugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
@@ -145,14 +150,16 @@ public class BesuNodeConfiguration {
     this.keyPair = keyPair;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    this.storageFactory = storageFactory;
   }
 
   public String getName() {
     return name;
   }
 
-  public MiningParameters getMiningParameters() {
-    return miningParameters;
+  public MiningConfiguration getMiningParameters() {
+    return miningConfiguration;
   }
 
   public TransactionPoolConfiguration getTransactionPoolConfiguration() {
@@ -223,10 +230,6 @@ public class BesuNodeConfiguration {
     return p2pPort;
   }
 
-  public Optional<TLSConfiguration> getTLSConfiguration() {
-    return tlsConfiguration;
-  }
-
   public NetworkingConfiguration getNetworkingConfiguration() {
     return networkingConfiguration;
   }
@@ -237,6 +240,10 @@ public class BesuNodeConfiguration {
 
   public List<String> getPlugins() {
     return plugins;
+  }
+
+  public List<String> getRequestedPlugins() {
+    return requestedPlugins;
   }
 
   public List<String> getExtraCLIOptions() {
@@ -285,5 +292,13 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public SynchronizerConfiguration getSynchronizerConfiguration() {
+    return synchronizerConfiguration;
+  }
+
+  public Optional<KeyValueStorageFactory> storageImplementation() {
+    return storageFactory;
   }
 }

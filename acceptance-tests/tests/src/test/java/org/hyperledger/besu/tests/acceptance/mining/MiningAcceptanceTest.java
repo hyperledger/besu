@@ -18,21 +18,21 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MiningAcceptanceTest extends AcceptanceTestBase {
+class MiningAcceptanceTest extends AcceptanceTestBase {
 
   private Node minerNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("miner1");
     cluster.start(minerNode);
   }
 
   @Test
-  public void shouldMineTransactions() {
+  void shouldMineTransactions() {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
     minerNode.execute(accountTransactions.createTransfer(sender, 50));

@@ -22,10 +22,14 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,7 +49,7 @@ public class BlockHeaderBuilder {
   private Hash transactionsRoot;
 
   private Hash withdrawalsRoot = null;
-  private Hash requestsRoot = null;
+  private Hash requestsHash = null;
 
   private Hash receiptsRoot;
 
@@ -124,7 +128,7 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .requestsRoot(header.getRequestsRoot().orElse(null));
+        .requestsHash(header.getRequestsHash().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -148,10 +152,59 @@ public class BlockHeaderBuilder {
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
-            .requestsRoot(fromBuilder.requestsRoot)
+            .requestsHash(fromBuilder.requestsHash)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
+  }
+
+  public static BlockHeaderBuilder createPending(
+      final ProtocolSpec protocolSpec,
+      final BlockHeader parentHeader,
+      final MiningConfiguration miningConfiguration,
+      final long timestamp,
+      final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
+
+    final long newBlockNumber = parentHeader.getNumber() + 1;
+    final long gasLimit =
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                miningConfiguration.getTargetGasLimit().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
+
+    final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
+    final var difficulty =
+        Difficulty.of(difficultyCalculator.nextDifficulty(timestamp, parentHeader));
+
+    final Wei baseFee;
+    if (protocolSpec.getFeeMarket().implementsBaseFee()) {
+      final var baseFeeMarket = (BaseFeeMarket) protocolSpec.getFeeMarket();
+      baseFee =
+          baseFeeMarket.computeBaseFee(
+              newBlockNumber,
+              parentHeader.getBaseFee().orElse(Wei.ZERO),
+              parentHeader.getGasUsed(),
+              baseFeeMarket.targetGasUsed(parentHeader));
+    } else {
+      baseFee = null;
+    }
+
+    final Bytes32 prevRandao = maybePrevRandao.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
+
+    return BlockHeaderBuilder.create()
+        .parentHash(parentHeader.getHash())
+        .coinbase(miningConfiguration.getCoinbase().orElseThrow())
+        .difficulty(difficulty)
+        .number(newBlockNumber)
+        .gasLimit(gasLimit)
+        .timestamp(timestamp)
+        .baseFee(baseFee)
+        .prevRandao(prevRandao)
+        .parentBeaconBlockRoot(parentBeaconBlockRoot);
   }
 
   public BlockHeader buildBlockHeader() {
@@ -178,7 +231,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot,
+        requestsHash,
         blockHeaderFunctions);
   }
 
@@ -220,7 +273,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot);
+        requestsHash);
   }
 
   private void validateBlockHeader() {
@@ -284,7 +337,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    requestsRoot(sealableBlockHeader.getRequestsRoot().orElse(null));
+    requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
     return this;
   }
 
@@ -399,8 +452,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder requestsRoot(final Hash hash) {
-    this.requestsRoot = hash;
+  public BlockHeaderBuilder requestsHash(final Hash hash) {
+    this.requestsHash = hash;
     return this;
   }
 

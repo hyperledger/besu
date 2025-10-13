@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -94,7 +95,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final List<VersionedHash> versionedHashes;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<SetCodeAuthorization> authorizationList;
+  private final List<CodeDelegationResult> authorizationList;
 
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
@@ -130,8 +131,9 @@ public class TransactionCompleteResult implements TransactionResult {
       this.yParity = Quantity.create(transaction.getYParity());
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
-                      || transactionType == TransactionType.EIP1559)
-                  || transactionType == TransactionType.SET_CODE
+                  || transactionType == TransactionType.EIP1559
+                  || transactionType == TransactionType.DELEGATE_CODE
+                  || transactionType == TransactionType.BLOB)
               ? Quantity.create(transaction.getYParity())
               : null;
     }
@@ -139,7 +141,11 @@ public class TransactionCompleteResult implements TransactionResult {
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
-    this.authorizationList = transaction.getAuthorizationList().orElse(null);
+    final Optional<List<CodeDelegation>> codeDelegationList = transaction.getCodeDelegationList();
+    this.authorizationList =
+        codeDelegationList
+            .map(cds -> cds.stream().map(CodeDelegationResult::new).toList())
+            .orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -255,7 +261,7 @@ public class TransactionCompleteResult implements TransactionResult {
   }
 
   @JsonGetter(value = "authorizationList")
-  public List<SetCodeAuthorization> getAuthorizationList() {
+  public List<CodeDelegationResult> getAuthorizationList() {
     return authorizationList;
   }
 }

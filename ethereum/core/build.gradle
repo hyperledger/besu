@@ -58,14 +58,12 @@ dependencies {
 
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-concurrent'
-  implementation 'io.tmio:tuweni-units'
-  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.consensys.protocols:tuweni-bytes'
+  implementation 'io.consensys.protocols:tuweni-concurrent'
+  implementation 'io.consensys.protocols:tuweni-units'
+  implementation 'io.consensys.protocols:tuweni-rlp'
   implementation 'org.immutables:value-annotations'
-  implementation 'tech.pegasys:jc-kzg-4844'
-
-  implementation 'io.prometheus:simpleclient_guava'
+  implementation 'io.consensys.protocols:jc-kzg-4844'
 
   implementation 'org.xerial.snappy:snappy-java'
 
@@ -80,9 +78,9 @@ dependencies {
   testImplementation project(path: ':plugins:rocksdb')
 
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'io.tmio:tuweni-bytes'
-  testImplementation 'io.tmio:tuweni-io'
-  testImplementation 'io.tmio:tuweni-units'
+  testImplementation 'io.consensys.protocols:tuweni-bytes'
+  testImplementation 'io.consensys.protocols:tuweni-io'
+  testImplementation 'io.consensys.protocols:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
@@ -96,8 +94,7 @@ dependencies {
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.testcontainers:testcontainers'
-  integrationTestImplementation 'io.tmio:tuweni-bytes'
+  integrationTestImplementation 'io.consensys.protocols:tuweni-bytes'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
@@ -108,6 +105,8 @@ dependencies {
   testSupportImplementation 'org.junit.jupiter:junit-jupiter'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
+  testSupportImplementation 'com.google.dagger:dagger'
+  testSupportAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   jmhImplementation project(':crypto:algorithms')

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
@@ -34,11 +35,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +54,10 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
+
+  protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+    return Set.of(shanghaiHardfork);
+  }
 
   public EngineNewPayloadV2Test() {}
 
@@ -64,7 +72,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             protocolContext,
             mergeCoordinator,
             ethPeers,
-            engineCallListener);
+            engineCallListener,
+            new NoOpMetricsSystem());
   }
 
   @Override
@@ -82,16 +91,11 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.of(withdrawals),
-            Optional.empty(),
-            Optional.empty());
+            Optional.of(withdrawals));
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp =
-        resp(
-            mockEnginePayload(
-                mockHeader, Collections.emptyList(), withdrawalsParam, null, null, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -104,14 +108,11 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.empty(),
             Optional.empty());
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp =
-        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -126,13 +127,9 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(
-                    Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty()),
+                createBlockHeader(Optional.of(Collections.emptyList())),
                 Collections.emptyList(),
-                withdrawals,
-                null,
-                null,
-                null));
+                withdrawals));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -143,16 +140,14 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateBlobGasUsedCorrectly() {
     // V2 should return error if non-null blobGasUsed
     BlockHeader blockHeader =
-        createBlockHeaderFixture(
-                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp =
-        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of()));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_BLOB_GAS_USED_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
+    assertThat(jsonRpcError.getData()).isEqualTo("Unexpected blob gas used field present");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -160,17 +155,15 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateExcessBlobGasCorrectly() {
     // V2 should return error if non-null ExcessBlobGas
     BlockHeader blockHeader =
-        createBlockHeaderFixture(
-                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
-    var resp =
-        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
+    assertThat(jsonRpcError.getData()).isEqualTo("Unexpected excess blob gas field present");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -183,12 +176,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.empty(), Optional.empty(), Optional.empty()),
-                Collections.emptyList(),
-                withdrawals,
-                null,
-                null,
-                null));
+                createBlockHeader(Optional.empty()), Collections.emptyList(), withdrawals));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -196,16 +184,14 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
-    // Cancun starte at timestamp 30
+    // Cancun started at timestamp 30
     final long blockTimestamp = 31L;
     BlockHeader blockHeader =
-        createBlockHeaderFixture(
-                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()))
             .timestamp(blockTimestamp)
             .buildHeader();
 
-    var resp =
-        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());

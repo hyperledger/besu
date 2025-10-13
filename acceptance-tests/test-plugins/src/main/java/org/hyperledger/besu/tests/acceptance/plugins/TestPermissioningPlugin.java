@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
@@ -40,7 +40,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
   PermissioningService service;
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     context.getService(PicoCLIOptions.class).orElseThrow().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).orElseThrow();
   }
@@ -74,6 +74,20 @@ public class TestPermissioningPlugin implements BesuPlugin {
               return false;
             }
             return true;
+          });
+
+      service.registerTransactionPermissioningProvider(
+          transaction -> {
+            long configuredGasLimitThreshold = 22000L;
+            long gasLimit = transaction.getGasLimit();
+            LOG.info(
+                "Transaction gas limit: {} | Configured threshold: {} ",
+                gasLimit,
+                configuredGasLimitThreshold);
+            // Sample logic to testing. If the gas limit is exactly 21000 (intrinsic gas limit)
+            // we let the transaction pass. This is helpful for not making additional configuration
+            // options in PermssioningPluginTest
+            return gasLimit > configuredGasLimitThreshold || gasLimit == 21000;
           });
     }
   }

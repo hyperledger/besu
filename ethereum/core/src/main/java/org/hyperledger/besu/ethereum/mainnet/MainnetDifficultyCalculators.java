@@ -45,7 +45,7 @@ public abstract class MainnetDifficultyCalculators {
   private MainnetDifficultyCalculators() {}
 
   static final DifficultyCalculator FRONTIER =
-      (time, parent, protocolContext) -> {
+      (time, parent) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger adjust = parentDifficulty.divide(DIFFICULTY_BOUND_DIVISOR);
         BigInteger difficulty;
@@ -60,7 +60,7 @@ public abstract class MainnetDifficultyCalculators {
       };
 
   static final DifficultyCalculator HOMESTEAD =
-      (time, parent, protocolContext) -> {
+      (time, parent) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =
             ensureMinimumDifficulty(
@@ -72,35 +72,28 @@ public abstract class MainnetDifficultyCalculators {
       };
 
   static final DifficultyCalculator BYZANTIUM =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);
 
   static final DifficultyCalculator CONSTANTINOPLE =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
 
   static final DifficultyCalculator MUIR_GLACIER =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, MUIR_GLACIER_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, MUIR_GLACIER_FAKE_BLOCK_OFFSET);
 
   // As per https://eips.ethereum.org/EIPS/eip-3554
   static final DifficultyCalculator LONDON =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, LONDON_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, LONDON_FAKE_BLOCK_OFFSET);
 
   // As per https://eips.ethereum.org/EIPS/eip-4345
   static final DifficultyCalculator ARROW_GLACIER =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, ARROW_GLACIER_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, ARROW_GLACIER_FAKE_BLOCK_OFFSET);
 
   // As per https://eips.ethereum.org/EIPS/eip-5133
   static final DifficultyCalculator GRAY_GLACIER =
-      (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
+      (time, parent) -> calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
 
   // Proof-of-Stake difficulty must not be altered
-  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY =
-      (time, parent, protocolContext) -> BigInteger.ZERO;
+  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY = (time, parent) -> BigInteger.ZERO;
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {

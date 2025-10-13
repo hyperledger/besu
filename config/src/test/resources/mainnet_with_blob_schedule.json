@@ -1,0 +1,40 @@
+{
+  "config": {
+    "chainId": 3151908,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "preMergeForkBlock": 0,
+    "terminalTotalDifficulty": 0,
+    "ethash": {},
+    "shanghaiTime": 0,
+    "cancunTime": 0,
+    "blobSchedule": {
+      "cancun": {
+        "target": 4,
+        "max": 7,
+        "baseFeeUpdateFraction": 3338477
+      },
+      "prague": {
+        "target": 7,
+        "max": 10,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "osaka": {
+        "target": 10,
+        "max": 13,
+        "baseFeeUpdateFraction": 5007716
+      }
+    },
+    "depositContractAddress": "0x4242424242424242424242424242424242424242",
+    "pragueTime": 1734106711,
+    "osakaTime": 1734107095
+  }
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Copyright contributors to Hyperledger Besu.
+## Copyright contributors to Besu.
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
 ## the License. You may obtain a copy of the License at
@@ -40,5 +40,13 @@ bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 $DOCKER_IMAG
 --rpc-ws-enabled \
 --graphql-http-enabled \
 > ./reports/01.xml || i=`expr $i + 1`
+
+if [[ $i != 0 ]]; then exit $i; fi
+
+# Test for directory permissions
+GOSS_FILES_PATH=$TEST_PATH/02 \
+bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 -v besu-data:/var/lib/besu $DOCKER_IMAGE --data-path=/var/lib/besu \
+--network=dev \
+> ./reports/02.xml || i=`expr $i + 1`
 
 exit $i

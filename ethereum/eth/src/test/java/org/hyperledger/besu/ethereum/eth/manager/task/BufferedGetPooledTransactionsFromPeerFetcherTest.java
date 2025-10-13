@@ -81,7 +81,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
             transactionPool,
             transactionTracker,
             new TransactionPoolMetrics(metricsSystem),
-            "new_pooled_transaction_hashes");
+            "new_pooled_transaction_hashes",
+            false);
   }
 
   @Test

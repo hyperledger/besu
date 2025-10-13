@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.transactionpool;
 
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.services.BesuService;
+
+import java.util.Collection;
 
 /** Service to enable and disable the transaction pool. */
 public interface TransactionPoolService extends BesuService {
@@ -23,4 +26,11 @@ public interface TransactionPoolService extends BesuService {
 
   /** Disables the transaction pool. */
   void enableTransactionPool();
+
+  /**
+   * Returns the collection of pending transactions.
+   *
+   * @return a collection of pending transactions
+   */
+  Collection<? extends PendingTransaction> getPendingTransactions();
 }

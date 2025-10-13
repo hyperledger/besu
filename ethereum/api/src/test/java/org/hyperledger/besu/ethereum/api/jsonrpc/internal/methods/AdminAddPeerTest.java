@@ -181,7 +181,6 @@ public class AdminAddPeerTest {
   @Test
   public void requestAddsValidDNSEnode() {
     when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(true);
-
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             validRequest.getRequest().getId(),
@@ -251,6 +250,16 @@ public class AdminAddPeerTest {
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
 
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestReturnsErrorWhenDiscoveryStopped() {
+    when(p2pNetwork.isStopped()).thenReturn(true);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validRequest.getRequest().getId(), RpcErrorType.DISCOVERY_DISABLED);
+    final JsonRpcResponse actualResponse = method.response(validRequest);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

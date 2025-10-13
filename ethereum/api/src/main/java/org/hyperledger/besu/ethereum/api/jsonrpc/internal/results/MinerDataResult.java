@@ -19,6 +19,7 @@ import java.util.List;
 import org.immutables.value.Value;
 
 @Value.Immutable
+@Deprecated(since = "24.12.0")
 public abstract class MinerDataResult implements JsonRpcResult {
   public abstract String getNetBlockReward();
 

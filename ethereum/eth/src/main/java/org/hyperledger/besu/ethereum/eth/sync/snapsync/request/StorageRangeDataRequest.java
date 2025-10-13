@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
-import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
 import static org.hyperledger.besu.ethereum.trie.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.trie.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
@@ -31,7 +30,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -180,6 +179,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
 
+    if (null == taskElement) {
+      return Stream.empty();
+    }
+
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
@@ -192,11 +195,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                                 getRootHash(), accountHash, storageRoot, key, value);
                         childRequests.add(storageRangeDataRequest);
                       });
-              if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
-                // need to heal this account storage
-                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
-              }
             });
+
+    if (startKeyHash.equals(MIN_RANGE) && !taskElement.proofs().isEmpty()) {
+      // need to heal this account storage
+      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+    }
 
     return childRequests.stream();
   }

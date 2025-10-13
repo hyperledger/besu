@@ -34,7 +34,8 @@ public class BlobCache {
   public BlobCache() {
     this.cache =
         Caffeine.newBuilder()
-            .maximumSize(6 * 32 * 3L) // 6 blobs max per 32 slots per 3 epochs
+            .maximumSize(
+                9 * 32 * 3L) // 9 blobs max (since Prague EIP-7691) per 32 slots per 3 epochs
             .expireAfterWrite(
                 3 * 32 * 12L, TimeUnit.SECONDS) // 3 epochs of 32 slots which take 12 seconds each.
             .build();
@@ -86,5 +87,13 @@ public class BlobCache {
           "can't restore blobs for non-blob transaction of type {}", transaction.getType().name());
       return Optional.empty();
     }
+  }
+
+  public BlobsWithCommitments.BlobQuad get(final VersionedHash vh) {
+    return cache.getIfPresent(vh);
+  }
+
+  public long size() {
+    return cache.estimatedSize();
   }
 }

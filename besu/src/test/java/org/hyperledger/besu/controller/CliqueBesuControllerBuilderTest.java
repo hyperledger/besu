@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
@@ -32,12 +32,12 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -79,7 +79,7 @@ public class CliqueBesuControllerBuilderTest {
 
   private BesuControllerBuilder cliqueBesuControllerBuilder;
 
-  @Mock private GenesisConfigFile genesisConfigFile;
+  @Mock private GenesisConfig genesisConfig;
   @Mock private GenesisConfigOptions genesisConfigOptions;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
@@ -87,7 +87,6 @@ public class CliqueBesuControllerBuilderTest {
   @Mock private PrivacyParameters privacyParameters;
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
-  @Mock private GasLimitCalculator gasLimitCalculator;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -95,7 +94,7 @@ public class CliqueBesuControllerBuilderTest {
       TransactionPoolConfiguration.DEFAULT;
   private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
   private final ObjectMapper objectMapper = new ObjectMapper();
-  private final MiningParameters miningParameters = MiningParameters.newDefault();
+  private final MiningConfiguration miningConfiguration = MiningConfiguration.newDefault();
 
   @TempDir Path tempDir;
 
@@ -107,14 +106,14 @@ public class CliqueBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    when(genesisConfigFile.getExtraData())
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
+    when(genesisConfig.getExtraData())
         .thenReturn(
             "0x0000000000000000000000000000000000000000000000000000000000000000b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    lenient().when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
-    lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
+    lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
@@ -175,11 +174,11 @@ public class CliqueBesuControllerBuilderTest {
 
     cliqueBesuControllerBuilder =
         new CliqueBesuControllerBuilder()
-            .genesisConfigFile(genesisConfigFile)
+            .genesisConfig(genesisConfig)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)
-            .miningParameters(miningParameters)
+            .miningParameters(miningConfiguration)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
             .dataDirectory(tempDir)
@@ -188,10 +187,10 @@ public class CliqueBesuControllerBuilderTest {
             .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
-            .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
-            .networkConfiguration(NetworkingConfiguration.create());
+            .networkConfiguration(NetworkingConfiguration.create())
+            .apiConfiguration(ImmutableApiConfiguration.builder().build());
   }
 
   @Test
@@ -227,7 +226,7 @@ public class CliqueBesuControllerBuilderTest {
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
-    assertThat(miningParameters.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningParameters.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
+    assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
+    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
   }
 }

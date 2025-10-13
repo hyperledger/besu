@@ -341,10 +341,15 @@ public class JsonTestParameters<S, T> {
     }
   }
 
-  private static class JsonTestCaseReader<T> {
+  /**
+   * Parameterized wrapper for deserialization.
+   *
+   * @param <T> the type parameter
+   */
+  public static class JsonTestCaseReader<T> {
 
     /** The Test case specs. */
-    final Map<String, T> testCaseSpecs;
+    public final Map<String, T> testCaseSpecs;
 
     /**
      * Public constructor.

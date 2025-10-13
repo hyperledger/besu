@@ -31,8 +31,9 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
@@ -40,6 +41,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -61,10 +64,10 @@ public class ProtocolSpecBuilder {
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
-  private Function<EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
+  private Function<EVM, ContractCreationProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
-  private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
+  private BiFunction<EVM, PrecompileContractRegistry, MessageCallProcessor>
       messageCallProcessorBuilder;
   private TransactionProcessorBuilder transactionProcessorBuilder;
 
@@ -80,8 +83,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-  private RequestsValidatorCoordinator requestsValidatorCoordinator =
-      RequestsValidatorCoordinator.empty();
+  private RequestsValidator requestsValidator = new ProhibitedRequestValidator();
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();
@@ -158,7 +160,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder contractCreationProcessorBuilder(
-      final Function<EVM, AbstractMessageProcessor> contractCreationProcessorBuilder) {
+      final Function<EVM, ContractCreationProcessor> contractCreationProcessorBuilder) {
     this.contractCreationProcessorBuilder = contractCreationProcessorBuilder;
     return this;
   }
@@ -180,7 +182,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder messageCallProcessorBuilder(
-      final BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
+      final BiFunction<EVM, PrecompileContractRegistry, MessageCallProcessor>
           messageCallProcessorBuilder) {
     this.messageCallProcessorBuilder = messageCallProcessorBuilder;
     return this;
@@ -268,8 +270,8 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder requestsValidator(
-      final RequestsValidatorCoordinator requestsValidatorCoordinator) {
-    this.requestsValidatorCoordinator = requestsValidatorCoordinator;
+      final RequestsValidator requestsValidatorCoordinator) {
+    this.requestsValidator = requestsValidatorCoordinator;
     return this;
   }
 
@@ -330,11 +332,11 @@ public class ProtocolSpecBuilder {
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final TransactionValidatorFactory transactionValidatorFactory =
         transactionValidatorFactoryBuilder.apply(evm, gasLimitCalculator, feeMarket);
-    final AbstractMessageProcessor contractCreationProcessor =
+    final ContractCreationProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(evm);
     final PrecompileContractRegistry precompileContractRegistry =
         precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
-    final AbstractMessageProcessor messageCallProcessor =
+    final MessageCallProcessor messageCallProcessor =
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
     final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
@@ -402,7 +404,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
-        requestsValidatorCoordinator,
+        requestsValidator,
         Optional.ofNullable(requestProcessorCoordinator),
         blockHashProcessor,
         isPoS,
@@ -469,8 +471,8 @@ public class ProtocolSpecBuilder {
         GasCalculator gasCalculator,
         FeeMarket feeMarket,
         TransactionValidatorFactory transactionValidatorFactory,
-        AbstractMessageProcessor contractCreationProcessor,
-        AbstractMessageProcessor messageCallProcessor);
+        ContractCreationProcessor contractCreationProcessor,
+        MessageCallProcessor messageCallProcessor);
   }
 
   public interface PrivateTransactionProcessorBuilder {

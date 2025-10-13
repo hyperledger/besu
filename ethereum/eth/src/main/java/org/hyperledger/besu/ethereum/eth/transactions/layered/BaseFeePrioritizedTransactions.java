@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.BELOW_BASE_FEE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.DEMOTED;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -50,7 +51,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
           transactionReplacementTester,
       final FeeMarket feeMarket,
       final BlobCache blobCache,
-      final MiningParameters miningParameters) {
+      final MiningConfiguration miningConfiguration) {
     super(
         poolConfig,
         ethScheduler,
@@ -58,7 +59,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         metrics,
         transactionReplacementTester,
         blobCache,
-        miningParameters);
+        miningConfiguration);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }
@@ -104,7 +105,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     while (itTxsBySender.hasNext()) {
       final var senderTxs = itTxsBySender.next().getValue();
 
-      Optional<Long> maybeFirstUnderpricedNonce = Optional.empty();
+      Optional<Long> maybeFirstDemotedNonce = Optional.empty();
 
       for (final var e : senderTxs.entrySet()) {
         final PendingTransaction tx = e.getValue();
@@ -114,26 +115,28 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         } else {
           // otherwise sender txs starting from this nonce need to be demoted to next layer,
           // and we can go to next sender
-          maybeFirstUnderpricedNonce = Optional.of(e.getKey());
+          maybeFirstDemotedNonce = Optional.of(e.getKey());
           break;
         }
       }
 
-      maybeFirstUnderpricedNonce.ifPresent(
+      maybeFirstDemotedNonce.ifPresent(
           nonce -> {
-            // demote all txs after the first underpriced to the next layer, because none of them is
+            // demote all txs after the first demoted to the next layer, because none of them is
             // executable now, and we can avoid sorting them until they are candidate for execution
             // again
             final var demoteTxs = senderTxs.tailMap(nonce, true);
             while (!demoteTxs.isEmpty()) {
               final PendingTransaction demoteTx = demoteTxs.pollLastEntry().getValue();
               LOG.atTrace()
-                  .setMessage("Demoting tx {} with max gas price below next block base fee {}")
+                  .setMessage(
+                      "Demoting tx {} since it does not respect anymore the requisites to stay in this layer."
+                          + " Next block base fee {}")
                   .addArgument(demoteTx::toTraceLog)
                   .addArgument(newNextBlockBaseFee::toHumanReadableString)
                   .log();
-              processEvict(senderTxs, demoteTx, BELOW_BASE_FEE);
-              addToNextLayer(senderTxs, demoteTx, 0);
+              processEvict(senderTxs, demoteTx, DEMOTED);
+              addToNextLayer(senderTxs, demoteTx, 0, MOVE);
             }
           });
 
@@ -171,15 +174,15 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       if (pendingTransaction
           .getTransaction()
           .getEffectiveGasPrice(nextBlockBaseFee)
-          .lessThan(miningParameters.getMinTransactionGasPrice())) {
+          .lessThan(miningConfiguration.getMinTransactionGasPrice())) {
         return false;
       }
 
       // check if enough priority fee is paid
-      if (!miningParameters.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
+      if (!miningConfiguration.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
         final Wei priorityFeePerGas =
             pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee);
-        if (priorityFeePerGas.lessThan(miningParameters.getMinPriorityFeePerGas())) {
+        if (priorityFeePerGas.lessThan(miningConfiguration.getMinPriorityFeePerGas())) {
           return false;
         }
       }

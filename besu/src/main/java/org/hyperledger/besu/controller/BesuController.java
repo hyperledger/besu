@@ -15,7 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 import java.io.Closeable;
@@ -66,17 +67,17 @@ public class BesuController implements java.io.Closeable {
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
-
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
-  private final MiningParameters miningParameters;
+  private final MiningConfiguration miningConfiguration;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
+  private final TransactionSimulator transactionSimulator;
 
   /**
    * Instantiates a new Besu controller.
@@ -91,7 +92,7 @@ public class BesuController implements java.io.Closeable {
    * @param transactionPool the transaction pool
    * @param miningCoordinator the mining coordinator
    * @param privacyParameters the privacy parameters
-   * @param miningParameters the mining parameters
+   * @param miningConfiguration the mining parameters
    * @param additionalJsonRpcMethodsFactory the additional json rpc methods factory
    * @param nodeKey the node key
    * @param closeables the closeables
@@ -99,6 +100,7 @@ public class BesuController implements java.io.Closeable {
    * @param ethPeers the eth peers
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
+   * @param transactionSimulator the transaction simulator
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -111,14 +113,15 @@ public class BesuController implements java.io.Closeable {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
-      final DataStorageConfiguration dataStorageConfiguration) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final TransactionSimulator transactionSimulator) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -132,11 +135,12 @@ public class BesuController implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.closeables = closeables;
-    this.miningParameters = miningParameters;
+    this.miningConfiguration = miningConfiguration;
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
+    this.transactionSimulator = transactionSimulator;
   }
 
   /**
@@ -265,8 +269,8 @@ public class BesuController implements java.io.Closeable {
    *
    * @return the mining parameters
    */
-  public MiningParameters getMiningParameters() {
-    return miningParameters;
+  public MiningConfiguration getMiningParameters() {
+    return miningConfiguration;
   }
 
   /**
@@ -307,6 +311,15 @@ public class BesuController implements java.io.Closeable {
     return dataStorageConfiguration;
   }
 
+  /**
+   * Gets the transaction simulator
+   *
+   * @return the transaction simulator
+   */
+  public TransactionSimulator getTransactionSimulator() {
+    return transactionSimulator;
+  }
+
   /** The type Builder. */
   public static class Builder {
     /** Instantiates a new Builder. */
@@ -321,24 +334,24 @@ public class BesuController implements java.io.Closeable {
      */
     public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig, final SyncMode syncMode) {
-      return fromGenesisFile(ethNetworkConfig.genesisConfigFile(), syncMode)
+      return fromGenesisFile(ethNetworkConfig.genesisConfig(), syncMode)
           .networkId(ethNetworkConfig.networkId());
     }
 
     /**
      * From genesis config besu controller builder.
      *
-     * @param genesisConfigFile the genesis config file
+     * @param genesisConfig the genesis config file
      * @param syncMode the sync mode
      * @return the besu controller builder
      */
     public BesuControllerBuilder fromGenesisFile(
-        final GenesisConfigFile genesisConfigFile, final SyncMode syncMode) {
+        final GenesisConfig genesisConfig, final SyncMode syncMode) {
       final BesuControllerBuilder builder;
-      final var configOptions = genesisConfigFile.getConfigOptions();
+      final var configOptions = genesisConfig.getConfigOptions();
 
       if (configOptions.isConsensusMigration()) {
-        return createConsensusScheduleBesuControllerBuilder(genesisConfigFile);
+        return createConsensusScheduleBesuControllerBuilder(genesisConfig);
       }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
@@ -360,29 +373,28 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
         if (syncMode == SyncMode.CHECKPOINT && isCheckpointPoSBlock(configOptions)) {
-          return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
+          return new MergeBesuControllerBuilder().genesisConfig(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
           // series of classes removed after we successfully transition to PoS
           // https://github.com/hyperledger/besu/issues/2897
           return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
-              .genesisConfigFile(genesisConfigFile);
+              .genesisConfig(genesisConfig);
         }
 
-      } else return builder.genesisConfigFile(genesisConfigFile);
+      } else return builder.genesisConfig(genesisConfig);
     }
 
     private BesuControllerBuilder createConsensusScheduleBesuControllerBuilder(
-        final GenesisConfigFile genesisConfigFile) {
+        final GenesisConfig genesisConfig) {
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
-      final var configOptions = genesisConfigFile.getConfigOptions();
+      final var configOptions = genesisConfig.getConfigOptions();
 
       final BesuControllerBuilder originalControllerBuilder;
       if (configOptions.isIbft2()) {
         originalControllerBuilder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        throw new IllegalStateException(
-            "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
+        originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
       } else {
         throw new IllegalStateException(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
@@ -394,7 +406,7 @@ public class BesuController implements java.io.Closeable {
       besuControllerBuilderSchedule.put(qbftBlock, new QbftBesuControllerBuilder());
 
       return new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule)
-          .genesisConfigFile(genesisConfigFile);
+          .genesisConfig(genesisConfig);
     }
 
     private Long readQbftStartBlockConfig(final QbftConfigOptions qbftConfigOptions) {

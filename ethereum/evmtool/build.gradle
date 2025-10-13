@@ -65,13 +65,13 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
   // No logging in graalvm EvmTool
   nativeImageClasspath 'org.slf4j:slf4j-nop'
 }
 
-mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+application {
+  mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
+}
 
 
 // rename the top level dir from besu-<version> to besu and this makes it really

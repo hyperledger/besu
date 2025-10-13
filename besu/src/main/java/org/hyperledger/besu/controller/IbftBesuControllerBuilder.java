@@ -19,10 +19,10 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -60,7 +60,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -74,47 +74,45 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Ibft besu controller builder. */
-public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
+public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(IbftBesuControllerBuilder.class);
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ForksSchedule<BftConfigOptions> forksSchedule;
   private ValidatorPeers peers;
+  private IbftExtraDataCodec bftExtraDataCodec;
+  private BftBlockInterface bftBlockInterface;
 
   /** Default Constructor */
   public IbftBesuControllerBuilder() {}
-
-  @Override
-  protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
-    return Suppliers.memoize(IbftExtraDataCodec::new);
-  }
 
   @Override
   protected void prepForBuild() {
     bftConfig = genesisConfigOptions.getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
     forksSchedule = IbftForksSchedulesFactory.create(genesisConfigOptions);
+    bftExtraDataCodec = new IbftExtraDataCodec();
+    bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
   }
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final MiningParameters miningParameters) {
-    return new IbftJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
+      final MiningConfiguration miningConfiguration) {
+    return new IbftJsonRpcMethods(protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
@@ -140,7 +138,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
@@ -155,16 +153,16 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             protocolContext,
             bftProtocolSchedule,
             forksSchedule,
-            miningParameters,
+            miningConfiguration,
             localAddress,
-            bftExtraDataCodec().get(),
+            bftExtraDataCodec,
             ethProtocolManager.ethContext().getScheduler());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
+        new ProposerSelector(blockchain, bftBlockInterface, true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -182,14 +180,17 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                Duration.ofSeconds(bftConfig.getRequestTimeoutSeconds()),
+                bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(
-            proposerSelector, bftProtocolSchedule, protocolContext, bftExtraDataCodec().get());
+            proposerSelector, bftProtocolSchedule, protocolContext, bftExtraDataCodec);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -218,7 +219,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                     minedBlockObservers,
                     messageValidatorFactory,
                     messageFactory,
-                    bftExtraDataCodec().get()),
+                    bftExtraDataCodec),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,
@@ -243,15 +244,24 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         .getBlockchain()
         .observeBlockAdded(
             o ->
-                miningParameters.setBlockPeriodSeconds(
+                miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
                         .getFork(o.getBlock().getHeader().getNumber() + 1)
                         .getValue()
                         .getBlockPeriodSeconds()));
 
-    if (syncState.isInitialSyncPhaseDone()) {
-      ibftMiningCoordinator.enable();
-    }
+    syncState.subscribeSyncStatus(
+        syncStatus -> {
+          if (syncState.syncTarget().isPresent()) {
+            // We're syncing so stop doing other stuff
+            LOG.info("Stopping IBFT mining coordinator while we are syncing");
+            ibftMiningCoordinator.stop();
+          } else {
+            LOG.info("Starting IBFT mining coordinator following sync");
+            ibftMiningCoordinator.enable();
+            ibftMiningCoordinator.start();
+          }
+        });
 
     syncState.subscribeCompletionReached(
         new BesuEvents.InitialSyncCompletionListener() {
@@ -278,7 +288,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
     return new IbftQueryPluginServiceFactory(
-        blockchain, bftBlockInterface().get(), validatorProvider, nodeKey);
+        blockchain, bftBlockInterface, validatorProvider, nodeKey);
   }
 
   @Override
@@ -288,9 +298,9 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         forksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
-        bftExtraDataCodec().get(),
+        bftExtraDataCodec,
         evmConfiguration,
-        miningParameters,
+        miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
         metricsSystem);
@@ -300,7 +310,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
-    if (bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).isEmpty()) {
+    if (bftBlockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
   }
@@ -318,9 +328,9 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(
-            blockchain, epochManager, bftBlockInterface().get(), validatorOverrides),
+            blockchain, epochManager, bftBlockInterface, validatorOverrides),
         epochManager,
-        bftBlockInterface().get());
+        bftBlockInterface);
   }
 
   private BftValidatorOverrides convertIbftForks(final List<BftFork> bftForks) {

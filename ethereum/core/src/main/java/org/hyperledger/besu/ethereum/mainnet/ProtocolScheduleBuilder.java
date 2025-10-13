@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -47,66 +48,19 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
-  private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
+  private final MiningConfiguration miningConfiguration;
 
   public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final BigInteger defaultChainId,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    this(
-        config,
-        Optional.of(defaultChainId),
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
-  public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    this(
-        config,
-        Optional.empty(),
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
-  private ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
+      final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
@@ -116,10 +70,10 @@ public class ProtocolScheduleBuilder {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
-    this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
+    this.miningConfiguration = miningConfiguration;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -129,7 +83,7 @@ public class ProtocolScheduleBuilder {
     return protocolSchedule;
   }
 
-  private void initSchedule(
+  public void initSchedule(
       final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
 
     final MainnetProtocolSpecFactory specFactory =
@@ -139,7 +93,7 @@ public class ProtocolScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
-            miningParameters,
+            miningConfiguration,
             isParallelTxProcessingEnabled,
             metricsSystem);
 
@@ -277,7 +231,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
-    lastForkBlock = validateForkOrder("PragueEOF", config.getPragueEOFTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Osaka", config.getOsakaTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -413,9 +367,9 @@ public class ProtocolScheduleBuilder {
                 config.getPragueTime(),
                 specFactory.pragueDefinition(config)),
             timestampMilestone(
-                HardforkId.MainnetHardforkId.PRAGUE_EOF,
-                config.getPragueEOFTime(),
-                specFactory.pragueEOFDefinition(config)),
+                MainnetHardforkId.OSAKA,
+                config.getOsakaTime(),
+                specFactory.osakaDefinition(config)),
             timestampMilestone(
                 HardforkId.MainnetHardforkId.FUTURE_EIPS,
                 config.getFutureEipsTime(),
@@ -555,5 +509,9 @@ public class ProtocolScheduleBuilder {
       BLOCK_NUMBER,
       TIMESTAMP
     }
+  }
+
+  public Optional<BigInteger> getDefaultChainId() {
+    return defaultChainId;
   }
 }

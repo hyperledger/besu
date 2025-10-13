@@ -23,10 +23,11 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -34,7 +35,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -116,26 +117,27 @@ public class TestNode implements Closeable {
                     .setBindPort(listenPort)
                     .setSupportedProtocols(EthProtocol.get()));
 
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromResource("/dev.json");
+    final GenesisConfig genesisConfig = GenesisConfig.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
+            MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
             new NoOpMetricsSystem());
 
-    final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
+    final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final MutableBlockchain blockchain =
         createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    genesisState.writeStateTo(worldStateArchive.getMutable());
+    genesisState.writeStateTo(worldStateArchive.getWorldState());
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, null, new BadBlockManager());
+        new ProtocolContext(
+            blockchain, worldStateArchive, mock(ConsensusContext.class), new BadBlockManager());
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
@@ -152,7 +154,6 @@ public class TestNode implements Closeable {
         };
     final EthPeers ethPeers =
         new EthPeers(
-            EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),
             metricsSystem,
@@ -169,7 +170,7 @@ public class TestNode implements Closeable {
     ethPeers.setChainHeadTracker(mockCHT);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler, null);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -181,7 +182,8 @@ public class TestNode implements Closeable {
             syncState,
             TransactionPoolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningParameters.newDefault());
+            MiningConfiguration.newDefault(),
+            false);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

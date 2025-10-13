@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -83,7 +83,6 @@ import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -367,9 +366,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
         final EnodeURL enodeURL =
             EnodeURLImpl.builder()
                 .ipAddress(enr.ip())
-                .nodeId(enr.publicKey().bytes())
-                .discoveryPort(Optional.ofNullable(enr.udp()))
-                .listeningPort(Optional.ofNullable(enr.tcp()))
+                .nodeId(enr.publicKey())
+                .discoveryPort(enr.udp())
+                .listeningPort(enr.tcp())
                 .build();
         final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);
@@ -465,7 +464,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return peerDiscoveryAgent.isActive();
+    return peerDiscoveryAgent.isEnabled();
+  }
+
+  @Override
+  public boolean isStopped() {
+    return peerDiscoveryAgent.isStopped();
   }
 
   @Override
@@ -520,7 +524,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
-    private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
     private Blockchain blockchain;
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
@@ -582,7 +585,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final ForkIdManager forkIdManager =
           new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
 
-      return new VertxPeerDiscoveryAgent(
+      return VertxPeerDiscoveryAgent.create(
           vertx,
           nodeKey,
           config.getDiscovery(),
@@ -605,7 +608,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
-          .p2pTLSConfiguration(p2pTLSConfiguration)
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
           .maxPeers(maxPeers)
@@ -681,12 +683,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder storageProvider(final StorageProvider storageProvider) {
       checkNotNull(storageProvider);
       this.storageProvider = storageProvider;
-      return this;
-    }
-
-    public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
-      checkNotNull(p2pTLSConfiguration);
-      this.p2pTLSConfiguration = p2pTLSConfiguration;
       return this;
     }
 

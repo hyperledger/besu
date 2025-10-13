@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Validates block bodies. */
 public interface BlockBodyValidator {
@@ -35,15 +33,16 @@ public interface BlockBodyValidator {
    * @param worldStateRootHash The rootHash defining the world state after processing this block and
    *     all of its transactions.
    * @param ommerValidationMode The validation mode to use for ommer headers
+   * @param bodyValidationMode The validation mode to use for the body
    * @return {@code true} if valid; otherwise {@code false}
    */
   boolean validateBody(
-      ProtocolContext context,
-      Block block,
-      List<TransactionReceipt> receipts,
-      Optional<List<Request>> requests,
-      Hash worldStateRootHash,
-      final HeaderValidationMode ommerValidationMode);
+      final ProtocolContext context,
+      final Block block,
+      final List<TransactionReceipt> receipts,
+      final Hash worldStateRootHash,
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode);
 
   /**
    * Validates that the block body is valid, but skips state root validation.
@@ -58,6 +57,5 @@ public interface BlockBodyValidator {
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode ommerValidationMode);
 }

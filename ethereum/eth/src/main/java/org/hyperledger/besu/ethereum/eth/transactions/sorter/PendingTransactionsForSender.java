@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
@@ -96,7 +97,15 @@ public class PendingTransactionsForSender {
     if (pendingTransactions.isEmpty()) {
       return OptionalLong.empty();
     } else {
-      return nextGap.isEmpty() ? OptionalLong.of(pendingTransactions.lastKey() + 1) : nextGap;
+      try {
+        return nextGap.isEmpty() ? OptionalLong.of(pendingTransactions.lastKey() + 1) : nextGap;
+      } catch (NoSuchElementException nse) {
+        // There is a timing condition where isEmpty() returns false, then another thread removes
+        // the last key before our call to lastKey(). There's no benefit to us adding a mutex to
+        // prevent the other thread updating the map so we just catch the exception and treat the
+        // map as empty.
+        return OptionalLong.empty();
+      }
     }
   }
 

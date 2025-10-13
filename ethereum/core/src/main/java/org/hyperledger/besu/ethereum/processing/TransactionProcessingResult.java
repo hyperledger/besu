@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.log.Log;
 
 import java.util.List;
@@ -49,8 +50,12 @@ public class TransactionProcessingResult
 
   private final Bytes output;
 
+  private Optional<Boolean> isProcessedInParallel = Optional.empty();
+
   private final ValidationResult<TransactionInvalidReason> validationResult;
   private final Optional<Bytes> revertReason;
+
+  public PathBasedWorldStateUpdateAccumulator<?> accumulator;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -192,6 +197,25 @@ public class TransactionProcessingResult
    */
   public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return validationResult;
+  }
+
+  /**
+   * Set isProcessedInParallel to the value in parameter
+   *
+   * @param isProcessedInParallel new value of isProcessedInParallel
+   */
+  public void setIsProcessedInParallel(final Optional<Boolean> isProcessedInParallel) {
+    this.isProcessedInParallel = isProcessedInParallel;
+  }
+
+  /**
+   * Returns a flag that indicates if the transaction was executed in parallel
+   *
+   * @return Optional of Boolean, the value of the boolean is true if the transaction was executed
+   *     in parallel
+   */
+  public Optional<Boolean> getIsProcessedInParallel() {
+    return isProcessedInParallel;
   }
 
   /**

@@ -98,6 +98,7 @@ public class IbftRoundTest {
   @Mock private RoundTimer roundTimer;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private BlockImporter blockImporter;
+  @Mock private BlockHeader parentHeader;
 
   @Captor private ArgumentCaptor<Block> blockCaptor;
 
@@ -131,7 +132,7 @@ public class IbftRoundTest {
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
     lenient()
-        .when(blockCreator.createBlock(anyLong()))
+        .when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 proposedBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -159,7 +160,8 @@ public class IbftRoundTest {
         messageFactory,
         transmitter,
         roundTimer,
-        bftExtraDataCodec);
+        bftExtraDataCodec,
+        parentHeader);
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
   }
 
@@ -177,7 +179,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.handleProposalMessage(
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
@@ -199,7 +202,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, times(1))
@@ -222,7 +226,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
     round.createAndSendProposalMessage(15);
     verify(transmitter, times(1))
         .multicastProposal(roundIdentifier, proposedBlock, Optional.empty());
@@ -245,7 +250,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     final Hash commitSealHash =
         new BftBlockHashing(new IbftExtraDataCodec())
@@ -292,7 +298,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     final Hash commitSealHash =
         new BftBlockHashing(new IbftExtraDataCodec())
@@ -329,7 +336,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     final RoundChangeCertificate roundChangeCertificate = new RoundChangeCertificate(emptyList());
 
@@ -353,7 +361,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     final RoundChangeArtifacts roundChangeArtifacts =
         RoundChangeArtifacts.create(
@@ -400,7 +409,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     final RoundChangeArtifacts roundChangeArtifacts =
         RoundChangeArtifacts.create(
@@ -434,7 +444,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
     round.createAndSendProposalMessage(15);
     verify(minedBlockObserver).blockMined(any());
   }
@@ -455,7 +466,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
@@ -481,7 +493,8 @@ public class IbftRoundTest {
             messageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
@@ -511,7 +524,8 @@ public class IbftRoundTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataCodec);
+            bftExtraDataCodec,
+            parentHeader);
 
     round.handleProposalMessage(
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));

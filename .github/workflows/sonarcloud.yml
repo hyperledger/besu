@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
@@ -38,4 +40,4 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
           SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-        run: ./gradlew build sonarqube --continue --info -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew build sonar --continue -Dorg.gradle.parallel=true -Dorg.gradle.caching=true

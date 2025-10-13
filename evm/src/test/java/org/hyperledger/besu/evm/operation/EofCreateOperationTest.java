@@ -33,7 +33,6 @@ import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -62,7 +61,7 @@ class EofCreateOperationTest {
 
   @Test
   void innerContractIsCorrect() {
-    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
     Code code = evm.getCodeUncached(INNER_CONTRACT);
     assertThat(code.isValid()).isTrue();
 
@@ -92,7 +91,7 @@ class EofCreateOperationTest {
   @Test
   void eofCreatePassesInCallData() {
     Bytes outerContract = EOF_CREATE_CONTRACT;
-    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
 
     Code code = evm.getCodeUncached(outerContract);
     if (!code.isValid()) {
@@ -147,7 +146,7 @@ class EofCreateOperationTest {
         .code(code)
         .completer(__ -> {})
         .address(Address.fromHexString(SENDER))
-        .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
+        .blockHashLookup((__, ___) -> Hash.ZERO)
         .blockValues(mock(BlockValues.class))
         .gasPrice(Wei.ZERO)
         .miningBeneficiary(Address.ZERO)

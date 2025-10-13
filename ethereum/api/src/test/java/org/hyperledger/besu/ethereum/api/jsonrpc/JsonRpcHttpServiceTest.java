@@ -980,7 +980,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       // Check general format of result
       final String respBody = resp.body().string();
       final JsonObject json = new JsonObject(respBody);
-      final RpcErrorType expectedError = RpcErrorType.INVALID_BLOCK_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }

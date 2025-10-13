@@ -15,27 +15,27 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.core.encoding.RequestDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class Request implements org.hyperledger.besu.plugin.data.Request {
+public record Request(RequestType type, Bytes data)
+    implements org.hyperledger.besu.plugin.data.Request {
   @Override
-  public abstract RequestType getType();
-
-  public static Request readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
+  public RequestType getType() {
+    return type();
   }
 
-  public static Request readFrom(final RLPInput rlpInput) {
-    return RequestDecoder.decode(rlpInput);
+  @Override
+  public Bytes getData() {
+    return data();
   }
 
-  public void writeTo(final RLPOutput out) {
-    RequestEncoder.encode(this, out);
+  /**
+   * Gets the serialized form of the concatenated type and data.
+   *
+   * @return the serialized request as a byte.
+   */
+  public Bytes getEncodedRequest() {
+    return Bytes.concatenate(Bytes.of(getType().ordinal()), getData());
   }
 }

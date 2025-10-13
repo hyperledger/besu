@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Shanghai gas calculator. */
 public class ShanghaiGasCalculator extends LondonGasCalculator {
@@ -39,13 +36,8 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
-  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
-    long intrinsicGasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);
-    if (isContractCreation) {
-      return clampedAdd(intrinsicGasCost, initcodeCost(payload.size()));
-    } else {
-      return intrinsicGasCost;
-    }
+  protected long contractCreationCost(final int initCodeLength) {
+    return txCreateExtraGasCost() + initcodeCost(initCodeLength);
   }
 
   @Override

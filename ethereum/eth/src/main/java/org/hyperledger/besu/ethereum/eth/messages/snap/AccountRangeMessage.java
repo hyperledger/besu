@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
@@ -117,8 +119,9 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     return ImmutableAccountRangeData.builder().accounts(accounts).proofs(proofs).build();
   }
 
-  private Bytes toFullAccount(final RLPInput rlpInput) {
-    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
+  @VisibleForTesting
+  public static Bytes toFullAccount(final RLPInput rlpInput) {
+    final PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
@@ -128,6 +131,26 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     rlpOutput.writeBytes(accountValue.getCodeHash());
     rlpOutput.endList();
 
+    return rlpOutput.encoded();
+  }
+
+  public static Bytes toSlimAccount(final RLPInput rlpInput) {
+    PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(rlpInput);
+    var rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(accountValue.getNonce());
+    rlpOutput.writeUInt256Scalar(accountValue.getBalance());
+    if (accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getStorageRoot());
+    }
+    if (accountValue.getCodeHash().equals(Hash.EMPTY)) {
+      rlpOutput.writeNull();
+    } else {
+      rlpOutput.writeBytes(accountValue.getCodeHash());
+    }
+    rlpOutput.endList();
     return rlpOutput.encoded();
   }
 

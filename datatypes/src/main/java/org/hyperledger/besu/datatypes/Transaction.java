@@ -229,6 +229,13 @@ public interface Transaction {
   Bytes encoded();
 
   /**
+   * Returns the preimage of the transaction with the proper encoding
+   *
+   * @return the encoded preimage of the transaction as Bytes
+   */
+  Bytes encodedPreimage();
+
+  /**
    * Returns the size in bytes of the encoded transaction.
    *
    * @return the size in bytes of the encoded transaction.
@@ -236,16 +243,16 @@ public interface Transaction {
   int getSize();
 
   /**
-   * Returns the set code transaction payload if this transaction is a 7702 transaction.
+   * Returns the code delegations if this transaction is a 7702 transaction.
    *
-   * @return the set code transaction payloads
+   * @return the code delegations
    */
-  Optional<List<SetCodeAuthorization>> getAuthorizationList();
+  Optional<List<CodeDelegation>> getCodeDelegationList();
 
   /**
-   * Returns the size of the authorization list.
+   * Returns the size of the code delegation list.
    *
-   * @return the size of the authorization list
+   * @return the size of the code delegation list
    */
-  int authorizationListSize();
+  int codeDelegationListSize();
 }

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -72,7 +73,8 @@ public class ImportBlocksStepTest {
             validationPolicy,
             ommerValidationPolicy,
             null,
-            pivotHeader);
+            pivotHeader,
+            true);
   }
 
   @Test
@@ -84,18 +86,29 @@ public class ImportBlocksStepTest {
             .collect(toList());
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      when(blockImporter.fastImportBlock(
+      when(blockImporter.importBlockForSyncing(
               protocolContext,
               blockWithReceipts.getBlock(),
               blockWithReceipts.getReceipts(),
               FULL,
-              LIGHT))
+              LIGHT,
+              BodyValidationMode.LIGHT,
+              true))
           .thenReturn(new BlockImportResult(true));
     }
     importBlocksStep.accept(blocksWithReceipts);
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+      verify(blockImporter)
+          .importBlockForSyncing(
+              protocolContext,
+              blockWithReceipts.getBlock(),
+              blockWithReceipts.getReceipts(),
+              FULL,
+              LIGHT,
+              BodyValidationMode.LIGHT,
+              true);
     }
     verify(validationPolicy, times(blocks.size())).getValidationModeForNextBlock();
   }
@@ -105,10 +118,56 @@ public class ImportBlocksStepTest {
     final Block block = gen.block();
     final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
 
-    when(blockImporter.fastImportBlock(
-            protocolContext, block, blockWithReceipts.getReceipts(), FULL, LIGHT))
+    when(blockImporter.importBlockForSyncing(
+            protocolContext,
+            block,
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            true))
         .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);
+  }
+
+  @Test
+  public void shouldImportBlockWithoutTxIndexingWhenNotEnabled() {
+    ImportBlocksStep importBlocksStep =
+        new ImportBlocksStep(
+            protocolSchedule,
+            protocolContext,
+            validationPolicy,
+            ommerValidationPolicy,
+            null,
+            pivotHeader,
+            false);
+
+    final Block block = gen.block();
+    final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
+
+    when(blockImporter.importBlockForSyncing(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            false))
+        .thenReturn(new BlockImportResult(true));
+
+    importBlocksStep.accept(List.of(blockWithReceipts));
+
+    verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
+    verify(validationPolicy, times(1)).getValidationModeForNextBlock();
+    verify(blockImporter)
+        .importBlockForSyncing(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            FULL,
+            LIGHT,
+            BodyValidationMode.LIGHT,
+            false);
   }
 }

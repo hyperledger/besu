@@ -175,16 +175,17 @@ public class ClassicProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    true,
-                    false,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccounts(true)
+                    .warmCoinbase(false)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+                    .build())
         .name("Atlantis");
   }
 
@@ -357,16 +358,17 @@ public class ClassicProtocolSpecs {
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidatorFactory,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    true,
-                    true,
-                    evmConfiguration.evmStackSize(),
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidatorFactory)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccounts(true)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.frontier())
+                    .build())
         .name("Spiral");
   }
 }

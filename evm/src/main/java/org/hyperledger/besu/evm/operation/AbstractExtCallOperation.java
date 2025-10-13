@@ -14,16 +14,18 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
 import javax.annotation.Nonnull;
 
@@ -106,36 +108,62 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     long inputOffset = inputDataOffset(frame);
     long inputLength = inputDataLength(frame);
 
+    GasCalculator gasCalculator = gasCalculator();
     if (!zeroValue && isStatic(frame)) {
       return new OperationResult(
-          gasCalculator().callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+          gasCalculator.callValueTransferGasCost(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
     if (toBytes.size() > Address.SIZE) {
       return new OperationResult(
-          gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)
-              + (zeroValue ? 0 : gasCalculator().callValueTransferGasCost())
-              + gasCalculator().getColdAccountAccessCost(),
+          clampedAdd(
+              clampedAdd(
+                  gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength),
+                  (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())),
+              gasCalculator.getColdAccountAccessCost()),
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
-    boolean accountCreation = contract == null && !zeroValue;
-    long cost =
-        gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)
-            + (zeroValue ? 0 : gasCalculator().callValueTransferGasCost())
-            + (frame.warmUpAddress(to)
-                ? gasCalculator().getWarmStorageReadCost()
-                : gasCalculator().getColdAccountAccessCost())
-            + (accountCreation ? gasCalculator().newAccountGasCost() : 0);
-    long currentGas = frame.getRemainingGas() - cost;
-    if (currentGas < 0) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+
+    if (contract != null && contract.hasDelegatedCode()) {
+      if (contract.getCodeDelegationTargetCode().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have delegated code");
+      }
+
+      if (contract.getCodeDelegationTargetHash().isEmpty()) {
+        throw new RuntimeException("A delegated code account must have a delegated code hash");
+      }
+
+      final long codeDelegationResolutionGas =
+          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
+
+      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
+        return new Operation.OperationResult(
+            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      }
+
+      frame.decrementRemainingGas(codeDelegationResolutionGas);
     }
 
-    final Code code =
-        contract == null
-            ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getCodeHash(), contract.getCode());
+    boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
+    long cost =
+        clampedAdd(
+            clampedAdd(
+                clampedAdd(
+                    gasCalculator.memoryExpansionGasCost(frame, inputOffset, inputLength),
+                    (zeroValue ? 0 : gasCalculator.callValueTransferGasCost())),
+                (frame.warmUpAddress(to) || gasCalculator.isPrecompile(to)
+                    ? gasCalculator.getWarmStorageReadCost()
+                    : gasCalculator.getColdAccountAccessCost())),
+            (accountCreation ? gasCalculator.newAccountGasCost() : 0));
+    long currentGas = frame.getRemainingGas();
+    if (currentGas < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+    currentGas -= cost;
+    frame.expandMemory(inputOffset, inputLength);
+
+    final Code code = getCode(evm, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
@@ -150,14 +178,14 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
       return softFailure(frame, cost);
     }
 
-    long retainedGas = Math.max(currentGas / 64, gasCalculator().getMinRetainedGas());
+    long retainedGas = Math.max(currentGas / 64, gasCalculator.getMinRetainedGas());
     long childGas = currentGas - retainedGas;
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.
-    if (childGas < gasCalculator().getMinCalleeGas()) {
+    if (childGas < gasCalculator.getMinCalleeGas()) {
       return softFailure(frame, cost);
     }
     // transferring value you don't have is not a halting exception, just a failure
@@ -188,7 +216,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(cost + childGas, null, 0);
+    return new OperationResult(clampedAdd(cost, childGas), null, 0);
   }
 
   private @Nonnull OperationResult softFailure(final MessageFrame frame, final long cost) {

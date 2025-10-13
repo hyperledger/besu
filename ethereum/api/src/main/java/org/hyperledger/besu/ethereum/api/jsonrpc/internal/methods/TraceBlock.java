@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
@@ -40,13 +39,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -58,10 +55,24 @@ public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
   protected final ProtocolSchedule protocolSchedule;
+  private final LabelledMetric<Counter> outputCounter;
+  protected final EthScheduler ethScheduler;
 
-  public TraceBlock(final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
+  public TraceBlock(
+      final ProtocolSchedule protocolSchedule,
+      final BlockchainQueries queries,
+      final MetricsSystem metricsSystem,
+      final EthScheduler ethScheduler) {
     super(queries);
     this.protocolSchedule = protocolSchedule;
+    this.outputCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "transactions_traceblock_pipeline_processed_total",
+            "Number of transactions processed for each block",
+            "step",
+            "action");
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -115,14 +126,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
               final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
 
               TransactionSource transactionSource = new TransactionSource(block);
-              final LabelledMetric<Counter> outputCounter =
-                  new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
-                      .createLabelledCounter(
-                          BesuMetricCategory.BLOCKCHAIN,
-                          "transactions_traceblock_pipeline_processed_total",
-                          "Number of transactions processed for each block",
-                          "step",
-                          "action");
               DebugOperationTracer debugOperationTracer =
                   new DebugOperationTracer(new TraceOptions(false, false, true), false);
               ExecuteTransactionStep executeTransactionStep =
@@ -152,16 +155,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                           traceStream -> traceStream.forEachOrdered(buildArrayNodeStep));
 
               try {
-                if (getBlockchainQueries().getEthScheduler().isPresent()) {
-                  getBlockchainQueries()
-                      .getEthScheduler()
-                      .get()
-                      .startPipeline(traceBlockPipeline)
-                      .get();
-                } else {
-                  EthScheduler ethScheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
-                  ethScheduler.startPipeline(traceBlockPipeline).get();
-                }
+                ethScheduler.startPipeline(traceBlockPipeline).get();
               } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
               }
@@ -171,18 +165,6 @@ public class TraceBlock extends AbstractBlockParameterMethod {
               return Optional.of(resultArrayNode);
             })
         .orElse(emptyResult());
-  }
-
-  protected void generateTracesFromTransactionTraceAndBlock(
-      final Optional<FilterParameter> filterParameter,
-      final List<TransactionTrace> transactionTraces,
-      final Block block,
-      final ArrayNodeWrapper resultArrayNode) {
-    transactionTraces.forEach(
-        transactionTrace ->
-            FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-                    protocolSchedule, transactionTrace, block)
-                .forEachOrdered(resultArrayNode::addPOJO));
   }
 
   protected void generateRewardsFromBlock(

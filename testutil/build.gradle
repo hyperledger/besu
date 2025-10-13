@@ -28,6 +28,10 @@ jar {
   }
 }
 
+sonarqube {
+  skipProject = true
+}
+
 dependencies {
   implementation project(':ethereum:eth')
   implementation project(':plugin-api')
@@ -39,12 +43,10 @@ dependencies {
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'io.vertx:vertx-core'
   implementation 'org.junit.jupiter:junit-jupiter'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-io'
-  implementation 'io.tmio:tuweni-toml'
+  implementation 'io.consensys.protocols:tuweni-bytes'
+  implementation 'io.consensys.protocols:tuweni-io'
+  implementation 'io.consensys.protocols:tuweni-toml'
   implementation 'org.assertj:assertj-core'
   implementation 'org.mockito:mockito-core'
   implementation 'org.web3j:core'
-
-  implementation 'org.testcontainers:testcontainers'
 }

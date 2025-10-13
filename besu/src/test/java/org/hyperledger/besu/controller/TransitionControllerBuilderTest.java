@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.clique.BlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -35,11 +35,12 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -73,6 +74,7 @@ public class TransitionControllerBuilderTest {
   @Mock ProtocolContext protocolContext;
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
+  @Mock PeerTaskExecutor peerTaskExecutor;
   @Mock SyncState syncState;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -84,7 +86,7 @@ public class TransitionControllerBuilderTest {
   CliqueBesuControllerBuilder cliqueBuilder = new CliqueBesuControllerBuilder();
   BesuControllerBuilder powBuilder = new MainnetBesuControllerBuilder();
   MergeBesuControllerBuilder postMergeBuilder = new MergeBesuControllerBuilder();
-  MiningParameters miningParameters;
+  MiningConfiguration miningConfiguration;
 
   TransitionProtocolSchedule transitionProtocolSchedule;
 
@@ -96,9 +98,9 @@ public class TransitionControllerBuilderTest {
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
-    cliqueBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    powBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    postMergeBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    cliqueBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    powBuilder.genesisConfig(GenesisConfig.DEFAULT);
+    postMergeBuilder.genesisConfig(GenesisConfig.DEFAULT);
     postMergeBuilder.storageProvider(storageProvider);
     lenient().when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     lenient()
@@ -118,27 +120,27 @@ public class TransitionControllerBuilderTest {
         .thenReturn(mergeContext);
     when(ethProtocolManager.ethContext().getScheduler())
         .thenReturn(new DeterministicEthScheduler());
-    miningParameters = MiningParameters.newDefault();
+    miningConfiguration = MiningConfiguration.newDefault();
   }
 
   @Test
   public void assertCliqueMiningOverridePreMerge() {
-    assertThat(miningParameters.isMiningEnabled()).isFalse();
+    assertThat(miningConfiguration.isMiningEnabled()).isFalse();
     var transCoordinator = buildTransitionCoordinator(cliqueBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
   }
 
   @Test
   public void assertPoWIsNotMiningPreMerge() {
-    assertThat(miningParameters.isMiningEnabled()).isFalse();
+    assertThat(miningConfiguration.isMiningEnabled()).isFalse();
     var transCoordinator = buildTransitionCoordinator(powBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isFalse();
   }
 
   @Test
   public void assertPowMiningPreMerge() {
-    miningParameters =
-        ImmutableMiningParameters.builder()
+    miningConfiguration =
+        ImmutableMiningConfiguration.builder()
             .mutableInitValues(MutableInitValues.builder().isMiningEnabled(true).build())
             .build();
     var transCoordinator = buildTransitionCoordinator(powBuilder, postMergeBuilder);
@@ -265,7 +267,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
-    builder.genesisConfigFile(GenesisConfigFile.mainnet());
+    builder.genesisConfig(GenesisConfig.mainnet());
     builder.storageProvider(storageProvider);
     builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =
@@ -273,7 +275,7 @@ public class TransitionControllerBuilderTest {
             transitionProtocolSchedule,
             protocolContext,
             transactionPool,
-            miningParameters,
+            miningConfiguration,
             syncState,
             ethProtocolManager);
 

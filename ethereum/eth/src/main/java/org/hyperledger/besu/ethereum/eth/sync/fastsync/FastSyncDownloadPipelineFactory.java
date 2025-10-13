@@ -117,6 +117,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
+
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
             new RangeHeadersFetcher(
@@ -133,14 +134,15 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolContext,
             ethContext,
             detachedValidationPolicy,
+            syncConfig,
             headerRequestSize,
             metricsSystem);
     final RangeHeadersValidationStep validateHeadersJoinUpStep =
         new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
-        new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
+        new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(ethContext, metricsSystem);
+        new DownloadReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
     final ImportBlocksStep importBlockStep =
         new ImportBlocksStep(
             protocolSchedule,
@@ -148,7 +150,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             attachedValidationPolicy,
             ommerValidationPolicy,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+            fastSyncState.getPivotBlockHeader().get(),
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",

@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -46,7 +46,7 @@ public class LayeredTransactionPoolGasPriceTest extends AbstractLayeredTransacti
         txPoolMetrics,
         transactionReplacementTester,
         new BlobCache(),
-        MiningParameters.newDefault());
+        MiningConfiguration.newDefault());
   }
 
   @Override

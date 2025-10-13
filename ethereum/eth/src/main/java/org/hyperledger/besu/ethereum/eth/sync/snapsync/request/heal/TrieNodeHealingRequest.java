@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -44,7 +45,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   private final Bytes location;
   protected Bytes data;
 
-  protected boolean requiresPersisting = true;
+  protected AtomicBoolean requiresPersisting = new AtomicBoolean(true);
 
   protected TrieNodeHealingRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
@@ -65,7 +66,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
       return 0;
     }
     int saved = 0;
-    if (requiresPersisting) {
+    if (requiresPersisting.getAndSet(false)) {
       checkNotNull(data, "Must set data before node can be persisted.");
       saved =
           doPersist(
@@ -143,7 +144,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   public boolean isRequiresPersisting() {
-    return requiresPersisting;
+    return requiresPersisting.get();
   }
 
   public Bytes32 getNodeHash() {
@@ -173,7 +174,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   public void setRequiresPersisting(final boolean requiresPersisting) {
-    this.requiresPersisting = requiresPersisting;
+    this.requiresPersisting.set(requiresPersisting);
   }
 
   private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -58,6 +59,7 @@ public class CliqueDifficultyValidationRuleTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    CliqueHelpers.setCliqueContext(cliqueContext);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, new BadBlockManager());
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

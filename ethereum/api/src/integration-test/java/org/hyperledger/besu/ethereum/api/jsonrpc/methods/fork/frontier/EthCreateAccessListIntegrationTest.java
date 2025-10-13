@@ -236,7 +236,12 @@ public class EthCreateAccessListIntegrationTest {
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(accessList, gasUsed));
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(response)
+        .usingRecursiveComparison()
+        // customize the comparison for the type that lazy compute the hashCode
+        .withEqualsForType(UInt256::equals, UInt256.class)
+        .withEqualsForType(Address::equals, Address.class)
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

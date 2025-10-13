@@ -8,8 +8,7 @@
       "to" : "0x0000000000000000000000000000000000000999",
       "gas" : "0xfffff2",
       "gasPrice" : "0xef",
-      "value" : "0x1",
-      "nonce" : "0x0"
+      "value" : "0x1"
     }, [ "vmTrace" ], "latest" ],
     "id" : 53
   },

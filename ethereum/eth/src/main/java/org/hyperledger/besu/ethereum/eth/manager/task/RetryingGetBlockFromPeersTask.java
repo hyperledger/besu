@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -36,18 +37,21 @@ public class RetryingGetBlockFromPeersTask
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
   private final ProtocolSchedule protocolSchedule;
+  private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<Hash> maybeBlockHash;
   private final long blockNumber;
 
   protected RetryingGetBlockFromPeersTask(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeBlockHash,
       final long blockNumber) {
     super(ethContext, metricsSystem, Objects::isNull, maxRetries);
     this.protocolSchedule = protocolSchedule;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
   }
@@ -55,12 +59,19 @@ public class RetryingGetBlockFromPeersTask
   public static RetryingGetBlockFromPeersTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final Optional<Hash> maybeHash,
       final long blockNumber) {
     return new RetryingGetBlockFromPeersTask(
-        ethContext, protocolSchedule, metricsSystem, maxRetries, maybeHash, blockNumber);
+        ethContext,
+        protocolSchedule,
+        synchronizerConfiguration,
+        metricsSystem,
+        maxRetries,
+        maybeHash,
+        blockNumber);
   }
 
   @Override
@@ -68,7 +79,12 @@ public class RetryingGetBlockFromPeersTask
       final EthPeer currentPeer) {
     final GetBlockFromPeerTask getBlockTask =
         GetBlockFromPeerTask.create(
-            protocolSchedule, getEthContext(), maybeBlockHash, blockNumber, getMetricsSystem());
+            protocolSchedule,
+            getEthContext(),
+            synchronizerConfiguration,
+            maybeBlockHash,
+            blockNumber,
+            getMetricsSystem());
     getBlockTask.assignPeer(currentPeer);
 
     return executeSubTask(getBlockTask::run)

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -25,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.LinkedHashMap;
@@ -157,7 +158,8 @@ public class PrivateStateRehydration {
               .getBlockHeader(blockHeader.getParentHash())
               .flatMap(
                   header ->
-                      publicWorldStateArchive.getMutable(header.getStateRoot(), header.getHash()))
+                      publicWorldStateArchive.getWorldState(
+                          withBlockHeaderAndUpdateNodeHead(header)))
               .orElseThrow(RuntimeException::new);
 
       privateGroupRehydrationBlockProcessor.processBlock(
@@ -167,7 +169,7 @@ public class PrivateStateRehydration {
           privateStateStorage,
           privateStateRootResolver,
           block,
-          new CachingBlockHashLookup(blockHeader, blockchain),
+          protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
           pmtHashToPrivateTransactionMap,
           block.getBody().getOmmers());
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class BlockProcessingResult extends BlockValidationResult {
 
   private final Optional<BlockProcessingOutputs> yield;
   private final boolean isPartial;
+  private Optional<Integer> nbParallelizedTransactions = Optional.empty();
 
   /** A result indicating that processing failed. */
   public static final BlockProcessingResult FAILED = new BlockProcessingResult("processing failed");
@@ -37,6 +39,21 @@ public class BlockProcessingResult extends BlockValidationResult {
   public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
     this.yield = yield;
     this.isPartial = false;
+  }
+
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param nbParallelizedTransactions potential number of parallelized transactions during block
+   *     processing
+   */
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield,
+      final Optional<Integer> nbParallelizedTransactions) {
+    this.yield = yield;
+    this.isPartial = false;
+    this.nbParallelizedTransactions = nbParallelizedTransactions;
   }
 
   /**
@@ -133,5 +150,23 @@ public class BlockProcessingResult extends BlockValidationResult {
     } else {
       return yield.get().getReceipts();
     }
+  }
+
+  /**
+   * Gets the requests of the result.
+   *
+   * @return the requests of the result
+   */
+  public Optional<List<Request>> getRequests() {
+    return yield.flatMap(BlockProcessingOutputs::getRequests);
+  }
+
+  /**
+   * Returns an optional that contains the number of parallelized transactions (if there is any)
+   *
+   * @return Optional of parallelized transactions during the block execution
+   */
+  public Optional<Integer> getNbParallelizedTransactions() {
+    return nbParallelizedTransactions;
   }
 }

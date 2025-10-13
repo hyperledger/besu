@@ -16,12 +16,13 @@ package org.hyperledger.besu.cli.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SEPOLIA_DISCOVERY_URL;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfig;
 
 import java.math.BigInteger;
 
@@ -46,6 +47,14 @@ public class EthNetworkConfigTest {
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(SEPOLIA_DISCOVERY_URL);
     assertThat(config.bootNodes()).isEqualTo(SEPOLIA_BOOTSTRAP_NODES);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(11155111));
+  }
+
+  @Test
+  public void testDefaultHoodiConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.HOODI);
+    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.bootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(560048));
   }
 
   @Test
@@ -77,8 +86,8 @@ public class EthNetworkConfigTest {
     EthNetworkConfig config =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfigFile(
-                GenesisConfigFile.fromConfig(
+            .setGenesisConfig(
+                GenesisConfig.fromConfig(
                     """
             {
               "config":{
@@ -87,7 +96,7 @@ public class EthNetworkConfigTest {
             }
             """))
             .build();
-    assertThat(config.genesisConfigFile().getConfigOptions().getChainId())
+    assertThat(config.genesisConfig().getConfigOptions().getChainId())
         .contains(BigInteger.valueOf(1234567));
     assertThat(config.dnsDiscoveryUrl()).isNotNull();
     assertThat(config.bootNodes()).isNotEmpty();

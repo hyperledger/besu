@@ -78,7 +78,9 @@ public class MessageValidator {
       return false;
     }
 
-    if (!validateBlock(msg.getBlock())) {
+    // We want to validate the block but not persist it yet as it's just a proposal. If it turns
+    // out to be an accepted block it will be persisted at block import time
+    if (!validateBlockWithoutPersisting(msg.getBlock())) {
       return false;
     }
 
@@ -93,14 +95,14 @@ public class MessageValidator {
         msg.getSignedPayload(), msg.getBlock(), blockInterface);
   }
 
-  private boolean validateBlock(final Block block) {
+  private boolean validateBlockWithoutPersisting(final Block block) {
 
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
     final var validationResult =
         blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL, false);
 
     if (validationResult.isFailed()) {
       LOG.info(

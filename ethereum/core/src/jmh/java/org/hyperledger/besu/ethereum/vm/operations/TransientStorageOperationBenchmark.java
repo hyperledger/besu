@@ -50,7 +50,7 @@ public class TransientStorageOperationBenchmark {
     final Blockchain blockchain = mock(Blockchain.class);
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
+    final WorldUpdater worldStateUpdater = worldStateArchive.getWorldState().updater();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame benchmarkFrame =
         new MessageFrameTestFixture()

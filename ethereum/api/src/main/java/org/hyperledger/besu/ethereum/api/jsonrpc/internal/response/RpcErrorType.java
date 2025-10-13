@@ -36,7 +36,7 @@ public enum RpcErrorType implements RpcMethodError {
       "Invalid blob count (blob transactions must have at least one blob)"),
   INVALID_BLOB_GAS_USED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid blob gas used param (missing or invalid)"),
-  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block, unable to parse RLP"),
+  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block param (block not found)"),
   INVALID_BLOCK_COUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block count params"),
   INVALID_BLOCK_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block hash params"),
   INVALID_BLOCK_INDEX_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block index params"),
@@ -58,12 +58,13 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
+  INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST(-38004, "Too large request"),
   INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
   INVALID_EXCESS_BLOB_GAS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid excess blob gas params (missing or invalid)"),
+  INVALID_EXECUTION_REQUESTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid execution requests params"),
   INVALID_EXTRA_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid extra data params"),
   INVALID_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid filter params"),
-  INVALID_GAS_PRICE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid gas price params"),
   INVALID_HASH_RATE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid hash rate params"),
   INVALID_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid ID params"),
   INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS(
@@ -93,6 +94,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_REMOTE_CAPABILITIES_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid remote capabilities params"),
   INVALID_REWARD_PERCENTILES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid reward percentiles params"),
+  INVALID_REQUESTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid requests params"),
   INVALID_SEALER_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid sealer ID params"),
   INVALID_STORAGE_KEYS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid storage keys params"),
   INVALID_SUBSCRIPTION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid subscription params"),
@@ -109,6 +111,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_TRANSACTION_LIMIT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction limit params"),
   INVALID_TRANSACTION_TRACE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction trace params"),
   INVALID_VERSIONED_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hash params"),
+  INVALID_VERSIONED_HASHES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hashes params"),
   INVALID_VOTE_TYPE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid vote type params"),
   INVALID_WITHDRAWALS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid withdrawals"),
 
@@ -133,6 +136,7 @@ public enum RpcErrorType implements RpcMethodError {
   ETH_SEND_TX_REPLACEMENT_UNDERPRICED(-32000, "Replacement transaction underpriced"),
   // P2P related errors
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
+  DISCOVERY_DISABLED(-32000, "Discovery has been disabled. This functionality is not available"),
   P2P_NETWORK_NOT_RUNNING(-32000, "P2P network is not running"),
 
   // Filter & Subscription Errors
@@ -144,7 +148,7 @@ public enum RpcErrorType implements RpcMethodError {
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
   INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
-  INVALID_TRANSACTION_TYPE(-32602, "Invalid transaction type"),
+  INVALID_TRANSACTION_TYPE(INVALID_PARAMS_ERROR_CODE, "Invalid transaction type"),
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),

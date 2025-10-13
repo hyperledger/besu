@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,8 +44,16 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
-      final EngineCallListener engineCallListener) {
-    super(vertx, protocolSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+      final EngineCallListener engineCallListener,
+      final MetricsSystem metricsSystem) {
+    super(
+        vertx,
+        protocolSchedule,
+        protocolContext,
+        mergeCoordinator,
+        ethPeers,
+        engineCallListener,
+        metricsSystem);
     cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
   }
 
@@ -57,14 +66,15 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
   protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
+      final Optional<String> maybeBeaconBlockRootParam,
+      final Optional<List<String>> maybeRequestsParam) {
     if (payloadParameter.getBlobGasUsed() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
+          RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Unexpected blob gas used field present");
     }
     if (payloadParameter.getExcessBlobGas() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "Missing excess blob gas field");
+          RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "Unexpected excess blob gas field present");
     }
     return ValidationResult.valid();
   }

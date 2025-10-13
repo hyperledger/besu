@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +47,7 @@ public class RoundTimerTest {
     bftExecutors = mock(BftExecutors.class);
     queue = new BftEventQueue(1000);
     queue.start();
-    timer = new RoundTimer(queue, 1, bftExecutors);
+    timer = new RoundTimer(queue, Duration.ofSeconds(1), bftExecutors);
   }
 
   @Test

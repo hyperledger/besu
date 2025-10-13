@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -57,7 +58,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    return getMutable(rootHash, blockHash).map(state -> state);
+    return getWorldState(rootHash).map(state -> state);
   }
 
   @Override
@@ -66,24 +67,26 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(
-      final BlockHeader blockHeader, final boolean isPersistingState) {
-    return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
+  public Optional<MutableWorldState> getWorldState(final WorldStateQueryParams queryParams) {
+    if (queryParams.getStateRoot().isEmpty()) {
+      throw new IllegalArgumentException(
+          "State root cannot be empty. A valid state root is required to retrieve the world state.");
+    }
+    return getWorldState(queryParams.getStateRoot().get());
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
+  public MutableWorldState getWorldState() {
+    return getWorldState(EMPTY_ROOT_HASH).get();
+  }
+
+  private Optional<MutableWorldState> getWorldState(final Hash rootHash) {
     if (!worldStateKeyValueStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
     }
     return Optional.of(
         new ForestMutableWorldState(
             rootHash, worldStateKeyValueStorage, preimageStorage, evmConfiguration));
-  }
-
-  @Override
-  public MutableWorldState getMutable() {
-    return getMutable(EMPTY_ROOT_HASH, null).get();
   }
 
   @Override
@@ -110,6 +113,11 @@ public class ForestWorldStateArchive implements WorldStateArchive {
     return mapper.apply(
         worldStateProof.getAccountProof(
             blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
+  }
+
+  @Override
+  public void heal(final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    // no heal needed for Forest
   }
 
   @Override

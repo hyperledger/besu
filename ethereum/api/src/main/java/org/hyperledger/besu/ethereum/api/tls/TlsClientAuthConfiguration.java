@@ -17,15 +17,23 @@ package org.hyperledger.besu.ethereum.api.tls;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class TlsClientAuthConfiguration {
   private final Optional<Path> knownClientsFile;
   private final boolean caClientsEnabled;
+  private final Optional<Path> truststorePath;
+  private final Supplier<String> trustStorePasswordSupplier;
 
   private TlsClientAuthConfiguration(
-      final Optional<Path> knownClientsFile, final boolean caClientsEnabled) {
+      final Optional<Path> knownClientsFile,
+      final boolean caClientsEnabled,
+      final Optional<Path> truststorePath,
+      final Supplier<String> trustStorePasswordSupplier) {
     this.knownClientsFile = knownClientsFile;
     this.caClientsEnabled = caClientsEnabled;
+    this.truststorePath = truststorePath;
+    this.trustStorePasswordSupplier = trustStorePasswordSupplier;
   }
 
   public Optional<Path> getKnownClientsFile() {
@@ -36,9 +44,19 @@ public class TlsClientAuthConfiguration {
     return caClientsEnabled;
   }
 
+  public Optional<Path> getTruststorePath() {
+    return truststorePath;
+  }
+
+  public String getTrustStorePassword() {
+    return trustStorePasswordSupplier.get();
+  }
+
   public static final class Builder {
     private Path knownClientsFile;
     private boolean caClientsEnabled;
+    private Path truststorePath;
+    private Supplier<String> trustStorePasswordSupplier;
 
     private Builder() {}
 
@@ -56,12 +74,29 @@ public class TlsClientAuthConfiguration {
       return this;
     }
 
+    public Builder withTruststorePath(final Path truststorePath) {
+      this.truststorePath = truststorePath;
+      return this;
+    }
+
+    public Builder withTruststorePasswordSupplier(final Supplier<String> keyStorePasswordSupplier) {
+      this.trustStorePasswordSupplier = keyStorePasswordSupplier;
+      return this;
+    }
+
     public TlsClientAuthConfiguration build() {
-      if (!caClientsEnabled) {
+      if (!caClientsEnabled && truststorePath == null) {
         Objects.requireNonNull(knownClientsFile, "Known Clients File is required");
       }
+      if (!caClientsEnabled && knownClientsFile == null) {
+        Objects.requireNonNull(truststorePath, "Truststore File is required");
+      }
+
       return new TlsClientAuthConfiguration(
-          Optional.ofNullable(knownClientsFile), caClientsEnabled);
+          Optional.ofNullable(knownClientsFile),
+          caClientsEnabled,
+          Optional.ofNullable(truststorePath),
+          trustStorePasswordSupplier);
     }
   }
 }

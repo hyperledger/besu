@@ -21,20 +21,54 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.Optional;
 
 public class ForkSupportHelper {
+
   public static ValidationResult<RpcErrorType> validateForkSupported(
-      final HardforkId hardforkId,
-      final Optional<Long> maybeForkMilestone,
+      final HardforkId firstSupportedHardforkId,
+      final Optional<Long> maybeFirstSupportedForkMilestone,
       final long blockTimestamp) {
-    if (maybeForkMilestone.isEmpty()) {
+
+    if (maybeFirstSupportedForkMilestone.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
-          "Configuration error, no schedule for " + hardforkId.name() + " fork set");
+          "Configuration error, no schedule for " + firstSupportedHardforkId.name() + " fork set");
     }
 
-    if (blockTimestamp < maybeForkMilestone.get()) {
+    if (Long.compareUnsigned(blockTimestamp, maybeFirstSupportedForkMilestone.get()) < 0) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
-          hardforkId.name() + " configured to start at timestamp: " + maybeForkMilestone.get());
+          firstSupportedHardforkId.name()
+              + " configured to start at timestamp: "
+              + maybeFirstSupportedForkMilestone.get());
+    }
+
+    return ValidationResult.valid();
+  }
+
+  public static ValidationResult<RpcErrorType> validateForkSupported(
+      final HardforkId firstSupportedHardforkId,
+      final Optional<Long> maybeFirstSupportedForkMilestone,
+      final HardforkId firstUnsupportedHardforkId,
+      final Optional<Long> maybeFirstUnsupportedMilestone,
+      final long blockTimestamp) {
+
+    var result =
+        validateForkSupported(
+            firstSupportedHardforkId, maybeFirstSupportedForkMilestone, blockTimestamp);
+
+    if (!result.isValid()) {
+      return result;
+    }
+
+    if (maybeFirstUnsupportedMilestone.isPresent()
+        && Long.compareUnsigned(blockTimestamp, maybeFirstUnsupportedMilestone.get()) >= 0) {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK,
+          "block timestamp "
+              + blockTimestamp
+              + " is after the first unsupported milestone: "
+              + firstUnsupportedHardforkId.name()
+              + " at timestamp "
+              + maybeFirstUnsupportedMilestone.get());
     }
 
     return ValidationResult.valid();

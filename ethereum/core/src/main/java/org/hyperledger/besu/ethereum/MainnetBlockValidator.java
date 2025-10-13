@@ -25,8 +25,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
@@ -114,7 +116,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist,
+      final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
 
     final BlockHeader header = block.getHeader();
@@ -147,8 +149,14 @@ public class MainnetBlockValidator implements BlockValidator {
       handleFailedBlockProcessing(block, retval, false);
       return retval;
     }
+
+    final WorldStateQueryParams worldStateQueryParams =
+        WorldStateQueryParams.newBuilder()
+            .withBlockHeader(parentHeader)
+            .withShouldWorldStateUpdateHead(shouldUpdateHead)
+            .build();
     try (final var worldState =
-        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
+        context.getWorldStateArchive().getWorldState(worldStateQueryParams).orElse(null)) {
 
       if (worldState == null) {
         var retval =
@@ -170,26 +178,23 @@ public class MainnetBlockValidator implements BlockValidator {
         Optional<List<Request>> maybeRequests =
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
         if (!blockBodyValidator.validateBody(
-            context, block, receipts, maybeRequests, worldState.rootHash(), ommerValidationMode)) {
+            context,
+            block,
+            receipts,
+            worldState.rootHash(),
+            ommerValidationMode,
+            BodyValidationMode.FULL)) {
           result = new BlockProcessingResult("failed to validate output of imported block");
           handleFailedBlockProcessing(block, result, shouldRecordBadBlock);
           return result;
         }
 
         return new BlockProcessingResult(
-            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
+            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
+            result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {
-      context
-          .getSynchronizer()
-          .ifPresentOrElse(
-              synchronizer -> synchronizer.healWorldState(ex.getMaybeAddress(), ex.getLocation()),
-              () ->
-                  handleFailedBlockProcessing(
-                      block,
-                      new BlockProcessingResult(Optional.empty(), ex),
-                      // Do not record bad black due to missing data
-                      false));
+      context.getWorldStateArchive().heal(ex.getMaybeAddress(), ex.getLocation());
       return new BlockProcessingResult(Optional.empty(), ex);
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
@@ -243,17 +248,23 @@ public class MainnetBlockValidator implements BlockValidator {
   protected BlockProcessingResult processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
 
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
+    return blockProcessor.processBlock(context, context.getBlockchain(), worldState, block);
   }
 
   @Override
-  public boolean fastBlockValidation(
+  public boolean validateBlockForSyncing(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Optional<List<Request>> requests,
       final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
+
+    if (bodyValidationMode == BodyValidationMode.FULL) {
+      throw new UnsupportedOperationException(
+          "Full body validation is not supported for syncing blocks");
+    }
+
     final BlockHeader header = block.getHeader();
     if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
       String description = String.format("Failed header validation (%s)", headerValidationMode);
@@ -261,8 +272,11 @@ public class MainnetBlockValidator implements BlockValidator {
       return false;
     }
 
-    if (!blockBodyValidator.validateBodyLight(
-        context, block, receipts, requests, ommerValidationMode)) {
+    if (bodyValidationMode == BodyValidationMode.NONE) {
+      return true;
+    }
+
+    if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
       badBlockManager.addBadBlock(
           block, BadBlockCause.fromValidationFailure("Failed body validation (light)"));
       return false;

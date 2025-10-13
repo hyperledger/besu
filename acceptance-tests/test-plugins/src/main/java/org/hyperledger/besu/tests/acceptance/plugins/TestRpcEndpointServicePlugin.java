@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
@@ -51,7 +51,7 @@ public class TestRpcEndpointServicePlugin implements BesuPlugin {
   }
 
   @Override
-  public void register(final BesuContext context) {
+  public void register(final ServiceManager context) {
     context
         .getService(RpcEndpointService.class)
         .ifPresent(

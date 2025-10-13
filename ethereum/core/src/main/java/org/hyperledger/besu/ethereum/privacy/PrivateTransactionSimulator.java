@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -28,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -106,7 +108,7 @@ public class PrivateTransactionSimulator {
     }
 
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getWorldState(withBlockHeaderAndUpdateNodeHead(header)).orElse(null);
     if (publicWorldState == null) {
       return Optional.empty();
     }
@@ -119,7 +121,8 @@ public class PrivateTransactionSimulator {
     final MutableWorldState disposablePrivateState =
         privacyParameters
             .getPrivateWorldStateArchive()
-            .getMutable(lastRootHash, header.getHash())
+            .getWorldState(
+                withStateRootAndBlockHashAndUpdateNodeHead(lastRootHash, header.getHash()))
             .get();
 
     final PrivateTransaction transaction =
@@ -140,7 +143,7 @@ public class PrivateTransactionSimulator {
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             OperationTracer.NO_TRACING,
-            new CachingBlockHashLookup(header, blockchain),
+            protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, header),
             privacyGroupId);
 
     return Optional.of(result);

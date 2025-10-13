@@ -27,15 +27,25 @@ public class AwaitNetPeerCount implements Condition {
 
   private final NetPeerCountTransaction transaction;
   private final BigInteger expectedPeerCount;
+  private final int timeout;
 
   public AwaitNetPeerCount(
       final NetPeerCountTransaction transaction, final BigInteger expectedPeerCount) {
+    this(transaction, expectedPeerCount, 30);
+  }
+
+  public AwaitNetPeerCount(
+      final NetPeerCountTransaction transaction,
+      final BigInteger expectedPeerCount,
+      final int timeout) {
     this.transaction = transaction;
     this.expectedPeerCount = expectedPeerCount;
+    this.timeout = timeout;
   }
 
   @Override
   public void verify(final Node node) {
-    WaitUtils.waitFor(() -> assertThat(node.execute(transaction)).isEqualTo(expectedPeerCount));
+    WaitUtils.waitFor(
+        timeout, () -> assertThat(node.execute(transaction)).isEqualTo(expectedPeerCount));
   }
 }
