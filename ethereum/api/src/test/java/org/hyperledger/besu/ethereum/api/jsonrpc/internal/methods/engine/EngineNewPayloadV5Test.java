@@ -164,7 +164,7 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
 
   @Test
   public void shouldReturnValidIfBlockAccessListMatchesHeader() {
-    assertThat(BLOCK_ACCESS_LIST.getAccountChanges()).isNotEmpty();
+    assertThat(BLOCK_ACCESS_LIST.accountChanges()).isNotEmpty();
 
     final BlockHeader header =
         setupValidPayload(
