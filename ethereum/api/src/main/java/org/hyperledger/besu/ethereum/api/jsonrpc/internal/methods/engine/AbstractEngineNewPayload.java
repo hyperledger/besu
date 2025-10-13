@@ -225,7 +225,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeBlockAccessList = extractBlockAccessList(blockParam);
     } catch (final InvalidBlockAccessListException e) {
-      return respondWithInvalid(reqId, blockParam, null, INVALID, e.getMessage());
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          e.getMessage());
     }
 
     if (mergeContext.get().isSyncing()) {

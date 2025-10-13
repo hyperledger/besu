@@ -92,13 +92,13 @@ public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
   @Override
   protected Optional<BlockAccessList> extractBlockAccessList(
       final EnginePayloadParameter payloadParameter) throws InvalidBlockAccessListException {
-    final Optional<String> maybeBlockAccessList = payloadParameter.getBlockAccessList();
-    if (maybeBlockAccessList.isEmpty()) {
+    final String blockAccessList = payloadParameter.getBlockAccessList();
+    if (blockAccessList == null || blockAccessList.isEmpty()) {
       throw new InvalidBlockAccessListException("Missing block access list field");
     }
     final Bytes encoded;
     try {
-      encoded = Bytes.fromHexString(maybeBlockAccessList.get());
+      encoded = Bytes.fromHexString(blockAccessList);
     } catch (final IllegalArgumentException e) {
       throw new InvalidBlockAccessListException("Invalid block access list encoding", e);
     }

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -176,7 +175,7 @@ public class EnginePayloadParameter {
     return excessBlobGas;
   }
 
-  public Optional<String> getBlockAccessList() {
-    return Optional.ofNullable(blockAccessList);
+  public String getBlockAccessList() {
+    return blockAccessList;
   }
 }
