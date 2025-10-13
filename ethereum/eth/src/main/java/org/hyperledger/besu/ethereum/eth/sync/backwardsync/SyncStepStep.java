@@ -19,6 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import org.slf4j.Logger;
 
@@ -48,7 +50,13 @@ public class SyncStepStep {
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              Block block = requestBlock(hash);
+              Block block;
+              try {
+                block = requestBlock(hash);
+              } catch (RuntimeException e) {
+                return CompletableFuture.failedFuture(
+                    new CompletionException(new MaxRetriesReachedException()));
+              }
               saveBlock(block);
               return CompletableFuture.completedFuture(block);
             });
