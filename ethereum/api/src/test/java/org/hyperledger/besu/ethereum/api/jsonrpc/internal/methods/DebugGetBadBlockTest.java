@@ -127,6 +127,7 @@ public class DebugGetBadBlockTest {
       assertThat(badBlockResult.getRlp()).isNotEmpty();
       assertThat(badBlockResult.getHash()).isNotEmpty();
       assertThat(badBlockResult.getBlockResult().getNonce()).isNotEmpty();
+      assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
     }
   }
 
@@ -183,6 +184,75 @@ public class DebugGetBadBlockTest {
     assertThat(
             badBlockResult.getBlockResult().getBlockAccessList().orElseThrow().getAccountChanges())
         .isNotEmpty();
+    assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
+  }
+
+  @Test
+  public void shouldIncludeGeneratedBlockAccessListInResponse() {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block baseBlock =
+        blockDataGenerator.block(
+            BlockDataGenerator.BlockOptions.create()
+                .setBlockNumber(1)
+                .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    final BlockAccessList providedBlockAccessList =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000002"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.valueOf(2)))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    final BlockBody bodyWithBal =
+        new BlockBody(
+            baseBlock.getBody().getTransactions(),
+            baseBlock.getBody().getOmmers(),
+            baseBlock.getBody().getWithdrawals(),
+            Optional.of(providedBlockAccessList));
+
+    final Block blockWithBal =
+        new Block(
+            BlockHeaderBuilder.fromHeader(baseBlock.getHeader())
+                .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                .balHash(BodyValidation.balHash(providedBlockAccessList))
+                .buildBlockHeader(),
+            bodyWithBal);
+
+    final BlockAccessList generatedBlockAccessList =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000003"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.valueOf(3)))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    badBlockManager.addBadBlock(
+        blockWithBal,
+        BadBlockCause.fromValidationFailure("failed"),
+        Optional.of(generatedBlockAccessList));
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
+
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) debugGetBadBlocks.response(request);
+
+    final Collection<BadBlockResult> result = (Collection<BadBlockResult>) response.getResult();
+    assertThat(result).hasSize(1);
+
+    final BadBlockResult badBlockResult = result.iterator().next();
+    assertThat(badBlockResult.getGeneratedBlockAccessList()).isPresent();
+    assertThat(
+            badBlockResult.getGeneratedBlockAccessList().orElseThrow().getAccountChanges().stream()
+                .map(accountChangesResult -> Address.fromHexString(accountChangesResult.address)))
+        .containsExactly(Address.fromHexString("0x0000000000000000000000000000000000000003"));
   }
 
   @Test
