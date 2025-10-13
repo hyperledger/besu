@@ -247,7 +247,7 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
                 address,
                 List.of(slotChanges),
                 List.of(new SlotRead(slotKey)),
-                List.of(new BalanceChange(0, Wei.ONE.toBytes())),
+                List.of(new BalanceChange(0, Wei.ONE)),
                 List.of(new NonceChange(0, 1L)),
                 List.of(new CodeChange(0, Bytes.of(1))))));
   }
