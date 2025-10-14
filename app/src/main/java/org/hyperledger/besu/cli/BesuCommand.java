@@ -1405,6 +1405,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || genesisConfigOptionsSupplier.get().getBpo3Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo4Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo5Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getAmsterdamTime().isPresent()
         || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);

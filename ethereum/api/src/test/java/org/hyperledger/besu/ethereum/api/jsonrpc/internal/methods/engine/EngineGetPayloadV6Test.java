@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -70,7 +70,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
 
-  private static final long FUTURE_EIPS_TIMESTAMP = 100L;
+  private static final long AMSTERDAM_TIMESTAMP = 100L;
 
   public EngineGetPayloadV6Test() {
     super();
@@ -83,8 +83,8 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     lenient().when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     lenient()
-        .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
-        .thenReturn(Optional.of(FUTURE_EIPS_TIMESTAMP));
+        .when(protocolSchedule.milestoneFor(AMSTERDAM))
+        .thenReturn(Optional.of(AMSTERDAM_TIMESTAMP));
     this.method =
         new EngineGetPayloadV6(
             vertx,
@@ -108,7 +108,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     final String encodedBlockAccessList = encodeBlockAccessList(blockAccessList);
     final BlockHeader header =
         new BlockHeaderTestFixture()
-            .timestamp(FUTURE_EIPS_TIMESTAMP + 1)
+            .timestamp(AMSTERDAM_TIMESTAMP + 1)
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .balHash(BodyValidation.balHash(blockAccessList))
@@ -160,7 +160,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforeEip7928Milestone() {
     final BlockHeader header =
         new BlockHeaderTestFixture()
-            .timestamp(FUTURE_EIPS_TIMESTAMP - 1)
+            .timestamp(AMSTERDAM_TIMESTAMP - 1)
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
