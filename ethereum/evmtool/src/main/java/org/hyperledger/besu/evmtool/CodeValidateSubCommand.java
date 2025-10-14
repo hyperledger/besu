@@ -91,7 +91,7 @@ public class CodeValidateSubCommand implements Runnable {
         Suppliers.memoize(
             () -> {
               if (parentCommand == null) {
-                return ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
+                return ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork).getEvm();
               }
               return ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
                   .geSpecByName(fork)

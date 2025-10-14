@@ -63,7 +63,7 @@ public class GeneralStateReferenceTestTools {
   }
 
   private static ProtocolSpec protocolSpec(final String name) {
-    return ReferenceTestProtocolSchedules.create()
+    return ReferenceTestProtocolSchedules.getInstance()
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }

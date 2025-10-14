@@ -51,7 +51,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class TransactionTest {
 
   private static TransactionValidator transactionValidator(final String name) {
-    return ReferenceTestProtocolSchedules.create()
+    return ReferenceTestProtocolSchedules.getInstance()
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
         .getTransactionValidatorFactory()

@@ -61,8 +61,13 @@ public class ReferenceTestProtocolSchedules {
           "eip158",
           "eip158tobyzantiumat5");
 
-  public static ReferenceTestProtocolSchedules create() {
-    return create(new StubGenesisConfigOptions(), EvmConfiguration.DEFAULT);
+  private static ReferenceTestProtocolSchedules INSTANCE;
+
+  public static ReferenceTestProtocolSchedules getInstance() {
+    if (INSTANCE == null) {
+      INSTANCE = create(new StubGenesisConfigOptions(), EvmConfiguration.DEFAULT);
+    }
+    return INSTANCE;
   }
 
   public static ReferenceTestProtocolSchedules create(final EvmConfiguration evmConfiguration) {
