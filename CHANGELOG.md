@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Return null result if block not found for `debug_accountAt`, `debug_setHead`, `eth_call`, `eth_getBlockReceipts`, `eth_getProof`, `eth_simulateV1`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount` [#9303](https://github.com/hyperledger/besu/pull/9303)
 
 ### Upcoming Breaking Changes
 - Deprecated CLI options
