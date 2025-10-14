@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -39,6 +40,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ReferenceTestProtocolSchedules {
+
+  static {
+    SignatureAlgorithmFactory.setDefaultInstance();
+  }
 
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
 
