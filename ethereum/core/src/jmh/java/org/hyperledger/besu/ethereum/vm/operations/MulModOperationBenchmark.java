@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.MulModOperation;
+import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -163,6 +163,6 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return MulModOperation.staticOperation(frame);
+    return MulModOperationOptimized.staticOperation(frame);
   }
 }
