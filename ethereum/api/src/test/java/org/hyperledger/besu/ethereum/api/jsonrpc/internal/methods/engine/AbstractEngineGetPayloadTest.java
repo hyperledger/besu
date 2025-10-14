@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,8 +40,11 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -50,6 +54,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -190,5 +195,40 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         new PayloadWrapper(payloadIdentifier, mockBlockWithReceipts, Optional.empty());
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(mockPayload));
     return payloadIdentifier;
+  }
+
+  @Test
+  public void shouldWaitForNonEmptyBlockWhenOnlyEmptyBlockAvailable() {
+    // Setup: mockPayload has 0 transactions (empty block)
+    // We simulate the scenario where:
+    // 1. First retrieval returns empty block (mockPayload)
+    // 2. After waiting, we get a block that's been updated
+    //    (mockPayloadWithWithdrawals - while both have 0 txs, this simulates the update)
+
+    // Mock: First call returns the default empty mockPayload,
+    // second call returns a different payload (simulating block building completion)
+    when(mergeContext.retrievePayloadById(mockPid))
+        .thenReturn(Optional.of(mockPayload))
+        .thenReturn(Optional.of(mockPayloadWithWithdrawals));
+
+    // Execute: Call getPayload
+    final JsonRpcResponse response = resp(getMethodName(), mockPid);
+
+    // Verify: finalizeProposalById was called (to signal loop to exit)
+    verify(mergeMiningCoordinator, times(1)).finalizeProposalById(mockPid);
+
+    // Verify: awaitCurrentBuildCompletion was called with 800ms timeout
+    verify(mergeMiningCoordinator, times(1)).awaitCurrentBuildCompletion(mockPid, 800L);
+
+    // Verify: retrievePayloadById was called twice (initial check + after waiting)
+    verify(mergeContext, times(2)).retrievePayloadById(mockPid);
+
+    // Verify call order: finalize BEFORE wait (critical - finalize signals loop to exit)
+    InOrder inOrder = inOrder(mergeMiningCoordinator);
+    inOrder.verify(mergeMiningCoordinator).finalizeProposalById(mockPid);
+    inOrder.verify(mergeMiningCoordinator).awaitCurrentBuildCompletion(mockPid, 800L);
+
+    // Verify: response is successful (not an error)
+    assertThat(response).isNotInstanceOf(JsonRpcErrorResponse.class);
   }
 }

@@ -257,7 +257,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
         LOG.debug(
-          "Transaction selection cancelled during execution, finalizing with current progress");
+            "Transaction selection cancelled during execution, finalizing with current progress");
       } else {
         LOG.warn("Error during block transaction selection", e);
       }

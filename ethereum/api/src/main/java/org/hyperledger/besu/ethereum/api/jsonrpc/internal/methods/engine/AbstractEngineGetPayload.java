@@ -77,8 +77,30 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       throw new InvalidJsonRpcParameters(
           "Invalid payload ID parameter (index 0)", RpcErrorType.INVALID_PAYLOAD_ID_PARAMS, e);
     }
+
+    // Check if we only have an empty block available
+    Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+
+    // Signal to finish current iteration and stop building
     mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+
+    // If we only have an empty block, wait for the current iteration to complete until the timeout
+    if (maybePayload.isPresent()
+        && maybePayload
+            .get()
+            .blockWithReceipts()
+            .getBlock()
+            .getBody()
+            .getTransactions()
+            .isEmpty()) {
+      LOG.debug(
+          "Only empty block available for payload {}, waiting for block building to complete",
+          payloadId);
+      mergeMiningCoordinator.awaitCurrentBuildCompletion(payloadId, 800);
+      // Retrieve again after waiting
+      maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+    }
+
     if (maybePayload.isPresent()) {
       final PayloadWrapper payload = maybePayload.get();
       final BlockWithReceipts proposal = payload.blockWithReceipts();

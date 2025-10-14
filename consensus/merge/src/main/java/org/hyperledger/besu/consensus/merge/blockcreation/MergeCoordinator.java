@@ -299,8 +299,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
-    blockCreationTasks.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
-
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator
@@ -334,6 +332,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
 
+    // Create the async block building task and store it
     tryToBuildBetterBlock(
         timestamp,
         prevRandao,
@@ -395,6 +394,38 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         });
   }
 
+  @Override
+  public void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId, final long timeoutMs) {
+    final BlockCreationTask task = blockCreationTasks.get(payloadId);
+    if (task == null) {
+      LOG.debug("No block creation task found for payload {}", payloadId);
+      return;
+    }
+
+    final CompletableFuture<Void> future = task.getBlockCreationFuture();
+    if (future == null) {
+      LOG.debug("No future found for payload {}", payloadId);
+      return;
+    }
+
+    try {
+      LOG.debug(
+          "Waiting up to {}ms for block building to complete for payload {}", timeoutMs, payloadId);
+      future.get(timeoutMs, TimeUnit.MILLISECONDS);
+      LOG.debug("Block building completed for payload {}", payloadId);
+    } catch (java.util.concurrent.TimeoutException e) {
+      LOG.debug("Timeout waiting for block building for payload {}", payloadId);
+    } catch (java.util.concurrent.ExecutionException e) {
+      LOG.debug(
+          "Exception while waiting for block building for payload {}: {}",
+          payloadId,
+          e.getMessage());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.debug("Interrupted while waiting for block building for payload {}", payloadId);
+    }
+  }
+
   private void tryToBuildBetterBlock(
       final Long timestamp,
       final Bytes32 random,
@@ -419,23 +450,28 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier,
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime());
 
-    ethScheduler
-        .scheduleBlockCreationTask(
-            parentHeader.getNumber() + 1,
-            () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
-        .orTimeout(
-            miningConfiguration.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
-        .whenComplete(
-            (unused, throwable) -> {
-              if (throwable != null) {
-                LOG.atDebug()
-                    .setMessage("Exception building block for payload id {}, reason {}")
-                    .addArgument(payloadIdentifier)
-                    .addArgument(() -> logException(throwable))
-                    .log();
-              }
-              cleanupBlockCreationTask(payloadIdentifier);
-            });
+    final CompletableFuture<Void> blockBuildingFuture =
+        ethScheduler
+            .scheduleBlockCreationTask(
+                parentHeader.getNumber() + 1,
+                () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
+            .orTimeout(
+                miningConfiguration.getUnstable().getPosBlockCreationMaxTime(),
+                TimeUnit.MILLISECONDS)
+            .whenComplete(
+                (unused, throwable) -> {
+                  if (throwable != null) {
+                    LOG.atDebug()
+                        .setMessage("Exception building block for payload id {}, reason {}")
+                        .addArgument(payloadIdentifier)
+                        .addArgument(() -> logException(throwable))
+                        .log();
+                  }
+                  cleanupBlockCreationTask(payloadIdentifier);
+                });
+
+    // Store the task with the blockBuildingFuture for later access
+    blockCreationTasks.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockBuildingFuture));
   }
 
   private Void retryBlockCreationUntilUseful(
@@ -946,14 +982,29 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     /** The Cancelled. */
     final AtomicBoolean cancelled;
 
+    /** The Future for the async block creation task. */
+    final CompletableFuture<Void> blockCreationFuture;
+
     /**
      * Instantiates a new Block creation task.
      *
      * @param blockCreator the block creator
+     * @param blockCreationFuture the completable future for the async task
      */
-    public BlockCreationTask(final MergeBlockCreator blockCreator) {
+    public BlockCreationTask(
+        final MergeBlockCreator blockCreator, final CompletableFuture<Void> blockCreationFuture) {
       this.blockCreator = blockCreator;
       this.cancelled = new AtomicBoolean(false);
+      this.blockCreationFuture = blockCreationFuture;
+    }
+
+    /**
+     * Gets the blockCreationFuture.
+     *
+     * @return the blockCreationFuture
+     */
+    public CompletableFuture<Void> getBlockCreationFuture() {
+      return blockCreationFuture;
     }
 
     /** Cancel. */
