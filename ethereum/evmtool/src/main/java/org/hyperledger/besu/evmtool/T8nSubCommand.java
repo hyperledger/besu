@@ -316,7 +316,8 @@ public class T8nSubCommand implements Runnable {
             initialWorldState,
             transactions,
             rejections,
-            tracerManager);
+            tracerManager,
+            parentCommand.getEvmConfiguration());
 
     try {
       ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
