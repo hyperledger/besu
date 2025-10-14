@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -34,7 +34,7 @@ import io.vertx.core.Vertx;
 
 public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
 
-  private final Optional<Long> futureEipsMilestone;
+  private final Optional<Long> amsterdamMilestone;
 
   public EngineGetPayloadV6(
       final Vertx vertx,
@@ -50,7 +50,7 @@ public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
         mergeMiningCoordinator,
         blockResultFactory,
         engineCallListener);
-    futureEipsMilestone = schedule.milestoneFor(FUTURE_EIPS);
+    amsterdamMilestone = schedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -67,7 +67,6 @@ public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(
-        FUTURE_EIPS, futureEipsMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
   }
 }
