@@ -22,9 +22,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.rlp.BlockBodyRlpEncoder;
-import org.hyperledger.besu.ethereum.core.rlp.BlockHeaderRlpEncoder;
-import org.hyperledger.besu.ethereum.core.rlp.TransactionReceiptRlpEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockBodyEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockHeaderEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.util.era1.Era1Type;
 
 import java.io.File;
@@ -55,9 +56,9 @@ public class Era1BlockExporterTest {
   private @Mock Era1AccumulatorFactory era1AccumulatorFactory;
   private @Mock Era1Accumulator era1Accumulator;
   private @Mock Era1BlockIndexConverter era1BlockIndexConverter;
-  private @Mock BlockHeaderRlpEncoder blockHeaderRlpEncoder;
-  private @Mock BlockBodyRlpEncoder blockBodyRlpEncoder;
-  private @Mock TransactionReceiptRlpEncoder transactionReceiptRlpEncoder;
+  private @Mock BlockHeaderEncoder blockHeaderEncoder;
+  private @Mock BlockBodyEncoder blockBodyEncoder;
+  private @Mock TransactionReceiptEncoder transactionReceiptEncoder;
 
   private Era1BlockExporter era1BlockExporter;
 
@@ -70,9 +71,9 @@ public class Era1BlockExporterTest {
             era1FileWriterFactory,
             era1AccumulatorFactory,
             era1BlockIndexConverter,
-            blockHeaderRlpEncoder,
-            blockBodyRlpEncoder,
-            transactionReceiptRlpEncoder);
+            blockHeaderEncoder,
+            blockBodyEncoder,
+            transactionReceiptEncoder);
   }
 
   @Test
@@ -101,9 +102,11 @@ public class Era1BlockExporterTest {
           .thenReturn(Optional.of(difficulty));
 
       final Bytes encodedValue = Bytes.ofUnsignedLong(blockNumber);
-      Mockito.when(blockHeaderRlpEncoder.encode(blockHeader)).thenReturn(encodedValue);
-      Mockito.when(blockBodyRlpEncoder.encode(blockBody)).thenReturn(encodedValue);
-      Mockito.when(transactionReceiptRlpEncoder.encode(List.of(transactionReceipt)))
+      Mockito.when(blockHeaderEncoder.encode(blockHeader)).thenReturn(encodedValue);
+      Mockito.when(blockBodyEncoder.encode(blockBody)).thenReturn(encodedValue);
+      Mockito.when(
+              transactionReceiptEncoder.encode(
+                  List.of(transactionReceipt), TransactionReceiptEncodingConfiguration.DEFAULT))
           .thenReturn(encodedValue);
 
       blockVerifications.add(
@@ -117,15 +120,17 @@ public class Era1BlockExporterTest {
             Mockito.verify(era1Accumulator).addBlock(blockHash, difficulty.toUInt256());
 
             try {
-              Mockito.verify(blockHeaderRlpEncoder).encode(blockHeader);
+              Mockito.verify(blockHeaderEncoder).encode(blockHeader);
               Mockito.verify(era1FileWriter)
                   .writeSection(Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER, encodedValue.toArray());
 
-              Mockito.verify(blockBodyRlpEncoder).encode(blockBody);
+              Mockito.verify(blockBodyEncoder).encode(blockBody);
               Mockito.verify(era1FileWriter)
                   .writeSection(Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY, encodedValue.toArray());
 
-              Mockito.verify(transactionReceiptRlpEncoder).encode(List.of(transactionReceipt));
+              Mockito.verify(transactionReceiptEncoder)
+                  .encode(
+                      List.of(transactionReceipt), TransactionReceiptEncodingConfiguration.DEFAULT);
               Mockito.verify(era1FileWriter)
                   .writeSection(
                       Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS, encodedValue.toArray());

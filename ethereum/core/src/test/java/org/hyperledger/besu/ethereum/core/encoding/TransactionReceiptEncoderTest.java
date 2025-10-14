@@ -12,11 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.rlp;
+package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -27,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TransactionReceiptRlpEncoderTest {
+public class TransactionReceiptEncoderTest {
   @Test
   public void testEncode() {
     Hash stateRoot = Hash.fromHexStringLenient("01");
@@ -42,8 +44,10 @@ public class TransactionReceiptRlpEncoderTest {
     TransactionReceipt transactionReceipt =
         new TransactionReceipt(stateRoot, cumulativeGasUsed, logs, revertReason);
 
-    TransactionReceiptRlpEncoder transactionReceiptRlpEncoder = new TransactionReceiptRlpEncoder();
-    Bytes actualRlp = transactionReceiptRlpEncoder.encode(List.of(transactionReceipt));
+    TransactionReceiptEncoder transactionReceiptRlpEncoder = new TransactionReceiptEncoder();
+    Bytes actualRlp =
+        transactionReceiptRlpEncoder.encode(
+            List.of(transactionReceipt), TransactionReceiptEncodingConfiguration.DEFAULT);
 
     String expectedRlpHex =
         "0xf90161a0000000000000000000000000000000000000000000000000000000000000000102b9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000010000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010000000000000000000000000000000000000000020f83af838940000000000000000000000000000000000000003e1a0050000000000000000000000000000000000000000000000000000000000000004";

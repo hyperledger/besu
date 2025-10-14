@@ -19,9 +19,10 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.rlp.BlockBodyRlpEncoder;
-import org.hyperledger.besu.ethereum.core.rlp.BlockHeaderRlpEncoder;
-import org.hyperledger.besu.ethereum.core.rlp.TransactionReceiptRlpEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockBodyEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockHeaderEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.util.era1.Era1Type;
 
 import java.io.File;
@@ -47,9 +48,9 @@ public class Era1BlockExporter {
   private final Era1FileWriterFactory era1FileWriterFactory;
   private final Era1AccumulatorFactory era1AccumulatorFactory;
   private final Era1BlockIndexConverter era1BlockIndexConverter;
-  private final BlockHeaderRlpEncoder blockHeaderRlpEncoder;
-  private final BlockBodyRlpEncoder blockBodyRlpEncoder;
-  private final TransactionReceiptRlpEncoder transactionReceiptRlpEncoder;
+  private final BlockHeaderEncoder blockHeaderEncoder;
+  private final BlockBodyEncoder blockBodyEncoder;
+  private final TransactionReceiptEncoder transactionReceiptEncoder;
 
   /**
    * Instantiates a new ERA1 block exporter.
@@ -59,9 +60,9 @@ public class Era1BlockExporter {
    * @param era1FileWriterFactory an Era1FileWriterFactory
    * @param era1AccumulatorFactory an Era1AccumulatorFactory
    * @param era1BlockIndexConverter an Era1BlockIndexConverter
-   * @param blockHeaderRlpEncoder a BlockHeaderRlpEncoder
-   * @param blockBodyRlpEncoder a BlockBodyRlpEncoder
-   * @param transactionReceiptRlpEncoder a TransactionReceiptRlpEncoder
+   * @param blockHeaderEncoder a BlockHeaderEncoder
+   * @param blockBodyEncoder a BlockBodyEncoder
+   * @param transactionReceiptEncoder a TransactionReceiptEncoder
    */
   public Era1BlockExporter(
       final Blockchain blockchain,
@@ -69,9 +70,9 @@ public class Era1BlockExporter {
       final Era1FileWriterFactory era1FileWriterFactory,
       final Era1AccumulatorFactory era1AccumulatorFactory,
       final Era1BlockIndexConverter era1BlockIndexConverter,
-      final BlockHeaderRlpEncoder blockHeaderRlpEncoder,
-      final BlockBodyRlpEncoder blockBodyRlpEncoder,
-      final TransactionReceiptRlpEncoder transactionReceiptRlpEncoder) {
+      final BlockHeaderEncoder blockHeaderEncoder,
+      final BlockBodyEncoder blockBodyEncoder,
+      final TransactionReceiptEncoder transactionReceiptEncoder) {
     this.blockchain = blockchain;
     this.network =
         switch (networkName) {
@@ -83,9 +84,9 @@ public class Era1BlockExporter {
     this.era1FileWriterFactory = era1FileWriterFactory;
     this.era1AccumulatorFactory = era1AccumulatorFactory;
     this.era1BlockIndexConverter = era1BlockIndexConverter;
-    this.blockHeaderRlpEncoder = blockHeaderRlpEncoder;
-    this.blockBodyRlpEncoder = blockBodyRlpEncoder;
-    this.transactionReceiptRlpEncoder = transactionReceiptRlpEncoder;
+    this.blockHeaderEncoder = blockHeaderEncoder;
+    this.blockBodyEncoder = blockBodyEncoder;
+    this.transactionReceiptEncoder = transactionReceiptEncoder;
   }
 
   /**
@@ -149,13 +150,17 @@ public class Era1BlockExporter {
           blockPositions.put(block, writer.getPosition());
           writer.writeSection(
               Era1Type.COMPRESSED_EXECUTION_BLOCK_HEADER,
-              blockHeaderRlpEncoder.encode(block.getHeader()).toArray());
+              blockHeaderEncoder.encode(block.getHeader()).toArray());
           writer.writeSection(
               Era1Type.COMPRESSED_EXECUTION_BLOCK_BODY,
-              blockBodyRlpEncoder.encode(block.getBody()).toArray());
+              blockBodyEncoder.encode(block.getBody()).toArray());
           writer.writeSection(
               Era1Type.COMPRESSED_EXECUTION_BLOCK_RECEIPTS,
-              transactionReceiptRlpEncoder.encode(transactionReceiptsForFile.get(block)).toArray());
+              transactionReceiptEncoder
+                  .encode(
+                      transactionReceiptsForFile.get(block),
+                      TransactionReceiptEncodingConfiguration.DEFAULT)
+                  .toArray());
           writer.writeSection(
               Era1Type.TOTAL_DIFFICULTY,
               difficultiesForFile.get(block).toArray(ByteOrder.LITTLE_ENDIAN));

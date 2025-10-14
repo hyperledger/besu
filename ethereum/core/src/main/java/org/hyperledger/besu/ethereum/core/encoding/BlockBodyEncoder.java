@@ -12,15 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.rlp;
+package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BlockHeaderRlpEncoder {
-  public Bytes encode(final BlockHeader blockHeader) {
-    return RLP.encode(blockHeader::writeTo);
+public class BlockBodyEncoder {
+  public Bytes encode(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeTo);
+  }
+
+  public Bytes encodeWrapped(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeWrappedBodyTo);
   }
 }
