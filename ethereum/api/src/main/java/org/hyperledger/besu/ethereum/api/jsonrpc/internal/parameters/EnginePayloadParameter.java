@@ -44,6 +44,7 @@ public class EnginePayloadParameter {
   private final List<WithdrawalParameter> withdrawals;
   private final Long blobGasUsed;
   private final String excessBlobGas;
+  private final String blockAccessList;
 
   /**
    * Creates an instance of EnginePayloadParameter.
@@ -84,7 +85,8 @@ public class EnginePayloadParameter {
       @JsonProperty("transactions") final List<String> transactions,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
-      @JsonProperty("excessBlobGas") final String excessBlobGas) {
+      @JsonProperty("excessBlobGas") final String excessBlobGas,
+      @JsonProperty("blockAccessList") final String blockAccessList) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -102,6 +104,7 @@ public class EnginePayloadParameter {
     this.withdrawals = withdrawals;
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
+    this.blockAccessList = blockAccessList;
   }
 
   public Hash getBlockHash() {
@@ -170,5 +173,9 @@ public class EnginePayloadParameter {
 
   public String getExcessBlobGas() {
     return excessBlobGas;
+  }
+
+  public String getBlockAccessList() {
+    return blockAccessList;
   }
 }

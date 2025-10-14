@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Besu.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -33,11 +32,11 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
-public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
+public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
 
-  private final Optional<Long> osakaMilestone;
+  private final Optional<Long> futureEipsMilestone;
 
-  public EngineGetPayloadV5(
+  public EngineGetPayloadV6(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
@@ -51,29 +50,24 @@ public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
         mergeMiningCoordinator,
         blockResultFactory,
         engineCallListener);
-    osakaMilestone = schedule.milestoneFor(OSAKA);
+    futureEipsMilestone = schedule.milestoneFor(FUTURE_EIPS);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V5.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V6.getMethodName();
   }
 
   @Override
   protected JsonRpcResponse createResponse(
       final JsonRpcRequestContext request, final PayloadWrapper payload) {
-
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV5(payload));
+        request.getRequest().getId(), blockResultFactory.payloadTransactionCompleteV6(payload));
   }
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     return ForkSupportHelper.validateForkSupported(
-        OSAKA,
-        osakaMilestone,
-        FUTURE_EIPS,
-        protocolSchedule.flatMap(s -> s.milestoneFor(FUTURE_EIPS)),
-        blockTimestamp);
+        FUTURE_EIPS, futureEipsMilestone, blockTimestamp);
   }
 }
