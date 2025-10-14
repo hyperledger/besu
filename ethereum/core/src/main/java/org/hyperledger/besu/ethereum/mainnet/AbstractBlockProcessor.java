@@ -393,7 +393,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             if (worldState instanceof BonsaiWorldState) {
               ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
             }
-            return new BlockProcessingResult(Optional.empty(), errorMessage);
+            return new BlockProcessingResult(
+                Optional.empty(), errorMessage, false, Optional.of(bal));
           }
         }
         maybeBlockAccessList = Optional.of(bal);

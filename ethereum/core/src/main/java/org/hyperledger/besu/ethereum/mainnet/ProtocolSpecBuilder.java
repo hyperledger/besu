@@ -45,7 +45,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProtocolSpecBuilder {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolSpecBuilder.class);
+
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
@@ -334,6 +339,10 @@ public class ProtocolSpecBuilder {
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
+    LOGGER.debug(
+        "Opcode optimizations {} for milestone {}",
+        evm.getEvmConfiguration().enableOptimizedOpcodes() ? "enabled" : "disabled",
+        hardforkId);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator);
     final TransactionValidatorFactory transactionValidatorFactory =
