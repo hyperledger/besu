@@ -15,26 +15,25 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
-/** The Add mod operation. */
-public class AddModOperation extends AbstractFixedCostOperation {
+/** The SMod operation. */
+public class SModOperationOptimized extends AbstractFixedCostOperation {
 
-  private static final OperationResult addModSuccess = new OperationResult(8, null);
+  private static final OperationResult smodSuccess = new OperationResult(5, null);
 
   /**
-   * Instantiates a new Add mod operation.
+   * Instantiates a new SMod operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public AddModOperation(final GasCalculator gasCalculator) {
-    super(0x08, "ADDMOD", 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+  public SModOperationOptimized(final GasCalculator gasCalculator) {
+    super(0x07, "SMOD", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
@@ -44,35 +43,25 @@ public class AddModOperation extends AbstractFixedCostOperation {
   }
 
   /**
-   * Static operation.
+   * Performs SMod operation.
    *
    * @param frame the frame
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
-    final Bytes value2 = frame.popStackItem();
 
-    if (value2.isZero()) {
-      frame.pushStackItem(Bytes.EMPTY);
+    Bytes resultBytes;
+    if (value1.isZero()) {
+      resultBytes = (Bytes) Bytes32.ZERO;
     } else {
-      BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
-      BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());
-      BigInteger b2 = new BigInteger(1, value2.toArrayUnsafe());
-
-      BigInteger result = b0.add(b1).mod(b2);
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
+      UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
+      UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
+      resultBytes = Bytes.wrap(b0.signedMod(b1).toBytesBE());
     }
-    return addModSuccess;
+    frame.pushStackItem(resultBytes);
+
+    return smodSuccess;
   }
 }

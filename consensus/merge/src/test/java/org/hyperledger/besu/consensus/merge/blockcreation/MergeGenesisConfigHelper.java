@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
@@ -60,6 +61,7 @@ public interface MergeGenesisConfigHelper {
         new BadBlockManager(),
         false,
         false,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        EvmConfiguration.DEFAULT);
   }
 }
