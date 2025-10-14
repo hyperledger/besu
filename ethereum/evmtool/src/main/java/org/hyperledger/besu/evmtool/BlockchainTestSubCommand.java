@@ -18,34 +18,50 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,6 +69,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -88,6 +105,36 @@ public class BlockchainTestSubCommand implements Runnable {
       names = {"--test-name"},
       description = "Limit execution to one named test.")
   private String testName = null;
+
+  @Option(
+      names = {"-t", "--trace-transactions"},
+      description = "Enable transaction tracing to stderr")
+  private boolean enableTracing = false;
+
+  @Option(
+      names = {"--trace-memory"},
+      description = "Include memory in traces")
+  private boolean traceMemory = false;
+
+  @Option(
+      names = {"--trace-stack"},
+      description = "Include stack in traces (default: true)")
+  private boolean traceStack = true;
+
+  @Option(
+      names = {"--trace-returndata"},
+      description = "Include return data in traces")
+  private boolean traceReturnData = false;
+
+  @Option(
+      names = {"--trace-storage"},
+      description = "Include storage changes in traces")
+  private boolean traceStorage = false;
+
+  @Option(
+      names = {"--trace-output"},
+      description = "Output file for traces (default: stderr)")
+  private String traceOutput = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -231,87 +278,277 @@ public class BlockchainTestSubCommand implements Runnable {
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();
 
-    boolean testFailed = false;
+    // Initialize tracing infrastructure (from feature branch)
+    BlockTestTracerManager tracerManager = null;
+    PrintWriter traceWriter = null;
+    long totalGasUsed = 0;
+    int totalTxCount = 0;
+    int blockCount = 0;
+    long testStartTime = System.currentTimeMillis();
+
+    // Use testPassed (more intuitive than testFailed)
+    boolean testPassed = true;
+    // Track failureReason for summary reporting (from main branch)
     String failureReason = "";
 
-    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-        spec.getCandidateBlocks()) {
-      if (!candidateBlock.isExecutable()) {
+    // Setup tracer if tracing is enabled (from feature branch)
+    if (enableTracing) {
+      try {
+        if (traceOutput != null) {
+          traceWriter =
+              new PrintWriter(Files.newBufferedWriter(Paths.get(traceOutput), UTF_8), true);
+        } else {
+          traceWriter = new PrintWriter(new OutputStreamWriter(System.err, UTF_8), true);
+        }
+        tracerManager =
+            new BlockTestTracerManager(
+                traceWriter, traceMemory, traceStack, traceReturnData, traceStorage);
+      } catch (final IOException e) {
+        parentCommand.out.println("Failed to open trace output: " + e.getMessage());
         return;
       }
+    }
 
-      try {
-        final Block block = candidateBlock.getBlock();
+    // Use try-finally for cleanup (from feature branch)
+    try {
+      for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
+          spec.getCandidateBlocks()) {
+        if (!candidateBlock.isExecutable()) {
+          return;
+        }
 
-        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
-        final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+        try {
+          final Block block = candidateBlock.getBlock();
+          blockCount++;
 
-        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
+          final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
+          final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
-        final HeaderValidationMode validationMode =
-            "NoProof".equalsIgnoreCase(spec.getSealEngine())
-                ? HeaderValidationMode.LIGHT
-                : HeaderValidationMode.FULL;
-        final Stopwatch timer = Stopwatch.createStarted();
-        final BlockImportResult importResult =
-            blockImporter.importBlock(context, block, validationMode, validationMode);
-        timer.stop();
-        if (importResult.isImported() != candidateBlock.isValid()) {
-          testFailed = true;
-          failureReason =
-              String.format(
-                  "Block %d (%s) %s",
-                  block.getHeader().getNumber(),
-                  block.getHash(),
-                  importResult.isImported() ? "Failed to be rejected" : "Failed to import");
-          parentCommand.out.println(failureReason);
-        } else {
-          if (importResult.isImported()) {
-            final long gasUsed = block.getHeader().getGasUsed();
-            final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-            final float mGps = gasUsed * 1000.0f / timeNs;
-            final double timeMs = timeNs / 1_000_000.0;
-            parentCommand.out.printf(
-                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
-                block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
+          verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
+
+          final HeaderValidationMode validationMode =
+              "NoProof".equalsIgnoreCase(spec.getSealEngine())
+                  ? HeaderValidationMode.LIGHT
+                  : HeaderValidationMode.FULL;
+
+          final BlockImportResult importResult;
+          final Stopwatch timer = Stopwatch.createStarted();
+
+          // Conditional processing: use tracing if enabled (from feature branch)
+          if (enableTracing && tracerManager != null) {
+            // Process block with tracing
+            importResult =
+                processBlockWithTracing(
+                    block,
+                    protocolSpec,
+                    blockchain,
+                    context,
+                    worldState,
+                    tracerManager,
+                    validationMode);
+            totalGasUsed += block.getHeader().getGasUsed();
+            totalTxCount += block.getBody().getTransactions().size();
           } else {
-            parentCommand.out.printf(
-                "Block %d (%s) Rejected (correctly)%n",
-                block.getHeader().getNumber(), block.getHash());
+            // Original block import logic (from main branch)
+            importResult =
+                blockImporter.importBlock(context, block, validationMode, validationMode);
+          }
+
+          timer.stop();
+
+          if (importResult.isImported() != candidateBlock.isValid()) {
+            testPassed = false;
+            failureReason =
+                String.format(
+                    "Block %d (%s) %s",
+                    block.getHeader().getNumber(),
+                    block.getHash(),
+                    importResult.isImported() ? "Failed to be rejected" : "Failed to import");
+            parentCommand.out.println(failureReason);
+          } else {
+            if (importResult.isImported()) {
+              final long gasUsed = block.getHeader().getGasUsed();
+              final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+              final float mGps = gasUsed * 1000.0f / timeNs;
+              final double timeMs = timeNs / 1_000_000.0;
+              parentCommand.out.printf(
+                  "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
+                  block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
+            } else {
+              parentCommand.out.printf(
+                  "Block %d (%s) Rejected (correctly)%n",
+                  block.getHeader().getNumber(), block.getHash());
+            }
+          }
+        } catch (final RLPException e) {
+          if (candidateBlock.isValid()) {
+            testPassed = false;
+            failureReason =
+                String.format(
+                    "Block %d (%s) RLP exception: %s",
+                    candidateBlock.getBlock().getHeader().getNumber(),
+                    candidateBlock.getBlock().getHash(),
+                    e.getMessage());
+            parentCommand.out.println(failureReason);
           }
         }
-      } catch (final RLPException e) {
-        if (candidateBlock.isValid()) {
-          testFailed = true;
-          failureReason =
-              String.format(
-                  "Block %d (%s) RLP exception: %s",
-                  candidateBlock.getBlock().getHeader().getNumber(),
-                  candidateBlock.getBlock().getHash(),
-                  e.getMessage());
-          parentCommand.out.println(failureReason);
+      }
+
+      if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
+        testPassed = false;
+        failureReason =
+            String.format(
+                "Chain header mismatch, have %s want %s",
+                blockchain.getChainHeadHash(), spec.getLastBlockHash());
+        parentCommand.out.printf(
+            "Chain header mismatch, have %s want %s - %s%n",
+            blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
+      } else {
+        parentCommand.out.println("Chain import successful - " + test);
+      }
+    } finally {
+      // Cleanup tracer if it was created (from feature branch)
+      if (tracerManager != null) {
+        final long testDuration = System.currentTimeMillis() - testStartTime;
+        tracerManager.writeTestEnd(
+            test,
+            testPassed,
+            spec.getNetwork(),
+            testDuration,
+            totalGasUsed,
+            totalTxCount,
+            blockCount);
+        try {
+          tracerManager.close();
+        } catch (final IOException e) {
+          parentCommand.out.println("Failed to close trace output: " + e.getMessage());
         }
       }
     }
-    if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
-      testFailed = true;
-      failureReason =
-          String.format(
-              "Chain header mismatch, have %s want %s",
-              blockchain.getChainHeadHash(), spec.getLastBlockHash());
-      parentCommand.out.printf(
-          "Chain header mismatch, have %s want %s - %s%n",
-          blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
-    } else {
-      parentCommand.out.println("Chain import successful - " + test);
-    }
 
-    // Record test result
-    if (testFailed) {
+    // Record test result for summary (from main branch)
+    if (!testPassed) {
       results.recordFailure(test, failureReason);
     } else {
       results.recordPass();
     }
+  }
+
+  /**
+   * Processes a block with transaction-level tracing enabled.
+   *
+   * @param block the block to process
+   * @param protocolSpec the protocol specification
+   * @param blockchain the blockchain
+   * @param context the protocol context
+   * @param worldState the world state
+   * @param tracerManager the tracer manager for creating traces
+   * @param validationMode the header validation mode
+   * @return the block import result
+   */
+  private BlockImportResult processBlockWithTracing(
+      final Block block,
+      final ProtocolSpec protocolSpec,
+      final MutableBlockchain blockchain,
+      final ProtocolContext context,
+      final MutableWorldState worldState,
+      final BlockTestTracerManager tracerManager,
+      final HeaderValidationMode validationMode) {
+
+    // Validate block header first
+    final BlockHeaderValidator headerValidator = protocolSpec.getBlockHeaderValidator();
+    if (!headerValidator.validateHeader(
+        block.getHeader(), context.getBlockchain().getChainHeadHeader(), context, validationMode)) {
+      return new BlockImportResult(false);
+    }
+
+    // Get the parent header for context
+    final BlockHeader parentHeader =
+        blockchain.getBlockHeader(block.getHeader().getParentHash()).orElse(null);
+    if (parentHeader == null && block.getHeader().getNumber() != 0) {
+      return new BlockImportResult(false);
+    }
+
+    // Process transactions with tracing
+    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+    final WorldUpdater worldStateUpdater = worldState.updater();
+    final BlockchainBasedBlockHashLookup blockHashLookup =
+        new BlockchainBasedBlockHashLookup(block.getHeader(), blockchain);
+
+    // Calculate blob gas price for EIP-4844
+    final BlobGas excessBlobGas = block.getHeader().getExcessBlobGas().orElse(BlobGas.ZERO);
+    final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
+
+    final List<TransactionReceipt> receipts = new ArrayList<>();
+    long cumulativeGasUsed = 0;
+
+    for (int i = 0; i < block.getBody().getTransactions().size(); i++) {
+      final org.hyperledger.besu.ethereum.core.Transaction tx =
+          block.getBody().getTransactions().get(i);
+
+      // Create tracer for this transaction
+      final OperationTracer tracer = tracerManager.createTracer();
+
+      // Trace the transaction lifecycle
+      tracer.tracePrepareTransaction(worldStateUpdater, tx);
+      tracer.traceStartTransaction(worldStateUpdater, tx);
+
+      try {
+        // Process the transaction with the tracer
+        final TransactionProcessingResult result =
+            transactionProcessor.processTransaction(
+                worldStateUpdater,
+                block.getHeader(),
+                tx,
+                block.getHeader().getCoinbase(),
+                tracer,
+                blockHashLookup,
+                TransactionValidationParams.processingBlock(),
+                blobGasPrice);
+
+        // Check if transaction is INVALID (e.g., nonce too low, insufficient balance)
+        // INVALID transactions should cause block rejection
+        if (result.isInvalid()) {
+          // Transaction is invalid, block should be rejected
+          tracer.traceEndTransaction(
+              worldStateUpdater, tx, false, Bytes.EMPTY, List.of(), 0, Set.of(), 0);
+          return new BlockImportResult(false);
+        }
+
+        // For SUCCESSFUL or FAILED (reverted) transactions, create receipts
+        // FAILED transactions (e.g., REVERT, out of gas, stack underflow) are valid and included
+        // in blocks
+        cumulativeGasUsed += tx.getGasLimit() - result.getGasRemaining();
+
+        final TransactionReceipt receipt =
+            protocolSpec
+                .getTransactionReceiptFactory()
+                .create(tx.getType(), result, worldState, cumulativeGasUsed);
+        receipts.add(receipt);
+
+        // Trace transaction end (successful or failed)
+        tracer.traceEndTransaction(
+            worldStateUpdater,
+            tx,
+            result.isSuccessful(),
+            result.getOutput(),
+            result.getLogs(),
+            cumulativeGasUsed,
+            Set.of(),
+            0);
+      } catch (final Exception e) {
+        parentCommand.out.printf("Transaction %d processing failed: %s%n", i, e.getMessage());
+        return new BlockImportResult(false);
+      }
+    }
+
+    // Commit the world state changes
+    worldStateUpdater.commit();
+
+    // Append block to blockchain
+    blockchain.appendBlock(block, receipts);
+
+    return new BlockImportResult(true);
   }
 
   void verifyJournaledEVMAccountCompatability(
@@ -327,6 +564,91 @@ public class BlockchainTestSubCommand implements Runnable {
       if (EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0) {
         parentCommand.out.println(
             "Journaled account configured and fork prior to the merge specified");
+      }
+    }
+  }
+
+  /**
+   * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
+   * creating and managing StandardJsonTracer instances for transaction-level tracing during block
+   * test execution.
+   */
+  private static class BlockTestTracerManager {
+    private final PrintWriter output;
+    private final boolean showMemory;
+    private final boolean showStack;
+    private final boolean showReturnData;
+    private final boolean showStorage;
+    private StandardJsonTracer currentTracer;
+
+    /**
+     * Constructs a BlockTestTracerManager with specified tracing options.
+     *
+     * @param output the PrintWriter for trace output
+     * @param showMemory whether to include memory in traces
+     * @param showStack whether to include stack in traces
+     * @param showReturnData whether to include return data in traces
+     * @param showStorage whether to include storage changes in traces
+     */
+    public BlockTestTracerManager(
+        final PrintWriter output,
+        final boolean showMemory,
+        final boolean showStack,
+        final boolean showReturnData,
+        final boolean showStorage) {
+      this.output = output;
+      this.showMemory = showMemory;
+      this.showStack = showStack;
+      this.showReturnData = showReturnData;
+      this.showStorage = showStorage;
+    }
+
+    /**
+     * Creates a new OperationTracer for tracing a transaction.
+     *
+     * @return a new StandardJsonTracer instance
+     */
+    public OperationTracer createTracer() {
+      currentTracer =
+          new StandardJsonTracer(output, showMemory, showStack, showReturnData, showStorage, true);
+      return currentTracer;
+    }
+
+    /**
+     * Writes a test end marker with test execution metrics.
+     *
+     * @param testName the name of the test
+     * @param passed whether the test passed
+     * @param fork the fork name
+     * @param durationMs test duration in milliseconds
+     * @param gasUsed total gas used
+     * @param txCount transaction count
+     * @param blockCount block count
+     */
+    public void writeTestEnd(
+        final String testName,
+        final boolean passed,
+        final String fork,
+        final long durationMs,
+        final long gasUsed,
+        final int txCount,
+        final int blockCount) {
+      output.printf(
+          "{\"test\":\"%s\",\"pass\":%s,\"fork\":\"%s\",\"duration\":%d,"
+              + "\"gasUsed\":%d,\"txCount\":%d,\"blockCount\":%d}%n",
+          testName, passed, fork, durationMs, gasUsed, txCount, blockCount);
+      output.flush();
+    }
+
+    /**
+     * Closes the output writer.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    public void close() throws IOException {
+      if (output != null) {
+        output.flush();
+        output.close();
       }
     }
   }
