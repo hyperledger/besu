@@ -101,7 +101,7 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 13));
     when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 15));
     when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 17));
-    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 18));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 19));
     when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
     when(configOptions.getConsolidationRequestContractAddress())
         .thenReturn(Optional.of(Address.ZERO));
