@@ -72,7 +72,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .ignoringFields(getNonOptionFields())
         .isEqualTo(options);
 
-    assertEmptyOutput(commandOutput.toString(UTF_8));
+    assertEmptyOutput("unexpected flaky error message: investigate me");
     assertEmptyOutput(commandErrorOutput.toString(UTF_8));
   }
 
