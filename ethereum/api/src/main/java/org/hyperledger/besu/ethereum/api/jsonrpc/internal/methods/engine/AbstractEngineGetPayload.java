@@ -96,7 +96,8 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       LOG.debug(
           "Only empty block available for payload {}, waiting for block building to complete",
           payloadId);
-      mergeMiningCoordinator.awaitCurrentBuildCompletion(payloadId, 800);
+      mergeMiningCoordinator.awaitCurrentBuildCompletion(
+          payloadId, mergeMiningCoordinator.getPosBlockFinalizationTimeoutMs());
       // Retrieve again after waiting
       maybePayload = mergeContext.get().retrievePayloadById(payloadId);
     }

@@ -176,6 +176,13 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId, final long timeoutMs);
 
   /**
+   * Gets the PoS block finalization timeout in milliseconds.
+   *
+   * @return the timeout in milliseconds
+   */
+  long getPosBlockFinalizationTimeoutMs();
+
+  /**
    * Return the scheduler
    *
    * @return the instance of the scheduler

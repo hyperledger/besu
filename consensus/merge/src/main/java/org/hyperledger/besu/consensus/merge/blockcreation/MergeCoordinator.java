@@ -51,6 +51,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -383,15 +384,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         });
 
     // Schedule cleanup after a short delay to allow graceful completion
-    ethScheduler.scheduleServiceTask(
-        () -> {
-          try {
-            Thread.sleep(800); // Give 800ms for graceful finalization
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          }
-          cleanupBlockCreationTask(payloadId);
-        });
+    ethScheduler.scheduleFutureTask(
+        () -> cleanupBlockCreationTask(payloadId),
+        Duration.ofMillis(miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs()));
   }
 
   @Override
@@ -424,6 +419,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       Thread.currentThread().interrupt();
       LOG.debug("Interrupted while waiting for block building for payload {}", payloadId);
     }
+  }
+
+  @Override
+  public long getPosBlockFinalizationTimeoutMs() {
+    return miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs();
   }
 
   private void tryToBuildBetterBlock(

@@ -260,6 +260,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             "Transaction selection cancelled during execution, finalizing with current progress");
       } else {
         LOG.warn("Error during block transaction selection", e);
+        // force rollback
+        rollback();
       }
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update

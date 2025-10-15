@@ -226,6 +226,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     mergeCoordinator.awaitCurrentBuildCompletion(payloadId, timeoutMs);
   }
 
+  @Override
+  public long getPosBlockFinalizationTimeoutMs() {
+    return mergeCoordinator.getPosBlockFinalizationTimeoutMs();
+  }
+
   /**
    * returns the instance of ethScheduler
    *

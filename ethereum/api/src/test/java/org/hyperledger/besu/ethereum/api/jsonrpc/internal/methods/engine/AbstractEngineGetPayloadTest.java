@@ -136,6 +136,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     super.before();
     when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
+    when(mergeMiningCoordinator.getPosBlockFinalizationTimeoutMs()).thenReturn(800L);
     if (methodFactory.isPresent()) {
       this.method =
           methodFactory
