@@ -274,7 +274,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
     final long outputDataLength = outputDataLength(frame);
-    final Account recipient = getAccount(address(frame), frame);
+    final Account recipient = frame.getWorldUpdater().get(address(frame));
     final Address to = to(frame);
     GasCalculator gasCalculator = gasCalculator();
 

@@ -315,6 +315,13 @@ public interface GenesisConfigOptions {
   OptionalLong getBpo5Time();
 
   /**
+   * Gets Amsterdam time.
+   *
+   * @return the Amsterdam time
+   */
+  OptionalLong getAmsterdamTime();
+
+  /**
    * Gets future eips time.
    *
    * @return the future eips time
