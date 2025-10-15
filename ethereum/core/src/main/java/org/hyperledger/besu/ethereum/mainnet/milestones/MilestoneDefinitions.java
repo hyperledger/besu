@@ -205,6 +205,10 @@ public class MilestoneDefinitions {
         createTimestampMilestone(
             MainnetHardforkId.BPO5, config.getBpo5Time(), specFactory::bpo5Definition),
         createTimestampMilestone(
+            MainnetHardforkId.AMSTERDAM,
+            config.getAmsterdamTime(),
+            specFactory::amsterdamDefinition),
+        createTimestampMilestone(
             MainnetHardforkId.FUTURE_EIPS,
             config.getFutureEipsTime(),
             specFactory::futureEipsDefinition),
