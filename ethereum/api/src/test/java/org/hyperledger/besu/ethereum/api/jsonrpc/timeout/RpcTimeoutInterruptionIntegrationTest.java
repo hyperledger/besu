@@ -24,7 +24,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.assertj.core.util.CanIgnoreReturnValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
@@ -44,7 +43,6 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.CancellableOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
-import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Map;
@@ -232,9 +230,11 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
             .build();
 
     // Make synchronous request that should timeout
-    assertThatExceptionOfType(SocketTimeoutException.class).isThrownBy(() -> {
-        timeoutClient.newCall(request).execute();
-    });
+    assertThatExceptionOfType(SocketTimeoutException.class)
+        .isThrownBy(
+            () -> {
+              timeoutClient.newCall(request).execute();
+            });
 
     SlowDebugOperationTracer sdot = slowTracerRef.get();
     CancellableOperationTracer spiedTracer = cancellableTracerSpy.get();
@@ -309,7 +309,7 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
         .as("CancellableOperationTracer spy should have been created")
         .isNotNull();
 
-    //will flake if first tx in this block changes to anything that doesn't have 46 operations
+    // will flake if first tx in this block changes to anything that doesn't have 46 operations
     verify(spiedTracer, times(46)).tracePreExecution(any(MessageFrame.class));
 
     // Verify NO interrupt exception was thrown
