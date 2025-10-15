@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
@@ -376,6 +377,15 @@ public class EvmToolCommand implements Runnable {
    */
   public boolean hasFork() {
     return daggerOptions.provideFork().isPresent();
+  }
+
+  /**
+   * Returns the EVM configuration options.
+   *
+   * @return The EVM configuration.
+   */
+  public EvmConfiguration getEvmConfiguration() {
+    return daggerOptions.provideEvmConfiguration();
   }
 
   @Override

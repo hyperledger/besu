@@ -45,7 +45,14 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<BadBlockResult> response =
         protocolContext.getBadBlockManager().getBadBlocks().stream()
-            .map(block -> BadBlockResult.from(blockResultFactory.transactionComplete(block), block))
+            .map(
+                block ->
+                    BadBlockResult.from(
+                        blockResultFactory.transactionComplete(block),
+                        block,
+                        protocolContext
+                            .getBadBlockManager()
+                            .getGeneratedBlockAccessList(block.getHash())))
             .collect(Collectors.toList());
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
