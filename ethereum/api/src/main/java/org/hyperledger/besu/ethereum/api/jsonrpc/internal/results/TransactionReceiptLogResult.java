@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "transactionHash",
   "transactionIndex",
   "blockHash",
+  "blockTimestamp",
   "logIndex",
   "removed"
 })
@@ -44,6 +45,7 @@ public class TransactionReceiptLogResult {
   private final String transactionHash;
   private final String transactionIndex;
   private final String blockHash;
+  private final String blockTimestamp;
   private final String logIndex;
   private final boolean removed;
 
@@ -52,6 +54,7 @@ public class TransactionReceiptLogResult {
       final long blockNumber,
       final Hash transactionHash,
       final Hash blockHash,
+      final long blockTimestamp,
       final int transactionIndex,
       final int logIndex) {
     this.address = log.getLogger().toString();
@@ -66,6 +69,7 @@ public class TransactionReceiptLogResult {
     this.transactionHash = transactionHash.toString();
     this.transactionIndex = Quantity.create(transactionIndex);
     this.blockHash = blockHash.toString();
+    this.blockTimestamp = Quantity.create(blockTimestamp);
     this.logIndex = Quantity.create(logIndex);
 
     // TODO: Handle chain reorgs, i.e. return `true` if log is removed
@@ -115,5 +119,10 @@ public class TransactionReceiptLogResult {
   @JsonGetter(value = "removed")
   public boolean isRemoved() {
     return removed;
+  }
+
+  @JsonGetter(value = "blockTimestamp")
+  public String getBlockTimestamp() {
+    return blockTimestamp;
   }
 }

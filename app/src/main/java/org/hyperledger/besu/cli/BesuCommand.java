@@ -1405,6 +1405,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || genesisConfigOptionsSupplier.get().getBpo3Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo4Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo5Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getAmsterdamTime().isPresent()
         || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
@@ -1581,7 +1582,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
       } else if (genesisConfigOptions.isPoa()) {
-        Long epochLength = 0L;
+        long epochLength = 0L;
         String consensusMechanism = "";
         if (genesisConfigOptions.isIbft2()) {
           epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
@@ -2660,6 +2661,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
         .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
         .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
+        .setEnabledOpcodeOptimizations(unstableEvmOptions.toDomainObject().enableOptimizedOpcodes())
         .setPluginContext(this.besuPluginContext)
         .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
         .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());

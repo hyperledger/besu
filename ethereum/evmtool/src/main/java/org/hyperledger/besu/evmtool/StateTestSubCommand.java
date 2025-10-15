@@ -266,7 +266,8 @@ public class StateTestSubCommand implements Runnable {
 
         final String forkName = fork == null ? spec.getFork() : fork;
         final ProtocolSchedule protocolSchedule =
-            ReferenceTestProtocolSchedules.getInstance().getByName(forkName);
+            ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+                .getByName(forkName);
         if (protocolSchedule == null) {
           throw new UnsupportedForkException(forkName);
         }

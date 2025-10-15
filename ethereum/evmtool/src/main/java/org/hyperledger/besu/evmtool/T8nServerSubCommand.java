@@ -250,7 +250,8 @@ public class T8nServerSubCommand implements Runnable {
                 initialWorldState,
                 transactions,
                 rejections,
-                tracerManager);
+                tracerManager,
+                parentCommand.getEvmConfiguration());
       }
 
       ObjectNode outputObject = objectMapper.createObjectNode();

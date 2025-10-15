@@ -79,7 +79,8 @@ public class WorldStateProofProvider {
                 final SortedMap<UInt256, Proof<Bytes>> storageProofs =
                     getStorageProofs(accountHash, account, accountStorageKeys);
                 return new WorldStateProof(account, accountProof, storageProofs);
-              });
+              })
+          .or(() -> Optional.of(new WorldStateProof(accountProof)));
     }
   }
 
