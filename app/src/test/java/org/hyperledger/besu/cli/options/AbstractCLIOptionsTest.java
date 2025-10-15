@@ -78,7 +78,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
   private void assertEmptyOutput(final String output) {
     // Help troubleshooting of flaky tests by including output in assertion message
-    assertThat(output).as("Expected empty command output but got: " + output).isEmpty();
+    assertThat(output).as("Expected empty output but got: " + output).isEmpty();
   }
 
   @Test
