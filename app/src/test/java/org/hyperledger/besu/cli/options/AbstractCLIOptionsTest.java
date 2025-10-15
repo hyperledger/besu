@@ -72,8 +72,13 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .ignoringFields(getNonOptionFields())
         .isEqualTo(options);
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertEmptyOutput(commandOutput.toString(UTF_8));
+    assertEmptyOutput(commandErrorOutput.toString(UTF_8));
+  }
+
+  private void assertEmptyOutput(final String output) {
+    // Help troubleshooting of flaky tests by including output in assertion message
+    assertThat(output).as("Expected empty command output but got: " + output).isEmpty();
   }
 
   @Test
@@ -135,7 +140,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
   protected void internalTestFailure(final String errorMsg, final String... args) {
     parseCommand(args);
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertEmptyOutput(commandOutput.toString(UTF_8));
     assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
   }
 }
