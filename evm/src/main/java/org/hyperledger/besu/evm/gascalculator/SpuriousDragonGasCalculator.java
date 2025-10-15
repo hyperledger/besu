@@ -54,8 +54,13 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
-    if ((recipient == null || recipient.isEmpty()) && !transferValue.isZero()) {
+    if (!transferValue.isZero() && (recipient == null || recipient.isEmpty())) {
       cost = clampedAdd(cost, newAccountGasCost());
+    }
+
+    // If recipient.isEmpty() must be evaluated above
+    if (!transferValue.isZero() && recipient != null) {
+      frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipient.getAddress()));
     }
 
     return cost;
