@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.blocks;
+package org.hyperledger.besu.chainexport;
 
-/** The enum Block export format. */
-public enum BlockExportFormat {
-  /** Rlp block export format. */
-  RLP,
-  /** ERA1 block export format. */
-  ERA1
+import org.hyperledger.besu.util.ssz.Merkleizer;
+
+/** A factory for producing Era1Accumulator objects */
+public class Era1AccumulatorFactory {
+
+  /** Default constructor */
+  public Era1AccumulatorFactory() {}
+
+  /**
+   * Creates an Era1Accumulator object with the default Merkleizer
+   *
+   * @return an Era1Accumulator object
+   */
+  public Era1Accumulator getEra1Accumulator() {
+    return new Era1Accumulator(new Merkleizer());
+  }
 }
