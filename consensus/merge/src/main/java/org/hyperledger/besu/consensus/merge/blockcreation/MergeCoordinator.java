@@ -471,7 +471,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 });
 
     // Store the task with the blockBuildingFuture for later access
-    blockCreationTasks.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockBuildingFuture));
+    blockCreationTasks.put(
+        payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockBuildingFuture));
   }
 
   private Void retryBlockCreationUntilUseful(
