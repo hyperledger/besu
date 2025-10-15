@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -59,7 +59,7 @@ public class TransactionProcessingResult
 
   public PathBasedWorldStateUpdateAccumulator<?> accumulator;
   private final Optional<ExceptionalHaltReason> exceptionalHaltReason;
-  private final Optional<TransactionAccessList> transactionAccessList;
+  private final Optional<PartialBlockAccessView> partialBlockAccessView;
 
   public static TransactionProcessingResult invalid(
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -71,6 +71,7 @@ public class TransactionProcessingResult
         Bytes.EMPTY,
         validationResult,
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -80,7 +81,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
     return new TransactionProcessingResult(
         Status.FAILED,
         List.of(),
@@ -90,7 +91,7 @@ public class TransactionProcessingResult
         validationResult,
         revertReason,
         exceptionalHaltReason,
-        transactionAccessList);
+        partialBlockAccessView);
   }
 
   public static TransactionProcessingResult successful(
@@ -98,7 +99,7 @@ public class TransactionProcessingResult
       final long gasUsedByTransaction,
       final long gasRemaining,
       final Bytes output,
-      final Optional<TransactionAccessList> transactionAccessList,
+      final Optional<PartialBlockAccessView> partialBlockAccessView,
       final ValidationResult<TransactionInvalidReason> validationResult) {
     return new TransactionProcessingResult(
         Status.SUCCESSFUL,
@@ -108,7 +109,7 @@ public class TransactionProcessingResult
         output,
         validationResult,
         Optional.empty(),
-        transactionAccessList);
+        partialBlockAccessView);
   }
 
   public TransactionProcessingResult(
@@ -119,7 +120,7 @@ public class TransactionProcessingResult
       final Bytes output,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -128,7 +129,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = Optional.empty();
-    this.transactionAccessList = transactionAccessList;
+    this.partialBlockAccessView = partialBlockAccessView;
   }
 
   public TransactionProcessingResult(
@@ -140,7 +141,7 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
@@ -149,7 +150,7 @@ public class TransactionProcessingResult
     this.validationResult = validationResult;
     this.revertReason = revertReason;
     this.exceptionalHaltReason = exceptionalHaltReason;
-    this.transactionAccessList = transactionAccessList;
+    this.partialBlockAccessView = partialBlockAccessView;
   }
 
   /**
@@ -240,8 +241,13 @@ public class TransactionProcessingResult
     return validationResult;
   }
 
-  public Optional<TransactionAccessList> getTransactionAccessList() {
-    return transactionAccessList;
+  /**
+   * Returns the transaction block access view
+   *
+   * @return block access view of the executed transaction , empty when failed
+   */
+  public Optional<PartialBlockAccessView> getPartialBlockAccessView() {
+    return partialBlockAccessView;
   }
 
   /**

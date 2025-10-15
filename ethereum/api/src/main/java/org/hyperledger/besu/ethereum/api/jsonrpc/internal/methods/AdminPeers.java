@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 
@@ -44,7 +45,11 @@ public class AdminPeers implements JsonRpcMethod {
     try {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          ethPeers.streamAllPeers().map(PeerResult::fromEthPeer).collect(Collectors.toList()));
+          ethPeers
+              .streamAllPeers()
+              .map(EthPeerImmutableAttributes::ethPeer)
+              .map(PeerResult::fromEthPeer)
+              .collect(Collectors.toList()));
     } catch (P2PDisabledException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);

@@ -18,6 +18,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftMessageAdaptor;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
@@ -38,7 +40,8 @@ class FutureMessageSynchronizerHandlerTest {
 
     final FutureMessageSynchronizerHandler futureMessageSynchronizerHandler =
         new FutureMessageSynchronizerHandler(synchronizerUpdater);
-    futureMessageSynchronizerHandler.handleFutureMessage(10, message);
+    final QbftMessage qbftMessage = new QbftMessageAdaptor(message);
+    futureMessageSynchronizerHandler.handleFutureMessage(10, qbftMessage);
 
     verify(synchronizerUpdater).updatePeerChainState(9, peerConnection);
   }

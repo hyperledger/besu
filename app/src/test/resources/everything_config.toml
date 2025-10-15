@@ -95,6 +95,7 @@ rpc-max-logs-range=100
 json-pretty-print-enabled=false
 cache-last-blocks=512
 cache-last-block-headers=5000
+cache-last-block-headers-preload-enabled=true
 cache-precompiles=true
 rpc-gas-cap = 50000000
 rpc-max-trace-filter-range=100
@@ -215,6 +216,7 @@ auto-log-bloom-caching-enabled=true
 ethstats="nodename:secret@host:1234"
 ethstats-contact="contact@mail.n"
 ethstats-cacert-file="./root.cert"
+ethstats-report-interval=10
 
 # Data storage
 data-storage-format="BONSAI"
