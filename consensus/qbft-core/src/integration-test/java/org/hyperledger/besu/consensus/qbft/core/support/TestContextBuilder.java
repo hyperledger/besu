@@ -179,6 +179,8 @@ public class TestContextBuilder {
   public static final Address VALIDATOR_CONTRACT_ADDRESS =
       Address.fromHexString("0x0000000000000000000000000000000000008888");
   private static final QbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
+  private static final BftBlockInterface BFT_BLOCK_INTERFACE =
+      new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);
@@ -188,6 +190,8 @@ public class TestContextBuilder {
   private Optional<String> genesisFile = Optional.empty();
   private List<NodeParams> nodeParams = Collections.emptyList();
   private List<QbftFork> qbftForks = Collections.emptyList();
+  private QbftBlockInterface qbftBlockInterface =
+      new QbftBlockInterfaceAdaptor(BFT_BLOCK_INTERFACE);
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -252,6 +256,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
+    return this;
+  }
+
+  public TestContextBuilder qbftBlockInterface(final QbftBlockInterface qbftBlockInterface) {
+    this.qbftBlockInterface = qbftBlockInterface;
     return this;
   }
 
@@ -320,7 +329,8 @@ public class TestContextBuilder {
             useZeroBaseFee,
             useFixedBaseFee,
             qbftForks,
-            blockEncoder);
+            blockEncoder,
+            qbftBlockInterface);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -407,7 +417,8 @@ public class TestContextBuilder {
       final boolean useZeroBaseFee,
       final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks,
-      final QbftBlockCodec blockEncoder) {
+      final QbftBlockCodec blockEncoder,
+      final QbftBlockInterface qbftBlockInterface) {
 
     final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()
@@ -449,9 +460,6 @@ public class TestContextBuilder {
 
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BftBlockInterface bftBlockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
-    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
 
@@ -474,7 +482,7 @@ public class TestContextBuilder {
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
-            blockChain, epochManager, bftBlockInterface, validatorOverrides);
+            blockChain, epochManager, BFT_BLOCK_INTERFACE, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
@@ -489,7 +497,7 @@ public class TestContextBuilder {
             .withBlockchain(blockChain)
             .withWorldStateArchive(worldStateArchive)
             .withConsensusContext(
-                new BftContext(validatorProvider, epochManager, bftBlockInterface))
+                new BftContext(validatorProvider, epochManager, BFT_BLOCK_INTERFACE))
             .build();
 
     final TransactionPoolConfiguration poolConf =
@@ -530,7 +538,7 @@ public class TestContextBuilder {
             ethScheduler);
 
     final ProposerSelector proposerSelector =
-        new BftProposerSelector(blockChain, bftBlockInterface, true, validatorProvider);
+        new BftProposerSelector(blockChain, BFT_BLOCK_INTERFACE, true, validatorProvider);
 
     final BftExecutors bftExecutors =
         BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);

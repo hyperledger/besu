@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -40,7 +41,7 @@ class QbftBlockInterfaceAdaptorTest {
       new BftBlockInterface(new QbftExtraDataCodec());
 
   @Test
-  void replacesRoundInBlockHeader() {
+  void replacesRoundForCommitBlock() {
     QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
     BftExtraData bftExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
@@ -50,9 +51,29 @@ class QbftBlockInterfaceAdaptorTest {
     QbftBlock block = new QbftBlockAdaptor(besuBlock);
 
     QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-    QbftBlock updatedBlock = qbftBlockInterface.replaceRoundInBlock(block, 1);
+    QbftBlock updatedBlock = qbftBlockInterface.replaceRoundForCommitBlock(block, 1);
     BftExtraData extraData =
         qbftExtraDataCodec.decode(AdaptorUtil.toBesuBlockHeader(updatedBlock.getHeader()));
     assertThat(extraData.getRound()).isEqualTo(1);
+  }
+
+  @Test
+  void replacesRoundOnlyForProposalBlock() {
+    QbftExtraDataCodec qbftExtraDataCodec = new QbftExtraDataCodec();
+    BftExtraData bftExtraData =
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
+    Bytes encodedExtraData = qbftExtraDataCodec.encode(bftExtraData);
+    BlockHeader header = new BlockHeaderTestFixture().extraData(encodedExtraData).buildHeader();
+    Block besuBlock = new Block(header, BlockBody.empty());
+    QbftBlock block = new QbftBlockAdaptor(besuBlock);
+
+    QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
+    Address proposer = Address.fromHexString("0x1234567890123456789012345678901234567890");
+    QbftBlock updatedBlock =
+        qbftBlockInterface.replaceRoundAndProposerForProposalBlock(block, 2, proposer);
+    BftExtraData extraData =
+        qbftExtraDataCodec.decode(AdaptorUtil.toBesuBlockHeader(updatedBlock.getHeader()));
+    assertThat(extraData.getRound()).isEqualTo(2);
+    assertThat(updatedBlock.getHeader().getCoinbase()).isEqualTo(header.getCoinbase());
   }
 }

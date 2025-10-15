@@ -225,7 +225,8 @@ public class BlockchainTestSubCommand implements Runnable {
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
+        ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+            .getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();

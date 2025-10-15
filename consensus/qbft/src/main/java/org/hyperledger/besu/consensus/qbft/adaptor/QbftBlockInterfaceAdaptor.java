@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
@@ -41,12 +42,21 @@ public class QbftBlockInterfaceAdaptor implements QbftBlockInterface {
   }
 
   @Override
-  public QbftBlock replaceRoundInBlock(final QbftBlock proposalBlock, final int roundNumber) {
+  public QbftBlock replaceRoundForCommitBlock(
+      final QbftBlock proposalBlock, final int roundNumber) {
     final Block besuBlock = toBesuBlock(proposalBlock);
     final BlockHeaderFunctions blockHeaderFunctions =
         BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec);
     final Block updatedRoundBlock =
         bftBlockInterface.replaceRoundInBlock(besuBlock, roundNumber, blockHeaderFunctions);
     return new QbftBlockAdaptor(updatedRoundBlock);
+  }
+
+  @Override
+  public QbftBlock replaceRoundAndProposerForProposalBlock(
+      final QbftBlock proposalBlock, final int roundNumber, final Address proposer) {
+    // Only update the round number, we don't want to update the proposer as this would make this
+    // incompatible for other Besu versions of QBFT for the proposer selection
+    return replaceRoundForCommitBlock(proposalBlock, roundNumber);
   }
 }

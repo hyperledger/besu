@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -332,11 +333,12 @@ public class T8nExecutor {
       final ReferenceTestWorldState initialWorldState,
       final List<Transaction> transactions,
       final List<RejectedTransaction> rejections,
-      final TracerManager tracerManager) {
+      final TracerManager tracerManager,
+      final EvmConfiguration evmConfiguration) {
 
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
-            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
+            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)), evmConfiguration);
 
     final BonsaiReferenceTestWorldState worldState =
         (BonsaiReferenceTestWorldState) initialWorldState.copy();
