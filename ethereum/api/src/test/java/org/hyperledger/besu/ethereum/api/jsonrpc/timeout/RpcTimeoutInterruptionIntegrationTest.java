@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.timeout;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.assertj.core.util.CanIgnoreReturnValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Transaction;
@@ -208,8 +210,6 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
 
   @Test
   public void shouldInterruptWhenClientTimesOutBeforeServer() throws Exception {
-    // Client should timeout first, triggering connection close handler which interrupts worker
-    // thread
     // Fix IPv4/IPv6 localhost resolution issue - ensure we use 127.0.0.1 instead of localhost
     // TODO why did we need to do this during local testing on MacOS
     final String fixedBaseUrl = baseUrl.replace("localhost", "127.0.0.1");
@@ -232,26 +232,9 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
             .build();
 
     // Make synchronous request that should timeout
-    try {
-      timeoutClient.newCall(request).execute();
-    } catch (IOException e) {
-      // Expected: Server closes connection due to timeout - can be SocketTimeoutException or
-      // IOException
-      // Server-side timeout causes "unexpected end of stream" when connection is terminated
-      boolean isExpectedTimeoutError =
-          e instanceof SocketTimeoutException
-              || e.getMessage().contains("unexpected end of stream")
-              || e.getMessage().contains("stream was reset")
-              || e.getMessage().contains("connection was closed");
-
-      assertThat(isExpectedTimeoutError)
-          .as(
-              "HTTP call should fail with timeout-related error, but got: "
-                  + e.getClass().getSimpleName()
-                  + ": "
-                  + e.getMessage())
-          .isTrue();
-    }
+    assertThatExceptionOfType(SocketTimeoutException.class).isThrownBy(() -> {
+        timeoutClient.newCall(request).execute();
+    });
 
     SlowDebugOperationTracer sdot = slowTracerRef.get();
     CancellableOperationTracer spiedTracer = cancellableTracerSpy.get();
@@ -261,18 +244,12 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
         .as("SlowDebugOperationTracer should have been created by the tracer factory")
         .isNotNull();
 
+    verify(spiedTracer).tracePreExecution(any(MessageFrame.class));
     // Verify the tracer made some progress before being interrupted
     assertThat(sdot.getOperationsCount())
         .as("Tracer should have processed at least one operation before interruption")
         .isGreaterThan(0);
 
-    // The key test: Verify that tracePreExecution was called at least once
-    // The HTTP timeout should have interrupted the thread during the slow trace operation
-    verify(spiedTracer).tracePreExecution(any(MessageFrame.class));
-
-    // Most importantly: Verify that the CancellableOperationTracer threw the expected
-    // RuntimeException
-    // when it detected the thread interrupt
     RuntimeException capturedException = caughtInterruptException.get();
     assertThat(capturedException)
         .as(
@@ -290,13 +267,10 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
 
   @Test
   public void shouldCompleteSuccessfullyWhenNoInterruptOccurs() throws Exception {
-    // Set up a scenario where the operation completes before any timeout
-    // Configure a short delay (50ms) so the operation completes quickly
-    tracerDelayMs = 0; // Much shorter than any timeout
+    tracerDelayMs = 0; // no delay
 
     final String fixedBaseUrl = baseUrl.replace("localhost", "127.0.0.1");
 
-    // Create debug trace request
     final String requestJson =
         String.format(
             "{\"jsonrpc\":\"2.0\",\"method\":\"debug_traceTransaction\",\"params\":[\"%s\"],\"id\":1}",
@@ -306,6 +280,7 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
     final Request request = new Request.Builder().url(fixedBaseUrl).post(requestBody).build();
 
     // Set up a client with a longer timeout than the operation duration
+    // could possibly flake on super slow machine?
     final okhttp3.OkHttpClient longTimeoutClient =
         new okhttp3.OkHttpClient.Builder()
             .connectTimeout(HTTP_TIMEOUT_MS * 10, TimeUnit.MILLISECONDS) // 4000ms
@@ -313,9 +288,7 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
             .writeTimeout(HTTP_TIMEOUT_MS * 10, TimeUnit.MILLISECONDS) // 4000ms
             .build();
 
-    // Make the request - this should complete successfully
     try (Response response = longTimeoutClient.newCall(request).execute()) {
-      // Verify we got a successful response
       assertThat(response.isSuccessful())
           .as("HTTP request should complete successfully without timeout")
           .isTrue();
@@ -330,16 +303,16 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
           .contains("result");
     }
 
-    // Verify the tracers were created and used
+    // Verify the tracers were created and used,
     CancellableOperationTracer spiedTracer = cancellableTracerSpy.get();
     assertThat(spiedTracer)
         .as("CancellableOperationTracer spy should have been created")
         .isNotNull();
 
-    // Verify tracing methods were called
+    //will flake if first tx in this block changes to anything that doesn't have 46 operations
     verify(spiedTracer, times(46)).tracePreExecution(any(MessageFrame.class));
 
-    // Most importantly: Verify NO interrupt exception was thrown
+    // Verify NO interrupt exception was thrown
     RuntimeException capturedException = caughtInterruptException.get();
     assertThat(capturedException)
         .as("No interrupt exception should have been thrown in happy path")
