@@ -44,48 +44,48 @@ public class CancellableOperationTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
-    checkInterrupt();
     delegate.tracePreExecution(frame);
+    checkInterrupt();
   }
 
   @Override
   public void tracePostExecution(
       final MessageFrame frame, final Operation.OperationResult operationResult) {
-    checkInterrupt();
     delegate.tracePostExecution(frame, operationResult);
+    checkInterrupt();
   }
 
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
-    checkInterrupt();
     delegate.tracePrecompileCall(frame, gasRequirement, output);
+    checkInterrupt();
   }
 
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    checkInterrupt();
     delegate.traceAccountCreationResult(frame, haltReason);
+    checkInterrupt();
   }
 
   @Override
   public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
-    checkInterrupt();
     delegate.tracePrepareTransaction(worldView, transaction);
+    checkInterrupt();
   }
 
   @Override
   public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
-    checkInterrupt();
     delegate.traceStartTransaction(worldView, transaction);
+    checkInterrupt();
   }
 
   @Override
   public void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {
-    checkInterrupt();
     delegate.traceBeforeRewardTransaction(worldView, tx, miningReward);
+    checkInterrupt();
   }
 
   @Override
@@ -98,43 +98,41 @@ public class CancellableOperationTracer implements OperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
-    checkInterrupt();
     delegate.traceEndTransaction(
         worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    checkInterrupt();
   }
 
   @Override
   public void traceContextEnter(final MessageFrame frame) {
-    checkInterrupt();
     delegate.traceContextEnter(frame);
+    checkInterrupt();
   }
 
   @Override
   public void traceContextReEnter(final MessageFrame frame) {
-    checkInterrupt();
     delegate.traceContextReEnter(frame);
+    checkInterrupt();
   }
 
   @Override
   public void traceContextExit(final MessageFrame frame) {
-    checkInterrupt();
     delegate.traceContextExit(frame);
+    checkInterrupt();
   }
 
   @Override
   public boolean isExtendedTracing() {
-    checkInterrupt();
     return delegate.isExtendedTracing();
   }
 
   @Override
   public List<TraceFrame> getTraceFrames() {
-    checkInterrupt();
     return delegate.getTraceFrames();
   }
 
   private void checkInterrupt() {
-    if (Thread.interrupted()) {
+    if (Thread.currentThread().isInterrupted()) {
       throw new RuntimeException(new InterruptedException("Trace execution interrupted"));
     }
   }
