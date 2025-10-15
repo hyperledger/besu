@@ -130,7 +130,6 @@ public class EngineGetPayloadResultV4 {
       this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.excessBlobGas =
           header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
-
     }
 
     @JsonGetter(value = "blockNumber")
