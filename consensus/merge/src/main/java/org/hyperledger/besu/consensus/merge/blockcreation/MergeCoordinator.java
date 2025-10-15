@@ -60,6 +60,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -461,11 +462,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .whenComplete(
                 (unused, throwable) -> {
                   if (throwable != null) {
-                    LOG.atDebug()
-                        .setMessage("Exception building block for payload id {}, reason {}")
-                        .addArgument(payloadIdentifier)
-                        .addArgument(() -> logException(throwable))
-                        .log();
+                    if (throwable instanceof TimeoutException) {
+                      LOG.atDebug()
+                          .setMessage("Block creation for payload id {} has timed out")
+                          .addArgument(payloadIdentifier)
+                          .log();
+                    } else {
+                      LOG.atDebug()
+                          .setMessage("Exception building block for payload id {}, reason {}")
+                          .addArgument(payloadIdentifier)
+                          .addArgument(() -> logException(throwable))
+                          .log();
+                    }
                   }
                   cleanupBlockCreationTask(payloadIdentifier);
                 });
