@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockRlpSizeTransactionSelector.MAX_HEADER_SIZE;
+import static org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockRlpSizeTransactionSelector.INITIAL_RLP_SIZE;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -52,6 +52,9 @@ class BlockRlpSizeTransactionSelectorTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
+  @SuppressWarnings("UnnecessaryLambda")
+  private static final Supplier<Boolean> NEVER_CANCELLED = () -> false;
+
   @Mock(answer = RETURNS_DEEP_STUBS)
   BlockSelectionContext blockSelectionContext;
 
@@ -72,7 +75,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(80));
     final int maxRlpBlockSize =
         (int)
-                (MAX_HEADER_SIZE
+                (INITIAL_RLP_SIZE
                     + tx1.getTransaction().getSizeForBlockInclusion()
                     + tx2.getTransaction().getSizeForBlockInclusion())
             + 20; // ensure there's some room left
@@ -81,14 +84,14 @@ class BlockRlpSizeTransactionSelectorTest {
     // transaction is under the total block size limit, so it should be selected
     var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     // add another transaction still under the total block size limit, so it should also be selected
     var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext);
   }
@@ -100,7 +103,7 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx3 = createEIP1559PendingTransaction(Bytes.random(20));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx3.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
@@ -108,14 +111,14 @@ class BlockRlpSizeTransactionSelectorTest {
     // transaction is under the total block size limit, so it should be selected
     var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     // add another transaction which is too large for the block, so it should not be selected
     var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(
         txEvaluationContext2, TransactionSelectionResult.TOO_LARGE_FOR_REMAINING_BLOCK_SIZE);
@@ -123,7 +126,7 @@ class BlockRlpSizeTransactionSelectorTest {
     // transaction is under the total block size limit, so it should be selected
     var txEvaluationContext3 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx3, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx3, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext3);
   }
@@ -134,20 +137,20 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(50));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext2);
     evaluateAndAssertNotSelected(
@@ -160,20 +163,20 @@ class BlockRlpSizeTransactionSelectorTest {
     final var tx2 = createEIP1559PendingTransaction(Bytes.random(100));
     final int maxRlpBlockSize =
         (int)
-            (MAX_HEADER_SIZE
+            (INITIAL_RLP_SIZE
                 + tx1.getTransaction().getSizeForBlockInclusion()
                 + tx2.getTransaction().getSizeForBlockInclusion());
     when(blockSelectionContext.maxRlpBlockSize()).thenReturn(maxRlpBlockSize);
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext2);
     evaluateAndAssertNotSelected(

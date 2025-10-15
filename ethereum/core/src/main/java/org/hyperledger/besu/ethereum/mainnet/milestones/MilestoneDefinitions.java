@@ -157,21 +157,19 @@ public class MilestoneDefinitions {
         createBlockNumberMilestone(
             MainnetHardforkId.BERLIN, config.getBerlinBlockNumber(), specFactory::berlinDefinition),
         createBlockNumberMilestone(
-            MainnetHardforkId.LONDON,
-            config.getLondonBlockNumber(),
-            () -> specFactory.londonDefinition(config)),
+            MainnetHardforkId.LONDON, config.getLondonBlockNumber(), specFactory::londonDefinition),
         createBlockNumberMilestone(
             MainnetHardforkId.ARROW_GLACIER,
             config.getArrowGlacierBlockNumber(),
-            () -> specFactory.arrowGlacierDefinition(config)),
+            specFactory::arrowGlacierDefinition),
         createBlockNumberMilestone(
             MainnetHardforkId.GRAY_GLACIER,
             config.getGrayGlacierBlockNumber(),
-            () -> specFactory.grayGlacierDefinition(config)),
+            specFactory::grayGlacierDefinition),
         createBlockNumberMilestone(
             MainnetHardforkId.PARIS,
             config.getMergeNetSplitBlockNumber(),
-            () -> specFactory.parisDefinition(config)));
+            specFactory::parisDefinition));
   }
 
   /**
@@ -185,42 +183,38 @@ public class MilestoneDefinitions {
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
     return List.of(
         createTimestampMilestone(
-            MainnetHardforkId.SHANGHAI,
-            config.getShanghaiTime(),
-            () -> specFactory.shanghaiDefinition(config)),
+            MainnetHardforkId.SHANGHAI, config.getShanghaiTime(), specFactory::shanghaiDefinition),
         createTimestampMilestone(
-            MainnetHardforkId.CANCUN,
-            config.getCancunTime(),
-            () -> specFactory.cancunDefinition(config)),
+            MainnetHardforkId.CANCUN, config.getCancunTime(), specFactory::cancunDefinition),
         createTimestampMilestone(
             MainnetHardforkId.CANCUN_EOF,
             config.getCancunEOFTime(),
-            () -> specFactory.cancunEOFDefinition(config)),
+            specFactory::cancunEOFDefinition),
         createTimestampMilestone(
-            MainnetHardforkId.PRAGUE,
-            config.getPragueTime(),
-            () -> specFactory.pragueDefinition(config)),
+            MainnetHardforkId.PRAGUE, config.getPragueTime(), specFactory::pragueDefinition),
         createTimestampMilestone(
-            MainnetHardforkId.OSAKA,
-            config.getOsakaTime(),
-            () -> specFactory.osakaDefinition(config)),
+            MainnetHardforkId.OSAKA, config.getOsakaTime(), specFactory::osakaDefinition),
         createTimestampMilestone(
-            MainnetHardforkId.BPO1, config.getBpo1Time(), () -> specFactory.bpo1Definition(config)),
+            MainnetHardforkId.BPO1, config.getBpo1Time(), specFactory::bpo1Definition),
         createTimestampMilestone(
-            MainnetHardforkId.BPO2, config.getBpo2Time(), () -> specFactory.bpo2Definition(config)),
+            MainnetHardforkId.BPO2, config.getBpo2Time(), specFactory::bpo2Definition),
         createTimestampMilestone(
-            MainnetHardforkId.BPO3, config.getBpo3Time(), () -> specFactory.bpo3Definition(config)),
+            MainnetHardforkId.BPO3, config.getBpo3Time(), specFactory::bpo3Definition),
         createTimestampMilestone(
-            MainnetHardforkId.BPO4, config.getBpo4Time(), () -> specFactory.bpo4Definition(config)),
+            MainnetHardforkId.BPO4, config.getBpo4Time(), specFactory::bpo4Definition),
         createTimestampMilestone(
-            MainnetHardforkId.BPO5, config.getBpo5Time(), () -> specFactory.bpo5Definition(config)),
+            MainnetHardforkId.BPO5, config.getBpo5Time(), specFactory::bpo5Definition),
+        createTimestampMilestone(
+            MainnetHardforkId.AMSTERDAM,
+            config.getAmsterdamTime(),
+            specFactory::amsterdamDefinition),
         createTimestampMilestone(
             MainnetHardforkId.FUTURE_EIPS,
             config.getFutureEipsTime(),
-            () -> specFactory.futureEipsDefinition(config)),
+            specFactory::futureEipsDefinition),
         createTimestampMilestone(
             MainnetHardforkId.EXPERIMENTAL_EIPS,
             config.getExperimentalEipsTime(),
-            () -> specFactory.experimentalEipsDefinition(config)));
+            specFactory::experimentalEipsDefinition));
   }
 }

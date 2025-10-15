@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
@@ -275,20 +276,82 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   public void blockTxsSelectionMaxTimeOption() {
     internalTestSuccess(
         this::runtimeConfiguration,
-        miningParams -> assertThat(miningParams.getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
+        miningParams ->
+            assertThat(miningParams.getBlockTxsSelectionMaxTime(true))
+                .isEqualTo(Duration.ofMillis(1700L)),
         "--block-txs-selection-max-time",
         "1700");
   }
 
   @Test
-  public void blockTxsSelectionMaxTimeIncompatibleWithPoaNetworks() throws IOException {
+  public void blockTxsSelectionMaxTimeIncompatibleWithoutPoSTransition() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestFailure(
-        "--block-txs-selection-max-time can't be used with PoA networks, see poa-block-txs-selection-max-time instead",
+        "--block-txs-selection-max-time can only be used on networks with PoS support in the genesis file, see --poa-block-txs-selection-max-time instead",
         "--genesis-file",
         genesisFileIBFT2.toString(),
         "--block-txs-selection-max-time",
         "2");
+  }
+
+  @Test
+  public void blockTxsSelectionMaxTimeRequiresPoSTransition() throws IOException {
+    final Path genesisFilePoS = createFakeGenesisFile(VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION);
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams ->
+            assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+                .isEqualTo(PositiveNumber.fromInt(2)),
+        "--genesis-file",
+        genesisFilePoS.toString(),
+        "--block-txs-selection-max-time",
+        "2");
+  }
+
+  @Test
+  public void bothBlockTxsSelectionMaxTimeOptionsAllowedWhenPoSTransitionIsPresent_PreTransition()
+      throws IOException {
+    final Path genesisFilePoS = createFakeGenesisFile(VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION);
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams -> {
+          assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(2000));
+          assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(80));
+          // pre transition PoA conf is used
+          assertThat(miningParams.getBlockTxsSelectionMaxTime(false))
+              .isEqualTo(Duration.ofSeconds(4));
+        },
+        "--genesis-file",
+        genesisFilePoS.toString(),
+        "--block-txs-selection-max-time",
+        "2000",
+        "--poa-block-txs-selection-max-time",
+        "80");
+  }
+
+  @Test
+  public void bothBlockTxsSelectionMaxTimeOptionsAllowedWhenPoSTransitionIsPresent_PostTransition()
+      throws IOException {
+    final Path genesisFilePoS = createFakeGenesisFile(VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION);
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams -> {
+          assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(2000));
+          assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
+              .isEqualTo(PositiveNumber.fromInt(80));
+          // post transition nonPoA conf is used
+          assertThat(miningParams.getBlockTxsSelectionMaxTime(true))
+              .isEqualTo(Duration.ofSeconds(2));
+        },
+        "--genesis-file",
+        genesisFilePoS.toString(),
+        "--block-txs-selection-max-time",
+        "2000",
+        "--poa-block-txs-selection-max-time",
+        "80");
   }
 
   @Test
@@ -322,8 +385,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         miningParams -> {
           assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(200));
-          assertThat(miningParams.getBlockTxsSelectionMaxTime())
-              .isEqualTo(Duration.ofSeconds(POA_BLOCK_PERIOD_SECONDS * 2).toMillis());
+          assertThat(miningParams.getBlockTxsSelectionMaxTime(false))
+              .isEqualTo(Duration.ofSeconds(POA_BLOCK_PERIOD_SECONDS * 2));
         },
         "--genesis-file",
         genesisFileClique.toString(),
@@ -337,6 +400,48 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         "--poa-block-txs-selection-max-time can be only used with PoA networks, see --block-txs-selection-max-time instead",
         "--poa-block-txs-selection-max-time",
         "90");
+  }
+
+  @Test
+  public void pluginBlockTxsSelectionMaxTimeDefaultValue() {
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams ->
+            assertThat(miningParams.getPluginBlockTxsSelectionMaxTime())
+                .isEqualTo(DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME));
+  }
+
+  @Test
+  public void pluginBlockTxsSelectionMaxTimeOptionOnPoaNetwork() throws IOException {
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams ->
+            assertThat(
+                    miningParams.getPluginTxsSelectionMaxTime(
+                        miningParams.getBlockTxsSelectionMaxTime(false)))
+                .isEqualTo(Duration.ofSeconds(1)),
+        "--genesis-file",
+        genesisFileIBFT2.toString(),
+        "--poa-block-txs-selection-max-time",
+        "80",
+        "--plugin-block-txs-selection-max-time",
+        "25");
+  }
+
+  @Test
+  public void pluginBlockTxsSelectionMaxTimeOptionNonPoaNetwork() {
+    internalTestSuccess(
+        this::runtimeConfiguration,
+        miningParams ->
+            assertThat(
+                    miningParams.getPluginTxsSelectionMaxTime(
+                        miningParams.getBlockTxsSelectionMaxTime(false)))
+                .isEqualTo(Duration.ofMillis(800)),
+        "--block-txs-selection-max-time",
+        "2000",
+        "--plugin-block-txs-selection-max-time",
+        "40");
   }
 
   @Test

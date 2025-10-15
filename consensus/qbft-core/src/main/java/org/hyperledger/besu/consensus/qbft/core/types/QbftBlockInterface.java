@@ -14,16 +14,30 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+import org.hyperledger.besu.datatypes.Address;
+
 /** Utility functions for QBFT blocks */
 public interface QbftBlockInterface {
 
   /**
-   * Create a new block using the supplied block with round number replaced. The hash must be for
-   * the committed seal.
+   * Create a new commit block using the supplied block with the round number replaced. The hash
+   * must be for the committed seal.
    *
    * @param proposalBlock the proposal block
-   * @param roundNumber the round number
-   * @return the new qbft block with updated round number
+   * @param roundNumber the round number to set in the block
+   * @return the new qbft block with the updated round number
    */
-  QbftBlock replaceRoundInBlock(QbftBlock proposalBlock, int roundNumber);
+  QbftBlock replaceRoundForCommitBlock(QbftBlock proposalBlock, int roundNumber);
+
+  /**
+   * Create a new proposal block using the supplied block with the round number and proposer
+   * replaced. It is optional to update the proposer. The hash must be for the committed seal.
+   *
+   * @param proposalBlock the proposal block
+   * @param roundNumber the round number to set in the block
+   * @param proposer the proposer address to optionally set in the block
+   * @return the new qbft block with the updated round number and optionally updated proposer
+   */
+  QbftBlock replaceRoundAndProposerForProposalBlock(
+      QbftBlock proposalBlock, int roundNumber, Address proposer);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -70,7 +70,6 @@ public class ModOperation extends AbstractFixedCostOperation {
 
       frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
-
     return modSuccess;
   }
 }

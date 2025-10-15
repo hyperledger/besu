@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -108,6 +109,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -146,10 +148,12 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
+  private static final int POW_SLOT_TIME_ESTIMATION = 13;
 
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder frontierDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -207,7 +211,29 @@ public abstract class MainnetProtocolSpecs {
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
         .preExecutionProcessor(new FrontierPreExecutionProcessor())
+        .slotDuration(getSlotDurationFromGenesis(genesisConfigOptions))
         .hardforkId(FRONTIER);
+  }
+
+  private static Duration getSlotDurationFromGenesis(
+      final GenesisConfigOptions genesisConfigOptions) {
+
+    if (genesisConfigOptions.isIbft2()) {
+      return Duration.ofSeconds(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
+    }
+    if (genesisConfigOptions.isQbft()) {
+      return Duration.ofSeconds(
+          genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
+    }
+    if (genesisConfigOptions.isClique()) {
+      return Duration.ofSeconds(
+          genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
+    }
+    // if no hints are present in the genesis file, then we are in PoW and there is not predefined
+    // block period, so just return an estimation.
+    // We also get here if we are in PoS mode, but the right value for PoS slot duration will
+    // override this value.
+    return Duration.ofSeconds(POW_SLOT_TIME_ESTIMATION);
   }
 
   public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
@@ -218,11 +244,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return frontierDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -242,11 +270,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -282,11 +312,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return daoRecoveryInitDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -299,11 +331,13 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -314,11 +348,13 @@ public abstract class MainnetProtocolSpecs {
 
   public static ProtocolSpecBuilder spuriousDragonDefinition(
       final Optional<BigInteger> chainId,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -367,12 +403,14 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return spuriousDragonDefinition(
             chainId,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -389,6 +427,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -396,6 +435,7 @@ public abstract class MainnetProtocolSpecs {
     return byzantiumDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -410,6 +450,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -417,6 +458,7 @@ public abstract class MainnetProtocolSpecs {
     return constantinopleDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -428,6 +470,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder istanbulDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -435,6 +478,7 @@ public abstract class MainnetProtocolSpecs {
     return petersburgDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -459,6 +503,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder muirGlacierDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -466,6 +511,7 @@ public abstract class MainnetProtocolSpecs {
     return istanbulDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -477,6 +523,7 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder berlinDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
@@ -484,6 +531,7 @@ public abstract class MainnetProtocolSpecs {
     return muirGlacierDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -515,6 +563,7 @@ public abstract class MainnetProtocolSpecs {
     return berlinDefinition(
             chainId,
             enableRevertReason,
+            genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
             isBlockAccessListEnabled,
@@ -658,6 +707,7 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 
@@ -1097,6 +1147,28 @@ public abstract class MainnetProtocolSpecs {
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, BPO5);
   }
 
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
+        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+        .hardforkId(AMSTERDAM);
+  }
+
   private static ProtocolSpecBuilder applyBlobSchedule(
       final ProtocolSpecBuilder builder,
       final GenesisConfigOptions genesisConfigOptions,
@@ -1142,7 +1214,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        bpo5Definition(
+        amsterdamDefinition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,
@@ -1152,7 +1224,6 @@ public abstract class MainnetProtocolSpecs {
                 isBlockAccessListEnabled,
                 metricsSystem)
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
             .hardforkId(FUTURE_EIPS);
 
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder);

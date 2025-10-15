@@ -748,6 +748,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
+  defaultJvmOpts = application.applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
@@ -1050,22 +1051,34 @@ def calculateArtifactId(configuringProject) {
   return projectNames.reverse().join('-')
 }
 
-def getGitCommitDetails(length = 8) {
+def getGitCommitDetails(takeFromHash = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
-      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
+      // this is a worktree or submodule
+      gitFolder = file(gitFolder).text.replaceAll("^gitdir:", "").trim()
+      if (!gitFolder.endsWith("/")) {
+        gitFolder += "/"
+      }
     }
-    def takeFromHash = length
-    def head = new File(gitFolder + "HEAD").text.split(":")
+
+    def headFile = new File(gitFolder + "HEAD")
+    def head = headFile.text.split(":")
     def isCommit = head.length == 1
 
     def commitHash, refHeadFile
     if (isCommit) {
       commitHash = head[0].trim().take(takeFromHash)
-      refHeadFile = new File(gitFolder + "HEAD")
+      refHeadFile = headFile
     } else {
-      refHeadFile = new File(gitFolder + head[1].trim())
+      def refPath = head[1].trim()
+
+      refHeadFile = new File(gitFolder + refPath)
+      if (!refHeadFile.exists()) {
+        // For worktrees have to check in main .git directory
+        def mainGitDir = gitFolder.replaceFirst("\\.git/worktrees/.*", ".git/")
+        refHeadFile = new File(mainGitDir + refPath)
+      }
       commitHash = refHeadFile.text.trim().take(takeFromHash)
     }
 

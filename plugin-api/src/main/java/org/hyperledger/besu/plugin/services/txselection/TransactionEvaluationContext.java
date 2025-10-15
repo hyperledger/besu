@@ -60,4 +60,11 @@ public interface TransactionEvaluationContext {
    * @return the min gas price
    */
   Wei getMinGasPrice();
+
+  /**
+   * Returns true if the evaluation of the tx is cancelled
+   *
+   * @return true if the evaluation of the tx is cancelled
+   */
+  boolean isCancelled();
 }
