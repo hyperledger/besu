@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.subcommands.blocks;
+package org.hyperledger.besu.ethereum.core.encoding;
 
-/** The enum Block export format. */
-public enum BlockExportFormat {
-  /** Rlp block export format. */
-  RLP,
-  /** ERA1 block export format. */
-  ERA1
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public class BlockBodyEncoder {
+  public Bytes encode(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeTo);
+  }
+
+  public Bytes encodeWrapped(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeWrappedBodyTo);
+  }
 }
