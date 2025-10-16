@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased
+## 25.10.0
+This is a recommended update for Hoodi users for the Fusaka hardfork.
 
 ### Breaking Changes
 
@@ -18,6 +19,7 @@
 - Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
 - Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
 - Add `isCancelled` method to `TransactionEvaluationContext`. That way selectors could check if the block creation has been cancelled or in timeout [#9285](https://github.com/hyperledger/besu/pull/9285)
+- Performance improvements for MOD related opcodes [#9188](https://github.com/hyperledger/besu/pull/9188)
 
 ### Bug fixes
 
