@@ -398,27 +398,37 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
-    final CompletableFuture<Void> future = task.getBlockCreationFuture();
-    if (future == null) {
-      LOG.debug("No future found for payload {}", payloadId);
+    final CompletableFuture<Void> blockCreationFuture = task.getBlockCreationFuture();
+    if (blockCreationFuture == null) {
+      LOG.debug("No blockCreationFuture found for payload {}", payloadId);
       return;
     }
 
+    final long startTime = System.currentTimeMillis();
     try {
       LOG.debug(
           "Waiting up to {}ms for block building to complete for payload {}", timeoutMs, payloadId);
-      future.get(timeoutMs, TimeUnit.MILLISECONDS);
-      LOG.debug("Block building completed for payload {}", payloadId);
+      blockCreationFuture.get(timeoutMs, TimeUnit.MILLISECONDS);
+      final long elapsedTime = System.currentTimeMillis() - startTime;
+      LOG.debug("Block building completed for payload {} in {}ms", payloadId, elapsedTime);
     } catch (java.util.concurrent.TimeoutException e) {
-      LOG.debug("Timeout waiting for block building for payload {}", payloadId);
-    } catch (java.util.concurrent.ExecutionException e) {
+      final long elapsedTime = System.currentTimeMillis() - startTime;
       LOG.debug(
-          "Exception while waiting for block building for payload {}: {}",
+          "Timeout waiting for block building for payload {} after {}ms", payloadId, elapsedTime);
+    } catch (java.util.concurrent.ExecutionException e) {
+      final long elapsedTime = System.currentTimeMillis() - startTime;
+      LOG.debug(
+          "Exception while waiting for block building for payload {} after {}ms: {}",
           payloadId,
+          elapsedTime,
           e.getMessage());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      LOG.debug("Interrupted while waiting for block building for payload {}", payloadId);
+      final long elapsedTime = System.currentTimeMillis() - startTime;
+      LOG.debug(
+          "Interrupted while waiting for block building for payload {} after {}ms",
+          payloadId,
+          elapsedTime);
     }
   }
 
