@@ -40,21 +40,27 @@ public interface TransactionTraceParams {
   String getTransactionHash();
 
   @JsonProperty(value = "disableStorage")
-  @Value.Default
+  @Nullable
+  Boolean disableStorageNullable();
+
   default boolean disableStorage() {
-    return false;
+    return Boolean.TRUE.equals(disableStorageNullable());
   }
 
   @JsonProperty(value = "disableMemory")
-  @Value.Default
+  @Nullable
+  Boolean disableMemoryNullable();
+
   default boolean disableMemory() {
-    return false;
+    return Boolean.TRUE.equals(disableMemoryNullable());
   }
 
   @JsonProperty(value = "disableStack")
-  @Value.Default
+  @Nullable
+  Boolean disableStackNullable();
+
   default boolean disableStack() {
-    return false;
+    return Boolean.TRUE.equals(disableStackNullable());
   }
 
   @JsonProperty("tracer")

@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -98,18 +97,25 @@ public class TransactionTracer {
             .map(TransactionTraceParams::getTransactionHash)
             .map(Hash::fromHexString);
     final OpCodeTracerConfig opCodeTracerConfig =
-        transactionTraceParams
-            .map(TransactionTraceParams::traceOptions)
-            .map(TraceOptions::opCodeTracerConfig)
-            .orElse(
-                OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-                    // same behaviour as Geth
-                    .traceMemory(true)
-                    .traceStack(true)
-                    .traceReturnData(true)
-                    .traceStorage(false)
-                    .eip3155Strict(true)
-                    .build());
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableMemoryNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStack(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStackNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStorage(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStorageNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(false))
+            .traceReturnData(true)
+            .eip3155Strict(true)
+            .build();
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
