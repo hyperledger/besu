@@ -18,6 +18,7 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
@@ -50,7 +51,7 @@ public class ProposalValidator {
   private final int quorumMessageCount;
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier roundIdentifier;
-  private final Address expectedProposer;
+  private final ProposerSelector proposerSelector;
 
   /**
    * Instantiates a new Proposal validator.
@@ -60,7 +61,7 @@ public class ProposalValidator {
    * @param quorumMessageCount the quorum message count
    * @param validators the validators
    * @param roundIdentifier the round identifier
-   * @param expectedProposer the expected proposer
+   * @param proposerSelector the proposer selector
    */
   public ProposalValidator(
       final QbftBlockInterface blockInterface,
@@ -68,13 +69,13 @@ public class ProposalValidator {
       final int quorumMessageCount,
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
-      final Address expectedProposer) {
+      final ProposerSelector proposerSelector) {
     this.blockInterface = blockInterface;
     this.protocolSchedule = protocolSchedule;
     this.quorumMessageCount = quorumMessageCount;
     this.validators = validators;
     this.roundIdentifier = roundIdentifier;
-    this.expectedProposer = expectedProposer;
+    this.proposerSelector = proposerSelector;
   }
 
   /**
@@ -87,6 +88,7 @@ public class ProposalValidator {
     final QbftBlockValidator blockValidator =
         protocolSchedule.getBlockValidator(msg.getBlock().getHeader());
 
+    final Address expectedProposer = proposerSelector.selectProposerForRound(roundIdentifier);
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
@@ -124,8 +126,10 @@ public class ProposalValidator {
           getRoundChangeWithLatestPreparedRound(proposal.getRoundChanges());
 
       if (roundChangeWithLatestPreparedRound.isPresent()) {
+        SignedData<RoundChangePayload> roundChangePayloadSignedData =
+            roundChangeWithLatestPreparedRound.get();
         final PreparedRoundMetadata metadata =
-            roundChangeWithLatestPreparedRound.get().getPayload().getPreparedRoundMetadata().get();
+            roundChangePayloadSignedData.getPayload().getPreparedRoundMetadata().get();
 
         LOG.debug(
             "Prepared Metadata blockhash : {}, proposal blockhash: {}, prepared round in message: {}, proposal round in message: {}",
@@ -140,8 +144,13 @@ public class ProposalValidator {
         // to create a block with the old round in it, then re-calc expected hash
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
+        final Address proposerForOldRound =
+            proposerSelector.selectProposerForRound(
+                new ConsensusRoundIdentifier(
+                    roundIdentifier.getSequenceNumber(), metadata.getPreparedRound()));
         final QbftBlock currentBlockWithOldRound =
-            blockInterface.replaceRoundInBlock(proposal.getBlock(), metadata.getPreparedRound());
+            blockInterface.replaceRoundAndProposerForProposalBlock(
+                proposal.getBlock(), metadata.getPreparedRound(), proposerForOldRound);
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 

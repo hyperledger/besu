@@ -29,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
   "removed",
   "blockNumber",
   "blockHash",
+  "blockTimestamp",
   "transactionHash",
   "transactionIndex",
   "address",
@@ -40,6 +41,7 @@ public class LogResult implements JsonRpcResult {
   private final String logIndex;
   private final String blockNumber;
   private final String blockHash;
+  private final String blockTimestamp;
   private final String transactionHash;
   private final String transactionIndex;
   private final String address;
@@ -51,6 +53,7 @@ public class LogResult implements JsonRpcResult {
     this.logIndex = Quantity.create(logWithMetadata.getLogIndex());
     this.blockNumber = Quantity.create(logWithMetadata.getBlockNumber());
     this.blockHash = logWithMetadata.getBlockHash().toString();
+    this.blockTimestamp = Quantity.create(logWithMetadata.getBlockTimestamp());
     this.transactionHash = logWithMetadata.getTransactionHash().toString();
     this.transactionIndex = Quantity.create(logWithMetadata.getTransactionIndex());
     this.address = logWithMetadata.getLogger().toString();
@@ -76,6 +79,11 @@ public class LogResult implements JsonRpcResult {
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return blockHash;
+  }
+
+  @JsonGetter(value = "blockTimestamp")
+  public String getBlockTimestamp() {
+    return blockTimestamp;
   }
 
   @JsonGetter(value = "transactionHash")

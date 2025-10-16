@@ -1071,7 +1071,7 @@ class AbstractBlockProcessorIntegrationTest {
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
     final List<Address> actual =
-        blockAccessList.getAccountChanges().stream()
+        blockAccessList.accountChanges().stream()
             .map(BlockAccessList.AccountChanges::address)
             .toList();
 
@@ -1114,7 +1114,7 @@ class AbstractBlockProcessorIntegrationTest {
     final BlockAccessList blockAccessList =
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
-    return blockAccessList.getAccountChanges().stream()
+    return blockAccessList.accountChanges().stream()
         .filter(ac -> ac.address().equals(address))
         .findFirst()
         .orElseThrow();
@@ -1164,7 +1164,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertThat(slotChanges.changes()).isNotEmpty();
     final BlockAccessList.StorageChange last = slotChanges.changes().getLast();
-    assertThat(last.txIndex()).isEqualTo(txIndex);
+    assertThat(last.txIndex()).isEqualTo(txIndex + 1);
     assertThat(last.newValue()).isEqualTo(UInt256.valueOf(newValue));
   }
 }

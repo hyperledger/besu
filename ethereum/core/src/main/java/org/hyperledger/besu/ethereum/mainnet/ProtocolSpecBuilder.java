@@ -34,16 +34,23 @@ import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreP
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProtocolSpecBuilder {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolSpecBuilder.class);
+
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
@@ -82,6 +89,7 @@ public class ProtocolSpecBuilder {
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
+  private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
   private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
@@ -271,6 +279,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder slotDuration(final Duration slotDuration) {
+    this.slotDuration = slotDuration;
+    return this;
+  }
+
   public ProtocolSpecBuilder isReplayProtectionSupported(
       final boolean isReplayProtectionSupported) {
     this.isReplayProtectionSupported = isReplayProtectionSupported;
@@ -319,12 +332,17 @@ public class ProtocolSpecBuilder {
     checkNotNull(feeMarketBuilder, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
+    checkNotNull(slotDuration, "Missing slot duration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
+    LOGGER.debug(
+        "Opcode optimizations {} for milestone {}",
+        evm.getEvmConfiguration().enableOptimizedOpcodes() ? "enabled" : "disabled",
+        hardforkId);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator);
     final TransactionValidatorFactory transactionValidatorFactory =
@@ -359,18 +377,18 @@ public class ProtocolSpecBuilder {
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
 
-    BlockAccessListFactory finalBalFactory = blockAccessListFactory;
-    if (finalBalFactory == null && isBlockAccessListEnabled) {
-      // If blockAccessListFactory was not set, but block access lists were enabled via CLI,
-      // blockAccessListFactory must be created.
-      finalBalFactory = new BlockAccessListFactory(true, false);
-    } else if (finalBalFactory != null
-        && isBlockAccessListEnabled
-        && !finalBalFactory.isCliActivated()) {
-      // If blockAccessListFactory was set, we want to make sure its `cliActivated` flag respects
-      // isBlockAccessListEnabled.
-      finalBalFactory =
-          new BlockAccessListFactory(isBlockAccessListEnabled, finalBalFactory.isForkActivated());
+    final boolean isStackedModeEnabled =
+        evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.STACKED;
+    BlockAccessListFactory finalBalFactory = isStackedModeEnabled ? blockAccessListFactory : null;
+
+    if (isStackedModeEnabled && isBlockAccessListEnabled) {
+      // Ensure we have a factory and its CLI flag reflects the CLI setting.
+      final boolean forkActivated = finalBalFactory != null && finalBalFactory.isForkActivated();
+      final boolean cliActivated = finalBalFactory != null && finalBalFactory.isCliActivated();
+
+      if (!cliActivated) {
+        finalBalFactory = new BlockAccessListFactory(true, forkActivated);
+      }
     }
 
     return new ProtocolSpec(
@@ -401,6 +419,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         preExecutionProcessor,
         isPoS,
+        slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
         Optional.ofNullable(finalBalFactory));

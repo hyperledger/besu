@@ -29,6 +29,7 @@ public class TransactionReceiptWithMetadata {
   private final Optional<Wei> baseFee;
   private final long blockNumber;
   private final Hash blockHash;
+  private final long blockTimestamp;
   private final Transaction transaction;
   private final Optional<Long> blobGasUsed;
   private final Optional<Wei> blobGasPrice;
@@ -42,6 +43,7 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
+      final long blockTimestamp,
       final long blockNumber,
       final Optional<Long> blobGasUsed,
       final Optional<Wei> blobGasPrice,
@@ -52,6 +54,7 @@ public class TransactionReceiptWithMetadata {
     this.gasUsed = gasUsed;
     this.baseFee = baseFee;
     this.blockHash = blockHash;
+    this.blockTimestamp = blockTimestamp;
     this.blockNumber = blockNumber;
     this.transaction = transaction;
     this.blobGasUsed = blobGasUsed;
@@ -67,6 +70,7 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
+      final long blockTimestamp,
       final long blockNumber,
       final Optional<Long> blobGasUsed,
       final Optional<Wei> blobGasPrice,
@@ -79,6 +83,7 @@ public class TransactionReceiptWithMetadata {
         gasUsed,
         baseFee,
         blockHash,
+        blockTimestamp,
         blockNumber,
         blobGasUsed,
         blobGasPrice,
@@ -103,6 +108,10 @@ public class TransactionReceiptWithMetadata {
 
   public Hash getBlockHash() {
     return blockHash;
+  }
+
+  public long getBlockTimestamp() {
+    return blockTimestamp;
   }
 
   public long getBlockNumber() {
