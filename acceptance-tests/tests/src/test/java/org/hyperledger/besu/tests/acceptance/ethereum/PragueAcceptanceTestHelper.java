@@ -80,7 +80,6 @@ public class PragueAcceptanceTestHelper {
     final ObjectNode executionPayload;
     final ArrayNode executionRequests;
     final String newBlockHash;
-    final String parentBeaconBlockRoot;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
       assertThat(getPayloadResponse.code()).isEqualTo(200);
 
