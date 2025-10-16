@@ -461,36 +461,44 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier,
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime());
 
-    final CompletableFuture<Void> blockBuildingFuture =
-        ethScheduler
-            .scheduleBlockCreationTask(
-                parentHeader.getNumber() + 1,
-                () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
-            .orTimeout(
-                miningConfiguration.getUnstable().getPosBlockCreationMaxTime(),
-                TimeUnit.MILLISECONDS)
-            .whenComplete(
-                (unused, throwable) -> {
-                  if (throwable != null) {
-                    if (throwable instanceof TimeoutException) {
-                      LOG.atDebug()
-                          .setMessage("Block creation for payload id {} has timed out")
-                          .addArgument(payloadIdentifier)
-                          .log();
-                    } else {
-                      LOG.atDebug()
-                          .setMessage("Exception building block for payload id {}, reason {}")
-                          .addArgument(payloadIdentifier)
-                          .addArgument(() -> logException(throwable))
-                          .log();
-                    }
-                  }
-                  cleanupBlockCreationTask(payloadIdentifier);
-                });
+    // Create a future that we control
+    final CompletableFuture<Void> blockCreationFuture = new CompletableFuture<>();
 
-    // Store the task with the blockBuildingFuture for later access
+    // Store the task BEFORE scheduling to avoid race condition where async work
+    // starts before task is registered, causing isBlockCreationCancelled to incorrectly
+    // return true during the race window
     blockCreationTasks.put(
-        payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockBuildingFuture));
+        payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockCreationFuture));
+
+    // Schedule the async work and chain it to complete our controlled future
+    ethScheduler
+        .scheduleBlockCreationTask(
+            parentHeader.getNumber() + 1,
+            () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
+        .orTimeout(
+            miningConfiguration.getUnstable().getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
+        .whenComplete(
+            (unused, throwable) -> {
+              // Complete our controlled future to unblock any waiters
+              if (throwable != null) {
+                if (throwable instanceof TimeoutException) {
+                  LOG.atDebug()
+                      .setMessage("Block creation for payload id {} has timed out")
+                      .addArgument(payloadIdentifier)
+                      .log();
+                } else {
+                  LOG.atDebug()
+                      .setMessage("Exception building block for payload id {}, reason {}")
+                      .addArgument(payloadIdentifier)
+                      .addArgument(() -> logException(throwable))
+                      .log();
+                }
+                blockCreationFuture.completeExceptionally(throwable);
+              } else {
+                blockCreationFuture.complete(null);
+              }
+              cleanupBlockCreationTask(payloadIdentifier);
+            });
   }
 
   private Void retryBlockCreationUntilUseful(
