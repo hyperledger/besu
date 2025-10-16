@@ -42,7 +42,6 @@ This is a recommended update for Hoodi users for the Fusaka hardfork.
 - Performance improvements for MOD related opcodes [#9188](https://github.com/hyperledger/besu/pull/9188) thanks to [@thomas-quadratic](https://github.com/thomas-quadratic)
 
 ### Bug fixes
-- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 
 ## 25.10.0-RC2
 This RC is a pre-release, recommended update for Holesky and Sepolia users for the Fusaka hardfork.
