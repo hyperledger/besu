@@ -76,9 +76,8 @@ public class Era1Reader {
         case VERSION -> {
           // do nothing
         }
-        case EMPTY, ACCUMULATOR, TOTAL_DIFFICULTY -> {
+        case EMPTY -> {
           // skip the bytes that were indicated to be empty
-          // TODO read ACCUMULATOR and TOTAL_DIFFICULTY properly?
           bufferedInputStream.skipNBytes(length);
         }
         case COMPRESSED_EXECUTION_BLOCK_HEADER -> {
@@ -102,8 +101,16 @@ public class Era1Reader {
           try (SnappyFramedInputStream decompressionStream =
               snappyFactory.createFramedInputStream(compressedReceipts)) {
             listener.handleExecutionBlockReceipts(
-                new Era1ExecutionBlockReceipts(decompressionStream.readAllBytes(), blockIndex++));
+                new Era1ExecutionBlockReceipts(decompressionStream.readAllBytes(), blockIndex));
           }
+        }
+        case TOTAL_DIFFICULTY -> {
+          byte[] totalDifficulty = bufferedInputStream.readNBytes(length);
+          listener.handleTotalDifficulty(new Era1TotalDifficulty(totalDifficulty, blockIndex++));
+        }
+        case ACCUMULATOR -> {
+          byte[] accumulator = bufferedInputStream.readNBytes(length);
+          listener.handleAccumulator(new Era1Accumulator(accumulator));
         }
         case BLOCK_INDEX -> {
           ByteArrayInputStream blockIndexInputStream =

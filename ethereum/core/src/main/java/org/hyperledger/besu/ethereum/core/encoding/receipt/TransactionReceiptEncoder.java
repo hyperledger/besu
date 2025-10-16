@@ -19,7 +19,23 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+
 public class TransactionReceiptEncoder {
+  public Bytes encode(
+      final List<TransactionReceipt> transactionReceipts,
+      final TransactionReceiptEncodingConfiguration options) {
+    return RLP.encode(
+        (rlpOutput) -> {
+          if (transactionReceipts.isEmpty()) {
+            rlpOutput.writeEmptyList();
+          } else {
+            transactionReceipts.forEach((tr) -> writeTo(tr, rlpOutput, options));
+          }
+        });
+  }
 
   public static void writeTo(
       final TransactionReceipt receipt,
