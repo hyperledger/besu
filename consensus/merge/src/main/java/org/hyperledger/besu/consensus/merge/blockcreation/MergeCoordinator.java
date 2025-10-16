@@ -391,7 +391,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId, final long timeoutMs) {
+  public void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId) {
     final BlockCreationTask task = blockCreationTasks.get(payloadId);
     if (task == null) {
       LOG.debug("No block creation task found for payload {}", payloadId);
@@ -404,6 +404,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return;
     }
 
+    final long timeoutMs = getPosBlockFinalizationTimeoutMs();
     final long startTime = System.currentTimeMillis();
     try {
       LOG.debug(
@@ -432,8 +433,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
   }
 
-  @Override
-  public long getPosBlockFinalizationTimeoutMs() {
+  private long getPosBlockFinalizationTimeoutMs() {
     return miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs();
   }
 

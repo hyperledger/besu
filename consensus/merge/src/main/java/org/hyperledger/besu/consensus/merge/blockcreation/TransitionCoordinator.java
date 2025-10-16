@@ -222,13 +222,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId, final long timeoutMs) {
-    mergeCoordinator.awaitCurrentBuildCompletion(payloadId, timeoutMs);
-  }
-
-  @Override
-  public long getPosBlockFinalizationTimeoutMs() {
-    return mergeCoordinator.getPosBlockFinalizationTimeoutMs();
+  public void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId) {
+    mergeCoordinator.awaitCurrentBuildCompletion(payloadId);
   }
 
   /**

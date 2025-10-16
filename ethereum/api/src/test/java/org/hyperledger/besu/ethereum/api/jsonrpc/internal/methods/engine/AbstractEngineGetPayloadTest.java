@@ -248,16 +248,14 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         .thenReturn(Optional.of(testPayload))
         .thenReturn(Optional.of(testPayloadWithWithdrawals));
 
-    when(mergeMiningCoordinator.getPosBlockFinalizationTimeoutMs()).thenReturn(800L);
-
     // Execute: Call getPayload
     final JsonRpcResponse response = resp(getMethodName(), testPid);
 
     // Verify: finalizeProposalById was called (to signal loop to exit)
     verify(mergeMiningCoordinator, times(1)).finalizeProposalById(testPid);
 
-    // Verify: awaitCurrentBuildCompletion was called with 800ms timeout
-    verify(mergeMiningCoordinator, times(1)).awaitCurrentBuildCompletion(testPid, 800L);
+    // Verify: awaitCurrentBuildCompletion was called
+    verify(mergeMiningCoordinator, times(1)).awaitCurrentBuildCompletion(testPid);
 
     // Verify: retrievePayloadById was called twice (initial check + after waiting)
     verify(mergeContext, times(2)).retrievePayloadById(testPid);
@@ -265,7 +263,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     // Verify call order: finalize BEFORE wait (critical - finalize signals loop to exit)
     InOrder inOrder = inOrder(mergeMiningCoordinator);
     inOrder.verify(mergeMiningCoordinator).finalizeProposalById(testPid);
-    inOrder.verify(mergeMiningCoordinator).awaitCurrentBuildCompletion(testPid, 800L);
+    inOrder.verify(mergeMiningCoordinator).awaitCurrentBuildCompletion(testPid);
 
     // Verify: response is successful (not an error)
     assertThat(response).isNotInstanceOf(JsonRpcErrorResponse.class);

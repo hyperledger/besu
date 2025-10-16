@@ -169,18 +169,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    *
    * <p>This method waits for the in-progress block building task to complete, with a timeout. This
    * is useful when we want to wait for a non-empty block to be built before returning a payload.
+   * The timeout is determined by the configured PoS block finalization timeout.
    *
    * @param payloadId the payload id
-   * @param timeoutMs the timeout in milliseconds
    */
-  void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId, final long timeoutMs);
-
-  /**
-   * Gets the PoS block finalization timeout in milliseconds.
-   *
-   * @return the timeout in milliseconds
-   */
-  long getPosBlockFinalizationTimeoutMs();
+  void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId);
 
   /**
    * Return the scheduler
