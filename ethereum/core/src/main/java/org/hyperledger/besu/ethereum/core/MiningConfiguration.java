@@ -350,6 +350,7 @@ public abstract class MiningConfiguration {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
+    long DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS = 800L;
     Integer DEFAULT_POS_SLOT_DURATION_SECS = 12;
 
     MiningConfiguration.Unstable DEFAULT = ImmutableMiningConfiguration.Unstable.builder().build();
@@ -387,6 +388,11 @@ public abstract class MiningConfiguration {
     @Value.Default
     default Integer getPosSlotDuration() {
       return DEFAULT_POS_SLOT_DURATION_SECS;
+    }
+
+    @Value.Default
+    default long getPosBlockFinalizationTimeoutMs() {
+      return DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS;
     }
   }
 }
