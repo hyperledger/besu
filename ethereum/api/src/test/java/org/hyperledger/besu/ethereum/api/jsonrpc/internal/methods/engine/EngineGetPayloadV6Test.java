@@ -258,4 +258,10 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
   String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V6.getMethodName();
   }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V6 works with Amsterdam (>= 100)
+    return AMSTERDAM_TIMESTAMP + 1;
+  }
 }

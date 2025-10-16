@@ -250,4 +250,10 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
   protected String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName();
   }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V4 works with Prague (>= 50) but must be before Osaka (< 60)
+    return 55L;
+  }
 }
