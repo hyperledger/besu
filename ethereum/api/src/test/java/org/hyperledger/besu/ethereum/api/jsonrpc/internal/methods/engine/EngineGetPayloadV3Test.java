@@ -238,4 +238,10 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
   protected String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName();
   }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V3 works with Cancun (>= 30) but must be before Prague (< 50)
+    return 35L;
+  }
 }
