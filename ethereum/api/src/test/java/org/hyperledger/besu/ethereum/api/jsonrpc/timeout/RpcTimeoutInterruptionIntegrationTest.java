@@ -234,19 +234,16 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
         .isThrownBy(
             () -> {
               timeoutClient.newCall(request).execute();
+              assertThat(slowTracerRef.get())
+                  .as("SlowDebugOperationTracer should have been created by the tracer factory")
+                  .isNotNull();
             });
 
-    SlowDebugOperationTracer sdot = slowTracerRef.get();
     CancellableOperationTracer spiedTracer = cancellableTracerSpy.get();
-
-    // First verify that both tracers were created
-    assertThat(sdot)
-        .as("SlowDebugOperationTracer should have been created by the tracer factory")
-        .isNotNull();
 
     verify(spiedTracer).tracePreExecution(any(MessageFrame.class));
     // Verify the tracer made some progress before being interrupted
-    assertThat(sdot.getOperationsCount())
+    assertThat(slowTracerRef.get().getOperationsCount())
         .as("Tracer should have processed at least one operation before interruption")
         .isGreaterThan(0);
 
