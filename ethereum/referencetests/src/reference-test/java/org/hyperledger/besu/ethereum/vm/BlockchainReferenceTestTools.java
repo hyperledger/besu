@@ -67,7 +67,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class BlockchainReferenceTestTools {
 

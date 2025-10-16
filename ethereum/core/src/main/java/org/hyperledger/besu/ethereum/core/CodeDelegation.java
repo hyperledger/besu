@@ -70,12 +70,13 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create code delegation.
+   * Create code delegation. Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
    * @param nonce the nonce
-   * @param v the recovery id
+   * @param v the recovery id (legacy field name)
+   * @param yParity the recovery id (EIP-7702 spec field name)
    * @param r the r value of the signature
    * @param s the s value of the signature
    * @return CodeDelegation
@@ -87,8 +88,19 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final String nonce,
       @JsonProperty("v") final String v,
+      @JsonProperty("yParity") final String yParity,
       @JsonProperty("r") final String r,
       @JsonProperty("s") final String s) {
+
+    // Support both "v" and "yParity" field names for the recovery id
+    // Prefer yParity (EIP-7702 spec) over v (legacy) if both are provided
+    final String recoveryId = (yParity != null) ? yParity : v;
+
+    if (recoveryId == null) {
+      throw new IllegalArgumentException(
+          "Either 'v' or 'yParity' must be provided in authorization");
+    }
+
     return new CodeDelegation(
         chainId,
         address,
@@ -98,7 +110,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
             .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(v).get(0)));
+                Bytes.fromHexStringLenient(recoveryId).get(0)));
   }
 
   @JsonProperty("chainId")

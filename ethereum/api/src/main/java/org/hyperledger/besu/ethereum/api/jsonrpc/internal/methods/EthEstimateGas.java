@@ -35,10 +35,12 @@ import org.slf4j.LoggerFactory;
 public class EthEstimateGas extends AbstractEstimateGas {
   private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 64D / 63D;
-  // zero tolerance means there is no tolerance,
-  // which means keep looping until the estimate is exact (previous behavior)
   protected double estimateGasToleranceRatio;
   private static final long CALL_STIPEND = 2_300L;
+
+  // EIP-7702 gas cost constants
+  private static final long PER_AUTH_BASE_COST = 12_500L;
+  private static final long PER_EMPTY_ACCOUNT_COST = 25_000L;
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries,
@@ -67,9 +69,16 @@ public class EthEstimateGas extends AbstractEstimateGas {
         estimateGasToleranceRatio,
         callParams);
 
+    // Calculate additional gas for EIP-7702 authorization list if present
+    long adjustedMinTxCost = minTxCost;
+    if (!callParams.getCodeDelegationAuthorizations().isEmpty()) {
+      adjustedMinTxCost = calculateMinCostWithAuthorizations(minTxCost, callParams);
+      LOG.debug("Adjusted min cost for EIP-7702 authorizations: {}", adjustedMinTxCost);
+    }
+
     if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
-        minTxCost, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
-      return Quantity.create(minTxCost);
+        adjustedMinTxCost, callParams, simulationFunction, OperationTracer.NO_TRACING)) {
+      return Quantity.create(adjustedMinTxCost);
     }
 
     final var maybeResult =
@@ -118,6 +127,37 @@ public class EthEstimateGas extends AbstractEstimateGas {
     }
 
     return Quantity.create(high);
+  }
+
+  /**
+   * Calculate minimum transaction cost including EIP-7702 authorization costs
+   *
+   * @param baseCost the base transaction cost
+   * @param callParams the call parameters containing authorization list
+   * @return adjusted minimum cost including authorization overhead
+   */
+  private long calculateMinCostWithAuthorizations(
+      final long baseCost, final CallParameter callParams) {
+
+    final var authList = callParams.getCodeDelegationAuthorizations();
+    if (authList.isEmpty()) {
+      return baseCost;
+    }
+
+    long authorizationGas = 0;
+
+    // Add base cost per authorization
+    authorizationGas += authList.size() * PER_AUTH_BASE_COST;
+
+    // Note: We add a conservative estimate for empty account costs
+    // In a real implementation, you would check if accounts are empty
+    // For now, we assume worst case to ensure sufficient gas
+    authorizationGas += authList.size() * PER_EMPTY_ACCOUNT_COST;
+
+    LOG.debug(
+        "Authorization gas overhead: {} authorizations, {} gas", authList.size(), authorizationGas);
+
+    return baseCost + authorizationGas;
   }
 
   private Optional<JsonRpcErrorResponse> validateSimulationResult(
