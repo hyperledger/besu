@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
@@ -40,7 +41,23 @@ public class JsonRpcExecutorHandler {
       final Tracer tracer,
       final JsonRpcConfiguration jsonRpcConfiguration) {
     return ctx -> {
+      final AtomicReference<Thread> workerThreadRef = new AtomicReference<>();
       long timeoutMillis = jsonRpcConfiguration.getHttpTimeoutSec() * 1000;
+
+      if (ctx.request() != null) { // unit tests will often mock a context without a request
+        ctx.request()
+            .connection()
+            .closeHandler(
+                v -> {
+                  Thread t = workerThreadRef.get();
+                  if (t != null && t.isAlive()) {
+                    LOG.debug(
+                        "Client connection closed, interrupting worker thread, halt will depend on implementation.");
+                    t.interrupt();
+                  }
+                });
+        ctx.put("workerThreadRef", workerThreadRef);
+      }
       final long timerId =
           ctx.vertx()
               .setTimer(
@@ -52,6 +69,12 @@ public class JsonRpcExecutorHandler {
                         "Timeout ({} ms) occurred in JSON-RPC executor for method {}",
                         timeoutMillis,
                         getShortLogString(requestBodyAsJson));
+                    Thread t = workerThreadRef.get();
+                    if (t != null && t.isAlive()) {
+                      LOG.debug(
+                          "Timer expired, interrupting worker thread, halt will depend on implementation.");
+                      t.interrupt();
+                    }
                     LOG.atTrace()
                         .setMessage("Timeout ({} ms) occurred in JSON-RPC executor for method {}")
                         .addArgument(timeoutMillis)
@@ -66,19 +89,24 @@ public class JsonRpcExecutorHandler {
         createExecutor(jsonRpcExecutor, tracer, ctx, jsonRpcConfiguration)
             .ifPresentOrElse(
                 executor -> {
+                  Thread t = Thread.currentThread();
+                  // TODO: maybe set the thread name to the rpc method being called, is it worth the
+                  // perf hit to parse json here?
+                  workerThreadRef.set(t);
                   try {
                     executor.execute();
                   } catch (IOException e) {
                     final String method = executor.getRpcMethodName(ctx);
+                    LOG.error("{} - Error streaming JSON-RPC response", method, e);
                     final String requestBodyAsJson =
                         ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-                    LOG.error("{} - Error streaming JSON-RPC response", method, e);
                     LOG.atTrace()
                         .setMessage("{} - Error streaming JSON-RPC response")
                         .addArgument(requestBodyAsJson)
                         .log();
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
                   } finally {
+                    workerThreadRef.set(null);
                     cancelTimer(ctx);
                   }
                 },
@@ -97,6 +125,7 @@ public class JsonRpcExecutorHandler {
             .setMessage("Unhandled exception in JSON-RPC executor for method {}")
             .addArgument(requestBodyAsJson)
             .log();
+        workerThreadRef.set(null);
         handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
         cancelTimer(ctx);
       }
