@@ -18,6 +18,8 @@ assignees: ''
 - [ ] Sign-off with team; announce the tag in #besu-release in Discord
   - [ ] Targeting this tag for the burn-in: https://github.com/hyperledger/besu/releases/tag/24.4.0-RC1
 - [ ] Consensys staff start burn-in using this tag
+  - [ ] start a new burn-in fleet with comparison nodes from previous release
+  - [ ] update existing canaries and validators
 - [ ] Seek sign off for burn-in
   - [ ] Pass? Go ahead and complete the release process
   - [ ] Fail? Put a message in #besu-release in Discord indicating the release will be aborted because it failed burn-in 
