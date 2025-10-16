@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,7 +29,7 @@ import org.immutables.value.Value;
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableBadBlockResult.class)
 @JsonDeserialize(as = ImmutableBadBlockResult.class)
-@JsonPropertyOrder({"block", "hash", "rlp"})
+@JsonPropertyOrder({"block", "hash", "rlp", "generatedBlockAccessList"})
 public interface BadBlockResult {
 
   @JsonProperty("block")
@@ -38,8 +41,17 @@ public interface BadBlockResult {
   @JsonProperty("rlp")
   String getRlp();
 
-  static BadBlockResult from(final BlockResult blockResult, final Block block) {
+  @JsonProperty("generatedBlockAccessList")
+  Optional<BlockAccessListResult> getGeneratedBlockAccessList();
+
+  static BadBlockResult from(
+      final BlockResult blockResult,
+      final Block block,
+      final Optional<BlockAccessList> generatedBlockAccessList) {
     return ImmutableBadBlockResult.of(
-        blockResult, block.getHash().toHexString(), block.toRlp().toHexString());
+        blockResult,
+        block.getHash().toHexString(),
+        block.toRlp().toHexString(),
+        generatedBlockAccessList.map(BlockAccessListResult::fromBlockAccessList));
   }
 }

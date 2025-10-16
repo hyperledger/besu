@@ -16,7 +16,9 @@
 
 ### Additions and Improvements
 - Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
+- Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
 - Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
+- Add `isCancelled` method to `TransactionEvaluationContext`. That way selectors could check if the block creation has been cancelled or in timeout [#9285](https://github.com/hyperledger/besu/pull/9285)
 
 ### Bug fixes
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)

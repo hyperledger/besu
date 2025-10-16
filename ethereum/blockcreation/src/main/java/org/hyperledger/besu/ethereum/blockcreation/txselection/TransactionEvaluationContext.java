@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Supplier;
 
 public class TransactionEvaluationContext
     implements org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext {
@@ -28,18 +29,21 @@ public class TransactionEvaluationContext
   private final Stopwatch evaluationTimer;
   private final Wei transactionGasPrice;
   private final Wei minGasPrice;
+  private final Supplier<Boolean> isCancelledSupplier;
 
   public TransactionEvaluationContext(
       final ProcessableBlockHeader pendingBlockHeader,
       final PendingTransaction pendingTransaction,
       final Stopwatch evaluationTimer,
       final Wei transactionGasPrice,
-      final Wei minGasPrice) {
+      final Wei minGasPrice,
+      final Supplier<Boolean> isCancelledSupplier) {
     this.pendingBlockHeader = pendingBlockHeader;
     this.pendingTransaction = pendingTransaction;
     this.evaluationTimer = evaluationTimer;
     this.transactionGasPrice = transactionGasPrice;
     this.minGasPrice = minGasPrice;
+    this.isCancelledSupplier = isCancelledSupplier;
   }
 
   public Transaction getTransaction() {
@@ -71,5 +75,10 @@ public class TransactionEvaluationContext
   @Override
   public Wei getMinGasPrice() {
     return minGasPrice;
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return isCancelledSupplier.get();
   }
 }

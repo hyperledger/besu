@@ -92,6 +92,7 @@ public abstract class TransactionReceiptResult {
             receiptWithMetadata.getBlockNumber(),
             txn.getHash(),
             receiptWithMetadata.getBlockHash(),
+            receiptWithMetadata.getBlockTimestamp(),
             receiptWithMetadata.getTransactionIndex(),
             receiptWithMetadata.getLogIndexOffset());
     this.logsBloom = receipt.getBloomFilter().toString();
@@ -193,6 +194,7 @@ public abstract class TransactionReceiptResult {
       final long blockNumber,
       final Hash transactionHash,
       final Hash blockHash,
+      final long blockTimestamp,
       final int transactionIndex,
       final int logIndexOffset) {
     final List<TransactionReceiptLogResult> logResults = new ArrayList<>(logs.size());
@@ -201,7 +203,13 @@ public abstract class TransactionReceiptResult {
       final Log log = logs.get(i);
       logResults.add(
           new TransactionReceiptLogResult(
-              log, blockNumber, transactionHash, blockHash, transactionIndex, i + logIndexOffset));
+              log,
+              blockNumber,
+              transactionHash,
+              blockHash,
+              blockTimestamp,
+              transactionIndex,
+              i + logIndexOffset));
     }
 
     return logResults;

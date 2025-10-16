@@ -138,10 +138,19 @@ public class EvmToolCommandOptionsModule {
       EvmConfiguration.WorldUpdaterMode
           .STACKED; // Stacked Updater.  Years of battle tested correctness.
 
+  @CommandLine.Option(
+      names = {"--Xevm-optimized-opcodes"},
+      description = "Turn on/off optimized implementation of EVM opcodes",
+      fallbackValue = "true",
+      hidden = true,
+      arity = "1")
+  private boolean enableOptimizedOpcodes = true;
+
   @Provides
   @Singleton
   EvmConfiguration provideEvmConfiguration() {
-    return new EvmConfiguration(jumpDestCacheWeightKilobytes, worldstateUpdateMode);
+    return new EvmConfiguration(
+        jumpDestCacheWeightKilobytes, worldstateUpdateMode, enableOptimizedOpcodes);
   }
 
   /** Default constructor for the EvmToolCommandOptionsModule class. */

@@ -547,7 +547,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         pendingTransaction,
         Stopwatch.createStarted(),
         transactionGasPriceInBlock,
-        blockSelectionContext.miningConfiguration().getMinTransactionGasPrice());
+        blockSelectionContext.miningConfiguration().getMinTransactionGasPrice(),
+        () -> isTimeout.get() || isCancelled.get());
   }
 
   /**

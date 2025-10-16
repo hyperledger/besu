@@ -62,6 +62,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
+  private boolean enabledOpcodeOptimizations;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
   private boolean isHistoryExpiryPruneEnabled = false;
@@ -288,6 +289,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Whether opcodes optimizations are enabled or not.
+   *
+   * @param enabledOpcodeOptimizations flag that tells whether optimizations are enabled.
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEnabledOpcodeOptimizations(
+      final boolean enabledOpcodeOptimizations) {
+    this.enabledOpcodeOptimizations = enabledOpcodeOptimizations;
+    return this;
+  }
+
+  /**
    * Sets the engine jwt file path.
    *
    * @param engineJwtFilePath the engine apis
@@ -431,6 +444,8 @@ public class ConfigurationOverviewBuilder {
     lines.add("Using " + txPoolImplementation + " transaction pool implementation");
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    lines.add("Opcode optimizations " + (enabledOpcodeOptimizations ? "enabled" : "disabled"));
 
     if (isParallelTxProcessingEnabled) {
       lines.add("Parallel transaction processing enabled");

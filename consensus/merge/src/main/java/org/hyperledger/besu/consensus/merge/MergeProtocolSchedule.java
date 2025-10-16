@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +55,7 @@ public class MergeProtocolSchedule {
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -63,7 +65,8 @@ public class MergeProtocolSchedule {
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final EvmConfiguration evmConfiguration) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -71,7 +74,7 @@ public class MergeProtocolSchedule {
         0L,
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
-                specBuilder, config.getChainId()));
+                specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -79,7 +82,7 @@ public class MergeProtocolSchedule {
             Optional.of(DEFAULT_CHAIN_ID),
             new ProtocolSpecAdapters(postMergeModifications),
             isRevertReasonEnabled,
-            EvmConfiguration.DEFAULT,
+            evmConfiguration,
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
@@ -95,18 +98,21 @@ public class MergeProtocolSchedule {
    * via a blockNumber so it can't be looked up in the schedule.
    */
   private static ProtocolSpecBuilder applyParisSpecificModifications(
-      final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
+      final ProtocolSpecBuilder specBuilder,
+      final Optional<BigInteger> chainId,
+      final MiningConfiguration miningConfiguration,
+      final EvmConfiguration evmConfiguration) {
 
     return specBuilder
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.paris(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
+                MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
+        .slotDuration(Duration.ofSeconds(miningConfiguration.getUnstable().getPosSlotDuration()))
         .hardforkId(PARIS);
   }
 

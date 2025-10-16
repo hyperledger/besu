@@ -66,6 +66,9 @@ class BlobSizeTransactionSelectorTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
+  @SuppressWarnings("UnnecessaryLambda")
+  private static final Supplier<Boolean> NEVER_CANCELLED = () -> false;
+
   private static final long BLOB_GAS_PER_BLOB = new CancunGasCalculator().getBlobGasPerBlob();
   private static final int MAX_BLOBS = 6;
   private static final long MAX_BLOB_GAS = BLOB_GAS_PER_BLOB * MAX_BLOBS;
@@ -95,7 +98,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            firstBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext);
 
@@ -104,7 +112,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var nonBlobTxEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), nonBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            nonBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(nonBlobTxEvaluationContext);
   }
@@ -115,7 +128,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            firstBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext);
   }
@@ -125,7 +143,7 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx1 = createBlobPendingTransaction(MAX_BLOBS);
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null, NEVER_CANCELLED);
 
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
@@ -133,7 +151,7 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx2 = createBlobPendingTransaction(1);
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOBS_FULL);
   }
@@ -145,14 +163,14 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx1 = createBlobPendingTransaction(1);
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     final var blobTx2 = createBlobPendingTransaction(MAX_BLOBS);
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext2, TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS);
   }

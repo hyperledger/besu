@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +38,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class MinPriorityFeePerGasTransactionSelectorTest {
+  @SuppressWarnings("UnnecessaryLambda")
+  private static final Supplier<Boolean> NEVER_CANCELLED = () -> false;
+
   private AbstractTransactionSelector transactionSelector;
 
   private final int minPriorityFeeParameter = 7;
@@ -93,6 +97,11 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
     when(pendingTransaction.getTransaction()).thenReturn(transaction);
     when(transaction.getEffectivePriorityFeePerGas(any())).thenReturn(Wei.of(priorityFeePerGas));
     return new TransactionEvaluationContext(
-        pendingBlockHeader, pendingTransaction, Stopwatch.createStarted(), Wei.ONE, Wei.ONE);
+        pendingBlockHeader,
+        pendingTransaction,
+        Stopwatch.createStarted(),
+        Wei.ONE,
+        Wei.ONE,
+        NEVER_CANCELLED);
   }
 }

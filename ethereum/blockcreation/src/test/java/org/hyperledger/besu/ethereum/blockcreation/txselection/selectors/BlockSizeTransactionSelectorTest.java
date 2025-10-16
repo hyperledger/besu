@@ -59,6 +59,9 @@ class BlockSizeTransactionSelectorTest {
   private static final long TRANSFER_GAS_LIMIT = 21_000L;
   private static final long BLOCK_GAS_LIMIT = 1_000_000L;
 
+  @SuppressWarnings("UnnecessaryLambda")
+  private static final Supplier<Boolean> NEVER_CANCELLED = () -> false;
+
   @Mock(answer = RETURNS_DEEP_STUBS)
   BlockSelectionContext blockSelectionContext;
 
@@ -82,7 +85,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
 
@@ -95,7 +98,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext, TX_TOO_LARGE_FOR_REMAINING_GAS);
 
@@ -109,7 +112,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext, remainingGas(remainingGas));
 
@@ -129,7 +132,12 @@ class BlockSizeTransactionSelectorTest {
 
               final var txEvaluationContext =
                   new TransactionEvaluationContext(
-                      blockSelectionContext.pendingBlockHeader(), tx, null, null, null);
+                      blockSelectionContext.pendingBlockHeader(),
+                      tx,
+                      null,
+                      null,
+                      null,
+                      NEVER_CANCELLED);
               evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
             });
 
@@ -149,7 +157,12 @@ class BlockSizeTransactionSelectorTest {
 
               final var txEvaluationContext =
                   new TransactionEvaluationContext(
-                      blockSelectionContext.pendingBlockHeader(), tx, null, null, null);
+                      blockSelectionContext.pendingBlockHeader(),
+                      tx,
+                      null,
+                      null,
+                      null,
+                      NEVER_CANCELLED);
               evaluateAndAssertSelected(txEvaluationContext, remainingGas(0));
             });
 
@@ -164,7 +177,8 @@ class BlockSizeTransactionSelectorTest {
             createPendingTransaction(tooBigGasLimit),
             null,
             null,
-            null);
+            null,
+            NEVER_CANCELLED);
     evaluateAndAssertNotSelected(bigTxEvaluationContext, TX_TOO_LARGE_FOR_REMAINING_GAS);
 
     assertThat(selector.getWorkingState()).isEqualTo(TRANSFER_GAS_LIMIT * txCount);
@@ -182,7 +196,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
 
     assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
@@ -191,7 +205,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
 
     assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
@@ -214,7 +228,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
     evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
 
     assertThat(selector.getWorkingState()).isEqualTo(fillBlockGasLimit);
@@ -223,7 +237,7 @@ class BlockSizeTransactionSelectorTest {
 
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_FULL);
 
     assertThat(selector.getWorkingState()).isEqualTo(fillBlockGasLimit);

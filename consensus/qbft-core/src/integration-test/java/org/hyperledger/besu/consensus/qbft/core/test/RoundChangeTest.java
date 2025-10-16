@@ -18,11 +18,15 @@ import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.hyperledger.besu.consensus.qbft.core.support.IntegrationTestHelpers.createValidPreparedCertificate;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.adaptor.AdaptorUtil;
+import org.hyperledger.besu.consensus.qbft.adaptor.QbftBlockAdaptor;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
@@ -34,6 +38,10 @@ import org.hyperledger.besu.consensus.qbft.core.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.core.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.core.support.ValidatorPeer;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -349,5 +357,106 @@ public class RoundChangeTest {
 
     // Ensure no Proposal message is sent.
     peers.verifyNoMessagesReceived();
+  }
+
+  @Test
+  public void roundChangeUpdatedBlockProposerIsValidAndPrepareIsTransmitted() {
+    final long ARBITRARY_BLOCKTIME = 1500;
+
+    final TestContext proposerUpdatingContext =
+        new TestContextBuilder()
+            .validatorCount(NETWORK_SIZE)
+            .indexOfFirstLocallyProposedBlock(0)
+            .clock(fixedClock)
+            .qbftBlockInterface(new ProposerUpdatingQbftBlockInterface())
+            .buildAndStart();
+
+    final RoundSpecificPeers proposerUpdatingPeers =
+        proposerUpdatingContext.roundSpecificPeers(new ConsensusRoundIdentifier(1, 0));
+    final MessageFactory proposerUpdatingMessageFactory =
+        proposerUpdatingContext.getLocalNodeMessageFactory();
+
+    final ConsensusRoundIdentifier round2 = new ConsensusRoundIdentifier(1, 2);
+    final PreparedCertificate preparedCert =
+        createValidPreparedCertificate(
+            proposerUpdatingContext,
+            round2,
+            proposerUpdatingContext.createBlockForProposalFromChainHead(
+                ARBITRARY_BLOCKTIME,
+                proposerUpdatingContext.roundSpecificPeers(round2).getProposer().getNodeAddress(),
+                2));
+
+    final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
+
+    final RoundChange rc1 =
+        proposerUpdatingPeers.getNonProposing(0).injectRoundChange(targetRound, empty());
+    final RoundChange rc2 =
+        proposerUpdatingPeers.getNonProposing(1).injectRoundChange(targetRound, empty());
+    final RoundChange rc3 =
+        proposerUpdatingPeers.getNonProposing(2).injectRoundChange(targetRound, empty());
+    final RoundChange rc4 =
+        proposerUpdatingPeers
+            .getProposer()
+            .injectRoundChange(targetRound, Optional.of(preparedCert));
+
+    final QbftBlock expectedBlockToPropose =
+        proposerUpdatingContext.createBlockForProposalFromChainHead(
+            ARBITRARY_BLOCKTIME, proposerUpdatingContext.getLocalNodeParams().getAddress(), 4);
+
+    final Proposal expectedProposal =
+        proposerUpdatingMessageFactory.createProposal(
+            targetRound,
+            expectedBlockToPropose,
+            Lists.newArrayList(
+                rc1.getSignedPayload(),
+                rc2.getSignedPayload(),
+                rc3.getSignedPayload(),
+                rc4.getSignedPayload()),
+            preparedCert.getPrepares());
+
+    final Prepare expectedPrepare =
+        proposerUpdatingMessageFactory.createPrepare(targetRound, expectedBlockToPropose.getHash());
+
+    proposerUpdatingPeers.verifyMessagesReceived(expectedProposal, expectedPrepare);
+  }
+
+  /**
+   * Custom QbftBlockInterface implementation that updates the coinbase (proposer) when replacing
+   * round and proposer for proposal blocks.
+   */
+  private static class ProposerUpdatingQbftBlockInterface implements QbftBlockInterface {
+    private final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    private final org.hyperledger.besu.consensus.common.bft.BftBlockInterface bftBlockInterface =
+        new org.hyperledger.besu.consensus.common.bft.BftBlockInterface(bftExtraDataCodec);
+
+    @Override
+    public QbftBlock replaceRoundForCommitBlock(
+        final QbftBlock proposalBlock, final int roundNumber) {
+      final Block besuBlock = AdaptorUtil.toBesuBlock(proposalBlock);
+      final Block updatedBlock =
+          bftBlockInterface.replaceRoundInBlock(
+              besuBlock, roundNumber, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+      return new QbftBlockAdaptor(updatedBlock);
+    }
+
+    @Override
+    public QbftBlock replaceRoundAndProposerForProposalBlock(
+        final QbftBlock proposalBlock, final int roundNumber, final Address proposer) {
+      final Block besuBlock = AdaptorUtil.toBesuBlock(proposalBlock);
+
+      final Block updatedRoundBlock =
+          bftBlockInterface.replaceRoundInBlock(
+              besuBlock, roundNumber, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+
+      final BlockHeaderBuilder headerBuilder =
+          BlockHeaderBuilder.fromHeader(updatedRoundBlock.getHeader());
+      headerBuilder.coinbase(proposer);
+      headerBuilder.blockHeaderFunctions(
+          BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+
+      final Block updatedBlock =
+          new Block(headerBuilder.buildBlockHeader(), updatedRoundBlock.getBody());
+      return new QbftBlockAdaptor(updatedBlock);
+    }
   }
 }

@@ -16,12 +16,18 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 public class BadBlockManagerTest {
@@ -38,6 +44,26 @@ public class BadBlockManagerTest {
     badBlockManager.addBadBlock(block, cause);
 
     assertThat(badBlockManager.getBadBlocks()).containsExactly(block);
+  }
+
+  @Test
+  public void addBadBlockWithGeneratedBal_storesGeneratedAccessList() {
+    BadBlockManager badBlockManager = new BadBlockManager();
+    final BadBlockCause cause = BadBlockCause.fromValidationFailure("failed");
+    final BlockAccessList generatedBal =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000002"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.valueOf(2)))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    badBlockManager.addBadBlock(block, cause, Optional.of(generatedBal));
+
+    assertThat(badBlockManager.getGeneratedBlockAccessList(block.getHash())).contains(generatedBal);
   }
 
   @Test

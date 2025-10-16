@@ -29,6 +29,9 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   /** The constant WORLDSTATE_UPDATE_MODE. */
   public static final String WORLDSTATE_UPDATE_MODE = "--Xevm-worldstate-update-mode";
 
+  /** The constant OPTIMIZED_OP_CODES. */
+  public static final String OPTIMIZED_OP_CODES = "--Xevm-optimized-opcodes";
+
   /** Default constructor. */
   EvmOptions() {}
 
@@ -63,9 +66,18 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
       EvmConfiguration.WorldUpdaterMode
           .STACKED; // Stacked Updater.  Years of battle tested correctness.
 
+  @CommandLine.Option(
+      names = {OPTIMIZED_OP_CODES},
+      description = "Turn on/off optimized implementation of EVM opcodes",
+      fallbackValue = "true",
+      hidden = true,
+      arity = "1")
+  private boolean enableOptimizedOpcodes = true;
+
   @Override
   public EvmConfiguration toDomainObject() {
-    return new EvmConfiguration(jumpDestCacheWeightKilobytes, worldstateUpdateMode);
+    return new EvmConfiguration(
+        jumpDestCacheWeightKilobytes, worldstateUpdateMode, enableOptimizedOpcodes);
   }
 
   @Override

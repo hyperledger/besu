@@ -140,8 +140,9 @@ public class TransitionUtils<SwitchingObject> {
     }
 
     if (currentChainTotalDifficulty.isZero()) {
-      LOG.atWarn()
-          .setMessage("unable to get total difficulty for {}, parent hash {} difficulty not found")
+      LOG.atInfo()
+          .setMessage(
+              "Total difficulty unavailable for {} (parent: {}). Expected during transition from Clique/PoW to PoS or at merge-at-genesis.")
           .addArgument(header::toLogString)
           .addArgument(header::getParentHash)
           .log();

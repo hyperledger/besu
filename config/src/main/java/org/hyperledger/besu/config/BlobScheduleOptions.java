@@ -27,14 +27,11 @@ public class BlobScheduleOptions {
 
   private static final String CANCUN_KEY = "cancun";
   private static final String PRAGUE_KEY = "prague";
-  private static final String OSAKA_KEY = "osaka";
   private static final String BPO1_KEY = "bpo1";
   private static final String BPO2_KEY = "bpo2";
   private static final String BPO3_KEY = "bpo3";
   private static final String BPO4_KEY = "bpo4";
   private static final String BPO5_KEY = "bpo5";
-
-  private static final String FUTURE_EIPS_KEY = "future_eips";
 
   /**
    * Instantiates a new Blob Schedule config options.
@@ -61,15 +58,6 @@ public class BlobScheduleOptions {
    */
   public Optional<BlobSchedule> getPrague() {
     return getBlobSchedule(PRAGUE_KEY);
-  }
-
-  /**
-   * Gets osaka blob schedule.
-   *
-   * @return the osaka blob schedule
-   */
-  public Optional<BlobSchedule> getOsaka() {
-    return getBlobSchedule(OSAKA_KEY);
   }
 
   /**
@@ -118,15 +106,6 @@ public class BlobScheduleOptions {
   }
 
   /**
-   * Gets future eips blob schedule.
-   *
-   * @return the future eips blob schedule
-   */
-  public Optional<BlobSchedule> getFutureEips() {
-    return getBlobSchedule(FUTURE_EIPS_KEY);
-  }
-
-  /**
    * Gets blob schedule by key.
    *
    * @param key the key for the blob schedule
@@ -145,13 +124,11 @@ public class BlobScheduleOptions {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getCancun().ifPresent(bs -> builder.put(CANCUN_KEY, bs.asMap()));
     getPrague().ifPresent(bs -> builder.put(PRAGUE_KEY, bs.asMap()));
-    getOsaka().ifPresent(bs -> builder.put(OSAKA_KEY, bs.asMap()));
     getBpo1().ifPresent(bs -> builder.put(BPO1_KEY, bs.asMap()));
     getBpo2().ifPresent(bs -> builder.put(BPO2_KEY, bs.asMap()));
     getBpo3().ifPresent(bs -> builder.put(BPO3_KEY, bs.asMap()));
     getBpo4().ifPresent(bs -> builder.put(BPO4_KEY, bs.asMap()));
     getBpo5().ifPresent(bs -> builder.put(BPO5_KEY, bs.asMap()));
-    getFutureEips().ifPresent(bs -> builder.put(FUTURE_EIPS_KEY, bs.asMap()));
     return builder.build();
   }
 }

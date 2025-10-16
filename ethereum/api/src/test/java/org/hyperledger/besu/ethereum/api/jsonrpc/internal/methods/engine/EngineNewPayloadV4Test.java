@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS;
@@ -72,7 +73,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     return Set.of(pragueHardfork);
   }
 
-  private static final List<Request> VALID_REQUESTS =
+  protected static final List<Request> VALID_REQUESTS =
       List.of(
           new Request(RequestType.DEPOSIT, Bytes.of(1)),
           new Request(RequestType.WITHDRAWAL, Bytes.of(1)),
@@ -93,6 +94,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             engineCallListener,
             new NoOpMetricsSystem());
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
+    lenient()
+        .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
+        .thenReturn(Optional.of(pragueHardfork.milestone() + 100L));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     mockAllowedRequestsValidator();
   }
@@ -109,9 +113,27 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
-    final BlockHeader cancunHeader = createBlockHeaderFixtureForV3(Optional.empty()).buildHeader();
+    final BlockHeader cancunHeader = createPreActivationBlockHeader();
 
     var resp = resp(mockEnginePayload(cancunHeader, emptyList()));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterFutureEipsMilestone() {
+    when(protocolSchedule.milestoneFor(FUTURE_EIPS))
+        .thenReturn(Optional.of(pragueHardfork.milestone() + 10L));
+
+    final BlockHeader futureEipsHeader =
+        createActivationBlockHeaderFixture(Optional.empty())
+            .timestamp(pragueHardfork.milestone() + 10L)
+            .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+            .buildHeader();
+
+    final JsonRpcResponse resp = resp(mockEnginePayload(futureEipsHeader, emptyList()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(UNSUPPORTED_FORK.getCode());
@@ -122,7 +144,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfRequestsIsNull_WhenRequestsAllowed() {
     var resp =
         respWithInvalidRequests(
-            mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList()));
+            mockEnginePayload(createValidBlockHeader(Optional.empty()), emptyList()));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(fromErrorResp(resp).getMessage())
@@ -151,7 +173,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfRequestsIsNotNull_WhenRequestsProhibited() {
     mockProhibitedRequestsValidator();
 
-    var resp = resp(mockEnginePayload(createValidBlockHeaderForV4(Optional.empty()), emptyList()));
+    var resp = resp(mockEnginePayload(createValidBlockHeader(Optional.empty()), emptyList()));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -194,17 +216,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     assertThat(res.isValid()).isTrue();
   }
 
-  private BlockHeader createValidBlockHeaderForV4(
-      final Optional<List<Withdrawal>> maybeWithdrawals) {
-    return createBlockHeaderFixtureForV3(maybeWithdrawals)
+  protected BlockHeader createValidBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
+    return createActivationBlockHeaderFixture(maybeWithdrawals)
         .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
         .timestamp(pragueHardfork.milestone())
         .buildHeader();
   }
 
-  private BlockHeaderTestFixture createBlockHeaderFixtureForV3(
+  protected BlockHeaderTestFixture createActivationBlockHeaderFixture(
       final Optional<List<Withdrawal>> maybeWithdrawals) {
-    BlockHeader parentBlockHeader =
+    final BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
             .timestamp(pragueHardfork.milestone() - 2) // cancun parent
@@ -224,9 +245,15 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null);
   }
 
+  protected BlockHeader createPreActivationBlockHeader() {
+    return createActivationBlockHeaderFixture(Optional.empty())
+        .timestamp(pragueHardfork.milestone() - 1)
+        .buildHeader();
+  }
+
   @Override
   protected BlockHeader createBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
-    return createValidBlockHeaderForV4(maybeWithdrawals);
+    return createValidBlockHeader(maybeWithdrawals);
   }
 
   @Override

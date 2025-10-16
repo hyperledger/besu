@@ -150,7 +150,10 @@ public class BlockSimulator {
 
     // Fill gaps between blocks and set the correct block number and timestamp
     List<BlockStateCall> blockStateCalls =
-        fillBlockStateCalls(simulationParameter.getBlockStateCalls(), blockHeader);
+        fillBlockStateCalls(
+            protocolSchedule.getByBlockHeader(blockHeader),
+            simulationParameter.getBlockStateCalls(),
+            blockHeader);
 
     BlockHeader currentBlockHeader = blockHeader;
     HashMap<Long, Hash> blockHashCache = HashMap.newHashMap(countStateCalls);

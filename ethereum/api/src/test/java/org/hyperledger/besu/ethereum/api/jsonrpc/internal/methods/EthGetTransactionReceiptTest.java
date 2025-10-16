@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -121,6 +122,7 @@ public class EthGetTransactionReceiptTest {
           2,
           Optional.empty(),
           blockHash,
+          1234,
           4,
           Optional.empty(),
           Optional.empty(),
@@ -134,6 +136,7 @@ public class EthGetTransactionReceiptTest {
           2,
           Optional.empty(),
           blockHash,
+          1234,
           4,
           Optional.empty(),
           Optional.empty(),
@@ -168,6 +171,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierPreExecutionProcessor(),
           true,
+          Duration.ofSeconds(12),
           true,
           Optional.empty(),
           Optional.empty());
@@ -200,6 +204,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           new FrontierPreExecutionProcessor(),
           true,
+          Duration.ofSeconds(12),
           true,
           Optional.empty(),
           Optional.empty());
@@ -272,6 +277,7 @@ public class EthGetTransactionReceiptTest {
             2,
             Optional.of(baseFee),
             blockHash,
+            1234,
             4,
             Optional.empty(),
             Optional.empty(),

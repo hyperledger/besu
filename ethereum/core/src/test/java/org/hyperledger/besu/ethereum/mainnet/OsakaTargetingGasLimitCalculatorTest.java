@@ -38,7 +38,8 @@ class OsakaTargetingGasLimitCalculatorTest {
   private final BaseFeeMarket feeMarket = FeeMarket.cancunDefault(0L, Optional.empty());
 
   @ParameterizedTest(
-      name = "{index} - parent gas {0}, used gas {1}, parent base fee per gas {2}, new excess {3}")
+      name =
+          "{index} - parent excess blob gas {0}, used gas {1}, parent base fee per gas {2}, new excess {3}")
   @MethodSource("osakaExcessBlobGasTestCases")
   public void shouldCalculateOsakaExcessBlobGasCorrectly(
       final long parentExcess,
@@ -65,6 +66,7 @@ class OsakaTargetingGasLimitCalculatorTest {
         Arguments.of(0L, 0L, 0L, 0L),
         Arguments.of(targetGasPerBlock - 1, 0L, 0L, 0L),
         Arguments.of(0L, 8, 0L, 0L), // 8 blobs is below target (9)
+        Arguments.of(0L, 9, 0L, 0L), // 9 blobs == target (9)
 
         // Case 2: Above target, BLOB_BASE_COST * baseFee <= GAS_PER_BLOB * blobFee
         // This should use the formula: parentExcess + parentBlobGasUsed - target
@@ -72,6 +74,8 @@ class OsakaTargetingGasLimitCalculatorTest {
 
         // Case 3: Above target, BLOB_BASE_COST * baseFee > GAS_PER_BLOB * blobFee
         // This should use the formula: parentExcess + parentBlobGasUsed * (max - target) / max
+        Arguments.of(
+            0L, 10L, 0L, osakaGasCalculator.getBlobGasPerBlob()), // 10 blobs is above target (9)
         Arguments.of(targetGasPerBlock, 1, 0L, osakaGasCalculator.getBlobGasPerBlob()),
         Arguments.of(targetGasPerBlock, 10, 1L, 1310720L),
         Arguments.of(targetGasPerBlock, 10, 16L, 1310720L));

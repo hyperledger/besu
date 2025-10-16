@@ -51,11 +51,6 @@
         "target": 51,
         "max": 52,
         "baseFeeUpdateFraction": 5007716
-      },
-      "future_eips": {
-        "target": 12,
-        "max": 16,
-        "baseFeeUpdateFraction": 5007740
       }
     },
     "depositContractAddress": "0x4242424242424242424242424242424242424242",
