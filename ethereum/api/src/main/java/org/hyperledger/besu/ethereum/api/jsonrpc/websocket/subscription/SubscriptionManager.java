@@ -164,10 +164,10 @@ public class SubscriptionManager extends AbstractVerticle {
       final Class<T> clazz,
       final Consumer<List<T>> runnable) {
     vertx.executeBlocking(
-        future -> {
+        () -> {
           final List<T> syncingSubscriptions = subscriptionsOfType(subscriptionType, clazz);
           runnable.accept(syncingSubscriptions);
-          future.complete();
+          return null;
         },
         result -> {
           if (result.failed()) {
