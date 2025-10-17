@@ -33,7 +33,12 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -59,6 +64,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -533,26 +539,59 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final Optional<EthPeer> maybePreferredPeer,
       final long blockNumber,
       final Optional<Hash> maybeBlockHash) {
-    final RetryingGetBlockFromPeersTask getBlockTask =
-        RetryingGetBlockFromPeersTask.create(
-            protocolSchedule,
-            ethContext,
-            config,
-            metricsSystem,
-            Math.max(1, ethContext.getEthPeers().peerCount()),
-            maybeBlockHash,
-            blockNumber);
-    maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
 
-    var future =
-        ethContext
-            .getScheduler()
-            .scheduleSyncWorkerTask(getBlockTask::run)
-            .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
-
-    ethContext.getScheduler().failAfterTimeout(future, getBlockTimeoutMillis);
-
-    return future;
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              GetHeadersFromPeerTask headersFromPeerTask =
+                  new GetHeadersFromPeerTask(
+                      maybeBlockHash.orElse(null),
+                      blockNumber,
+                      1,
+                      0,
+                      Direction.FORWARD,
+                      Math.max(1, ethContext.getEthPeers().peerCount()),
+                      protocolSchedule);
+              if (maybePreferredPeer.isPresent()) {
+                PeerTaskExecutorResult<List<BlockHeader>> executorResult =
+                    ethContext
+                        .getPeerTaskExecutor()
+                        .executeAgainstPeer(headersFromPeerTask, maybePreferredPeer.get());
+                if (executorResult.result().isPresent()
+                    && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                  return CompletableFuture.completedFuture(
+                      executorResult.result().get().getFirst());
+                }
+              }
+              PeerTaskExecutorResult<List<BlockHeader>> executorResult =
+                  ethContext.getPeerTaskExecutor().execute(headersFromPeerTask);
+              if (executorResult.result().isEmpty()
+                  || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                return CompletableFuture.failedFuture(new InvalidPeerTaskResponseException());
+              } else {
+                return CompletableFuture.completedFuture(executorResult.result().get().getFirst());
+              }
+            })
+        .thenApply(
+            (blockHeader) -> {
+              GetBodiesFromPeerTask bodiesTask =
+                  new GetBodiesFromPeerTask(List.of(blockHeader), protocolSchedule);
+              PeerTaskExecutorResult<List<Block>> executorResult =
+                  ethContext.getPeerTaskExecutor().execute(bodiesTask);
+              if (executorResult.result().isEmpty()
+                  || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                throw new RuntimeException(new InvalidPeerTaskResponseException());
+              } else {
+                return executorResult;
+              }
+            })
+        .thenCompose(
+            blockExecutorResult ->
+                importOrSavePendingBlock(
+                    blockExecutorResult.result().get().getFirst(),
+                    blockExecutorResult.ethPeers().getLast().nodeId()))
+        .orTimeout(getBlockTimeoutMillis.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
