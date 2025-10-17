@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -72,6 +73,11 @@ public class DebugOperationTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
+    final Operation currentOperation = frame.getCurrentOperation();
+    if (!options.traceOpcodes().isEmpty()
+        && !options.traceOpcodes().contains(currentOperation.getName().toLowerCase(Locale.ROOT))) {
+      return;
+    }
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
     if (lastFrame != null && frame.getDepth() > lastFrame.getDepth())
@@ -85,6 +91,10 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
+    if (!options.traceOpcodes().isEmpty()
+        && !options.traceOpcodes().contains(opcode.toLowerCase(Locale.ROOT))) {
+      return;
+    }
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
