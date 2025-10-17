@@ -44,8 +44,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.BufferedReader;
@@ -570,8 +571,8 @@ public class BlockchainTestSubCommand implements Runnable {
 
   /**
    * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
-   * creating and managing StandardJsonTracer instances for transaction-level tracing during block
-   * test execution.
+   * creating and managing StreamingOperationTracer instances for transaction-level tracing during
+   * block test execution.
    */
   private static class BlockTestTracerManager {
     private final PrintWriter output;
@@ -579,7 +580,7 @@ public class BlockchainTestSubCommand implements Runnable {
     private final boolean showStack;
     private final boolean showReturnData;
     private final boolean showStorage;
-    private StandardJsonTracer currentTracer;
+    private StreamingOperationTracer currentTracer;
 
     /**
      * Constructs a BlockTestTracerManager with specified tracing options.
@@ -606,11 +607,19 @@ public class BlockchainTestSubCommand implements Runnable {
     /**
      * Creates a new OperationTracer for tracing a transaction.
      *
-     * @return a new StandardJsonTracer instance
+     * @return a new StreamingOperationTracer instance
      */
     public OperationTracer createTracer() {
       currentTracer =
-          new StandardJsonTracer(output, showMemory, showStack, showReturnData, showStorage, true);
+          new StreamingOperationTracer(
+              output,
+              OpCodeTracerConfigBuilder.create()
+                  .traceMemory(showMemory)
+                  .traceStack(showStack)
+                  .traceReturnData(showReturnData)
+                  .traceStorage(showStorage)
+                  .eip3155Strict(true)
+                  .build());
       return currentTracer;
     }
 
