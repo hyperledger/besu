@@ -29,7 +29,9 @@ import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,7 +76,15 @@ class EVMExecutorTest {
   void giantExecuteStack() {
     SimpleWorld simpleWorld = createSimpleWorld();
 
-    var tracer = new StandardJsonTracer(System.out, false, true, true, false);
+    var tracer =
+        new StreamingOperationTracer(
+            System.out,
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceMemory(false)
+                .traceStack(true)
+                .traceReturnData(true)
+                .traceStorage(false)
+                .build());
     var result =
         new EVMExecutor(
                 EvmSpec.evmSpec(EvmSpecVersion.SHANGHAI)
