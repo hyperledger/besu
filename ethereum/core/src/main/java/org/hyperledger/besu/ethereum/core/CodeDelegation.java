@@ -38,8 +38,8 @@ import org.apache.tuweni.bytes.Bytes;
 // ignore `signer` field used in execution-spec-tests
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   public static final Bytes MAGIC = Bytes.fromHexString("05");
 
@@ -93,12 +93,10 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
         chainId,
         address,
         Bytes.fromHexStringLenient(nonce).toLong(),
-        SIGNATURE_ALGORITHM
-            .get()
-            .createCodeDelegationSignature(
-                Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(v).get(0)));
+        SIGNATURE_ALGORITHM.createCodeDelegationSignature(
+            Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
+            Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
+            Bytes.fromHexStringLenient(v).get(0)));
   }
 
   @JsonProperty("chainId")
@@ -162,10 +160,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
     Optional<Address> authorityAddress;
     try {
       authorityAddress =
-          SIGNATURE_ALGORITHM
-              .get()
-              .recoverPublicKeyFromSignature(hash, signature)
-              .map(Address::extract);
+          SIGNATURE_ALGORITHM.recoverPublicKeyFromSignature(hash, signature).map(Address::extract);
     } catch (final IllegalArgumentException e) {
       authorityAddress = Optional.empty();
     }
@@ -251,9 +246,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       output.endList();
 
       signature(
-          SIGNATURE_ALGORITHM
-              .get()
-              .sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
+          SIGNATURE_ALGORITHM.sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
       return build();
     }
 
