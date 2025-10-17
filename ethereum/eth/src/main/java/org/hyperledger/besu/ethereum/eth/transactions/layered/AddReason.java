@@ -20,6 +20,8 @@ import java.util.Locale;
 public enum AddReason {
   /** When adding a tx, that is not present in the pool. */
   NEW(true, true),
+  /** When adding a tx, that was removed from the pool to reconcile the sender. */
+  NEW_RECONCILED(true, true),
   /** When adding a tx as result of an internal move between layers. */
   MOVE(false, false),
   /** When adding a tx as result of a promotion from a lower layer. */
