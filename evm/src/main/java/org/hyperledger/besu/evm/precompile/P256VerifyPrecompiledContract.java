@@ -43,7 +43,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private static final Bytes32 VALID = Bytes32.leftPad(Bytes.of(1), (byte) 0);
   private static final Bytes INVALID = Bytes.EMPTY;
   private static final int SECP256R1_INPUT_LENGTH = 160;
-  private static final SignatureAlgorithm DEFAULT_SIGNATURE_ALGORITHM_INSTANCE;
+  private static final SignatureAlgorithm SECP256R1_SIGNATURE_ALGORITHM_INSTANCE;
 
   static final X9ECParameters R1_PARAMS = SECNamedCurves.getByName("secp256r1");
   static final BigInteger N = R1_PARAMS.getN();
@@ -55,7 +55,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
 
   static {
     maybeEnableNativeBoringSSL();
-    DEFAULT_SIGNATURE_ALGORITHM_INSTANCE =
+    SECP256R1_SIGNATURE_ALGORITHM_INSTANCE =
         SignatureAlgorithmType.create(SECP_256_R1_CURVE_NAME).getInstance();
   }
 
@@ -103,7 +103,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
    * @param gasCalculator the gas calculator
    */
   public P256VerifyPrecompiledContract(final GasCalculator gasCalculator) {
-    this(gasCalculator, DEFAULT_SIGNATURE_ALGORITHM_INSTANCE);
+    this(gasCalculator, SECP256R1_SIGNATURE_ALGORITHM_INSTANCE);
   }
 
   /**
