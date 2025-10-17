@@ -17,6 +17,7 @@
 ### Additions and Improvements
 - Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
 - Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
+- Update netty [#9330](https://github.com/hyperledger/besu/pull/9330)
 
 ### Bug fixes
 
