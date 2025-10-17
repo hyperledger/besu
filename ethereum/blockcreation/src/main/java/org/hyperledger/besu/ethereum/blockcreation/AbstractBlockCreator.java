@@ -465,6 +465,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   @Override
   public void cancel() {
+    LOG.debug("Block creation cancellation requested");
     isCancelled.set(true);
   }
 
