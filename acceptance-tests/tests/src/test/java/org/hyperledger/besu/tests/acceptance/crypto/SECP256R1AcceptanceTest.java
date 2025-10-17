@@ -34,13 +34,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
-@DisabledIfSystemProperty(
-    named = "acctests.runBesuAsProcess",
-    matches = "false",
-    disabledReason =
-        "SignatureAlgorithmFactory instance is static and cannot be changed when using ThreadBesuRunner")
 public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   private Node minerNode;
   private Node otherNode;
