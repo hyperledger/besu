@@ -64,8 +64,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
       final long outputDataOffset,
       final long outputDataLength,
       final Wei transferValue,
-      final Account recipient,
-      final Address to,
+      final Address recipientAddress,
       final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
@@ -80,6 +79,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
+    final Account recipient = frame.getWorldUpdater().get(recipientAddress);
     if (recipient == null) {
       cost = clampedAdd(cost, newAccountGasCost());
     }
