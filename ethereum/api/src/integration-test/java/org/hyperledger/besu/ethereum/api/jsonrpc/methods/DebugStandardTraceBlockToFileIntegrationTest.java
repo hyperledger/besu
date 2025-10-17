@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -254,6 +255,84 @@ public class DebugStandardTraceBlockToFileIntegrationTest {
   }
 
   @Test
+  public void defaultFieldsAssertOpcodesWithTxHash() throws IOException {
+    final Map<String, String> map =
+        Map.of("txHash", "0x812742182a79a8e67733edc58cfa3767aa2d7ad06439d156ddbbb33e3403b4ed");
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+    final Object[] params = new Object[] {blockHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", RPC_ENDPOINT, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    List<?> files = (List<?>) ((JsonRpcSuccessResponse) response).getResult();
+
+    ObjectMapper jsonMapper = new ObjectMapper();
+    List<JsonNode> json =
+        Files.readAllLines(Path.of((String) files.getFirst())).stream()
+            .map(
+                line -> {
+                  try {
+                    return jsonMapper.readTree(line);
+                  } catch (JsonProcessingException e) {
+                    Assert.fail("encountered invalid json from RPC response");
+                    throw new RuntimeException(e);
+                  }
+                })
+            .toList();
+
+    assertThat(json)
+        .allMatch(
+            node ->
+                node.equals(json.getLast())
+                    || "PUSH1".equals(node.get("opName").asText())
+                    || "JUMPDEST".equals(node.get("opName").asText())
+                    || "DUP1".equals(node.get("opName").asText())
+                    || "RETURN".equals(node.get("opName").asText())
+                    || "PUSH2".equals(node.get("opName").asText())
+                    || "CODECOPY".equals(node.get("opName").asText()));
+  }
+
+  @Test
+  public void defaultFieldsAssertOpcodes() throws IOException {
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+    final Object[] params = new Object[] {blockHash};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", RPC_ENDPOINT, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    List<?> files = (List<?>) ((JsonRpcSuccessResponse) response).getResult();
+
+    ObjectMapper jsonMapper = new ObjectMapper();
+    List<JsonNode> json =
+        Files.readAllLines(Path.of((String) files.getFirst())).stream()
+            .map(
+                line -> {
+                  try {
+                    return jsonMapper.readTree(line);
+                  } catch (JsonProcessingException e) {
+                    Assert.fail("encountered invalid json from RPC response");
+                    throw new RuntimeException(e);
+                  }
+                })
+            .toList();
+
+    assertThat(json)
+        .allMatch(
+            node ->
+                node.equals(json.getLast())
+                    || "PUSH1".equals(node.get("opName").asText())
+                    || "JUMPDEST".equals(node.get("opName").asText())
+                    || "DUP1".equals(node.get("opName").asText())
+                    || "RETURN".equals(node.get("opName").asText())
+                    || "PUSH2".equals(node.get("opName").asText())
+                    || "CODECOPY".equals(node.get("opName").asText()));
+  }
+
+  @Test
   public void disableMemory() throws IOException {
     final Map<String, Boolean> map = Map.of("disableMemory", true);
     final Hash blockHash =
@@ -341,5 +420,40 @@ public class DebugStandardTraceBlockToFileIntegrationTest {
             .toList();
 
     assertThat(json).anyMatch(node -> node.has("storage"));
+  }
+
+  @Test
+  public void traceOpcodes() throws IOException {
+    final Map<String, List<String>> map = Map.of("opcodes", Arrays.asList("PUSH2", "CODECOPY"));
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+    final Object[] params = new Object[] {blockHash, map};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", RPC_ENDPOINT, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    List<?> files = (List<?>) ((JsonRpcSuccessResponse) response).getResult();
+
+    ObjectMapper jsonMapper = new ObjectMapper();
+    List<JsonNode> json =
+        Files.readAllLines(Path.of((String) files.getFirst())).stream()
+            .map(
+                line -> {
+                  try {
+                    return jsonMapper.readTree(line);
+                  } catch (JsonProcessingException e) {
+                    Assert.fail("encountered invalid json from RPC response");
+                    throw new RuntimeException(e);
+                  }
+                })
+            .toList();
+
+    assertThat(json)
+        .allMatch(
+            node ->
+                node.equals(json.getLast())
+                    || "PUSH2".equals(node.get("opName").asText())
+                    || "CODECOPY".equals(node.get("opName").asText()));
   }
 }

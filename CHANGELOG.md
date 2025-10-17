@@ -18,6 +18,7 @@
 - Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
 - Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
 - Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
+- Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
 
 ### Bug fixes
 
