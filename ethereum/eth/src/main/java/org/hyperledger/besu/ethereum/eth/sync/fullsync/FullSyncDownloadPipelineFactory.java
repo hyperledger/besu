@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.PersistBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
@@ -107,6 +108,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final RangeHeadersValidationStep validateHeadersJoinUpStep = new RangeHeadersValidationStep();
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+    final PersistBodiesStep persistBodiesStep = new PersistBodiesStep(protocolContext);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep importBlockStep =
         new FullImportBlockStep(
@@ -127,7 +129,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsync("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcess("persistBodies", persistBodiesStep)
         .thenFlatMap("extractTxSignatures", extractTxSignaturesStep, singleHeaderBufferSize)
         .andFinishWith("importBlock", importBlockStep);
   }

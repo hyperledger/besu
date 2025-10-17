@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
+import org.hyperledger.besu.ethereum.eth.sync.PersistReceiptsStep;
+import org.hyperledger.besu.ethereum.eth.sync.PersistSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SavePreMergeHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
@@ -142,6 +144,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
         new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+    final PersistSyncBodiesStep persistSyncBodiesStep = new PersistSyncBodiesStep(protocolContext);
+    final PersistReceiptsStep persistReceiptsStep = new PersistReceiptsStep(protocolContext);
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolSchedule,
@@ -166,10 +170,10 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .thenFlatMap("savePreMergeHeadersStep", savePreMergeHeadersStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
-        .thenProcessAsyncOrdered(
-            "downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered(
-            "downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+        .thenProcessAsync("downloadSyncBodies", downloadSyncBodiesStep, downloaderParallelism)
+        .thenProcess("persistSyncBodies", persistSyncBodiesStep)
+        .thenProcessAsync("downloadReceipts", downloadSyncReceiptsStep, downloaderParallelism)
+        .thenProcess("persistReceipts", persistReceiptsStep)
         .andFinishWith("importBlock", importSyncBlocksStep);
   }
 
