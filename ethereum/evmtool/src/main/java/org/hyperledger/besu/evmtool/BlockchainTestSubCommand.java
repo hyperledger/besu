@@ -472,7 +472,6 @@ public class BlockchainTestSubCommand implements Runnable {
 
     // Process transactions with tracing
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
-    final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockchainBasedBlockHashLookup blockHashLookup =
         new BlockchainBasedBlockHashLookup(block.getHeader(), blockchain);
 
@@ -487,18 +486,23 @@ public class BlockchainTestSubCommand implements Runnable {
       final org.hyperledger.besu.ethereum.core.Transaction tx =
           block.getBody().getTransactions().get(i);
 
+      // Create a fresh WorldUpdater for each transaction (EIP-2929 compliance)
+      // This ensures warm/cold storage tracking resets between transactions
+      final WorldUpdater blockUpdater = worldState.updater();
+      final WorldUpdater transactionUpdater = blockUpdater.updater();
+
       // Create tracer for this transaction
       final OperationTracer tracer = tracerManager.createTracer();
 
       // Trace the transaction lifecycle
-      tracer.tracePrepareTransaction(worldStateUpdater, tx);
-      tracer.traceStartTransaction(worldStateUpdater, tx);
+      tracer.tracePrepareTransaction(transactionUpdater, tx);
+      tracer.traceStartTransaction(transactionUpdater, tx);
 
       try {
         // Process the transaction with the tracer
         final TransactionProcessingResult result =
             transactionProcessor.processTransaction(
-                worldStateUpdater,
+                transactionUpdater,
                 block.getHeader(),
                 tx,
                 block.getHeader().getCoinbase(),
@@ -512,7 +516,7 @@ public class BlockchainTestSubCommand implements Runnable {
         if (result.isInvalid()) {
           // Transaction is invalid, block should be rejected
           tracer.traceEndTransaction(
-              worldStateUpdater, tx, false, Bytes.EMPTY, List.of(), 0, Set.of(), 0);
+              transactionUpdater, tx, false, Bytes.EMPTY, List.of(), 0, Set.of(), 0);
           return new BlockImportResult(false);
         }
 
@@ -529,7 +533,7 @@ public class BlockchainTestSubCommand implements Runnable {
 
         // Trace transaction end (successful or failed)
         tracer.traceEndTransaction(
-            worldStateUpdater,
+            transactionUpdater,
             tx,
             result.isSuccessful(),
             result.getOutput(),
@@ -537,14 +541,19 @@ public class BlockchainTestSubCommand implements Runnable {
             cumulativeGasUsed,
             Set.of(),
             0);
+
+        // Commit transaction changes to block updater, then to world state
+        transactionUpdater.commit();
+        blockUpdater.commit();
+
+        // Mark transaction boundary to reset warm/cold storage tracking (EIP-2929)
+        blockUpdater.markTransactionBoundary();
+
       } catch (final Exception e) {
         parentCommand.out.printf("Transaction %d processing failed: %s%n", i, e.getMessage());
         return new BlockImportResult(false);
       }
     }
-
-    // Commit the world state changes
-    worldStateUpdater.commit();
 
     // Append block to blockchain
     blockchain.appendBlock(block, receipts);
