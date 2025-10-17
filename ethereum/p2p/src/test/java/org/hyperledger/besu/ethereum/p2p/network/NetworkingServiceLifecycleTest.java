@@ -27,6 +27,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -77,14 +78,11 @@ public class NetworkingServiceLifecycleTest {
   @NotNull
   private DefaultP2PNetwork.Builder getP2PNetworkBuilder() {
     final DefaultP2PNetwork.Builder builder = builder();
-    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
-    final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
-    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     builder
-        .blockchain(blockchainMock)
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())
+        .genesisHash(Hash.ZERO)
+        .genesisTimestamp(0L)
         .allConnectionsSupplier(Stream::empty)
         .allActiveConnectionsSupplier(Stream::empty);
     return builder;
