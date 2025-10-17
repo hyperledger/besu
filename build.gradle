@@ -390,6 +390,8 @@ configure(allprojects - project(':platform')) {
         systemProperty name, System.getProperty(name)
       }
     }
+    // Enable JUnit 5 extension auto-detection to initialize SignatureAlgorithmFactory early
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     useJUnitPlatform {}
     finalizedBy jacocoTestReport // report is always generated after tests run
   }
@@ -536,6 +538,8 @@ subprojects {
       testClassesDirs = sourceSets.integrationTest.output.classesDirs
       classpath = sourceSets.integrationTest.runtimeClasspath
       outputs.upToDateWhen { false }
+      // Enable JUnit 5 extension auto-detection to initialize SignatureAlgorithmFactory early
+      systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
       useJUnitPlatform {}
     }
   }
