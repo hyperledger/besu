@@ -18,7 +18,7 @@ Having the following accounts is necessary for contributing code/issues to Besu.
 * [First contribution workflow](https://wiki.hyperledger.org/display/BESU/First+contribution?src=contextnavpagetreemode)
 * [Did you find a bug?](https://wiki.hyperledger.org/display/BESU/Reporting+Bugs)
 * [Issues](https://wiki.hyperledger.org/display/BESU/Issues)
-* [DCO](https://wiki.hyperledger.org/display/BESU/DCO)
+* [DCO](DCO.md)
 * [Suggesting Enhancements](https://wiki.hyperledger.org/display/BESU/Suggesting+Enhancements)
 * [Pull Requests](https://wiki.hyperledger.org/display/BESU/Pull+Requests)
 * [Code Reviews](https://wiki.hyperledger.org/display/BESU/Code+Reviews)
