@@ -211,11 +211,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(timestamp, processableBlockHeader);
 
-      throwIfStopped();
-
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
-
-      throwIfStopped();
 
       final var selectorsStateManager = new SelectorsStateManager();
       final var pluginTransactionSelector =
@@ -263,7 +259,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               blockAccessListBuilder);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
-      throwIfStopped();
 
       final Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
           blockAccessListBuilder.map(
@@ -285,8 +280,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 postExecutionAccessLocationTracker);
       }
 
-      throwIfStopped();
-
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
           newProtocolSpec.getRequestProcessorCoordinator();
@@ -303,8 +296,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               blockAccessListBuilder.ifPresent(
                   builder -> builder.apply(tracker, disposableWorldState.updater().updater())));
 
-      throwIfStopped();
-
       if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
@@ -318,12 +309,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         throw new RuntimeException("Failed to apply mining reward.");
       }
 
-      throwIfStopped();
-
       final GasUsage usage =
           computeExcessBlobGas(transactionResults, newProtocolSpec, parentHeader);
-
-      throwIfStopped();
 
       BlockHeaderBuilder builder =
           BlockHeaderBuilder.create()
@@ -472,12 +459,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   @Override
   public boolean isCancelled() {
     return isCancelled.get();
-  }
-
-  private void throwIfStopped() throws CancellationException {
-    if (isCancelled.get()) {
-      throw new CancellationException();
-    }
   }
 
   /* Copied from BlockProcessor (with modifications). */
