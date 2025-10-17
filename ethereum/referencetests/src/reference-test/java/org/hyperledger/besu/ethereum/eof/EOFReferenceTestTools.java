@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,11 +40,13 @@ import org.hyperledger.besu.testutil.JsonTestParameters;
 
 public class EOFReferenceTestTools {
   private static final List<String> EIPS_TO_RUN;
+  private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
 
   static {
     final String eips =
         System.getProperty("test.ethereum.eof.eips", "Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
+    PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
   }
 
   private static final JsonTestParameters<?, ?> params =
@@ -103,7 +105,7 @@ public class EOFReferenceTestTools {
       final Bytes code,
       final String containerKind,
       final EOFTestCaseSpec.TestResult expected) {
-    EVM evm = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork).getEvm();
+    EVM evm = PROTOCOL_SCHEDULES.geSpecByName(fork).getEvm();
     assertThat(evm).isNotNull();
 
     // hardwire in the magic byte transaction checks
