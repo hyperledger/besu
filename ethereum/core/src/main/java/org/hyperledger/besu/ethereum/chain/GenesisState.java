@@ -215,7 +215,7 @@ public final class GenesisState {
           genesisAccount.storage().forEach(account::setStorageValue);
         });
     updater.commit();
-    target.persist(rootHeader);
+    target.persist(rootHeader, Optional.empty());
   }
 
   private static Hash calculateGenesisStateRoot(

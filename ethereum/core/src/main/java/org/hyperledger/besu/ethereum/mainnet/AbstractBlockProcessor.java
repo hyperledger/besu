@@ -53,15 +53,10 @@ import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +77,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
 
   static final int MAX_GENERATION = 6;
-  private static final Duration BAL_STATE_ROOT_CALCULATION_TIMEOUT = Duration.ofSeconds(1);
 
   protected final MainnetTransactionProcessor transactionProcessor;
 
@@ -408,9 +402,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         }
         maybeBlockAccessList = Optional.of(bal);
         maybeStateRootFuture =
-            Optional.of(
-                BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
-                    protocolContext, blockHeader, bal));
+            (worldState instanceof BonsaiWorldState)
+                ? Optional.of(
+                    BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+                        protocolContext, blockHeader, bal))
+                : Optional.empty();
       } else {
         maybeBlockAccessList = Optional.empty();
       }
@@ -426,7 +422,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceEndBlock(blockHeader, blockBody);
 
     try {
-      worldState.persist(blockHeader);
+      worldState.persist(blockHeader, maybeStateRootFuture);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
       if (worldState instanceof BonsaiWorldState) {
@@ -448,34 +444,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       LOG.error("failed persisting block", e);
       maybeStateRootFuture.ifPresent(future -> future.cancel(true));
       return new BlockProcessingResult(Optional.empty(), e);
-    }
-
-    if (maybeStateRootFuture.isPresent()) {
-      final CompletableFuture<Hash> stateRootFuture = maybeStateRootFuture.get();
-      try {
-        final Hash balStateRoot =
-            stateRootFuture.get(
-                BAL_STATE_ROOT_CALCULATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-        final Hash persistedStateRoot = worldState.rootHash();
-        if (!balStateRoot.equals(persistedStateRoot)) {
-          LOG.error(
-              "State root mismatch between state root computed using BAL ({}) and persisted world state root ({})",
-              balStateRoot.toHexString(),
-              persistedStateRoot.toHexString());
-        }
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        LOG.error("Interrupted while waiting for BAL-based state root calculation to finish", e);
-      } catch (final ExecutionException e) {
-        final Throwable cause = e.getCause() == null ? e : e.getCause();
-        LOG.error("Failed to compute state root from block access list", cause);
-      } catch (final CancellationException e) {
-        LOG.error("Block access list state root calculation was cancelled", e);
-      } catch (final TimeoutException e) {
-        LOG.error("Timed out waiting for BAL-based state root calculation to finish", e);
-      } finally {
-        stateRootFuture.cancel(true);
-      }
     }
 
     return new BlockProcessingResult(
