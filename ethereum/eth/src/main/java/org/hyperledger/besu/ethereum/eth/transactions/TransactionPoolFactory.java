@@ -151,6 +151,11 @@ public class TransactionPoolFactory {
       pooledTransactionsMessageHandler.setEnabled();
       transactionsMessageHandler.setEnabled();
       transactionPool.setEnabled();
+    } else if (syncState.hasReachedTerminalDifficulty().orElse(false)) {
+      // Allow pool to accept/hold txs after TTD; gossip stays gated on in-sync
+      LOG.info(
+          "TTD reached; enabling transaction pool (transaction gossip remains disabled until in-sync)");
+      transactionPool.setEnabled();
     } else {
       LOG.info("Transaction pool disabled while initial sync in progress");
     }
@@ -192,6 +197,15 @@ public class TransactionPoolFactory {
                     transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
               }
             }
+          }
+        });
+
+    // Ensure tx pool becomes enabled as soon as TTD is reached during initial sync
+    syncState.subscribeTTDReached(
+        stoppedAtTTD -> {
+          if (stoppedAtTTD && !syncState.isInitialSyncPhaseDone() && !transactionPool.isEnabled()) {
+            LOG.info("TTD reached; enabling transaction pool");
+            transactionPool.setEnabled();
           }
         });
 

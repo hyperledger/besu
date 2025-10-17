@@ -294,6 +294,40 @@ public class TransactionPoolFactoryTest {
     assertThat(pool.isEnabled()).isTrue();
   }
 
+  @Test
+  public void txPoolEnabledWhenTTDReachedDuringInitialSync_handlersRemainDisabled() {
+      // Setup: start with an initial-sync-required SyncState (pool and handlers start disabled).
+    // Stimulus: trigger TTD via syncState.setReachedTerminalDifficulty(true).
+    // Assertions: pool.isEnabled() becomes true; both NewPooledTransactionHashesMessageHandler and
+    // TransactionsMessageHandler remain disabled (gossip gated on in-sync).
+    setupInitialSyncPhase(true);
+    assertThat(pool.isEnabled()).isFalse();
+
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(2)).subscribe(anyInt(), messageHandlers.capture());
+
+    syncState.setReachedTerminalDifficulty(true);
+
+    assertThat(pool.isEnabled()).isTrue();
+
+    assertThat(messageHandlers.getAllValues())
+        .haveAtLeastOne(
+            new Condition<>(
+                h ->
+                    h instanceof NewPooledTransactionHashesMessageHandler
+                        && !((NewPooledTransactionHashesMessageHandler) h).isEnabled(),
+                "pooled transaction hashes handler should be disabled"));
+
+    assertThat(messageHandlers.getAllValues())
+        .haveAtLeastOne(
+            new Condition<>(
+                h ->
+                    h instanceof TransactionsMessageHandler
+                        && !((TransactionsMessageHandler) h).isEnabled(),
+                "transaction messages handler should be disabled"));
+  }
+
   private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
     syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
     setupInitialSyncPhase(syncState);
