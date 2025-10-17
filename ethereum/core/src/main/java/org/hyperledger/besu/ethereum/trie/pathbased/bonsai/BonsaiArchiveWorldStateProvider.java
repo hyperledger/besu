@@ -121,7 +121,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
     LOG.trace("Rolling mutable archive world state to block hash " + blockHash.toHexString());
     try {
       // Simply persist the block hash/number and state root for this archive state
-      mutableState.persist(blockchain.getBlockHeader(blockHash).get(), Optional.empty());
+      mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
       LOG.trace(
           "Archive rolling finished, {} now at {}",

@@ -32,6 +32,10 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    */
   void persist(BlockHeader blockHeader, Optional<CompletableFuture<Hash>> maybeStateRootFuture);
 
+  default void persist(final BlockHeader blockHeader) {
+    persist(blockHeader, Optional.empty());
+  }
+
   default MutableWorldState freezeStorage() {
     // no op
     throw new UnsupportedOperationException("cannot freeze");
