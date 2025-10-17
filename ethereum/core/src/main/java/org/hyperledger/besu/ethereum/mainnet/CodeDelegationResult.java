@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class CodeDelegationResult {
-  private final Set<Address> accessedDelegatorAddresses = new BytesTrieSet<>(Address.SIZE);
+  private final Set<Address> accessedDelegatorAddresses = new HashSet<>(Address.SIZE);
   private long alreadyExistingDelegators = 0L;
 
   public void addAccessedDelegatorAddress(final Address address) {
