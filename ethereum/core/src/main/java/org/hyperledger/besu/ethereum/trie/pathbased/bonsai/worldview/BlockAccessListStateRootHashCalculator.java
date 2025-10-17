@@ -31,11 +31,39 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockAccessListStateRootHashCalculator {
-  public static Hash calculateRootHash(
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BlockAccessListStateRootHashCalculator.class);
+
+  private BlockAccessListStateRootHashCalculator() {}
+
+  private static BonsaiWorldState prepareWorldState(
+      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
+    if (!chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
+      throw new IllegalStateException("Chain head is not the parent of the processed block");
+    }
+    final BonsaiWorldState ws =
+        (BonsaiWorldState)
+            protocolContext
+                .getWorldStateArchive()
+                .getWorldState(
+                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
+                .orElseThrow();
+    ws.disableCacheMerkleTrieLoader();
+    return ws;
+  }
+
+  private static Hash accumulateAccessListAndComputeRoot(
       final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
     final BonsaiWorldStateUpdateAccumulator accumulator =
         (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
@@ -80,21 +108,35 @@ public class BlockAccessListStateRootHashCalculator {
     return worldState.calculateRootHash(Optional.empty(), accumulator);
   }
 
-  public static BonsaiWorldState prepareWorldState(
-      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
-    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-    if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      final BonsaiWorldState ws =
-          (BonsaiWorldState)
-              protocolContext
-                  .getWorldStateArchive()
-                  .getWorldState(
-                      WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
-                  .orElseThrow();
-      ws.disableCacheMerkleTrieLoader();
-      return ws;
-    } else {
-      throw new IllegalStateException("Chain head is not the parent of the processed block");
-    }
+  public static CompletableFuture<Hash> computeStateRootFromBlockAccessListAsync(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final BlockAccessList bal) {
+
+    final BonsaiWorldState ws = prepareWorldState(protocolContext, blockHeader);
+
+    final Supplier<Hash> task =
+        () -> {
+          return accumulateAccessListAndComputeRoot(ws, bal);
+        };
+
+    final BiConsumer<? super Hash, ? super Throwable> finalHandler =
+        (ignored, thrown) -> {
+          try {
+            ws.close();
+          } catch (final Exception closeEx) {
+            if (thrown == null) {
+              LOG.warn(
+                  "Failed to close BonsaiWorldState after successful BAL-based state root computation",
+                  closeEx);
+            } else {
+              LOG.warn(
+                  "Suppressed close() failure after BAL-based state root computation error",
+                  closeEx);
+            }
+          }
+        };
+
+    return CompletableFuture.supplyAsync(task).whenComplete(finalHandler);
   }
 }

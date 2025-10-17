@@ -407,12 +407,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           }
         }
         maybeBlockAccessList = Optional.of(bal);
-        final BonsaiWorldState balWs =
-            BlockAccessListStateRootHashCalculator.prepareWorldState(protocolContext, blockHeader);
         maybeStateRootFuture =
             Optional.of(
-                CompletableFuture.supplyAsync(
-                    () -> BlockAccessListStateRootHashCalculator.calculateRootHash(balWs, bal)));
+                BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+                    protocolContext, blockHeader, bal));
       } else {
         maybeBlockAccessList = Optional.empty();
       }
