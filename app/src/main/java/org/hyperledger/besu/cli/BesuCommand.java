@@ -652,7 +652,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner runner;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
-  private BigInteger ephemeryCycleId = BigInteger.ZERO;
+  private BigInteger ephemeryNextCycleId = BigInteger.ZERO;
 
   /**
    * Besu command constructor.
@@ -903,9 +903,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     try {
       configureLogging(true);
+
+      if (printPathsAndExit) {
+        // Print configured paths requiring read/write permissions to be adjusted
+        checkPermissionsAndPrintPaths(besuUserName);
+        System.exit(0); // Exit before any services are started
+      }
+
+      // set merge config on the basis of genesis config
+      setMergeConfigOptions();
+
+      instantiateSignatureAlgorithmFactory();
+
       logger.info("Starting Besu");
 
-      ephemeryCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
+      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
+      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+
+      validateOptions();
+
+      ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
 
       initialProcess();
 
@@ -925,25 +942,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void initialProcess() throws Exception {
     if (network.equals(EPHEMERY)) {
       genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
-      dataPath = dataPath.resolve("Ephemery-data-chain-" + ephemeryCycleId);
-      ephemeryCycleId = ephemeryCycleId.add(BigInteger.ONE);
+      dataPath = dataPath.resolve("Ephemery-data-chain-" + ephemeryNextCycleId);
+      ephemeryNextCycleId = ephemeryNextCycleId.add(BigInteger.ONE);
     }
-
-    if (printPathsAndExit) {
-      // Print configured paths requiring read/write permissions to be adjusted
-      checkPermissionsAndPrintPaths(besuUserName);
-      System.exit(0); // Exit before any services are started
-    }
-
-    // set merge config on the basis of genesis config
-    setMergeConfigOptions();
-
-    instantiateSignatureAlgorithmFactory();
-
-    // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-    vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
-
-    validateOptions();
 
     configure();
 
@@ -1252,7 +1253,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preSynchronizationTaskRunner.runTasks(besuController);
   }
 
-  private Runner buildRunner() {
+  Runner buildRunner() {
     return synchronize(
         besuController,
         p2PDiscoveryConfig.p2pEnabled(),
@@ -2733,5 +2734,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public void setDataPathToParent() {
     this.dataPath = dataPath.getParent();
+  }
+
+  @VisibleForTesting
+  Supplier<GenesisConfig> getGenesisConfigSupplier() {
+    return genesisConfigSupplier;
   }
 }

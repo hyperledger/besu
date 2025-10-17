@@ -93,7 +93,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -3004,7 +3011,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(networkArg.getValue().networkId())
         .isEqualTo(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get());
 
-    Map<String, String> overrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> overrides = new HashMap<>();
 
     overrides.put("chainId", "39438151");
     overrides.put("timestamp", String.valueOf(Instant.now().getEpochSecond()));

@@ -201,7 +201,20 @@ public class Runner implements AutoCloseable {
     // next restart should be triggered in "lastGenesisTime + cycle - now" seconds
     long restartTime = lastGenesisTimestamp + ephemeryCycle - currentTimestamp;
 
-    LOG.info("Scheduled Ephemery testnet restart in {} days", TimeUnit.SECONDS.toDays(restartTime));
+    if (TimeUnit.SECONDS.toDays(restartTime) >= 1) {
+      LOG.info(
+          "Scheduled Ephemery testnet restarts in {} days", TimeUnit.SECONDS.toDays(restartTime));
+    } else {
+      if (TimeUnit.SECONDS.toHours(restartTime) >= 1) {
+        LOG.info(
+            "Scheduled Ephemery testnet restarts in {} hours",
+            TimeUnit.SECONDS.toHours(restartTime));
+      } else {
+        LOG.info(
+            "Scheduled Ephemery testnet restarts in {} minutes",
+            TimeUnit.SECONDS.toMinutes(restartTime));
+      }
+    }
     ephemeryService =
         Executors.newSingleThreadScheduledExecutor(
             r -> {
@@ -229,8 +242,7 @@ public class Runner implements AutoCloseable {
         TimeUnit.SECONDS);
   }
 
-  private void stopEphemery(final BesuCommand besuCommand)
-      throws IOException, InterruptedException {
+  public void stopEphemery(final BesuCommand besuCommand) throws IOException, InterruptedException {
     if (besuController != null) {
       stopServices();
       clearDirectory(dataDir);
@@ -240,7 +252,7 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  void startEphemery(final BesuCommand besuCommand) throws Exception {
+  public void startEphemery(final BesuCommand besuCommand) throws Exception {
     ephemeryRestartPrepare(besuCommand);
     besuCommand.initialProcess();
   }
@@ -280,13 +292,13 @@ public class Runner implements AutoCloseable {
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::stop);
     natService.stop();
     besuController.close();
-    vertx.close((res) -> vertxShutdownLatch.countDown());
-    waitForServiceToStop("Vertx", vertxShutdownLatch::await);
   }
 
   /** Stop services. */
   public void stop() {
     stopServices();
+    vertx.close((res) -> vertxShutdownLatch.countDown());
+    waitForServiceToStop("Vertx", vertxShutdownLatch::await);
     if (ephemeryService != null) {
       ephemeryService.close();
     }
