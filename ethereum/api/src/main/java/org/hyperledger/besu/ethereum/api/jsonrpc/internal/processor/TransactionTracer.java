@@ -42,6 +42,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +98,7 @@ public class TransactionTracer {
             .map(TransactionTraceParams::getTransactionHash)
             .map(Hash::fromHexString);
     final OpCodeTracerConfig opCodeTracerConfig =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+        OpCodeTracerConfigBuilder.create()
             .traceMemory(
                 transactionTraceParams
                     .map(TransactionTraceParams::disableMemoryNullable)
@@ -114,6 +115,10 @@ public class TransactionTracer {
                     .map(Boolean.FALSE::equals)
                     .orElse(false))
             .traceReturnData(true)
+            .traceOpcodes(
+                transactionTraceParams
+                    .map(TransactionTraceParams::opcodes)
+                    .orElse(Collections.emptySet()))
             .eip3155Strict(true)
             .build();
 

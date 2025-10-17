@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.google.common.base.Joiner;
@@ -100,6 +101,13 @@ public class StreamingOperationTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
+    final Operation currentOp = messageFrame.getCurrentOperation();
+    if (!opCodeTracerConfig.traceOpcodes().isEmpty()
+        && !opCodeTracerConfig
+            .traceOpcodes()
+            .contains(currentOp.getName().toLowerCase(Locale.ROOT))) {
+      return;
+    }
     stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
@@ -149,6 +157,12 @@ public class StreamingOperationTracer implements OperationTracer {
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
+    if (!opCodeTracerConfig.traceOpcodes().isEmpty()
+        && !opCodeTracerConfig
+            .traceOpcodes()
+            .contains(currentOp.getName().toLowerCase(Locale.ROOT))) {
+      return;
+    }
     if (currentOp.isVirtualOperation()) {
       return;
     }
