@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1Parameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,14 +76,16 @@ public class EthSimulateV1Test {
   }
 
   @Test
-  public void shouldReturnBlockNotFoundWhenInvalidBlockNumberSpecified() {
+  public void shouldReturnNullWhenInvalidBlockNumberSpecified() {
     final JsonRpcRequestContext request =
         ethSimulateV1Request(simulateParameter(), Quantity.create(33L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
+
     verify(blockchainQueries).headBlockNumber();
   }
 
