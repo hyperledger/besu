@@ -29,8 +29,10 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
@@ -94,11 +96,26 @@ public class TransactionTracer {
         transactionTraceParams
             .map(TransactionTraceParams::getTransactionHash)
             .map(Hash::fromHexString);
-    final boolean showMemory =
-        transactionTraceParams
-            .map(TransactionTraceParams::traceOptions)
-            .map(options -> options.opCodeTracerConfig().traceMemory())
-            .orElse(true);
+    final OpCodeTracerConfig opCodeTracerConfig =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableMemoryNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStack(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStackNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStorage(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStorageNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(false))
+            .traceReturnData(true)
+            .eip3155Strict(true)
+            .build();
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
@@ -134,7 +151,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true, false, true),
+                            new StreamingOperationTracer(out, opCodeTracerConfig),
                             blobGasPrice);
                     out.println(
                         summaryTrace(
@@ -204,7 +221,7 @@ public class TransactionTracer {
     summaryLine.put("output", result.getOutput().toUnprefixedHexString());
     summaryLine.put(
         "gasUsed",
-        StandardJsonTracer.shortNumber(
+        StreamingOperationTracer.shortNumber(
             UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
     summaryLine.put("time", timer);
     return summaryLine.toString();

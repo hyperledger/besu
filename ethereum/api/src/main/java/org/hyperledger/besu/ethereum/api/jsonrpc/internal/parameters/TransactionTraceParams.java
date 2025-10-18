@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.util.LinkedHashMap;
 import javax.annotation.Nullable;
@@ -39,21 +40,27 @@ public interface TransactionTraceParams {
   String getTransactionHash();
 
   @JsonProperty(value = "disableStorage")
-  @Value.Default
+  @Nullable
+  Boolean disableStorageNullable();
+
   default boolean disableStorage() {
-    return false;
+    return Boolean.TRUE.equals(disableStorageNullable());
   }
 
   @JsonProperty(value = "disableMemory")
-  @Value.Default
+  @Nullable
+  Boolean disableMemoryNullable();
+
   default boolean disableMemory() {
-    return false;
+    return Boolean.TRUE.equals(disableMemoryNullable());
   }
 
   @JsonProperty(value = "disableStack")
-  @Value.Default
+  @Nullable
+  Boolean disableStackNullable();
+
   default boolean disableStack() {
-    return false;
+    return Boolean.TRUE.equals(disableStackNullable());
   }
 
   @JsonProperty("tracer")
@@ -77,7 +84,11 @@ public interface TransactionTraceParams {
    */
   default TraceOptions traceOptions() {
     var defaultTracerConfig =
-        new OpCodeTracerConfig(!disableStorage(), !disableMemory(), !disableStack());
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceStorage(!disableStorage())
+            .traceMemory(!disableMemory())
+            .traceStack(!disableStack())
+            .build();
 
     // Convert string tracer to TracerType enum, handling null case
     TracerType tracerType =

@@ -144,4 +144,10 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
   protected String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName();
   }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V2 works with Shanghai but must be before Cancun (< 30)
+    return 25L;
+  }
 }

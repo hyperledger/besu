@@ -165,6 +165,17 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   void finalizeProposalById(final PayloadIdentifier payloadId);
 
   /**
+   * Await current build completion for the given payload.
+   *
+   * <p>This method waits for the in-progress block building task to complete, with a timeout. This
+   * is useful when we want to wait for a non-empty block to be built before returning a payload.
+   * The timeout is determined by the configured PoS block finalization timeout.
+   *
+   * @param payloadId the payload id
+   */
+  void awaitCurrentBuildCompletion(final PayloadIdentifier payloadId);
+
+  /**
    * Return the scheduler
    *
    * @return the instance of the scheduler

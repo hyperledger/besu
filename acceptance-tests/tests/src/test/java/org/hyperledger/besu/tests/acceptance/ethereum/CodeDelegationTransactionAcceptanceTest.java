@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -121,9 +123,17 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    Optional<TransactionReceipt> maybeTransactionReceipt =
-        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
-    assertThat(maybeTransactionReceipt).isPresent();
+    // Wait for transaction receipt to be available with retry logic
+    final AtomicReference<Optional<TransactionReceipt>> maybeTransactionReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeTransactionReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeTransactionReceiptHolder.get()).isPresent();
+        });
+    Optional<TransactionReceipt> maybeTransactionReceipt = maybeTransactionReceiptHolder.get();
 
     cluster.verify(authorizer.balanceEquals(0));
 
@@ -178,17 +188,34 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
+    // Wait for first transaction receipt to be available with retry logic
+    final AtomicReference<Optional<TransactionReceipt>> maybeFirstTransactionReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeFirstTransactionReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeFirstTransactionReceiptHolder.get()).isPresent();
+        });
     final Optional<TransactionReceipt> maybeFirstTransactionReceipt =
-        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
-    assertThat(maybeFirstTransactionReceipt).isPresent();
+        maybeFirstTransactionReceiptHolder.get();
 
     final String gasPriceWithout0x =
         maybeFirstTransactionReceipt.get().getEffectiveGasPrice().substring(2);
     final BigInteger gasPrice = new BigInteger(gasPriceWithout0x, 16);
     final BigInteger txCost = maybeFirstTransactionReceipt.get().getGasUsed().multiply(gasPrice);
 
-    final BigInteger authorizerBalanceAfterFirstTx =
-        besuNode.execute(ethTransactions.getBalance(authorizer));
+    // Wait for balance to be queryable with retry logic
+    final AtomicReference<BigInteger> authorizerBalanceAfterFirstTxHolder = new AtomicReference<>();
+    WaitUtils.waitFor(
+        30,
+        () -> {
+          authorizerBalanceAfterFirstTxHolder.set(
+              besuNode.execute(ethTransactions.getBalance(authorizer)));
+          assertThat(authorizerBalanceAfterFirstTxHolder.get()).isNotNull();
+        });
+    final BigInteger authorizerBalanceAfterFirstTx = authorizerBalanceAfterFirstTxHolder.get();
 
     // The remaining balance of the authorizer should the gas limit multiplied by the gas price
     // minus the transaction cost.
@@ -225,13 +252,30 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
             ethTransactions.sendRawTransaction(txSendEthToOtherAccount.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    final Optional<TransactionReceipt> maybeSecondTransactionReceipt =
-        besuNode.execute(ethTransactions.getTransactionReceipt(txSendEthToOtherAccountHash));
-    assertThat(maybeSecondTransactionReceipt).isPresent();
+    // Wait for second transaction receipt to be available with retry logic
+    final AtomicReference<Optional<TransactionReceipt>> maybeSecondTransactionReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeSecondTransactionReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceipt(txSendEthToOtherAccountHash)));
+          assertThat(maybeSecondTransactionReceiptHolder.get()).isPresent();
+        });
 
-    // the balance of the other account should be the previous balance plus the value of the 1 Wei
+    // Wait for balance to be queryable with retry logic
+    final AtomicReference<BigInteger> otherAccountBalanceAfterSecondTxHolder =
+        new AtomicReference<>();
+    WaitUtils.waitFor(
+        30,
+        () -> {
+          otherAccountBalanceAfterSecondTxHolder.set(
+              besuNode.execute(ethTransactions.getBalance(otherAccount)));
+          assertThat(otherAccountBalanceAfterSecondTxHolder.get()).isNotNull();
+        });
     final BigInteger otherAccountBalanceAfterSecondTx =
-        besuNode.execute(ethTransactions.getBalance(otherAccount));
+        otherAccountBalanceAfterSecondTxHolder.get();
+
     assertThat(otherAccountBalanceAfterFirstTx.add(BigInteger.ONE))
         .isEqualTo(otherAccountBalanceAfterSecondTx);
   }
@@ -282,18 +326,31 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
+    // Wait for transaction receipt to be available with retry logic
+    final AtomicReference<Optional<TransactionReceipt>> maybeTransactionReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeTransactionReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeTransactionReceiptHolder.get()).isPresent();
+        });
+    Optional<TransactionReceipt> maybeTransactionReceipt = maybeTransactionReceiptHolder.get();
+
     // check that the transaction was included and has indeed reverted
-    Optional<TransactionReceipt> maybeTransactionReceipt =
-        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
-    assertThat(maybeTransactionReceipt).isPresent();
     assertThat(maybeTransactionReceipt.get().getStatus()).isEqualTo("0x0");
 
-    // check the authorizer has the code delegation after the transaction even though it has
-    // reverted
+    // Wait for code to be queryable with retry logic
     final Bytes expectedCode =
         Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
-    final Bytes authorizerCode = besuNode.execute(ethTransactions.getCode(authorizer));
-    assertThat(authorizerCode).isEqualTo(expectedCode);
+    final AtomicReference<Bytes> authorizerCodeHolder = new AtomicReference<>();
+    WaitUtils.waitFor(
+        30,
+        () -> {
+          authorizerCodeHolder.set(besuNode.execute(ethTransactions.getCode(authorizer)));
+          assertThat(authorizerCodeHolder.get()).isEqualTo(expectedCode);
+        });
   }
 
   /**
@@ -342,17 +399,30 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
+    // Wait for transaction receipt to be available with retry logic
+    final AtomicReference<Optional<TransactionReceipt>> maybeTransactionReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeTransactionReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeTransactionReceiptHolder.get()).isPresent();
+        });
+    Optional<TransactionReceipt> maybeTransactionReceipt = maybeTransactionReceiptHolder.get();
+
     // check that the transaction was included and has indeed reverted
-    Optional<TransactionReceipt> maybeTransactionReceipt =
-        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
-    assertThat(maybeTransactionReceipt).isPresent();
     assertThat(maybeTransactionReceipt.get().getStatus()).isEqualTo("0x0");
 
-    // check the authorizer has the code delegation after the transaction even though it has
-    // reverted
+    // Wait for code to be queryable with retry logic
     final Bytes expectedCode =
         Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
-    final Bytes authorizerCode = besuNode.execute(ethTransactions.getCode(authorizer));
-    assertThat(authorizerCode).isEqualTo(expectedCode);
+    final AtomicReference<Bytes> authorizerCodeHolder = new AtomicReference<>();
+    WaitUtils.waitFor(
+        30,
+        () -> {
+          authorizerCodeHolder.set(besuNode.execute(ethTransactions.getCode(authorizer)));
+          assertThat(authorizerCodeHolder.get()).isEqualTo(expectedCode);
+        });
   }
 }

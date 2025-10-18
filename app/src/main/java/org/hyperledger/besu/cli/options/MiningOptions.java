@@ -27,6 +27,7 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInit
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_SLOT_DURATION_SECS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
@@ -196,6 +197,13 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         arity = "1")
     @Positive
     Integer posSlotDuration = DEFAULT_POS_SLOT_DURATION_SECS;
+
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xpos-block-finalization-timeout-ms"},
+        description =
+            "Specifies the maximum time, in milliseconds, to wait for block building to complete when only an empty block is available (default: ${DEFAULT-VALUE} milliseconds)")
+    private Long posBlockFinalizationTimeoutMs = DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS;
   }
 
   private TransactionSelectionService transactionSelectionService;
@@ -282,6 +290,12 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           commandLine, "--Xpos-block-creation-repetition-min-duration must be positive and ≤ 2000");
     }
 
+    if (unstableOptions.posBlockFinalizationTimeoutMs <= 0
+        || unstableOptions.posBlockFinalizationTimeoutMs > 12000) {
+      throw new ParameterException(
+          commandLine, "--Xpos-block-finalization-timeout-ms must be positive and ≤ 12000");
+    }
+
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--block-txs-selection-max-time can only be used on networks with PoS support in the genesis file,"
@@ -327,6 +341,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getUnstable().getPosBlockCreationRepetitionMinDuration();
     miningOptions.unstableOptions.posSlotDuration =
         miningConfiguration.getUnstable().getPosSlotDuration();
+    miningOptions.unstableOptions.posBlockFinalizationTimeoutMs =
+        miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs();
 
     miningConfiguration.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningConfiguration.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
@@ -370,6 +386,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
                 .posBlockCreationRepetitionMinDuration(
                     unstableOptions.posBlockCreationRepetitionMinDuration)
                 .posSlotDuration(unstableOptions.posSlotDuration)
+                .posBlockFinalizationTimeoutMs(unstableOptions.posBlockFinalizationTimeoutMs)
                 .build())
         .build();
   }
