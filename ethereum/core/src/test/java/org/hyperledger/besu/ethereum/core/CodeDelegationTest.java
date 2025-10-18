@@ -113,7 +113,7 @@ class CodeDelegationTest {
     CodeDelegation delegation =
         (CodeDelegation)
             CodeDelegation.createCodeDelegation(
-                chainId, address, "0x64", "0x1b", "0xabcdef", "0x123456");
+                chainId, address, "0x64", "0x1b", null, "0xabcdef", "0x123456");
 
     assertThat(delegation).isNotNull();
     assertThat(delegation.chainId()).isEqualTo(chainId);
