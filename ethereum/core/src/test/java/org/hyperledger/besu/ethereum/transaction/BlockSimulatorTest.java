@@ -51,6 +51,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,6 +104,7 @@ public class BlockSimulatorTest {
     when(gasLimitCalculator.nextGasLimit(anyLong(), anyLong(), anyLong())).thenReturn(1L);
     when(protocolSpec.getFeeMarket()).thenReturn(mock(FeeMarket.class));
     when(protocolSpec.getPreExecutionProcessor()).thenReturn(mock(PreExecutionProcessor.class));
+    when(protocolSpec.getSlotDuration()).thenReturn(Duration.ofSeconds(12));
   }
 
   @Test

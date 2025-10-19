@@ -156,6 +156,12 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenAnswer(
             new GetHeadersFromPeerTaskExecutorAnswer(
                 getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(
+                getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
         .thenAnswer(
             new GetBodiesFromPeerTaskExecutorAnswer(
@@ -1024,6 +1030,67 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     assertThat(blockPropagationManager.isRunning()).isFalse();
     verifyNoInteractions(pendingBlocksManager);
+  }
+
+  @Test
+  public void shouldRequestBlockFromOtherPeersIfFirstPeerFails() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    // Sanity check
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.start();
+
+    final RespondingEthPeer firstPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.NewBlockHash(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+
+    Mockito.reset(peerTaskExecutor);
+    when(peerTaskExecutor.executeAgainstPeer(
+            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(firstPeer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Collections.emptyList()));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(
+            new GetHeadersFromPeerTaskExecutorAnswer(
+                getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.eq(firstPeer.getEthPeer())))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Collections.emptyList()));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(
+                getFullBlockchain(), ethProtocolManager.ethContext().getEthPeers()));
+
+    // Broadcast message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, firstPeer, nextAnnouncement);
+
+    Mockito.verify(peerTaskExecutor)
+        .executeAgainstPeer(
+            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(firstPeer.getEthPeer()));
+    Mockito.verify(peerTaskExecutor).execute(Mockito.any(GetHeadersFromPeerTask.class));
+    Mockito.verify(peerTaskExecutor)
+        .executeAgainstPeer(
+            Mockito.any(GetBodiesFromPeerTask.class), Mockito.eq(firstPeer.getEthPeer()));
+    Mockito.verify(peerTaskExecutor).execute(Mockito.any(GetBodiesFromPeerTask.class));
+    Mockito.verifyNoMoreInteractions(peerTaskExecutor);
+
+    verify(processingBlocksManager).addRequestedBlock(nextBlock.getHash());
+    verify(processingBlocksManager).addImportingBlock(nextBlock.getHash());
+    verify(processingBlocksManager).registerReceivedBlock(nextBlock);
+    verify(processingBlocksManager).registerBlockImportDone(nextBlock.getHash());
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
   }
 
   public abstract Blockchain getFullBlockchain();

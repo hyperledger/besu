@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -220,6 +221,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS);
     }
 
+    final Optional<BlockAccessList> maybeBlockAccessList;
+    try {
+      maybeBlockAccessList = extractBlockAccessList(blockParam);
+    } catch (final InvalidBlockAccessListException e) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          e.getMessage());
+    }
+
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
       return respondWith(reqId, blockParam, null, SYNCING);
@@ -276,7 +289,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
-            null,
+            maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -338,7 +351,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
+            newBlockHeader,
+            new BlockBody(
+                transactions, Collections.emptyList(), maybeWithdrawals, maybeBlockAccessList));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -497,6 +512,21 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final Optional<String> maybeBeaconBlockRootParam,
       final Optional<List<String>> maybeRequestsParam) {
     return ValidationResult.valid();
+  }
+
+  protected Optional<BlockAccessList> extractBlockAccessList(
+      final EnginePayloadParameter payloadParameter) throws InvalidBlockAccessListException {
+    return Optional.empty();
+  }
+
+  protected static class InvalidBlockAccessListException extends Exception {
+    InvalidBlockAccessListException(final String message) {
+      super(message);
+    }
+
+    InvalidBlockAccessListException(final String message, final Throwable cause) {
+      super(message, cause);
+    }
   }
 
   protected ValidationResult<RpcErrorType> validateBlobs(

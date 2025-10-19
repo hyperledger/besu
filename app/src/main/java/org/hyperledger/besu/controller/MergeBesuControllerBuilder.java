@@ -182,7 +182,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         isBlockAccessListEnabled,
-        metricsSystem);
+        metricsSystem,
+        evmConfiguration);
   }
 
   @Override

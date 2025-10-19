@@ -62,7 +62,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
             new XmlExtensionConfiguration(
                 refreshedParent.getLoggerContext(),
                 refreshedParent.getConfigurationSource().resetInputStream());
-        refreshed.createConsoleAppender();
+        createConsoleAppender();
         return refreshed;
       } catch (final IOException e) {
         LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
@@ -90,12 +90,11 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
       return;
     }
 
-    final boolean colorEnabled = getColorEnabled();
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
-            .withDisableAnsi(!colorEnabled)
-            .withNoConsoleNoAnsi(!colorEnabled)
+            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(!noColorSet()))
+            .withNoConsoleNoAnsi(!BesuCommand.getColorEnabled().orElse(false))
             .withPattern(
                 String.join(
                     SEP,
@@ -106,27 +105,9 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
                     colorize("%msgc%n%throwable")))
             .build();
     final ConsoleAppender consoleAppender =
-        ConsoleAppender.newBuilder()
-            .setName("Console")
-            .setTarget(ConsoleAppender.Target.SYSTEM_ERR)
-            .setLayout(patternLayout)
-            .build();
+        ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
     consoleAppender.start();
-
-    // Remove existing Console appender if present to avoid duplicate output
-    if (this.getRootLogger().getAppenders().containsKey("Console")) {
-      this.getRootLogger().removeAppender("Console");
-    }
-
     this.getRootLogger().addAppender(consoleAppender, null, null);
-  }
-
-  private boolean getColorEnabled() {
-    try {
-      return BesuCommand.getColorEnabled().orElse(!noColorSet());
-    } catch (NoClassDefFoundError | ExceptionInInitializerError e) {
-      return !noColorSet();
-    }
   }
 
   private static boolean noColorSet() {

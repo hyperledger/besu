@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+
 import java.util.Map;
 
 /**
@@ -27,15 +29,12 @@ public record TraceOptions(
     TracerType tracerType,
     OpCodeTracerConfig opCodeTracerConfig,
     Map<String, Object> tracerConfig) {
-  private static final OpCodeTracerConfig DEFAULT_OPCODE_TRACER_CONFIG =
-      new OpCodeTracerConfig(true, false, true);
-
   /**
    * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
    * specified.
    */
   public static final TraceOptions DEFAULT =
-      new TraceOptions(TracerType.OPCODE_TRACER, DEFAULT_OPCODE_TRACER_CONFIG, Map.of());
+      new TraceOptions(TracerType.OPCODE_TRACER, OpCodeTracerConfig.DEFAULT, Map.of());
 
   /**
    * Constructor for TraceOptions. The default tracer (opcode) options are specified by
@@ -53,7 +52,7 @@ public record TraceOptions(
       final Map<String, Object> tracerConfig) {
     this.tracerType = tracerType == null ? TracerType.OPCODE_TRACER : tracerType;
     this.opCodeTracerConfig =
-        opCodeTracerConfig == null ? DEFAULT_OPCODE_TRACER_CONFIG : opCodeTracerConfig;
+        opCodeTracerConfig == null ? OpCodeTracerConfig.DEFAULT : opCodeTracerConfig;
     this.tracerConfig = tracerConfig == null ? Map.of() : tracerConfig;
   }
 }
