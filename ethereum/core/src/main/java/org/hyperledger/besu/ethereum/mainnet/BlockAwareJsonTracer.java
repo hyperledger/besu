@@ -21,7 +21,9 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -38,13 +40,20 @@ import org.apache.tuweni.bytes.Bytes;
 public class BlockAwareJsonTracer implements BlockAwareOperationTracer {
   private final StringWriter stringWriter;
   private final PrintWriter printWriter;
-  private final StandardJsonTracer tracer;
+  private final StreamingOperationTracer tracer;
 
   public BlockAwareJsonTracer() {
     this.stringWriter = new StringWriter();
     this.printWriter = new PrintWriter(stringWriter);
 
-    this.tracer = new StandardJsonTracer(this.printWriter, false, true, false, false);
+    this.tracer =
+        new StreamingOperationTracer(
+            this.printWriter,
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceMemory(false)
+                .traceStack(true)
+                .traceStorage(false)
+                .build());
   }
 
   @Override
