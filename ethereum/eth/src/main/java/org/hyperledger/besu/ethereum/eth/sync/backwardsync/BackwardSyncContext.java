@@ -211,7 +211,6 @@ public class BackwardSyncContext {
     return exceptionallyCompose(
         prepareBackwardSyncFuture(),
         throwable -> {
-          //          backwardChain.clear();
           processException(throwable);
           return ethContext
               .getScheduler()
