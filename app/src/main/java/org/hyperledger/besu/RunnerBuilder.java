@@ -974,7 +974,8 @@ public class RunnerBuilder {
                   EthStatsConnectOptions.fromParams(
                       ethstatsOptions.getEthstatsUrl(),
                       ethstatsOptions.getEthstatsContact(),
-                      ethstatsOptions.getEthstatsCaCert()),
+                      ethstatsOptions.getEthstatsCaCert(),
+                      ethstatsOptions.getEthstatsReportInterval()),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,

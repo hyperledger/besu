@@ -243,6 +243,13 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetAmsterdamTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("amsterdamTime", 1670470144));
+    assertThat(config.getAmsterdamTime()).hasValue(1670470144);
+  }
+
+  @Test
   void shouldGetFutureEipsTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
     assertThat(config.getFutureEipsTime()).hasValue(1337);
@@ -282,6 +289,7 @@ class GenesisConfigOptionsTest {
     assertThat(config.getBpo3Time()).isEmpty();
     assertThat(config.getBpo4Time()).isEmpty();
     assertThat(config.getBpo5Time()).isEmpty();
+    assertThat(config.getAmsterdamTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
   }
@@ -447,42 +455,74 @@ class GenesisConfigOptionsTest {
   void asMapIncludesBlobFeeSchedule() {
     final GenesisConfigOptions config =
         GenesisConfig.fromConfig(
-                "{\n"
-                    + "  \"config\": {\n"
-                    + "    \"blobSchedule\": {\n"
-                    + "      \"cancun\": {\n"
-                    + "        \"target\": 1,\n"
-                    + "        \"max\": 2,\n"
-                    + "        \"baseFeeUpdateFraction\": 3\n"
-                    + "      },\n"
-                    + "      \"prague\": {\n"
-                    + "        \"target\": 4,\n"
-                    + "        \"max\": 5,\n"
-                    + "        \"baseFeeUpdateFraction\": 6\n"
-                    + "      },\n"
-                    + "      \"osaka\": {\n"
-                    + "        \"target\": 7,\n"
-                    + "        \"max\": 8,\n"
-                    + "        \"baseFeeUpdateFraction\": 9\n"
-                    + "      }\n"
-                    + "    }\n"
-                    + "  }\n"
-                    + "}")
+                """
+              {
+                "config": {
+                  "blobSchedule": {
+                    "cancun": {
+                      "target": 1,
+                      "max": 2,
+                      "baseFeeUpdateFraction": 3
+                    },
+                    "prague": {
+                      "target": 4,
+                      "max": 5,
+                      "baseFeeUpdateFraction": 6
+                    },
+                    "bpo1": {
+                      "target": 7,
+                      "max": 9,
+                      "baseFeeUpdateFraction": 10
+                    },
+                    "bpo2": {
+                      "target": 11,
+                      "max": 12,
+                      "baseFeeUpdateFraction": 13
+                    },
+                    "bpo3": {
+                      "target": 14,
+                      "max": 15,
+                      "baseFeeUpdateFraction": 16
+                    },
+                    "bpo4": {
+                      "target": 17,
+                      "max": 18,
+                      "baseFeeUpdateFraction": 19
+                    },
+                    "bpo5": {
+                      "target": 20,
+                      "max": 21,
+                      "baseFeeUpdateFraction": 22
+                    }
+                  }
+                }
+              }""")
             .getConfigOptions();
 
     final Map<String, Object> map = config.asMap();
     assertThat(map).containsOnlyKeys("blobSchedule");
     final Map<String, Object> blobSchedule = (Map<String, Object>) map.get("blobSchedule");
-    assertThat(blobSchedule).containsOnlyKeys("cancun", "prague", "osaka");
-    assertThat((Map<String, Object>) blobSchedule.get("cancun"))
+    assertThat(blobSchedule)
+        .containsOnlyKeys("cancun", "prague", "bpo1", "bpo2", "bpo3", "bpo4", "bpo5");
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("cancun"), 1, 2, 3);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("prague"), 4, 5, 6);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("bpo1"), 7, 9, 10);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("bpo2"), 11, 12, 13);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("bpo3"), 14, 15, 16);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("bpo4"), 17, 18, 19);
+    assertBlobDefinition((Map<String, Object>) blobSchedule.get("bpo5"), 20, 21, 22);
+  }
+
+  private void assertBlobDefinition(
+      final Map<String, Object> blobDefinitionMap,
+      final int expectedTarget,
+      final int expectedMax,
+      final int expectedBaseFeeUpdateFraction) {
+    assertThat(blobDefinitionMap)
         .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
-        .containsValues(1, 2, 3);
-    assertThat((Map<String, Object>) blobSchedule.get("prague"))
-        .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
-        .containsValues(4, 5, 6);
-    assertThat((Map<String, Object>) blobSchedule.get("osaka"))
-        .containsOnlyKeys("target", "max", "baseFeeUpdateFraction")
-        .containsValues(7, 8, 9);
+        .containsEntry("target", expectedTarget)
+        .containsEntry("max", expectedMax)
+        .containsEntry("baseFeeUpdateFraction", expectedBaseFeeUpdateFraction);
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {

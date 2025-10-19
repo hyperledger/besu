@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -67,11 +67,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class BlockchainReferenceTestTools {
 
   private static final List<String> NETWORKS_TO_RUN;
+  private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
 
   static {
     final String networks =
@@ -81,6 +81,7 @@ public class BlockchainReferenceTestTools {
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
                 + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
+    PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
   }
 
   private static final JsonTestParameters<?, ?> params =
@@ -137,8 +138,7 @@ public class BlockchainReferenceTestTools {
             .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
-    final ProtocolSchedule schedule =
-        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
+    final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();

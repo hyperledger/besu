@@ -303,8 +303,8 @@ public class BlockHeader extends SealableBlockHeader
             if (requestsHash == null) break;
             out.writeBytes(requestsHash);
 
-            if (balHash == null) break;
-            out.writeBytes(balHash);
+            if (blockAccessListHash == null) break;
+            out.writeBytes(blockAccessListHash);
           } while (false);
           out.endList();
         });
@@ -491,8 +491,8 @@ public class BlockHeader extends SealableBlockHeader
     if (requestsHash != null) {
       sb.append("requestsHash=").append(requestsHash).append(", ");
     }
-    if (balHash != null) {
-      sb.append("balHash=").append(balHash);
+    if (blockAccessListHash != null) {
+      sb.append("blockAccessListHash=").append(blockAccessListHash);
     }
     return sb.append("}").toString();
   }
