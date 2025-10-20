@@ -33,7 +33,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -172,7 +174,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
-        @JsonProperty("hash") final String hash) {
+        @JsonProperty("hash") final String hash,
+        @JsonProperty("blockAccessListHash") final String blockAccessListHash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
@@ -199,7 +202,7 @@ public class BlockchainReferenceTestCaseSpec {
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
-          null,
+          blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -248,7 +251,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositRequests") final Object depositRequests,
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
-        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence) {
+        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence,
+        @JsonProperty("blockAccessList") final Object blockAccessList) {
       boolean blockValid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -288,13 +292,18 @@ public class BlockchainReferenceTestCaseSpec {
       input.enterList();
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-      final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
+      final List<Transaction> transactions = input.readList(Transaction::readFrom);
+      final List<BlockHeader> ommers =
+          input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions));
+      final Optional<List<Withdrawal>> withdrawals =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(input.readList(Withdrawal::readFrom));
+      final Optional<BlockAccessList> blockAccessList =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(BlockAccessListDecoder.decode(input));
+      final BlockBody body = new BlockBody(transactions, ommers, withdrawals, blockAccessList);
       return new Block(header, body);
     }
   }

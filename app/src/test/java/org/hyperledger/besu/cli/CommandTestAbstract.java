@@ -30,11 +30,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
@@ -105,6 +107,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -223,6 +226,7 @@ public abstract class CommandTestAbstract {
   protected BesuComponent mockBesuComponent;
 
   @Mock protected RlpBlockExporter rlpBlockExporter;
+  @Mock protected Era1BlockExporter era1BlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected Era1BlockImporter era1BlockImporter;
@@ -250,6 +254,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor protected ArgumentCaptor<Long> longArgumentCaptor;
+  @Captor protected ArgumentCaptor<Boolean> booleanArgumentCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -304,6 +309,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlockHeaders(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isCacheLastBlockHeadersPreloadEnabled(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.apiConfiguration(any())).thenReturn(mockControllerBuilder);
@@ -476,6 +483,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -489,6 +497,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -502,6 +511,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -546,6 +556,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -558,6 +569,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,
@@ -644,6 +656,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -656,6 +669,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,
@@ -678,6 +692,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -690,6 +705,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,

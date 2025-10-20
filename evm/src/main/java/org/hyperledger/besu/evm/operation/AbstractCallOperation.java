@@ -204,7 +204,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.clearReturnData();
 
     final Account account = getAccount(frame.getRecipientAddress(), frame);
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(frame.getRecipientAddress()));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(frame.getRecipientAddress()));
 
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
 
@@ -274,8 +274,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
     final long outputDataLength = outputDataLength(frame);
-    final Account recipient = getAccount(address(frame), frame);
-    final Address to = to(frame);
+    final Address recipientAddress = address(frame);
     GasCalculator gasCalculator = gasCalculator();
 
     return gasCalculator.callOperationGasCost(
@@ -286,8 +285,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         outputDataOffset,
         outputDataLength,
         value(frame),
-        recipient,
-        to,
+        recipientAddress,
         accountIsWarm);
   }
 
@@ -351,7 +349,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     final Hash codeHash = account.getCodeHash();
-    frame.getEip7928AccessList().ifPresent(t -> t.addAccount(account.getAddress()));
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
       return CodeV0.EMPTY_CODE;
     }
