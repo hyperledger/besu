@@ -379,7 +379,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     blockCreationTasks.computeIfPresent(
         payloadId,
         (pid, task) -> {
-          task.blockCreator.cancel();
+          task.cancel();
           LOG.debug("Signaled block creator to cancel gracefully for payload {}", payloadId);
           return task;
         });
@@ -560,12 +560,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private void evaluateNewBlock(
       final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
 
-    if (isBlockCreationCancelled(payloadIdentifier)) return;
-
     final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
-
-      if (isBlockCreationCancelled(payloadIdentifier)) return;
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
