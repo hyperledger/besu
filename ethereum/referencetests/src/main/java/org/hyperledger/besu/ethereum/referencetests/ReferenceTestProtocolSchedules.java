@@ -38,6 +38,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Loads all available protocol schedules into memory and lets users select the appropriate one.
+ * Beware of the high memory usage and object allocation cost since **all** protocol schedules will
+ * be created and initialized for each created instance. This might cause your tests to slow down.
+ */
 public class ReferenceTestProtocolSchedules {
 
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
@@ -56,13 +61,8 @@ public class ReferenceTestProtocolSchedules {
           "eip158",
           "eip158tobyzantiumat5");
 
-  private static ReferenceTestProtocolSchedules INSTANCE;
-
-  public static ReferenceTestProtocolSchedules getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = create(new StubGenesisConfigOptions(), EvmConfiguration.DEFAULT);
-    }
-    return INSTANCE;
+  public static ReferenceTestProtocolSchedules create() {
+    return create(new StubGenesisConfigOptions(), EvmConfiguration.DEFAULT);
   }
 
   public static ReferenceTestProtocolSchedules create(final EvmConfiguration evmConfiguration) {
