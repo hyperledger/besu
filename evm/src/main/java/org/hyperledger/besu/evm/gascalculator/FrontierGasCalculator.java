@@ -295,8 +295,7 @@ public class FrontierGasCalculator implements GasCalculator {
       final long outputDataOffset,
       final long outputDataLength,
       final Wei transferValue,
-      final Account recipient,
-      final Address to,
+      final Address recipientAddress,
       final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
@@ -311,6 +310,7 @@ public class FrontierGasCalculator implements GasCalculator {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
+    final Account recipient = frame.getWorldUpdater().get(recipientAddress);
     if (recipient == null) {
       cost = clampedAdd(cost, newAccountGasCost());
     }
