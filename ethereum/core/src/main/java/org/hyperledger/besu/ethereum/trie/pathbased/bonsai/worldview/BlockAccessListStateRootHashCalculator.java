@@ -32,17 +32,10 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BlockAccessListStateRootHashCalculator {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BlockAccessListStateRootHashCalculator.class);
 
   private BlockAccessListStateRootHashCalculator() {}
 
@@ -112,31 +105,11 @@ public class BlockAccessListStateRootHashCalculator {
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final BlockAccessList bal) {
-
-    final BonsaiWorldState ws = prepareWorldState(protocolContext, blockHeader);
-
-    final Supplier<Hash> task =
+    return CompletableFuture.supplyAsync(
         () -> {
-          return accumulateAccessListAndComputeRoot(ws, bal);
-        };
-
-    final BiConsumer<? super Hash, ? super Throwable> finalHandler =
-        (ignored, thrown) -> {
-          try {
-            ws.close();
-          } catch (final Exception closeEx) {
-            if (thrown == null) {
-              LOG.warn(
-                  "Failed to close BonsaiWorldState after successful BAL-based state root computation",
-                  closeEx);
-            } else {
-              LOG.warn(
-                  "Suppressed close() failure after BAL-based state root computation error",
-                  closeEx);
-            }
+          try (BonsaiWorldState ws = prepareWorldState(protocolContext, blockHeader)) {
+            return accumulateAccessListAndComputeRoot(ws, bal);
           }
-        };
-
-    return CompletableFuture.supplyAsync(task).whenComplete(finalHandler);
+        });
   }
 }

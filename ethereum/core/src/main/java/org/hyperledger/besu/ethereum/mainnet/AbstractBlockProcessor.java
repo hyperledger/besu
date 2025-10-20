@@ -180,7 +180,25 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .getBlockAccessListFactory()
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
     Optional<CompletableFuture<Hash>> maybeStateRootFuture = Optional.empty();
+    if (protocolSpec
+        .getBlockAccessListFactory()
+        .filter(BlockAccessListFactory::isEnabled)
+        .isPresent()) {
+      if (blockBody.getBlockAccessList().isPresent()) {
+        maybeStateRootFuture =
+            (worldState instanceof BonsaiWorldState)
+                ? Optional.of(
+                    BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+                        protocolContext, blockHeader, blockBody.getBlockAccessList().get()))
+                : Optional.empty();
+      } else {
+        final String errorMessage = "BALs enabled but BAL not found in block body";
+        LOG.error(errorMessage);
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
+      }
+    }
 
     final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -401,12 +419,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           }
         }
         maybeBlockAccessList = Optional.of(bal);
-        maybeStateRootFuture =
-            (worldState instanceof BonsaiWorldState)
-                ? Optional.of(
-                    BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
-                        protocolContext, blockHeader, bal))
-                : Optional.empty();
       } else {
         maybeBlockAccessList = Optional.empty();
       }
