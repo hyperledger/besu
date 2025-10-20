@@ -70,3 +70,5 @@ To learn how to run the tests and enable opcode-level JSON tracing for debugging
 [Besu User Documentation]: https://besu.hyperledger.org
 [Besu channel on Discord]: https://discord.com/invite/hyperledger
 [Contributing Guidelines]: CONTRIBUTING.md
+## Privacy Features Intro
+Besu's privacy tools (TEE and ZKPs) protect enterprise data—start with the Orion mode tutorial for private transactions! 🚀
