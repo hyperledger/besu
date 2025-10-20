@@ -59,6 +59,10 @@ public class DebugOperationTracer implements OperationTracer {
   private int pc;
   private int depth;
 
+  // Flags used for implementing traceOpcodes functionality
+  private boolean traceOpcode;
+  private Operation previousOpcode = null;
+
   /**
    * Creates the operation tracer.
    *
@@ -74,8 +78,7 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePreExecution(final MessageFrame frame) {
     final Operation currentOperation = frame.getCurrentOperation();
-    if (!options.traceOpcodes().isEmpty()
-        && !options.traceOpcodes().contains(currentOperation.getName().toLowerCase(Locale.ROOT))) {
+    if (!(traceOpcode = traceOpcode(currentOperation))) {
       return;
     }
     preExecutionStack = captureStack(frame);
@@ -87,12 +90,28 @@ public class DebugOperationTracer implements OperationTracer {
     depth = frame.getDepth();
   }
 
+  private boolean traceOpcode(final Operation currentOpcode) {
+    if (options.traceOpcodes().isEmpty()) {
+      return true;
+    }
+    final boolean traceCurrentOpcode =
+        options.traceOpcodes().contains(currentOpcode.getName().toLowerCase(Locale.ROOT));
+    final boolean tracePreviousOpcode =
+        previousOpcode != null
+            && options.traceOpcodes().contains(previousOpcode.getName().toLowerCase(Locale.ROOT));
+
+    if (!traceCurrentOpcode && !tracePreviousOpcode) {
+      return false;
+    }
+    previousOpcode = currentOpcode;
+    return true;
+  }
+
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
-    if (!options.traceOpcodes().isEmpty()
-        && !options.traceOpcodes().contains(opcode.toLowerCase(Locale.ROOT))) {
+    if (!options.traceOpcodes().isEmpty() && !traceOpcode) {
       return;
     }
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;

@@ -52,6 +52,10 @@ public class StreamingOperationTracer implements OperationTracer {
   private int functionDepth;
   private String storageString;
 
+  // Flags used for implementing traceOpcodes functionality
+  private boolean traceOpcode;
+  private Operation previousOpcode = null;
+
   /**
    * Instantiates a new StreamingOperationTracer
    *
@@ -102,10 +106,7 @@ public class StreamingOperationTracer implements OperationTracer {
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    if (!opCodeTracerConfig.traceOpcodes().isEmpty()
-        && !opCodeTracerConfig
-            .traceOpcodes()
-            .contains(currentOp.getName().toLowerCase(Locale.ROOT))) {
+    if (!(traceOpcode = traceOpcode(currentOp))) {
       return;
     }
     stack = new ArrayList<>(messageFrame.stackSize());
@@ -153,14 +154,32 @@ public class StreamingOperationTracer implements OperationTracer {
     storageString = sb.toString();
   }
 
+  private boolean traceOpcode(final Operation currentOpcode) {
+    if (opCodeTracerConfig.traceOpcodes().isEmpty()) {
+      return true;
+    }
+    final boolean traceCurrentOpcode =
+        opCodeTracerConfig
+            .traceOpcodes()
+            .contains(currentOpcode.getName().toLowerCase(Locale.ROOT));
+    final boolean tracePreviousOpcode =
+        previousOpcode != null
+            && opCodeTracerConfig
+                .traceOpcodes()
+                .contains(previousOpcode.getName().toLowerCase(Locale.ROOT));
+
+    if (!traceCurrentOpcode && !tracePreviousOpcode) {
+      return false;
+    }
+    previousOpcode = currentOpcode;
+    return true;
+  }
+
   @Override
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    if (!opCodeTracerConfig.traceOpcodes().isEmpty()
-        && !opCodeTracerConfig
-            .traceOpcodes()
-            .contains(currentOp.getName().toLowerCase(Locale.ROOT))) {
+    if (!opCodeTracerConfig.traceOpcodes().isEmpty() && !traceOpcode) {
       return;
     }
     if (currentOp.isVirtualOperation()) {

@@ -37,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -140,24 +141,41 @@ public class DebugTraceTransactionIntegrationTest {
 
   @Test
   public void debugTraceTransactionSpecificOpcodes() {
-    final Map<String, List<String>> map = Map.of("opcodes", Arrays.asList("EQ", "DIV"));
+    final ObjectMapper jsonMapper = new ObjectMapper();
     final Hash trxHash =
         Hash.fromHexString("0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
+
+    // Get response with defaults first to take expected JSON
+    JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, List.of(trxHash).toArray()));
+    Object result = ((JsonRpcSuccessResponse) method.response(request)).getResult();
+    final List<StructLog> defaultLogs = ((OpCodeLoggerTracerResult) result).getStructLogs();
+
+    final AtomicReference<String> previousOpName = new AtomicReference<>();
+    final List<JsonNode> expectedJson =
+        defaultLogs.stream()
+            .filter(
+                log -> {
+                  final boolean keep =
+                      "EQ".equals(log.op())
+                          || "EQ".equals(previousOpName.get())
+                          || "DIV".equals(log.op())
+                          || "DIV".equals(previousOpName.get());
+                  previousOpName.set(log.op());
+                  return keep;
+                })
+            .<JsonNode>map(jsonMapper::valueToTree)
+            .toList();
+
+    // Get response that we will assert on
+    final Map<String, List<String>> map = Map.of("opcodes", Arrays.asList("EQ", "DIV"));
     final Object[] params = new Object[] {trxHash, map};
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
-    final Object result = ((JsonRpcSuccessResponse) method.response(request)).getResult();
-
-    List<StructLog> logs = ((OpCodeLoggerTracerResult) result).getStructLogs();
-
-    ObjectMapper jsonMapper = new ObjectMapper();
+    request = new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
+    result = ((JsonRpcSuccessResponse) method.response(request)).getResult();
+    final List<StructLog> logs = ((OpCodeLoggerTracerResult) result).getStructLogs();
     List<JsonNode> json = logs.stream().<JsonNode>map(jsonMapper::valueToTree).toList();
 
-    assertThat(json)
-        .allMatch(
-            node ->
-                node.equals(json.getLast())
-                    || "EQ".equals(node.get("op").asText())
-                    || "DIV".equals(node.get("op").asText()));
+    assertThat(json).containsAll(expectedJson);
   }
 }
