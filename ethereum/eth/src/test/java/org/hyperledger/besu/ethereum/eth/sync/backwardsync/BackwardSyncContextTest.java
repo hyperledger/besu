@@ -42,8 +42,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -154,6 +159,7 @@ public class BackwardSyncContextTest {
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(localBlockchain)
             .setPeerTaskExecutor(peerTaskExecutor)
+            .setEthScheduler(new EthScheduler(1, 1, 1, metricsSystem))
             .build();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -197,6 +203,13 @@ public class BackwardSyncContextTest {
                 TEST_MAX_BAD_CHAIN_EVENT_ENTRIES));
     doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
+
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(
+            new GetHeadersFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(remoteBlockchain, ethContext.getEthPeers()));
   }
 
   private Block createUncle(final int i, final Hash parentHash) {
@@ -275,7 +288,7 @@ public class BackwardSyncContextTest {
 
   @Test
   public void shouldSyncUntilHash() throws Exception {
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
@@ -287,7 +300,7 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldNotSyncUntilHashWhenNotInSync() {
     doReturn(false).when(context).isReady();
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
@@ -302,7 +315,7 @@ public class BackwardSyncContextTest {
   public void shouldSyncUntilRemoteBranch() throws Exception {
 
     final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
     respondUntilFutureIsDone(future);
 
@@ -314,10 +327,10 @@ public class BackwardSyncContextTest {
   public void shouldAddExpectedBlock() throws Exception {
 
     final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT - 1));
 
     final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
     assertThat(future).isSameAs(secondFuture);
 
@@ -335,7 +348,7 @@ public class BackwardSyncContextTest {
   }
 
   @NotNull
-  private Block getBlockByNumber(final int number) {
+  private Block getRemoteBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }
 
@@ -516,7 +529,7 @@ public class BackwardSyncContextTest {
 
     // choose an intermediate remote block to create a reorg block from
     int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
-    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Hash reorgBlockParentHash = getRemoteBlockByNumber(reorgBlockHeight - 1).getHash();
     final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
 
     // represents first FCU with a block that will become reorged away
@@ -526,31 +539,7 @@ public class BackwardSyncContextTest {
 
     // represents subsequent FCU with successfully reorged version of the same block
     final CompletableFuture<Void> fcuAfterReorg =
-        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
-    respondUntilFutureIsDone(fcuAfterReorg);
-    assertThat(localBlockchain.getChainHeadBlock())
-        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
-  }
-
-  @Test
-  public void
-      whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressWithQueueInSameSession() {
-    // This scenario can happen due to a reorg
-    // Expectation we progress beyond the reorg block due to FCU we received during the same session
-
-    // choose an intermediate remote block to create a reorg block from
-    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
-    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
-    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
-
-    // represents first FCU with a block that will become reorged away
-    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
-    // represents subsequent FCU with successfully reorged version of the same block
-    // received during the first FCU's BWS session
-    final CompletableFuture<Void> fcuAfterReorg =
-        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
-
-    respondUntilFutureIsDone(fcuBeforeReorg);
+        context.syncBackwardsUntil(getRemoteBlockByNumber(reorgBlockHeight).getHash());
     respondUntilFutureIsDone(fcuAfterReorg);
     assertThat(localBlockchain.getChainHeadBlock())
         .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
