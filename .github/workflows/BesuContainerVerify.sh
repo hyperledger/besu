@@ -19,7 +19,7 @@ VERSION=${VERSION}
 TAG=${TAG}
 CHECK_LATEST=${CHECK_LATEST}
 RETRY=${RETRY:-10}
-SLEEP=${SLEEP:-5}
+SLEEP=${SLEEP:-8}
 
 # Helper function to throw error
 log_error() {
@@ -42,8 +42,8 @@ do
     _SUCCESS=true
     continue
   }
-  echo "Waiting for the besu to start. Remaining retries $RETRY ..."
   RETRY=$(expr $RETRY - 1)
+  echo "Waiting for the besu to start. Remaining retries $RETRY ..."
   sleep $SLEEP
 done
 
