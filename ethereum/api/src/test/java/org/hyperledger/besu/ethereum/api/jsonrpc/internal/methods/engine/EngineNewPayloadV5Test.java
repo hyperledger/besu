@@ -16,7 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+<<<<<<< HEAD
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+=======
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -69,17 +73,29 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   private static final String INVALID_BLOCK_ACCESS_LIST_ENCODING = "0xzz";
   private static final String INVALID_BLOCK_ACCESS_LIST_RLP = "0x01";
 
+<<<<<<< HEAD
   private final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
       new ScheduledProtocolSpec.Hardfork("Amsterdam", 80);
+=======
+  private final ScheduledProtocolSpec.Hardfork futureEipsHardfork =
+      new ScheduledProtocolSpec.Hardfork("FutureEips", 80);
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
 
   @BeforeEach
   @Override
   public void before() {
     super.before();
+<<<<<<< HEAD
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(amsterdamHardfork));
     lenient()
         .when(protocolSchedule.milestoneFor(AMSTERDAM))
         .thenReturn(Optional.of(amsterdamHardfork.milestone()));
+=======
+    lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(futureEipsHardfork));
+    lenient()
+        .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
+        .thenReturn(Optional.of(futureEipsHardfork.milestone()));
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     lenient().when(protocolSpec.getRequestsValidator()).thenReturn(new MainnetRequestsValidator());
     this.method =
@@ -95,7 +111,11 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
 
   @Override
   protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
+<<<<<<< HEAD
     return Set.of(amsterdamHardfork);
+=======
+    return Set.of(futureEipsHardfork);
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
   }
 
   @Override
@@ -200,7 +220,11 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   @Override
   protected BlockHeader createValidBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createActivationBlockHeaderFixture(maybeWithdrawals)
+<<<<<<< HEAD
         .timestamp(amsterdamHardfork.milestone())
+=======
+        .timestamp(futureEipsHardfork.milestone())
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
         .buildHeader();
   }
 
@@ -210,7 +234,11 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
     final BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
+<<<<<<< HEAD
             .timestamp(amsterdamHardfork.milestone() - 2)
+=======
+            .timestamp(futureEipsHardfork.milestone() - 2)
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
@@ -232,7 +260,11 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   @Override
   protected BlockHeader createPreActivationBlockHeader() {
     return createActivationBlockHeaderFixture(Optional.empty())
+<<<<<<< HEAD
         .timestamp(amsterdamHardfork.milestone() - 1)
+=======
+        .timestamp(futureEipsHardfork.milestone() - 1)
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
         .buildHeader();
   }
 

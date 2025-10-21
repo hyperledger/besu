@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+<<<<<<< HEAD
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+=======
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -37,7 +41,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
 
+<<<<<<< HEAD
   private final Optional<Long> amsterdamMilestone;
+=======
+  private final Optional<Long> futureEipsMilestone;
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
 
   public EngineNewPayloadV5(
       final Vertx vertx,
@@ -55,7 +63,11 @@ public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
         ethPeers,
         engineCallListener,
         metricsSystem);
+<<<<<<< HEAD
     amsterdamMilestone = timestampSchedule.milestoneFor(AMSTERDAM);
+=======
+    futureEipsMilestone = timestampSchedule.milestoneFor(FUTURE_EIPS);
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
   }
 
   @Override
@@ -111,6 +123,11 @@ public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+<<<<<<< HEAD
     return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
+=======
+    return ForkSupportHelper.validateForkSupported(
+        FUTURE_EIPS, futureEipsMilestone, blockTimestamp);
+>>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
   }
 }
