@@ -74,7 +74,11 @@ public class MergeProtocolSchedule {
         0L,
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
+<<<<<<< HEAD
                 specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
+=======
+                specBuilder, config.getChainId(), miningConfiguration));
+>>>>>>> 828226b25 (Provide slot time via protocol schedule (#9257))
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -100,8 +104,12 @@ public class MergeProtocolSchedule {
   private static ProtocolSpecBuilder applyParisSpecificModifications(
       final ProtocolSpecBuilder specBuilder,
       final Optional<BigInteger> chainId,
+<<<<<<< HEAD
       final MiningConfiguration miningConfiguration,
       final EvmConfiguration evmConfiguration) {
+=======
+      final MiningConfiguration miningConfiguration) {
+>>>>>>> 828226b25 (Provide slot time via protocol schedule (#9257))
 
     return specBuilder
         .evmBuilder(
