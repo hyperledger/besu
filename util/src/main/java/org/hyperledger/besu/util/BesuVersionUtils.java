@@ -24,12 +24,15 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represent Besu information such as version, OS etc. Used with --version option and during Besu
  * start.
  */
 public final class BesuVersionUtils {
+  private static final Logger LOG = LoggerFactory.getLogger(BesuVersionUtils.class);
   private static final String CLIENT = "besu";
   private static final String VERSION;
   private static final String OS = PlatformDetector.getOS();
@@ -61,7 +64,10 @@ public final class BesuVersionUtils {
           implVersion = attributes.getValue("Implementation-Version");
         }
       } catch (Exception ignored) {
-        commit = null;
+        LOG.warn(
+            "Partial or missing Besu version metadata, commit: {} version: {}",
+            Optional.ofNullable(commit).orElse("NONE/null"),
+            Optional.ofNullable(implVersion).orElse("NONE/null"));
       }
     }
     COMMIT = commit;
