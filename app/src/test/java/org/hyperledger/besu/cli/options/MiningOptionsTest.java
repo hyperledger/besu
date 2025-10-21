@@ -491,7 +491,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   private MiningConfiguration runtimeConfiguration(
       final TestBesuCommand besuCommand, final MiningConfiguration miningConfiguration) {
-    if (besuCommand.getGenesisConfigOptions().isPoa()) {
+    if (besuCommand.getGenesisConfigService().isPoaConsensus()) {
       miningConfiguration.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
     }
     return miningConfiguration;

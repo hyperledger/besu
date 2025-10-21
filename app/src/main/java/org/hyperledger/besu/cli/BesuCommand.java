@@ -88,8 +88,7 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
-import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfigService;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.controller.BesuController;
@@ -216,7 +215,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.GroupPrincipal;
@@ -233,7 +231,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
@@ -343,10 +340,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
-      Suppliers.memoize(this::readGenesisConfig);
-  private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
-      Suppliers.memoize(this::readGenesisConfigOptions);
+  private GenesisConfigService genesisConfigService;
   private final Supplier<MiningConfiguration> miningParametersSupplier =
       Suppliers.memoize(this::getMiningParameters);
   private final Supplier<ApiConfiguration> apiConfigurationSupplier =
@@ -907,6 +901,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         System.exit(0); // Exit before any services are started
       }
 
+      genesisConfigService = createGenesisConfigService();
+
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
@@ -1406,17 +1402,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
-    if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getOsakaTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getBpo1Time().isPresent()
-        || genesisConfigOptionsSupplier.get().getBpo2Time().isPresent()
-        || genesisConfigOptionsSupplier.get().getBpo3Time().isPresent()
-        || genesisConfigOptionsSupplier.get().getBpo4Time().isPresent()
-        || genesisConfigOptionsSupplier.get().getBpo5Time().isPresent()
-        || genesisConfigOptionsSupplier.get().getAmsterdamTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
+    if (genesisConfigService.hasKzgFork()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1487,7 +1473,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateTransactionPoolOptions() {
-    transactionPoolOptions.validate(commandLine, genesisConfigOptionsSupplier.get());
+    transactionPoolOptions.validate(commandLine, genesisConfigService.getGenesisConfigOptions());
   }
 
   private void validateDataStorageOptions() {
@@ -1496,7 +1482,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateMiningParams() {
     miningOptions.validate(
-        commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
+        commandLine, genesisConfigService.getGenesisConfigOptions(), isMergeEnabled(), logger);
   }
 
   private void validateP2POptions() {
@@ -1584,55 +1570,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     Long chainDataPruningBlocksRetained =
         unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       if (chainDataPruningBlocksRetained
           < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
         throw new ParameterException(
             this.commandLine,
             "--Xchain-pruning-blocks-retained must be >= "
                 + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
-      } else if (genesisConfigOptions.isPoa()) {
-        long epochLength = 0L;
-        String consensusMechanism = "";
-        if (genesisConfigOptions.isIbft2()) {
-          epochLength = genesisConfigOptions.getBftConfigOptions().getEpochLength();
-          consensusMechanism = "IBFT2";
-        } else if (genesisConfigOptions.isQbft()) {
-          epochLength = genesisConfigOptions.getQbftConfigOptions().getEpochLength();
-          consensusMechanism = "QBFT";
-        } else if (genesisConfigOptions.isClique()) {
-          epochLength = genesisConfigOptions.getCliqueConfigOptions().getEpochLength();
-          consensusMechanism = "Clique";
-        }
-        if (chainDataPruningBlocksRetained < epochLength) {
-          throw new ParameterException(
-              this.commandLine,
-              String.format(
-                  "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
-                  chainDataPruningBlocksRetained, epochLength, consensusMechanism));
+      } else if (genesisConfigService.isPoaConsensus()) {
+        final var epochLengthOpt = genesisConfigService.getPoaEpochLength();
+        if (epochLengthOpt.isPresent()) {
+          final long epochLength = epochLengthOpt.getAsLong();
+          if (chainDataPruningBlocksRetained < epochLength) {
+            throw new ParameterException(
+                this.commandLine,
+                String.format(
+                    "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
+                    chainDataPruningBlocksRetained,
+                    epochLength,
+                    genesisConfigService.getConsensusMechanism()));
+          }
         }
       }
-    }
-  }
-
-  private GenesisConfig readGenesisConfig() {
-    GenesisConfig effectiveGenesisFile;
-    effectiveGenesisFile =
-        network.equals(EPHEMERY)
-            ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
-            : genesisFile != null
-                ? GenesisConfig.fromSource(genesisConfigSource(genesisFile))
-                : GenesisConfig.fromResource(
-                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
-    return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
-  }
-
-  private GenesisConfigOptions readGenesisConfigOptions() {
-    try {
-      return genesisConfigSupplier.get().getConfigOptions();
-    } catch (final Exception e) {
-      throw new ParameterException(
-          this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
   }
 
@@ -1981,7 +1939,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .from(txPoolConf)
             .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
 
-    if (genesisConfigOptionsSupplier.get().isZeroBaseFee()) {
+    if (genesisConfigService.getGenesisConfigOptions().isZeroBaseFee()) {
       logger.warn(
           "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
@@ -2020,8 +1978,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MiningConfiguration getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
-    getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
-        .ifPresent(miningParameters::setBlockPeriodSeconds);
+    genesisConfigService.getBlockPeriodSeconds().ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
 
     return miningParameters;
@@ -2086,23 +2043,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
     new MiningParametersMetrics(getMetricsSystem(), miningConfiguration);
-  }
-
-  private OptionalInt getGenesisBlockPeriodSeconds(
-      final GenesisConfigOptions genesisConfigOptions) {
-    if (genesisConfigOptions.isClique()) {
-      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
-    }
-
-    if (genesisConfigOptions.isIbft2()) {
-      return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
-    }
-
-    if (genesisConfigOptions.isQbft()) {
-      return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
-    }
-
-    return OptionalInt.empty();
   }
 
   // Blockchain synchronization from peers.
@@ -2225,8 +2165,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // If no chain id is found in the genesis, use mainnet network id
         try {
           builder.setNetworkId(
-              genesisConfigOptionsSupplier
-                  .get()
+              genesisConfigService
+                  .getGenesisConfigOptions()
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).networkId()));
         } catch (final DecodeException e) {
@@ -2246,7 +2186,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfig(genesisConfigSupplier.get());
+    builder.setGenesisConfig(genesisConfigService.getGenesisConfig());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
@@ -2260,7 +2200,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
       final Optional<String> discoveryDnsUrlFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
+          genesisConfigService.getGenesisConfigOptions().getDiscoveryOptions().getDiscoveryDnsUrl();
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
@@ -2279,7 +2219,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else {
       final Optional<List<String>> bootNodesFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
+          genesisConfigService.getGenesisConfigOptions().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
         listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
       }
@@ -2294,12 +2234,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return builder.build();
   }
 
-  private URL genesisConfigSource(final File genesisFile) {
-    try {
-      return genesisFile.toURI().toURL();
-    } catch (final IOException e) {
-      throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis URL %s.", genesisFile), e);
+  /**
+   * Creates a GenesisConfigService instance based on the current configuration. This service
+   * handles loading genesis files and automatically detects and transforms Geth-format genesis
+   * files to Besu format.
+   *
+   * @return a new GenesisConfigService instance
+   */
+  private GenesisConfigService createGenesisConfigService() {
+    if (network.equals(EPHEMERY)) {
+      final var config = EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides);
+      return GenesisConfigService.fromGenesisConfig(config);
+    } else if (genesisFile != null) {
+      return GenesisConfigService.fromFile(genesisFile, genesisConfigOverrides);
+    } else {
+      return GenesisConfigService.fromResource(
+          Optional.ofNullable(network).orElse(MAINNET).getGenesisFile(), genesisConfigOverrides);
     }
   }
 
@@ -2511,21 +2461,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile == null) {
       return Optional.empty();
     }
-    return genesisConfigOptionsSupplier.get().getEcCurve();
+    return genesisConfigService.getEcCurve();
   }
 
   /**
-   * Return the genesis config options
+   * Return the genesis config service
    *
-   * @return the genesis config options
+   * @return the genesis config service
    */
-  protected GenesisConfigOptions getGenesisConfigOptions() {
-    return genesisConfigOptionsSupplier.get();
+  protected GenesisConfigService getGenesisConfigService() {
+    return genesisConfigService;
   }
 
   private void setMergeConfigOptions() {
     MergeConfiguration.setMergeEnabled(
-        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty().isPresent());
+        genesisConfigService.getGenesisConfigOptions().getTerminalTotalDifficulty().isPresent());
   }
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
@@ -2540,9 +2490,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty =
-        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty();
+        genesisConfigService.getGenesisConfigOptions().getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfigOptionsSupplier.get().getCheckpointOptions();
+        genesisConfigService.getGenesisConfigOptions().getCheckpointOptions();
     if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(
