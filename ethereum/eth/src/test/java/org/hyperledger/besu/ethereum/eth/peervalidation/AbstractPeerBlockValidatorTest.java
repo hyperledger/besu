@@ -74,9 +74,7 @@ public abstract class AbstractPeerBlockValidatorTest {
                 Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
-                Optional.empty(),
-                PeerTaskExecutorResponseCode.TIMEOUT,
-                List.of(peer)));
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, List.of(peer)));
 
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), peer);
@@ -99,7 +97,9 @@ public abstract class AbstractPeerBlockValidatorTest {
     final int peerCount = 24;
     final List<EthPeer> otherPeers =
         Stream.generate(
-                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer())
+                () ->
+                    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber)
+                        .getEthPeer())
             .limit(peerCount)
             .toList();
     final EthPeer targetPeer =
@@ -123,8 +123,7 @@ public abstract class AbstractPeerBlockValidatorTest {
         validator.validatePeer(ethProtocolManager.ethContext(), targetPeer);
 
     Mockito.verify(peerTaskExecutor)
-        .executeAgainstPeer(
-            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer));
+        .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer));
     Mockito.verifyNoMoreInteractions(peerTaskExecutor);
     assertThat(result).isDone();
   }
