@@ -19,6 +19,7 @@
 - Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
 - Update netty [#9330](https://github.com/hyperledger/besu/pull/9330)
 - Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
+- Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
 
 ### Bug fixes
 
