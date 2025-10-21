@@ -38,23 +38,27 @@ public final class BesuVersionUtils {
 
   static {
     String className = BesuVersionUtils.class.getSimpleName() + ".class";
-    String classPath = BesuVersionUtils.class.getResource(className).toString();
+    String classPath = Optional.ofNullable(BesuVersionUtils.class.getResource(className))
+        .map(URL::toString).orElse(null);
 
-    String commit;
-    String implVersion = BesuVersionUtils.class.getPackage().getImplementationVersion();
-    try {
-      URL url = new URL(classPath);
-      JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
-      Manifest manifest = jarConnection.getManifest();
-      Attributes attributes = manifest.getMainAttributes();
-      commit = attributes.getValue("Commit-Hash");
-      if (implVersion == null) {
-        // workaround fallback: when running tests it could happen that the first class loaded in
-        // the package is a test class and so the package is created without the manifest
-        implVersion = attributes.getValue("Implementation-Version");
+    String commit = null;
+    String implVersion = Optional.ofNullable(BesuVersionUtils.class.getPackage())
+        .map(Package::getImplementationVersion).orElse(null);
+    if (classPath != null) {
+      try {
+        URL url = new URL(classPath);
+        JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
+        Manifest manifest = jarConnection.getManifest();
+        Attributes attributes = manifest.getMainAttributes();
+        commit = attributes.getValue("Commit-Hash");
+        if (implVersion == null) {
+          // workaround fallback: when running tests it could happen that the first class loaded in
+          // the package is a test class and so the package is created without the manifest
+          implVersion = attributes.getValue("Implementation-Version");
+        }
+      } catch (Exception ignored) {
+        commit = null;
       }
-    } catch (Exception e) {
-      commit = null;
     }
     COMMIT = commit;
     VERSION = implVersion;
