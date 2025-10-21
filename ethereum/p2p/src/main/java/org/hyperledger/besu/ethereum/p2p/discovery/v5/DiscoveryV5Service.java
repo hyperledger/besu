@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -49,7 +50,7 @@ public final class DiscoveryV5Service implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DiscoveryV5Service.class);
   private final MutableDiscoverySystem discovery;
-  private volatile boolean started = false;
+  private final AtomicBoolean started = new AtomicBoolean(false);
 
   // Fallback poller (used only if one or both callback methods are missing)
   private final ScheduledExecutorService scheduler =
@@ -94,9 +95,8 @@ public final class DiscoveryV5Service implements AutoCloseable {
 
   /** Start the DiscV5 system (idempotent). */
   public synchronized void start() {
-    if (started) return;
+    if (!started.compareAndSet(false, true)) return;
     discovery.start().join(); // future-based in Mutable API
-    started = true;
 
     // If either handler needs polling, start the poller.
     if ((addedHandler != null || removedHandler != null) && pollTask == null) {
@@ -107,26 +107,13 @@ public final class DiscoveryV5Service implements AutoCloseable {
 
   /** Stop asynchronously. */
   public CompletableFuture<Void> stopAsync() {
-    final ScheduledFuture<?> t = pollTask;
-    if (t != null) t.cancel(true);
-    scheduler.shutdownNow();
-
-    // In some versions stop() returns void; in others it returns a future.
-    try {
-      final Method m = discovery.getClass().getMethod("stop");
-      final Object ret = m.invoke(discovery);
-      started = false;
-      if (ret instanceof CompletableFuture) {
-        @SuppressWarnings("unchecked")
-        final CompletableFuture<Void> cf = (CompletableFuture<Void>) ret;
-        return cf;
-      }
-      return CompletableFuture.<Void>completedFuture(null);
-    } catch (Throwable ex) {
-      final CompletableFuture<Void> f = new CompletableFuture<>();
-      f.completeExceptionally(ex);
-      return f;
+    if (pollTask != null) {
+      pollTask.cancel(true);
     }
+    scheduler.shutdownNow();
+    started.set(false);
+    discovery.stop();
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
@@ -145,7 +132,7 @@ public final class DiscoveryV5Service implements AutoCloseable {
     }
     // fallback to polling for additions
     this.addedHandler = handler;
-    if (started && pollTask == null) {
+    if (started.get() && pollTask == null) {
       seedSnapshot();
       pollTask = scheduler.scheduleAtFixedRate(this::pollOnce, 0, 2, TimeUnit.SECONDS);
     }
@@ -160,7 +147,7 @@ public final class DiscoveryV5Service implements AutoCloseable {
     }
     // fallback to polling for removals
     this.removedHandler = handler;
-    if (started && pollTask == null) {
+    if (started.get() && pollTask == null) {
       seedSnapshot();
       pollTask = scheduler.scheduleAtFixedRate(this::pollOnce, 0, 2, TimeUnit.SECONDS);
     }
