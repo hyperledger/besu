@@ -228,8 +228,8 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
   }
 
   private void storeBlockHeader(final BlockHeader header) {
-    final Difficulty difficulty = blockchain.calculateTotalDifficulty(header);
-    blockchain.unsafeStoreHeader(header, difficulty);
+//    final Difficulty difficulty = blockchain.calculateTotalDifficulty(header);
+    blockchain.unsafeStoreHeader(header, Difficulty.ZERO);
   }
 
   private void logProgress(final long currentBlock, final long totalSaved) {
