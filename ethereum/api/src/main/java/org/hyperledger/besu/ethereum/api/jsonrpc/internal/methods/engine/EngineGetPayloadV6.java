@@ -15,10 +15,14 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 =======
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -39,10 +43,14 @@ import io.vertx.core.Vertx;
 public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   private final Optional<Long> amsterdamMilestone;
 =======
   private final Optional<Long> futureEipsMilestone;
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+  private final Optional<Long> amsterdamMilestone;
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 
   public EngineGetPayloadV6(
       final Vertx vertx,
@@ -59,10 +67,14 @@ public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
         blockResultFactory,
         engineCallListener);
 <<<<<<< HEAD
+<<<<<<< HEAD
     amsterdamMilestone = schedule.milestoneFor(AMSTERDAM);
 =======
     futureEipsMilestone = schedule.milestoneFor(FUTURE_EIPS);
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+    amsterdamMilestone = schedule.milestoneFor(AMSTERDAM);
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
   }
 
   @Override
@@ -80,10 +92,14 @@ public class EngineGetPayloadV6 extends AbstractEngineGetPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
 =======
     return ForkSupportHelper.validateForkSupported(
         FUTURE_EIPS, futureEipsMilestone, blockTimestamp);
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+    return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
   }
 }

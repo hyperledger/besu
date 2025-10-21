@@ -17,10 +17,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 =======
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -74,17 +78,23 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   private static final String INVALID_BLOCK_ACCESS_LIST_RLP = "0x01";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   private final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
       new ScheduledProtocolSpec.Hardfork("Amsterdam", 80);
 =======
   private final ScheduledProtocolSpec.Hardfork futureEipsHardfork =
       new ScheduledProtocolSpec.Hardfork("FutureEips", 80);
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+  private final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
+      new ScheduledProtocolSpec.Hardfork("Amsterdam", 80);
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 
   @BeforeEach
   @Override
   public void before() {
     super.before();
+<<<<<<< HEAD
 <<<<<<< HEAD
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(amsterdamHardfork));
     lenient()
@@ -96,6 +106,12 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
         .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
         .thenReturn(Optional.of(futureEipsHardfork.milestone()));
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+    lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(amsterdamHardfork));
+    lenient()
+        .when(protocolSchedule.milestoneFor(AMSTERDAM))
+        .thenReturn(Optional.of(amsterdamHardfork.milestone()));
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     lenient().when(protocolSpec.getRequestsValidator()).thenReturn(new MainnetRequestsValidator());
     this.method =
@@ -112,10 +128,14 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   @Override
   protected Set<ScheduledProtocolSpec.Hardfork> supportedHardforks() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return Set.of(amsterdamHardfork);
 =======
     return Set.of(futureEipsHardfork);
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+    return Set.of(amsterdamHardfork);
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
   }
 
   @Override
@@ -221,10 +241,14 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   protected BlockHeader createValidBlockHeader(final Optional<List<Withdrawal>> maybeWithdrawals) {
     return createActivationBlockHeaderFixture(maybeWithdrawals)
 <<<<<<< HEAD
+<<<<<<< HEAD
         .timestamp(amsterdamHardfork.milestone())
 =======
         .timestamp(futureEipsHardfork.milestone())
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+        .timestamp(amsterdamHardfork.milestone())
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
         .buildHeader();
   }
 
@@ -235,10 +259,14 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
 <<<<<<< HEAD
+<<<<<<< HEAD
             .timestamp(amsterdamHardfork.milestone() - 2)
 =======
             .timestamp(futureEipsHardfork.milestone() - 2)
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+            .timestamp(amsterdamHardfork.milestone() - 2)
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
@@ -261,10 +289,14 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   protected BlockHeader createPreActivationBlockHeader() {
     return createActivationBlockHeaderFixture(Optional.empty())
 <<<<<<< HEAD
+<<<<<<< HEAD
         .timestamp(amsterdamHardfork.milestone() - 1)
 =======
         .timestamp(futureEipsHardfork.milestone() - 1)
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+        .timestamp(amsterdamHardfork.milestone() - 1)
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
         .buildHeader();
   }
 

@@ -17,10 +17,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 =======
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -75,10 +79,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   private static final long AMSTERDAM_TIMESTAMP = 100L;
 =======
   private static final long FUTURE_EIPS_TIMESTAMP = 100L;
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+  private static final long AMSTERDAM_TIMESTAMP = 100L;
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
 
   public EngineGetPayloadV6Test() {
     super();
@@ -92,12 +100,17 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     lenient()
 <<<<<<< HEAD
+<<<<<<< HEAD
         .when(protocolSchedule.milestoneFor(AMSTERDAM))
         .thenReturn(Optional.of(AMSTERDAM_TIMESTAMP));
 =======
         .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
         .thenReturn(Optional.of(FUTURE_EIPS_TIMESTAMP));
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+        .when(protocolSchedule.milestoneFor(AMSTERDAM))
+        .thenReturn(Optional.of(AMSTERDAM_TIMESTAMP));
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
     this.method =
         new EngineGetPayloadV6(
             vertx,
@@ -122,10 +135,14 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     final BlockHeader header =
         new BlockHeaderTestFixture()
 <<<<<<< HEAD
+<<<<<<< HEAD
             .timestamp(AMSTERDAM_TIMESTAMP + 1)
 =======
             .timestamp(FUTURE_EIPS_TIMESTAMP + 1)
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+            .timestamp(AMSTERDAM_TIMESTAMP + 1)
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .balHash(BodyValidation.balHash(blockAccessList))
@@ -178,10 +195,14 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     final BlockHeader header =
         new BlockHeaderTestFixture()
 <<<<<<< HEAD
+<<<<<<< HEAD
             .timestamp(AMSTERDAM_TIMESTAMP - 1)
 =======
             .timestamp(FUTURE_EIPS_TIMESTAMP - 1)
 >>>>>>> 531bfa6e4 (EIP-7928 - Update engine API (#9213))
+=======
+            .timestamp(AMSTERDAM_TIMESTAMP - 1)
+>>>>>>> 5c2b26b6b (Activate BALs on amsterdam instead of futureEips (#9296))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
