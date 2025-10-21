@@ -109,12 +109,15 @@ public class PoWMinerExecutorTest {
 
     final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+    final var protocolContext = mock(ProtocolContext.class, RETURNS_DEEP_STUBS);
+    final var blockHeader = Optional.of(mockBlockHeader());
+    when(protocolContext.getBlockchain().getBlockHeader(any())).thenReturn(blockHeader);
 
     final TransactionPool transactionPool =
         new TransactionPool(
             () -> pendingTransactions,
             mock(ProtocolSchedule.class),
-            mock(ProtocolContext.class),
+            protocolContext,
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
