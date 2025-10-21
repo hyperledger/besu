@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -114,45 +113,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         false,
         bftExtraDataCodec,
         evmConfiguration,
-        miningConfiguration,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
-        metricsSystem);
-  }
-
-  /**
-   * Create protocol schedule.
-   *
-   * @param config the config
-   * @param qbftForksSchedule the qbft forks schedule
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @param bftExtraDataCodec the bft extra data codec
-   * @param miningConfiguration The mining parameters
-   * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
-   * @param isBlockAccessListEnabled indicates whether block-level access list functionality is
-   *     enabled
-   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
-   *     calls
-   * @return the protocol schedule
-   */
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
-      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
-      final boolean isRevertReasonEnabled,
-      final BftExtraDataCodec bftExtraDataCodec,
-      final MiningConfiguration miningConfiguration,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
-      final MetricsSystem metricsSystem) {
-    return create(
-        config,
-        qbftForksSchedule,
-        isRevertReasonEnabled,
-        bftExtraDataCodec,
-        EvmConfiguration.DEFAULT,
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,

@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.internal.JumpDestOnlyCodeCache;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
+import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
@@ -46,7 +47,9 @@ import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
 import org.hyperledger.besu.evm.operation.ModOperation;
+import org.hyperledger.besu.evm.operation.ModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulModOperation;
+import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -60,6 +63,7 @@ import org.hyperledger.besu.evm.operation.SDivOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
 import org.hyperledger.besu.evm.operation.SModOperation;
+import org.hyperledger.besu.evm.operation.SModOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -239,10 +243,22 @@ public class EVM {
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);
               case 0x05 -> SDivOperation.staticOperation(frame);
-              case 0x06 -> ModOperation.staticOperation(frame);
-              case 0x07 -> SModOperation.staticOperation(frame);
-              case 0x08 -> AddModOperation.staticOperation(frame);
-              case 0x09 -> MulModOperation.staticOperation(frame);
+              case 0x06 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? ModOperationOptimized.staticOperation(frame)
+                      : ModOperation.staticOperation(frame);
+              case 0x07 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SModOperationOptimized.staticOperation(frame)
+                      : SModOperation.staticOperation(frame);
+              case 0x08 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddModOperationOptimized.staticOperation(frame)
+                      : AddModOperation.staticOperation(frame);
+              case 0x09 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? MulModOperationOptimized.staticOperation(frame)
+                      : MulModOperation.staticOperation(frame);
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
               case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);

@@ -256,11 +256,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       txSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
     } catch (InterruptedException | ExecutionException e) {
       if (isCancelled.get()) {
-        throw new CancellationException("Cancelled during internal transaction selection");
+        LOG.debug(
+            "Transaction selection cancelled during execution, finalizing with current progress");
+      } else {
+        LOG.warn("Error during block transaction selection", e);
+        // force rollback
+        rollback();
       }
-      LOG.error("Unhandled exception during internal transaction selection", e);
-      // force rollback
-      rollback();
     } catch (TimeoutException e) {
       // synchronize since we want to be sure that there is no concurrent state update
       synchronized (isTimeout) {

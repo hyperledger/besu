@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -39,6 +40,8 @@ public class BadBlockManager {
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, Hash> latestValidHashes =
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+  private final Cache<Hash, BlockAccessList> generatedBlockAccessLists =
+      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
 
   /**
@@ -48,8 +51,17 @@ public class BadBlockManager {
    * @param cause the cause detailing why the block is considered invalid
    */
   public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
+    addBadBlock(badBlock, cause, Optional.empty());
+  }
+
+  public void addBadBlock(
+      final Block badBlock,
+      final BadBlockCause cause,
+      final Optional<BlockAccessList> generatedBlockAccessList) {
     LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
     this.badBlocks.put(badBlock.getHash(), badBlock);
+    generatedBlockAccessList.ifPresent(
+        bal -> this.generatedBlockAccessLists.put(badBlock.getHash(), bal));
     badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock.getHeader(), cause));
   }
 
@@ -57,6 +69,7 @@ public class BadBlockManager {
     this.badBlocks.invalidateAll();
     this.badHeaders.invalidateAll();
     this.latestValidHashes.invalidateAll();
+    this.generatedBlockAccessLists.invalidateAll();
   }
 
   /**
@@ -99,6 +112,10 @@ public class BadBlockManager {
 
   public Optional<Hash> getLatestValidHash(final Hash blockHash) {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
+  }
+
+  public Optional<BlockAccessList> getGeneratedBlockAccessList(final Hash blockHash) {
+    return Optional.ofNullable(generatedBlockAccessLists.getIfPresent(blockHash));
   }
 
   public long subscribeToBadBlocks(final BadBlockListener listener) {

@@ -21,7 +21,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
@@ -154,8 +153,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final long outputDataOffset,
       final long outputDataLength,
       final Wei transferValue,
-      final Account recipient,
-      final Address to,
+      final Address recipientAddress,
       final boolean accountIsWarm) {
     final long baseCost =
         super.callOperationGasCost(
@@ -166,8 +164,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             outputDataOffset,
             outputDataLength,
             transferValue,
-            recipient,
-            to,
+            recipientAddress,
             true); // we want the "warmed price" as we will charge for warming ourselves
     return clampedAdd(
         baseCost, accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());

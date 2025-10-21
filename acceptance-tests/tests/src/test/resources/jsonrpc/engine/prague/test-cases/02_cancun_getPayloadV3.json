@@ -23,7 +23,6 @@
         "extraData": "0x",
         "baseFeePerGas": "0x7",
         "excessBlobGas": "0x0",
-        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
         "withdrawals": [],
         "blockNumber": "0x1",

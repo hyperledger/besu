@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -1146,6 +1147,28 @@ public abstract class MainnetProtocolSpecs {
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, BPO5);
   }
 
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
+        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+        .hardforkId(AMSTERDAM);
+  }
+
   private static ProtocolSpecBuilder applyBlobSchedule(
       final ProtocolSpecBuilder builder,
       final GenesisConfigOptions genesisConfigOptions,
@@ -1191,7 +1214,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        bpo5Definition(
+        amsterdamDefinition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,
@@ -1201,7 +1224,6 @@ public abstract class MainnetProtocolSpecs {
                 isBlockAccessListEnabled,
                 metricsSystem)
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
             .hardforkId(FUTURE_EIPS);
 
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder);

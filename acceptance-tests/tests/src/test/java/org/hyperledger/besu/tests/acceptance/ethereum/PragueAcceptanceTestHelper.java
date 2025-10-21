@@ -42,6 +42,8 @@ public class PragueAcceptanceTestHelper {
   private final ObjectMapper mapper;
   private final BesuNode besuNode;
   private final EthTransactions ethTransactions;
+  private static final String PARENT_BEACON_BLOCK_ROOT_TEST =
+      "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   private long blockTimeStamp = 0;
 
@@ -78,7 +80,6 @@ public class PragueAcceptanceTestHelper {
     final ObjectNode executionPayload;
     final ArrayNode executionRequests;
     final String newBlockHash;
-    final String parentBeaconBlockRoot;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
       assertThat(getPayloadResponse.code()).isEqualTo(200);
 
@@ -87,7 +88,6 @@ public class PragueAcceptanceTestHelper {
       executionRequests = (ArrayNode) result.get("executionRequests");
 
       newBlockHash = executionPayload.get("blockHash").asText();
-      parentBeaconBlockRoot = executionPayload.remove("parentBeaconBlockRoot").asText();
 
       assertThat(newBlockHash).isNotEmpty();
     }
@@ -95,7 +95,9 @@ public class PragueAcceptanceTestHelper {
     final Call newPayloadRequest =
         createEngineCall(
             createNewPayloadRequest(
-                executionPayload.toString(), parentBeaconBlockRoot, executionRequests.toString()));
+                executionPayload.toString(),
+                PARENT_BEACON_BLOCK_ROOT_TEST,
+                executionRequests.toString()));
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
 

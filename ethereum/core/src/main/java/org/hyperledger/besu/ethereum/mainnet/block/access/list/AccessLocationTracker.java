@@ -135,7 +135,7 @@ public class AccessLocationTracker implements Eip7928AccessList {
 
           Bytes newCode = account.getCode();
           Bytes originalCode = wrappedAccount.getCode();
-          if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
+          if (!newCode.equals(originalCode)) {
             accountBuilder.withNewCode(newCode);
           }
         } else {

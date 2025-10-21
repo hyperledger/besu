@@ -23,8 +23,9 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -204,13 +205,15 @@ public class T8nServerSubCommand implements Runnable {
                               .toFile());
 
                   var jsonTracer =
-                      new StandardJsonTracer(
+                      new StreamingOperationTracer(
                           new PrintStream(traceDest),
-                          parentCommand.showMemory,
-                          !parentCommand.hideStack,
-                          parentCommand.showReturnData,
-                          parentCommand.showStorage,
-                          parentCommand.eip3155strict);
+                          OpCodeTracerConfigBuilder.create()
+                              .traceMemory(parentCommand.showMemory)
+                              .traceStack(!parentCommand.hideStack)
+                              .traceReturnData(parentCommand.showReturnData)
+                              .traceStorage(parentCommand.showStorage)
+                              .eip3155Strict(parentCommand.eip3155strict)
+                              .build());
                   outputStreams.put(jsonTracer, traceDest);
                   return jsonTracer;
                 }
@@ -247,7 +250,8 @@ public class T8nServerSubCommand implements Runnable {
                 initialWorldState,
                 transactions,
                 rejections,
-                tracerManager);
+                tracerManager,
+                parentCommand.getEvmConfiguration());
       }
 
       ObjectNode outputObject = objectMapper.createObjectNode();

@@ -32,6 +32,7 @@
           "transactionHash": "0x185a9154a0acc4e0ffc84029aee0f3dbf57ff0b84ec7624cb80e7373a03e8aeb",
           "transactionIndex": "0x0",
           "blockHash": "0x0f765087745aa259d9e5ac39c367c57432a16ed98e3b0d81c5b51d10f301dc49",
+          "blockTimestamp" : "0x561bc33a",
           "logIndex": "0x0",
           "removed": false
         }

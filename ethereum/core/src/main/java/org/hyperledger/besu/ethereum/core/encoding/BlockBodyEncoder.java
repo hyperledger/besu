@@ -12,13 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.debug;
+package org.hyperledger.besu.ethereum.core.encoding;
 
-/**
- * Configuration for the default struct/opcode tracer.
- *
- * @param traceStorage Used by opcode tracer to enable storage capture
- * @param traceMemory Used by opcode tracer to enable memory capture
- * @param traceStack Used by opcode tracer to enable stack capture
- */
-public record OpCodeTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack) {}
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public class BlockBodyEncoder {
+  public Bytes encode(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeTo);
+  }
+
+  public Bytes encodeWrapped(final BlockBody blockBody) {
+    return RLP.encode(blockBody::writeWrappedBodyTo);
+  }
+}

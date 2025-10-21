@@ -243,6 +243,13 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetAmsterdamTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("amsterdamTime", 1670470144));
+    assertThat(config.getAmsterdamTime()).hasValue(1670470144);
+  }
+
+  @Test
   void shouldGetFutureEipsTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
     assertThat(config.getFutureEipsTime()).hasValue(1337);
@@ -282,6 +289,7 @@ class GenesisConfigOptionsTest {
     assertThat(config.getBpo3Time()).isEmpty();
     assertThat(config.getBpo4Time()).isEmpty();
     assertThat(config.getBpo5Time()).isEmpty();
+    assertThat(config.getAmsterdamTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
   }
