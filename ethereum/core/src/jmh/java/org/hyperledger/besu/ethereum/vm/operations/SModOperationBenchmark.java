@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SModOperationOptimized;
+<<<<<<< HEAD
 
 import java.math.BigInteger;
 import java.util.concurrent.ThreadLocalRandom;
@@ -25,6 +26,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
+=======
+>>>>>>> 1794d4bb0 (Add Option to enable/disable opcode optimizations (#9299))
 
 import java.math.BigInteger;
 import java.util.concurrent.ThreadLocalRandom;

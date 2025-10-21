@@ -75,10 +75,14 @@ public class MergeProtocolSchedule {
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
 <<<<<<< HEAD
+<<<<<<< HEAD
                 specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
 =======
                 specBuilder, config.getChainId(), miningConfiguration));
 >>>>>>> 828226b25 (Provide slot time via protocol schedule (#9257))
+=======
+                specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
+>>>>>>> 1794d4bb0 (Add Option to enable/disable opcode optimizations (#9299))
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -105,11 +109,16 @@ public class MergeProtocolSchedule {
       final ProtocolSpecBuilder specBuilder,
       final Optional<BigInteger> chainId,
 <<<<<<< HEAD
+<<<<<<< HEAD
       final MiningConfiguration miningConfiguration,
       final EvmConfiguration evmConfiguration) {
 =======
       final MiningConfiguration miningConfiguration) {
 >>>>>>> 828226b25 (Provide slot time via protocol schedule (#9257))
+=======
+      final MiningConfiguration miningConfiguration,
+      final EvmConfiguration evmConfiguration) {
+>>>>>>> 1794d4bb0 (Add Option to enable/disable opcode optimizations (#9299))
 
     return specBuilder
         .evmBuilder(
