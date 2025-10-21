@@ -184,6 +184,7 @@ public class DebugGetBadBlockTest {
     assertThat(
             badBlockResult.getBlockResult().getBlockAccessList().orElseThrow().getAccountChanges())
         .isNotEmpty();
+<<<<<<< HEAD
     assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
   }
 
@@ -253,6 +254,8 @@ public class DebugGetBadBlockTest {
             badBlockResult.getGeneratedBlockAccessList().orElseThrow().getAccountChanges().stream()
                 .map(accountChangesResult -> Address.fromHexString(accountChangesResult.address)))
         .containsExactly(Address.fromHexString("0x0000000000000000000000000000000000000003"));
+=======
+>>>>>>> cbae39233 (Include BALs in `debug_getBadBlocks` response (#9293))
   }
 
   @Test
