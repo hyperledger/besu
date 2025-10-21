@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class FastSyncStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
-  private static final byte FORMAT_VERSION = 1;
+  private static final byte FORMAT_VERSION = 2; // Incremented for backward header progress tracking
   private final File pivotBlockHeaderFile;
 
   public FastSyncStateStorage(final Path fastSyncDataDir) {
@@ -59,16 +59,34 @@ public class FastSyncStateStorage {
       final BytesValueRLPInput input = new BytesValueRLPInput(rlp, false);
 
       if (isVersionedFormat(input)) {
-        // Versioned format: list containing [version, header, sourceIsTrusted]
+        // Versioned format
         input.enterList();
         final byte version = input.readByte();
-        if (version != FORMAT_VERSION) {
+
+        if (version == 2) {
+          // Version 2: [version, header, sourceIsTrusted, lowestContiguousBlockHeader, backwardDownloadComplete]
+          final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
+          final boolean sourceIsTrusted = input.readByte() != 0;
+          final long lowestContiguousBlockHeader = input.readLongScalar();
+          final boolean backwardDownloadComplete = input.readByte() != 0;
+          input.leaveList();
+
+          final FastSyncState state = new FastSyncState(header, sourceIsTrusted);
+          if (lowestContiguousBlockHeader >= 0) {
+            state.setLowestContiguousBlockHeaderDownloaded(lowestContiguousBlockHeader);
+          }
+          state.setBackwardHeaderDownloadComplete(backwardDownloadComplete);
+          return state;
+
+        } else if (version == 1) {
+          // Version 1: [version, header, sourceIsTrusted]
+          final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
+          final boolean sourceIsTrusted = input.readByte() != 0;
+          input.leaveList();
+          return new FastSyncState(header, sourceIsTrusted);
+        } else {
           throw new IllegalStateException("Unsupported fast sync state format version: " + version);
         }
-        final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-        final boolean sourceIsTrusted = input.readByte() != 0;
-        input.leaveList();
-        return new FastSyncState(header, sourceIsTrusted);
       } else {
         // Legacy format: just the header itself
         return new FastSyncState(BlockHeader.readFrom(input, blockHeaderFunctions), false);
@@ -93,6 +111,10 @@ public class FastSyncStateStorage {
       output.writeByte(FORMAT_VERSION);
       state.getPivotBlockHeader().get().writeTo(output);
       output.writeByte((byte) (state.isSourceTrusted() ? 1 : 0));
+      // Store backward header download progress (version 2 fields)
+      output.writeLongScalar(
+          state.getLowestContiguousBlockHeaderDownloaded().orElse(-1L)); // -1 means not started
+      output.writeByte((byte) (state.isBackwardHeaderDownloadComplete() ? 1 : 0));
       output.endList();
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
     } catch (final IOException e) {
@@ -109,8 +131,9 @@ public class FastSyncStateStorage {
    */
   private boolean isVersionedFormat(final BytesValueRLPInput input) {
     int listSize = input.enterList();
-    // Versioned format has 3 items: version, header, sourceIsTrusted
-    boolean isVersionedFormat = listSize == 3;
+    // Versioned format has 3 or 5 items (v1: 3 items, v2: 5 items)
+    // Legacy format has variable items depending on header structure
+    boolean isVersionedFormat = listSize == 3 || listSize == 5;
     input.reset();
     return isVersionedFormat;
   }

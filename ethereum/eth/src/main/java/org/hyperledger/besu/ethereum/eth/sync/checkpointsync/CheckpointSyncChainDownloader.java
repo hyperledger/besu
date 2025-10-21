@@ -14,50 +14,57 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.SyncTargetManager;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.TwoStageFastSyncChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointSyncChainDownloader.class);
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
-      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
-      final SyncDurationMetrics syncDurationMetrics) {
+      final SyncDurationMetrics syncDurationMetrics,
+      final FastSyncStateStorage fastSyncStateStorage) {
 
-    final SyncTargetManager syncTargetManager =
-        new SyncTargetManager(
-            config,
-            worldStateStorageCoordinator,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            metricsSystem,
-            fastSyncState);
-
-    return new PipelineChainDownloader(
-        syncState,
-        syncTargetManager,
+    final FastSyncDownloadPipelineFactory pipelineFactory =
         new CheckpointSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+
+    // Use two-stage sync approach for checkpoint sync
+    final Hash pivotBlockHash =
+        fastSyncState
+            .getPivotBlockHash()
+            .orElseThrow(() -> new RuntimeException("checkpoint block hash not available"));
+    LOG.info("Using two-stage checkpoint sync with checkpoint block={}", pivotBlockHash);
+
+    return new TwoStageFastSyncChainDownloader(
+        pipelineFactory,
         ethContext.getScheduler(),
+        syncState,
+        pivotBlockHash,
         metricsSystem,
-        syncDurationMetrics);
+        syncDurationMetrics,
+        fastSyncState,
+        fastSyncStateStorage);
   }
 }

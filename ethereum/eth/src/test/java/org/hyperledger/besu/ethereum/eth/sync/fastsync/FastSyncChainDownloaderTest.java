@@ -41,6 +41,7 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
@@ -115,7 +116,8 @@ public class FastSyncChainDownloaderTest {
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+            new FastSyncStateStorage(Path.of("file://")));
   }
 
   @ParameterizedTest

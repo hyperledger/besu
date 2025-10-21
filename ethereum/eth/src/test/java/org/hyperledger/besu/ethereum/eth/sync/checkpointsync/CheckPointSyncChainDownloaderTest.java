@@ -53,10 +53,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -93,8 +89,6 @@ public class CheckPointSyncChainDownloaderTest {
   protected Blockchain otherBlockchain;
   private Checkpoint checkpoint;
 
-  private WorldStateStorageCoordinator worldStateStorageCoordinator;
-
   static class CheckPointSyncChainDownloaderTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
@@ -104,21 +98,6 @@ public class CheckPointSyncChainDownloaderTest {
   }
 
   public void setup(final DataStorageFormat dataStorageFormat) {
-    final WorldStateKeyValueStorage worldStateKeyValueStorage;
-    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      worldStateKeyValueStorage = mock(BonsaiWorldStateKeyValueStorage.class);
-      when(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage)
-              .isWorldStateAvailable(any(), any()))
-          .thenReturn(true);
-    } else {
-      worldStateKeyValueStorage = mock(ForestWorldStateKeyValueStorage.class);
-      when(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage)
-              .isWorldStateAvailable(any()))
-          .thenReturn(true);
-    }
-    when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(dataStorageFormat);
-    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
-
     final BlockchainSetupUtil localBlockchainSetup =
         BlockchainSetupUtil.forTesting(dataStorageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
@@ -217,14 +196,14 @@ public class CheckPointSyncChainDownloaderTest {
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
     return CheckpointSyncChainDownloader.create(
         syncConfig,
-        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+        mock(org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage.class));
   }
 
   @ParameterizedTest

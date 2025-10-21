@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -199,5 +201,127 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     return syncConfig.isSnapSyncSavePreCheckpointHeadersOnlyEnabled()
         ? syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L)
         : 0L;
+  }
+
+  /**
+   * Creates Pipeline 1: Backward header download from pivot block to genesis. Downloads headers in
+   * reverse direction, validates boundaries, and stores in database. Supports out-of-order parallel
+   * execution with resume capability.
+   *
+   * @param pivotBlockHash the pivot block hash to start from
+   * @param fastSyncState the fast sync state for tracking progress
+   * @param fastSyncStateStorage the storage for persisting progress
+   * @return the backward header download pipeline
+   */
+  public Pipeline<Long> createBackwardHeaderDownloadPipeline(
+      final Hash pivotBlockHash,
+      final FastSyncState fastSyncState,
+      final FastSyncStateStorage fastSyncStateStorage) {
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
+
+    LOG.debug(
+        "Creating backward header download pipeline: pivot={}, parallelism={}, batchSize={}",
+        pivotBlockHash,
+        downloaderParallelism,
+        headerRequestSize);
+
+
+    final BackwardHeaderSource headerSource =
+        new BackwardHeaderSource(
+            pivotBlockHash,
+            headerRequestSize,
+            ethContext,
+            protocolSchedule,
+            metricsSystem,
+            protocolContext.getBlockchain(),
+            fastSyncState);
+
+    final DownloadBackwardHeadersStep downloadStep =
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem);
+
+    final SaveAllHeadersStep saveStep =
+        new SaveAllHeadersStep(
+            protocolContext.getBlockchain(),
+            metricsSystem,
+            pivotBlockHash,
+            fastSyncState,
+            fastSyncStateStorage);
+
+    return PipelineBuilder.createPipelineFrom(
+            "backwardHeaderSource",
+            headerSource,
+            downloaderParallelism,
+            metricsSystem.createLabelledCounter(
+                BesuMetricCategory.SYNCHRONIZER,
+                "backward_header_download_pipeline_processed_total",
+                "Number of entries processed by each backward header download pipeline stage",
+                "step",
+                "action"),
+            true,
+            "backwardHeaderSync")
+        .thenProcessAsync("downloadBackwardHeaders", downloadStep, downloaderParallelism)
+        .thenFlatMap("saveAllHeaders", saveStep, headerRequestSize * downloaderParallelism)
+        .andFinishWith("completed", output -> {});
+  }
+
+  /**
+   * Creates Pipeline 2: Forward bodies and receipts download from start block to pivot block. Reads
+   * stored headers from database and downloads corresponding bodies and receipts.
+   *
+   * @param pivotBlockNumber the pivot block number (end of range)
+   * @param syncState the sync state to use for determining the checkpoint block number
+   * @return the forward bodies and receipts download pipeline
+   */
+  public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
+          final long pivotBlockNumber, final SyncState syncState) {
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
+    final long startBlock = getCheckpointBlockNumber(syncState);
+
+    LOG.info(
+        "Creating forward bodies and receipts download pipeline: startBlock={}, pivot={}, parallelism={}, batchSize={}",
+        startBlock,
+        pivotBlockNumber,
+        downloaderParallelism,
+        headerRequestSize);
+
+    final BlockHeaderSource headerSource =
+        new BlockHeaderSource(
+            protocolContext.getBlockchain(), startBlock, pivotBlockNumber, headerRequestSize);
+
+    final DownloadSyncBodiesStep downloadBodiesStep =
+        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
+
+    final DownloadSyncReceiptsStep downloadReceiptsStep =
+        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+
+    final ImportSyncBlocksStep importBlocksStep =
+        new ImportSyncBlocksStep(
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            fastSyncState.getPivotBlockHeader().get(),
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
+
+    return PipelineBuilder.createPipelineFrom(
+            "forwardHeaderSource",
+            headerSource,
+            downloaderParallelism,
+            metricsSystem.createLabelledCounter(
+                BesuMetricCategory.SYNCHRONIZER,
+                "forward_bodies_receipts_pipeline_processed_total",
+                "Number of entries processed by each forward bodies/receipts pipeline stage",
+                "step",
+                "action"),
+            true,
+            "forwardBodiesReceipts")
+        .thenFlatMap(
+            "flattenHeaders", headers -> headers.stream(), headerRequestSize * downloaderParallelism)
+        .inBatches(headerRequestSize)
+        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .andFinishWith("importBlocks", importBlocksStep);
   }
 }

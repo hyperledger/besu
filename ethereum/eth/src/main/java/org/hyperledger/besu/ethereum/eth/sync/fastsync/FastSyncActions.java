@@ -56,6 +56,7 @@ public class FastSyncActions {
   protected final SyncState syncState;
   protected final PivotBlockSelector pivotBlockSelector;
   protected final MetricsSystem metricsSystem;
+  protected final FastSyncStateStorage fastSyncStateStorage;
   protected final Counter pivotBlockSelectionCounter;
   protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
@@ -67,7 +68,8 @@ public class FastSyncActions {
       final EthContext ethContext,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final FastSyncStateStorage fastSyncStateStorage) {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
@@ -76,6 +78,7 @@ public class FastSyncActions {
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
+    this.fastSyncStateStorage = fastSyncStateStorage;
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -174,7 +177,8 @@ public class FastSyncActions {
         syncState,
         metricsSystem,
         currentState,
-        syncDurationMetrics);
+        syncDurationMetrics,
+        fastSyncStateStorage);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(

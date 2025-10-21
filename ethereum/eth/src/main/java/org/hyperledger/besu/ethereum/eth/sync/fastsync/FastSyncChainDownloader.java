@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -25,7 +25,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FastSyncChainDownloader {
+  private static final Logger LOG = LoggerFactory.getLogger(FastSyncChainDownloader.class);
 
   protected FastSyncChainDownloader() {}
 
@@ -38,24 +42,29 @@ public class FastSyncChainDownloader {
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
-      final SyncDurationMetrics syncDurationMetrics) {
+      final SyncDurationMetrics syncDurationMetrics,
+      final FastSyncStateStorage fastSyncStateStorage) {
 
-    final SyncTargetManager syncTargetManager =
-        new SyncTargetManager(
-            config,
-            worldStateStorageCoordinator,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            metricsSystem,
-            fastSyncState);
-    return new PipelineChainDownloader(
-        syncState,
-        syncTargetManager,
+    final FastSyncDownloadPipelineFactory pipelineFactory =
         new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+
+    // Use two-stage sync approach which works directly with pivot block hash
+    // and doesn't require SyncTargetManager
+    final Hash pivotBlockHash =
+        fastSyncState
+            .getPivotBlockHash()
+            .orElseThrow(() -> new RuntimeException("pivot block hash not available"));
+    LOG.info("Using two-stage fast sync with pivot={}", pivotBlockHash);
+
+    return new TwoStageFastSyncChainDownloader(
+        pipelineFactory,
         ethContext.getScheduler(),
+        syncState,
+        pivotBlockHash,
         metricsSystem,
-        syncDurationMetrics);
+        syncDurationMetrics,
+        fastSyncState,
+        fastSyncStateStorage);
   }
 }

@@ -451,6 +451,7 @@ public class FastSyncActionsTest {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
+    final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
     return new FastSyncActions(
         syncConfig,
         worldStateStorageCoordinator,
@@ -459,7 +460,8 @@ public class FastSyncActionsTest {
         ethContext,
         new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        fastSyncStateStorage);
   }
 
   @Test
