@@ -14,17 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import java.math.BigInteger;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes32;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+
+import java.math.BigInteger;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -38,7 +40,6 @@ class CodeDelegationTest {
   private SignatureAlgorithm signatureAlgorithm;
 
   @BeforeEach
-  @SuppressWarnings("unused")
   void setUp() {
     chainId = BigInteger.valueOf(1);
     address = Address.fromHexString("0x1234567890abcdef1234567890abcdef12345678");

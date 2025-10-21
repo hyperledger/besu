@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-
-import org.apache.tuweni.bytes.Bytes;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -31,8 +29,12 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -135,7 +137,6 @@ class TransactionRLPDecoderTest {
     assertThat(encodedBytes).isEqualTo(reencodedBytes);
   }
 
-  @SuppressWarnings("unused")
   private static Collection<Object[]> dataTransactionSize() {
     return Arrays.asList(
         new Object[][] {
