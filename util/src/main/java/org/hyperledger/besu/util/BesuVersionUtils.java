@@ -38,12 +38,16 @@ public final class BesuVersionUtils {
 
   static {
     String className = BesuVersionUtils.class.getSimpleName() + ".class";
-    String classPath = Optional.ofNullable(BesuVersionUtils.class.getResource(className))
-        .map(URL::toString).orElse(null);
+    String classPath =
+        Optional.ofNullable(BesuVersionUtils.class.getResource(className))
+            .map(URL::toString)
+            .orElse(null);
 
     String commit = null;
-    String implVersion = Optional.ofNullable(BesuVersionUtils.class.getPackage())
-        .map(Package::getImplementationVersion).orElse(null);
+    String implVersion =
+        Optional.ofNullable(BesuVersionUtils.class.getPackage())
+            .map(Package::getImplementationVersion)
+            .orElse(null);
     if (classPath != null) {
       try {
         URL url = new URL(classPath);
