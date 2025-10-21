@@ -111,7 +111,7 @@ public class DebugOperationTracer implements OperationTracer {
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
-    if (!options.traceOpcodes().isEmpty() && !traceOpcode) {
+    if (!traceOpcode) {
       return;
     }
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;

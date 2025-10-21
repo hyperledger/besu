@@ -179,7 +179,7 @@ public class StreamingOperationTracer implements OperationTracer {
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    if (!opCodeTracerConfig.traceOpcodes().isEmpty() && !traceOpcode) {
+    if (!traceOpcode) {
       return;
     }
     if (currentOp.isVirtualOperation()) {
