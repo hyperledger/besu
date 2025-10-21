@@ -66,20 +66,20 @@ public abstract class AbstractPeerBlockValidatorTest {
     final long blockNumber = 500;
     final PeerValidator validator = createValidator(peerTaskExecutor, blockNumber, 0);
 
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer();
 
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
-                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer.getEthPeer())))
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.empty(),
                 PeerTaskExecutorResponseCode.TIMEOUT,
-                List.of(peer.getEthPeer())));
+                List.of(peer)));
 
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), peer);
 
     // Request should timeout immediately
     assertThat(result).isDone();
@@ -97,34 +97,34 @@ public abstract class AbstractPeerBlockValidatorTest {
     final PeerValidator validator = createValidator(peerTaskExecutor, blockNumber, 0);
 
     final int peerCount = 24;
-    final List<RespondingEthPeer> otherPeers =
+    final List<EthPeer> otherPeers =
         Stream.generate(
-                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber))
+                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer())
             .limit(peerCount)
             .toList();
-    final RespondingEthPeer targetPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
+    final EthPeer targetPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer();
 
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
-                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer.getEthPeer())))
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer)))
         .thenReturn(
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(block.getHeader())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                List.of(targetPeer.getEthPeer())));
+                List.of(targetPeer)));
     otherPeers.forEach(
         (p) ->
             Mockito.when(
                     peerTaskExecutor.executeAgainstPeer(
-                        Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(p.getEthPeer())))
+                        Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(p)))
                 .thenThrow(new RuntimeException("Test failed: wrong peer validated")));
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer);
 
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(
-            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer.getEthPeer()));
+            Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer));
     Mockito.verifyNoMoreInteractions(peerTaskExecutor);
     assertThat(result).isDone();
   }
