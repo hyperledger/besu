@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration level="WARN">
+    <Properties>
+        <Property name="tx.lifecycle.layers">hash=%X{hash} sender=%X{sender} reason=%X{reason}</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Logger name="TX_POOL_LIFECYCLE" level="INFO"/>
+        <Logger name="TX_POOL_REPLAY" level="INFO"/>
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+        </Root>
+    </Loggers>
+</Configuration>

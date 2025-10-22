@@ -19,6 +19,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logAdded;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logMoved;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logPenalized;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logRemoved;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.MOVE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.LayerMoveReason.EVICTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.BELOW_MIN_SCORE;
@@ -41,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
@@ -198,7 +203,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       }
 
       if (addReason.sendNotification()) {
-        ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(addedPendingTransaction));
+        logAdded(addedPendingTransaction, gap, addReason, name());
+        ethScheduler.scheduleServiceTask(() -> notifyTransactionAdded(addedPendingTransaction));
       }
 
     } else {
@@ -431,7 +437,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);
       if (removalReason.removedFrom().equals(POOL)) {
+        logRemoved(removedTx, removalReason, name());
         notifyTransactionDropped(removedTx, removalReason);
+      } else {
+        logMoved(removedTx, removalReason, name());
       }
     }
     return removedTx;
@@ -486,15 +495,18 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   @Override
-  public void penalize(final PendingTransaction penalizedTransaction) {
+  public void penalize(
+      final PendingTransaction penalizedTransaction,
+      final TransactionSelectionResult selectionResult) {
     if (pendingTransactions.containsKey(penalizedTransaction.getHash())) {
       internalPenalize(penalizedTransaction);
       metrics.incrementPenalized(penalizedTransaction, name());
+      logPenalized(penalizedTransaction, selectionResult, name());
       if (penalizedTransaction.getScore() < poolConfig.getMinScore()) {
         remove(penalizedTransaction, BELOW_MIN_SCORE);
       }
     } else {
-      nextLayer.penalize(penalizedTransaction);
+      nextLayer.penalize(penalizedTransaction, selectionResult);
     }
   }
 

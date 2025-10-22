@@ -91,6 +91,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+  private volatile BlockTransactionSelector selector;
 
   protected AbstractBlockCreator(
       final MiningConfiguration miningConfiguration,
@@ -405,7 +406,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, parentHeader));
 
-    final BlockTransactionSelector selector =
+    this.selector =
         new BlockTransactionSelector(
             miningConfiguration,
             transactionProcessor,
@@ -414,7 +415,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,
-            isCancelled::get,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,
@@ -454,6 +454,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   public void cancel() {
     LOG.debug("Block creation cancellation requested");
     isCancelled.set(true);
+    final var currSelector = selector;
+    if (currSelector != null) {
+      currSelector.cancel();
+    }
   }
 
   @Override

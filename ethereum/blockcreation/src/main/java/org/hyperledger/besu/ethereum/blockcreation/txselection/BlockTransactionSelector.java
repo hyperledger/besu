@@ -73,7 +73,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
@@ -104,7 +103,7 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector implements BlockTransactionSelectionService {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
   private static final long CANCELLATION_GRACE_TIME_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
-  private final Supplier<Boolean> isCancelled;
+  private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final MainnetTransactionProcessor transactionProcessor;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
@@ -129,6 +128,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
   private volatile TransactionSelectionResult validTxSelectionTimeoutResult;
   private volatile TransactionSelectionResult invalidTxSelectionTimeoutResult;
+  private volatile FutureTask<Void> currTxSelectionTask;
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -138,7 +138,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final Wei blobGasPrice,
       final ProtocolSpec protocolSpec,
@@ -150,7 +149,6 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     this.blockchain = blockchain;
     this.worldState = worldState;
     this.transactionReceiptFactory = transactionReceiptFactory;
-    this.isCancelled = isCancelled;
     this.ethScheduler = ethScheduler;
     this.blockSelectionContext =
         new BlockSelectionContext(
@@ -208,6 +206,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     return transactionSelectionResults;
   }
 
+  public void cancel() {
+    isCancelled.set(true);
+    if (currTxSelectionTask != null) {
+      currTxSelectionTask.cancel(true);
+      LOG.debug("Cancelled transaction selection task");
+    }
+  }
+
   private void timeLimitedSelection() {
     final long startTime = System.nanoTime();
 
@@ -237,8 +243,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     validTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT;
     invalidTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT_INVALID_TX;
 
-    final var txSelectionTask =
-        new FutureTask<Void>(
+    currTxSelectionTask =
+        new FutureTask<>(
             () -> {
               LOG.atDebug()
                   .setMessage(
@@ -250,11 +256,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             },
             null);
     ethScheduler.scheduleBlockCreationTask(
-        blockSelectionContext.pendingBlockHeader().getNumber(), txSelectionTask);
+        blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask);
 
     try {
-      txSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
-    } catch (InterruptedException | ExecutionException e) {
+      currTxSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
+    } catch (InterruptedException | ExecutionException | CancellationException e) {
       if (isCancelled.get()) {
         LOG.debug(
             "Transaction selection cancelled during execution, finalizing with current progress");
@@ -269,7 +275,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         isTimeout.set(true);
       }
 
-      cancelEvaluatingTxWithGraceTime(txSelectionTask);
+      cancelEvaluatingTxWithGraceTime(currTxSelectionTask);
 
       LOG.warn(
           "Interrupting the internal selection of transactions for block inclusion as it exceeds"
@@ -284,8 +290,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     final CountDownLatch pluginSelectionDone = new CountDownLatch(1);
 
-    final var pluginTxSelectionTask =
-        new FutureTask<Void>(
+    currTxSelectionTask =
+        new FutureTask<>(
             () -> {
               try {
                 LOG.atDebug()
@@ -301,11 +307,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             null);
 
     ethScheduler.scheduleBlockCreationTask(
-        blockSelectionContext.pendingBlockHeader().getNumber(), pluginTxSelectionTask);
+        blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask);
 
     try {
-      pluginTxSelectionTask.get(pluginTxsSelectionMaxTimeNanos, TimeUnit.NANOSECONDS);
-    } catch (InterruptedException | ExecutionException e) {
+      currTxSelectionTask.get(pluginTxsSelectionMaxTimeNanos, TimeUnit.NANOSECONDS);
+    } catch (InterruptedException | ExecutionException | CancellationException e) {
       if (isCancelled.get()) {
         throw new CancellationException("Cancelled during plugin transaction selection");
       }
@@ -319,7 +325,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       }
 
       // cancelling the task and interrupting the thread running it
-      pluginTxSelectionTask.cancel(true);
+      currTxSelectionTask.cancel(true);
       final long elapsedPluginTxsSelectionTime = System.nanoTime() - startTime;
       LOG.warn(
           "Interrupting the plugin selection of transactions for block inclusion after {}ms,"
@@ -333,7 +339,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       LOG.atTrace()
           .setMessage(
               "Plugin transaction selection state {}, waiting {}ms for the thread to process the interrupt")
-          .addArgument(pluginTxSelectionTask::state)
+          .addArgument(currTxSelectionTask::state)
           .addArgument(() -> nanosToMillis(remainingSelectionTime))
           .log();
 
@@ -347,7 +353,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .addArgument(
                 () ->
                     nanosToMillis((System.nanoTime() - startTime) - elapsedPluginTxsSelectionTime))
-            .addArgument(pluginTxSelectionTask.state())
+            .addArgument(currTxSelectionTask.state())
             .log();
 
       } catch (InterruptedException ex) {

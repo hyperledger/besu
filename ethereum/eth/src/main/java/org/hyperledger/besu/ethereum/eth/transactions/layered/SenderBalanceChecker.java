@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logSenderBalance;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -79,7 +81,6 @@ public interface SenderBalanceChecker {
    */
   class WorldStateChecker implements SenderBalanceChecker {
     private static final Logger LOG = LoggerFactory.getLogger(SenderBalanceChecker.class);
-    private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
     private final ProtocolSchedule protocolSchedule;
     private final WorldStateArchive worldStateArchive;
     private final Blockchain blockchain;
@@ -132,15 +133,6 @@ public interface SenderBalanceChecker {
       final var senderBalance = maybeAccount != null ? maybeAccount.getBalance() : Wei.ZERO;
       logSenderBalance(sender, senderBalance);
       return senderBalance;
-    }
-
-    private void logSenderBalance(final Address sender, final Wei balance) {
-      LOG_FOR_REPLAY
-          .atTrace()
-          .setMessage("SB,{},{}")
-          .addArgument(sender)
-          .addArgument(balance::toShortHexString)
-          .log();
     }
 
     @Override

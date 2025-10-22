@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logMinGasPrice;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logMinPriorityFeePerGas;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -37,19 +40,13 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Holds the current set of executable pending transactions, that are candidate for inclusion on
  * next block. The pending transactions are kept sorted by paid fee descending.
  */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
-  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   protected final TreeSet<PendingTransaction> orderByFee;
   private final MiningConfiguration miningConfiguration;
-  private volatile Wei lastRecordedMinTransactionGasPrice = Wei.ZERO;
-  private volatile Wei lastRecordedMinPriorityFeePerGas = Wei.ZERO;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -288,21 +285,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
 
   protected Wei getAndLogMinTransactionGasPrice() {
     final var currMinTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
-    if (LOG_FOR_REPLAY.isTraceEnabled()
-        && !lastRecordedMinTransactionGasPrice.equals(currMinTransactionGasPrice)) {
-      LOG_FOR_REPLAY.trace("MGP,{}", currMinTransactionGasPrice.toShortHexString());
-      lastRecordedMinTransactionGasPrice = currMinTransactionGasPrice;
-    }
+    logMinGasPrice(currMinTransactionGasPrice);
     return currMinTransactionGasPrice;
   }
 
   protected Wei getAndLogMinPriorityFeePerGas() {
     final var currMinPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
-    if (LOG_FOR_REPLAY.isTraceEnabled()
-        && !lastRecordedMinPriorityFeePerGas.equals(currMinPriorityFeePerGas)) {
-      LOG_FOR_REPLAY.trace("MPF,{}", currMinPriorityFeePerGas.toShortHexString());
-      lastRecordedMinPriorityFeePerGas = currMinPriorityFeePerGas;
-    }
+    logMinPriorityFeePerGas(currMinPriorityFeePerGas);
     return currMinPriorityFeePerGas;
   }
 }
