@@ -146,7 +146,7 @@ public class ZeroBlobFeeMarketTest {
   }
 
   @Test
-  public void blobGasPricePerGasShouldReturnsZero() {
+  public void blobGasPricePerGasShouldReturnZero() {
     assertThat(zeroBlobFeeMarket.blobGasPricePerGas(BlobGas.ONE)).isEqualTo(Wei.ZERO);
   }
 }
