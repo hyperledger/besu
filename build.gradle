@@ -718,10 +718,13 @@ run {
   }
 }
 
-def tweakStartScript(createScriptTask) {
+def tweakStartScript(createScriptTask, defaultJvmOpts25) {
   def shortenWindowsClasspath = { line ->
     line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
   }
+
+  // this must be before the BESU_HOME replacement
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('@DEFAULT_JVM_OPTS_25@', defaultJvmOpts25)
 
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
@@ -734,17 +737,28 @@ def tweakStartScript(createScriptTask) {
     .join('\r\n')
 }
 
+def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
+  "-XX:MaxHeapFreeRatio=30",
+  "-XX:MinHeapFreeRatio=10",
+  "-XX:MaxGCPauseMillis=100",
+  "-XX:StartFlightRecording,settings=default.jfc",
+  "-Xlog:jfr*=off"
+]
+
+def defaultJvmOpts25 = defaultJvmOpts21 + [
+  "-XX:+UseCompactObjectHeaders"
+]
+
+def serializeDefaultJvmOpts(opts) {
+  return "'" + opts.collect{ /"$it"/}.join(' ') + "'"
+}
+
 startScripts {
-  defaultJvmOpts = application.applicationDefaultJvmArgs + [
-    "-XX:G1ConcRefinementThreads=2",
-    "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100",
-    "-XX:StartFlightRecording,settings=default.jfc",
-    "-Xlog:jfr*=off"
-  ]
+  defaultJvmOpts = defaultJvmOpts21
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+
+  doLast { tweakStartScript(startScripts, serializeDefaultJvmOpts(defaultJvmOpts25)) }
 }
 
 task untunedStartScripts(type: CreateStartScripts) {
@@ -755,7 +769,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = application.applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(untunedStartScripts) }
+  doLast { tweakStartScript(untunedStartScripts, serializeDefaultJvmOpts(application.applicationDefaultJvmArgs)) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -768,7 +782,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(evmToolStartScripts) }
+  doLast { tweakStartScript(evmToolStartScripts, serializeDefaultJvmOpts(defaultJvmOpts)) }
 }
 
 task autocomplete(type: JavaExec) {

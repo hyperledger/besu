@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage: Use Eclipse Temurin JRE
-FROM eclipse-temurin:21-jre AS java-base
+FROM eclipse-temurin:25-jre AS java-base
 
 # Stage: Final Besu image
 FROM ubuntu:24.04
