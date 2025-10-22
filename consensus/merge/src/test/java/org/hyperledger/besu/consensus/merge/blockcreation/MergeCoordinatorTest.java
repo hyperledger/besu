@@ -137,7 +137,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private static final BigInteger CHAIN_ID_MAINNET = BigInteger.ONE;
   private static final BigInteger CHAIN_ID_HOODI = BigInteger.valueOf(560048);
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
   @Mock MergeContext mergeContext;
@@ -1034,7 +1034,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   public static Stream<Arguments> getGasLimits() {
     return Stream.of(
-        Arguments.of("mainnet", 1L, 45_000_000L),
+        Arguments.of("mainnet", 1L, 60_000_000L),
         Arguments.of("holesky", 17_000L, 60_000_000L),
         Arguments.of("sepolia", 11_155_111L, 60_000_000L),
         Arguments.of("hoodi", 560_048L, 60_000_000L),
