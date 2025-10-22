@@ -49,32 +49,34 @@ public class GetHeadersFromPeerTaskExecutorAnswer
     } else {
       initialHeader = otherBlockchain.getBlockHeader(task.getBlockNumber()).orElse(null);
     }
-    getHeadersFromPeerTaskResult.add(initialHeader);
+    if (initialHeader != null) {
+      getHeadersFromPeerTaskResult.add(initialHeader);
 
-    if (initialHeader != null && task.getMaxHeaders() > 1) {
-      if (task.getDirection() == GetHeadersFromPeerTask.Direction.FORWARD) {
-        int skip = task.getSkip() + 1;
-        long nextHeaderNumber = initialHeader.getNumber() + skip;
-        long getLimit = nextHeaderNumber + ((task.getMaxHeaders() - 1) * skip);
-        for (long i = nextHeaderNumber; i < getLimit; i += skip) {
-          Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
-          if (header.isPresent()) {
-            getHeadersFromPeerTaskResult.add(header.get());
-          } else {
-            break;
+      if (task.getMaxHeaders() > 1) {
+        if (task.getDirection() == GetHeadersFromPeerTask.Direction.FORWARD) {
+          int skip = task.getSkip() + 1;
+          long nextHeaderNumber = initialHeader.getNumber() + skip;
+          long getLimit = nextHeaderNumber + ((task.getMaxHeaders() - 1) * skip);
+          for (long i = nextHeaderNumber; i < getLimit; i += skip) {
+            Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
+            if (header.isPresent()) {
+              getHeadersFromPeerTaskResult.add(header.get());
+            } else {
+              break;
+            }
           }
-        }
 
-      } else {
-        int skip = task.getSkip() + 1;
-        long nextHeaderNumber = initialHeader.getNumber() - skip;
-        long getLimit = nextHeaderNumber - ((task.getMaxHeaders() - 1) * skip);
-        for (long i = initialHeader.getNumber() - 1; i > getLimit; i -= skip) {
-          Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
-          if (header.isPresent()) {
-            getHeadersFromPeerTaskResult.add(header.get());
-          } else {
-            break;
+        } else {
+          int skip = task.getSkip() + 1;
+          long nextHeaderNumber = initialHeader.getNumber() - skip;
+          long getLimit = nextHeaderNumber - ((task.getMaxHeaders() - 1) * skip);
+          for (long i = initialHeader.getNumber() - 1; i > getLimit; i -= skip) {
+            Optional<BlockHeader> header = otherBlockchain.getBlockHeader(i);
+            if (header.isPresent()) {
+              getHeadersFromPeerTaskResult.add(header.get());
+            } else {
+              break;
+            }
           }
         }
       }
