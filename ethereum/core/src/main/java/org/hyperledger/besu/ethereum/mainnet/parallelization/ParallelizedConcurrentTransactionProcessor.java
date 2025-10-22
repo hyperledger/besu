@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -94,6 +97,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param blockHashLookup Function for block hash lookup.
    * @param blobGasPrice Gas price for blob transactions.
    * @param executor The executor to use for asynchronous execution.
+   * @param blockAccessListBuilder BAL builder.
    */
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
@@ -102,7 +106,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final Executor executor) {
+      final Executor executor,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
@@ -120,7 +125,8 @@ public class ParallelizedConcurrentTransactionProcessor {
                   transaction,
                   miningBeneficiary,
                   blockHashLookup,
-                  blobGasPrice),
+                  blobGasPrice,
+                  blockAccessListBuilder),
           executor);
     }
   }
@@ -133,7 +139,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Wei blobGasPrice) {
+      final Wei blobGasPrice,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
     if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
       try (BonsaiWorldState ws =
@@ -149,9 +156,15 @@ public class ParallelizedConcurrentTransactionProcessor {
               new ParallelizedTransactionContext.Builder();
           final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
               (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+          final StackedUpdater stackedUpdater = (StackedUpdater) roundWorldStateUpdater.updater();
+          final Optional<AccessLocationTracker> transactionLocationTracker =
+              blockAccessListBuilder.map(
+                  b ->
+                      BlockAccessListBuilder.createTransactionAccessLocationTracker(
+                          transactionLocation));
           final TransactionProcessingResult result =
               transactionProcessor.processTransaction(
-                  roundWorldStateUpdater,
+                  stackedUpdater,
                   blockHeader,
                   transaction.detachedCopy(),
                   miningBeneficiary,
@@ -178,10 +191,12 @@ public class ParallelizedConcurrentTransactionProcessor {
                   },
                   blockHashLookup,
                   TransactionValidationParams.processingBlock(),
-                  blobGasPrice);
+                  blobGasPrice,
+                  transactionLocationTracker);
 
           // commit the accumulator in order to apply all the modifications
-          ws.getAccumulator().commit();
+          stackedUpdater.commit();
+          roundWorldStateUpdater.commit();
 
           contextBuilder
               .transactionAccumulator(ws.getAccumulator())
@@ -267,8 +282,7 @@ public class ParallelizedConcurrentTransactionProcessor {
                 partialBlockAccessView ->
                     partialBlockAccessView.accountChanges().stream()
                         .filter(
-                            accountChanges ->
-                                accountChanges.getAddress().equals(miningBeneficiary))
+                            accountChanges -> accountChanges.getAddress().equals(miningBeneficiary))
                         .findFirst()
                         .ifPresent(
                             accountChanges ->

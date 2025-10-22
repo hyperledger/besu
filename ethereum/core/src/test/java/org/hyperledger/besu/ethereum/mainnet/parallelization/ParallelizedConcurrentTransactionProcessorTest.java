@@ -135,7 +135,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     verify(transactionProcessor, times(1))
         .processTransaction(
@@ -180,7 +181,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     Optional<TransactionProcessingResult> result =
         processor.applyParallelizedTransactionResult(
@@ -213,7 +215,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     verify(transactionProcessor, times(1))
         .processTransaction(

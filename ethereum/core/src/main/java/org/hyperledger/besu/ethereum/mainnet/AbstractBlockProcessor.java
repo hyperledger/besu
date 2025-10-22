@@ -214,7 +214,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             transactions,
             miningBeneficiary,
             blockHashLookup,
-            blobGasPrice);
+            blobGasPrice,
+            blockAccessListBuilder);
 
     boolean parallelizedTxFound = false;
     int nbParallelTx = 0;
@@ -525,7 +526,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final List<Transaction> transactions,
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
-        final Wei blobGasPrice);
+        final Wei blobGasPrice,
+        final Optional<BlockAccessListBuilder> blockAccessListBuilder);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -536,7 +538,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final List<Transaction> transactions,
           final Address miningBeneficiary,
           final BlockHashLookup blockHashLookup,
-          final Wei blobGasPrice) {
+          final Wei blobGasPrice,
+          final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
         return Optional.empty();
       }
     }
