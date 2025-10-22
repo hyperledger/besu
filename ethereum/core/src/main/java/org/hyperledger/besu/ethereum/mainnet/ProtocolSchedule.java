@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
@@ -32,6 +33,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
       final BlockHeader parentBlockHeader, final long timestampForNextBlock) {
     final BlockHeader nextBlockHeader =
         BlockHeaderBuilder.fromHeader(parentBlockHeader)
+            .difficulty(Difficulty.ZERO)
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(timestampForNextBlock)
             .parentHash(parentBlockHeader.getHash())
