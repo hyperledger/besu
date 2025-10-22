@@ -81,14 +81,24 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
    * @return CodeDelegation
    */
   @JsonCreator
-  public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
-      @JsonProperty("chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
-          final BigInteger chainId,
-      @JsonProperty("address") final Address address,
-      @JsonProperty("nonce") final String nonce,
-      @JsonProperty("v") final String v,
-      @JsonProperty("r") final String r,
-      @JsonProperty("s") final String s) {
+public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
+    @JsonProperty("chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
+        final BigInteger chainId,
+    @JsonProperty("address") final Address address,
+    @JsonProperty("nonce") final String nonce,
+    @JsonProperty("v") final String v,
+    @JsonProperty("yParity") final String yParity,  // ← Add this parameter
+    @JsonProperty("r") final String r,
+    @JsonProperty("s") final String s) {
+    
+    // Support both "v" and "yParity" - prefer yParity if both provided
+    final String recoveryId = (yParity != null) ? yParity : v;
+    
+    if (recoveryId == null) {
+      throw new IllegalArgumentException(
+          "Either 'v' or 'yParity' must be provided in authorization");
+    }
+    
     return new CodeDelegation(
         chainId,
         address,
@@ -98,7 +108,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
             .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(v).get(0)));
+                Bytes.fromHexStringLenient(recoveryId).get(0)));  // ← Use recoveryId instead of v
   }
 
   @JsonProperty("chainId")

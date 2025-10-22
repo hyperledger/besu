@@ -14,156 +14,297 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.json.ChainIdDeserializer;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
-class CodeDelegationTest {
+// ignore `signer` field used in execution-spec-tests
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private BigInteger chainId;
-  private Address address;
-  private long nonce;
-  private SECPSignature signature;
-  private SignatureAlgorithm signatureAlgorithm;
+  public static final Bytes MAGIC = Bytes.fromHexString("05");
 
-  @BeforeEach
-  void setUp() {
-    chainId = BigInteger.valueOf(1);
-    address = Address.fromHexString("0x1234567890abcdef1234567890abcdef12345678");
-    nonce = 100;
+  private final BigInteger chainId;
+  private final Address address;
+  private final long nonce;
+  private final SECPSignature signature;
+  private final Supplier<Optional<Address>> authorizerSupplier =
+      Suppliers.memoize(this::computeAuthority);
 
-    signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-    KeyPair keyPair = signatureAlgorithm.generateKeyPair();
-    signature = signatureAlgorithm.sign(Bytes32.fromHexStringLenient("deadbeef"), keyPair);
+  /**
+   * An access list entry as defined in EIP-7702
+   *
+   * @param chainId can be either the current chain id or zero
+   * @param address the address from which the code will be set into the EOA account
+   * @param nonce the nonce after which this auth expires
+   * @param signature the signature of the EOA account which will be used to set the code
+   */
+  public CodeDelegation(
+      final BigInteger chainId,
+      final Address address,
+      final long nonce,
+      final SECPSignature signature) {
+    this.chainId = chainId;
+    this.address = address;
+    this.nonce = nonce;
+    this.signature = signature;
   }
 
-  @Test
-  void shouldCreateCodeDelegationSuccessfully() {
-    CodeDelegation delegation = new CodeDelegation(chainId, address, nonce, signature);
-
-    assertThat(delegation.chainId()).isEqualTo(chainId);
-    assertThat(delegation.address()).isEqualTo(address);
-    assertThat(delegation.nonce()).isEqualTo(nonce);
-    assertThat(delegation.signature()).isEqualTo(signature);
+  /**
+   * Create code delegation.
+   * Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
+   *
+   * @param chainId can be either the current chain id or zero
+   * @param address the address from which the code will be set into the EOA account
+   * @param nonce the nonce
+   * @param v the recovery id (legacy field name)
+   * @param yParity the recovery id (EIP-7702 spec field name)
+   * @param r the r value of the signature
+   * @param s the s value of the signature
+   * @return CodeDelegation
+   */
+  @JsonCreator
+  public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
+      @JsonProperty("chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
+          final BigInteger chainId,
+      @JsonProperty("address") final Address address,
+      @JsonProperty("nonce") final String nonce,
+      @JsonProperty("v") final String v,
+      @JsonProperty("yParity") final String yParity,
+      @JsonProperty("r") final String r,
+      @JsonProperty("s") final String s) {
+    
+    // Support both "v" and "yParity" field names for the recovery id
+    // Prefer yParity (EIP-7702 spec) over v (legacy) if both are provided
+    final String recoveryId = (yParity != null) ? yParity : v;
+    
+    if (recoveryId == null) {
+      throw new IllegalArgumentException(
+          "Either 'v' or 'yParity' must be provided in authorization");
+    }
+    
+    return new CodeDelegation(
+        chainId,
+        address,
+        Bytes.fromHexStringLenient(nonce).toLong(),
+        SIGNATURE_ALGORITHM
+            .get()
+            .createCodeDelegationSignature(
+                Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
+                Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
+                Bytes.fromHexStringLenient(recoveryId).get(0)));
   }
 
-  @Test
-  void shouldBuildCodeDelegationWithBuilder() {
-    CodeDelegation delegation =
-        (CodeDelegation)
-            CodeDelegation.builder()
-                .chainId(chainId)
-                .address(address)
-                .nonce(nonce)
-                .signature(signature)
-                .build();
-
-    assertThat(delegation).isNotNull();
-    assertThat(delegation.chainId()).isEqualTo(chainId);
-    assertThat(delegation.address()).isEqualTo(address);
-    assertThat(delegation.nonce()).isEqualTo(nonce);
-    assertThat(delegation.signature()).isEqualTo(signature);
+  @JsonProperty("chainId")
+  @Override
+  public BigInteger chainId() {
+    return chainId;
   }
 
-  @Test
-  void shouldThrowWhenBuildingWithoutAddress() {
-    assertThatThrownBy(
-            () ->
-                CodeDelegation.builder().chainId(chainId).nonce(nonce).signature(signature).build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Address must be set");
+  @JsonProperty("address")
+  @Override
+  public Address address() {
+    return address;
   }
 
-  @Test
-  void shouldThrowWhenBuildingWithoutNonce() {
-    assertThatThrownBy(
-            () ->
-                CodeDelegation.builder()
-                    .chainId(chainId)
-                    .address(address)
-                    .signature(signature)
-                    .build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Nonce must be set");
+  @JsonProperty("signature")
+  @Override
+  public SECPSignature signature() {
+    return signature;
   }
 
-  @Test
-  void shouldThrowWhenBuildingWithoutSignature() {
-    assertThatThrownBy(
-            () -> CodeDelegation.builder().chainId(chainId).address(address).nonce(nonce).build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Signature must be set");
+  @Override
+  public Optional<Address> authorizer() {
+    // recId needs to be between either 0 or 1, otherwise the signature is invalid
+    // which means we can't recover the authorizer.
+    if (signature.getRecId() > 1 || signature.getRecId() < 0) {
+      return Optional.empty();
+    }
+
+    return authorizerSupplier.get();
   }
 
-  @Test
-  void shouldCreateCodeDelegationUsingFactoryMethod() {
-    CodeDelegation delegation =
-        (CodeDelegation)
-            CodeDelegation.createCodeDelegation(
-                chainId, address, "0x64", "0x1b", "0xabcdef", "0x123456");
-
-    assertThat(delegation).isNotNull();
-    assertThat(delegation.chainId()).isEqualTo(chainId);
-    assertThat(delegation.address()).isEqualTo(address);
-    assertThat(delegation.nonce()).isEqualTo(100);
+  @Override
+  public long nonce() {
+    return nonce;
   }
 
-  @Test
-  void shouldReturnAuthorizerWhenSignatureIsValid() {
-    CodeDelegation delegation = new CodeDelegation(chainId, address, nonce, signature);
-
-    Optional<Address> authorizer = delegation.authorizer();
-
-    assertThat(authorizer).isNotEmpty();
+  @JsonProperty("v")
+  @Override
+  public byte v() {
+    return signature.getRecId();
   }
 
-  @Test
-  void shouldReturnEmptyAuthorizerWhenSignatureInvalid() {
-    SECPSignature invalidSignature = Mockito.mock(SECPSignature.class);
-    Mockito.when(invalidSignature.getRecId()).thenReturn((byte) 5); // Invalid recId (>3)
-
-    CodeDelegation delegation = new CodeDelegation(chainId, address, nonce, invalidSignature);
-
-    Optional<Address> authorizer = delegation.authorizer();
-
-    assertThat(authorizer).isEmpty();
+  @JsonProperty("r")
+  @Override
+  public BigInteger r() {
+    return signature.getR();
   }
 
-  @Test
-  void shouldReturnCorrectSignatureValues() {
-    CodeDelegation delegation = new CodeDelegation(chainId, address, nonce, signature);
-
-    assertThat(delegation.v()).isEqualTo(signature.getRecId());
-    assertThat(delegation.r()).isEqualTo(signature.getR());
-    assertThat(delegation.s()).isEqualTo(signature.getS());
+  @JsonProperty("s")
+  @Override
+  public BigInteger s() {
+    return signature.getS();
   }
 
-  @Test
-  void shouldSignAndBuildUsingKeyPair() {
-    KeyPair keyPair = signatureAlgorithm.generateKeyPair();
+  private Optional<Address> computeAuthority() {
+    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    CodeDelegationTransactionEncoder.encodeSingleCodeDelegationWithoutSignature(this, rlpOutput);
 
-    CodeDelegation delegation =
-        (CodeDelegation)
-            CodeDelegation.builder()
-                .chainId(chainId)
-                .address(address)
-                .nonce(nonce)
-                .signAndBuild(keyPair);
+    final Hash hash = Hash.hash(Bytes.concatenate(MAGIC, rlpOutput.encoded()));
 
-    assertThat(delegation).isNotNull();
-    assertThat(delegation.signature()).isNotNull();
+    Optional<Address> authorityAddress;
+    try {
+      authorityAddress =
+          SIGNATURE_ALGORITHM
+              .get()
+              .recoverPublicKeyFromSignature(hash, signature)
+              .map(Address::extract);
+    } catch (final IllegalArgumentException e) {
+      authorityAddress = Optional.empty();
+    }
+
+    return authorityAddress;
+  }
+
+  /**
+   * Create a code delegation authorization with a builder.
+   *
+   * @return CodeDelegation.Builder
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /** Builder for CodeDelegation authorizations. */
+  public static class Builder {
+    private BigInteger chainId = BigInteger.ZERO;
+    private Address address;
+    private Long nonce;
+    private SECPSignature signature;
+
+    /** Create a new builder. */
+    protected Builder() {}
+
+    /**
+     * Set the optional chain id.
+     *
+     * @param chainId the chain id
+     * @return this builder
+     */
+    public Builder chainId(final BigInteger chainId) {
+      this.chainId = chainId;
+      return this;
+    }
+
+    /**
+     * Set the address of the authorized smart contract.
+     *
+     * @param address the address
+     * @return this builder
+     */
+    public Builder address(final Address address) {
+      this.address = address;
+      return this;
+    }
+
+    /**
+     * Set the nonce.
+     *
+     * @param nonce the nonce.
+     * @return this builder
+     */
+    public Builder nonce(final long nonce) {
+      this.nonce = nonce;
+      return this;
+    }
+
+    /**
+     * Set the signature of the authorizer account.
+     *
+     * @param signature the signature
+     * @return this builder
+     */
+    public Builder signature(final SECPSignature signature) {
+      this.signature = signature;
+      return this;
+    }
+
+    /**
+     * Sign the authorization with the given key pair and return the authorization.
+     *
+     * @param keyPair the key pair
+     * @return CodeDelegation
+     */
+    public org.hyperledger.besu.datatypes.CodeDelegation signAndBuild(final KeyPair keyPair) {
+      final BytesValueRLPOutput output = new BytesValueRLPOutput();
+      output.startList();
+      output.writeBigIntegerScalar(chainId);
+      output.writeBytes(address);
+      output.writeLongScalar(nonce);
+      output.endList();
+
+      signature(
+          SIGNATURE_ALGORITHM
+              .get()
+              .sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
+      return build();
+    }
+
+    /**
+     * Build the authorization.
+     *
+     * @return CodeDelegation
+     */
+    public org.hyperledger.besu.datatypes.CodeDelegation build() {
+      if (address == null) {
+        throw new IllegalStateException("Address must be set");
+      }
+
+      if (nonce == null) {
+        throw new IllegalStateException("Nonce must be set");
+      }
+
+      if (signature == null) {
+        throw new IllegalStateException("Signature must be set");
+      }
+
+      return new CodeDelegation(chainId, address, nonce, signature);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "CodeDelegation{"
+        + "chainId="
+        + chainId
+        + ", address="
+        + address
+        + ", nonce="
+        + nonce
+        + ", signature="
+        + signature
+        + ", authorizerSupplier="
+        + authorizerSupplier
+        + '}';
   }
 }

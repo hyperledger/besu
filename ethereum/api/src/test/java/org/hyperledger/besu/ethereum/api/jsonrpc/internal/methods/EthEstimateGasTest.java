@@ -514,7 +514,30 @@ public class EthEstimateGasTest {
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }
-
+  @Test
+  public void shouldEstimateGasForEIP7702Transaction() {
+  // Setup authorization list
+  final List<SetCodeAuthorization> authorizationList = List.of(
+    new SetCodeAuthorization(
+      BigInteger.valueOf(1), // chainId
+      Address.fromHexString("0x..."), // contract address
+      0L, // nonce
+      (byte) 0, // yParity
+      Bytes.fromHexString("0x..."), // r
+      Bytes.fromHexString("0x...") // s
+    )
+  );
+  
+  // Create transaction with authorization list
+  final JsonRpcRequestContext request = requestWithAuthorizationList(authorizationList);
+  
+  // Execute estimation
+  final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x...");
+  final JsonRpcResponse actualResponse = method.response(request);
+  
+  // Verify
+  assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+}
   private void failEstimationOnTxMinGas() {
     getMockTransactionSimulatorResult(
         false,
