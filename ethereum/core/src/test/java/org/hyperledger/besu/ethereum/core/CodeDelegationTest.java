@@ -70,8 +70,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create code delegation.
-   * Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
+   * Create code delegation. Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
@@ -92,16 +91,16 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       @JsonProperty("yParity") final String yParity,
       @JsonProperty("r") final String r,
       @JsonProperty("s") final String s) {
-    
+
     // Support both "v" and "yParity" field names for the recovery id
     // Prefer yParity (EIP-7702 spec) over v (legacy) if both are provided
     final String recoveryId = (yParity != null) ? yParity : v;
-    
+
     if (recoveryId == null) {
       throw new IllegalArgumentException(
           "Either 'v' or 'yParity' must be provided in authorization");
     }
-    
+
     return new CodeDelegation(
         chainId,
         address,

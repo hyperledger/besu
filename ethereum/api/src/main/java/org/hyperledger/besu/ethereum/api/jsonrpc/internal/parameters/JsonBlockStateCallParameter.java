@@ -34,4 +34,3 @@ public class JsonBlockStateCallParameter extends BlockStateCall {
     super(calls, blockOverrides, stateOverrides);
   }
 }
-
