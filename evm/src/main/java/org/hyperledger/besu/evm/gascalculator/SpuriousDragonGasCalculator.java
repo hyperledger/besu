@@ -38,8 +38,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       final long outputDataOffset,
       final long outputDataLength,
       final Wei transferValue,
-      final Account recipient,
-      final Address to,
+      final Address recipientAddress,
       final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
@@ -54,15 +53,16 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
     if (!isTransferValueZero) {
       cost = clampedAdd(cost, callValueTransferGasCost());
-    }
 
-    if (!isTransferValueZero && (recipient == null || recipient.isEmpty())) {
-      cost = clampedAdd(cost, newAccountGasCost());
-    }
+      final Account recipient = frame.getWorldUpdater().get(recipientAddress);
+      if (recipient == null || recipient.isEmpty()) {
+        cost = clampedAdd(cost, newAccountGasCost());
+      }
 
-    // If recipient.isEmpty() must be evaluated above
-    if (!isTransferValueZero && recipient != null) {
-      frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipient.getAddress()));
+      // If recipient.isEmpty() must be evaluated above
+      if (recipient != null) {
+        frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipientAddress));
+      }
     }
 
     return cost;
