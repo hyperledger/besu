@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -252,10 +253,26 @@ public class ParallelizedConcurrentTransactionProcessor {
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
+        final MutableAccount miningBeneficiaryAccount =
+            blockAccumulator.getOrCreate(miningBeneficiary);
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
         if (!reward.isZero() || !transactionProcessor.getClearEmptyAccounts()) {
-          blockAccumulator.getOrCreate(miningBeneficiary).incrementBalance(reward);
+          miningBeneficiaryAccount.incrementBalance(reward);
         }
+
+        final Wei miningBeneficiaryPostBalance = miningBeneficiaryAccount.getBalance();
+        transactionProcessingResult
+            .getPartialBlockAccessView()
+            .ifPresent(
+                partialBlockAccessView ->
+                    partialBlockAccessView.accountChanges().stream()
+                        .filter(
+                            accountChanges ->
+                                accountChanges.getAddress().equals(miningBeneficiary))
+                        .findFirst()
+                        .ifPresent(
+                            accountChanges ->
+                                accountChanges.setPostBalance(miningBeneficiaryPostBalance)));
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
