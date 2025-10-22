@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -399,7 +400,7 @@ public class ReplayTest {
             .orElseThrow(
                 () -> new IllegalStateException("Not found penalized pending transaction " + hash));
 
-    prioritizedTransactions.penalize(pendingTransaction);
+    prioritizedTransactions.penalize(pendingTransaction, TX_EVALUATION_TOO_LONG);
   }
 
   private boolean transactionReplacementTester(
