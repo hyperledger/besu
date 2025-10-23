@@ -111,6 +111,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
@@ -122,7 +123,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -479,7 +479,7 @@ public abstract class CommandTestAbstract {
     return besuCommand;
   }
 
-  @NotNull
+  @Nonnull
   private static List<String> constructArgsWithDataPathIfNotSpecified(String[] args) {
     // if data-path is not set and this is not a subcommand, set to a tmp dir
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
