@@ -30,13 +30,13 @@ public class GraphQlOptionsTest extends CommandTestAbstract {
   public void graphQLHttpEnabledPropertyMustBeUsed() {
     parseCommand("--graphql-http-enabled");
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -51,14 +51,14 @@ public class GraphQlOptionsTest extends CommandTestAbstract {
         "--graphql-http-port",
         String.valueOf(port));
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(graphQLConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -67,13 +67,13 @@ public class GraphQlOptionsTest extends CommandTestAbstract {
     final String host = "localhost";
     parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -82,12 +82,12 @@ public class GraphQlOptionsTest extends CommandTestAbstract {
     final String host = "2600:DB8::8545";
     parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockRunnerBuilder).graphQLConfiguration(graphQLConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

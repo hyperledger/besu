@@ -39,15 +39,14 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
   public void txpoolDefaultSaveFileRelativeToDataPath() throws IOException {
     final Path dataDir = Files.createTempDirectory("data-dir");
     parseCommand("--data-path", dataDir.toString(), "--tx-pool-enable-save-restore", "true");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     assertThat(transactionPoolConfigCaptor.getValue().getSaveFile())
         .isEqualTo(dataDir.resolve(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME).toFile());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -63,16 +62,15 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
         "true",
         "--tx-pool-save-file",
         saveFile.getName());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
     assertThat(configuredSaveFile).isEqualTo(saveFile);
     assertThat(configuredSaveFile.toPath().getParent()).isEqualTo(dataDir);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -88,16 +86,15 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
         "true",
         "--tx-pool-save-file",
         saveFile.getAbsolutePath());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
     assertThat(configuredSaveFile).isEqualTo(saveFile);
     assertThat(configuredSaveFile.toPath().getParent()).isNotEqualTo(dataDir);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -105,15 +102,14 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
   public void txpoolForcePriceBumpToZeroWhenZeroBaseFeeMarket() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_WITH_ZERO_BASE_FEE_MARKET);
     parseCommand("--genesis-file", genesisFile.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
     assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -129,43 +125,40 @@ public class TxPoolOptionsTest extends CommandTestAbstract {
   @Test
   public void txpoolForcePriceBumpToZeroWhenMinGasPriceZero() {
     parseCommand("--min-gas-price", "0");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
     assertThat(priceBump).isEqualTo(Percentage.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void txpoolPriceBumpKeepItsValueIfSetEvenWhenMinGasPriceZero() {
     parseCommand("--min-gas-price", "0", "--tx-pool-price-bump", "1");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final Percentage priceBump = transactionPoolConfigCaptor.getValue().getPriceBump();
     assertThat(priceBump).isEqualTo(Percentage.fromInt(1));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void txpoolWhenNotSetForceTxPoolMinGasPriceToZeroWhenMinGasPriceZero() {
     parseCommand("--min-gas-price", "0");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
     final Wei txPoolMinGasPrice = transactionPoolConfigCaptor.getValue().getMinGasPrice();
     assertThat(txPoolMinGasPrice).isEqualTo(Wei.ZERO);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     verify(mockLogger, atLeast(1))
         .warn(
             contains(
