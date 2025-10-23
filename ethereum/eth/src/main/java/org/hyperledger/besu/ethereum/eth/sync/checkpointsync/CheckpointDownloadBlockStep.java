@@ -20,15 +20,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -40,86 +40,70 @@ public class CheckpointDownloadBlockStep {
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final Checkpoint checkpoint;
-  private final SynchronizerConfiguration synchronizerConfiguration;
-  private final MetricsSystem metricsSystem;
 
   public CheckpointDownloadBlockStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Checkpoint checkpoint,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
+      final Checkpoint checkpoint) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.checkpoint = checkpoint;
-    this.synchronizerConfiguration = synchronizerConfiguration;
-    this.metricsSystem = metricsSystem;
   }
 
   public CompletableFuture<Optional<BlockWithReceipts>> downloadBlock(final Hash hash) {
-    final GetBlockFromPeerTask getBlockFromPeerTask =
-        GetBlockFromPeerTask.create(
-            protocolSchedule,
-            ethContext,
-            synchronizerConfiguration,
-            Optional.of(hash),
-            checkpoint.blockNumber(),
-            metricsSystem);
-    return getBlockFromPeerTask
-        .run()
-        .thenCompose(this::downloadReceipts)
-        .exceptionally(throwable -> Optional.empty());
+    GetHeadersFromPeerTask headersTask =
+        new GetHeadersFromPeerTask(
+            hash, checkpoint.blockNumber(), 1, 0, Direction.FORWARD, protocolSchedule);
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              PeerTaskExecutorResult<List<BlockHeader>> executorResult =
+                  ethContext.getPeerTaskExecutor().execute(headersTask);
+              if (executorResult.result().isEmpty()
+                  || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                return CompletableFuture.failedFuture(new InvalidPeerTaskResponseException());
+              } else {
+                return CompletableFuture.completedFuture(executorResult.result().get().getFirst());
+              }
+            })
+        .thenApply(
+            (blockHeader) -> {
+              GetBodiesFromPeerTask bodiesTask =
+                  new GetBodiesFromPeerTask(List.of(blockHeader), protocolSchedule);
+              PeerTaskExecutorResult<List<Block>> executorResult =
+                  ethContext.getPeerTaskExecutor().execute(bodiesTask);
+              if (executorResult.result().isEmpty()
+                  || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+                throw new RuntimeException(new InvalidPeerTaskResponseException());
+              } else {
+                return executorResult.result().get().getFirst();
+              }
+            })
+        .thenApply(this::downloadReceipts);
   }
 
-  private CompletableFuture<Optional<BlockWithReceipts>> downloadReceipts(
-      final PeerTaskResult<Block> peerTaskResult) {
-    final Block block = peerTaskResult.getResult();
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      return ethContext
-          .getScheduler()
-          .scheduleServiceTask(
-              () -> {
-                GetReceiptsFromPeerTask task =
-                    new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
-                PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
-                    ethContext.getPeerTaskExecutor().execute(task);
+  private Optional<BlockWithReceipts> downloadReceipts(final Block block) {
+    GetReceiptsFromPeerTask task =
+        new GetReceiptsFromPeerTask(List.of(block.getHeader()), protocolSchedule);
+    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> executorResult =
+        ethContext.getPeerTaskExecutor().execute(task);
 
-                if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
-                  List<TransactionReceipt> transactionReceipts =
-                      executorResult
-                          .result()
-                          .map((map) -> map.get(block.getHeader()))
-                          .orElseThrow(
-                              () ->
-                                  new IllegalStateException(
-                                      "PeerTask response code was success, but empty"));
-                  if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
-                    throw new IllegalStateException(
-                        "PeerTask response code was success, but incorrect number of receipts returned");
-                  }
-                  BlockWithReceipts blockWithReceipts =
-                      new BlockWithReceipts(block, transactionReceipts);
-                  return CompletableFuture.completedFuture(Optional.of(blockWithReceipts));
-                } else {
-                  return CompletableFuture.completedFuture(Optional.empty());
-                }
-              });
-
+    if (executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+      List<TransactionReceipt> transactionReceipts =
+          executorResult
+              .result()
+              .map((map) -> map.get(block.getHeader()))
+              .orElseThrow(
+                  () -> new IllegalStateException("PeerTask response code was success, but empty"));
+      if (block.getBody().getTransactions().size() != transactionReceipts.size()) {
+        throw new IllegalStateException(
+            "PeerTask response code was success, but incorrect number of receipts returned");
+      }
+      BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, transactionReceipts);
+      return Optional.of(blockWithReceipts);
     } else {
-      final org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask
-          getReceiptsFromPeerTask =
-              org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask.forHeaders(
-                  ethContext, List.of(block.getHeader()), metricsSystem);
-      return getReceiptsFromPeerTask
-          .run()
-          .thenCompose(
-              receiptTaskResult -> {
-                final Optional<List<TransactionReceipt>> transactionReceipts =
-                    Optional.ofNullable(receiptTaskResult.getResult().get(block.getHeader()));
-                return CompletableFuture.completedFuture(
-                    transactionReceipts.map(receipts -> new BlockWithReceipts(block, receipts)));
-              })
-          .exceptionally(throwable -> Optional.empty());
+      return Optional.empty();
     }
   }
 }
