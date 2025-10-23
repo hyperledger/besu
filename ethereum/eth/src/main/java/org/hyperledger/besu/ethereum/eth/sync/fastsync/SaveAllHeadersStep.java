@@ -99,11 +99,12 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     this.highestContiguousBlock = new AtomicLong(initialBlock);
     this.lowestSeenBlock = new AtomicLong(initialBlock);
 
-    LOG.debug("SaveAllHeadersStep initialized with starting block: {}", initialBlock);
+    LOG.info("SaveAllHeadersStep initialized with starting block: {}", initialBlock);
   }
 
   @Override
   public Stream<Void> apply(final List<BlockHeader> headers) {
+      LOG.info("SaveAllHeadersStep received {} headers, first {}, last {}", headers.size(), headers.getFirst().getNumber(), headers.getLast().getNumber());
     if (headers.isEmpty()) {
       return Stream.empty();
     }
@@ -162,11 +163,12 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
    * @param headers the headers in reverse order [n, n-1, n-2, ...]
    */
   private void validateAndTrackBoundaries(final List<BlockHeader> headers) {
-    final BlockHeader highestHeader = headers.get(0); // highest block in this batch
-    final BlockHeader lowestHeader = headers.get(headers.size() - 1); // lowest block
+    final BlockHeader highestHeader = headers.getFirst(); // highest block in this batch
+    final BlockHeader lowestHeader = headers.getLast(); // lowest block
 
     final long highestBlockNumber = highestHeader.getNumber();
     final long lowestBlockNumber = lowestHeader.getNumber();
+    LOG.info("Validating boundaries for range [{}, {}]", lowestBlockNumber, highestBlockNumber);
 
     // Check if we can validate this range's lower boundary with a previous range
     final Hash expectedHash = highestBlockHashes.get(lowestBlockNumber - 1);
@@ -195,6 +197,7 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     if (expectedParentHash != null) {
       // A higher range is waiting to validate against this range
       if (!highestHeader.getHash().equals(expectedParentHash)) {
+          LOG.info("Expected parent hash {} does not match block {}", expectedParentHash, highestBlockNumber);
         throw InvalidBlockException.fromInvalidBlock(
             String.format(
                 "Batch boundary validation failed: block %d expected parent hash %s does not match block %d hash %s",
@@ -216,14 +219,14 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     if (expectedHash == null) {
       // Store this range's lower boundary for future validation
       lowestBlockParentHashes.put(lowestBlockNumber, lowestHeader.getParentHash());
-      LOG.trace(
+      LOG.info(
           "Stored lower boundary: block {} parentHash for future validation", lowestBlockNumber);
     }
 
     if (expectedParentHash == null) {
       // Store this range's upper boundary for future validation
       highestBlockHashes.put(highestBlockNumber, highestHeader.getHash());
-      LOG.trace("Stored upper boundary: block {} hash for future validation", highestBlockNumber);
+      LOG.info("Stored upper boundary: block {} hash for future validation", highestBlockNumber);
     }
   }
 
