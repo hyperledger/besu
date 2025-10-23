@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 // ignore `signer` field used in execution-spec-tests
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
+class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 

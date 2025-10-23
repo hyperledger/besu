@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -521,7 +522,7 @@ public class EthEstimateGasTest {
     final List<SetCodeAuthorization> authorizationList =
         List.of(
             new SetCodeAuthorization(
-                BigInteger.valueOf(1), // chainId
+                java.math.BigInteger.valueOf(1L), // chainId
                 Address.fromHexString("0x..."), // contract address
                 0L, // nonce
                 (byte) 0, // yParity
@@ -761,5 +762,10 @@ public class EthEstimateGasTest {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
             "2.0", "eth_estimateGas", new Object[] {callParameter, blockParam, overrides}));
+  }
+
+  private JsonRpcRequestContext requestWithAuthorizationList(
+      List<SetCodeAuthorization> authorizationList) {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 }
