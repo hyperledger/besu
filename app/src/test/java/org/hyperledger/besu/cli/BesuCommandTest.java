@@ -2391,6 +2391,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void nativeLibrariesAreEnabledByDefault() {
     parseCommand();
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
     verify(mockLogger).info("Using the native implementation of the signature algorithm");
 

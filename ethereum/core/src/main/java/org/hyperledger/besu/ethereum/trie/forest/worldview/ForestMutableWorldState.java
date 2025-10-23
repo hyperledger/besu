@@ -45,6 +45,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -174,7 +175,8 @@ public class ForestMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist(final BlockHeader blockHeader) {
+  public void persist(
+      final BlockHeader blockHeader, final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
     final ForestWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     // Store updated code
