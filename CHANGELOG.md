@@ -15,13 +15,36 @@
   - Fast Sync
 
 ### Additions and Improvements
-- Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
 - Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
-- Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
-- Add `isCancelled` method to `TransactionEvaluationContext`. That way selectors could check if the block creation has been cancelled or in timeout [#9285](https://github.com/hyperledger/besu/pull/9285)
+- Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
+- Update netty [#9330](https://github.com/hyperledger/besu/pull/9330)
+- Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
+- Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
 
 ### Bug fixes
-- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
+
+## 25.10.0
+This is a recommended update for Hoodi users for the Fusaka hardfork.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
+- Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
+- Add `isCancelled` method to `TransactionEvaluationContext`. That way selectors could check if the block creation has been cancelled or in timeout [#9285](https://github.com/hyperledger/besu/pull/9285)
+- Performance improvements for MOD related opcodes [#9188](https://github.com/hyperledger/besu/pull/9188) thanks to [@thomas-quadratic](https://github.com/thomas-quadratic)
+
+### Bug fixes
 
 ## 25.10.0-RC2
 This RC is a pre-release, recommended update for Holesky and Sepolia users for the Fusaka hardfork.
@@ -106,6 +129,7 @@ Affects users of eth_subscribe (WebSocket) eg SSV, and ethstats integration
 - Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
 - Configurable limit for how much time plugins are allowed to take, to propose transactions, during block creation [#9184](https://github.com/hyperledger/besu/pull/9184)
 - Add Osaka, BPO1 and BPO2 fork times for holesky, hoodi and sepolia [#9196](https://github.com/hyperledger/besu/pull/9196)
+- Ability to export ERA1 files [#9081](https://github.com/hyperledger/besu/pull/9081)
 
 #### Performance
 - Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
