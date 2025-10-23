@@ -42,12 +42,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCache
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
@@ -118,7 +118,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(),
@@ -140,14 +140,15 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(PathBasedWorldStateUpdateAccumulator.class),
+            any(WorldUpdater.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
             eq(TransactionValidationParams.processingBlock()),
-            eq(blobGasPrice));
+            eq(blobGasPrice),
+            eq(Optional.empty()));
 
     assertTrue(
         processor
@@ -163,7 +164,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
     Wei blobGasPrice = Wei.ZERO;
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.failed(
                 0,
@@ -198,7 +199,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(),
@@ -220,14 +221,15 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(PathBasedWorldStateUpdateAccumulator.class),
+            any(WorldUpdater.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
             eq(TransactionValidationParams.processingBlock()),
-            eq(blobGasPrice));
+            eq(blobGasPrice),
+            eq(Optional.empty()));
 
     // simulate a conflict
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(true);
