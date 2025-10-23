@@ -122,6 +122,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -465,6 +466,21 @@ public abstract class CommandTestAbstract {
     }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
+    final List<String> argsList = constructArgsWithDataPathIfNotSpecified(args);
+
+    // parse using Ansi.OFF to be able to assert on non-formatted output results
+    besuCommand.parse(
+        new RunLast(),
+        besuCommand.parameterExceptionHandler(),
+        besuCommand.executionExceptionHandler(),
+        in,
+        mockBesuComponent,
+        argsList.toArray(new String[0]));
+    return besuCommand;
+  }
+
+  @NotNull
+  private static List<String> constructArgsWithDataPathIfNotSpecified(String[] args) {
     // if data-path is not set and this is not a subcommand, set to a tmp dir
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 
@@ -489,16 +505,7 @@ public abstract class CommandTestAbstract {
         throw new RuntimeException("Failed to create temporary directory", e);
       }
     }
-
-    // parse using Ansi.OFF to be able to assert on non-formatted output results
-    besuCommand.parse(
-        new RunLast(),
-        besuCommand.parameterExceptionHandler(),
-        besuCommand.executionExceptionHandler(),
-        in,
-        mockBesuComponent,
-        argsList.toArray(new String[0]));
-    return besuCommand;
+    return argsList;
   }
 
   private TestBesuCommand getTestBesuCommand(final TestType testType) {
