@@ -43,4 +43,22 @@ public interface Era1ReaderListener {
    * @param blockIndex the Era1BlockIndex
    */
   void handleBlockIndex(Era1BlockIndex blockIndex);
+
+  /**
+   * Handles the supplied Era1Accumulator
+   *
+   * @param era1Accumulator the Era1Accumulator
+   */
+  default void handleAccumulator(final Era1Accumulator era1Accumulator) {
+    // do nothing
+  }
+
+  /**
+   * Handles the supplied Era1TotalDifficulty
+   *
+   * @param era1TotalDifficulty the Era1TotalDifficulty
+   */
+  default void handleTotalDifficulty(final Era1TotalDifficulty era1TotalDifficulty) {
+    // do nothing
+  }
 }

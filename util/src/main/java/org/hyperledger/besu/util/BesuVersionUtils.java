@@ -24,12 +24,15 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represent Besu information such as version, OS etc. Used with --version option and during Besu
  * start.
  */
 public final class BesuVersionUtils {
+  private static final Logger LOG = LoggerFactory.getLogger(BesuVersionUtils.class);
   private static final String CLIENT = "besu";
   private static final String VERSION;
   private static final String OS = PlatformDetector.getOS();
@@ -38,23 +41,34 @@ public final class BesuVersionUtils {
 
   static {
     String className = BesuVersionUtils.class.getSimpleName() + ".class";
-    String classPath = BesuVersionUtils.class.getResource(className).toString();
+    String classPath =
+        Optional.ofNullable(BesuVersionUtils.class.getResource(className))
+            .map(URL::toString)
+            .orElse(null);
 
-    String commit;
-    String implVersion = BesuVersionUtils.class.getPackage().getImplementationVersion();
-    try {
-      URL url = new URL(classPath);
-      JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
-      Manifest manifest = jarConnection.getManifest();
-      Attributes attributes = manifest.getMainAttributes();
-      commit = attributes.getValue("Commit-Hash");
-      if (implVersion == null) {
-        // workaround fallback: when running tests it could happen that the first class loaded in
-        // the package is a test class and so the package is created without the manifest
-        implVersion = attributes.getValue("Implementation-Version");
+    String commit = null;
+    String implVersion =
+        Optional.ofNullable(BesuVersionUtils.class.getPackage())
+            .map(Package::getImplementationVersion)
+            .orElse(null);
+    if (classPath != null) {
+      try {
+        URL url = new URL(classPath);
+        JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
+        Manifest manifest = jarConnection.getManifest();
+        Attributes attributes = manifest.getMainAttributes();
+        commit = attributes.getValue("Commit-Hash");
+        if (implVersion == null) {
+          // workaround fallback: when running tests it could happen that the first class loaded in
+          // the package is a test class and so the package is created without the manifest
+          implVersion = attributes.getValue("Implementation-Version");
+        }
+      } catch (Exception ignored) {
+        LOG.warn(
+            "Partial or missing Besu version metadata, commit: {} version: {}",
+            Optional.ofNullable(commit).orElse("NONE/null"),
+            Optional.ofNullable(implVersion).orElse("NONE/null"));
       }
-    } catch (Exception e) {
-      commit = null;
     }
     COMMIT = commit;
     VERSION = implVersion;
