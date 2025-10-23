@@ -91,7 +91,10 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
+    final MutableBlockchain inMemoryBlockchain =
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
+    inMemoryBlockchain.removeAllBlockAddedObservers();
+    return inMemoryBlockchain;
   }
 
   @JsonCreator
