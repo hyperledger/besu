@@ -90,7 +90,7 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.of(0L),
+            Optional.of(10L),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
@@ -102,7 +102,7 @@ public class BlockchainReferenceTestCaseSpec {
               }
             },
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier(),
+            () -> (__, ___) -> {},
             new CodeCache());
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
