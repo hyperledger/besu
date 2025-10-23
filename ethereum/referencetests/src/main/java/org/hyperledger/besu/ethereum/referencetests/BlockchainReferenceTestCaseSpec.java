@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -90,7 +88,7 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.of(10L),
+            Optional.of(1L),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
