@@ -12,13 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.debug;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-/**
- * Configuration for the default struct/opcode tracer.
- *
- * @param traceStorage Used by opcode tracer to enable storage capture
- * @param traceMemory Used by opcode tracer to enable memory capture
- * @param traceStack Used by opcode tracer to enable stack capture
- */
-public record OpCodeTracerConfig(boolean traceStorage, boolean traceMemory, boolean traceStack) {}
+public class ZeroBlobFeeMarket extends ZeroBaseFeeMarket {
+  ZeroBlobFeeMarket(final long londonForkBlockNumber) {
+    super(londonForkBlockNumber);
+  }
+
+  @Override
+  public boolean implementsBlobFee() {
+    return true;
+  }
+}

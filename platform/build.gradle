@@ -28,7 +28,7 @@ javaPlatform {
 dependencies {
   api platform('com.fasterxml.jackson:jackson-bom:2.19.2')
   api platform('io.grpc:grpc-bom:1.75.0')
-  api platform('io.netty:netty-bom:4.2.5.Final')
+  api platform('io.netty:netty-bom:4.2.7.Final')
   api platform('io.opentelemetry:opentelemetry-bom:1.47.0')
   api platform('io.prometheus:prometheus-metrics-bom:1.3.5')
   api platform('io.vertx:vertx-stack-depchain:4.5.13')
@@ -110,15 +110,15 @@ dependencies {
 
     api 'io.pkts:pkts-core:3.0.10'
 
-    api 'io.consensys.tuweni:tuweni-bytes:2.7.1'
-    api 'io.consensys.tuweni:tuweni-config:2.7.1'
-    api 'io.consensys.tuweni:tuweni-concurrent:2.7.1'
-    api 'io.consensys.tuweni:tuweni-crypto:2.7.1'
-    api 'io.consensys.tuweni:tuweni-io:2.7.1'
-    api 'io.consensys.tuweni:tuweni-net:2.7.1'
-    api 'io.consensys.tuweni:tuweni-rlp:2.7.1'
-    api 'io.consensys.tuweni:tuweni-toml:2.7.1'
-    api 'io.consensys.tuweni:tuweni-units:2.7.1'
+    api 'io.consensys.tuweni:tuweni-bytes:2.7.2'
+    api 'io.consensys.tuweni:tuweni-config:2.7.2'
+    api 'io.consensys.tuweni:tuweni-concurrent:2.7.2'
+    api 'io.consensys.tuweni:tuweni-crypto:2.7.2'
+    api 'io.consensys.tuweni:tuweni-io:2.7.2'
+    api 'io.consensys.tuweni:tuweni-net:2.7.2'
+    api 'io.consensys.tuweni:tuweni-rlp:2.7.2'
+    api 'io.consensys.tuweni:tuweni-toml:2.7.2'
+    api 'io.consensys.tuweni:tuweni-units:2.7.2'
 
     api 'jakarta.validation:jakarta.validation-api:3.1.1'
 

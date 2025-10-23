@@ -83,7 +83,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static final double TRY_FILL_BLOCK = 1.0;
 
   // if you change these gas limits, also update the tests in MergeCoordinatorTest
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
   // testnets might have higher gas limits than mainnet and are incrementally updated
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
   // next target gas limit TBD
@@ -379,7 +379,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     blockCreationTasks.computeIfPresent(
         payloadId,
         (pid, task) -> {
-          task.blockCreator.cancel();
+          task.cancel();
           LOG.debug("Signaled block creator to cancel gracefully for payload {}", payloadId);
           return task;
         });
@@ -560,12 +560,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private void evaluateNewBlock(
       final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
 
-    if (isBlockCreationCancelled(payloadIdentifier)) return;
-
     final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
-
-      if (isBlockCreationCancelled(payloadIdentifier)) return;
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
