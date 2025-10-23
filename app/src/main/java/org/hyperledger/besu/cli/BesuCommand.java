@@ -782,6 +782,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param args The command line arguments.
    * @return The execution result status code.
    */
+  @VisibleForTesting
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,

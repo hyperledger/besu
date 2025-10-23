@@ -466,7 +466,7 @@ public abstract class CommandTestAbstract {
     }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
-    final List<String> argsList = constructArgsWithDataPathIfNotSpecified(args);
+    final List<String> argsList = constructArgsWithTmpDataPathIfNotSpecified(args);
 
     // parse using Ansi.OFF to be able to assert on non-formatted output results
     besuCommand.parse(
@@ -480,7 +480,7 @@ public abstract class CommandTestAbstract {
   }
 
   @Nonnull
-  private static List<String> constructArgsWithDataPathIfNotSpecified(final String[] args) {
+  private static List<String> constructArgsWithTmpDataPathIfNotSpecified(final String[] args) {
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 
     // If first arg starts with "-" or args is empty, it's likely main command
