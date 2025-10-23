@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -79,36 +80,48 @@ public class DownloadBackwardHeadersStep
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              final GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      startBlockNumber,
-                      headersToRequest,
-                      0,
-                      GetHeadersFromPeerTask.Direction.REVERSE,
-                      protocolSchedule);
-
-              final PeerTaskExecutorResult<List<BlockHeader>> result =
-                  ethContext.getPeerTaskExecutor().execute(task);
-
-              if (result.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || result.result().isEmpty()) {
-                LOG.warn(
-                    "Failed to download headers from block {} (response: {})",
-                    startBlockNumber,
-                    result.responseCode());
-                return CompletableFuture.failedFuture(
-                    new RuntimeException(
-                        "Failed to download headers from block " + startBlockNumber));
-              }
-
-              final List<BlockHeader> headers = result.result().get();
-              LOG.info(
-                  "Downloaded {} headers: blocks {} to {}",
-                  headers.size(),
-                  headers.get(0).getNumber(),
-                  headers.get(headers.size() - 1).getNumber());
-
-              return CompletableFuture.completedFuture(headers);
+              return downloadAllHeaders(startBlockNumber, headersToRequest);
             });
+  }
+
+  private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
+      final Long startBlockNumber, final int headersToRequest) {
+    List<BlockHeader> headers = new ArrayList<>(headersToRequest);
+    do {
+      final GetHeadersFromPeerTask task =
+          new GetHeadersFromPeerTask(
+              startBlockNumber - headers.size(),
+              headersToRequest - headers.size(),
+              0,
+              GetHeadersFromPeerTask.Direction.REVERSE,
+              protocolSchedule);
+
+      final PeerTaskExecutorResult<List<BlockHeader>> result =
+          ethContext.getPeerTaskExecutor().execute(task);
+
+      if (result.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+          || result.result().isEmpty()) {
+        LOG.warn(
+            "Failed to download headers from block {} (response: {})",
+            startBlockNumber,
+            result.responseCode());
+        return CompletableFuture.failedFuture(
+            new RuntimeException("Failed to download headers from block " + startBlockNumber));
+      }
+
+      final List<BlockHeader> receivedHeaders = result.result().get();
+      if (receivedHeaders.size() == headersToRequest) {
+        headers = receivedHeaders;
+      } else {
+        headers.addAll(receivedHeaders);
+      }
+    } while (headers.size() < headersToRequest);
+    LOG.info(
+        "Downloaded {} headers: blocks {} to {}",
+        headers.size(),
+        headers.get(0).getNumber(),
+        headers.get(headers.size() - 1).getNumber());
+
+    return CompletableFuture.completedFuture(headers);
   }
 }

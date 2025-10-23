@@ -34,23 +34,25 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private final long downloaderHeaderTarget;
   private final long pivotBlockNumber;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
+  private final FastSyncState fastSyncState;
   private BlockHeader currentChildHeader;
 
   public ImportHeadersStep(
       final MutableBlockchain blockchain,
       final long downloaderHeaderTarget,
-      final BlockHeader pivotBlockHeader) {
+      final FastSyncState fastSyncState) {
     this.blockchainStorage = blockchain;
     this.downloaderHeaderTarget = downloaderHeaderTarget;
-    this.pivotBlockNumber = pivotBlockHeader.getNumber();
-    this.currentChildHeader = pivotBlockHeader;
+    this.fastSyncState = fastSyncState;
+    this.pivotBlockNumber = fastSyncState.getPivotBlockNumber().getAsLong();
+    this.currentChildHeader = fastSyncState.getPivotBlockHeader().get();
   }
 
   @Override
   public void accept(final List<BlockHeader> blockHeaders) {
     if (!blockHeaders.getFirst().getHash().equals(currentChildHeader.getParentHash())) {
       LOG.info(
-          "Received empty or invalid header list (expected hash {} for Block {}, but got {})",
+          "Received invalid header list (expected hash {} for Block {}, but got {})",
           currentChildHeader.getParentHash(),
           blockHeaders.getFirst().getNumber(),
           blockHeaders.getFirst().getHash());
@@ -61,6 +63,8 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
               + blockHeaders.getFirst().getParentHash());
     }
     currentChildHeader = blockHeaders.getLast();
+    fastSyncState.setCurrentHeader(
+        currentChildHeader); // make sure we restart from here in case of failure
     blockHeaders.forEach(blockchainStorage::importHeader);
 
     final long totalHeaders = pivotBlockNumber - downloaderHeaderTarget;
