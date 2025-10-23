@@ -236,8 +236,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem);
 
     final ImportHeadersStep importHeadersStep =
-        new ImportHeadersStep(
-            protocolContext.getBlockchain(), 0L, fastSyncState.getPivotBlockHeader().get());
+        new ImportHeadersStep(protocolContext.getBlockchain(), 0L, fastSyncState);
     return PipelineBuilder.createPipelineFrom(
             "backwardHeaderSource",
             headerSource,
