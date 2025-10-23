@@ -67,10 +67,10 @@ public class DownloadBackwardHeadersStep
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
     // Calculate how many headers to request for this batch
     // Download down to block 0 (genesis)
-    final long remainingBlocks = startBlockNumber + 1; // +1 to include block 0
+    final long remainingBlocks = startBlockNumber;
     final int headersToRequest = (int) Math.min(headerRequestSize, remainingBlocks);
 
-    LOG.debug(
+    LOG.info(
         "Downloading {} headers backward from block {} (to genesis)",
         headersToRequest,
         startBlockNumber);
@@ -83,7 +83,7 @@ public class DownloadBackwardHeadersStep
                   new GetHeadersFromPeerTask(
                       startBlockNumber,
                       headersToRequest,
-                      0, // no skip
+                      0,
                       GetHeadersFromPeerTask.Direction.REVERSE,
                       protocolSchedule);
 
@@ -102,7 +102,7 @@ public class DownloadBackwardHeadersStep
               }
 
               final List<BlockHeader> headers = result.result().get();
-              LOG.trace(
+              LOG.info(
                   "Downloaded {} headers: blocks {} to {}",
                   headers.size(),
                   headers.get(0).getNumber(),

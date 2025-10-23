@@ -195,7 +195,7 @@ public class BackwardHeaderSource implements Iterator<Long> {
 
   @Override
   public boolean hasNext() {
-    return currentBlock.get() >= 0;
+    return currentBlock.get() > 0;
   }
 
   @Override
@@ -208,10 +208,11 @@ public class BackwardHeaderSource implements Iterator<Long> {
             });
 
     if (block >= 0) {
-      LOG.trace("BackwardHeaderSource generated block number: {}", block);
+      LOG.info("BackwardHeaderSource generated block number: {}", block);
       return block;
     }
 
+    LOG.info("BackwardHeaderSource exhausted at block {}", block);
     return null;
   }
 }
