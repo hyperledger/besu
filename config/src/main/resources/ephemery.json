@@ -40,7 +40,8 @@
         "baseFeeUpdateFraction": 8346193
       }
     },
-      "pragueTime": 0,
+    "ethash": {},
+    "pragueTime": 0,
     "osakaTime": 0,
     "bpo1Time": 1762033032,
     "bpo2Time": 1762819464,
