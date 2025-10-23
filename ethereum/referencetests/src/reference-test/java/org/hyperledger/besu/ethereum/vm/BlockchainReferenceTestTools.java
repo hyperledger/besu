@@ -135,7 +135,7 @@ public class BlockchainReferenceTestTools {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
-            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
+            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndNoUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
     final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
