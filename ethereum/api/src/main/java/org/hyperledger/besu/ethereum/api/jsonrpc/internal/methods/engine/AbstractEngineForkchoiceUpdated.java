@@ -127,7 +127,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
     // Return SYNCING if we don't have the header OR if we're still syncing
-    // During initial sync (e.g., backward header download), we may download headers before world state
+    // During initial sync (e.g., backward header download), we may download headers before world
+    // state
     if (maybeNewHead.isEmpty() || mergeContext.get().isSyncing()) {
       LOG.debug(
           "Node is syncing or block header not yet available for {}, returning SYNCING response",

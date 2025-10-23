@@ -1,51 +1,55 @@
-///*
+/// *
 // * Copyright contributors to Hyperledger Besu.
 // *
-// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+// except
 // * in compliance with the License. You may obtain a copy of the License at
 // *
 // * http://www.apache.org/licenses/LICENSE-2.0
 // *
-// * Unless required by applicable law or agreed to in writing, software distributed under the License
-// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-// * or implied. See the License for the specific language governing permissions and limitations under
+// * Unless required by applicable law or agreed to in writing, software distributed under the
+// License
+// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express
+// * or implied. See the License for the specific language governing permissions and limitations
+// under
 // * the License.
 // *
 // * SPDX-License-Identifier: Apache-2.0
 // */
-//package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+// package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 //
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.mock;
-//import static org.mockito.Mockito.never;
-//import static org.mockito.Mockito.times;
-//import static org.mockito.Mockito.verify;
-//import static org.mockito.Mockito.when;
+// import static org.assertj.core.api.Assertions.assertThat;
+// import static org.mockito.ArgumentMatchers.any;
+// import static org.mockito.Mockito.mock;
+// import static org.mockito.Mockito.never;
+// import static org.mockito.Mockito.times;
+// import static org.mockito.Mockito.verify;
+// import static org.mockito.Mockito.when;
 //
-//import org.hyperledger.besu.datatypes.Hash;
-//import org.hyperledger.besu.ethereum.core.BlockHeader;
-//import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-//import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-//import org.hyperledger.besu.metrics.SyncDurationMetrics;
-//import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-//import org.hyperledger.besu.services.pipeline.Pipeline;
+// import org.hyperledger.besu.datatypes.Hash;
+// import org.hyperledger.besu.ethereum.core.BlockHeader;
+// import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+// import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+// import org.hyperledger.besu.metrics.SyncDurationMetrics;
+// import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+// import org.hyperledger.besu.services.pipeline.Pipeline;
 //
-//import java.util.List;
-//import java.util.concurrent.CompletableFuture;
-//import java.util.concurrent.ExecutionException;
+// import java.util.List;
+// import java.util.concurrent.CompletableFuture;
+// import java.util.concurrent.ExecutionException;
 //
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.mockito.ArgumentCaptor;
+// import org.junit.jupiter.api.BeforeEach;
+// import org.junit.jupiter.api.Test;
+// import org.mockito.ArgumentCaptor;
 //
-///**
+/// **
 // * Unit tests for TwoStageFastSyncChainDownloader.
 // *
 // * <p>Tests the orchestration of two sequential pipelines: backward header download followed by
 // * forward bodies/receipts download.
 // */
-//class TwoStageFastSyncChainDownloaderTest {
+// class TwoStageFastSyncChainDownloaderTest {
 //
 //  private FastSyncDownloadPipelineFactory pipelineFactory;
 //  private EthScheduler scheduler;
@@ -107,7 +111,8 @@
 //    when(pipelineFactory.createBackwardHeaderDownloadPipeline(PIVOT_BLOCK_HASH))
 //        .thenReturn(headerPipeline);
 //
-//    final CompletableFuture<Void> failedFuture = CompletableFuture.failedFuture(new RuntimeException("Stage 1 failed"));
+//    final CompletableFuture<Void> failedFuture = CompletableFuture.failedFuture(new
+// RuntimeException("Stage 1 failed"));
 //    when(scheduler.startPipeline(headerPipeline)).thenReturn(failedFuture);
 //
 //    // When: start() called
@@ -116,7 +121,8 @@
 //    // Then: stage 2 never starts (result completes with error handled)
 //    assertThat(result).isCompletedWithValue(null);
 //    verify(pipelineFactory).createBackwardHeaderDownloadPipeline(PIVOT_BLOCK_HASH);
-//    verify(pipelineFactory, never()).createForwardBodiesAndReceiptsDownloadPipeline(PIVOT_BLOCK_HASH, );
+//    verify(pipelineFactory,
+// never()).createForwardBodiesAndReceiptsDownloadPipeline(PIVOT_BLOCK_HASH, );
 //  }
 //
 //  @SuppressWarnings("unchecked")
@@ -315,4 +321,4 @@
 //    assertThat(result).isCompleted();
 //    assertThat(result.get()).isNull(); // handle() returns null
 //  }
-//}
+// }

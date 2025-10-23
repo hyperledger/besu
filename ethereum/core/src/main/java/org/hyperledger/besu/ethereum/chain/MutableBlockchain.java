@@ -120,6 +120,13 @@ public interface MutableBlockchain extends Blockchain {
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
+  /**
+   * Adds a block header to the blockchain, without updating the chain state.
+   *
+   * @param blockHeader The block to append.
+   */
+  void importHeader(BlockHeader blockHeader);
+
   Difficulty calculateTotalDifficulty(final BlockHeader blockHeader);
 
   /**

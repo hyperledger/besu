@@ -117,7 +117,7 @@ public class FastSyncChainDownloaderTest {
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-            new FastSyncStateStorage(Path.of("file://")));
+        new FastSyncStateStorage(Path.of("file://")));
   }
 
   @ParameterizedTest
