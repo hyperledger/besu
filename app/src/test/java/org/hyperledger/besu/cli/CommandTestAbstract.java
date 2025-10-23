@@ -480,7 +480,7 @@ public abstract class CommandTestAbstract {
   }
 
   @Nonnull
-  private static List<String> constructArgsWithDataPathIfNotSpecified(String[] args) {
+  private static List<String> constructArgsWithDataPathIfNotSpecified(final String[] args) {
     // if data-path is not set and this is not a subcommand, set to a tmp dir
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 
