@@ -186,7 +186,7 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
       }
       // Remove the used hash (cleanup)
       highestBlockHashes.remove(lowestBlockNumber - 1);
-      LOG.trace(
+      LOG.info(
           "Validated lower boundary: block {} connects to block {}",
           lowestBlockNumber,
           lowestBlockNumber - 1);
@@ -209,7 +209,7 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
       }
       // Remove the used parent hash (cleanup)
       lowestBlockParentHashes.remove(highestBlockNumber + 1);
-      LOG.trace(
+      LOG.info(
           "Validated upper boundary: block {} connects from block {}",
           highestBlockNumber,
           highestBlockNumber + 1);
