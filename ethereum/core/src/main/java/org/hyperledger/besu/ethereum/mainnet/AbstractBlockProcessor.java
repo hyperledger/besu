@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -55,6 +56,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,6 +180,25 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .getBlockAccessListFactory()
             .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
+    Optional<CompletableFuture<Hash>> maybeStateRootFuture = Optional.empty();
+    if (protocolSpec
+        .getBlockAccessListFactory()
+        .filter(BlockAccessListFactory::isEnabled)
+        .isPresent()) {
+      if (blockBody.getBlockAccessList().isPresent()) {
+        maybeStateRootFuture =
+            (worldState instanceof BonsaiWorldState)
+                ? Optional.of(
+                    BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+                        protocolContext, blockHeader, blockBody.getBlockAccessList().get()))
+                : Optional.empty();
+      } else {
+        final String errorMessage = "BALs enabled but BAL not found in block body";
+        LOG.error(errorMessage);
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
+      }
+    }
 
     final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -413,12 +434,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceEndBlock(blockHeader, blockBody);
 
     try {
-      worldState.persist(blockHeader);
+      worldState.persist(blockHeader, maybeStateRootFuture);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
       if (worldState instanceof BonsaiWorldState) {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
+      maybeStateRootFuture.ifPresent(future -> future.cancel(true));
       @SuppressWarnings(
           "java:S2139") // Exception is logged and rethrown to preserve original behavior
       RuntimeException rethrown = e;
@@ -428,9 +450,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           "failed persisting block due to stateroot mismatch; expected {}, actual {}",
           ex.getExpectedRoot().toHexString(),
           ex.getActualRoot().toHexString());
+      maybeStateRootFuture.ifPresent(future -> future.cancel(true));
       return new BlockProcessingResult(Optional.empty(), ex.getMessage());
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
+      maybeStateRootFuture.ifPresent(future -> future.cancel(true));
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
