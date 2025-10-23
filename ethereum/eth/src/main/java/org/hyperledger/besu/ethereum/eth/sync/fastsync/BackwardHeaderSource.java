@@ -45,7 +45,6 @@ public class BackwardHeaderSource implements Iterator<Long> {
   /**
    * Creates a new BackwardHeaderSource with resume capability.
    *
-   * @param pivotBlockHash the pivot block hash to start from
    * @param batchSize the number of blocks in each batch
    * @param ethContext the Ethereum context for fetching headers
    * @param protocolSchedule the protocol schedule
@@ -54,7 +53,6 @@ public class BackwardHeaderSource implements Iterator<Long> {
    * @param fastSyncState the fast sync state to determine resume point
    */
   public BackwardHeaderSource(
-      final Hash pivotBlockHash,
       final int batchSize,
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
@@ -63,6 +61,7 @@ public class BackwardHeaderSource implements Iterator<Long> {
       final FastSyncState fastSyncState) {
 
     // Download the pivot block header and use its number as the starting point
+    final Hash pivotBlockHash = fastSyncState.getPivotBlockHash().get();
     final long pivotBlockNumber =
         fetchPivotBlockNumber(pivotBlockHash, ethContext, protocolSchedule, metricsSystem);
 
@@ -97,18 +96,16 @@ public class BackwardHeaderSource implements Iterator<Long> {
    * @return the block number to start downloading from
    */
   private long determineStartingBlock(
-      final long pivotBlockNumber,
-      final Blockchain blockchain,
-      final FastSyncState fastSyncState) {
+      final long pivotBlockNumber, final Blockchain blockchain, final FastSyncState fastSyncState) {
 
     // Check if we have persisted progress
     if (fastSyncState.getLowestContiguousBlockHeaderDownloaded().isPresent()) {
-      final long lowestDownloaded = fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
+      final long lowestDownloaded =
+          fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
 
       // Verify the persisted state matches what's in the database
       if (blockchain.getBlockHeader(lowestDownloaded).isPresent()) {
-        LOG.info(
-            "Resuming from persisted state: lowest contiguous block = {}", lowestDownloaded);
+        LOG.info("Resuming from persisted state: lowest contiguous block = {}", lowestDownloaded);
         return lowestDownloaded;
       } else {
         LOG.warn(
@@ -175,8 +172,9 @@ public class BackwardHeaderSource implements Iterator<Long> {
 
       // just make sure that we got the right block header as the hash is what we trust
       if (!pivotHeader.getHash().equals(pivotBlockHash)) {
-          throw new IllegalStateException(
-            "Hash of retrieved block header does not match pivot block header hash: " + pivotBlockHash);
+        throw new IllegalStateException(
+            "Hash of retrieved block header does not match pivot block header hash: "
+                + pivotBlockHash);
       }
 
       final long blockNumber = pivotHeader.getNumber();

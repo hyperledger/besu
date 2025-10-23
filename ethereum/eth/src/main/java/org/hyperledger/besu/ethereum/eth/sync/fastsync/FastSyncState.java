@@ -150,9 +150,7 @@ public class FastSyncState {
     return backwardHeaderDownloadComplete;
   }
 
-  /**
-   * Marks the backward header download as complete.
-   */
+  /** Marks the backward header download as complete. */
   public void setBackwardHeaderDownloadComplete(final boolean complete) {
     this.backwardHeaderDownloadComplete = complete;
   }
@@ -167,7 +165,8 @@ public class FastSyncState {
         && Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHash, that.pivotBlockHash)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader)
-        && Objects.equals(lowestContiguousBlockHeaderDownloaded, that.lowestContiguousBlockHeaderDownloaded);
+        && Objects.equals(
+            lowestContiguousBlockHeaderDownloaded, that.lowestContiguousBlockHeaderDownloaded);
   }
 
   @Override
@@ -177,7 +176,7 @@ public class FastSyncState {
         pivotBlockHash,
         pivotBlockHeader,
         sourceIsTrusted,
-            lowestContiguousBlockHeaderDownloaded,
+        lowestContiguousBlockHeaderDownloaded,
         backwardHeaderDownloadComplete);
   }
 

@@ -63,14 +63,16 @@ class SaveAllHeadersStepTest {
 
     when(blockchain.calculateTotalDifficulty(any())).thenReturn(Difficulty.ONE);
     when(fastSyncState.getPivotBlockNumber()).thenReturn(java.util.OptionalLong.of(PIVOT_BLOCK));
-    when(fastSyncState.getLowestContiguousBlockHeaderDownloaded()).thenReturn(java.util.OptionalLong.empty());
+    when(fastSyncState.getLowestContiguousBlockHeaderDownloaded())
+        .thenReturn(java.util.OptionalLong.empty());
 
-    step = new SaveAllHeadersStep(
-        blockchain,
-        new NoOpMetricsSystem(),
-        PIVOT_BLOCK_HASH,
-        fastSyncState,
-        fastSyncStateStorage);
+    step =
+        new SaveAllHeadersStep(
+            blockchain,
+            new NoOpMetricsSystem(),
+            PIVOT_BLOCK_HASH,
+            fastSyncState,
+            fastSyncStateStorage);
   }
 
   @Test
@@ -151,7 +153,7 @@ class SaveAllHeadersStepTest {
   void shouldHandleOutOfOrderRanges() {
     // Given: step receives ranges out of order: [100-91], [70-61], then [90-81] to connect them
     final List<BlockHeader> range1 = createHeaderChain(100, 10); // blocks 100-91
-    final List<BlockHeader> range3 = createHeaderChain(70, 10);  // blocks 70-61
+    final List<BlockHeader> range3 = createHeaderChain(70, 10); // blocks 70-61
 
     step.apply(range1);
     step.apply(range3);
@@ -162,7 +164,8 @@ class SaveAllHeadersStepTest {
     // Block 81's parentHash should match block 80's hash (not stored, validation skipped)
     // Block 90's hash should match lowestBlockParentHashes(91) from range1
     final Hash block91ExpectedParent = range1.get(9).getParentHash(); // parent of block 91
-    final List<BlockHeader> range2 = createHeaderChainWithHighestHash(90, 10, block91ExpectedParent);
+    final List<BlockHeader> range2 =
+        createHeaderChainWithHighestHash(90, 10, block91ExpectedParent);
 
     // Then: all validate correctly despite out-of-order processing
     assertThat(step.apply(range2)).isNotNull();
@@ -251,7 +254,9 @@ class SaveAllHeadersStepTest {
   @Test
   void shouldHandleSingleBlockRange() {
     // Given: step
-    final BlockHeader singleHeader = createMockBlockHeader(85, Hash.hash(Bytes.ofUnsignedLong(85)), Hash.hash(Bytes.ofUnsignedLong(84)));
+    final BlockHeader singleHeader =
+        createMockBlockHeader(
+            85, Hash.hash(Bytes.ofUnsignedLong(85)), Hash.hash(Bytes.ofUnsignedLong(84)));
 
     // When: applying single-block range
     final Stream<Void> result = step.apply(List.of(singleHeader));
@@ -265,7 +270,7 @@ class SaveAllHeadersStepTest {
   void shouldHandleNonContiguousRanges() {
     // Given: step
     final List<BlockHeader> range1 = createHeaderChain(100, 10); // 100-91
-    final List<BlockHeader> range2 = createHeaderChain(70, 10);  // 70-61 (gap of 20 blocks)
+    final List<BlockHeader> range2 = createHeaderChain(70, 10); // 70-61 (gap of 20 blocks)
 
     // When: applying non-contiguous ranges
     step.apply(range1);
@@ -279,8 +284,8 @@ class SaveAllHeadersStepTest {
   // Helper methods
 
   /**
-   * Creates a chain of headers where each parent hash matches the previous block's hash.
-   * Headers are in reverse order: [startBlock, startBlock-1, ..., startBlock-count+1]
+   * Creates a chain of headers where each parent hash matches the previous block's hash. Headers
+   * are in reverse order: [startBlock, startBlock-1, ..., startBlock-count+1]
    */
   private List<BlockHeader> createHeaderChain(final long startBlock, final int count) {
     final List<BlockHeader> headers = new ArrayList<>();
@@ -297,9 +302,7 @@ class SaveAllHeadersStepTest {
     return headers;
   }
 
-  /**
-   * Creates a header chain where the lowest block has a specific parent hash.
-   */
+  /** Creates a header chain where the lowest block has a specific parent hash. */
   private List<BlockHeader> createHeaderChainWithLowestParent(
       final long startBlock, final int count, final Hash lowestBlockParent) {
     final List<BlockHeader> headers = new ArrayList<>();
@@ -318,22 +321,22 @@ class SaveAllHeadersStepTest {
     // Add the lowest block with specific parent hash
     final long lowestBlockNumber = startBlock - count + 1;
     final Hash lowestHash = Hash.hash(Bytes.ofUnsignedLong(lowestBlockNumber));
-    final BlockHeader lowestHeader = createMockBlockHeader(lowestBlockNumber, lowestHash, lowestBlockParent);
+    final BlockHeader lowestHeader =
+        createMockBlockHeader(lowestBlockNumber, lowestHash, lowestBlockParent);
     headers.add(lowestHeader);
 
     return headers;
   }
 
-  /**
-   * Creates a header chain where the highest block has a specific hash.
-   */
+  /** Creates a header chain where the highest block has a specific hash. */
   private List<BlockHeader> createHeaderChainWithHighestHash(
       final long startBlock, final int count, final Hash highestBlockHash) {
     final List<BlockHeader> headers = new ArrayList<>();
 
     // First header with specific hash
     final Hash parentOfHighest = Hash.hash(Bytes.ofUnsignedLong(startBlock + 1));
-    final BlockHeader highestHeader = createMockBlockHeader(startBlock, highestBlockHash, parentOfHighest);
+    final BlockHeader highestHeader =
+        createMockBlockHeader(startBlock, highestBlockHash, parentOfHighest);
     headers.add(highestHeader);
 
     // Rest of the chain

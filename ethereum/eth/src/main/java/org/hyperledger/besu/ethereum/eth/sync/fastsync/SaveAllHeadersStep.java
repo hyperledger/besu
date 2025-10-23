@@ -104,7 +104,11 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
 
   @Override
   public Stream<Void> apply(final List<BlockHeader> headers) {
-      LOG.info("SaveAllHeadersStep received {} headers, first {}, last {}", headers.size(), headers.getFirst().getNumber(), headers.getLast().getNumber());
+    LOG.info(
+        "SaveAllHeadersStep received {} headers, first {}, last {}",
+        headers.size(),
+        headers.getFirst().getNumber(),
+        headers.getLast().getNumber());
     if (headers.isEmpty()) {
       return Stream.empty();
     }
@@ -175,6 +179,12 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     if (expectedHash != null) {
       // We have the hash of block (lowestBlockNumber - 1), validate connection
       if (!lowestHeader.getParentHash().equals(expectedHash)) {
+        LOG.info("Expected hash {} does not match block {}", expectedHash, highestBlockNumber);
+        LOG.info(
+            "Blockheaders {} to {} ",
+            headers.getFirst().getNumber(),
+            headers.getLast().getNumber());
+        printBlockHeaders(headers);
         throw InvalidBlockException.fromInvalidBlock(
             String.format(
                 "Batch boundary validation failed: block %d parentHash %s does not match block %d hash %s",
@@ -197,7 +207,15 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     if (expectedParentHash != null) {
       // A higher range is waiting to validate against this range
       if (!highestHeader.getHash().equals(expectedParentHash)) {
-          LOG.info("Expected parent hash {} does not match block {}", expectedParentHash, highestBlockNumber);
+        LOG.info(
+            "Expected parent hash {} does not match block {}",
+            expectedParentHash,
+            highestBlockNumber);
+        LOG.info(
+            "Blockheaders {} to {} ",
+            headers.getFirst().getNumber(),
+            headers.getLast().getNumber());
+        printBlockHeaders(headers);
         throw InvalidBlockException.fromInvalidBlock(
             String.format(
                 "Batch boundary validation failed: block %d expected parent hash %s does not match block %d hash %s",
@@ -230,8 +248,15 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     }
   }
 
+  private void printBlockHeaders(final List<BlockHeader> headers) {
+    for (int i = 0; i < headers.size(); i++) {
+      final BlockHeader header = headers.get(i);
+      LOG.info("Block {}: {}", header.getNumber(), header);
+    }
+  }
+
   private void storeBlockHeader(final BlockHeader header) {
-//    final Difficulty difficulty = blockchain.calculateTotalDifficulty(header);
+    //    final Difficulty difficulty = blockchain.calculateTotalDifficulty(header);
     blockchain.unsafeStoreHeader(header, Difficulty.ZERO);
   }
 

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -208,28 +207,23 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
    * reverse direction, validates boundaries, and stores in database. Supports out-of-order parallel
    * execution with resume capability.
    *
-   * @param pivotBlockHash the pivot block hash to start from
    * @param fastSyncState the fast sync state for tracking progress
    * @param fastSyncStateStorage the storage for persisting progress
    * @return the backward header download pipeline
    */
   public Pipeline<Long> createBackwardHeaderDownloadPipeline(
-      final Hash pivotBlockHash,
-      final FastSyncState fastSyncState,
-      final FastSyncStateStorage fastSyncStateStorage) {
+      final FastSyncState fastSyncState, final FastSyncStateStorage fastSyncStateStorage) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     LOG.debug(
         "Creating backward header download pipeline: pivot={}, parallelism={}, batchSize={}",
-        pivotBlockHash,
+        fastSyncState.getPivotBlockHeader().get(),
         downloaderParallelism,
         headerRequestSize);
 
-
     final BackwardHeaderSource headerSource =
         new BackwardHeaderSource(
-            pivotBlockHash,
             headerRequestSize,
             ethContext,
             protocolSchedule,
@@ -241,14 +235,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadBackwardHeadersStep(
             protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem);
 
-    final SaveAllHeadersStep saveStep =
-        new SaveAllHeadersStep(
-            protocolContext.getBlockchain(),
-            metricsSystem,
-            pivotBlockHash,
-            fastSyncState,
-            fastSyncStateStorage);
-
+    final ImportHeadersStep importHeadersStep =
+        new ImportHeadersStep(
+            protocolContext.getBlockchain(), 0L, fastSyncState.getPivotBlockHeader().get());
     return PipelineBuilder.createPipelineFrom(
             "backwardHeaderSource",
             headerSource,
@@ -261,9 +250,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "action"),
             true,
             "backwardHeaderSync")
-        .thenProcessAsync("downloadBackwardHeaders", downloadStep, downloaderParallelism)
-        .thenFlatMap("saveAllHeaders", saveStep, headerRequestSize * downloaderParallelism)
-        .andFinishWith("completed", output -> {});
+        .thenProcessAsyncOrdered(
+            "downloadBackwardHeaders", downloadStep, downloaderParallelism * 200)
+        .andFinishWith("importHeadersStep", importHeadersStep);
   }
 
   /**
@@ -275,7 +264,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
    * @return the forward bodies and receipts download pipeline
    */
   public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
-          final long pivotBlockNumber, final SyncState syncState) {
+      final long pivotBlockNumber, final SyncState syncState) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final long startBlock = getCheckpointBlockNumber(syncState);
@@ -318,7 +307,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             true,
             "forwardBodiesReceipts")
         .thenFlatMap(
-            "flattenHeaders", headers -> headers.stream(), headerRequestSize * downloaderParallelism)
+            "flattenHeaders",
+            headers -> headers.stream(),
+            headerRequestSize * downloaderParallelism)
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)

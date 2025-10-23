@@ -133,29 +133,33 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader {
   private CompletableFuture<Void> determineStage1Execution() {
     // Check if backward header download already completed
     if (fastSyncState.isBackwardHeaderDownloadComplete()) {
-//      // Check if pivot has changed
-//      final Hash storedPivotHash = fastSyncState.getPivotBlockHash().orElse(null);
-//
-//      if (pivotBlockHash.equals(storedPivotHash)) {
-//        LOG.info(
-//            "Backward header download already complete for pivot {}. Skipping Stage 1.",
-//            pivotBlockHash);
-        return CompletableFuture.completedFuture(null);
-//      } else {
-//        LOG.info(
-//            "Pivot block changed from {} to {}. Running incremental backward header download.",
-//            storedPivotHash,
-//            pivotBlockHash);
-//        // TODO: Implement incremental download between old and new pivot
-//        // For now, treat as resume from lowest point
-//        return runStage1BackwardHeaderDownload();
-//      }
+      //      // Check if pivot has changed
+      //      final Hash storedPivotHash = fastSyncState.getPivotBlockHash().orElse(null);
+      //
+      //      if (pivotBlockHash.equals(storedPivotHash)) {
+      //        LOG.info(
+      //            "Backward header download already complete for pivot {}. Skipping Stage 1.",
+      //            pivotBlockHash);
+      return CompletableFuture.completedFuture(null);
+      //      } else {
+      //        LOG.info(
+      //            "Pivot block changed from {} to {}. Running incremental backward header
+      // download.",
+      //            storedPivotHash,
+      //            pivotBlockHash);
+      //        // TODO: Implement incremental download between old and new pivot
+      //        // For now, treat as resume from lowest point
+      //        return runStage1BackwardHeaderDownload();
+      //      }
     } else {
       // Backward download not complete - run or resume Stage 1
       if (fastSyncState.getLowestContiguousBlockHeaderDownloaded().isPresent()) {
-        final long resumeFrom = fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
+        final long resumeFrom =
+            fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
         LOG.info(
-            "Resuming backward header download from block {} (pivot: {})", resumeFrom, pivotBlockHash);
+            "Resuming backward header download from block {} (pivot: {})",
+            resumeFrom,
+            pivotBlockHash);
       } else {
         LOG.info("Starting backward header download for first time from pivot {}", pivotBlockHash);
       }
@@ -169,7 +173,7 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader {
     final Instant stage1StartTime = Instant.now();
 
     final Pipeline<Long> headerPipeline =
-        pipelineFactory.createBackwardHeaderDownloadPipeline(pivotBlockHash, fastSyncState, fastSyncStateStorage);
+        pipelineFactory.createBackwardHeaderDownloadPipeline(fastSyncState, fastSyncStateStorage);
     currentPipeline = headerPipeline;
 
     return scheduler
@@ -197,8 +201,11 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader {
     final Instant stage2StartTime = Instant.now();
 
     // Use the pivot block number from the persisted state (from Stage 1)
-    final long pivotBlockNumber = fastSyncState.getPivotBlockNumber().orElseThrow(
-        () -> new IllegalStateException("Pivot block number not available for Stage 2"));
+    final long pivotBlockNumber =
+        fastSyncState
+            .getPivotBlockNumber()
+            .orElseThrow(
+                () -> new IllegalStateException("Pivot block number not available for Stage 2"));
 
     final Pipeline<List<BlockHeader>> bodiesReceiptsPipeline =
         pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(pivotBlockNumber, syncState);

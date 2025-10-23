@@ -64,7 +64,8 @@ public class FastSyncStateStorage {
         final byte version = input.readByte();
 
         if (version == 2) {
-          // Version 2: [version, header, sourceIsTrusted, lowestContiguousBlockHeader, backwardDownloadComplete]
+          // Version 2: [version, header, sourceIsTrusted, lowestContiguousBlockHeader,
+          // backwardDownloadComplete]
           final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
           final boolean sourceIsTrusted = input.readByte() != 0;
           final long lowestContiguousBlockHeader = input.readLongScalar();
