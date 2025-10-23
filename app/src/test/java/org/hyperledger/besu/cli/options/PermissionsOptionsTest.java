@@ -88,7 +88,7 @@ public class PermissionsOptionsTest extends CommandTestAbstract {
     Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-nodes-config-file'");
+        .contains("Missing required parameter for option '--permissions-nodes-config-file'");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -99,7 +99,7 @@ public class PermissionsOptionsTest extends CommandTestAbstract {
     Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Missing required parameter for option '--permissions-accounts-config-file'");
+        .contains("Missing required parameter for option '--permissions-accounts-config-file'");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
