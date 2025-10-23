@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.WorldStateHealerHelper.throwingWorldStateHealerSupplier;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -38,9 +38,17 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.List;
 import java.util.Map;
@@ -73,7 +81,29 @@ public class BlockchainReferenceTestCaseSpec {
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts,
       final MutableBlockchain blockchain) {
-    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive(blockchain);
+
+    final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
+        new InMemoryKeyValueStorageProvider();
+    final WorldStateArchive worldStateArchive =
+        new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage)
+                inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            blockchain,
+            Optional.of(0L),
+            new NoopBonsaiCachedMerkleTrieLoader(),
+            new ServiceManager() {
+              @Override
+              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+
+              @Override
+              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+                return Optional.empty();
+              }
+            },
+            EvmConfiguration.DEFAULT,
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -91,10 +121,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    final MutableBlockchain inMemoryBlockchain =
-        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
-    inMemoryBlockchain.removeAllBlockAddedObservers();
-    return inMemoryBlockchain;
+    return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
 
   @JsonCreator
