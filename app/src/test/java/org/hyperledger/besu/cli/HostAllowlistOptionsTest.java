@@ -27,6 +27,9 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
   public void rpcHttpHostAllowlistAcceptsSingleArgument() {
     parseCommand("--host-allowlist", "a");
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
@@ -34,15 +37,15 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a");
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void rpcHttpHostAllowlistAcceptsMultipleArguments() {
     parseCommand("--host-allowlist", "a,b");
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
@@ -50,15 +53,15 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void rpcHttpHostAllowlistAcceptsDoubleComma() {
     parseCommand("--host-allowlist", "a,,b");
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
@@ -66,15 +69,15 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void rpcHttpHostAllowlistAcceptsMultipleFlags() {
     parseCommand("--host-allowlist=a", "--host-allowlist=b");
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
@@ -82,9 +85,6 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).contains("a", "b");
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -128,13 +128,13 @@ public class HostAllowlistOptionsTest extends CommandTestAbstract {
     final String[] origins = {"none"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).isEmpty();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

@@ -33,77 +33,87 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldParsePluginOptionForSinglePlugin() {
     parseCommand("--plugins", "pluginA");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of("pluginA"));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void shouldParsePluginOptionForMultiplePlugins() {
     parseCommand("--plugins", "pluginA,pluginB");
-    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
-        .isEqualTo(List.of("pluginA", "pluginB"));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
+        .isEqualTo(List.of("pluginA", "pluginB"));
   }
 
   @Test
   public void shouldNotUsePluginOptionWhenNoPluginsSpecified() {
     parseCommand();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of());
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void shouldNotParseAnyPluginsWhenPluginOptionIsEmpty() {
     parseCommand("--plugins", "");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
         .isEqualTo(List.of());
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void shouldParsePluginsExternalEnabledOptionWhenFalse() {
     parseCommand("--Xplugins-external-enabled=false");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(false);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void shouldParsePluginsExternalEnabledOptionWhenTrue() {
     parseCommand("--Xplugins-external-enabled=true");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(true);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void shouldEnablePluginsExternalByDefault() {
     parseCommand();
-    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
-        .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
+        .isEqualTo(true);
   }
 
   @Test
@@ -119,24 +129,26 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   @Test
   public void shouldHaveContinueOnErrorFalseByDefault() {
     parseCommand();
-    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
-        .isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
+        .isEqualTo(false);
   }
 
   @Test
   public void shouldUseContinueOnErrorWhenTrue() {
     parseCommand("--plugin-continue-on-error=true");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(pluginConfigurationArgumentCaptor.getValue().isContinueOnPluginError())
         .isEqualTo(true);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

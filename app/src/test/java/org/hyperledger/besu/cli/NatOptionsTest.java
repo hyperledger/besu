@@ -41,10 +41,10 @@ public class NatOptionsTest extends CommandTestAbstract {
   public void natMethodPropertyDefaultIsAuto() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
-
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
   }
 
   @Test
