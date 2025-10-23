@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -34,6 +35,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -238,5 +241,64 @@ class ParallelizedConcurrentTransactionProcessorTest {
         processor.applyParallelizedTransactionResult(
             worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
     assertTrue(result.isEmpty(), "Expected no transaction result to be applied due to conflict");
+  }
+
+  @Test
+  void testApplyResultUsesAccessLocationTrackerAndUpdatesPartialBlockAccessView() {
+    Address miningBeneficiary = Address.fromHexString("0x1");
+    Wei blobGasPrice = Wei.ZERO;
+
+    PartialBlockAccessView partialView = mock(PartialBlockAccessView.class);
+    PartialBlockAccessView.AccountChanges beneficiaryChanges =
+        mock(PartialBlockAccessView.AccountChanges.class);
+    when(beneficiaryChanges.getAddress()).thenReturn(miningBeneficiary);
+    when(partialView.accountChanges()).thenReturn(Collections.singletonList(beneficiaryChanges));
+
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(
+            TransactionProcessingResult.successful(
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.of(partialView),
+                ValidationResult.valid()));
+
+    BlockAccessListBuilder balBuilder = mock(BlockAccessListBuilder.class);
+
+    processor.runTransaction(
+        protocolContext,
+        blockHeader,
+        0,
+        transaction,
+        miningBeneficiary,
+        (__, ___) -> Hash.EMPTY,
+        blobGasPrice,
+        Optional.of(balBuilder));
+
+    verify(transactionProcessor)
+        .processTransaction(
+            any(WorldUpdater.class),
+            eq(blockHeader),
+            eq(transaction),
+            eq(miningBeneficiary),
+            any(OperationTracer.class),
+            any(BlockHashLookup.class),
+            eq(TransactionValidationParams.processingBlock()),
+            eq(blobGasPrice),
+            argThat(Optional::isPresent));
+
+    when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
+
+    Optional<TransactionProcessingResult> maybeResult =
+        processor.applyParallelizedTransactionResult(
+            worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
+
+    assertTrue(
+        maybeResult.isPresent(), "Expected the parallelized transaction result to be applied");
+    TransactionProcessingResult result = maybeResult.get();
+    assertTrue(result.getPartialBlockAccessView().isPresent(), "Expected BAL view to be present");
+    verify(beneficiaryChanges).setPostBalance(any(Wei.class));
   }
 }
