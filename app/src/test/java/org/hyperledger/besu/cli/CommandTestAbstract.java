@@ -100,6 +100,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -464,14 +465,39 @@ public abstract class CommandTestAbstract {
     }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
-    // parse using Ansi.OFF to be able to assert on non formatted output results
+    // if data-path is not set and this is not a subcommand, set to a tmp dir
+    final List<String> argsList = new ArrayList<>(Arrays.asList(args));
+
+    // could add in more subcommands here but this is the only one where parsing args in tests
+    // currently needs this
+    boolean isTrieLogSubcommand = argsList.stream().anyMatch(arg -> arg.equals("trie-log"));
+
+    // If first arg starts with "-" or args is empty, it's likely main command
+    boolean isMainCommand = !isTrieLogSubcommand && (args.length == 0 || args[0].startsWith("-"));
+
+    boolean hasDataPath = argsList.stream().anyMatch(arg -> arg.contains("data-path"));
+
+    boolean hasConfigFile = argsList.stream().anyMatch(arg -> arg.contains("config-file"));
+
+    if (isMainCommand && !hasDataPath && !hasConfigFile) {
+      try {
+        final Path tmpDir = Files.createTempDirectory("besu-test-");
+        tmpDir.toFile().deleteOnExit();
+        argsList.add(0, "--data-path");
+        argsList.add(1, tmpDir.toString());
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create temporary directory", e);
+      }
+    }
+
+    // parse using Ansi.OFF to be able to assert on non-formatted output results
     besuCommand.parse(
         new RunLast(),
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
         mockBesuComponent,
-        args);
+        argsList.toArray(new String[0]));
     return besuCommand;
   }
 
