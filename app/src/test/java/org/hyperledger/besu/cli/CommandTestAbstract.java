@@ -481,20 +481,15 @@ public abstract class CommandTestAbstract {
 
   @Nonnull
   private static List<String> constructArgsWithDataPathIfNotSpecified(final String[] args) {
-    // if data-path is not set and this is not a subcommand, set to a tmp dir
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 
-    // could add in more subcommands here but this is the only one where parsing args in tests
-    // currently needs this
-    boolean isTrieLogSubcommand = argsList.stream().anyMatch(arg -> arg.equals("trie-log"));
-
     // If first arg starts with "-" or args is empty, it's likely main command
-    boolean isMainCommand = !isTrieLogSubcommand && (args.length == 0 || args[0].startsWith("-"));
+    boolean isMainCommand = args.length == 0 || args[0].startsWith("-");
 
     boolean hasDataPath = argsList.stream().anyMatch(arg -> arg.contains("data-path"));
-
     boolean hasConfigFile = argsList.stream().anyMatch(arg -> arg.contains("config-file"));
 
+    // if data-path is not set and this is not a subcommand, set to a tmp dir
     if (isMainCommand && !hasDataPath && !hasConfigFile) {
       try {
         final Path tmpDir = Files.createTempDirectory("besu-test-");
