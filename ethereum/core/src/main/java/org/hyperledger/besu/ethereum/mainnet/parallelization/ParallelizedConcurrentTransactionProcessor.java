@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -156,7 +156,7 @@ public class ParallelizedConcurrentTransactionProcessor {
               new ParallelizedTransactionContext.Builder();
           final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
               (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
-          final StackedUpdater stackedUpdater = (StackedUpdater) roundWorldStateUpdater.updater();
+          final WorldUpdater transactionUpdater = roundWorldStateUpdater.updater();
           final Optional<AccessLocationTracker> transactionLocationTracker =
               blockAccessListBuilder.map(
                   b ->
@@ -164,7 +164,7 @@ public class ParallelizedConcurrentTransactionProcessor {
                           transactionLocation));
           final TransactionProcessingResult result =
               transactionProcessor.processTransaction(
-                  stackedUpdater,
+                  transactionUpdater,
                   blockHeader,
                   transaction.detachedCopy(),
                   miningBeneficiary,
@@ -195,7 +195,7 @@ public class ParallelizedConcurrentTransactionProcessor {
                   transactionLocationTracker);
 
           // commit the accumulator in order to apply all the modifications
-          stackedUpdater.commit();
+          transactionUpdater.commit();
           roundWorldStateUpdater.commit();
 
           contextBuilder
