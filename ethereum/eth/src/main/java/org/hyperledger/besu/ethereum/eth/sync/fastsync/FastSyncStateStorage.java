@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.google.common.io.Files;
 import org.apache.tuweni.bytes.Bytes;
@@ -64,18 +65,22 @@ public class FastSyncStateStorage {
         final byte version = input.readByte();
 
         if (version == 2) {
-          // Version 2: [version, header, sourceIsTrusted, lowestContiguousBlockHeader,
+          final Optional<BlockHeader> lowestBlockHeader;
+          // Version 2: [version, header, sourceIsTrusted, lowestBlockHeader,
           // backwardDownloadComplete]
           final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
+          if (input.nextIsList()) {
+            lowestBlockHeader = Optional.of(BlockHeader.readFrom(input, blockHeaderFunctions));
+          } else {
+            lowestBlockHeader = Optional.empty();
+            input.skipNext();
+          }
           final boolean sourceIsTrusted = input.readByte() != 0;
-          final long lowestContiguousBlockHeader = input.readLongScalar();
           final boolean backwardDownloadComplete = input.readByte() != 0;
           input.leaveList();
 
           final FastSyncState state = new FastSyncState(header, sourceIsTrusted);
-          if (lowestContiguousBlockHeader >= 0) {
-            state.setLowestBlockHeaderDownloaded(lowestContiguousBlockHeader);
-          }
+          lowestBlockHeader.ifPresent(state::setLowestBlockHeaderDownloaded);
           state.setBackwardHeaderDownloadComplete(backwardDownloadComplete);
           return state;
 
@@ -89,8 +94,8 @@ public class FastSyncStateStorage {
           throw new IllegalStateException("Unsupported fast sync state format version: " + version);
         }
       } else {
-        // Legacy format: just the header itself
-        return new FastSyncState(BlockHeader.readFrom(input, blockHeaderFunctions), false);
+        pivotBlockHeaderFile.delete();
+        return FastSyncState.EMPTY_SYNC_STATE;
       }
     } catch (final IOException e) {
       throw new IllegalStateException(
@@ -111,10 +116,14 @@ public class FastSyncStateStorage {
       output.startList();
       output.writeByte(FORMAT_VERSION);
       state.getPivotBlockHeader().get().writeTo(output);
+      if (state.getLowestBlockHeaderDownloaded().isPresent()) {
+        state.getLowestBlockHeaderDownloaded().get().writeTo(output);
+      } else {
+        output.writeByte((byte) 0);
+      }
       output.writeByte((byte) (state.isSourceTrusted() ? 1 : 0));
       // Store backward header download progress (version 2 fields)
-      output.writeLongScalar(
-          state.getLowestBlockHeaderDownloaded().orElse(-1L)); // -1 means not started
+
       output.writeByte((byte) (state.isBackwardHeaderDownloadComplete() ? 1 : 0));
       output.endList();
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
