@@ -63,8 +63,7 @@ class SaveAllHeadersStepTest {
 
     when(blockchain.calculateTotalDifficulty(any())).thenReturn(Difficulty.ONE);
     when(fastSyncState.getPivotBlockNumber()).thenReturn(java.util.OptionalLong.of(PIVOT_BLOCK));
-    when(fastSyncState.getLowestContiguousBlockHeaderDownloaded())
-        .thenReturn(java.util.OptionalLong.empty());
+    when(fastSyncState.getLowestBlockHeaderDownloaded()).thenReturn(java.util.OptionalLong.empty());
 
     step =
         new SaveAllHeadersStep(

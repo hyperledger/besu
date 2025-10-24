@@ -93,7 +93,7 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
     // Initialize from persisted state or use pivot block number
     final long initialBlock =
         fastSyncState
-            .getLowestContiguousBlockHeaderDownloaded()
+            .getLowestBlockHeaderDownloaded()
             .orElse(fastSyncState.getPivotBlockNumber().orElse(0L));
 
     this.highestContiguousBlock = new AtomicLong(initialBlock);
@@ -149,7 +149,7 @@ public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Vo
    */
   private void persistProgress(final long currentLowestBlock) {
     try {
-      fastSyncState.setLowestContiguousBlockHeaderDownloaded(currentLowestBlock);
+      fastSyncState.setLowestBlockHeaderDownloaded(currentLowestBlock);
       fastSyncStateStorage.storeState(fastSyncState);
       LOG.debug("Persisted backward header download progress: lowestBlock={}", currentLowestBlock);
     } catch (Exception e) {
