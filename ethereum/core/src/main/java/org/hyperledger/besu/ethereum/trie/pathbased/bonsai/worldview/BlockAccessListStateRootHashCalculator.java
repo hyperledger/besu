@@ -110,6 +110,7 @@ public class BlockAccessListStateRootHashCalculator {
       }
     }
 
+    accumulator.clearAccountsThatAreEmpty();
     accumulator.commit();
     return worldState.calculateRootHash(Optional.empty(), accumulator);
   }

@@ -140,6 +140,7 @@ class BlockAccessListStateRootHashCalculatorTest {
     final Address addressOne = Address.fromHexString("0x00000000000000000000000000000000000000cc");
     final Address addressTwo = Address.fromHexString("0x00000000000000000000000000000000000000dd");
     final StorageSlotKey slotKey = new StorageSlotKey(UInt256.valueOf(1));
+    final Bytes newCode = Bytes.fromHexString("0x60016000");
 
     final BlockAccessList bal =
         new BlockAccessList(
@@ -159,7 +160,7 @@ class BlockAccessListStateRootHashCalculatorTest {
                     List.of(),
                     List.of(),
                     List.of(),
-                    List.of())));
+                    List.of(new CodeChange(0, newCode)))));
 
     final Hash accumulatorRoot =
         computeRootFromAccumulator(
@@ -169,6 +170,7 @@ class BlockAccessListStateRootHashCalculatorTest {
               first.setNonce(3L);
 
               final MutableAccount second = accumulator.getOrCreate(addressTwo);
+              second.setCode(newCode);
               second.setStorageValue(slotKey.getSlotKey().orElseThrow(), UInt256.valueOf(99));
             });
 
