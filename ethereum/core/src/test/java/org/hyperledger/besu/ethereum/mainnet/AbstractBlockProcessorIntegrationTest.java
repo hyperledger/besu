@@ -73,6 +73,8 @@ import org.web3j.abi.datatypes.generated.Uint256;
 
 @SuppressWarnings("rawtypes")
 class AbstractBlockProcessorIntegrationTest {
+  private static final org.slf4j.Logger LOG =
+      org.slf4j.LoggerFactory.getLogger(AbstractBlockProcessorIntegrationTest.class);
 
   private static final String ACCOUNT_GENESIS_1 = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
   private static final String ACCOUNT_GENESIS_2 = "0x7f2d653f56ea8de6ffa554c7a0cd4e03af79f3eb";
@@ -201,43 +203,62 @@ class AbstractBlockProcessorIntegrationTest {
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testBlockProcessingWithTransfers(final String processorType) {
+    LOG.info("Starting testBlockProcessingWithTransfers using {}", processorType);
     processSimpleTransfers(getBlockProcessor(processorType));
+    LOG.info("Ending testBlockProcessingWithTransfers using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessConflictedSimpleTransfersSameSender(final String processorType) {
+    LOG.info("Starting testProcessConflictedSimpleTransfersSameSender using {}", processorType);
     processConflictedSimpleTransfersSameSender(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessConflictedSimpleTransfersSameSender using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(
       final String processorType) {
+    LOG.info(
+        "Starting testProcessConflictedSimpleTransfersSameAddressReceiverAndSender using {}",
+        processorType);
     processConflictedSimpleTransfersSameAddressReceiverAndSender(getBlockProcessor(processorType));
+    LOG.info(
+        "Ending testProcessConflictedSimpleTransfersSameAddressReceiverAndSender using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessConflictedSimpleTransfersWithCoinbase(final String processorType) {
+    LOG.info("Starting testProcessConflictedSimpleTransfersWithCoinbase using {}", processorType);
     processConflictedSimpleTransfersWithCoinbase(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessConflictedSimpleTransfersWithCoinbase using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessContractSlotUpdateThenReadTx(final String processorType) {
+    LOG.info("Starting testProcessContractSlotUpdateThenReadTx using {}", processorType);
     processContractSlotUpdateThenReadTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessContractSlotUpdateThenReadTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessSlotReadThenUpdateTx(final String processorType) {
+    LOG.info("Starting testProcessSlotReadThenUpdateTx using {}", processorType);
     processSlotReadThenUpdateTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessSlotReadThenUpdateTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
   void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(final String processorType) {
+    LOG.info(
+        "Starting blockAccessListStateRootMatchesAccumulatorForSimpleTransfers using {}",
+        processorType);
     BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Transaction transactionTransfer1 =
         createTransferTransaction(
@@ -259,11 +280,17 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
+    LOG.info(
+        "Ending blockAccessListStateRootMatchesAccumulatorForSimpleTransfers using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
   void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(final String processorType) {
+    LOG.info(
+        "Starting blockAccessListStateRootMatchesAccumulatorForStorageAndReads using {}",
+        processorType);
     BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
 
@@ -295,30 +322,41 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
+    LOG.info(
+        "Ending blockAccessListStateRootMatchesAccumulatorForStorageAndReads using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessAccountReadThenUpdateTx(final String processorType) {
+    LOG.info("Starting testProcessAccountReadThenUpdateTx using {}", processorType);
     processAccountReadThenUpdateTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountReadThenUpdateTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessAccountUpdateThenReadTx(final String processorType) {
+    LOG.info("Starting testProcessAccountUpdateThenReadTx using {}", processorType);
     processAccountUpdateThenReadTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountUpdateThenReadTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessAccountReadThenUpdateTxWithTwoAccounts(final String processorType) {
+    LOG.info("Starting testProcessAccountReadThenUpdateTxWithTwoAccounts using {}", processorType);
     processAccountReadThenUpdateTxWithTwoAccounts(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountReadThenUpdateTxWithTwoAccounts using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(final String processorType) {
+    LOG.info("Starting testProcessAccountUpdateThenReadTxWithTwoAccounts using {}", processorType);
     processAccountUpdateThenReadTxWithTwoAccounts(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountUpdateThenReadTxWithTwoAccounts using {}", processorType);
   }
 
   @Test
