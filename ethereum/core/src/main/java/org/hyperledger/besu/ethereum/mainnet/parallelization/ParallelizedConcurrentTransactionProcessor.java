@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -148,6 +149,10 @@ public class ParallelizedConcurrentTransactionProcessor {
               new ParallelizedTransactionContext.Builder();
           final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
               (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+          // Create an access location tracker for this transaction to track account/storage
+          // accesses
+          final AccessLocationTracker accessLocationTracker =
+              new AccessLocationTracker(transactionLocation + 1);
           final TransactionProcessingResult result =
               transactionProcessor.processTransaction(
                   roundWorldStateUpdater,
@@ -177,7 +182,8 @@ public class ParallelizedConcurrentTransactionProcessor {
                   },
                   blockHashLookup,
                   TransactionValidationParams.processingBlock(),
-                  blobGasPrice);
+                  blobGasPrice,
+                  Optional.of(accessLocationTracker));
 
           // commit the accumulator in order to apply all the modifications
           ws.getAccumulator().commit();
