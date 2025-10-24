@@ -99,23 +99,32 @@ public class DownloadBackwardHeadersStep
       final PeerTaskExecutorResult<List<BlockHeader>> result =
           ethContext.getPeerTaskExecutor().execute(task);
 
-      if (result.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+      final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
+      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS
           || result.result().isEmpty()) {
-        LOG.warn(
-            "Failed to download headers from block {} (response: {})",
-            startBlockNumber,
-            result.responseCode());
-        return CompletableFuture.failedFuture(
-            new RuntimeException("Failed to download headers from block " + startBlockNumber));
+        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
+          try {
+            Thread.sleep(1000L);
+          } catch (InterruptedException e) {
+            // do nothing
+          }
+        } else {
+          LOG.warn(
+              "Failed to download headers from block {} (response: {})",
+              startBlockNumber,
+              peerTaskExecutorResponseCode);
+          return CompletableFuture.failedFuture(
+              new RuntimeException("Failed to download headers from block " + startBlockNumber));
+        }
+      } else {
+        headers.addAll(result.result().get());
       }
-
-      headers.addAll(result.result().get());
     } while (headers.size() < headersToRequest);
     LOG.info(
         "Downloaded {} headers: blocks {} to {}",
         headers.size(),
-        headers.get(0).getNumber(),
-        headers.get(headers.size() - 1).getNumber());
+        headers.getFirst().getNumber(),
+        headers.getLast().getNumber());
 
     return CompletableFuture.completedFuture(headers);
   }
