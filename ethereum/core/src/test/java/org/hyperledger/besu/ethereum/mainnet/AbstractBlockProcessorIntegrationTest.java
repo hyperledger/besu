@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionR
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -54,6 +55,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -69,6 +73,8 @@ import org.web3j.abi.datatypes.generated.Uint256;
 
 @SuppressWarnings("rawtypes")
 class AbstractBlockProcessorIntegrationTest {
+  private static final org.slf4j.Logger LOG =
+      org.slf4j.LoggerFactory.getLogger(AbstractBlockProcessorIntegrationTest.class);
 
   private static final String ACCOUNT_GENESIS_1 = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
   private static final String ACCOUNT_GENESIS_2 = "0x7f2d653f56ea8de6ffa554c7a0cd4e03af79f3eb";
@@ -93,12 +99,26 @@ class AbstractBlockProcessorIntegrationTest {
   private DefaultBlockchain blockchain;
   private Address coinbase;
 
+  private MainnetBlockProcessor sequentialBlockProcessor;
+  private MainnetParallelBlockProcessor parallelBlockProcessor;
+  private MainnetBlockProcessor sequentialBlockProcessorNoRewards;
+  private MainnetParallelBlockProcessor parallelBlockProcessorNoRewards;
+
   private static final String GENESIS_RESOURCE =
       "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json";
 
+  @SuppressWarnings("BannedMethod")
   @BeforeEach
   public void setUp() {
-    final ExecutionContextTestFixture contextTestFixture =
+    Configurator.setLevel(
+        LogManager.getLogger(MainnetParallelBlockProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(LogManager.getLogger(MainnetBlockProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(
+        LogManager.getLogger(MainnetTransactionProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(
+        LogManager.getLogger(ParallelizedConcurrentTransactionProcessor.class).getName(),
+        Level.TRACE);
+    final var contextTestFixture =
         ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -107,15 +127,8 @@ class AbstractBlockProcessorIntegrationTest {
     worldStateArchive = contextTestFixture.getStateArchive();
     protocolContext = contextTestFixture.getProtocolContext();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
-  }
 
-  private static Stream<Arguments> blockProcessors(
-      final Wei coinbaseReward, final boolean skipRewards) {
-    final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
-            .dataStorageFormat(DataStorageFormat.BONSAI)
-            .build();
-
+    // Create block processors with rewards
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final var protocolSpec =
         protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
@@ -123,84 +136,130 @@ class AbstractBlockProcessorIntegrationTest {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final var receiptFactory = protocolSpec.getTransactionReceiptFactory();
 
-    final BlockProcessor sequentialBlockProcessor =
+    sequentialBlockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
+            COINBASE_REWARD,
             BlockHeader::getCoinbase,
-            skipRewards,
+            false,
             protocolSchedule);
 
-    final BlockProcessor parallelBlockProcessor =
+    parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
+            COINBASE_REWARD,
             BlockHeader::getCoinbase,
-            skipRewards,
+            false,
             protocolSchedule,
             new NoOpMetricsSystem());
 
-    return Stream.of(
-        Arguments.of("sequential", sequentialBlockProcessor),
-        Arguments.of("parallel", parallelBlockProcessor));
+    // Create block processors without rewards
+    sequentialBlockProcessorNoRewards =
+        new MainnetBlockProcessor(
+            transactionProcessor,
+            receiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            true,
+            protocolSchedule);
+
+    parallelBlockProcessorNoRewards =
+        new MainnetParallelBlockProcessor(
+            transactionProcessor,
+            receiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            true,
+            protocolSchedule,
+            new NoOpMetricsSystem());
   }
 
   private static Stream<Arguments> blockProcessorProvider() {
-    return blockProcessors(COINBASE_REWARD, false);
+    return Stream.of(Arguments.of("sequential"), Arguments.of("parallel"));
   }
 
   private static Stream<Arguments> blockProcessorProviderWithoutRewards() {
-    return blockProcessors(Wei.ZERO, true);
+    return Stream.of(Arguments.of("sequential"), Arguments.of("parallel"));
+  }
+
+  private BlockProcessor getBlockProcessor(final String processorType) {
+    return switch (processorType) {
+      case "sequential" -> sequentialBlockProcessor;
+      case "parallel" -> parallelBlockProcessor;
+      default -> throw new IllegalArgumentException("Unknown processor type: " + processorType);
+    };
+  }
+
+  private BlockProcessor getBlockProcessorNoRewards(final String processorType) {
+    return switch (processorType) {
+      case "sequential" -> sequentialBlockProcessorNoRewards;
+      case "parallel" -> parallelBlockProcessorNoRewards;
+      default -> throw new IllegalArgumentException("Unknown processor type: " + processorType);
+    };
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testBlockProcessingWithTransfers(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processSimpleTransfers(blockProcessor);
+  void testBlockProcessingWithTransfers(final String processorType) {
+    LOG.info("Starting testBlockProcessingWithTransfers using {}", processorType);
+    processSimpleTransfers(getBlockProcessor(processorType));
+    LOG.info("Ending testBlockProcessingWithTransfers using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersSameSender(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersSameSender(blockProcessor);
+  void testProcessConflictedSimpleTransfersSameSender(final String processorType) {
+    LOG.info("Starting testProcessConflictedSimpleTransfersSameSender using {}", processorType);
+    processConflictedSimpleTransfersSameSender(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessConflictedSimpleTransfersSameSender using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
+      final String processorType) {
+    LOG.info(
+        "Starting testProcessConflictedSimpleTransfersSameAddressReceiverAndSender using {}",
+        processorType);
+    processConflictedSimpleTransfersSameAddressReceiverAndSender(getBlockProcessor(processorType));
+    LOG.info(
+        "Ending testProcessConflictedSimpleTransfersSameAddressReceiverAndSender using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersWithCoinbase(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersWithCoinbase(blockProcessor);
+  void testProcessConflictedSimpleTransfersWithCoinbase(final String processorType) {
+    LOG.info("Starting testProcessConflictedSimpleTransfersWithCoinbase using {}", processorType);
+    processConflictedSimpleTransfersWithCoinbase(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessConflictedSimpleTransfersWithCoinbase using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessContractSlotUpdateThenReadTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processContractSlotUpdateThenReadTx(blockProcessor);
+  void testProcessContractSlotUpdateThenReadTx(final String processorType) {
+    LOG.info("Starting testProcessContractSlotUpdateThenReadTx using {}", processorType);
+    processContractSlotUpdateThenReadTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessContractSlotUpdateThenReadTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessSlotReadThenUpdateTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processSlotReadThenUpdateTx(blockProcessor);
+  void testProcessSlotReadThenUpdateTx(final String processorType) {
+    LOG.info("Starting testProcessSlotReadThenUpdateTx using {}", processorType);
+    processSlotReadThenUpdateTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessSlotReadThenUpdateTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
-  void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(
-      final String ignoredName, final BlockProcessor blockProcessor) {
+  void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(final String processorType) {
+    LOG.info(
+        "Starting blockAccessListStateRootMatchesAccumulatorForSimpleTransfers using {}",
+        processorType);
+    BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Transaction transactionTransfer1 =
         createTransferTransaction(
             0, 1_000_000_000_000_000_000L, 300000L, 0L, 5L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR);
@@ -221,12 +280,18 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
+    LOG.info(
+        "Ending blockAccessListStateRootMatchesAccumulatorForSimpleTransfers using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
-  void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(
-      final String ignoredName, final BlockProcessor blockProcessor) {
+  void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(final String processorType) {
+    LOG.info(
+        "Starting blockAccessListStateRootMatchesAccumulatorForStorageAndReads using {}",
+        processorType);
+    BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
 
     Transaction setSlot1Transaction =
@@ -257,34 +322,41 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
+    LOG.info(
+        "Ending blockAccessListStateRootMatchesAccumulatorForStorageAndReads using {}",
+        processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountReadThenUpdateTx(blockProcessor);
+  void testProcessAccountReadThenUpdateTx(final String processorType) {
+    LOG.info("Starting testProcessAccountReadThenUpdateTx using {}", processorType);
+    processAccountReadThenUpdateTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountReadThenUpdateTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountUpdateThenReadTx(blockProcessor);
+  void testProcessAccountUpdateThenReadTx(final String processorType) {
+    LOG.info("Starting testProcessAccountUpdateThenReadTx using {}", processorType);
+    processAccountUpdateThenReadTx(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountUpdateThenReadTx using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTxWithTwoAccounts(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
+  void testProcessAccountReadThenUpdateTxWithTwoAccounts(final String processorType) {
+    LOG.info("Starting testProcessAccountReadThenUpdateTxWithTwoAccounts using {}", processorType);
+    processAccountReadThenUpdateTxWithTwoAccounts(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountReadThenUpdateTxWithTwoAccounts using {}", processorType);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
+  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(final String processorType) {
+    LOG.info("Starting testProcessAccountUpdateThenReadTxWithTwoAccounts using {}", processorType);
+    processAccountUpdateThenReadTxWithTwoAccounts(getBlockProcessor(processorType));
+    LOG.info("Ending testProcessAccountUpdateThenReadTxWithTwoAccounts using {}", processorType);
   }
 
   @Test

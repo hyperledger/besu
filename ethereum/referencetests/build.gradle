@@ -231,6 +231,8 @@ dependencies {
 }
 
 tasks.register('referenceTests', Test) {
+  // Enable JUnit 5 extension auto-detection to initialize SignatureAlgorithmFactory early
+  systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
   useJUnitPlatform()
   doFirst {
     if (!file("src/reference-test/external-resources/README.md").exists()) {
