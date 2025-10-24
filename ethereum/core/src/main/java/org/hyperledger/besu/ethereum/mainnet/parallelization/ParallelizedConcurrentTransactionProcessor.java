@@ -116,18 +116,19 @@ public class ParallelizedConcurrentTransactionProcessor {
       /*
        * All transactions are executed in the background by copying the world state of the block on which the transactions need to be executed, ensuring that each one has its own accumulator.
        */
-      CompletableFuture.runAsync(
-          () ->
-              runTransaction(
-                  protocolContext,
-                  blockHeader,
-                  transactionLocation,
-                  transaction,
-                  miningBeneficiary,
-                  blockHashLookup,
-                  blobGasPrice,
-                  blockAccessListBuilder),
-          executor);
+      completableFuturesForBackgroundTransactions[i] =
+          CompletableFuture.runAsync(
+              () ->
+                  runTransaction(
+                      protocolContext,
+                      blockHeader,
+                      transactionLocation,
+                      transaction,
+                      miningBeneficiary,
+                      blockHashLookup,
+                      blobGasPrice,
+                      blockAccessListBuilder),
+              executor);
     }
   }
 
