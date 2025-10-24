@@ -77,7 +77,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final ProtocolContext protocolContext;
 
-  public WorldStateArchive buildWorldStateArchive() {
+  public WorldStateArchive buildWorldStateArchive(final long cacheSize) {
 
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
@@ -87,7 +87,7 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.empty(),
+            Optional.of(cacheSize),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
@@ -137,7 +137,7 @@ public class BlockchainReferenceTestCaseSpec {
     this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.blockchain = buildBlockchain(genesisBlockHeader);
-    this.worldStateArchive = buildWorldStateArchive();
+    this.worldStateArchive = buildWorldStateArchive(candidateBlocks.length);
     this.sealEngine = sealEngine;
     this.protocolContext = buildProtocolContext(worldStateArchive);
   }
