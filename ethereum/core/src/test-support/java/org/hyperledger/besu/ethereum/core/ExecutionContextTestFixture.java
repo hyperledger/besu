@@ -179,8 +179,8 @@ public class ExecutionContextTestFixture {
       return new ExecutionContextTestFixture(
           genesisConfig,
           protocolSchedule,
-          variablesKeyValueStorage,
           blockchainKeyValueStorage,
+          variablesKeyValueStorage,
           dataStorageFormat);
     }
   }

@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
@@ -26,7 +30,11 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *     represents. If this does not represent a forward transition from one block to the next
    *     `null` should be passed in.
    */
-  void persist(BlockHeader blockHeader);
+  void persist(BlockHeader blockHeader, Optional<CompletableFuture<Hash>> maybeStateRootFuture);
+
+  default void persist(final BlockHeader blockHeader) {
+    persist(blockHeader, Optional.empty());
+  }
 
   default MutableWorldState freezeStorage() {
     // no op

@@ -40,7 +40,13 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
@@ -54,6 +60,8 @@ public abstract class PathBasedWorldState
     implements MutableWorldState, PathBasedWorldView, StorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(PathBasedWorldState.class);
+
+  private static final Duration BAL_STATE_ROOT_CALCULATION_TIMEOUT = Duration.ofSeconds(1);
 
   protected PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final PathBasedCachedWorldStorageManager cachedWorldStorageManager;
@@ -174,8 +182,40 @@ public abstract class PathBasedWorldState
     return this;
   }
 
+  private void logErrorIfBalStateRootMismatchesPersisted(
+      final Hash calculatedRootHash, final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
+    if (maybeStateRootFuture.isPresent()) {
+      final CompletableFuture<Hash> stateRootFuture = maybeStateRootFuture.get();
+      try {
+        final Hash balStateRoot =
+            stateRootFuture.get(
+                BAL_STATE_ROOT_CALCULATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        if (!balStateRoot.equals(calculatedRootHash)) {
+          LOG.error(
+              "State root mismatch between state root computed using BAL ({}) and persisted world state root ({})",
+              balStateRoot.toHexString(),
+              calculatedRootHash.toHexString());
+        }
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOG.error("Interrupted while waiting for BAL-based state root calculation to finish", e);
+      } catch (final ExecutionException e) {
+        final Throwable cause = e.getCause() == null ? e : e.getCause();
+        LOG.error("Failed to compute state root from block access list", cause);
+      } catch (final CancellationException e) {
+        LOG.error("Block access list state root calculation was cancelled", e);
+      } catch (final TimeoutException e) {
+        LOG.error("Timed out waiting for BAL-based state root calculation to finish", e);
+      } finally {
+        stateRootFuture.cancel(true);
+      }
+    }
+  }
+
   @Override
-  public void persist(final BlockHeader blockHeader) {
+  public void persist(
+      final BlockHeader blockHeader, final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
+
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
         .setMessage("Persist world state for block {}")
@@ -217,6 +257,7 @@ public abstract class PathBasedWorldState
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
+        logErrorIfBalStateRootMismatchesPersisted(calculatedRootHash, maybeStateRootFuture);
         saveTrieLog =
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);

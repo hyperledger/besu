@@ -20,7 +20,7 @@ env:
 jobs:
   repolint:
     name: "Repository Linting"
-    runs-on: ubuntu-22.04
+    runs-on: besu-research-ubuntu-16 # more cores
     container: ghcr.io/todogroup/repolinter:v0.11.2
     steps:
     - name: Checkout Code

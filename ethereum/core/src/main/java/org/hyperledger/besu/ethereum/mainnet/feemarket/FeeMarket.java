@@ -144,6 +144,16 @@ public interface FeeMarket {
   }
 
   /**
+   * Creates a fee market with a zero blob fee.
+   *
+   * @param londonForkBlockNumber the block number at which the London fork activates.
+   * @return a {@link BaseFeeMarket} instance with a zero blob fee.
+   */
+  static BaseFeeMarket zeroBlobFee(final long londonForkBlockNumber) {
+    return new ZeroBlobFeeMarket(londonForkBlockNumber);
+  }
+
+  /**
    * Creates a fee market with a fixed base fee.
    *
    * @param londonForkBlockNumber the block number at which the London fork activates.
