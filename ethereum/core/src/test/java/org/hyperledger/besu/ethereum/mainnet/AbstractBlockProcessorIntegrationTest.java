@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionR
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -54,6 +55,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -101,8 +105,17 @@ class AbstractBlockProcessorIntegrationTest {
   private static final String GENESIS_RESOURCE =
       "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json";
 
+  @SuppressWarnings("BannedMethod")
   @BeforeEach
   public void setUp() {
+    Configurator.setLevel(
+        LogManager.getLogger(MainnetParallelBlockProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(LogManager.getLogger(MainnetBlockProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(
+        LogManager.getLogger(MainnetTransactionProcessor.class).getName(), Level.TRACE);
+    Configurator.setLevel(
+        LogManager.getLogger(ParallelizedConcurrentTransactionProcessor.class).getName(),
+        Level.TRACE);
     final var contextTestFixture =
         ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
