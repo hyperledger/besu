@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Upcoming Breaking Changes
 - Deprecated CLI options
@@ -21,6 +22,7 @@
 - Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
 - Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
 - Update to tuweni 2.7.2 [#9338](https://github.com/hyperledger/besu/pull/9338)
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Bug fixes
 
