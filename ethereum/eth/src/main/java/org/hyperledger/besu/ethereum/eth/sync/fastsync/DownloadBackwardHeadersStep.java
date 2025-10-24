@@ -109,12 +109,7 @@ public class DownloadBackwardHeadersStep
             new RuntimeException("Failed to download headers from block " + startBlockNumber));
       }
 
-      final List<BlockHeader> receivedHeaders = result.result().get();
-      if (receivedHeaders.size() == headersToRequest) {
-        headers = receivedHeaders;
-      } else {
-        headers.addAll(receivedHeaders);
-      }
+      headers.addAll(result.result().get());
     } while (headers.size() < headersToRequest);
     LOG.info(
         "Downloaded {} headers: blocks {} to {}",

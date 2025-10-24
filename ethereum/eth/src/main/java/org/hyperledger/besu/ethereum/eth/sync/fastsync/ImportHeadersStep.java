@@ -60,7 +60,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
           "Received header with unexpected parent hash, expected "
               + currentChildHeader.getParentHash()
               + ", got "
-              + blockHeaders.getFirst().getParentHash());
+              + blockHeaders.getFirst().getHash());
     }
     currentChildHeader = blockHeaders.getLast();
     fastSyncState.setCurrentHeader(

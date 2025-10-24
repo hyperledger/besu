@@ -68,7 +68,7 @@ public class BackwardHeaderSource implements Iterator<Long> {
     // Determine where to start/resume from
     final long startingBlock = determineStartingBlock(pivotBlockNumber, blockchain, fastSyncState);
 
-    this.currentBlock = new AtomicLong(startingBlock);
+    this.currentBlock = new AtomicLong(startingBlock - 1);
     this.batchSize = batchSize;
 
     if (startingBlock < pivotBlockNumber) {
