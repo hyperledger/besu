@@ -67,6 +67,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final ReferenceTestBlockHeader genesisBlockHeader;
 
+  private final Map<String, ReferenceTestWorldState.AccountMock> accounts;
   private final Hash lastBlockHash;
 
   private final WorldStateArchive worldStateArchive;
@@ -76,9 +77,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final ProtocolContext protocolContext;
 
-  private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts,
-      final MutableBlockchain blockchain) {
+  public WorldStateArchive buildWorldStateArchive() {
 
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
@@ -114,6 +113,7 @@ public class BlockchainReferenceTestCaseSpec {
     updater.commit();
     worldState.persist(null);
 
+    worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
     return worldStateArchive;
   }
 
@@ -134,17 +134,20 @@ public class BlockchainReferenceTestCaseSpec {
     this.network = network;
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
+    this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.blockchain = buildBlockchain(genesisBlockHeader);
-    this.worldStateArchive = buildWorldStateArchive(accounts, blockchain);
-    this.worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
+    this.worldStateArchive = buildWorldStateArchive();
     this.sealEngine = sealEngine;
-    this.protocolContext =
-        new ProtocolContext.Builder()
-            .withBlockchain(blockchain)
-            .withWorldStateArchive(this.worldStateArchive)
-            .withConsensusContext(new ConsensusContextFixture())
-            .build();
+    this.protocolContext = buildProtocolContext(worldStateArchive);
+  }
+
+  public ProtocolContext buildProtocolContext(final WorldStateArchive worldStateArchive) {
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(worldStateArchive)
+        .withConsensusContext(new ConsensusContextFixture())
+        .build();
   }
 
   public String getNetwork() {
