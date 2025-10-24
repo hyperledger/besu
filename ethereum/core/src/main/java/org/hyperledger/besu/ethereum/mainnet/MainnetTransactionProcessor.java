@@ -460,13 +460,10 @@ public class MainnetTransactionProcessor {
 
       // EIP-158 & EIP-7928: coinbase is considered "touched" even when fees are zero.
       // Touching ensures an *empty* coinbase can be deleted during state clearing.
-      final boolean mustTouchCoinbase = clearEmptyAccounts || !coinbaseWeiDelta.isZero();
-      if (mustTouchCoinbase) {
-        final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
-        accessLocationTracker.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
-        if (!coinbaseWeiDelta.isZero()) {
-          coinbase.incrementBalance(coinbaseWeiDelta);
-        }
+      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
+      accessLocationTracker.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
+      if (!coinbaseWeiDelta.isZero()) {
+        coinbase.incrementBalance(coinbaseWeiDelta);
       }
 
       operationTracer.traceEndTransaction(
