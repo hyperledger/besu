@@ -51,6 +51,7 @@ import org.hyperledger.besu.plugin.services.BesuService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -70,12 +71,8 @@ public class BlockchainReferenceTestCaseSpec {
   private final Map<String, ReferenceTestWorldState.AccountMock> accounts;
   private final Hash lastBlockHash;
 
-  private final WorldStateArchive worldStateArchive;
-
   private final MutableBlockchain blockchain;
   private final String sealEngine;
-
-  private final ProtocolContext protocolContext;
 
   public WorldStateArchive buildWorldStateArchive(final long cacheSize) {
 
@@ -137,17 +134,7 @@ public class BlockchainReferenceTestCaseSpec {
     this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.blockchain = buildBlockchain(genesisBlockHeader);
-    this.worldStateArchive = buildWorldStateArchive(candidateBlocks.length);
     this.sealEngine = sealEngine;
-    this.protocolContext = buildProtocolContext(worldStateArchive);
-  }
-
-  public ProtocolContext buildProtocolContext(final WorldStateArchive worldStateArchive) {
-    return new ProtocolContext.Builder()
-        .withBlockchain(blockchain)
-        .withWorldStateArchive(worldStateArchive)
-        .withConsensusContext(new ConsensusContextFixture())
-        .build();
   }
 
   public String getNetwork() {
@@ -158,10 +145,6 @@ public class BlockchainReferenceTestCaseSpec {
     return candidateBlocks;
   }
 
-  public WorldStateArchive getWorldStateArchive() {
-    return worldStateArchive;
-  }
-
   public BlockHeader getGenesisBlockHeader() {
     return genesisBlockHeader;
   }
@@ -170,8 +153,14 @@ public class BlockchainReferenceTestCaseSpec {
     return blockchain;
   }
 
-  public ProtocolContext getProtocolContext() {
-    return protocolContext;
+  public ProtocolContext buildProtocolContext() {
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(
+            buildWorldStateArchive(
+                Stream.of(candidateBlocks).filter(CandidateBlock::isExecutable).count()))
+        .withConsensusContext(new ConsensusContextFixture())
+        .build();
   }
 
   public Hash getLastBlockHash() {

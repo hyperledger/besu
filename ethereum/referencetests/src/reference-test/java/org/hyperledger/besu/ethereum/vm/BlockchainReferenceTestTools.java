@@ -136,7 +136,7 @@ public class BlockchainReferenceTestTools {
     @SuppressWarnings("java:S5960") // this is actually test code
     public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
         final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
-        final ProtocolContext protocolContext = spec.buildProtocolContext(spec.buildWorldStateArchive(spec.getCandidateBlocks().length));
+        final ProtocolContext protocolContext = spec.buildProtocolContext();
         final WorldStateArchive worldStateArchive = protocolContext.getWorldStateArchive();
         final MutableWorldState worldState =
                 worldStateArchive
