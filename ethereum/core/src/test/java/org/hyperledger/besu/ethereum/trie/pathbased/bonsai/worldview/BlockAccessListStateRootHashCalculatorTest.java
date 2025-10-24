@@ -237,6 +237,43 @@ class BlockAccessListStateRootHashCalculatorTest {
     assertThat(balRoot).isNotEqualTo(accumulatorRoot);
   }
 
+  @Test
+  void accountPresentButNoChangesDoesNotAlterRoot() throws Exception {
+    final Address readOnlyAddress =
+        Address.fromHexString("0x0000000000000000000000000000000000000aaa");
+    final Address updatedAddress =
+        Address.fromHexString("0x0000000000000000000000000000000000000bbb");
+
+    final Wei newBalance = Wei.of(12345);
+    final long newNonce = 9L;
+
+    final BlockAccessList bal =
+        new BlockAccessList(
+            List.of(
+                new AccountChanges(
+                    readOnlyAddress, List.of(), List.of(), List.of(), List.of(), List.of()),
+                new AccountChanges(
+                    updatedAddress,
+                    List.of(),
+                    List.of(),
+                    List.of(new BalanceChange(0, newBalance)),
+                    List.of(new NonceChange(0, newNonce)),
+                    List.of())));
+
+    final Hash expectedRoot =
+        computeRootFromAccumulator(
+            accumulator -> {
+              final MutableAccount account = accumulator.getOrCreate(updatedAddress);
+              account.setBalance(newBalance);
+              account.setNonce(newNonce);
+            });
+
+    final Hash balRoot =
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+
+    assertThat(balRoot).isEqualTo(expectedRoot);
+  }
+
   private Hash computeRootFromAccumulator(
       final Consumer<BonsaiWorldStateUpdateAccumulator> accumulatorConsumer) {
     final BonsaiWorldState worldState =

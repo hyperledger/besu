@@ -63,27 +63,40 @@ public class BlockAccessListStateRootHashCalculator {
 
     for (AccountChanges accountChanges : blockAccessList.accountChanges()) {
       final Address address = accountChanges.address();
-      final MutableAccount account = accumulator.getOrCreate(address);
 
       final List<BalanceChange> balanceChanges = accountChanges.balanceChanges();
+      final List<NonceChange> nonceChanges = accountChanges.nonceChanges();
+      final List<CodeChange> codeChanges = accountChanges.codeChanges();
+      final List<SlotChanges> storageChanges = accountChanges.storageChanges();
+
+      final boolean anyChange =
+          !balanceChanges.isEmpty()
+              || !nonceChanges.isEmpty()
+              || !codeChanges.isEmpty()
+              || !storageChanges.isEmpty();
+
+      if (!anyChange) {
+        continue;
+      }
+
+      final MutableAccount account = accumulator.getOrCreate(address);
+
       if (!balanceChanges.isEmpty()) {
         final BalanceChange change = balanceChanges.get(balanceChanges.size() - 1);
         account.setBalance(Wei.wrap(change.postBalance()));
       }
 
-      final List<NonceChange> nonceChanges = accountChanges.nonceChanges();
       if (!nonceChanges.isEmpty()) {
         final NonceChange change = nonceChanges.get(nonceChanges.size() - 1);
         account.setNonce(change.newNonce());
       }
 
-      final List<CodeChange> codeChanges = accountChanges.codeChanges();
       if (!codeChanges.isEmpty()) {
         final CodeChange change = codeChanges.get(codeChanges.size() - 1);
         account.setCode(change.newCode());
       }
 
-      for (SlotChanges slotChanges : accountChanges.storageChanges()) {
+      for (SlotChanges slotChanges : storageChanges) {
         final List<StorageChange> changes = slotChanges.changes();
         if (!changes.isEmpty()) {
           final StorageChange change = changes.get(changes.size() - 1);
