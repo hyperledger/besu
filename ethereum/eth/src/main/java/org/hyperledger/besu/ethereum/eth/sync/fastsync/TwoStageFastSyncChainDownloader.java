@@ -27,6 +27,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -153,16 +154,6 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader {
       //      }
     } else {
       // Backward download not complete - run or resume Stage 1
-      if (fastSyncState.getLowestContiguousBlockHeaderDownloaded().isPresent()) {
-        final long resumeFrom =
-            fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
-        LOG.info(
-            "Resuming backward header download from block {} (pivot: {})",
-            resumeFrom,
-            pivotBlockHash);
-      } else {
-        LOG.info("Starting backward header download for first time from pivot {}", pivotBlockHash);
-      }
       return runStage1BackwardHeaderDownload();
     }
   }
@@ -187,7 +178,6 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader {
 
               // Mark backward header download as complete and persist
               fastSyncState.setBackwardHeaderDownloadComplete(true);
-              fastSyncState.setLowestContiguousBlockHeaderDownloaded(0); // Reached genesis
               fastSyncStateStorage.storeState(fastSyncState);
               LOG.info("Persisted backward header download completion state");
 

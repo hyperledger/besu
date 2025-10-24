@@ -74,7 +74,7 @@ public class FastSyncStateStorage {
 
           final FastSyncState state = new FastSyncState(header, sourceIsTrusted);
           if (lowestContiguousBlockHeader >= 0) {
-            state.setLowestContiguousBlockHeaderDownloaded(lowestContiguousBlockHeader);
+            state.setLowestBlockHeaderDownloaded(lowestContiguousBlockHeader);
           }
           state.setBackwardHeaderDownloadComplete(backwardDownloadComplete);
           return state;
@@ -114,7 +114,7 @@ public class FastSyncStateStorage {
       output.writeByte((byte) (state.isSourceTrusted() ? 1 : 0));
       // Store backward header download progress (version 2 fields)
       output.writeLongScalar(
-          state.getLowestContiguousBlockHeaderDownloaded().orElse(-1L)); // -1 means not started
+          state.getLowestBlockHeaderDownloaded().orElse(-1L)); // -1 means not started
       output.writeByte((byte) (state.isBackwardHeaderDownloadComplete() ? 1 : 0));
       output.endList();
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);

@@ -99,9 +99,9 @@ public class BackwardHeaderSource implements Iterator<Long> {
       final long pivotBlockNumber, final Blockchain blockchain, final FastSyncState fastSyncState) {
 
     // Check if we have persisted progress
-    if (fastSyncState.getLowestContiguousBlockHeaderDownloaded().isPresent()) {
+    if (fastSyncState.getLowestBlockHeaderDownloaded().isPresent()) {
       final long lowestDownloaded =
-          fastSyncState.getLowestContiguousBlockHeaderDownloaded().getAsLong();
+          fastSyncState.getLowestBlockHeaderDownloaded().get().getNumber();
 
       // Verify the persisted state matches what's in the database
       if (blockchain.getBlockHeader(lowestDownloaded).isPresent()) {

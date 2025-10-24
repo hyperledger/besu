@@ -63,7 +63,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
               + blockHeaders.getFirst().getHash());
     }
     currentChildHeader = blockHeaders.getLast();
-    fastSyncState.setCurrentHeader(
+    fastSyncState.setLowestBlockHeaderDownloaded(
         currentChildHeader); // make sure we restart from here in case of failure
     blockHeaders.forEach(blockchainStorage::importHeader);
 
