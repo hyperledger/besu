@@ -87,7 +87,7 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.of(1L),
+            Optional.empty(),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
