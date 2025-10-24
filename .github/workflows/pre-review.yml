@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
+  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true  -Dorg.gradle.caching=true"
   total-runners: 14
 
 jobs:
@@ -79,7 +79,6 @@ jobs:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
-    needs: [spotless, gradle-wrapper, repolint]
     permissions:
       checks: write
       statuses: write
@@ -104,9 +103,9 @@ jobs:
         with:
           cache-disabled: true
       - name: List unit tests
-        run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew test --test-dry-run
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/testcase/@classname' '{}' | sort -u | tr -d '\n'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
       - name: Get unit test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
