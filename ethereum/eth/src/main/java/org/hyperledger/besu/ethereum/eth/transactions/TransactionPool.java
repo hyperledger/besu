@@ -932,12 +932,13 @@ public class TransactionPool implements BlockAddedObserver {
 
       LOG.debug("Removing processed lines from save file");
 
-      final var tmp = File.createTempFile(saveFile.getName(), ".tmp");
+      // Create temporary file with default secure permissions
+      final var tmp =
+          Files.createTempFile(saveFile.getParentFile().toPath(), saveFile.getName(), ".tmp");
 
       try (final BufferedReader reader =
               Files.newBufferedReader(saveFile.toPath(), StandardCharsets.US_ASCII);
-          final BufferedWriter writer =
-              Files.newBufferedWriter(tmp.toPath(), StandardCharsets.US_ASCII)) {
+          final BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.US_ASCII)) {
         reader
             .lines()
             .skip(processedLines)
@@ -953,7 +954,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
 
       saveFile.delete();
-      Files.move(tmp.toPath(), saveFile.toPath());
+      Files.move(tmp, saveFile.toPath());
     }
   }
 }
