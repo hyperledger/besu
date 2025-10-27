@@ -33,6 +33,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP2;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -2038,7 +2039,9 @@ public class LayersTest extends BaseTransactionPoolTest {
                                 n2 ->
                                     senderTxs.stream().filter(pt -> pt.getNonce() == n2).findAny())
                             .map(Optional::get)
-                            .forEach(prio::penalize);
+                            .forEach(
+                                penalizedTransaction ->
+                                    prio.penalize(penalizedTransaction, TX_EVALUATION_TOO_LONG));
                       }));
       return this;
     }
