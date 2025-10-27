@@ -23,6 +23,7 @@
 - Update to tuweni 2.7.2 [#9338](https://github.com/hyperledger/besu/pull/9338)
 
 ### Bug fixes
+- Performance: Fix CompletableFuture tracking to correctly cancel parallel txs threads [#9360](https://github.com/hyperledger/besu/pull/9360)
 
 ## 25.10.0
 This is a recommended update for Hoodi users for the Fusaka hardfork.
