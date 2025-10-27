@@ -1,48 +1,52 @@
-///*
+/// *
 // * Copyright contributors to Hyperledger Besu.
 // *
-// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+// except
 // * in compliance with the License. You may obtain a copy of the License at
 // *
 // * http://www.apache.org/licenses/LICENSE-2.0
 // *
-// * Unless required by applicable law or agreed to in writing, software distributed under the License
-// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-// * or implied. See the License for the specific language governing permissions and limitations under
+// * Unless required by applicable law or agreed to in writing, software distributed under the
+// License
+// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express
+// * or implied. See the License for the specific language governing permissions and limitations
+// under
 // * the License.
 // *
 // * SPDX-License-Identifier: Apache-2.0
 // */
-//package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+// package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 //
-//import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
+// import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 //
-//import org.hyperledger.besu.datatypes.Hash;
-//import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-//import org.hyperledger.besu.ethereum.core.BlockHeader;
-//import org.hyperledger.besu.ethereum.core.Difficulty;
-//import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-//import org.hyperledger.besu.plugin.services.MetricsSystem;
+// import org.hyperledger.besu.datatypes.Hash;
+// import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+// import org.hyperledger.besu.ethereum.core.BlockHeader;
+// import org.hyperledger.besu.ethereum.core.Difficulty;
+// import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+// import org.hyperledger.besu.plugin.services.MetricsSystem;
 //
-//import java.util.List;
-//import java.util.Set;
-//import java.util.concurrent.ConcurrentHashMap;
-//import java.util.concurrent.atomic.AtomicBoolean;
-//import java.util.concurrent.atomic.AtomicLong;
-//import java.util.function.Function;
-//import java.util.stream.Stream;
+// import java.util.List;
+// import java.util.Set;
+// import java.util.concurrent.ConcurrentHashMap;
+// import java.util.concurrent.atomic.AtomicBoolean;
+// import java.util.concurrent.atomic.AtomicLong;
+// import java.util.function.Function;
+// import java.util.stream.Stream;
 //
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 //
-///**
+/// **
 // * Validates backward header chain continuity (boundary validation only), saves headers to DB, and
 // * tracks completed ranges. Thread-safe for parallel, out-of-order execution.
 // *
 // * <p>This step validates only the boundaries between batches using in-memory hash maps. Internal
 // * chain continuity within each batch is already validated by GetHeadersFromPeerTask.
 // */
-//public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Void>> {
+// public class SaveAllHeadersStep implements Function<List<BlockHeader>, Stream<Void>> {
 //  private static final Logger LOG = LoggerFactory.getLogger(SaveAllHeadersStep.class);
 //  private static final int LOG_PROGRESS_INTERVAL = 1000;
 //  private static final int LOG_REPEAT_DELAY_SECONDS = 30;
@@ -151,7 +155,8 @@
 //    try {
 //      fastSyncState.setLowestBlockHeaderDownloaded(currentLowestBlock);
 //      fastSyncStateStorage.storeState(fastSyncState);
-//      LOG.debug("Persisted backward header download progress: lowestBlock={}", currentLowestBlock);
+//      LOG.debug("Persisted backward header download progress: lowestBlock={}",
+// currentLowestBlock);
 //    } catch (Exception e) {
 //      LOG.warn("Failed to persist backward header download progress", e);
 //      // Don't fail the download if persistence fails
@@ -187,7 +192,8 @@
 //        printBlockHeaders(headers);
 //        throw InvalidBlockException.fromInvalidBlock(
 //            String.format(
-//                "Batch boundary validation failed: block %d parentHash %s does not match block %d hash %s",
+//                "Batch boundary validation failed: block %d parentHash %s does not match block %d
+// hash %s",
 //                lowestBlockNumber,
 //                lowestHeader.getParentHash(),
 //                lowestBlockNumber - 1,
@@ -218,7 +224,8 @@
 //        printBlockHeaders(headers);
 //        throw InvalidBlockException.fromInvalidBlock(
 //            String.format(
-//                "Batch boundary validation failed: block %d expected parent hash %s does not match block %d hash %s",
+//                "Batch boundary validation failed: block %d expected parent hash %s does not match
+// block %d hash %s",
 //                highestBlockNumber + 1,
 //                expectedParentHash,
 //                highestBlockNumber,
@@ -269,7 +276,8 @@
 //      throttledLog(
 //          LOG::info,
 //          String.format(
-//              "Backward header download progress: %d headers saved, lowest block: %d, pending boundaries: %d",
+//              "Backward header download progress: %d headers saved, lowest block: %d, pending
+// boundaries: %d",
 //              totalSaved, lowest, pendingBoundaries),
 //          shouldLog,
 //          LOG_REPEAT_DELAY_SECONDS);
@@ -277,7 +285,8 @@
 //  }
 //
 //  /**
-//   * Get the highest contiguous block number downloaded from the pivot. This is the restart point if
+//   * Get the highest contiguous block number downloaded from the pivot. This is the restart point
+// if
 //   * the pipeline is interrupted.
 //   *
 //   * @return the highest contiguous block number
@@ -303,4 +312,4 @@
 //  public long getTotalHeadersSaved() {
 //    return totalHeadersSaved.get();
 //  }
-//}
+// }

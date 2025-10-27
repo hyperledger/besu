@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -42,6 +43,8 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final SyncState syncState;
+  private final long startBlock;
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
   private final BlockHeader pivotHeader;
@@ -54,9 +57,29 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
       final EthContext ethContext,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
+    this(
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        null,
+        0L,
+        pivotHeader,
+        transactionIndexingEnabled);
+  }
+
+  public ImportSyncBlocksStep(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final long startBlock,
+      final BlockHeader pivotHeader,
+      final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.syncState = syncState;
+    this.startBlock = startBlock;
     this.pivotHeader = pivotHeader;
     this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
@@ -83,6 +106,9 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     }
     final long endTime = System.nanoTime();
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
+
+    syncState.setSyncProgress(startBlock, lastBlock, pivotHeader.getNumber());
+
     if (shouldLog.get()) {
       final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
       throttledLog(

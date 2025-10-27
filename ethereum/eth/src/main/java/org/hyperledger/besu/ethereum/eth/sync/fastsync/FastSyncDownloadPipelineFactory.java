@@ -259,7 +259,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
    * stored headers from database and downloads corresponding bodies and receipts.
    *
    * @param pivotBlockNumber the pivot block number (end of range)
-   * @param syncState the sync state to use for determining the checkpoint block number
+   * @param syncState the sync state to use for determining the checkpoint block number and
+   *     reporting progress
    * @return the forward bodies and receipts download pipeline
    */
   public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
@@ -290,6 +291,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
+            syncState,
+            startBlock,
             fastSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 

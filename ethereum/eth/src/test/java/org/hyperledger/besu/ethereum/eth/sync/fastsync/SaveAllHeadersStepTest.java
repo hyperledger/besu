@@ -1,52 +1,57 @@
-///*
+/// *
 // * Copyright contributors to Hyperledger Besu.
 // *
-// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+// * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+// except
 // * in compliance with the License. You may obtain a copy of the License at
 // *
 // * http://www.apache.org/licenses/LICENSE-2.0
 // *
-// * Unless required by applicable law or agreed to in writing, software distributed under the License
-// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-// * or implied. See the License for the specific language governing permissions and limitations under
+// * Unless required by applicable law or agreed to in writing, software distributed under the
+// License
+// * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express
+// * or implied. See the License for the specific language governing permissions and limitations
+// under
 // * the License.
 // *
 // * SPDX-License-Identifier: Apache-2.0
 // */
-//package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+// package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 //
-//import static org.assertj.core.api.Assertions.assertThat;
-//import static org.assertj.core.api.Assertions.assertThatThrownBy;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.ArgumentMatchers.eq;
-//import static org.mockito.Mockito.mock;
-//import static org.mockito.Mockito.times;
-//import static org.mockito.Mockito.verify;
-//import static org.mockito.Mockito.when;
+// import static org.assertj.core.api.Assertions.assertThat;
+// import static org.assertj.core.api.Assertions.assertThatThrownBy;
+// import static org.mockito.ArgumentMatchers.any;
+// import static org.mockito.ArgumentMatchers.eq;
+// import static org.mockito.Mockito.mock;
+// import static org.mockito.Mockito.times;
+// import static org.mockito.Mockito.verify;
+// import static org.mockito.Mockito.when;
 //
-//import org.hyperledger.besu.datatypes.Hash;
-//import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-//import org.hyperledger.besu.ethereum.core.BlockHeader;
-//import org.hyperledger.besu.ethereum.core.Difficulty;
-//import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-//import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+// import org.hyperledger.besu.datatypes.Hash;
+// import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+// import org.hyperledger.besu.ethereum.core.BlockHeader;
+// import org.hyperledger.besu.ethereum.core.Difficulty;
+// import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+// import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 //
-//import java.util.ArrayList;
-//import java.util.Collections;
-//import java.util.List;
-//import java.util.stream.Stream;
+// import java.util.ArrayList;
+// import java.util.Collections;
+// import java.util.List;
+// import java.util.stream.Stream;
 //
-//import org.apache.tuweni.bytes.Bytes;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
+// import org.apache.tuweni.bytes.Bytes;
+// import org.junit.jupiter.api.BeforeEach;
+// import org.junit.jupiter.api.Test;
 //
-///**
+/// **
 // * Unit tests for SaveAllHeadersStep.
 // *
-// * <p>Tests the boundary validation logic that ensures out-of-order header ranges connect correctly
+// * <p>Tests the boundary validation logic that ensures out-of-order header ranges connect
+// correctly
 // * using in-memory hash maps. Also tests header storage and progress tracking.
 // */
-//class SaveAllHeadersStepTest {
+// class SaveAllHeadersStepTest {
 //
 //  private MutableBlockchain blockchain;
 //  private FastSyncState fastSyncState;
@@ -63,7 +68,8 @@
 //
 //    when(blockchain.calculateTotalDifficulty(any())).thenReturn(Difficulty.ONE);
 //    when(fastSyncState.getPivotBlockNumber()).thenReturn(java.util.OptionalLong.of(PIVOT_BLOCK));
-//    when(fastSyncState.getLowestBlockHeaderDownloaded()).thenReturn(java.util.OptionalLong.empty());
+//
+// when(fastSyncState.getLowestBlockHeaderDownloaded()).thenReturn(java.util.OptionalLong.empty());
 //
 //    step =
 //        new SaveAllHeadersStep(
@@ -124,7 +130,8 @@
 //    step.apply(higherRange);
 //    // This stores: lowestBlockParentHashes(91) = parent_of_91 and highestBlockHashes(100)
 //
-//    // When: apply() with LOWER range [90-81] where block 90's hash matches the stored parent_of_91
+//    // When: apply() with LOWER range [90-81] where block 90's hash matches the stored
+// parent_of_91
 //    final Hash parent91 = higherRange.get(9).getParentHash(); // parent of block 91
 //    final List<BlockHeader> currentRange = createHeaderChainWithHighestHash(90, 10, parent91);
 //
@@ -247,7 +254,8 @@
 //    // Lower range [90-81] should validate if block 90's hash == parent_91
 //    final Hash parent91 = headers.get(9).getParentHash(); // parent of block 91 (last in range)
 //    final List<BlockHeader> lowerRange = createHeaderChainWithHighestHash(90, 10, parent91);
-//    assertThat(step.apply(lowerRange)).isNotNull(); // Should validate successfully (upper boundary)
+//    assertThat(step.apply(lowerRange)).isNotNull(); // Should validate successfully (upper
+// boundary)
 //  }
 //
 //  @Test
@@ -307,7 +315,8 @@
 //    final List<BlockHeader> headers = new ArrayList<>();
 //
 //    // Build the chain from top down
-//    Hash previousHash = Hash.hash(Bytes.ofUnsignedLong(startBlock + 1)); // parent of highest block
+//    Hash previousHash = Hash.hash(Bytes.ofUnsignedLong(startBlock + 1)); // parent of highest
+// block
 //
 //    for (int i = 0; i < count - 1; i++) {
 //      final long blockNumber = startBlock - i;
@@ -359,4 +368,4 @@
 //    when(header.getParentHash()).thenReturn(parentHash);
 //    return header;
 //  }
-//}
+// }
