@@ -102,12 +102,10 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final AccessListOperationTracer operationTracer) {
     // access list is created regardless, but include error message if result was not successful
     return result ->
-        result.isSuccessful()
-            ? new CreateAccessListResult(operationTracer.getAccessList(), result.getGasEstimate())
-            : new CreateAccessListResult(
-                operationTracer.getAccessList(),
-                result.getGasEstimate(),
-                result.isSuccessful() ? Optional.empty() : Optional.of("execution reverted"));
+        new CreateAccessListResult(
+            operationTracer.getAccessList(),
+            result.getGasEstimate(),
+            result.isSuccessful() ? Optional.empty() : Optional.of("execution reverted"));
   }
 
   private AccessListSimulatorResult processTransactionWithAccessListOverride(
