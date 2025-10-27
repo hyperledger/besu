@@ -250,7 +250,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             true,
             "backwardHeaderSync")
         .thenProcessAsyncOrdered(
-            "downloadBackwardHeaders", downloadStep, downloaderParallelism * 200)
+            "downloadBackwardHeaders", downloadStep, downloaderParallelism * 20)
         .andFinishWith("importHeadersStep", importHeadersStep);
   }
 
