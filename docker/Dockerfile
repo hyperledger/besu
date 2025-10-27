@@ -24,7 +24,7 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   chown besu:besu /opt/besu  && \
   chmod 0755 /opt/besu
 
-# Copy JRE from the java-stage stage
+# Copy JRE from the java-base stage
 COPY --from=java-base /opt/java/openjdk /opt/java/openjdk
 
 ARG BESU_USER=besu

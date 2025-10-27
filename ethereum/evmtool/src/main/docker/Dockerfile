@@ -24,7 +24,7 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   chown besu:besu /opt/besu-evmtool  && \
   chmod 0755 /opt/besu-evmtool
 
-# Copy JRE from the jre-build stage
+# Copy JRE from the jre-base stage
 COPY --from=java-base /opt/java/openjdk /opt/java/openjdk
 
 ARG BESU_USER=besu
