@@ -701,7 +701,8 @@ application {
     "--add-exports",
     "java.base/jdk.internal.misc=ALL-UNNAMED",
     "--add-opens",
-    "java.base/java.nio=ALL-UNNAMED"
+    "java.base/java.nio=ALL-UNNAMED",
+    "--enable-native-access=ALL-UNNAMED"
   ]
 }
 
