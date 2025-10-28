@@ -14,10 +14,30 @@
 ## SPDX-License-Identifier: Apache-2.0
 ##
 
+# Detect architecture if not already set
+if [ -z "$architecture" ]; then
+  case $(uname -m) in
+    x86_64)
+      architecture="amd64"
+      ;;
+    aarch64|arm64)
+      architecture="arm64"
+      ;;
+    arm*)
+      architecture="arm64"
+      ;;
+    *)
+      echo "Unsupported architecture: $(uname -m)"
+      exit 1
+      ;;
+  esac
+fi
+
 export TEST_PATH=./tests
 export GOSS_PATH=$TEST_PATH/goss-linux-${architecture}
 export GOSS_OPTS="$GOSS_OPTS --format junit"
 export GOSS_FILES_STRATEGY=cp
+
 DOCKER_IMAGE=$1
 DOCKER_FILE="${2:-$PWD/Dockerfile}"
 
