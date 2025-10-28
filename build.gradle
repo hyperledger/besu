@@ -882,67 +882,67 @@ task distDocker {
 }
 
 tasks.register("downloadGossBinaries") {
-    def gossVersion = 'v0.4.9'
-    def baseUrl = "https://github.com/goss-org/goss/releases/download/${gossVersion}"
-    def testDir = "${projectDir}/docker/tests"
+  def gossVersion = 'v0.4.9'
+  def baseUrl = "https://github.com/goss-org/goss/releases/download/${gossVersion}"
+  def testDir = "${projectDir}/docker/tests"
 
-    // Detect current architecture
-    def osArch = System.getProperty("os.arch").toLowerCase()
-    def currentArch = (osArch.contains("aarch64") || osArch.contains("arm64")) ? "arm64" : "amd64"
+  // Detect current architecture
+  def osArch = System.getProperty("os.arch").toLowerCase()
+  def currentArch = (osArch.contains("aarch64") || osArch.contains("arm64")) ? "arm64" : "amd64"
 
-    doLast {
-        // Download goss binary for current architecture
-        def binaryFile = new File(testDir, "goss-linux-${currentArch}")
+  doLast {
+    // Download goss binary for current architecture
+    def binaryFile = new File(testDir, "goss-linux-${currentArch}")
 
-        // Download binary if it doesn't exist
-        if (!binaryFile.exists()) {
-            println "Downloading goss-linux-${currentArch}..."
-            download.run {
-                src "${baseUrl}/goss-linux-${currentArch}"
-                dest binaryFile
-                overwrite false
-                onlyIfModified true
-            }
+    // Download binary if it doesn't exist
+    if (!binaryFile.exists()) {
+      println "Downloading goss-linux-${currentArch}..."
+      download.run {
+        src "${baseUrl}/goss-linux-${currentArch}"
+        dest binaryFile
+        overwrite false
+        onlyIfModified true
+      }
 
-            binaryFile.setExecutable(true)
-            println "Successfully downloaded goss-linux-${currentArch}"
-        } else {
-            println "goss-linux-${currentArch} already exists"
-        }
-
-        // Download dgoss if it doesn't exist
-        def dgossFile = new File(testDir, 'dgoss')
-        if (!dgossFile.exists()) {
-            println "Downloading dgoss..."
-            download.run {
-                src "${baseUrl}/dgoss"
-                dest dgossFile
-                overwrite false
-                onlyIfModified true
-            }
-
-            dgossFile.setExecutable(true)
-            println "Successfully downloaded dgoss"
-        } else {
-            println "dgoss already exists"
-        }
+      binaryFile.setExecutable(true)
+      println "Successfully downloaded goss-linux-${currentArch}"
+    } else {
+      println "goss-linux-${currentArch} already exists"
     }
+
+    // Download dgoss if it doesn't exist
+    def dgossFile = new File(testDir, 'dgoss')
+    if (!dgossFile.exists()) {
+      println "Downloading dgoss..."
+      download.run {
+        src "${baseUrl}/dgoss"
+        dest dgossFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      dgossFile.setExecutable(true)
+      println "Successfully downloaded dgoss"
+    } else {
+      println "dgoss already exists"
+    }
+  }
 }
 
 tasks.register("testDocker", Exec) {
-    dependsOn("distDocker", "downloadGossBinaries")
+  dependsOn("distDocker", "downloadGossBinaries")
 
-    doFirst {
-        new File("docker/reports/").mkdir()
-    }
+  doFirst {
+    new File("docker/reports/").mkdir()
+  }
 
-    def image = project.hasProperty('release.releaseVersion')
-            ? "${dockerImageName}:" + project.property('release.releaseVersion')
-            : "${dockerImageName}:${project.version}"
+  def image = project.hasProperty('release.releaseVersion')
+    ? "${dockerImageName}:" + project.property('release.releaseVersion')
+    : "${dockerImageName}:${project.version}"
 
-    workingDir "${projectDir}/docker"
-    executable shell
-    args "-c", "./test.sh ${image}"
+  workingDir "${projectDir}/docker"
+  executable shell
+  args "-c", "./test.sh ${image}"
 }
 
 task dockerUpload {
