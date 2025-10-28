@@ -717,54 +717,54 @@ run {
 }
 
 def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
-        "-XX:G1ConcRefinementThreads=2",
-        "-XX:G1HeapWastePercent=15",
-        "-XX:MaxGCPauseMillis=100",
-        "-XX:StartFlightRecording,settings=default.jfc",
-        "-Xlog:jfr*=off"
+  "-XX:G1ConcRefinementThreads=2",
+  "-XX:G1HeapWastePercent=15",
+  "-XX:MaxGCPauseMillis=100",
+  "-XX:StartFlightRecording,settings=default.jfc",
+  "-Xlog:jfr*=off"
 ]
 
 def defaultJvmOpts25 = defaultJvmOpts21 + [
-        "-XX:+UseCompactObjectHeaders",
-        "-XX:MaxHeapFreeRatio=30",
-        "-XX:MinHeapFreeRatio=10",
-        "-XX:GCTimeRatio=50",
-        "-XX:-ShrinkHeapInSteps"
+  "-XX:+UseCompactObjectHeaders",
+  "-XX:MaxHeapFreeRatio=30",
+  "-XX:MinHeapFreeRatio=10",
+  "-XX:GCTimeRatio=50",
+  "-XX:-ShrinkHeapInSteps"
 ]
 
 def untunedJvmOpts = application.applicationDefaultJvmArgs
 
 def evmToolJvmOpts = [
-        "-Dsecp256k1.randomize=false"
+  "-Dsecp256k1.randomize=false"
 ]
 
 def serializeDefaultJvmOpts(opts) {
-    return "'" + opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ') + "'"
+  return "'" + opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ') + "'"
 }
 
 def tweakStartScript(createScriptTask, jvmOptsForJava25) {
-    def shortenWindowsClasspath = { line ->
-        line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
-    }
+  def shortenWindowsClasspath = { line ->
+    line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+  }
 
-    // Replace Java 25 opts placeholder - must be before BESU_HOME replacement
-    createScriptTask.unixScript.text = createScriptTask.unixScript.text
-            .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
+  // Replace Java 25 opts placeholder - must be before BESU_HOME replacement
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text
+    .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
 
-    // For Windows, remove the outer single quotes
-    def windowsJvmOpts = jvmOptsForJava25.replaceAll(/^'|'$/, '')
-    createScriptTask.windowsScript.text = createScriptTask.windowsScript.text
-            .replace('@DEFAULT_JVM_OPTS_25@', windowsJvmOpts)
+  // For Windows, remove the outer single quotes
+  def windowsJvmOpts = jvmOptsForJava25.replaceAll(/^'|'$/, '')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text
+    .replace('@DEFAULT_JVM_OPTS_25@', windowsJvmOpts)
 
-    createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-    createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
 
-    // Prevent the error originating from the 8191 chars limit on Windows
-    createScriptTask.windowsScript.text =
-            createScriptTask.windowsScript
-                    .readLines()
-                    .collect(shortenWindowsClasspath)
-                    .join('\r\n')
+  // Prevent the error originating from the 8191 chars limit on Windows
+  createScriptTask.windowsScript.text =
+    createScriptTask.windowsScript
+    .readLines()
+    .collect(shortenWindowsClasspath)
+    .join('\r\n')
 }
 
 startScripts {
