@@ -483,14 +483,11 @@ public abstract class CommandTestAbstract {
   private static List<String> constructArgsWithTmpDataPathIfNotSpecified(final String[] args) {
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 
-    // If first arg starts with "-" or args is empty, it's likely main command
-    boolean isMainCommand = args.length == 0 || args[0].startsWith("-");
-
     boolean hasDataPath = argsList.stream().anyMatch(arg -> arg.contains("data-path"));
     boolean hasConfigFile = argsList.stream().anyMatch(arg -> arg.contains("config-file"));
 
-    // if data-path is not set and this is not a subcommand, set to a tmp dir
-    if (isMainCommand && !hasDataPath && !hasConfigFile) {
+    // if data-path is not set, set to a tmp dir
+    if (!hasDataPath && !hasConfigFile) {
       try {
         final Path tmpDir = Files.createTempDirectory("besu-test-");
         tmpDir.toFile().deleteOnExit();
