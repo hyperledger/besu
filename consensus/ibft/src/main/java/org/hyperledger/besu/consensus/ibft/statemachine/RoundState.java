@@ -21,14 +21,15 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +46,8 @@ public class RoundState {
 
   // Must track the actual Prepare message, not just the sender, as these may need to be reused
   // to send out in a PrepareCertificate.
-  private final Set<Prepare> prepareMessages = Sets.newLinkedHashSet();
-  private final Set<Commit> commitMessages = Sets.newLinkedHashSet();
+  private final Map<Address, Prepare> prepareMessages = new LinkedHashMap<>();
+  private final Map<Address, Commit> commitMessages = new LinkedHashMap<>();
 
   private boolean prepared = false;
   private boolean committed = false;
@@ -87,8 +88,8 @@ public class RoundState {
     if (!proposalMessage.isPresent()) {
       if (validator.validateProposal(msg)) {
         proposalMessage = Optional.of(msg);
-        prepareMessages.removeIf(p -> !validator.validatePrepare(p));
-        commitMessages.removeIf(p -> !validator.validateCommit(p));
+        prepareMessages.entrySet().removeIf(e -> !validator.validatePrepare(e.getValue()));
+        commitMessages.entrySet().removeIf(e -> !validator.validateCommit(e.getValue()));
         updateState();
         return true;
       }
@@ -104,7 +105,7 @@ public class RoundState {
    */
   public void addPrepareMessage(final Prepare msg) {
     if (!proposalMessage.isPresent() || validator.validatePrepare(msg)) {
-      prepareMessages.add(msg);
+      prepareMessages.putIfAbsent(msg.getAuthor(), msg);
       LOG.trace("Round state added prepare message prepare={}", msg);
     }
     updateState();
@@ -117,7 +118,7 @@ public class RoundState {
    */
   public void addCommitMessage(final Commit msg) {
     if (!proposalMessage.isPresent() || validator.validateCommit(msg)) {
-      commitMessages.add(msg);
+      commitMessages.putIfAbsent(msg.getAuthor(), msg);
       LOG.trace("Round state added commit message commit={}", msg);
     }
 
@@ -173,7 +174,7 @@ public class RoundState {
    * @return the commit seals
    */
   public Collection<SECPSignature> getCommitSeals() {
-    return commitMessages.stream()
+    return commitMessages.values().stream()
         .map(cp -> cp.getSignedPayload().getPayload().getCommitSeal())
         .collect(Collectors.toList());
   }
@@ -185,7 +186,8 @@ public class RoundState {
    */
   public Optional<PreparedRoundArtifacts> constructPreparedRoundArtifacts() {
     if (isPrepared()) {
-      return Optional.of(new PreparedRoundArtifacts(proposalMessage.get(), prepareMessages));
+      return Optional.of(
+          new PreparedRoundArtifacts(proposalMessage.get(), prepareMessages.values()));
     }
     return Optional.empty();
   }
