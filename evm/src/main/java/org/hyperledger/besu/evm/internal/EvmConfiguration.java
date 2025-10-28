@@ -56,7 +56,7 @@ public record EvmConfiguration(
    * Create an EVM Configuration without any overrides
    *
    * @param jumpDestCacheWeightKilobytes the jump dest cache weight (in kibibytes)
-   * @param worldstateUpdateMode the workd update mode
+   * @param worldstateUpdateMode the world update mode
    * @param enableOptimizedOpcodes enabled opcode optimizations
    */
   public EvmConfiguration(
