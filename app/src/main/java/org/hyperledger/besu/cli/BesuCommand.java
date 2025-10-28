@@ -772,16 +772,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Parse Besu command line arguments. Visible for testing.
-   *
-   * @param resultHandler execution strategy. See PicoCLI. Typical argument is RunLast.
-   * @param parameterExceptionHandler Exception handler for handling parameters
-   * @param executionExceptionHandler Exception handler for business logic
-   * @param in Standard input stream
-   * @param args arguments to Besu command
-   * @return success or failure exit code.
-   */
-  /**
    * Parses command line arguments and configures the application accordingly.
    *
    * @param resultHandler The strategy to handle the execution result.
@@ -792,6 +782,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param args The command line arguments.
    * @return The execution result status code.
    */
+  @VisibleForTesting
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,
