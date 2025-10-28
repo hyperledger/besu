@@ -716,22 +716,6 @@ run {
   }
 }
 
-def tweakStartScript(createScriptTask) {
-  def shortenWindowsClasspath = { line ->
-    line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
-  }
-
-  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
-
-  // Prevent the error originating from the 8191 chars limit on Windows
-  createScriptTask.windowsScript.text =
-    createScriptTask.windowsScript
-    .readLines()
-    .collect(shortenWindowsClasspath)
-    .join('\r\n')
-}
-
 def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
         "-XX:G1ConcRefinementThreads=2",
         "-XX:G1HeapWastePercent=15",
@@ -740,17 +724,49 @@ def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
         "-Xlog:jfr*=off"
 ]
 
+def defaultJvmOpts25 = defaultJvmOpts21 + [
+        "-XX:+UseCompactObjectHeaders",
+        "-XX:MaxHeapFreeRatio=30",
+        "-XX:MinHeapFreeRatio=10",
+        "-XX:GCTimeRatio=50",
+        "-XX:-ShrinkHeapInSteps"
+]
+
 def untunedJvmOpts = application.applicationDefaultJvmArgs
 
 def evmToolJvmOpts = [
         "-Dsecp256k1.randomize=false"
 ]
 
+def serializeDefaultJvmOpts(opts) {
+    return opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ')
+}
+
+def tweakStartScript(createScriptTask, jvmOptsForJava25) {
+    def shortenWindowsClasspath = { line ->
+        line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+    }
+
+    // Replace Java 25 opts placeholder - must be before BESU_HOME replacement
+    createScriptTask.unixScript.text = createScriptTask.unixScript.text
+            .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
+
+    createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+    createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
+
+    // Prevent the error originating from the 8191 chars limit on Windows
+    createScriptTask.windowsScript.text =
+            createScriptTask.windowsScript
+                    .readLines()
+                    .collect(shortenWindowsClasspath)
+                    .join('\r\n')
+}
+
 startScripts {
   defaultJvmOpts = defaultJvmOpts21
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+  doLast { tweakStartScript(startScripts, serializeDefaultJvmOpts(defaultJvmOpts25)) }
 }
 
 task untunedStartScripts(type: CreateStartScripts) {
@@ -761,7 +777,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = untunedJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(untunedStartScripts) }
+  doLast { tweakStartScript(untunedStartScripts, serializeDefaultJvmOpts(untunedJvmOpts)) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -772,7 +788,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = evmToolJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(evmToolStartScripts) }
+  doLast { tweakStartScript(evmToolStartScripts, serializeDefaultJvmOpts(evmToolJvmOpts)) }
 }
 
 task autocomplete(type: JavaExec) {
