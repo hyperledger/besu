@@ -732,14 +732,22 @@ def tweakStartScript(createScriptTask) {
     .join('\r\n')
 }
 
+def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
+        "-XX:G1ConcRefinementThreads=2",
+        "-XX:G1HeapWastePercent=15",
+        "-XX:MaxGCPauseMillis=100",
+        "-XX:StartFlightRecording,settings=default.jfc",
+        "-Xlog:jfr*=off"
+]
+
+def untunedJvmOpts = application.applicationDefaultJvmArgs
+
+def evmToolJvmOpts = [
+        "-Dsecp256k1.randomize=false"
+]
+
 startScripts {
-  defaultJvmOpts = application.applicationDefaultJvmArgs + [
-    "-XX:G1ConcRefinementThreads=2",
-    "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100",
-    "-XX:StartFlightRecording,settings=default.jfc",
-    "-Xlog:jfr*=off"
-  ]
+  defaultJvmOpts = defaultJvmOpts21
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
@@ -750,7 +758,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  defaultJvmOpts = application.applicationDefaultJvmArgs
+  defaultJvmOpts = untunedJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
@@ -761,9 +769,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evmtool'
-  defaultJvmOpts = [
-    "-Dsecp256k1.randomize=false"
-  ]
+  defaultJvmOpts = evmToolJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(evmToolStartScripts) }
