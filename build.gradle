@@ -739,7 +739,7 @@ def evmToolJvmOpts = [
 ]
 
 def serializeDefaultJvmOpts(opts) {
-    return opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ')
+    return "'" + opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ') + "'"
 }
 
 def tweakStartScript(createScriptTask, jvmOptsForJava25) {
