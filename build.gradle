@@ -751,8 +751,10 @@ def tweakStartScript(createScriptTask, jvmOptsForJava25) {
     createScriptTask.unixScript.text = createScriptTask.unixScript.text
             .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
 
+    // For Windows, remove the outer single quotes
+    def windowsJvmOpts = jvmOptsForJava25.replaceAll(/^'|'$/, '')
     createScriptTask.windowsScript.text = createScriptTask.windowsScript.text
-            .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
+            .replace('@DEFAULT_JVM_OPTS_25@', windowsJvmOpts)
 
     createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
     createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
