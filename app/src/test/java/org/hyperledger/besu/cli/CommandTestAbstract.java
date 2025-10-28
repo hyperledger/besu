@@ -99,6 +99,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -457,16 +458,20 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand = getTestBesuCommand(testType);
     besuCommands.add(besuCommand);
 
-    final File defaultKeyFile =
-        KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
+    besuCommand.setBesuConfiguration(commonPluginConfiguration);
+
+    final List<String> argsList = constructArgsWithTmpDataPathIfNotSpecified(args);
+
+    // Determine the data directory that will be used and write the key file there
+    final Path dataDir = determineDataDir(argsList);
+    final File defaultKeyFile = KeyPairUtil.getDefaultKeyFile(dataDir);
     try {
+      // Ensure parent directory exists
+      defaultKeyFile.getParentFile().mkdirs();
       Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
-    besuCommand.setBesuConfiguration(commonPluginConfiguration);
-
-    final List<String> argsList = constructArgsWithTmpDataPathIfNotSpecified(args);
 
     // parse using Ansi.OFF to be able to assert on non-formatted output results
     besuCommand.parse(
@@ -477,6 +482,18 @@ public abstract class CommandTestAbstract {
         mockBesuComponent,
         argsList.toArray(new String[0]));
     return besuCommand;
+  }
+
+  @Nonnull
+  private static Path determineDataDir(final List<String> argsList) {
+    // Look for --data-path in the arguments
+    for (int i = 0; i < argsList.size() - 1; i++) {
+      if ("--data-path".equals(argsList.get(i))) {
+        return Paths.get(argsList.get(i + 1));
+      }
+    }
+    // If no explicit data-path, use default
+    return DefaultCommandValues.getDefaultBesuDataPath(null);
   }
 
   @Nonnull
