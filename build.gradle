@@ -230,46 +230,49 @@ configure(allprojects - project(':platform')) {
   }
 
 
-  apply plugin: 'com.diffplug.spotless'
-  spotless {
-    java {
-      // This path needs to be relative to each project
-      target 'src/**/*.java'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
-      removeUnusedImports()
-      googleJavaFormat('1.25.2')
-      importOrder 'org.hyperledger', 'java', ''
-      trimTrailingWhitespace()
-      endWithNewline()
-      // apply appropriate license header files.
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
-    }
-    // spotless check applied to build.gradle (groovy) files
-    groovyGradle {
-      target '*.gradle'
-      greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
-      endWithNewline()
-    }
-    // Below this line are currently only license header tasks
-    format 'ShellScripts', {
-      target '**/*.sh'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
-      trimTrailingWhitespace()
-      endWithNewline()
+  // Skip spotless for referencetests project
+  if (project.name != 'referencetests') {
+    apply plugin: 'com.diffplug.spotless'
+    spotless {
+      java {
+        // This path needs to be relative to each project
+        target 'src/**/*.java'
+        targetExclude '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+        removeUnusedImports()
+        googleJavaFormat('1.25.2')
+        importOrder 'org.hyperledger', 'java', ''
+        trimTrailingWhitespace()
+        endWithNewline()
+        // apply appropriate license header files.
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
+      }
+      // spotless check applied to build.gradle (groovy) files
+      groovyGradle {
+        target '*.gradle'
+        greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
+        endWithNewline()
+      }
+      // Below this line are currently only license header tasks
+      format 'ShellScripts', {
+        target '**/*.sh'
+        targetExclude '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+        trimTrailingWhitespace()
+        endWithNewline()
 
-      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
-    }
-    format 'Solidity', {
-      target '**/*.sol'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
-      trimTrailingWhitespace()
-      endWithNewline()
+        licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
+      }
+      format 'Solidity', {
+        target '**/*.sol'
+        targetExclude '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+        trimTrailingWhitespace()
+        endWithNewline()
 
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+        licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
+      }
     }
   }
 
