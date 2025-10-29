@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryBal;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -149,6 +150,7 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
   private static final int POW_SLOT_TIME_ESTIMATION = 13;
+  private static final Duration BAL_ROOT_TIMEOUT = Duration.ofSeconds(1);
 
   private MainnetProtocolSpecs() {}
 
@@ -1168,6 +1170,9 @@ public abstract class MainnetProtocolSpecs {
             isBlockAccessListEnabled,
             metricsSystem)
         .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+        // TODO: Currently we will be starting the BAL state root future on Amsterdam even if
+        // Forest is enabled so will not be used
+        .stateRootCommitterFactory(new StateRootCommitterFactoryBal(false, BAL_ROOT_TIMEOUT))
         .hardforkId(AMSTERDAM);
   }
 

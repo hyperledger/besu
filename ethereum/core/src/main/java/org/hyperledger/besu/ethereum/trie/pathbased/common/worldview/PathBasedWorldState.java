@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -40,13 +41,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
@@ -60,8 +55,6 @@ public abstract class PathBasedWorldState
     implements MutableWorldState, PathBasedWorldView, StorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(PathBasedWorldState.class);
-
-  private static final Duration BAL_STATE_ROOT_CALCULATION_TIMEOUT = Duration.ofSeconds(1);
 
   protected PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final PathBasedCachedWorldStorageManager cachedWorldStorageManager;
@@ -182,39 +175,31 @@ public abstract class PathBasedWorldState
     return this;
   }
 
-  private void logErrorIfBalStateRootMismatchesPersisted(
-      final Hash calculatedRootHash, final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
-    if (maybeStateRootFuture.isPresent()) {
-      final CompletableFuture<Hash> stateRootFuture = maybeStateRootFuture.get();
-      try {
-        final Hash balStateRoot =
-            stateRootFuture.get(
-                BAL_STATE_ROOT_CALCULATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-        if (!balStateRoot.equals(calculatedRootHash)) {
-          LOG.error(
-              "State root mismatch between state root computed using BAL ({}) and persisted world state root ({})",
-              balStateRoot.toHexString(),
-              calculatedRootHash.toHexString());
-        }
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        LOG.error("Interrupted while waiting for BAL-based state root calculation to finish", e);
-      } catch (final ExecutionException e) {
-        final Throwable cause = e.getCause() == null ? e : e.getCause();
-        LOG.error("Failed to compute state root from block access list", cause);
-      } catch (final CancellationException e) {
-        LOG.error("Block access list state root calculation was cancelled", e);
-      } catch (final TimeoutException e) {
-        LOG.error("Timed out waiting for BAL-based state root calculation to finish", e);
-      } finally {
-        stateRootFuture.cancel(true);
-      }
+  public Hash calculateOrReadRootHash(
+      final PathBasedWorldStateKeyValueStorage.Updater stateUpdater,
+      final BlockHeader blockHeader,
+      final WorldStateConfig cfg) {
+    if (blockHeader == null || !cfg.isTrieDisabled()) {
+      // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
+      // calculate a hash
+      return calculateRootHash(
+          isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+    } else {
+      // if the trie is disabled, we cannot calculate the state root, so we directly use the root
+      // of the block. It's important to understand that in all networks,
+      // the state root must be validated independently and the block should not be trusted
+      // implicitly. This mode
+      // can be used in cases where Besu would just be a follower of another trusted client.
+      LOG.atDebug()
+          .setMessage("Unsafe state root verification for block header {}")
+          .addArgument(blockHeader)
+          .log();
+      return unsafeRootHashUpdate(blockHeader, stateUpdater);
     }
   }
 
   @Override
-  public void persist(
-      final BlockHeader blockHeader, final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
+  public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
 
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
@@ -232,32 +217,14 @@ public abstract class PathBasedWorldState
     Runnable cacheWorldState = () -> {};
 
     try {
-      final Hash calculatedRootHash;
+      final Hash calculatedRootHash =
+          committer.computeRootAndCommit(this, stateUpdater, blockHeader, worldStateConfig);
 
-      if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
-        // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
-        // calculate a hash
-        calculatedRootHash =
-            calculateRootHash(
-                isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
-      } else {
-        // if the trie is disabled, we cannot calculate the state root, so we directly use the root
-        // of the block. It's important to understand that in all networks,
-        // the state root must be validated independently and the block should not be trusted
-        // implicitly. This mode
-        // can be used in cases where Besu would just be a follower of another trusted client.
-        LOG.atDebug()
-            .setMessage("Unsafe state root verification for block header {}")
-            .addArgument(maybeBlockHeader)
-            .log();
-        calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
-      }
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
-        logErrorIfBalStateRootMismatchesPersisted(calculatedRootHash, maybeStateRootFuture);
         saveTrieLog =
             () -> {
               trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
