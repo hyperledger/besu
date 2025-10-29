@@ -32,7 +32,3 @@ site/
 jitpack.yml
 /ethereum/eth/src/test/resources/tx.csv.gz
 **/**/.factorypath
-
-# Goss test binaries (downloaded by Gradle)
-docker/tests/goss-linux-*
-docker/tests/dgoss
