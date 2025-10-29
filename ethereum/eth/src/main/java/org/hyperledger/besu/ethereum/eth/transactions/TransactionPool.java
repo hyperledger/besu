@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logInvalid;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logStart;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logStop;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
@@ -58,9 +61,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -100,7 +103,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
-  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
   private final BlobCache cacheForBlobsOfTransactionsAddedToABlock;
   private volatile PendingTransactions pendingTransactions = new DisabledPendingTransactions();
@@ -147,46 +149,6 @@ public class TransactionPool implements BlockAddedObserver {
     subscribeDroppedTransactions(transactionBroadcaster);
   }
 
-  private void initLogForReplay() {
-    LOG_FOR_REPLAY.trace("START");
-    // log the initial block header data
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{},{},{},{}")
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getNumber).orElse(0L))
-        .addArgument(
-            () ->
-                getChainHeadBlockHeader()
-                    .flatMap(BlockHeader::getBaseFee)
-                    .map(Wei::getAsBigInteger)
-                    .orElse(BigInteger.ZERO))
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasUsed).orElse(0L))
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasLimit).orElse(0L))
-        .log();
-    // log the priority senders
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{}")
-        .addArgument(
-            () ->
-                configuration.getPrioritySenders().stream()
-                    .map(Address::toHexString)
-                    .collect(Collectors.joining(",")))
-        .log();
-    // log the max prioritized txs by type
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{}")
-        .addArgument(
-            () ->
-                configuration.getMaxPrioritizedTransactionsByType().entrySet().stream()
-                    .map(e -> e.getKey().name() + "=" + e.getValue())
-                    .collect(Collectors.joining(",")))
-        .log();
-    // log configuration: minScore
-    LOG_FOR_REPLAY.atTrace().setMessage("{}").addArgument(configuration::getMinScore).log();
-  }
-
   @VisibleForTesting
   void handleConnect(final EthPeer peer) {
     transactionBroadcaster.relayTransactionPoolTo(
@@ -196,17 +158,20 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
 
-    final var result = addTransaction(transaction, true, MAX_SCORE);
+    final boolean hasPriority = isPriorityTransaction(transaction, true);
+    final var result = addTransaction(transaction, true, hasPriority, MAX_SCORE);
     if (result.isValid()) {
       localSenders.add(transaction.getSender());
       transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+    } else {
+      logInvalid(transaction, result, true, hasPriority);
     }
     return result;
   }
 
   public Map<Hash, ValidationResult<TransactionInvalidReason>> addRemoteTransactions(
       final Collection<Transaction> transactions) {
-    final long started = System.currentTimeMillis();
+    final long started = System.nanoTime();
     final int initialCount = transactions.size();
     final List<Transaction> addedTransactions = new ArrayList<>(initialCount);
     LOG.trace("Adding {} remote transactions", initialCount);
@@ -217,27 +182,25 @@ public class TransactionPool implements BlockAddedObserver {
                 Collectors.toMap(
                     Transaction::getHash,
                     transaction -> {
-                      final var result = addTransaction(transaction, false, MAX_SCORE);
+                      final boolean hasPriority = isPriorityTransaction(transaction, false);
+                      final var result = addTransaction(transaction, false, hasPriority, MAX_SCORE);
                       if (result.isValid()) {
                         addedTransactions.add(transaction);
+                      } else {
+                        logInvalid(transaction, result, false, hasPriority);
                       }
                       return result;
                     },
                     (transaction1, transaction2) -> transaction1));
 
     if (isEnabled()) {
-      LOG_FOR_REPLAY
-          .atTrace()
-          .setMessage("S,{}")
-          .addArgument(() -> pendingTransactions.logStats())
-          .log();
+      TransactionPoolStructuredLogUtils.logStats(pendingTransactions);
     }
 
     LOG.atTrace()
-        .setMessage(
-            "Added {} transactions to the pool in {}ms, {} not added, current pool stats {}")
+        .setMessage("Added {} transactions to the pool in {}, {} not added, current pool stats {}")
         .addArgument(addedTransactions::size)
-        .addArgument(() -> System.currentTimeMillis() - started)
+        .addArgument(() -> Duration.ofNanos(System.nanoTime() - started))
         .addArgument(() -> initialCount - addedTransactions.size())
         .addArgument(pendingTransactions::logStats)
         .log();
@@ -249,9 +212,10 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
-      final Transaction baseTransaction, final boolean isLocal, final byte score) {
-
-    final boolean hasPriority = isPriorityTransaction(baseTransaction, isLocal);
+      final Transaction baseTransaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final byte score) {
 
     if (pendingTransactions.containsTransaction(baseTransaction)) {
       LOG.atTrace()
@@ -649,7 +613,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
-      initLogForReplay();
+      logStart(configuration, getChainHeadBlockHeader());
       pendingTransactions = pendingTransactionsSupplier.get();
       pendingTransactionsListenersProxy.subscribe();
       isPoolEnabled.set(true);
@@ -696,7 +660,7 @@ public class TransactionPool implements BlockAddedObserver {
                     return null;
                   });
       pendingTransactions = new DisabledPendingTransactions();
-      LOG_FOR_REPLAY.trace("STOP");
+      logStop();
       return saveOperation;
     }
     return CompletableFuture.completedFuture(null);
@@ -918,9 +882,9 @@ public class TransactionPool implements BlockAddedObserver {
                                       Bytes.fromBase64String(
                                           line.substring(scoreStr.length() + 1))),
                                   EncodingContext.POOLED_TRANSACTION);
-
+                          final boolean hasPriority = isPriorityTransaction(tx, isLocal);
                           final ValidationResult<TransactionInvalidReason> result =
-                              addTransaction(tx, isLocal, score);
+                              addTransaction(tx, isLocal, hasPriority, score);
                           return result.isValid() ? "OK" : result.getInvalidReason().name();
                         })
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -968,12 +932,13 @@ public class TransactionPool implements BlockAddedObserver {
 
       LOG.debug("Removing processed lines from save file");
 
-      final var tmp = File.createTempFile(saveFile.getName(), ".tmp");
+      // Create temporary file with default secure permissions
+      final var tmp =
+          Files.createTempFile(saveFile.getParentFile().toPath(), saveFile.getName(), ".tmp");
 
       try (final BufferedReader reader =
               Files.newBufferedReader(saveFile.toPath(), StandardCharsets.US_ASCII);
-          final BufferedWriter writer =
-              Files.newBufferedWriter(tmp.toPath(), StandardCharsets.US_ASCII)) {
+          final BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.US_ASCII)) {
         reader
             .lines()
             .skip(processedLines)
@@ -989,7 +954,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
 
       saveFile.delete();
-      Files.move(tmp.toPath(), saveFile.toPath());
+      Files.move(tmp, saveFile.toPath());
     }
   }
 }
