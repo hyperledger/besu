@@ -203,6 +203,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               ethContext,
               fastSyncActions,
               snapSyncState,
+              fastSyncActions.getFastSyncStateStorage(),
+              fastSyncActions.getChainDownloaderListener(),
               snapSyncConfiguration.getPivotBlockWindowValidity(),
               snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
 

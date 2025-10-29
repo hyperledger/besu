@@ -200,10 +200,18 @@ public class FastSyncDownloader<REQUEST> {
         return CompletableFuture.failedFuture(
             new CancellationException("FastSyncDownloader stopped"));
       }
-      final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
       final ChainDownloader chainDownloader =
           fastSyncActions.createChainDownloader(currentState, syncDurationMetrics);
+
+      // Register chain downloader as pivot update listener if it implements the interface
+      if (chainDownloader instanceof PivotUpdateListener) {
+        fastSyncActions.setChainDownloaderListener((PivotUpdateListener) chainDownloader);
+        LOG.debug("Registered chain downloader as pivot update listener");
+      }
+
+      final CompletableFuture<Void> worldStateFuture =
+          worldStateDownloader.run(fastSyncActions, currentState);
+
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.

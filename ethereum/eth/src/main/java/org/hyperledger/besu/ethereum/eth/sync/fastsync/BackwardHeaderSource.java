@@ -15,18 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -41,81 +32,42 @@ public class BackwardHeaderSource implements Iterator<Long> {
 
   private final AtomicLong currentBlock;
   private final int batchSize;
+  private final long stopBlock;
 
   /**
-   * Creates a new BackwardHeaderSource with resume capability.
+   * Creates a new BackwardHeaderSource with resume capability using ChainSyncState.
    *
    * @param batchSize the number of blocks in each batch
-   * @param ethContext the Ethereum context for fetching headers
-   * @param protocolSchedule the protocol schedule
-   * @param metricsSystem the metrics system
    * @param blockchain the blockchain to check for already downloaded headers
-   * @param fastSyncState the fast sync state to determine resume point
+   * @param chainSyncState the chain sync state containing pivot and progress
    */
   public BackwardHeaderSource(
-      final int batchSize,
-      final EthContext ethContext,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
-      final Blockchain blockchain,
-      final FastSyncState fastSyncState) {
+      final int batchSize, final Blockchain blockchain, final ChainSyncState chainSyncState) {
 
-    // Download the pivot block header and use its number as the starting point
-    final Hash pivotBlockHash = fastSyncState.getPivotBlockHash().get();
-    final long pivotBlockNumber =
-        fetchPivotBlockNumber(pivotBlockHash, ethContext, protocolSchedule, metricsSystem);
+    final long pivotBlockNumber = chainSyncState.getPivotBlockNumber();
+    final long stopBlock = chainSyncState.getHeaderDownloadStopBlock();
 
     // Determine where to start/resume from
-    final long startingBlock = determineStartingBlock(pivotBlockNumber, blockchain, fastSyncState);
+    final long startingBlock = determineStartingBlock(pivotBlockNumber, blockchain);
 
     this.currentBlock = new AtomicLong(startingBlock - 1);
     this.batchSize = batchSize;
+    this.stopBlock = stopBlock;
 
     if (startingBlock < pivotBlockNumber) {
       LOG.info(
-          "BackwardHeaderSource resuming: pivotHash={}, pivotNumber={}, resumeFrom={}, batchSize={}",
-          pivotBlockHash,
+          "BackwardHeaderSource resuming: pivot={}, stopBlock={}, resumeFrom={}, batchSize={}",
           pivotBlockNumber,
+          stopBlock,
           startingBlock,
           batchSize);
     } else {
       LOG.info(
-          "BackwardHeaderSource starting fresh: pivotHash={}, pivotNumber={}, batchSize={}",
-          pivotBlockHash,
+          "BackwardHeaderSource starting fresh: pivot={}, stopBlock={}, batchSize={}",
           pivotBlockNumber,
+          stopBlock,
           batchSize);
     }
-  }
-
-  /**
-   * Determines the starting block for backward header download, checking for resume capability.
-   *
-   * @param pivotBlockNumber the pivot block number
-   * @param blockchain the blockchain to check for existing headers
-   * @param fastSyncState the fast sync state containing resume information
-   * @return the block number to start downloading from
-   */
-  private long determineStartingBlock(
-      final long pivotBlockNumber, final Blockchain blockchain, final FastSyncState fastSyncState) {
-
-    // Check if we have persisted progress
-    if (fastSyncState.getLowestBlockHeaderDownloaded().isPresent()) {
-      final long lowestDownloaded =
-          fastSyncState.getLowestBlockHeaderDownloaded().get().getNumber();
-
-      // Verify the persisted state matches what's in the database
-      if (blockchain.getBlockHeader(lowestDownloaded).isPresent()) {
-        LOG.info("Resuming from persisted state: lowest contiguous block = {}", lowestDownloaded);
-        return lowestDownloaded;
-      } else {
-        LOG.warn(
-            "Persisted state indicates block {} downloaded, but not found in DB. Scanning database...",
-            lowestDownloaded);
-      }
-    }
-
-    // Fall back to scanning the database to find the resume point
-    return findLowestContiguousBlock(pivotBlockNumber, blockchain);
   }
 
   /**
@@ -125,11 +77,11 @@ public class BackwardHeaderSource implements Iterator<Long> {
    * @param blockchain the blockchain to scan
    * @return the lowest contiguous block number, or pivotBlockNumber if nothing downloaded yet
    */
-  private long findLowestContiguousBlock(final long pivotBlockNumber, final Blockchain blockchain) {
+  private long determineStartingBlock(final long pivotBlockNumber, final Blockchain blockchain) {
     long currentBlock = pivotBlockNumber;
 
     // Walk backward in steps of batchSize until we find a missing header
-    while (currentBlock >= 0) {
+    while (currentBlock >= stopBlock) {
       if (blockchain.getBlockHeader(currentBlock).isEmpty()) {
         // Found a gap - resume from the block after this gap
         final long resumeFrom = Math.min(currentBlock + batchSize, pivotBlockNumber);
@@ -147,53 +99,9 @@ public class BackwardHeaderSource implements Iterator<Long> {
     return -1; // Signal that download is complete
   }
 
-  private long fetchPivotBlockNumber(
-      final Hash pivotBlockHash,
-      final EthContext ethContext,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem) {
-    LOG.trace("Fetching pivot block header by hash: {}", pivotBlockHash);
-
-    try {
-      final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> future =
-          GetHeadersFromPeerByHashTask.forSingleHash(
-                  protocolSchedule, ethContext, pivotBlockHash, 0L, metricsSystem)
-              .run();
-
-      final AbstractPeerTask.PeerTaskResult<List<BlockHeader>> result = future.join();
-      final List<BlockHeader> headers = result.getResult();
-
-      if (headers.isEmpty()) {
-        throw new IllegalStateException(
-            "Failed to fetch pivot block header for safe hash: " + pivotBlockHash);
-      }
-
-      final BlockHeader pivotHeader = headers.getFirst();
-
-      // just make sure that we got the right block header as the hash is what we trust
-      if (!pivotHeader.getHash().equals(pivotBlockHash)) {
-        throw new IllegalStateException(
-            "Hash of retrieved block header does not match pivot block header hash: "
-                + pivotBlockHash);
-      }
-
-      final long blockNumber = pivotHeader.getNumber();
-
-      LOG.info(
-          "Successfully fetched pivot block header: hash={}, number={}",
-          pivotBlockHash,
-          blockNumber);
-
-      return blockNumber;
-    } catch (Exception e) {
-      throw new IllegalStateException(
-          "Failed to fetch pivot block header for hash: " + pivotBlockHash, e);
-    }
-  }
-
   @Override
   public boolean hasNext() {
-    return currentBlock.get() > 0;
+    return currentBlock.get() > stopBlock;
   }
 
   @Override
@@ -202,15 +110,15 @@ public class BackwardHeaderSource implements Iterator<Long> {
         currentBlock.getAndUpdate(
             current -> {
               final long next = current - batchSize;
-              return next >= 0 ? next : -1;
+              return next >= stopBlock ? next : stopBlock - 1;
             });
 
-    if (block >= 0) {
+    if (block >= stopBlock) {
       LOG.info("BackwardHeaderSource generated block number: {}", block);
       return block;
     }
 
-    LOG.info("BackwardHeaderSource exhausted at block {}", block);
+    LOG.info("BackwardHeaderSource exhausted at block {} (stopBlock={})", block, stopBlock);
     return null;
   }
 }

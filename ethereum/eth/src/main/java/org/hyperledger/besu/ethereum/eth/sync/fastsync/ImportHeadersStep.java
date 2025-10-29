@@ -34,37 +34,32 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private final long downloaderHeaderTarget;
   private final long pivotBlockNumber;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
-  private final FastSyncState fastSyncState;
   private BlockHeader currentChildHeader;
 
   public ImportHeadersStep(
       final MutableBlockchain blockchain,
       final long downloaderHeaderTarget,
-      final FastSyncState fastSyncState) {
+      final BlockHeader pivotBlockHeader) {
     this.blockchainStorage = blockchain;
     this.downloaderHeaderTarget = downloaderHeaderTarget;
-    this.fastSyncState = fastSyncState;
-    this.pivotBlockNumber = fastSyncState.getPivotBlockNumber().getAsLong();
-    this.currentChildHeader = fastSyncState.getPivotBlockHeader().get();
+    this.pivotBlockNumber = pivotBlockHeader.getNumber();
+    this.currentChildHeader = pivotBlockHeader;
   }
 
   @Override
   public void accept(final List<BlockHeader> blockHeaders) {
     if (!blockHeaders.getFirst().getHash().equals(currentChildHeader.getParentHash())) {
-      LOG.info(
-          "Received invalid header list (expected hash {} for Block {}, but got {})",
-          currentChildHeader.getParentHash(),
-          blockHeaders.getFirst().getNumber(),
-          blockHeaders.getFirst().getHash());
-      throw new IllegalStateException(
-          "Received header with unexpected parent hash, expected "
+      String message =
+          "Received invalid header list: expected hash "
               + currentChildHeader.getParentHash()
-              + ", got "
-              + blockHeaders.getFirst().getHash());
+              + "  for highest Block number "
+              + blockHeaders.getFirst().getNumber()
+              + " ,but got "
+              + blockHeaders.getFirst().getHash();
+      LOG.info(message);
+      throw new IllegalStateException(message);
     }
     currentChildHeader = blockHeaders.getLast();
-    fastSyncState.setLowestBlockHeaderDownloaded(
-        currentChildHeader); // make sure we restart from here in case of failure
     blockHeaders.forEach(blockchainStorage::importHeader);
 
     final long totalHeaders = pivotBlockNumber - downloaderHeaderTarget;

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -43,7 +44,8 @@ public class FastSyncChainDownloader {
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
       final SyncDurationMetrics syncDurationMetrics,
-      final FastSyncStateStorage fastSyncStateStorage) {
+      final FastSyncStateStorage fastSyncStateStorage,
+      final java.nio.file.Path fastSyncDataDirectory) {
 
     final FastSyncDownloadPipelineFactory pipelineFactory =
         new FastSyncDownloadPipelineFactory(
@@ -51,11 +53,23 @@ public class FastSyncChainDownloader {
 
     // Use two-stage sync approach which works directly with pivot block hash
     // and doesn't require SyncTargetManager
-    final Hash pivotBlockHash =
+    final BlockHeader pivotBlockHeader =
         fastSyncState
-            .getPivotBlockHash()
-            .orElseThrow(() -> new RuntimeException("pivot block hash not available"));
-    LOG.info("Using two-stage fast sync with pivot={}", pivotBlockHash);
+            .getPivotBlockHeader()
+            .orElseThrow(() -> new RuntimeException("pivot block header not available"));
+    final Hash pivotBlockHash = pivotBlockHeader.getHash();
+    LOG.info(
+        "Using two-stage fast sync with pivotHash={}, pivotBlockNumber={}, ",
+        pivotBlockHash,
+        pivotBlockHeader.getNumber());
+
+    // Create chain sync state storage (separate from world state storage)
+    final ChainSyncStateStorage chainStateStorage =
+        new ChainSyncStateStorage(fastSyncDataDirectory);
+
+    // Determine checkpoint block for bodies download
+    final long checkpointBlock =
+        syncState.getCheckpoint().map(checkpoint -> checkpoint.blockNumber()).orElse(0L);
 
     return new TwoStageFastSyncChainDownloader(
         pipelineFactory,
@@ -64,7 +78,8 @@ public class FastSyncChainDownloader {
         pivotBlockHash,
         metricsSystem,
         syncDurationMetrics,
-        fastSyncState,
-        fastSyncStateStorage);
+        pivotBlockHeader,
+        chainStateStorage,
+        checkpointBlock);
   }
 }

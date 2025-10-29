@@ -75,7 +75,7 @@ public class TransactionTest {
   @ParameterizedTest(name = "Name: {0}")
   @MethodSource("getTestParametersForConfig")
   public void frontier(final String name, final TransactionTestCaseSpec spec) {
-    milestone(spec, name, "Frontier", new FrontierGasCalculator(), Optional.empty());
+                                                                         milestone(spec, name, "Frontier", new FrontierGasCalculator(), Optional.empty());
   }
 
   @ParameterizedTest(name = "Name: {0}")
