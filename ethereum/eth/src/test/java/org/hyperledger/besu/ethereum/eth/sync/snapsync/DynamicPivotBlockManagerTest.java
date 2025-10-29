@@ -50,6 +50,8 @@ public class DynamicPivotBlockManagerTest {
             ethContext,
             fastSyncActions,
             snapSyncState,
+            null, // FastSyncStateStorage - not needed for tests
+            null, // PivotUpdateListener - not needed for tests
             SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY,
             SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING);
   }

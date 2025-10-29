@@ -59,6 +59,9 @@ public class FastSyncActions {
   protected final FastSyncStateStorage fastSyncStateStorage;
   protected final Counter pivotBlockSelectionCounter;
   protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
+  protected final java.nio.file.Path fastSyncDataDirectory;
+
+  private volatile PivotUpdateListener chainDownloaderListener;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -69,7 +72,8 @@ public class FastSyncActions {
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem,
-      final FastSyncStateStorage fastSyncStateStorage) {
+      final FastSyncStateStorage fastSyncStateStorage,
+      final java.nio.file.Path fastSyncDataDirectory) {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
@@ -79,6 +83,7 @@ public class FastSyncActions {
     this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
     this.fastSyncStateStorage = fastSyncStateStorage;
+    this.fastSyncDataDirectory = fastSyncDataDirectory;
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -178,7 +183,8 @@ public class FastSyncActions {
         metricsSystem,
         currentState,
         syncDurationMetrics,
-        fastSyncStateStorage);
+        fastSyncStateStorage,
+        fastSyncDataDirectory);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(
@@ -250,5 +256,33 @@ public class FastSyncActions {
 
   public boolean isBlockchainBehind(final long blockNumber) {
     return protocolContext.getBlockchain().getChainHeadHeader().getNumber() < blockNumber;
+  }
+
+  /**
+   * Sets the chain downloader listener to be notified of pivot updates from world state download.
+   *
+   * @param listener the pivot update listener
+   */
+  public void setChainDownloaderListener(final PivotUpdateListener listener) {
+    this.chainDownloaderListener = listener;
+    LOG.debug("Chain downloader listener registered for pivot updates");
+  }
+
+  /**
+   * Gets the chain downloader listener for pivot update notifications.
+   *
+   * @return the pivot update listener, or null if not set
+   */
+  public PivotUpdateListener getChainDownloaderListener() {
+    return chainDownloaderListener;
+  }
+
+  /**
+   * Gets the fast sync state storage.
+   *
+   * @return the fast sync state storage
+   */
+  public FastSyncStateStorage getFastSyncStateStorage() {
+    return fastSyncStateStorage;
   }
 }

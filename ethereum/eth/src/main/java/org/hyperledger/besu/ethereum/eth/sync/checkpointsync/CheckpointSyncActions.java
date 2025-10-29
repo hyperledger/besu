@@ -38,7 +38,8 @@ public class CheckpointSyncActions extends FastSyncActions {
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem,
-      final FastSyncStateStorage fastSyncStateStorage) {
+      final FastSyncStateStorage fastSyncStateStorage,
+      final java.nio.file.Path fastSyncDataDirectory) {
     super(
         syncConfig,
         worldStateStorageCoordinator,
@@ -48,7 +49,8 @@ public class CheckpointSyncActions extends FastSyncActions {
         syncState,
         pivotBlockSelector,
         metricsSystem,
-        fastSyncStateStorage);
+        fastSyncStateStorage,
+        fastSyncDataDirectory);
   }
 
   @Override
@@ -63,6 +65,7 @@ public class CheckpointSyncActions extends FastSyncActions {
         metricsSystem,
         currentState,
         syncDurationMetrics,
-        fastSyncStateStorage);
+        fastSyncStateStorage,
+        fastSyncDataDirectory);
   }
 }

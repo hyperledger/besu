@@ -41,6 +41,7 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
@@ -107,17 +108,23 @@ public class FastSyncChainDownloaderTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    return FastSyncChainDownloader.create(
-        syncConfig,
-        worldStateStorageCoordinator,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        syncState,
-        new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        new FastSyncStateStorage(Path.of("file://")));
+    try {
+      final Path tempDir = Files.createTempDirectory("fast-sync-test");
+      return FastSyncChainDownloader.create(
+          syncConfig,
+          worldStateStorageCoordinator,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          syncState,
+          new NoOpMetricsSystem(),
+          new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
+          SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+          new FastSyncStateStorage(tempDir),
+          tempDir);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create temp directory for test", e);
+    }
   }
 
   @ParameterizedTest

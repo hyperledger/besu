@@ -94,8 +94,11 @@ public class FastSyncStateStorage {
           throw new IllegalStateException("Unsupported fast sync state format version: " + version);
         }
       } else {
-        pivotBlockHeaderFile.delete();
-        return FastSyncState.EMPTY_SYNC_STATE;
+        // Legacy format (no version byte, just the header)
+        // Read as a simple header for backward compatibility
+        input.reset();
+        final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
+        return new FastSyncState(header, false); // Default sourceIsTrusted to false
       }
     } catch (final IOException e) {
       throw new IllegalStateException(

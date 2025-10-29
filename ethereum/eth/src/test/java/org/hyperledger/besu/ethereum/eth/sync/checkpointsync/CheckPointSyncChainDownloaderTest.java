@@ -202,16 +202,23 @@ public class CheckPointSyncChainDownloaderTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    return CheckpointSyncChainDownloader.create(
-        syncConfig,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        syncState,
-        new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        mock(org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage.class));
+    try {
+      final java.nio.file.Path tempDir =
+          java.nio.file.Files.createTempDirectory("checkpoint-sync-test");
+      return CheckpointSyncChainDownloader.create(
+          syncConfig,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          syncState,
+          new NoOpMetricsSystem(),
+          new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
+          SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+          mock(org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage.class),
+          tempDir);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create temp directory for test", e);
+    }
   }
 
   @ParameterizedTest
