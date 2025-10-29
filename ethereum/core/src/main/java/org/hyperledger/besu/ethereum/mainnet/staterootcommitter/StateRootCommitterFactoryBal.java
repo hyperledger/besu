@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 
 import java.time.Duration;
@@ -46,6 +47,11 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
     // TODO: Should we rather throw in this case?
     if (maybeBal.isEmpty()) {
       LOG.warn("No BAL present in the block, falling back to synchronous state root computation");
+      return new StateRootCommitterImplSync();
+    }
+
+    // This is temporary workaround to not launch state root pre-computation in Forest mode
+    if (!(protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider)) {
       return new StateRootCommitterImplSync();
     }
 
