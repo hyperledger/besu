@@ -114,11 +114,10 @@ public class BackwardHeaderSource implements Iterator<Long> {
             });
 
     if (block >= stopBlock) {
-      LOG.info("BackwardHeaderSource generated block number: {}", block);
       return block;
     }
 
-    LOG.info("BackwardHeaderSource exhausted at block {} (stopBlock={})", block, stopBlock);
+    LOG.debug("BackwardHeaderSource exhausted at block {} (stopBlock={})", block, stopBlock);
     return null;
   }
 }
