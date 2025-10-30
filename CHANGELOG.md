@@ -21,6 +21,7 @@
 - Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
 - Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
 - Update to tuweni 2.7.2 [#9338](https://github.com/hyperledger/besu/pull/9338)
+- Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
 
 ### Bug fixes
 
