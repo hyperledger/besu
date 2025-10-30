@@ -89,7 +89,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   // difficultyForSyncing is thread safe, as it is only used in the one thread of the import step
-  private Difficulty difficultyForSyncing = Difficulty.ZERO;
+//  private Difficulty difficultyForSyncing = Difficulty.ZERO;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -630,7 +630,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     blockAddedEvent = updateCanonicalChainData(updater, block, receipts, transactionIndexing);
     if (blockAddedEvent.isNewCanonicalHead()) {
-      updateCacheForNewCanonicalHead(block, td);
+      updateCacheForNewCanonicalHead(block, Difficulty.ZERO);
     }
 
     updater.commit();
@@ -681,21 +681,21 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockHeader.getDifficulty().add(parentTotalDifficulty);
   }
 
-  private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
-      difficultyForSyncing = blockHeader.getDifficulty();
-    } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
-      final Difficulty parentTotalDifficulty =
-          blockchainStorage
-              .getTotalDifficulty(blockHeader.getParentHash())
-              .orElseThrow(
-                  () -> new IllegalStateException("Blockchain is missing total difficulty data."));
-      difficultyForSyncing = parentTotalDifficulty.add(blockHeader.getDifficulty());
-    } else {
-      difficultyForSyncing = difficultyForSyncing.add(blockHeader.getDifficulty());
-    }
-    return difficultyForSyncing;
-  }
+//  private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
+//    if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
+//      difficultyForSyncing = blockHeader.getDifficulty();
+//    } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
+//      final Difficulty parentTotalDifficulty =
+//          blockchainStorage
+//              .getTotalDifficulty(blockHeader.getParentHash())
+//              .orElseThrow(
+//                  () -> new IllegalStateException("Blockchain is missing total difficulty data."));
+//      difficultyForSyncing = parentTotalDifficulty.add(blockHeader.getDifficulty());
+//    } else {
+//      difficultyForSyncing = difficultyForSyncing.add(blockHeader.getDifficulty());
+//    }
+//    return difficultyForSyncing;
+//  }
 
   private BlockAddedEvent updateCanonicalChainData(
       final Updater updater,
