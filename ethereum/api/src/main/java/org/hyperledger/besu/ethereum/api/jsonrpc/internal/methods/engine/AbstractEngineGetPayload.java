@@ -131,16 +131,16 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
     LOG.info(
         String.format(
-            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas | payloadId %s in %01.3fs | Timing(%s)",
+            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas in %01.3fs | Timing(%s) | PayloadId %s",
             block.getHeader().getNumber(),
             block.getHash().toShortLogString(),
             block.getBody().getTransactions().size(),
             withdrawalsInfo,
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            payloadIdentifier.toHexString(),
             blockCreationTiming.end("log").toMillis() / 1000.0,
-            blockCreationTiming));
+            blockCreationTiming,
+            payloadIdentifier.toHexString()));
   }
 
   protected abstract JsonRpcResponse createResponse(
