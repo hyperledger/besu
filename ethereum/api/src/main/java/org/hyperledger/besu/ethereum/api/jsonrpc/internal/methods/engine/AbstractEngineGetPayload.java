@@ -111,13 +111,19 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
-      logProducedBlock(payload.blockWithReceipts().getBlock(), payload.getBlockCreationTimings());
+      logProducedBlock(
+          payload.blockWithReceipts().getBlock(),
+          payload.getBlockCreationTimings(),
+          payload.payloadIdentifier());
       return createResponse(request, payload);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
-  private void logProducedBlock(final Block block, final BlockCreationTiming blockCreationTiming) {
+  private void logProducedBlock(
+      final Block block,
+      final BlockCreationTiming blockCreationTiming,
+      final PayloadIdentifier payloadIdentifier) {
     final String withdrawalsInfo =
         block.getBody().getWithdrawals().isPresent()
             ? String.format(" | %d ws", block.getBody().getWithdrawals().get().size())
@@ -125,13 +131,14 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
     LOG.info(
         String.format(
-            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas in %01.3fs | Timing(%s)",
+            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas | payloadId %s in %01.3fs | Timing(%s)",
             block.getHeader().getNumber(),
             block.getHash().toShortLogString(),
             block.getBody().getTransactions().size(),
             withdrawalsInfo,
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            payloadIdentifier.toHexString(),
             blockCreationTiming.end("log").toMillis() / 1000.0,
             blockCreationTiming));
   }
