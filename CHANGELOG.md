@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Upcoming Breaking Changes
+- Add Osaka, BPO1 and BPO2 fork times for mainnet [#9380](https://github.com/hyperledger/besu/pull/9380)
 - Deprecated CLI options
   - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
   - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
