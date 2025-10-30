@@ -67,14 +67,8 @@ public class DownloadBackwardHeadersStep
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
     // Calculate how many headers to request for this batch
-    // Download down to block 0 (genesis)
     final long remainingBlocks = startBlockNumber;
     final int headersToRequest = (int) Math.min(headerRequestSize, remainingBlocks);
-
-    LOG.info(
-        "Downloading {} headers backward from block {} (to genesis)",
-        headersToRequest,
-        startBlockNumber);
 
     return ethContext
         .getScheduler()
@@ -120,7 +114,7 @@ public class DownloadBackwardHeadersStep
         headers.addAll(result.result().get());
       }
     } while (headers.size() < headersToRequest);
-    LOG.info(
+    LOG.debug(
         "Downloaded {} headers: blocks {} to {}",
         headers.size(),
         headers.getFirst().getNumber(),
