@@ -86,6 +86,9 @@ public class RequestDataStep {
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final AccountRangeDataRequest accountDataRequest =
         (AccountRangeDataRequest) requestTask.getData();
+    LOG.info("AAAAA WS_DOWNLOAD: Requesting account range {} - {}",
+             accountDataRequest.getStartKeyHash(),
+             accountDataRequest.getEndKeyHash());
     final EthTask<AccountRangeMessage.AccountRangeData> getAccountTask =
         RetryingGetAccountRangeFromPeerTask.forAccountRange(
             ethContext,
@@ -104,14 +107,16 @@ public class RequestDataStep {
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
                 accountDataRequest.addResponse(
                     worldStateProofProvider, response.accounts(), response.proofs());
+                LOG.info("AAAAA WS_DOWNLOAD: Account range {} - {} completed successfully with {} accounts",
+                         accountDataRequest.getStartKeyHash(),
+                         accountDataRequest.getEndKeyHash(),
+                         response.accounts().size());
               }
               if (error != null) {
-                LOG.atDebug()
-                    .setMessage("Error handling account download accounts ({} - {}) task: {}")
-                    .addArgument(accountDataRequest.getStartKeyHash())
-                    .addArgument(accountDataRequest.getEndKeyHash())
-                    .addArgument(error)
-                    .log();
+                LOG.info("AAAAA WS_DOWNLOAD: Error downloading account range {} - {}: {}",
+                         accountDataRequest.getStartKeyHash(),
+                         accountDataRequest.getEndKeyHash(),
+                         error.getMessage());
               }
               return requestTask;
             });
