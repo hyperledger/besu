@@ -14,18 +14,21 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.statemachine;
 
+import static org.hyperledger.besu.consensus.qbft.core.validation.ValidatorUtil.isMsgForCurrentHeight;
+import static org.hyperledger.besu.consensus.qbft.core.validation.ValidatorUtil.isMsgForFutureChainHeight;
+import static org.hyperledger.besu.consensus.qbft.core.validation.ValidatorUtil.isMsgFromKnownValidator;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
-import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.CommitMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.PrepareMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.ProposalMessageData;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
-import org.hyperledger.besu.consensus.qbft.core.messagedata.RoundChangeMessageData;
+import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.core.messagewrappers.QbftMessageDecoder;
+import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockchain;
@@ -35,8 +38,11 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftGossiper;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftNewChainHead;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
+import org.hyperledger.besu.consensus.qbft.core.validation.RoundChangeMessageValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -54,6 +60,7 @@ public class QbftController implements QbftEventHandler {
   private final MessageTracker duplicateMessageTracker;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final QbftBlockCodec blockEncoder;
+  private final QbftMessageDecoder messageDecoder = new QbftMessageDecoder();
   private BaseQbftBlockHeightManager currentHeightManager;
   private final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory;
 
@@ -87,46 +94,23 @@ public class QbftController implements QbftEventHandler {
   }
 
   private void handleMessage(final QbftMessage message, final boolean isReplayed) {
-    final MessageData messageData = message.getData();
-
-    switch (messageData.getCode()) {
-      case QbftV1.PROPOSAL:
-        consumeMessage(
-            message,
-            ProposalMessageData.fromMessageData(messageData).decode(blockEncoder),
-            currentHeightManager::handleProposalPayload,
-            isReplayed);
-        break;
-
-      case QbftV1.PREPARE:
-        consumeMessage(
-            message,
-            PrepareMessageData.fromMessageData(messageData).decode(),
-            currentHeightManager::handlePreparePayload,
-            isReplayed);
-        break;
-
-      case QbftV1.COMMIT:
-        consumeMessage(
-            message,
-            CommitMessageData.fromMessageData(messageData).decode(),
-            currentHeightManager::handleCommitPayload,
-            isReplayed);
-        break;
-
-      case QbftV1.ROUND_CHANGE:
-        consumeMessage(
-            message,
-            RoundChangeMessageData.fromMessageData(messageData).decode(blockEncoder),
-            currentHeightManager::handleRoundChangePayload,
-            isReplayed);
-        break;
-
-      default:
-        throw new IllegalArgumentException(
-            String.format(
-                "Received message with messageCode=%d does not conform to any recognised QBFT message structure",
-                message.getData().getCode()));
+    final BftMessage<?> bftMessage = messageDecoder.decode(message, blockEncoder);
+    switch (bftMessage) {
+      case Proposal proposal ->
+          consumeMessage(
+              message, proposal, currentHeightManager::handleProposalPayload, isReplayed);
+      case Prepare prepare ->
+          consumeMessage(message, prepare, currentHeightManager::handlePreparePayload, isReplayed);
+      case Commit commit ->
+          consumeMessage(message, commit, currentHeightManager::handleCommitPayload, isReplayed);
+      case RoundChange roundChange ->
+          consumeMessage(
+              message, roundChange, currentHeightManager::handleRoundChangePayload, isReplayed);
+      default ->
+          throw new IllegalArgumentException(
+              String.format(
+                  "Received message with messageCode=%d does not conform to any recognised QBFT message structure",
+                  message.getData().getCode()));
     }
   }
 
@@ -136,6 +120,38 @@ public class QbftController implements QbftEventHandler {
 
   private BaseQbftBlockHeightManager getCurrentHeightManager() {
     return currentHeightManager;
+  }
+
+  /**
+   * Get the current chain height.
+   *
+   * @return the current chain height
+   */
+  public long getCurrentChainHeight() {
+    return getCurrentHeightManager().getChainHeight();
+  }
+
+  /**
+   * Get the current message validator.
+   *
+   * @return the current message validator, or empty if no round is active
+   */
+  public Optional<MessageValidator> getCurrentMessageValidator() {
+    return getCurrentHeightManager()
+        .getCurrentRound()
+        .map(QbftRound::getRoundState)
+        .map(RoundState::getValidator);
+  }
+
+  /**
+   * Get the current round change message validator.
+   *
+   * @return the current round change message validator, or empty if not available
+   */
+  public Optional<RoundChangeMessageValidator> getCurrentRoundChangeMessageValidator() {
+    return getCurrentHeightManager()
+        .getRoundChangeManager()
+        .map(RoundChangeManager::getRoundChangeMessageValidator);
   }
 
   /* Replace the current height manager with a no-op height manager. */
@@ -244,7 +260,7 @@ public class QbftController implements QbftEventHandler {
   @Override
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
     final ConsensusRoundIdentifier roundIdentifier = blockTimerExpiry.getRoundIdentifier();
-    if (isMsgForCurrentHeight(roundIdentifier)) {
+    if (isMsgForCurrentHeight(roundIdentifier, getCurrentChainHeight())) {
       getCurrentHeightManager().handleBlockTimerExpiry(roundIdentifier);
     } else {
       LOG.trace(
@@ -263,7 +279,7 @@ public class QbftController implements QbftEventHandler {
       return;
     }
 
-    if (isMsgForCurrentHeight(roundExpiry.getView())) {
+    if (isMsgForCurrentHeight(roundExpiry.getView(), getCurrentChainHeight())) {
       getCurrentHeightManager().roundExpired(roundExpiry);
     } else {
       LOG.trace(
@@ -283,9 +299,10 @@ public class QbftController implements QbftEventHandler {
 
   private boolean processMessage(final BftMessage<?> msg, final QbftMessage rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
-    if (isMsgForCurrentHeight(msgRoundIdentifier)) {
-      return isMsgFromKnownValidator(msg) && finalState.isLocalNodeValidator();
-    } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
+    if (isMsgForCurrentHeight(msg, getCurrentChainHeight())) {
+      return isMsgFromKnownValidator(msg, finalState.getValidators())
+          && finalState.isLocalNodeValidator();
+    } else if (isMsgForFutureChainHeight(msg, getCurrentChainHeight())) {
       LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
     } else {
@@ -296,17 +313,5 @@ public class QbftController implements QbftEventHandler {
           msgRoundIdentifier.getSequenceNumber());
     }
     return false;
-  }
-
-  private boolean isMsgFromKnownValidator(final Authored msg) {
-    return finalState.getValidators().contains(msg.getAuthor());
-  }
-
-  private boolean isMsgForCurrentHeight(final ConsensusRoundIdentifier roundIdentifier) {
-    return roundIdentifier.getSequenceNumber() == getCurrentHeightManager().getChainHeight();
-  }
-
-  private boolean isMsgForFutureChainHeight(final ConsensusRoundIdentifier roundIdentifier) {
-    return roundIdentifier.getSequenceNumber() > getCurrentHeightManager().getChainHeight();
   }
 }

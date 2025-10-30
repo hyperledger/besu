@@ -22,6 +22,8 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 
+import java.util.Optional;
+
 /** The type NoOp block height manager. */
 public class NoOpBlockHeightManager implements BaseQbftBlockHeightManager {
 
@@ -62,5 +64,15 @@ public class NoOpBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public QbftBlockHeader getParentBlockHeader() {
     return parentHeader;
+  }
+
+  @Override
+  public Optional<QbftRound> getCurrentRound() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<RoundChangeManager> getRoundChangeManager() {
+    return Optional.empty();
   }
 }

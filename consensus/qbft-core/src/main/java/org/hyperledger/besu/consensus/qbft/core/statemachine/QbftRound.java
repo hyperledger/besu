@@ -122,6 +122,15 @@ public class QbftRound {
   }
 
   /**
+   * Gets round state.
+   *
+   * @return the round state
+   */
+  public RoundState getRoundState() {
+    return roundState;
+  }
+
+  /**
    * Create a block
    *
    * @param headerTimeStampSeconds of the block

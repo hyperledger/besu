@@ -140,6 +140,7 @@ class BlockAccessListStateRootHashCalculatorTest {
     final Address addressOne = Address.fromHexString("0x00000000000000000000000000000000000000cc");
     final Address addressTwo = Address.fromHexString("0x00000000000000000000000000000000000000dd");
     final StorageSlotKey slotKey = new StorageSlotKey(UInt256.valueOf(1));
+    final Bytes newCode = Bytes.fromHexString("0x60016000");
 
     final BlockAccessList bal =
         new BlockAccessList(
@@ -159,7 +160,7 @@ class BlockAccessListStateRootHashCalculatorTest {
                     List.of(),
                     List.of(),
                     List.of(),
-                    List.of())));
+                    List.of(new CodeChange(0, newCode)))));
 
     final Hash accumulatorRoot =
         computeRootFromAccumulator(
@@ -169,6 +170,7 @@ class BlockAccessListStateRootHashCalculatorTest {
               first.setNonce(3L);
 
               final MutableAccount second = accumulator.getOrCreate(addressTwo);
+              second.setCode(newCode);
               second.setStorageValue(slotKey.getSlotKey().orElseThrow(), UInt256.valueOf(99));
             });
 
@@ -235,6 +237,43 @@ class BlockAccessListStateRootHashCalculatorTest {
         computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
 
     assertThat(balRoot).isNotEqualTo(accumulatorRoot);
+  }
+
+  @Test
+  void accountPresentButNoChangesDoesNotAlterRoot() throws Exception {
+    final Address readOnlyAddress =
+        Address.fromHexString("0x0000000000000000000000000000000000000aaa");
+    final Address updatedAddress =
+        Address.fromHexString("0x0000000000000000000000000000000000000bbb");
+
+    final Wei newBalance = Wei.of(12345);
+    final long newNonce = 9L;
+
+    final BlockAccessList bal =
+        new BlockAccessList(
+            List.of(
+                new AccountChanges(
+                    readOnlyAddress, List.of(), List.of(), List.of(), List.of(), List.of()),
+                new AccountChanges(
+                    updatedAddress,
+                    List.of(),
+                    List.of(),
+                    List.of(new BalanceChange(0, newBalance)),
+                    List.of(new NonceChange(0, newNonce)),
+                    List.of())));
+
+    final Hash expectedRoot =
+        computeRootFromAccumulator(
+            accumulator -> {
+              final MutableAccount account = accumulator.getOrCreate(updatedAddress);
+              account.setBalance(newBalance);
+              account.setNonce(newNonce);
+            });
+
+    final Hash balRoot =
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+
+    assertThat(balRoot).isEqualTo(expectedRoot);
   }
 
   private Hash computeRootFromAccumulator(

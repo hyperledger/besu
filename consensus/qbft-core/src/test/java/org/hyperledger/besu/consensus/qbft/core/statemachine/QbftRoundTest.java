@@ -324,6 +324,10 @@ public class QbftRoundTest {
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
     verify(blockImporter, never()).importBlock(any());
 
+    round.handleCommitMessage(
+        messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+    verify(blockImporter, never()).importBlock(any());
+
     round.handleProposalMessage(
         messageFactory.createProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));

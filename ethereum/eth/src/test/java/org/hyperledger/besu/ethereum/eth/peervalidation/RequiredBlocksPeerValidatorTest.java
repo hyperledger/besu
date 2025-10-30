@@ -21,30 +21,31 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Override
-  AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
+  AbstractPeerBlockValidator createValidator(
+      final PeerTaskExecutor peerTaskExecutor, final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        ProtocolScheduleFixture.TESTING_NETWORK,
-        null,
-        SynchronizerConfiguration.builder().build(),
-        new NoOpMetricsSystem(),
-        blockNumber,
-        Hash.ZERO,
-        buffer);
+        ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, blockNumber, Hash.ZERO, buffer);
   }
 
   @Test
@@ -61,25 +62,31 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.TESTING_NETWORK,
-            null,
-            SynchronizerConfiguration.builder().build(),
-            new NoOpMetricsSystem(),
+            peerTaskExecutor,
             requiredBlockNumber,
             requiredBlock.getHash(),
             0);
 
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber).getEthPeer();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(requiredBlock.getHeader())),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer)));
 
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), peer);
 
-    assertThat(result).isNotDone();
-
-    // Send response for block
-    final AtomicBoolean requiredBlockRequested = respondToBlockRequest(peer, requiredBlock);
-
-    assertThat(requiredBlockRequested).isTrue();
+    ArgumentCaptor<GetHeadersFromPeerTask> getHeadersTaskCaptor =
+        ArgumentCaptor.forClass(GetHeadersFromPeerTask.class);
+    Mockito.verify(peerTaskExecutor)
+        .executeAgainstPeer(getHeadersTaskCaptor.capture(), Mockito.eq(peer));
+    assertThat(getHeadersTaskCaptor.getValue().getBlockNumber()).isEqualTo(requiredBlockNumber);
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(true);
   }
@@ -95,25 +102,31 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
             ProtocolScheduleFixture.TESTING_NETWORK,
-            null,
-            SynchronizerConfiguration.builder().build(),
-            new NoOpMetricsSystem(),
+            peerTaskExecutor,
             requiredBlockNumber,
             Hash.ZERO,
             0);
 
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber).getEthPeer();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(requiredBlock.getHeader())),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer)));
 
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), peer);
 
-    assertThat(result).isNotDone();
-
-    // Send response for required block
-    final AtomicBoolean requiredBlockRequested = respondToBlockRequest(peer, requiredBlock);
-
-    assertThat(requiredBlockRequested).isTrue();
+    ArgumentCaptor<GetHeadersFromPeerTask> getHeadersTaskCaptor =
+        ArgumentCaptor.forClass(GetHeadersFromPeerTask.class);
+    Mockito.verify(peerTaskExecutor)
+        .executeAgainstPeer(getHeadersTaskCaptor.capture(), Mockito.eq(peer));
+    assertThat(getHeadersTaskCaptor.getValue().getBlockNumber()).isEqualTo(requiredBlockNumber);
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
   }
@@ -124,22 +137,21 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            ProtocolScheduleFixture.TESTING_NETWORK,
-            null,
-            SynchronizerConfiguration.builder().build(),
-            new NoOpMetricsSystem(),
-            1,
-            Hash.ZERO);
+            ProtocolScheduleFixture.TESTING_NETWORK, peerTaskExecutor, 1, Hash.ZERO);
 
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+    final EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1).getEthPeer();
+
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(Collections.emptyList()),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(peer)));
 
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
-
-    assertThat(result).isNotDone();
-
-    // Respond to block header request with empty
-    peer.respond(RespondingEthPeer.emptyResponder());
+        validator.validatePeer(ethProtocolManager.ethContext(), peer);
 
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);

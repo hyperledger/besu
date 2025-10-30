@@ -478,6 +478,16 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     return MessageAge.PRIOR_ROUND;
   }
 
+  @Override
+  public Optional<QbftRound> getCurrentRound() {
+    return currentRound;
+  }
+
+  @Override
+  public Optional<RoundChangeManager> getRoundChangeManager() {
+    return Optional.of(roundChangeManager);
+  }
+
   /** The enum Message age. */
   public enum MessageAge {
     /** Prior round message age. */

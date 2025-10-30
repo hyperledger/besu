@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -38,13 +36,22 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -61,18 +68,36 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final ReferenceTestBlockHeader genesisBlockHeader;
 
+  private final Map<String, ReferenceTestWorldState.AccountMock> accounts;
   private final Hash lastBlockHash;
-
-  private final WorldStateArchive worldStateArchive;
 
   private final MutableBlockchain blockchain;
   private final String sealEngine;
 
-  private final ProtocolContext protocolContext;
+  public WorldStateArchive buildWorldStateArchive(final long cacheSize) {
 
-  private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
+        new InMemoryKeyValueStorageProvider();
+    final WorldStateArchive worldStateArchive =
+        new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage)
+                inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            blockchain,
+            Optional.of(cacheSize),
+            new NoopBonsaiCachedMerkleTrieLoader(),
+            new ServiceManager() {
+              @Override
+              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+
+              @Override
+              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+                return Optional.empty();
+              }
+            },
+            EvmConfiguration.DEFAULT,
+            () -> (__, ___) -> {},
+            new CodeCache());
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -85,6 +110,7 @@ public class BlockchainReferenceTestCaseSpec {
     updater.commit();
     worldState.persist(null);
 
+    worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
     return worldStateArchive;
   }
 
@@ -105,16 +131,10 @@ public class BlockchainReferenceTestCaseSpec {
     this.network = network;
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
+    this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext =
-        new ProtocolContext.Builder()
-            .withBlockchain(blockchain)
-            .withWorldStateArchive(this.worldStateArchive)
-            .withConsensusContext(new ConsensusContextFixture())
-            .build();
   }
 
   public String getNetwork() {
@@ -125,10 +145,6 @@ public class BlockchainReferenceTestCaseSpec {
     return candidateBlocks;
   }
 
-  public WorldStateArchive getWorldStateArchive() {
-    return worldStateArchive;
-  }
-
   public BlockHeader getGenesisBlockHeader() {
     return genesisBlockHeader;
   }
@@ -137,8 +153,14 @@ public class BlockchainReferenceTestCaseSpec {
     return blockchain;
   }
 
-  public ProtocolContext getProtocolContext() {
-    return protocolContext;
+  public ProtocolContext buildProtocolContext() {
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(
+            buildWorldStateArchive(
+                Stream.of(candidateBlocks).filter(CandidateBlock::isExecutable).count()))
+        .withConsensusContext(new ConsensusContextFixture())
+        .build();
   }
 
   public Hash getLastBlockHash() {
