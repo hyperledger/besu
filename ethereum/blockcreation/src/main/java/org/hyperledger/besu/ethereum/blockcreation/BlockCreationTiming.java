@@ -50,7 +50,10 @@ public class BlockCreationTiming {
   }
 
   public Duration end(final String step) {
-    final var elapsed = stopwatch.stop().elapsed();
+    if (stopwatch.isRunning()) {
+      stopwatch.stop();
+    }
+    final var elapsed = stopwatch.elapsed();
     timing.put(step, elapsed);
     return elapsed;
   }
