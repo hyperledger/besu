@@ -25,9 +25,17 @@ public class BlockCreationTiming {
   private final Map<String, Duration> timing = new LinkedHashMap<>();
   private final Stopwatch stopwatch;
   private final Instant startedAt = Instant.now();
+  public static final BlockCreationTiming EMPTY = createEmpty();
 
   public BlockCreationTiming() {
     this.stopwatch = Stopwatch.createStarted();
+  }
+
+  private static BlockCreationTiming createEmpty() {
+    BlockCreationTiming empty = new BlockCreationTiming();
+    empty.timing.put("empty-block-created", Duration.ZERO);
+    empty.stopwatch.stop();
+    return empty;
   }
 
   public void register(final String step) {

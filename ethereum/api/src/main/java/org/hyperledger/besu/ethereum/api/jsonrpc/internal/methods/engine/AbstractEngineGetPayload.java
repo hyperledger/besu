@@ -26,7 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -110,32 +111,24 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
-      logProposal(payload);
+      logProducedBlock(payload.blockWithReceipts().getBlock(), payload.getBlockCreationTimings());
       return createResponse(request, payload);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
-  protected void logProposal(final PayloadWrapper payload) {
-    final BlockHeader proposalHeader = payload.blockWithReceipts().getHeader();
-    final float gasUsedPerc = 100.0f * proposalHeader.getGasUsed() / proposalHeader.getGasLimit();
-
-    final String message =
-        "Fetch block proposal by identifier: {}, hash: {}, "
-            + "number: {}, coinbase: {}, transaction count: {}, gas used: {}%"
-            + " reward: {}";
-
-    LOG.atInfo()
-        .setMessage(message)
-        .addArgument(payload.payloadIdentifier()::toHexString)
-        .addArgument(proposalHeader::getHash)
-        .addArgument(proposalHeader::getNumber)
-        .addArgument(proposalHeader::getCoinbase)
-        .addArgument(
-            () -> payload.blockWithReceipts().getBlock().getBody().getTransactions().size())
-        .addArgument(() -> String.format("%1.2f", gasUsedPerc))
-        .addArgument(payload.blockValue()::toHumanReadableString)
-        .log();
+  private void logProducedBlock(final Block block, final BlockCreationTiming blockCreationTiming) {
+    LOG.info(
+        String.format(
+            "Produced #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs / Timing(%s)",
+            block.getHeader().getNumber(),
+            block.getBody().getTransactions().size(),
+            block.getBody().getOmmers().size(),
+            block.getHeader().getGasUsed(),
+            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            block.getHash(),
+            blockCreationTiming.end("log").toMillis() / 1000.0,
+            blockCreationTiming));
   }
 
   protected abstract JsonRpcResponse createResponse(

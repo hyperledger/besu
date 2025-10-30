@@ -107,19 +107,9 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-
-    LOG.trace("Started a mining operation.");
-
-    final var timing = new BlockCreationTiming();
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     final long timestamp = scheduler.getNextTimestamp(parentHeader).timestampForHeader();
-    LOG.trace("Mining a new block with timestamp {}", timestamp);
-    final var blockCreationResult =
-        blockCreator.createBlock(transactions, ommers, timestamp, parentHeader);
-    timing.registerAll(blockCreationResult.getBlockCreationTimings());
-    final var block = blockCreationResult.getBlock();
-    logProducedBlock(block, timing);
-    return blockCreationResult;
+    return blockCreator.createBlock(transactions, ommers, timestamp, parentHeader);
   }
 
   /**
