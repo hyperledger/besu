@@ -118,15 +118,20 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
   }
 
   private void logProducedBlock(final Block block, final BlockCreationTiming blockCreationTiming) {
+    final String withdrawalsInfo =
+        block.getBody().getWithdrawals().isPresent()
+            ? String.format(" | %d ws", block.getBody().getWithdrawals().get().size())
+            : "";
+
     LOG.info(
         String.format(
-            "Produced #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs / Timing(%s)",
+            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas in %01.3fs | Timing(%s)",
             block.getHeader().getNumber(),
+            block.getHash().toShortLogString(),
             block.getBody().getTransactions().size(),
-            block.getBody().getOmmers().size(),
+            withdrawalsInfo,
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            block.getHash(),
             blockCreationTiming.end("log").toMillis() / 1000.0,
             blockCreationTiming));
   }
