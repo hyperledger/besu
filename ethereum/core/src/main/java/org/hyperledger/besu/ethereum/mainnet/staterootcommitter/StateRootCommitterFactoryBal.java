@@ -18,18 +18,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public final class StateRootCommitterFactoryBal implements StateRootCommitterFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(StateRootCommitterFactoryBal.class);
 
   private final boolean trustBalRoot;
   private final Duration balRootTimeout;
@@ -44,14 +40,13 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final Optional<BlockAccessList> maybeBal) {
-    // TODO: Should we rather throw in this case?
     if (maybeBal.isEmpty()) {
-      LOG.warn("No BAL present in the block, falling back to synchronous state root computation");
-      return new StateRootCommitterImplSync();
+      throw new IllegalStateException(
+          "No BAL present in the block, falling back to synchronous state root computation");
     }
 
     // This is temporary workaround to not launch state root pre-computation in Forest mode
-    if (!(protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider)) {
+    if (protocolContext.getWorldStateArchive() instanceof ForestWorldStateArchive) {
       return new StateRootCommitterImplSync();
     }
 

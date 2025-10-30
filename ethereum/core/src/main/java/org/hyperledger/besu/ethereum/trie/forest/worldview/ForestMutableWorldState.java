@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -178,18 +179,30 @@ public class ForestMutableWorldState implements MutableWorldState {
   public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
     final ForestWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
+    committer.computeRootAndCommit(
+        this, stateUpdater, blockHeader, WorldStateConfig.createStatefulConfigWithTrie());
+  }
+
+  @Override
+  public Hash calculateOrReadRootHash(
+      final WorldStateKeyValueStorage.Updater stateUpdater,
+      final BlockHeader blockHeader,
+      final WorldStateConfig cfg) {
+
+    final ForestWorldStateKeyValueStorage.Updater forestUpdater =
+        (ForestWorldStateKeyValueStorage.Updater) stateUpdater;
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(code);
+      forestUpdater.putCode(code);
     }
     // Commit account storage tries
     for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
       updatedStorage.commit(
-          (location, hash, value) -> stateUpdater.putAccountStorageTrieNode(hash, value));
+          (location, hash, value) -> forestUpdater.putAccountStorageTrieNode(hash, value));
     }
     // Commit account updates
     accountStateTrie.commit(
-        (location, hash, value) -> stateUpdater.putAccountStateTrieNode(hash, value));
+        (location, hash, value) -> forestUpdater.putAccountStateTrieNode(hash, value));
 
     // Persist preimages
     final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
@@ -203,7 +216,9 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     // Push changes to underlying storage
     preimageUpdater.commit();
-    stateUpdater.commit();
+    forestUpdater.commit();
+
+    return rootHash();
   }
 
   private static UInt256 convertToUInt256(final Bytes value) {

@@ -175,15 +175,18 @@ public abstract class PathBasedWorldState
     return this;
   }
 
+  @Override
   public Hash calculateOrReadRootHash(
-      final PathBasedWorldStateKeyValueStorage.Updater stateUpdater,
+      final WorldStateKeyValueStorage.Updater stateUpdater,
       final BlockHeader blockHeader,
       final WorldStateConfig cfg) {
+    final PathBasedWorldStateKeyValueStorage.Updater pathBasedUpdater =
+        (PathBasedWorldStateKeyValueStorage.Updater) stateUpdater;
     if (blockHeader == null || !cfg.isTrieDisabled()) {
       // TODO - rename calculateRootHash() to be clearer that it updates state, it doesn't just
       // calculate a hash
       return calculateRootHash(
-          isStorageFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+          isStorageFrozen ? Optional.empty() : Optional.of(pathBasedUpdater), accumulator);
     } else {
       // if the trie is disabled, we cannot calculate the state root, so we directly use the root
       // of the block. It's important to understand that in all networks,
@@ -194,7 +197,7 @@ public abstract class PathBasedWorldState
           .setMessage("Unsafe state root verification for block header {}")
           .addArgument(blockHeader)
           .log();
-      return unsafeRootHashUpdate(blockHeader, stateUpdater);
+      return unsafeRootHashUpdate(blockHeader, pathBasedUpdater);
     }
   }
 
