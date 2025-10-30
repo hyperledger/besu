@@ -259,4 +259,13 @@ public class RoundChangeManager {
       final ConsensusRoundIdentifier left, final ConsensusRoundIdentifier right) {
     return left.getRoundNumber() > right.getRoundNumber();
   }
+
+  /**
+   * Gets the round change message validator.
+   *
+   * @return the round change message validator
+   */
+  public RoundChangeMessageValidator getRoundChangeMessageValidator() {
+    return roundChangeMessageValidator;
+  }
 }
