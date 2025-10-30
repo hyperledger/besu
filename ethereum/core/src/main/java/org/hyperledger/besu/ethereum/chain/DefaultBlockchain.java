@@ -618,14 +618,13 @@ public class DefaultBlockchain implements MutableBlockchain {
     //    }
 
     final Hash hash = block.getHash();
-    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putSyncBlockBody(hash, block.getBody());
     updater.putTransactionReceipts(hash, receipts);
-    updater.putTotalDifficulty(hash, td);
+    updater.putTotalDifficulty(hash, Difficulty.ZERO);
 
     final BlockAddedEvent blockAddedEvent;
 
