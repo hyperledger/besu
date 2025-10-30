@@ -613,9 +613,9 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
-    if (blockIsAlreadyTracked(block.getHeader())) {
-      return;
-    }
+    //    if (blockIsAlreadyTracked(block.getHeader())) {
+    //      return;
+    //    }
 
     final Hash hash = block.getHash();
     final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
