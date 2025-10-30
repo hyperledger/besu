@@ -19,7 +19,9 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_D
 
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -47,6 +49,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -301,9 +304,15 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         downloaderParallelism,
         headerRequestSize);
 
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    if (startBlock > 0) {
+      // block headers have been downloaded in the first stage
+      final Optional<BlockHeader> previousBlockHeader = blockchain.getBlockHeader(startBlock - 1);
+      blockchain.unsafeSetChainHead(previousBlockHeader.get(), Difficulty.ZERO);
+    }
+
     final BlockHeaderSource headerSource =
-        new BlockHeaderSource(
-            protocolContext.getBlockchain(), startBlock, endBlock, headerRequestSize);
+        new BlockHeaderSource(blockchain, startBlock, endBlock, headerRequestSize);
 
     final DownloadSyncBodiesStep downloadBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
@@ -312,8 +321,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
 
     final BlockHeader pivotHeader =
-        protocolContext
-            .getBlockchain()
+        blockchain
             .getBlockHeader(endBlock)
             .orElseGet(() -> fastSyncState.getPivotBlockHeader().get());
 
