@@ -89,6 +89,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     final long startTime = System.nanoTime();
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
+        LOG.debug("Failed to import block {}", blockWithReceipts.getHeader());
         throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
       }
       LOG.atTrace()
@@ -97,7 +98,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
           .log();
     }
     if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
+      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
     final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
     int peerCount = -1; // ethContext is not available in tests
