@@ -15,6 +15,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add Osaka, BPO1 and BPO2 fork times for mainnet [#9380](https://github.com/hyperledger/besu/pull/9380)
 - Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
 - Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
 - Update to netty 4.2.7.Final [#9330](https://github.com/hyperledger/besu/pull/9330)
