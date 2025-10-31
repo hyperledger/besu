@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -246,7 +247,7 @@ public class BaseBftProtocolScheduleBuilderTest {
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        false,
+        ImmutableBalConfiguration.builder().build(),
         new NoOpMetricsSystem());
   }
 

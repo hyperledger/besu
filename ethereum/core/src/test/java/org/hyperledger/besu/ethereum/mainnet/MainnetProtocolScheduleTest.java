@@ -93,7 +93,7 @@ public class MainnetProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            ImmutableBalConfiguration.builder().build(),
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
         .isEqualTo(FRONTIER);
@@ -112,7 +112,7 @@ public class MainnetProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            ImmutableBalConfiguration.builder().build(),
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getHardforkId())
         .isEqualTo(FRONTIER);
@@ -151,7 +151,7 @@ public class MainnetProtocolScheduleTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    ImmutableBalConfiguration.builder().build(),
                     new NoOpMetricsSystem()));
   }
 

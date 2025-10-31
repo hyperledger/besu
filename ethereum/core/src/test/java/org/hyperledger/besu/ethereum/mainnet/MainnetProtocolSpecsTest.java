@@ -64,7 +64,7 @@ public class MainnetProtocolSpecsTest {
   private final Optional<BigInteger> chainId = Optional.of(BigInteger.ONE);
   private final boolean enableRevertReason = false;
   private final boolean isParallelTxProcessingEnabled = false;
-  private final boolean isBlockAccessListEnabled = false;
+  private final BalConfiguration balConfiguration = ImmutableBalConfiguration.builder().build();
   private final long londonForkBlockNumber = 0L;
 
   @BeforeEach
@@ -98,7 +98,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
-                    isBlockAccessListEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
@@ -122,7 +122,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
-                    isBlockAccessListEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
@@ -147,7 +147,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
-                    isBlockAccessListEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Deposit Contract Address not found");
   }
@@ -173,7 +173,7 @@ public class MainnetProtocolSpecsTest {
                     evmConfiguration,
                     MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
-                    isBlockAccessListEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Consolidation Request Contract Address not found");
   }
@@ -194,7 +194,7 @@ public class MainnetProtocolSpecsTest {
                 genesisConfigOptions,
                 evmConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);
@@ -215,7 +215,7 @@ public class MainnetProtocolSpecsTest {
                 genesisConfigOptions,
                 evmConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);
@@ -236,7 +236,7 @@ public class MainnetProtocolSpecsTest {
                 genesisConfigOptions,
                 evmConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);
@@ -251,7 +251,7 @@ public class MainnetProtocolSpecsTest {
                 genesisConfigOptions,
                 evmConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);
@@ -270,7 +270,7 @@ public class MainnetProtocolSpecsTest {
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);
@@ -293,7 +293,7 @@ public class MainnetProtocolSpecsTest {
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .badBlocksManager(badBlockManager)
             .build(protocolSchedule);

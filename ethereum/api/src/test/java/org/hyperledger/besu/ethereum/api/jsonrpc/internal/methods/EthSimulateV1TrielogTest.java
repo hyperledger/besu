@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -61,7 +62,7 @@ public class EthSimulateV1TrielogTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          false,
+          ImmutableBalConfiguration.builder().build(),
           new NoOpMetricsSystem());
 
   protected final GenesisState genesisState =

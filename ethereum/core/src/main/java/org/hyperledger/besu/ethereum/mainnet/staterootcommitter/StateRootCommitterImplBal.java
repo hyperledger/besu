@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 
@@ -26,18 +27,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 final class StateRootCommitterImplBal implements StateRootCommitter {
+  private static final Logger LOG = LoggerFactory.getLogger(StateRootCommitterImplBal.class);
+
   private final CompletableFuture<Hash> balRootFuture;
-  private final boolean trustBalRoot;
+  private final BalConfiguration balConfiguration;
   private final Duration balRootTimeout;
   private final StateRootCommitterImplSync computeAndCommitRoot = new StateRootCommitterImplSync();
 
   StateRootCommitterImplBal(
       final CompletableFuture<Hash> balRootFuture,
-      final boolean trustBalRoot,
+      final BalConfiguration balConfiguration,
       final Duration balRootTimeout) {
     this.balRootFuture = balRootFuture;
-    this.trustBalRoot = trustBalRoot;
+    this.balConfiguration = balConfiguration;
     this.balRootTimeout = balRootTimeout;
   }
 
@@ -50,7 +56,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
 
     final Hash balRoot = waitForBalRoot();
 
-    if (trustBalRoot) {
+    if (balConfiguration.isBalStateRootTrusted()) {
       return balRoot;
     }
 
@@ -58,8 +64,13 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
         computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
     if (!computed.equals(balRoot)) {
-      throw new IllegalStateException(
-          String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot));
+      final String mismatchMessage =
+          String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot);
+      if (balConfiguration.isBalLenientOnMismatch()) {
+        LOG.error(mismatchMessage);
+        return computed;
+      }
+      throw new IllegalStateException(mismatchMessage);
     }
 
     return computed;

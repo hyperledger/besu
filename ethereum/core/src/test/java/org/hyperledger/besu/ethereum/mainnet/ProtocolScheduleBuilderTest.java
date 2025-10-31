@@ -82,7 +82,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            ImmutableBalConfiguration.builder().build(),
             new NoOpMetricsSystem());
   }
 
@@ -362,7 +362,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            ImmutableBalConfiguration.builder().build(),
             new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(
