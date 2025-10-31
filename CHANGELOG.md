@@ -16,6 +16,7 @@
 
 ### Additions and Improvements
 - Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
+- Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
 
 ### Bug fixes
 
@@ -41,7 +42,6 @@
 - Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
 - Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
 - Update to tuweni 2.7.2 [#9338](https://github.com/hyperledger/besu/pull/9338)
-- Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
 
 ### Bug fixes
 
