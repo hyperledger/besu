@@ -1329,7 +1329,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
-            1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
   }
