@@ -74,10 +74,10 @@ public abstract class BinaryOperationBenchmark {
   protected abstract Operation.OperationResult invoke(MessageFrame frame);
 
   public <T> void fillPools(
-    final Supplier<Integer> aSizeSupplier,
-    final Supplier<Integer> bSizeSupplier,
-    final Function<byte[], T> transform,
-    final BiPredicate<T, T> swapOperands) {
+      final Supplier<Integer> aSizeSupplier,
+      final Supplier<Integer> bSizeSupplier,
+      final Function<byte[], T> transform,
+      final BiPredicate<T, T> swapOperands) {
 
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];

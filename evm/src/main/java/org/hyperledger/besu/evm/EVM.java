@@ -244,13 +244,13 @@ public class EVM {
               case 0x02 -> MulOperation.staticOperation(frame);
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? DivOperationOptimized.staticOperation(frame)
-                  : DivOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? DivOperationOptimized.staticOperation(frame)
+                      : DivOperation.staticOperation(frame);
               case 0x05 ->
-                evmConfiguration.enableOptimizedOpcodes()
-                  ? SDivOperationOptimized.staticOperation(frame)
-                  : SDivOperation.staticOperation(frame);
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SDivOperationOptimized.staticOperation(frame)
+                      : SDivOperation.staticOperation(frame);
               case 0x06 ->
                   evmConfiguration.enableOptimizedOpcodes()
                       ? ModOperationOptimized.staticOperation(frame)

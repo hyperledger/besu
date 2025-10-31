@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** The SDiv operation. */
 public class SDivOperationOptimized extends AbstractFixedCostOperation {
@@ -35,8 +36,7 @@ public class SDivOperationOptimized extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 
