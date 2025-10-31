@@ -367,4 +367,27 @@ public class UInt256Test {
       assertThat(remainder).isEqualTo(expected);
     }
   }
+
+  @Test
+  public void div() {
+    final Random random = new Random(123);
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+      int aSize = random.nextInt(1, 33);
+      int bSize = random.nextInt(1, 33);
+      final byte[] aArray = new byte[aSize];
+      final byte[] bArray = new byte[bSize];
+      random.nextBytes(aArray);
+      random.nextBytes(bArray);
+      BigInteger aInt = new BigInteger(1, aArray);
+      BigInteger bInt = new BigInteger(1, bArray);
+      UInt256 a = UInt256.fromBytesBE(aArray);
+      UInt256 b = UInt256.fromBytesBE(bArray);
+      Bytes32 result = Bytes32.leftPad(Bytes.wrap(a.div(b).toBytesBE()));
+      Bytes32 expected =
+        BigInteger.ZERO.compareTo(bInt) == 0
+          ? Bytes32.ZERO
+          : bigIntTo32B(aInt.divide(bInt));
+      assertThat(result).isEqualTo(expected);
+    }
+  }
 }
