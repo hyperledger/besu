@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
-- Remove these deprecated CLI options
+- Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)
   - Remove`--Xbonsai-parallel-tx-processing-enabled` deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
   - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
   - Remove `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
