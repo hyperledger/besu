@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -321,8 +322,8 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+      if (event.getEventType().equals(EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(EventType.CHAIN_REORG)) {
 
         blockAddedEventOrderedProcessor.submit(event);
       }

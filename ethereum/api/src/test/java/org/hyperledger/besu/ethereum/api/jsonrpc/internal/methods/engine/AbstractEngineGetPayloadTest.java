@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -101,7 +102,8 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   protected static final PayloadWrapper mockPayload =
-      new PayloadWrapper(mockPid, mockBlockWithReceipts, Optional.empty());
+      new PayloadWrapper(
+          mockPid, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
   private static final Block mockBlockWithWithdrawals =
       new Block(
           mockHeader,
@@ -116,12 +118,20 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());
   protected static final PayloadWrapper mockPayloadWithWithdrawals =
-      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndWithdrawals, Optional.empty());
+      new PayloadWrapper(
+          mockPid,
+          mockBlockWithReceiptsAndWithdrawals,
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
 
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDepositRequests =
       new BlockWithReceipts(mockBlockWithDepositRequests, Collections.emptyList());
   protected static final PayloadWrapper mockPayloadWithDepositRequests =
-      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndDepositRequests, Optional.empty());
+      new PayloadWrapper(
+          mockPid,
+          mockBlockWithReceiptsAndDepositRequests,
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
 
   @Mock protected ProtocolContext protocolContext;
 
@@ -195,7 +205,8 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     BlockWithReceipts mockBlockWithReceipts =
         new BlockWithReceipts(mockBlock, Collections.emptyList());
     final PayloadWrapper mockPayload =
-        new PayloadWrapper(payloadIdentifier, mockBlockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            payloadIdentifier, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(mockPayload));
     return payloadIdentifier;
   }
@@ -228,7 +239,8 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     final BlockWithReceipts testBlockWithReceipts =
         new BlockWithReceipts(testBlock, Collections.emptyList());
     final PayloadWrapper testPayload =
-        new PayloadWrapper(testPid, testBlockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            testPid, testBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
 
     final Block testBlockWithWithdrawals =
         new Block(
@@ -240,7 +252,11 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     final BlockWithReceipts testBlockWithReceiptsAndWithdrawals =
         new BlockWithReceipts(testBlockWithWithdrawals, Collections.emptyList());
     final PayloadWrapper testPayloadWithWithdrawals =
-        new PayloadWrapper(testPid, testBlockWithReceiptsAndWithdrawals, Optional.empty());
+        new PayloadWrapper(
+            testPid,
+            testBlockWithReceiptsAndWithdrawals,
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     // Mock: First call returns the empty payload,
     // second call returns a different payload (simulating block building completion)

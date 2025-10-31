@@ -536,7 +536,7 @@ public class BlockDataGenerator {
   }
 
   private LogTopic logTopic() {
-    return LogTopic.wrap(bytesValue(Bytes32.SIZE));
+    return LogTopic.wrap(bytes32());
   }
 
   public Bytes32 bytes32() {
