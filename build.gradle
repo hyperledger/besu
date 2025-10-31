@@ -43,14 +43,14 @@ dependencyCheck {
     delay = 16000 // Optional: delay between API calls in milliseconds
     autoUpdate = false
     skipConfigurations = [
-            'integrationTestCompileClasspath',
-            'integrationTestRuntimeClasspath',
-            'testRuntimeClasspath',
-            'acceptanceTestCompileClasspath',
-            'acceptanceTestRuntimeClasspath'
+      'integrationTestCompileClasspath',
+      'integrationTestRuntimeClasspath',
+      'testRuntimeClasspath',
+      'acceptanceTestCompileClasspath',
+      'acceptanceTestRuntimeClasspath'
     ]
     skipProjects = [
-            ':acceptance-tests'
+      ':acceptance-tests'
     ]
   }
 }
