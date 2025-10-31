@@ -15,6 +15,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
 
 ### Bug fixes
 
