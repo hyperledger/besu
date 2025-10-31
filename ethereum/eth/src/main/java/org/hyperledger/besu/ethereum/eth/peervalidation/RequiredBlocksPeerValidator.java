@@ -18,9 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,33 +31,21 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
   public RequiredBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash,
       final long chainHeightEstimationBuffer) {
-    super(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        blockNumber,
-        chainHeightEstimationBuffer);
+    super(protocolSchedule, peerTaskExecutor, blockNumber, chainHeightEstimationBuffer);
     this.hash = hash;
   }
 
   public RequiredBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long blockNumber,
       final Hash hash) {
     this(
         protocolSchedule,
         peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
         blockNumber,
         hash,
         DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
