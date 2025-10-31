@@ -32,9 +32,9 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
   private final MutableBlockchain blockchainStorage;
   private final long downloaderHeaderTarget;
-  private final long pivotBlockNumber;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
   private BlockHeader currentChildHeader;
+  private final long totalHeaders;
 
   public ImportHeadersStep(
       final MutableBlockchain blockchain,
@@ -42,8 +42,11 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
       final BlockHeader pivotBlockHeader) {
     this.blockchainStorage = blockchain;
     this.downloaderHeaderTarget = downloaderHeaderTarget;
-    this.pivotBlockNumber = pivotBlockHeader.getNumber();
+    final long pivotBlockNumber = pivotBlockHeader.getNumber();
     this.currentChildHeader = pivotBlockHeader;
+    this.totalHeaders = pivotBlockNumber - downloaderHeaderTarget;
+    // store the pivot block header as the first imported header
+    blockchainStorage.importHeader(pivotBlockHeader);
   }
 
   @Override
@@ -62,14 +65,15 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
     currentChildHeader = blockHeaders.getLast();
     blockHeaders.forEach(blockchainStorage::importHeader);
 
-    final long totalHeaders = pivotBlockNumber - downloaderHeaderTarget;
-    final long downloadedHeaders =
-        totalHeaders - (blockHeaders.getFirst().getNumber() - downloaderHeaderTarget);
-    final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
-    LogUtil.throttledLog(
-        LOG::info,
-        String.format("Header import progress %.2f%%", headersPercent),
-        logInfo,
-        LOG_DELAY);
+    if (logInfo.get()) {
+      final long downloadedHeaders =
+          totalHeaders - (blockHeaders.getFirst().getNumber() - downloaderHeaderTarget);
+      final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
+      LogUtil.throttledLog(
+          LOG::info,
+          String.format("Header import progress %.2f%%", headersPercent),
+          logInfo,
+          LOG_DELAY);
+    }
   }
 }

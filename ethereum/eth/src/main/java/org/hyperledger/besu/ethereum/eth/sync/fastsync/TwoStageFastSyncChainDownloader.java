@@ -182,7 +182,8 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
   }
 
   /**
-   * Determines whether Stage 1 (backward header download) needs to run based on persisted state.
+   * Determines whether Stage 1 (backward header download) needs to run based on the persisted
+   * state.
    *
    * @return CompletableFuture that completes when Stage 1 is done (or skipped)
    */
@@ -240,8 +241,8 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
     final Instant stage2StartTime = Instant.now();
 
     final Pipeline<List<BlockHeader>> bodiesReceiptsPipeline =
-        pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(
-            current.getPivotBlockNumber(), syncState);
+        pipelineFactory.createForwardBodiesAndReceiptsDownloadPipelineFromTo(
+            current.getBodiesDownloadStartBlock(), current.getPivotBlockNumber(), syncState);
     currentPipeline = bodiesReceiptsPipeline;
 
     return scheduler
