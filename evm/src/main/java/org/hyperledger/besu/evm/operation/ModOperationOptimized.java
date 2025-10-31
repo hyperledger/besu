@@ -53,7 +53,7 @@ public class ModOperationOptimized extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
     Bytes resultBytes;
     if (value1.isZero()) {
-      resultBytes = (Bytes) Bytes32.ZERO;
+      resultBytes = Bytes32.ZERO;
     } else {
       UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
       UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());

@@ -63,6 +63,7 @@ import org.hyperledger.besu.evm.operation.DataSizeOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DivOperationOptimized;
 import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.EOFCreateOperation;
@@ -120,6 +121,7 @@ import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
+import org.hyperledger.besu.evm.operation.SDivOperationOptimized;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
@@ -212,15 +214,17 @@ public class MainnetEVMs {
     registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
-    registry.put(new DivOperation(gasCalculator));
-    registry.put(new SDivOperation(gasCalculator));
     if (evmConfiguration.enableOptimizedOpcodes()) {
+      registry.put(new DivOperationOptimized(gasCalculator));
+      registry.put(new SDivOperationOptimized(gasCalculator));
       registry.put(new ModOperationOptimized(gasCalculator));
       registry.put(new SModOperationOptimized(gasCalculator));
       registry.put(new AddModOperationOptimized(gasCalculator));
       registry.put(new MulModOperationOptimized(gasCalculator));
 
     } else {
+      registry.put(new DivOperation(gasCalculator));
+      registry.put(new SDivOperation(gasCalculator));
       registry.put(new ModOperation(gasCalculator));
       registry.put(new SModOperation(gasCalculator));
       registry.put(new AddModOperation(gasCalculator));

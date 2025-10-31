@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,36 +14,34 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+/** The SDiv operation. */
+public class SDivOperationOptimized extends AbstractFixedCostOperation {
 
-/** The SMod operation. */
-public class SModOperationOptimized extends AbstractFixedCostOperation {
-
-  private static final OperationResult smodSuccess = new OperationResult(5, null);
+  private static final OperationResult sdivSuccess = new OperationResult(5, null);
 
   /**
-   * Instantiates a new SMod operation.
+   * Instantiates a new SDiv operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public SModOperationOptimized(final GasCalculator gasCalculator) {
-    super(0x07, "SMOD", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+  public SDivOperationOptimized(final GasCalculator gasCalculator) {
+    super(0x05, "SDIV", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
+  public OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 
   /**
-   * Performs SMod operation.
+   * Performs SDiv operation.
    *
    * @param frame the frame
    * @return the operation result
@@ -51,17 +49,15 @@ public class SModOperationOptimized extends AbstractFixedCostOperation {
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
-
     Bytes resultBytes;
     if (value1.isZero()) {
-      resultBytes = Bytes32.ZERO;
+      resultBytes = Bytes.EMPTY;
     } else {
       UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
       UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
-      resultBytes = Bytes.wrap(b0.signedMod(b1).toBytesBE());
+      resultBytes = Bytes.wrap(b0.signedDiv(b1).toBytesBE());
     }
     frame.pushStackItem(resultBytes);
-
-    return smodSuccess;
+    return sdivSuccess;
   }
 }

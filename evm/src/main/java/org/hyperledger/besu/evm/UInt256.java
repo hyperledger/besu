@@ -268,8 +268,8 @@ public final class UInt256 {
   /**
    * Signed integer division.
    *
-   * <p>In signed division, integers are interpreted as fixed 256 bits width two's
-   * complement signed integers.
+   * <p>In signed division, integers are interpreted as fixed 256 bits width two's complement signed
+   * integers.
    *
    * @param denominator unsigned integer with which to divide this numerator by.
    * @return result of integer division.

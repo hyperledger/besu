@@ -408,10 +408,11 @@ public class UInt256Test {
     final BigInteger aBigInt = bytesToBigInt(Bytes.fromHexString(numerator), sign);
     final BigInteger bBigInt = bytesToBigInt(Bytes.fromHexString(denominator), sign);
 
-    final Bytes32 quotient = switch (sign) {
-      case UNSIGNED -> Bytes32.leftPad(Bytes.wrap(a.div(b).toBytesBE()));
-      case SIGNED -> Bytes32.leftPad(Bytes.wrap(a.signedDiv(b).toBytesBE()));
-    };
+    final Bytes32 quotient =
+        switch (sign) {
+          case UNSIGNED -> Bytes32.leftPad(Bytes.wrap(a.div(b).toBytesBE()));
+          case SIGNED -> Bytes32.leftPad(Bytes.wrap(a.signedDiv(b).toBytesBE()));
+        };
 
     BigInteger expected = BigInteger.ZERO;
     if (BigInteger.ZERO.compareTo(bBigInt) != 0) {
@@ -422,41 +423,41 @@ public class UInt256Test {
 
   static Collection<Object[]> testCases() {
     return Arrays.stream(
-        new Object[][] {
-          {"0x00", "0x01"},
-          {"0x50", "0x21"},
-          {
-            "0x120d7a733f5016ad9fae51cb9896e15a96147719fe0379d0cb2642a6951e0a5c",
-            "0x007cdab49aba612fb02bd738a74c76789bc9a911c90296502a35df43e939e6e2"
-          },
-          {"0xa7f576de3a6c", "0xfffffffffef1c296a4c6"},
-          {"0xffffffffffffffffffffffff6bacfb1469f9a4d5674a85b75f951d72d7a58e4a", "0x020000"},
-          {"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01"},
-          {"0x01", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
-          {"0x1598209296af93c13b2f5fde7d8e99", "0x09244c1368"},
-          {
-            "0xfffffffffffffff9309d38241af6a2545b52958d000000000000000000000000",
-            "0xb17217f7d1cf79abc9e3b398"
-          },
-          {"0xa7f576de3a6c", "0xa7f576de3a6c"},
-          {"0x9c2c35e6c180771cda86cde561fe7609b9e89e8e5b", "0x993951396a774e675e93bea2e77c"},
-          {
-            "0xa73fc792edbfb1038115f77a37613b8f5b64837e28768c9dd90828",
-            "0x0700b2d7adda7612da7f95"
-          },
-          {"0xbf1256135bb3f72de074d0f237", "0x8b63235ac1765530"},
-          {"0x5b35862b0027a502b1d4cbc4a09e25", "0x932542f4003763"}
-        })
-      .flatMap(
-        inputs ->
-          Arrays.stream(Sign.values())
-            .map(
-              sign -> {
-                Object[] newInputs = Arrays.copyOf(inputs, inputs.length + 1);
-                newInputs[inputs.length] = sign;
-                return newInputs;
-              }))
-      .toList();
+            new Object[][] {
+              {"0x00", "0x01"},
+              {"0x50", "0x21"},
+              {
+                "0x120d7a733f5016ad9fae51cb9896e15a96147719fe0379d0cb2642a6951e0a5c",
+                "0x007cdab49aba612fb02bd738a74c76789bc9a911c90296502a35df43e939e6e2"
+              },
+              {"0xa7f576de3a6c", "0xfffffffffef1c296a4c6"},
+              {"0xffffffffffffffffffffffff6bacfb1469f9a4d5674a85b75f951d72d7a58e4a", "0x020000"},
+              {"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01"},
+              {"0x01", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+              {"0x1598209296af93c13b2f5fde7d8e99", "0x09244c1368"},
+              {
+                "0xfffffffffffffff9309d38241af6a2545b52958d000000000000000000000000",
+                "0xb17217f7d1cf79abc9e3b398"
+              },
+              {"0xa7f576de3a6c", "0xa7f576de3a6c"},
+              {"0x9c2c35e6c180771cda86cde561fe7609b9e89e8e5b", "0x993951396a774e675e93bea2e77c"},
+              {
+                "0xa73fc792edbfb1038115f77a37613b8f5b64837e28768c9dd90828",
+                "0x0700b2d7adda7612da7f95"
+              },
+              {"0xbf1256135bb3f72de074d0f237", "0x8b63235ac1765530"},
+              {"0x5b35862b0027a502b1d4cbc4a09e25", "0x932542f4003763"}
+            })
+        .flatMap(
+            inputs ->
+                Arrays.stream(Sign.values())
+                    .map(
+                        sign -> {
+                          Object[] newInputs = Arrays.copyOf(inputs, inputs.length + 1);
+                          newInputs[inputs.length] = sign;
+                          return newInputs;
+                        }))
+        .toList();
   }
 
   private static BigInteger bytesToBigInt(final Bytes bytes, final Sign sign) {
@@ -482,6 +483,7 @@ public class UInt256Test {
   }
 
   private enum Sign {
-    UNSIGNED, SIGNED
+    UNSIGNED,
+    SIGNED
   }
 }
