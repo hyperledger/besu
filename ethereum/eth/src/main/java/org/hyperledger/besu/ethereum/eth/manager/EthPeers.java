@@ -640,17 +640,24 @@ public class EthPeers implements PeerSelector {
         Boolean isServer;
         try {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(6L, TimeUnit.SECONDS);
-          LOG.info("AAAAA SNAP_STATUS: Peer {} snap check completed with result: {}",
-                   peer.getLoggableId(), isServer);
+          LOG.info(
+              "AAAAA SNAP_STATUS: Peer {} snap check completed with result: {}",
+              peer.getLoggableId(),
+              isServer);
         } catch (Exception e) {
-          LOG.info("AAAAA SNAP_STATUS: Peer {} snap check timed out or failed after 6s. Setting to false. Exception: {} - {}",
-                   peer.getLoggableId(), e.getClass().getSimpleName(), e.getMessage());
+          LOG.info(
+              "AAAAA SNAP_STATUS: Peer {} snap check timed out or failed after 6s. Setting to false. Exception: {} - {}",
+              peer.getLoggableId(),
+              e.getClass().getSimpleName(),
+              e.getMessage());
           peer.setIsServingSnap(false);
           return;
         }
         peer.setIsServingSnap(isServer);
-        LOG.info("AAAAA SNAP_STATUS: Peer {} marked as {} snap",
-                 peer.getLoggableId(), isServer ? "SERVING" : "NOT SERVING");
+        LOG.info(
+            "AAAAA SNAP_STATUS: Peer {} marked as {} snap",
+            peer.getLoggableId(),
+            isServer ? "SERVING" : "NOT SERVING");
       }
     }
     // Log overall snap peer status after each check
@@ -658,9 +665,8 @@ public class EthPeers implements PeerSelector {
   }
 
   public void logSnapPeerStatus() {
-    long snapPeerCount = streamAvailablePeers()
-        .filter(EthPeerImmutableAttributes::isServingSnap)
-        .count();
+    long snapPeerCount =
+        streamAvailablePeers().filter(EthPeerImmutableAttributes::isServingSnap).count();
     long totalPeerCount = streamAvailablePeers().count();
 
     LOG.info("AAAAA SNAP_PEERS: {}/{} peers marked as serving snap", snapPeerCount, totalPeerCount);

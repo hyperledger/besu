@@ -47,8 +47,10 @@ public class SnapServerChecker {
   }
 
   public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader peersHeadHeader) {
-    LOG.info("AAAAA SNAP_CHECK: Starting snap server check for peer {} at block {}",
-             peer.getLoggableId(), peersHeadHeader.getNumber());
+    LOG.info(
+        "AAAAA SNAP_CHECK: Starting snap server check for peer {} at block {}",
+        peer.getLoggableId(),
+        peersHeadHeader.getNumber());
     final long startTime = System.currentTimeMillis();
 
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
@@ -58,15 +60,22 @@ public class SnapServerChecker {
         (peerResult, error) -> {
           long duration = System.currentTimeMillis() - startTime;
           if (error != null) {
-            LOG.info("AAAAA SNAP_CHECK: Check for peer {} FAILED after {}ms with error: {}",
-                     peer.getLoggableId(), duration, error.getMessage());
+            LOG.info(
+                "AAAAA SNAP_CHECK: Check for peer {} FAILED after {}ms with error: {}",
+                peer.getLoggableId(),
+                duration,
+                error.getMessage());
           } else if (peerResult != null) {
-            boolean isSnapServer = !peerResult.getResult().accounts().isEmpty()
-                || !peerResult.getResult().proofs().isEmpty();
-            LOG.info("AAAAA SNAP_CHECK: Check for peer {} completed after {}ms - Result: {} (accounts: {}, proofs: {})",
-                     peer.getLoggableId(), duration, isSnapServer,
-                     peerResult.getResult().accounts().size(),
-                     peerResult.getResult().proofs().size());
+            boolean isSnapServer =
+                !peerResult.getResult().accounts().isEmpty()
+                    || !peerResult.getResult().proofs().isEmpty();
+            LOG.info(
+                "AAAAA SNAP_CHECK: Check for peer {} completed after {}ms - Result: {} (accounts: {}, proofs: {})",
+                peer.getLoggableId(),
+                duration,
+                isSnapServer,
+                peerResult.getResult().accounts().size(),
+                peerResult.getResult().proofs().size());
             if (isSnapServer) {
               future.complete(true);
             } else {
