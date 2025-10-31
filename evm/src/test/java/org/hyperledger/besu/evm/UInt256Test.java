@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -26,21 +25,6 @@ import org.junit.jupiter.api.Test;
 
 public class UInt256Test {
   static final int SAMPLE_SIZE = 300;
-
-  private Bytes32 bigIntTo32B(final BigInteger x) {
-    byte[] a = x.toByteArray();
-    if (a.length > 32) return Bytes32.wrap(a, a.length - 32);
-    return Bytes32.leftPad(Bytes.wrap(a));
-  }
-
-  private Bytes32 bigIntToSigned32B(final BigInteger x) {
-    if (x.signum() >= 0) return bigIntTo32B(x);
-    byte[] a = new byte[32];
-    Arrays.fill(a, (byte) 0xFF);
-    byte[] b = x.toByteArray();
-    System.arraycopy(b, 0, a, 32 - b.length, b.length);
-    return Bytes32.leftPad(Bytes.wrap(a));
-  }
 
   @Test
   public void fromInts() {
@@ -104,7 +88,7 @@ public class UInt256Test {
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
         };
     UInt256 asUint = UInt256.fromBytesBE(input);
-    BigInteger asBigInt = new BigInteger(1, input);
+    BigInteger asBigInt = bytesToBigInt(input, Sign.UNSIGNED);
     assertThat(asUint.toBytesBE()).isEqualTo(asBigInt.toByteArray());
   }
 
@@ -127,7 +111,7 @@ public class UInt256Test {
     UInt256 number = UInt256.fromBytesBE(num_arr);
     UInt256 modulus = UInt256.fromInt(27);
     int remainder = number.mod(modulus).intValue();
-    BigInteger big_number = new BigInteger(1, num_arr);
+    BigInteger big_number = bytesToBigInt(num_arr, Sign.UNSIGNED);
     BigInteger big_modulus = BigInteger.valueOf(27L);
     int expected = big_number.mod(big_modulus).intValue();
     assertThat(remainder).isEqualTo(expected);
@@ -143,7 +127,7 @@ public class UInt256Test {
     UInt256 number = UInt256.fromBytesBE(num_arr);
     UInt256 modulus = UInt256.fromInt(27);
     int remainder = number.mod(modulus).intValue();
-    BigInteger big_number = new BigInteger(1, num_arr);
+    BigInteger big_number = bytesToBigInt(num_arr, Sign.UNSIGNED);
     BigInteger big_modulus = BigInteger.valueOf(27L);
     int expected = big_number.mod(big_modulus).intValue();
     assertThat(remainder).isEqualTo(expected);
@@ -160,8 +144,8 @@ public class UInt256Test {
     UInt256 number = UInt256.fromBytesBE(num_arr);
     UInt256 modulus = UInt256.fromBytesBE(mod_arr);
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-    BigInteger big_number = new BigInteger(1, num_arr);
-    BigInteger big_modulus = new BigInteger(1, mod_arr);
+    BigInteger big_number = bytesToBigInt(num_arr, Sign.UNSIGNED);
+    BigInteger big_modulus = bytesToBigInt(mod_arr, Sign.UNSIGNED);
     Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
     assertThat(remainder).isEqualTo(expected);
   }
@@ -177,8 +161,8 @@ public class UInt256Test {
     UInt256 number = UInt256.fromBytesBE(num_arr);
     UInt256 modulus = UInt256.fromBytesBE(mod_arr);
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-    BigInteger big_number = new BigInteger(1, num_arr);
-    BigInteger big_modulus = new BigInteger(1, mod_arr);
+    BigInteger big_number = bytesToBigInt(num_arr, Sign.UNSIGNED);
+    BigInteger big_modulus = bytesToBigInt(mod_arr, Sign.UNSIGNED);
     Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
     assertThat(remainder).isEqualTo(expected);
   }
@@ -224,8 +208,8 @@ public class UInt256Test {
       final byte[] b = new byte[32];
       random.nextBytes(a);
       random.nextBytes(b);
-      BigInteger aInt = new BigInteger(1, a);
-      BigInteger bInt = new BigInteger(1, b);
+      BigInteger aInt = bytesToBigInt(a, Sign.UNSIGNED);
+      BigInteger bInt = bytesToBigInt(b, Sign.UNSIGNED);
       int comp = aInt.compareTo(bInt);
       BigInteger big_number;
       BigInteger big_modulus;
@@ -243,11 +227,11 @@ public class UInt256Test {
         modulus = UInt256.fromBytesBE(a);
       }
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
-      Bytes32 expected =
-          BigInteger.ZERO.compareTo(big_modulus) == 0
-              ? Bytes32.ZERO
-              : bigIntTo32B(big_number.mod(big_modulus));
-      assertThat(remainder).isEqualTo(expected);
+      BigInteger expected = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(big_modulus) != 0) {
+        expected = big_number.mod(big_modulus);
+      }
+      assertThat(bytesToBigInt(remainder, Sign.UNSIGNED)).isEqualTo(expected);
     }
   }
 
@@ -260,9 +244,11 @@ public class UInt256Test {
     UInt256 y = UInt256.fromBytesBE(ybig.toByteArray());
     UInt256 m = UInt256.fromBytesBE(mbig.toByteArray());
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(x.addMod(y, m).toBytesBE()));
-    Bytes32 expected =
-        BigInteger.ZERO.compareTo(mbig) == 0 ? Bytes32.ZERO : bigIntTo32B(xbig.add(ybig).mod(mbig));
-    assertThat(remainder).isEqualTo(expected);
+    BigInteger expected = BigInteger.ZERO;
+    if (BigInteger.ZERO.compareTo(mbig) != 0) {
+      expected = xbig.add(ybig).mod(mbig);
+    }
+    assertThat(bytesToBigInt(remainder, Sign.UNSIGNED)).isEqualTo(expected);
   }
 
   @Test
@@ -278,18 +264,18 @@ public class UInt256Test {
       random.nextBytes(aArray);
       random.nextBytes(bArray);
       random.nextBytes(cArray);
-      BigInteger aInt = new BigInteger(1, aArray);
-      BigInteger bInt = new BigInteger(1, bArray);
-      BigInteger cInt = new BigInteger(1, cArray);
+      BigInteger aInt = bytesToBigInt(aArray, Sign.UNSIGNED);
+      BigInteger bInt = bytesToBigInt(bArray, Sign.UNSIGNED);
+      BigInteger cInt = bytesToBigInt(cArray, Sign.UNSIGNED);
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
       UInt256 c = UInt256.fromBytesBE(cArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.addMod(b, c).toBytesBE()));
-      Bytes32 expected =
-          BigInteger.ZERO.compareTo(cInt) == 0
-              ? Bytes32.ZERO
-              : bigIntTo32B(aInt.add(bInt).mod(cInt));
-      assertThat(remainder).isEqualTo(expected);
+      BigInteger expected = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(cInt) != 0) {
+        expected = aInt.add(bInt).mod(cInt);
+      }
+      assertThat(bytesToBigInt(remainder, Sign.UNSIGNED)).isEqualTo(expected);
     }
   }
 
@@ -306,18 +292,18 @@ public class UInt256Test {
       random.nextBytes(aArray);
       random.nextBytes(bArray);
       random.nextBytes(cArray);
-      BigInteger aInt = new BigInteger(1, aArray);
-      BigInteger bInt = new BigInteger(1, bArray);
-      BigInteger cInt = new BigInteger(1, cArray);
+      BigInteger aInt = bytesToBigInt(aArray, Sign.UNSIGNED);
+      BigInteger bInt = bytesToBigInt(bArray, Sign.UNSIGNED);
+      BigInteger cInt = bytesToBigInt(cArray, Sign.UNSIGNED);
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
       UInt256 c = UInt256.fromBytesBE(cArray);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, c).toBytesBE()));
-      Bytes32 expected =
-          BigInteger.ZERO.compareTo(cInt) == 0
-              ? Bytes32.ZERO
-              : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
-      assertThat(remainder).isEqualTo(expected);
+      BigInteger expected = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(cInt) != 0) {
+        expected = aInt.multiply(bInt).mod(cInt);
+      }
+      assertThat(bytesToBigInt(remainder, Sign.UNSIGNED)).isEqualTo(expected);
     }
   }
 
@@ -349,28 +335,23 @@ public class UInt256Test {
       random.nextBytes(bArray);
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
-      BigInteger aInt = aArray.length < 32 ? new BigInteger(1, aArray) : new BigInteger(aArray);
-      BigInteger bInt = bArray.length < 32 ? new BigInteger(1, bArray) : new BigInteger(bArray);
+      BigInteger aInt = bytesToBigInt(aArray, Sign.SIGNED);
+      BigInteger bInt = bytesToBigInt(bArray, Sign.SIGNED);
       Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.signedMod(b).toBytesBE()));
-      Bytes32 expected;
-      BigInteger rem = BigInteger.ZERO;
-      if (BigInteger.ZERO.compareTo(bInt) == 0) expected = Bytes32.ZERO;
-      else {
-        rem = aInt.abs().mod(bInt.abs());
-        if ((aInt.compareTo(BigInteger.ZERO) < 0) && (rem.compareTo(BigInteger.ZERO) != 0)) {
-          rem = rem.negate();
-          expected = bigIntToSigned32B(rem);
-        } else {
-          expected = bigIntTo32B(rem);
+      BigInteger expected = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(bInt) != 0) {
+        expected = aInt.abs().mod(bInt.abs());
+        if ((aInt.compareTo(BigInteger.ZERO) < 0) && (expected.compareTo(BigInteger.ZERO) != 0)) {
+          expected = expected.negate();
         }
       }
-      assertThat(remainder).isEqualTo(expected);
+      assertThat(bytesToBigInt(remainder, Sign.SIGNED)).isEqualTo(expected);
     }
   }
 
   @Test
   public void div() {
-    final Random random = new Random(123);
+    final Random random = new Random(342342);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
@@ -378,16 +359,42 @@ public class UInt256Test {
       final byte[] bArray = new byte[bSize];
       random.nextBytes(aArray);
       random.nextBytes(bArray);
-      BigInteger aInt = new BigInteger(1, aArray);
-      BigInteger bInt = new BigInteger(1, bArray);
+      BigInteger aInt = bytesToBigInt(aArray, Sign.UNSIGNED);
+      BigInteger bInt = bytesToBigInt(bArray, Sign.UNSIGNED);
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
       Bytes32 result = Bytes32.leftPad(Bytes.wrap(a.div(b).toBytesBE()));
-      Bytes32 expected =
-        BigInteger.ZERO.compareTo(bInt) == 0
-          ? Bytes32.ZERO
-          : bigIntTo32B(aInt.divide(bInt));
-      assertThat(result).isEqualTo(expected);
+      BigInteger expected = BigInteger.ZERO;
+      if (BigInteger.ZERO.compareTo(bInt) != 0) {
+        expected = aInt.divide(bInt);
+      }
+      assertThat(bytesToBigInt(result, Sign.UNSIGNED)).isEqualTo(expected);
     }
+  }
+
+  private static BigInteger bytesToBigInt(final Bytes bytes, final Sign sign) {
+    // bytes can be shorter, so it's treated as left padded with zeros
+    if (bytes.size() < 32) {
+      return new BigInteger(1, bytes.toArrayUnsafe());
+    }
+    return switch (sign) {
+      case UNSIGNED -> new BigInteger(1, bytes.toArrayUnsafe());
+      case SIGNED -> new BigInteger(bytes.toArrayUnsafe());
+    };
+  }
+
+  private static BigInteger bytesToBigInt(final byte[] bytes, final Sign sign) {
+    // bytes can be shorter, so it's treated as left padded with zeros
+    if (bytes.length < 32) {
+      return new BigInteger(1, bytes);
+    }
+    return switch (sign) {
+      case UNSIGNED -> new BigInteger(1, bytes);
+      case SIGNED -> new BigInteger(bytes);
+    };
+  }
+
+  private enum Sign {
+    UNSIGNED, SIGNED
   }
 }
