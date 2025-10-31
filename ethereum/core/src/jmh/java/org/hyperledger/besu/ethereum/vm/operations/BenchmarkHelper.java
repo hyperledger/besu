@@ -85,7 +85,7 @@ public class BenchmarkHelper {
    */
   public static void fillPool(final Bytes[] pool) {
     final Random random = new Random();
-    fillPool(pool, () -> 1 + random.nextInt(32)); // [1, 32]
+    fillPool(pool, () -> 1 + random.nextInt(32)); //  [1, 32]
   }
 
   /**
