@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -89,6 +90,7 @@ public class ProtocolSpec {
   private final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor;
 
   private final Optional<BlockAccessListFactory> blockAccessListFactory;
+  private final StateRootCommitterFactory stateRootCommitterFactory;
 
   /**
    * Creates a new protocol specification instance.
@@ -154,7 +156,8 @@ public class ProtocolSpec {
       final Duration slotDuration,
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
-      final Optional<BlockAccessListFactory> blockAccessListFactory) {
+      final Optional<BlockAccessListFactory> blockAccessListFactory,
+      final StateRootCommitterFactory stateRootCommitterFactory) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -186,6 +189,7 @@ public class ProtocolSpec {
     this.isReplayProtectionSupported = isReplayProtectionSupported;
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
     this.blockAccessListFactory = blockAccessListFactory;
+    this.stateRootCommitterFactory = stateRootCommitterFactory;
   }
 
   /**
@@ -417,5 +421,9 @@ public class ProtocolSpec {
 
   public Optional<BlockAccessListFactory> getBlockAccessListFactory() {
     return blockAccessListFactory;
+  }
+
+  public StateRootCommitterFactory getStateRootCommitterFactory() {
+    return stateRootCommitterFactory;
   }
 }
