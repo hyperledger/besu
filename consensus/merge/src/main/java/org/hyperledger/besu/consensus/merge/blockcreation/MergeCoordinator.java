@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -83,7 +84,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static final double TRY_FILL_BLOCK = 1.0;
 
   // if you change these gas limits, also update the tests in MergeCoordinatorTest
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
   // testnets might have higher gas limits than mainnet and are incrementally updated
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
   // next target gas limit TBD
@@ -319,7 +320,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
-              result.getRequests()));
+              result.getRequests(),
+              BlockCreationTiming.EMPTY));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -542,7 +544,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final long startedAt) {
 
     try {
-      evaluateNewBlock(blockCreator.get().getBlock(), payloadIdentifier, startedAt);
+      evaluateNewBlock(blockCreator.get(), payloadIdentifier, startedAt);
     } catch (final Throwable throwable) {
       if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         LOG.atDebug()
@@ -558,8 +560,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void evaluateNewBlock(
-      final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
-
+      final BlockCreationResult blockCreationResult,
+      final PayloadIdentifier payloadIdentifier,
+      final long startedAt) {
+    final var bestBlock = blockCreationResult.getBlock();
     final var resultBest = validateProposedBlock(bestBlock);
     if (resultBest.isSuccessful()) {
 
@@ -567,7 +571,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
-              resultBest.getRequests()));
+              resultBest.getRequests(),
+              blockCreationResult.getBlockCreationTimings()));
       LOG.atDebug()
           .setMessage(
               "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")
