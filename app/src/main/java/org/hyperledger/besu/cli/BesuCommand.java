@@ -652,6 +652,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner runner;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private KeyPair keyPair;
   private BigInteger ephemeryNextCycleId = BigInteger.ZERO;
 
   /**
@@ -1227,7 +1228,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule defaultSecurityModule() {
-    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
+    keyPair = loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile());
+    return new KeyPairSecurityModule(keyPair);
   }
 
   /**
@@ -2713,6 +2715,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public RocksDBPlugin getRocksDBPlugin() {
     return this.rocksDBPlugin;
+  }
+
+  public KeyPair getKeyPair() {
+    return keyPair;
   }
 
   public CommandLine getCommandLine() {

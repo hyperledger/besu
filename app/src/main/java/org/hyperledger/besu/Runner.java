@@ -19,6 +19,7 @@ import static java.lang.Thread.sleep;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.options.PluginsConfigurationOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
@@ -255,6 +256,13 @@ public class Runner implements AutoCloseable {
   public void startEphemery(final BesuCommand besuCommand) throws Exception {
     ephemeryRestartPrepare(besuCommand);
     besuCommand.initialProcess();
+    var keypair = besuCommand.getKeyPair();
+    if (keypair != null) {
+      KeyPairUtil.storeKeyFile(keypair, besuCommand.dataDir());
+      LOG.info("Stored public key {} to {}", keypair.getPublicKey(), besuCommand.dataDir());
+    } else {
+      LOG.info("Key is null");
+    }
   }
 
   private void ephemeryRestartPrepare(final BesuCommand besuCommand) {
