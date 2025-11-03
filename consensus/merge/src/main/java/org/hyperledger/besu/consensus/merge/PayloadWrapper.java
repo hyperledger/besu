@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -29,21 +30,25 @@ public class PayloadWrapper {
   private final BlockWithReceipts blockWithReceipts;
   private final Wei blockValue;
   private final Optional<List<Request>> requests;
+  private final BlockCreationTiming blockCreationTimings;
 
   /**
    * Construct a wrapper with the following fields.
    *
    * @param payloadIdentifier Payload identifier
    * @param blockWithReceipts Block with receipts
+   * @param blockCreationTimings The timings from block creation
    */
   public PayloadWrapper(
       final PayloadIdentifier payloadIdentifier,
       final BlockWithReceipts blockWithReceipts,
-      final Optional<List<Request>> requests) {
+      final Optional<List<Request>> requests,
+      final BlockCreationTiming blockCreationTimings) {
     this.blockWithReceipts = blockWithReceipts;
     this.payloadIdentifier = payloadIdentifier;
     this.blockValue = BlockValueCalculator.calculateBlockValue(blockWithReceipts);
     this.requests = requests;
+    this.blockCreationTimings = blockCreationTimings;
   }
 
   /**
@@ -80,5 +85,14 @@ public class PayloadWrapper {
    */
   public Optional<List<Request>> requests() {
     return requests;
+  }
+
+  /**
+   * Get the timings from block creation
+   *
+   * @return the timings from block creatiom
+   */
+  public BlockCreationTiming getBlockCreationTimings() {
+    return blockCreationTimings;
   }
 }
