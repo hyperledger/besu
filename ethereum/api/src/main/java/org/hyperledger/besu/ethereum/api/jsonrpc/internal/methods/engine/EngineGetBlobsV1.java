@@ -107,8 +107,7 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
     if (mergeContext.get().isSyncing()) {
-      final List<BlobAndProofV1> emptyResults =
-        Collections.nCopies(versionedHashes.length, null);
+      final List<BlobAndProofV1> emptyResults = Collections.nCopies(versionedHashes.length, null);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), emptyResults);
     }
     long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
