@@ -96,17 +96,19 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
-    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
-    }
-
     final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
+    }
+    if (mergeContext.get().isSyncing()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
     }
     requestedCounter.inc(versionedHashes.length);
     List<BlobProofBundle> validBundles = new ArrayList<>(versionedHashes.length);

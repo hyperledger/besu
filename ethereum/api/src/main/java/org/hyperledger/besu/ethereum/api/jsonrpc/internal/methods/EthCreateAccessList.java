@@ -77,7 +77,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext, final AccessListSimulatorResult result) {
     return result
         .result()
-        .map(createResponse(requestContext, result.tracer()))
+        .map(createResponse(result.tracer()))
         .orElseGet(() -> errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR));
   }
 
@@ -99,11 +99,13 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   }
 
   private Function<TransactionSimulatorResult, Object> createResponse(
-      final JsonRpcRequestContext request, final AccessListOperationTracer operationTracer) {
+      final AccessListOperationTracer operationTracer) {
+    // access list is created regardless, but include error message if result was not successful
     return result ->
-        result.isSuccessful()
-            ? new CreateAccessListResult(operationTracer.getAccessList(), result.getGasEstimate())
-            : errorResponse(request, result);
+        new CreateAccessListResult(
+            operationTracer.getAccessList(),
+            result.getGasEstimate(),
+            result.isSuccessful() ? Optional.empty() : Optional.of("execution reverted"));
   }
 
   private AccessListSimulatorResult processTransactionWithAccessListOverride(
