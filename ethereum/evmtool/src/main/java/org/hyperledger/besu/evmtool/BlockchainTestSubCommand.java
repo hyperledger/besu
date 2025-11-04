@@ -18,36 +18,34 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.BlockBody;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -70,7 +68,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -257,9 +254,8 @@ public class BlockchainTestSubCommand implements Runnable {
             .getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext context = spec.getProtocolContext();
+    ProtocolContext context = spec.getProtocolContext();
 
-    // Initialize tracing infrastructure (from feature branch)
     BlockTestTracerManager tracerManager = null;
     PrintWriter traceWriter = null;
     long totalGasUsed = 0;
@@ -267,12 +263,9 @@ public class BlockchainTestSubCommand implements Runnable {
     int blockCount = 0;
     long testStartTime = System.currentTimeMillis();
 
-    // Use testPassed (more intuitive than testFailed)
     boolean testPassed = true;
-    // Track failureReason for summary reporting (from main branch)
     String failureReason = "";
 
-    // Setup tracer if tracing is enabled (from feature branch)
     if (enableTracing) {
       try {
         if (traceOutput != null) {
@@ -288,13 +281,32 @@ public class BlockchainTestSubCommand implements Runnable {
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
                 parentCommand.showStorage);
+
+        final ServiceManager serviceManager;
+        if (context.getPluginServiceManager() == null) {
+          serviceManager = new ServiceManager.SimpleServiceManager();
+          context =
+              new ProtocolContext.Builder()
+                  .withBlockchain(context.getBlockchain())
+                  .withWorldStateArchive(context.getWorldStateArchive())
+                  .withConsensusContext(context.getConsensusContext(ConsensusContext.class))
+                  .withBadBlockManager(context.getBadBlockManager())
+                  .withServiceManager(serviceManager)
+                  .build();
+        } else {
+          serviceManager = context.getPluginServiceManager();
+        }
+
+        final BlockTestTracerProvider tracerProvider = new BlockTestTracerProvider(tracerManager);
+        serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
       } catch (final IOException e) {
         parentCommand.out.println("Failed to open trace output: " + e.getMessage());
         return;
       }
     }
 
-    // Use try-finally for cleanup (from feature branch)
+    final BlockTestTracerManager finalTracerManager = tracerManager;
+
     try {
       for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
           spec.getCandidateBlocks()) {
@@ -316,30 +328,17 @@ public class BlockchainTestSubCommand implements Runnable {
                   ? HeaderValidationMode.LIGHT
                   : HeaderValidationMode.FULL;
 
-          final BlockImportResult importResult;
           final Stopwatch timer = Stopwatch.createStarted();
 
-          // Conditional processing: use tracing if enabled (from feature branch)
-          if (enableTracing && tracerManager != null) {
-            // Process block with tracing
-            importResult =
-                processBlockWithTracing(
-                    block,
-                    protocolSpec,
-                    blockchain,
-                    context,
-                    worldState,
-                    tracerManager,
-                    validationMode);
-            totalGasUsed += block.getHeader().getGasUsed();
-            totalTxCount += block.getBody().getTransactions().size();
-          } else {
-            // Original block import logic (from main branch)
-            importResult =
-                blockImporter.importBlock(context, block, validationMode, validationMode);
-          }
+          final BlockImportResult importResult =
+              blockImporter.importBlock(context, block, validationMode, validationMode);
 
           timer.stop();
+
+          if (enableTracing && finalTracerManager != null) {
+            totalGasUsed += block.getHeader().getGasUsed();
+            totalTxCount += block.getBody().getTransactions().size();
+          }
 
           if (importResult.isImported() != candidateBlock.isValid()) {
             testPassed = false;
@@ -391,8 +390,7 @@ public class BlockchainTestSubCommand implements Runnable {
       } else {
         parentCommand.out.println("Chain import successful - " + test);
       }
-    } finally {
-      // Cleanup tracer if it was created (from feature branch)
+
       if (tracerManager != null) {
         final long testDuration = System.currentTimeMillis() - testStartTime;
         tracerManager.writeTestEnd(
@@ -403,146 +401,17 @@ public class BlockchainTestSubCommand implements Runnable {
             totalGasUsed,
             totalTxCount,
             blockCount);
-        try {
-          tracerManager.close();
-        } catch (final IOException e) {
-          parentCommand.out.println("Failed to close trace output: " + e.getMessage());
-        }
+        tracerManager.close();
       }
+    } catch (final IOException e) {
+      parentCommand.out.println("Failed to close trace output: " + e.getMessage());
     }
 
-    // Record test result for summary (from main branch)
     if (!testPassed) {
       results.recordFailure(test, failureReason);
     } else {
       results.recordPass();
     }
-  }
-
-  /**
-   * Processes a block with transaction-level tracing enabled.
-   *
-   * @param block the block to process
-   * @param protocolSpec the protocol specification
-   * @param blockchain the blockchain
-   * @param context the protocol context
-   * @param worldState the world state
-   * @param tracerManager the tracer manager for creating traces
-   * @param validationMode the header validation mode
-   * @return the block import result
-   */
-  private BlockImportResult processBlockWithTracing(
-      final Block block,
-      final ProtocolSpec protocolSpec,
-      final MutableBlockchain blockchain,
-      final ProtocolContext context,
-      final MutableWorldState worldState,
-      final BlockTestTracerManager tracerManager,
-      final HeaderValidationMode validationMode) {
-
-    // Validate block header first
-    final BlockHeaderValidator headerValidator = protocolSpec.getBlockHeaderValidator();
-    if (!headerValidator.validateHeader(
-        block.getHeader(), context.getBlockchain().getChainHeadHeader(), context, validationMode)) {
-      return new BlockImportResult(false);
-    }
-
-    // Get the parent header for context
-    final BlockHeader parentHeader =
-        blockchain.getBlockHeader(block.getHeader().getParentHash()).orElse(null);
-    if (parentHeader == null && block.getHeader().getNumber() != 0) {
-      return new BlockImportResult(false);
-    }
-
-    // Process transactions with tracing
-    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
-    final BlockchainBasedBlockHashLookup blockHashLookup =
-        new BlockchainBasedBlockHashLookup(block.getHeader(), blockchain);
-
-    // Calculate blob gas price for EIP-4844
-    final BlobGas excessBlobGas = block.getHeader().getExcessBlobGas().orElse(BlobGas.ZERO);
-    final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
-
-    final List<TransactionReceipt> receipts = new ArrayList<>();
-    long cumulativeGasUsed = 0;
-
-    for (int i = 0; i < block.getBody().getTransactions().size(); i++) {
-      final org.hyperledger.besu.ethereum.core.Transaction tx =
-          block.getBody().getTransactions().get(i);
-
-      // Create a fresh WorldUpdater for each transaction (EIP-2929 compliance)
-      // This ensures warm/cold storage tracking resets between transactions
-      final WorldUpdater blockUpdater = worldState.updater();
-      final WorldUpdater transactionUpdater = blockUpdater.updater();
-
-      // Create tracer for this transaction
-      final OperationTracer tracer = tracerManager.createTracer();
-
-      // Trace the transaction lifecycle
-      tracer.tracePrepareTransaction(transactionUpdater, tx);
-      tracer.traceStartTransaction(transactionUpdater, tx);
-
-      try {
-        // Process the transaction with the tracer
-        final TransactionProcessingResult result =
-            transactionProcessor.processTransaction(
-                transactionUpdater,
-                block.getHeader(),
-                tx,
-                block.getHeader().getCoinbase(),
-                tracer,
-                blockHashLookup,
-                TransactionValidationParams.processingBlock(),
-                blobGasPrice);
-
-        // Check if transaction is INVALID (e.g., nonce too low, insufficient balance)
-        // INVALID transactions should cause block rejection
-        if (result.isInvalid()) {
-          // Transaction is invalid, block should be rejected
-          tracer.traceEndTransaction(
-              transactionUpdater, tx, false, Bytes.EMPTY, List.of(), 0, Set.of(), 0);
-          return new BlockImportResult(false);
-        }
-
-        // For SUCCESSFUL or FAILED (reverted) transactions, create receipts
-        // FAILED transactions (e.g., REVERT, out of gas, stack underflow) are valid and included
-        // in blocks
-        cumulativeGasUsed += tx.getGasLimit() - result.getGasRemaining();
-
-        final TransactionReceipt receipt =
-            protocolSpec
-                .getTransactionReceiptFactory()
-                .create(tx.getType(), result, worldState, cumulativeGasUsed);
-        receipts.add(receipt);
-
-        // Trace transaction end (successful or failed)
-        tracer.traceEndTransaction(
-            transactionUpdater,
-            tx,
-            result.isSuccessful(),
-            result.getOutput(),
-            result.getLogs(),
-            cumulativeGasUsed,
-            Set.of(),
-            0);
-
-        // Commit transaction changes to block updater, then to world state
-        transactionUpdater.commit();
-        blockUpdater.commit();
-
-        // Mark transaction boundary to reset warm/cold storage tracking (EIP-2929)
-        blockUpdater.markTransactionBoundary();
-
-      } catch (final Exception e) {
-        parentCommand.out.printf("Transaction %d processing failed: %s%n", i, e.getMessage());
-        return new BlockImportResult(false);
-      }
-    }
-
-    // Append block to blockchain
-    blockchain.appendBlock(block, receipts);
-
-    return new BlockImportResult(true);
   }
 
   void verifyJournaledEVMAccountCompatability(
@@ -559,6 +428,142 @@ public class BlockchainTestSubCommand implements Runnable {
         parentCommand.out.println(
             "Journaled account configured and fork prior to the merge specified");
       }
+    }
+  }
+
+  /**
+   * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
+   * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
+   * BlockImportTracerProvider infrastructure.
+   */
+  private static class BlockTestTracerProvider implements BlockImportTracerProvider {
+    private final BlockTestTracerManager tracerManager;
+
+    BlockTestTracerProvider(final BlockTestTracerManager tracerManager) {
+      this.tracerManager = tracerManager;
+    }
+
+    @Override
+    public BlockAwareOperationTracer getBlockImportTracer(
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
+      return new BlockAwareOperationTracerAdapter(tracerManager.createTracer());
+    }
+  }
+
+  /**
+   * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
+   * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
+   * while providing default implementations for block-level tracing methods.
+   */
+  private static class BlockAwareOperationTracerAdapter implements BlockAwareOperationTracer {
+    private final StreamingOperationTracer delegate;
+
+    BlockAwareOperationTracerAdapter(final StreamingOperationTracer delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void traceStartBlock(
+        final WorldView worldView,
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader,
+        final BlockBody blockBody,
+        final Address miningBeneficiary) {
+      // No-op: StreamingOperationTracer doesn't need block-level events
+    }
+
+    @Override
+    public void traceEndBlock(
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader, final BlockBody blockBody) {
+      // No-op: StreamingOperationTracer doesn't need block-level events
+    }
+
+    @Override
+    public void traceStartBlock(
+        final WorldView worldView,
+        final org.hyperledger.besu.plugin.data.ProcessableBlockHeader processableBlockHeader,
+        final Address miningBeneficiary) {
+      // No-op: StreamingOperationTracer doesn't need block-level events
+    }
+
+    @Override
+    public void tracePrepareTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      delegate.tracePrepareTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceStartTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      delegate.traceStartTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceEndTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction tx,
+        final boolean status,
+        final org.apache.tuweni.bytes.Bytes output,
+        final List<org.hyperledger.besu.evm.log.Log> logs,
+        final long gasUsed,
+        final Set<Address> selfDestructs,
+        final long timeNs) {
+      delegate.traceEndTransaction(
+          worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    }
+
+    @Override
+    public void traceBeforeRewardTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction transaction,
+        final Wei miningReward) {
+      delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
+    }
+
+    @Override
+    public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextEnter(frame);
+    }
+
+    @Override
+    public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextReEnter(frame);
+    }
+
+    @Override
+    public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextExit(frame);
+    }
+
+    @Override
+    public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.tracePreExecution(frame);
+    }
+
+    @Override
+    public void tracePostExecution(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final org.hyperledger.besu.evm.operation.Operation.OperationResult operationResult) {
+      delegate.tracePostExecution(frame, operationResult);
+    }
+
+    @Override
+    public void tracePrecompileCall(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final long gasRequirement,
+        final org.apache.tuweni.bytes.Bytes output) {
+      delegate.tracePrecompileCall(frame, gasRequirement, output);
+    }
+
+    @Override
+    public void traceAccountCreationResult(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final java.util.Optional<org.hyperledger.besu.evm.frame.ExceptionalHaltReason> haltReason) {
+      delegate.traceAccountCreationResult(frame, haltReason);
+    }
+
+    @Override
+    public boolean isExtendedTracing() {
+      return true;
     }
   }
 
@@ -598,11 +603,11 @@ public class BlockchainTestSubCommand implements Runnable {
     }
 
     /**
-     * Creates a new OperationTracer for tracing a transaction.
+     * Creates a new StreamingOperationTracer for tracing a transaction.
      *
      * @return a new StreamingOperationTracer instance
      */
-    public OperationTracer createTracer() {
+    public StreamingOperationTracer createTracer() {
       currentTracer =
           new StreamingOperationTracer(
               output,
