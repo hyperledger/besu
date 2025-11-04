@@ -273,7 +273,6 @@ public class Address extends DelegatingBytes {
 
   @Override
   public int hashCode() {
-    // Delegate to parent's hashCode implementation which uses delegate.hashCode()
-    return super.hashCode();
+    return Arrays.hashCode(this.toArrayUnsafe());
   }
 }
