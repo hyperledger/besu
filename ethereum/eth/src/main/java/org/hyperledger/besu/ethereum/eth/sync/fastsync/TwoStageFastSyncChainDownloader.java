@@ -46,7 +46,8 @@ import org.slf4j.LoggerFactory;
  * <p>Supports incremental continuation when the world state downloader updates the pivot block,
  * avoiding re-downloading already synced data.
  */
-public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUpdateListener {
+public class TwoStageFastSyncChainDownloader
+    implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(TwoStageFastSyncChainDownloader.class);
 
   private final FastSyncDownloadPipelineFactory pipelineFactory;
@@ -57,32 +58,35 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final AtomicReference<ChainSyncState> chainState;
   private final AtomicReference<BlockHeader> pendingPivotUpdate = new AtomicReference<>(null);
+  private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
+  private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
 
   private volatile Pipeline<?> currentPipeline;
+    private Instant overallStartTime;
 
-  /**
+    /**
    * Creates a new TwoStageFastSyncChainDownloader.
    *
-   * @param pipelineFactory the pipeline factory for creating download pipelines
-   * @param scheduler the scheduler for running pipelines
-   * @param syncState the sync state tracker
-   * @param pivotBlockHash the initial pivot block hash (kept for logging compatibility)
-   * @param metricsSystem the metrics system (unused but kept for API compatibility)
+   * @param pipelineFactory     the pipeline factory for creating download pipelines
+   * @param scheduler           the scheduler for running pipelines
+   * @param syncState           the sync state tracker
+   * @param metricsSystem       the metrics system (unused but kept for API compatibility)
    * @param syncDurationMetrics the sync duration metrics tracker
-   * @param initialPivotHeader the initial pivot block header
-   * @param chainStateStorage the storage for chain sync state
-   * @param checkpointBlock the checkpoint block number (0 for full sync)
+   * @param initialPivotHeader  the initial pivot block header
+   * @param chainStateStorage   the storage for chain sync state
+   * @param checkpointBlock     the checkpoint block number (0 for full sync)
+   * @param genesisHash         the genesis hash
    */
   public TwoStageFastSyncChainDownloader(
       final FastSyncDownloadPipelineFactory pipelineFactory,
       final EthScheduler scheduler,
       final SyncState syncState,
-      final Hash pivotBlockHash,
       final MetricsSystem metricsSystem,
       final SyncDurationMetrics syncDurationMetrics,
       final BlockHeader initialPivotHeader,
       final ChainSyncStateStorage chainStateStorage,
-      final long checkpointBlock) {
+      final long checkpointBlock,
+      final Hash genesisHash) {
     this.pipelineFactory = pipelineFactory;
     this.scheduler = scheduler;
     this.syncState = syncState;
@@ -95,7 +99,7 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
             rlpInput -> BlockHeader.readFrom(rlpInput, pipelineFactory.getBlockHeaderFunctions()));
     if (chainSyncState == null) {
       // First time sync - create initial state
-      chainSyncState = ChainSyncState.initialSync(initialPivotHeader, checkpointBlock);
+      chainSyncState = ChainSyncState.initialSync(initialPivotHeader, 0L, genesisHash, checkpointBlock);
       chainStateStorage.storeState(chainSyncState);
       LOG.info(
           "Created initial chain sync state: pivot={}, checkpoint={}",
@@ -112,6 +116,13 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
   public void onPivotUpdated(final BlockHeader newPivotBlockHeader) {
     pendingPivotUpdate.getAndSet(newPivotBlockHeader);
     LOG.info("Received pivot update from block no {}", newPivotBlockHeader.getNumber());
+    pivotUpdateFuture.complete(null);
+  }
+
+  @Override
+  public void onWorldStateFinished() {
+    LOG.info("World state download is stable, no more pivot updates expected");
+    worldStateHealFinishedFuture.complete(null);
   }
 
   @Override
@@ -121,12 +132,12 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
         "Starting two-stage fast sync chain download from pivot block {}",
         initialState.getPivotBlockHash());
 
-    final Instant overallStartTime = Instant.now();
+      overallStartTime = Instant.now();
 
     // Start chain download duration metrics
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
-    return runSyncWithRetry(initialState.getPivotBlockNumber())
+    return downloadAccordingToChainState()
         .handle(
             (ignored, throwable) -> {
               if (throwable != null) {
@@ -151,31 +162,6 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
         .thenCompose(f -> f);
   }
 
-  private CompletableFuture<Void> runSyncWithRetry(final long initialPivotNumber) {
-    return determineStage1Execution()
-        .thenCompose(
-            ignore -> {
-              if (cancelled.get()) {
-                LOG.info("Two-stage sync cancelled after Stage 1");
-                return CompletableFuture.failedFuture(new CancellationException());
-              }
-              return runStage2ForwardBodiesAndReceipts();
-            })
-        .thenCompose(ignore -> checkAndHandlePivotUpdate(initialPivotNumber))
-        .handle(
-            (result, error) -> {
-              if (error != null && shouldRetry(error)) {
-                LOG.warn("Chain sync encountered error, will retry from saved state", error);
-                // State is already persisted, restart from current position
-                return runSyncWithRetry(chainState.get().getPivotBlockNumber());
-              } else if (error != null) {
-                return CompletableFuture.<Void>failedFuture(error);
-              }
-              return CompletableFuture.<Void>completedFuture(result);
-            })
-        .thenCompose(f -> f);
-  }
-
   private boolean shouldRetry(final Throwable error) {
     final Throwable cause = error instanceof CompletionException ? error.getCause() : error;
     return !(cause instanceof CancellationException);
@@ -185,32 +171,30 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
    * Determines whether Stage 1 (backward header download) needs to run based on the persisted
    * state.
    *
+   * @param state the chain sync state to use for this stage
    * @return CompletableFuture that completes when Stage 1 is done (or skipped)
    */
-  private CompletableFuture<Void> determineStage1Execution() {
-    final ChainSyncState current = chainState.get();
-
-    if (current.isHeadersDownloadComplete()) {
+  private CompletableFuture<Void> determineStage1Execution(final ChainSyncState state) {
+    if (state.isHeadersDownloadComplete()) {
       LOG.info(
           "Backward header download already complete for pivot {}. Skipping Stage 1.",
-          current.getPivotBlockNumber());
+          state.getPivotBlockNumber());
       return CompletableFuture.completedFuture(null);
     } else {
-      return runStage1BackwardHeaderDownload();
+      return runStage1BackwardHeaderDownload(state);
     }
   }
 
-  private CompletableFuture<Void> runStage1BackwardHeaderDownload() {
-    final ChainSyncState current = chainState.get();
+  private CompletableFuture<Void> runStage1BackwardHeaderDownload(final ChainSyncState state) {
     LOG.info(
         "Stage 1: Starting backward header download from pivot {} to stop block {}",
-        current.getPivotBlockNumber(),
-        current.getHeaderDownloadStopBlock());
+        state.getPivotBlockNumber(),
+        state.getCheckpointBlockNumber());
 
     final Instant stage1StartTime = Instant.now();
 
     final Pipeline<Long> headerPipeline =
-        pipelineFactory.createBackwardHeaderDownloadPipeline(chainState, chainStateStorage);
+        pipelineFactory.createBackwardHeaderDownloadPipeline(state);
     currentPipeline = headerPipeline;
 
     return scheduler
@@ -223,7 +207,7 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
                   stage1Duration.getSeconds());
 
               // Mark headers download as complete and persist
-              chainState.updateAndGet(state -> state.withHeadersDownloadComplete());
+              chainState.updateAndGet(s -> s.withHeadersDownloadComplete());
               chainStateStorage.storeState(chainState.get());
               LOG.info("Persisted backward header download completion state");
 
@@ -231,18 +215,17 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
             });
   }
 
-  private CompletableFuture<Void> runStage2ForwardBodiesAndReceipts() {
-    final ChainSyncState current = chainState.get();
+  private CompletableFuture<Void> runStage2ForwardBodiesAndReceipts(final ChainSyncState state) {
     LOG.info(
         "Stage 2: Starting forward bodies and receipts download from {} to pivot {}",
-        current.getBodiesDownloadStartBlock(),
-        current.getPivotBlockNumber());
+        state.getBodiesDownloadStartBlockNumber(),
+        state.getPivotBlockNumber());
 
     final Instant stage2StartTime = Instant.now();
 
     final Pipeline<List<BlockHeader>> bodiesReceiptsPipeline =
         pipelineFactory.createForwardBodiesAndReceiptsDownloadPipelineFromTo(
-            current.getBodiesDownloadStartBlock(), current.getPivotBlockNumber(), syncState);
+            state.getBodiesDownloadStartBlockNumber(), state.getPivotBlockNumber(), syncState);
     currentPipeline = bodiesReceiptsPipeline;
 
     return scheduler
@@ -259,66 +242,92 @@ public class TwoStageFastSyncChainDownloader implements ChainDownloader, PivotUp
 
   /**
    * Checks if the pivot block has been updated during sync and handles continuation if necessary.
-   * Uses double-check pattern to avoid race conditions.
+   * Waits for world state heal to be finished
+   * before declaring completion to ensure no pivot updates are missed.
    *
-   * @param previousPivotBlockNumber the pivot block number when sync started
    * @return CompletableFuture that completes when all continuation is done
    */
-  private CompletableFuture<Void> checkAndHandlePivotUpdate(final long previousPivotBlockNumber) {
+  private CompletableFuture<Void> checkAndHandlePivotUpdate() {
 
     final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
+    final BlockHeader previousPivot = chainState.get().getPivotBlockHeader();
 
-    if (updatedPivot != null && updatedPivot.getNumber() > previousPivotBlockNumber) {
+    if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
       LOG.info(
           "Pivot block has been updated from {} to {}. Continuing sync to new pivot.",
-          previousPivotBlockNumber,
+          previousPivot.getNumber(),
           updatedPivot.getNumber());
 
       // Update chain state to new pivot
       chainState.updateAndGet(
-          state -> state.continueToNewPivot(updatedPivot, previousPivotBlockNumber));
+          state -> state.continueToNewPivot(updatedPivot, previousPivot));
       chainStateStorage.storeState(chainState.get());
 
-      return continueToNewPivot(previousPivotBlockNumber, updatedPivot.getNumber());
+      return downloadAccordingToChainState();
     }
 
     LOG.info(
-        "No pivot block update detected (current: {}), sync complete", previousPivotBlockNumber);
-    return CompletableFuture.completedFuture(null);
+        "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
+
+    return CompletableFuture.anyOf(pivotUpdateFuture, worldStateHealFinishedFuture).thenCompose(
+        ignore -> {
+            if (pivotUpdateFuture.isDone()) {
+                pivotUpdateFuture = new CompletableFuture<>();
+                return checkAndHandlePivotUpdate();
+            } else {
+                LOG.info(
+                        "World state heal finished (current pivot number: {}). Chain download complete.",
+                        previousPivot.getNumber());
+                return CompletableFuture.completedFuture(null);
+            }
+        });
   }
 
   /**
-   * Continues syncing from the previous pivot to a new updated pivot. Reuses the standard stage 1
-   * and stage 2 methods since chainState has already been updated with new boundaries.
+   * Uses the stage 1 and stage 2 methods to download the chain according to chainState.
    *
-   * @param previousPivotBlockNumber the previous pivot block number (for logging)
-   * @param newPivotBlockNumber the new pivot block number (for recursive check)
    * @return CompletableFuture that completes when continuation is done
    */
-  private CompletableFuture<Void> continueToNewPivot(
-      final long previousPivotBlockNumber, final long newPivotBlockNumber) {
+  private CompletableFuture<Void> downloadAccordingToChainState() {
+    // Snapshot state once - both stages use the same snapshot
+    // (only the headers complete flag changes, which is for persistence/restart logic)
+    final ChainSyncState currentState = chainState.get();
 
-    LOG.info(
-        "Continuation: Syncing from previous pivot {} to new pivot {}",
-        previousPivotBlockNumber,
-        newPivotBlockNumber);
-
-    // ChainState has already been updated with new pivot and boundaries in
-    // checkAndHandlePivotUpdate
-    // Just run the standard stage 1 and stage 2 methods which will use the updated boundaries
-    return runStage1BackwardHeaderDownload()
+    return determineStage1Execution(currentState)
         .thenCompose(
             ignore -> {
               if (cancelled.get()) {
                 return CompletableFuture.failedFuture(new CancellationException());
               }
-              return runStage2ForwardBodiesAndReceipts();
+              // Use the same state snapshot for stage 2
+              return runStage2ForwardBodiesAndReceipts(currentState);
             })
         .thenCompose(
             ignore -> {
               // Recursively check for further pivot updates
-              return checkAndHandlePivotUpdate(newPivotBlockNumber);
-            });
+              return checkAndHandlePivotUpdate();
+            })
+        .handle(
+            (result, error) -> {
+                if (error != null && shouldRetry(error)) {
+                    LOG.warn("Chain sync encountered error, will retry from saved state", error);
+                    // Restart from saved state
+                    return downloadAccordingToChainState();
+                } else if (error != null) {
+                    // Stop metrics on failure
+                    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                    return CompletableFuture.<Void>failedFuture(error);
+                } else {
+                    final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
+                    LOG.info(
+                            "Two-stage fast sync chain download complete in {} seconds",
+                            totalDuration.getSeconds());
+                    // Stop metrics on success
+                    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                    return CompletableFuture.<Void>completedFuture(null);
+                }
+            })
+        .thenCompose(f -> f);
   }
 
   @Override

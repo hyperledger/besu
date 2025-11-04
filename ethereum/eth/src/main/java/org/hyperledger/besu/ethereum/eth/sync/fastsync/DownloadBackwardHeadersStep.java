@@ -43,32 +43,35 @@ public class DownloadBackwardHeadersStep
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final int headerRequestSize;
+    private final long checkpointBlockNumber;
 
-  /**
+    /**
    * Creates a new DownloadBackwardHeadersStep.
    *
-   * @param protocolSchedule the protocol schedule
-   * @param ethContext the eth context
-   * @param syncConfig the synchronizer configuration (unused but kept for API compatibility)
-   * @param headerRequestSize the number of headers to request per batch
-   * @param metricsSystem the metrics system (unused but kept for consistency)
+   * @param protocolSchedule               the protocol schedule
+   * @param ethContext                     the eth context
+   * @param syncConfig                     the synchronizer configuration (unused but kept for API compatibility)
+   * @param headerRequestSize              the number of headers to request per batch
+   * @param metricsSystem                  the metrics system (unused but kept for consistency)
+   * @param checkpointBlockNumber         the lowest header that we want to download
    */
   public DownloadBackwardHeadersStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration syncConfig,
-      final int headerRequestSize,
-      final MetricsSystem metricsSystem) {
+          final ProtocolSchedule protocolSchedule,
+          final EthContext ethContext,
+          final SynchronizerConfiguration syncConfig,
+          final int headerRequestSize,
+          final MetricsSystem metricsSystem,
+          final long checkpointBlockNumber) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.headerRequestSize = headerRequestSize;
+    this.checkpointBlockNumber = checkpointBlockNumber;
   }
 
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
-    // Calculate how many headers to request for this batch
-    final long remainingBlocks = startBlockNumber;
-    final int headersToRequest = (int) Math.min(headerRequestSize, remainingBlocks);
+    final long remainingHeaders = startBlockNumber - checkpointBlockNumber;
+    final int headersToRequest = (int) Math.min(headerRequestSize, remainingHeaders);
 
     return ethContext
         .getScheduler()
@@ -94,14 +97,15 @@ public class DownloadBackwardHeadersStep
           ethContext.getPeerTaskExecutor().execute(task);
 
       final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
-      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS
-          || result.result().isEmpty()) {
+      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
         if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
           try {
             Thread.sleep(1000L);
           } catch (InterruptedException e) {
             // do nothing
           }
+        } else if (result.result().isEmpty()) {
+            // TODO: we should punish the peer here
         } else {
           LOG.warn(
               "Failed to download headers from block {} (response: {})",

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -82,6 +83,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
   private Set<Bytes> accountsHealingList = new HashSet<>();
   private DynamicPivotBlockSelector pivotBlockSelector;
+  private WorldStateHealFinishedListener
+          worldStateHealFinishedListener;
 
   private final SnapSyncStatePersistenceManager snapContext;
   private final SnapSyncProcessState snapSyncState;
@@ -95,6 +98,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final SnapSyncMetricsManager metricsManager;
 
   private final AtomicBoolean trieHealStartedBefore = new AtomicBoolean(false);
+  private final AtomicBoolean worldStateHealFinishedNotified = new AtomicBoolean(false);
 
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -185,6 +189,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and the blockchain is not
       // behind the pivot block
       else {
+        // Notify that world state heal has finished
+        notifyWorldStateHealFinished();
+
         syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
         syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
@@ -431,6 +438,24 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public void setPivotBlockSelector(final DynamicPivotBlockSelector pivotBlockSelector) {
     this.pivotBlockSelector = pivotBlockSelector;
+  }
+
+  public void setWorldStateHealFinishedListener(
+      final WorldStateHealFinishedListener listener) {
+    this.worldStateHealFinishedListener = listener;
+  }
+
+  /**
+   * Notifies the registered listener that world state heal has finished and will
+   * not select any new pivot blocks. This notification is sent only once.
+   */
+  private void notifyWorldStateHealFinished() {
+    if (worldStateHealFinishedNotified.compareAndSet(false, true)) {
+      if (worldStateHealFinishedListener != null) {
+        LOG.info("Notifying that world state download has finished");
+        worldStateHealFinishedListener.onWorldStateFinished();
+      }
+    }
   }
 
   public BlockAddedObserver createBlockchainObserver() {

@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -81,6 +82,7 @@ public class ChainSyncStateStorage {
 
         // Read progress fields
         final long headerDownloadStopBlock = input.readLongScalar();
+        final Hash lowerHeaderDownloadBlockHash = Hash.wrap(input.readBytes32());
         final long bodiesDownloadStartBlock = input.readLongScalar();
         final boolean headersDownloadComplete = input.readByte() == 1;
 
@@ -96,6 +98,7 @@ public class ChainSyncStateStorage {
         return new ChainSyncState(
             pivotBlockHeader,
             headerDownloadStopBlock,
+            lowerHeaderDownloadBlockHash,
             bodiesDownloadStartBlock,
             headersDownloadComplete);
 
@@ -130,8 +133,9 @@ public class ChainSyncStateStorage {
         state.getPivotBlockHeader().writeTo(output);
 
         // Write progress fields
-        output.writeLongScalar(state.getHeaderDownloadStopBlock());
-        output.writeLongScalar(state.getBodiesDownloadStartBlock());
+        output.writeLongScalar(state.getCheckpointBlockNumber());
+        output.writeBytes(state.getCheckpointBlockHash());
+        output.writeLongScalar(state.getBodiesDownloadStartBlockNumber());
         output.writeByte((byte) (state.isHeadersDownloadComplete() ? 1 : 0));
 
         output.endList();
@@ -149,8 +153,8 @@ public class ChainSyncStateStorage {
         LOG.debug(
             "Stored chain sync state: pivot={}, stopBlock={}, startBlock={}, complete={}",
             state.getPivotBlockNumber(),
-            state.getHeaderDownloadStopBlock(),
-            state.getBodiesDownloadStartBlock(),
+            state.getCheckpointBlockNumber(),
+            state.getBodiesDownloadStartBlockNumber(),
             state.isHeadersDownloadComplete());
 
       } catch (final IOException e) {
