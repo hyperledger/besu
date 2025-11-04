@@ -525,10 +525,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
@@ -612,10 +609,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftMigrationGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(

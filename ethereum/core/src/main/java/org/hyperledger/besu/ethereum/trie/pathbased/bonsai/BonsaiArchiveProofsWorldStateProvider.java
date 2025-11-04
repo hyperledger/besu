@@ -90,20 +90,22 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
 
   private Optional<BlockHeader> getCheckpointStateStartBlock(
       final Blockchain blockchain, final Hash targetHash) {
-    long nearestCheckpointBlock =
-        (((blockchain.getBlockHeader(targetHash).get().getNumber() + trieNodeCheckpointInterval)
-                    / trieNodeCheckpointInterval)
-                * trieNodeCheckpointInterval)
-            - 1;
+    Optional<Long> targetHashBlockNumber =
+        blockchain.getBlockHeader(targetHash).map(BlockHeader::getNumber);
 
-    Hash chainHeadHash = blockchain.getChainHeadHash();
+    if (targetHashBlockNumber.isPresent()) {
+      long nearestCheckpointBlockNumber =
+          ((((targetHashBlockNumber.get() + trieNodeCheckpointInterval)
+                      / trieNodeCheckpointInterval)
+                  * trieNodeCheckpointInterval)
+              - 1);
 
-    Optional<BlockHeader> block =
-        blockchain
-            .getBlockHeaderSafe(nearestCheckpointBlock)
-            .or(() -> blockchain.getBlockHeader(chainHeadHash))
-            .or(() -> blockchain.getBlockHeaderSafe(chainHeadHash));
-    return block;
+      return blockchain
+          .getBlockHeaderSafe(nearestCheckpointBlockNumber)
+          .or(() -> blockchain.getBlockHeader(blockchain.getChainHeadHash()))
+          .or(() -> blockchain.getBlockHeaderSafe(blockchain.getChainHeadHash()));
+    }
+    return Optional.empty();
   }
 
   @Override
