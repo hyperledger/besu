@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.util.log.LogUtil;
@@ -31,22 +32,25 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private static final int LOG_DELAY = 30;
 
   private final MutableBlockchain blockchainStorage;
-  private final long downloaderHeaderTarget;
+  private final long lowestHeaderToImport;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
-  private BlockHeader currentChildHeader;
+    private final Hash checkpointBlockHash;
+    private BlockHeader currentChildHeader;
   private final long totalHeaders;
 
   public ImportHeadersStep(
-      final MutableBlockchain blockchain,
-      final long downloaderHeaderTarget,
-      final BlockHeader pivotBlockHeader) {
+          final MutableBlockchain blockchain,
+          final long checkpointBlockNumber,
+          final Hash checkpointBlockHash,
+          final BlockHeader pivotBlockHeader) {
     this.blockchainStorage = blockchain;
-    this.downloaderHeaderTarget = downloaderHeaderTarget;
-    final long pivotBlockNumber = pivotBlockHeader.getNumber();
+    this.lowestHeaderToImport = checkpointBlockNumber + 1;
+      this.checkpointBlockHash = checkpointBlockHash;
+      final long pivotBlockNumber = pivotBlockHeader.getNumber();
     this.currentChildHeader = pivotBlockHeader;
-    this.totalHeaders = pivotBlockNumber - downloaderHeaderTarget;
+    this.totalHeaders = pivotBlockNumber - checkpointBlockNumber;
     // store the pivot block header as the first imported header
-    blockchainStorage.importHeader(pivotBlockHeader);
+    this.blockchainStorage.importHeader(pivotBlockHeader);
   }
 
   @Override
@@ -62,12 +66,18 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
       LOG.info(message);
       throw new IllegalStateException(message);
     }
+
     currentChildHeader = blockHeaders.getLast();
+    if (currentChildHeader.getNumber() == lowestHeaderToImport) {
+        if (!currentChildHeader.getParentHash().equals(checkpointBlockHash)) {
+            throw new IllegalStateException("The lower header parent hash does not match the checkpoint hash");
+        }
+    }
     blockHeaders.forEach(blockchainStorage::importHeader);
 
     if (logInfo.get()) {
       final long downloadedHeaders =
-          totalHeaders - (blockHeaders.getFirst().getNumber() - downloaderHeaderTarget);
+          totalHeaders - (blockHeaders.getFirst().getNumber() - lowestHeaderToImport);
       final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
       LogUtil.throttledLog(
           LOG::info,

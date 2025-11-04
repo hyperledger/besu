@@ -69,15 +69,18 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
     final long checkpointBlock =
         syncState.getCheckpoint().map(checkpoint -> checkpoint.blockNumber()).orElse(0L);
 
+    final Hash genesisHash = protocolContext.getBlockchain().getChainHeadHeader().getHash();
+
     return new TwoStageFastSyncChainDownloader(
         pipelineFactory,
         ethContext.getScheduler(),
         syncState,
-        pivotBlockHash,
-        metricsSystem,
+            metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
         chainStateStorage,
-        checkpointBlock);
+        checkpointBlock,
+        genesisHash
+    );
   }
 }

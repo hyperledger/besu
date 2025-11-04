@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -241,6 +242,14 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .build();
 
       newDownloadState.setPivotBlockSelector(dynamicPivotBlockManager);
+
+      // Set the world state stable listener if available
+      final WorldStateHealFinishedListener
+              worldStateHealFinishedListener = fastSyncActions.getWorldStateStableListener();
+      if (worldStateHealFinishedListener != null) {
+        newDownloadState.setWorldStateHealFinishedListener(worldStateHealFinishedListener);
+        LOG.debug("World state stable listener registered with download state");
+      }
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }

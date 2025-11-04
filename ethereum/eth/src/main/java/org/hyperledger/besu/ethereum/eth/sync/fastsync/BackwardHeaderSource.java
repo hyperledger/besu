@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,66 +35,25 @@ public class BackwardHeaderSource implements Iterator<Long> {
   /**
    * Creates a new BackwardHeaderSource with resume capability using ChainSyncState.
    *
-   * @param batchSize the number of blocks in each batch
-   * @param blockchain the blockchain to check for already downloaded headers
+   * @param batchSize      the number of blocks in each batch
    * @param chainSyncState the chain sync state containing pivot and progress
    */
   public BackwardHeaderSource(
-      final int batchSize, final Blockchain blockchain, final ChainSyncState chainSyncState) {
+          final int batchSize, final ChainSyncState chainSyncState) {
 
     final long pivotBlockNumber = chainSyncState.getPivotBlockNumber();
-    final long stopBlock = chainSyncState.getHeaderDownloadStopBlock();
 
-    // Determine where to start/resume from
-    final long startingBlock = determineStartingBlock(pivotBlockNumber, blockchain);
+    final long startingBlock = pivotBlockNumber - 1;
 
     this.currentBlock = new AtomicLong(startingBlock - 1);
     this.batchSize = batchSize;
-    this.stopBlock = stopBlock;
+    this.stopBlock = chainSyncState.getCheckpointBlockNumber() + 1;
 
-    if (startingBlock < pivotBlockNumber) {
-      LOG.info(
-          "BackwardHeaderSource resuming: pivot={}, stopBlock={}, resumeFrom={}, batchSize={}",
-          pivotBlockNumber,
-          stopBlock,
-          startingBlock,
-          batchSize);
-    } else {
       LOG.info(
           "BackwardHeaderSource starting fresh: pivot={}, stopBlock={}, batchSize={}",
           pivotBlockNumber,
           stopBlock,
           batchSize);
-    }
-  }
-
-  /**
-   * Scans the blockchain database to find the lowest contiguous block downloaded from the pivot.
-   *
-   * @param pivotBlockNumber the pivot block number
-   * @param blockchain the blockchain to scan
-   * @return the lowest contiguous block number, or pivotBlockNumber if nothing downloaded yet
-   */
-  private long determineStartingBlock(final long pivotBlockNumber, final Blockchain blockchain) {
-    long currentBlock = pivotBlockNumber;
-
-    // Walk backward in steps of batchSize until we find a missing header
-    while (currentBlock >= stopBlock) {
-      if (blockchain.getBlockHeader(currentBlock).isEmpty()) {
-        // Found a gap - resume from the block after this gap
-        final long resumeFrom = Math.min(currentBlock + batchSize, pivotBlockNumber);
-        LOG.info(
-            "Database scan found gap at block {}. Resuming from block {}",
-            currentBlock,
-            resumeFrom);
-        return resumeFrom;
-      }
-      currentBlock -= batchSize;
-    }
-
-    // All blocks down to genesis are stored - nothing to download
-    LOG.info("All headers from pivot {} to genesis already downloaded", pivotBlockNumber);
-    return -1; // Signal that download is complete
   }
 
   @Override
@@ -107,11 +64,7 @@ public class BackwardHeaderSource implements Iterator<Long> {
   @Override
   public Long next() {
     final long block =
-        currentBlock.getAndUpdate(
-            current -> {
-              final long next = current - batchSize;
-              return next >= stopBlock ? next : stopBlock - 1;
-            });
+        currentBlock.getAndUpdate(current -> current - batchSize);
 
     if (block >= stopBlock) {
       return block;

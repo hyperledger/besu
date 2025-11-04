@@ -218,36 +218,33 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
    * in reverse direction, validates boundaries, and stores in database. Supports out-of-order
    * parallel execution with resume capability.
    *
-   * @param chainStateRef atomic reference to chain sync state
-   * @param chainStateStorage the storage for chain sync state (unused but kept for API)
+   * @param chainState chain sync state containing pivot and progress
    * @return the backward header download pipeline
    */
   public Pipeline<Long> createBackwardHeaderDownloadPipeline(
-      final java.util.concurrent.atomic.AtomicReference<ChainSyncState> chainStateRef,
-      final ChainSyncStateStorage chainStateStorage) {
+      final ChainSyncState chainState) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
-
-    final ChainSyncState chainState = chainStateRef.get();
 
     LOG.debug(
         "Creating backward header download pipeline: pivot={}, stopBlock={}, parallelism={}, batchSize={}",
         chainState.getPivotBlockNumber(),
-        chainState.getHeaderDownloadStopBlock(),
+        chainState.getCheckpointBlockNumber(),
         downloaderParallelism,
         headerRequestSize);
 
     final BackwardHeaderSource headerSource =
-        new BackwardHeaderSource(headerRequestSize, protocolContext.getBlockchain(), chainState);
+        new BackwardHeaderSource(headerRequestSize, chainState);
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem);
+            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem, chainState.getCheckpointBlockNumber());
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
             protocolContext.getBlockchain(),
-            chainState.getHeaderDownloadStopBlock(),
+            chainState.getCheckpointBlockNumber(),
+            chainState.getCheckpointBlockHash(),
             chainState.getPivotBlockHeader());
 
     return PipelineBuilder.createPipelineFrom(
