@@ -108,6 +108,8 @@ public class Address extends DelegatingBytes {
                 }
               });
 
+  private final byte[] arrayUnsafe;
+
   /**
    * Instantiates a new Address.
    *
@@ -115,6 +117,7 @@ public class Address extends DelegatingBytes {
    */
   protected Address(final Bytes bytes) {
     super(bytes);
+    arrayUnsafe = this.toArrayUnsafe();
   }
 
   /**
@@ -264,15 +267,14 @@ public class Address extends DelegatingBytes {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof Address)) {
+    if (!(obj instanceof Address other)) {
       return false;
     }
-    Address other = (Address) obj;
-    return Arrays.equals(this.toArrayUnsafe(), other.toArrayUnsafe());
+    return Arrays.equals(this.arrayUnsafe, other.toArrayUnsafe());
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(this.toArrayUnsafe());
+    return Arrays.hashCode(this.arrayUnsafe);
   }
 }
