@@ -113,26 +113,6 @@ public class BlockchainTestSubCommand implements Runnable {
   private boolean enableTracing = false;
 
   @Option(
-      names = {"--trace-memory"},
-      description = "Include memory in traces")
-  private boolean traceMemory = false;
-
-  @Option(
-      names = {"--trace-stack"},
-      description = "Include stack in traces (default: true)")
-  private boolean traceStack = true;
-
-  @Option(
-      names = {"--trace-returndata"},
-      description = "Include return data in traces")
-  private boolean traceReturnData = false;
-
-  @Option(
-      names = {"--trace-storage"},
-      description = "Include storage changes in traces")
-  private boolean traceStorage = false;
-
-  @Option(
       names = {"--trace-output"},
       description = "Output file for traces (default: stderr)")
   private String traceOutput = null;
@@ -303,7 +283,11 @@ public class BlockchainTestSubCommand implements Runnable {
         }
         tracerManager =
             new BlockTestTracerManager(
-                traceWriter, traceMemory, traceStack, traceReturnData, traceStorage);
+                traceWriter,
+                parentCommand.showMemory,
+                !parentCommand.hideStack,
+                parentCommand.showReturnData,
+                parentCommand.showStorage);
       } catch (final IOException e) {
         parentCommand.out.println("Failed to open trace output: " + e.getMessage());
         return;
