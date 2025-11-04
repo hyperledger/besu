@@ -321,10 +321,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final DownloadSyncReceiptsStep downloadReceiptsStep =
         new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
 
-    final BlockHeader pivotHeader =
-        blockchain
-            .getBlockHeader(endBlock)
-            .orElseGet(() -> fastSyncState.getPivotBlockHeader().get());
+    // Headers have been downloaded from the pivot down to the start block, so the pivot header is
+    // available
+    final BlockHeader pivotHeader = blockchain.getBlockHeader(endBlock).get();
 
     final ImportSyncBlocksStep importBlocksStep =
         new ImportSyncBlocksStep(
