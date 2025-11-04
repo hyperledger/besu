@@ -196,7 +196,8 @@ public class GraphQLHttpService {
     router
         .route()
         .handler(
-            CorsHandler.create(buildCorsRegexFromConfig())
+            CorsHandler.create()
+                .addOriginWithRegex(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router
