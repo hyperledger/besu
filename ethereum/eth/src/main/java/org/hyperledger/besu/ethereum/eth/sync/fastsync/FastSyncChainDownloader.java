@@ -77,12 +77,11 @@ public class FastSyncChainDownloader {
         pipelineFactory,
         ethContext.getScheduler(),
         syncState,
-            metricsSystem,
+        metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
         chainStateStorage,
         checkpointBlock,
-        genesisHash
-    );
+        genesisHash);
   }
 }

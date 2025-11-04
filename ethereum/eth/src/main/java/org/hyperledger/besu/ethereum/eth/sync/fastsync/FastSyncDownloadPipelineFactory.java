@@ -221,8 +221,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
    * @param chainState chain sync state containing pivot and progress
    * @return the backward header download pipeline
    */
-  public Pipeline<Long> createBackwardHeaderDownloadPipeline(
-      final ChainSyncState chainState) {
+  public Pipeline<Long> createBackwardHeaderDownloadPipeline(final ChainSyncState chainState) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
@@ -238,7 +237,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem, chainState.getCheckpointBlockNumber());
+            protocolSchedule,
+            ethContext,
+            syncConfig,
+            headerRequestSize,
+            metricsSystem,
+            chainState.getCheckpointBlockNumber());
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(

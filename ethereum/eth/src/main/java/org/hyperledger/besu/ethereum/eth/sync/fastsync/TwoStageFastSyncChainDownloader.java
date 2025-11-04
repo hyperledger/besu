@@ -62,20 +62,20 @@ public class TwoStageFastSyncChainDownloader
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
 
   private volatile Pipeline<?> currentPipeline;
-    private Instant overallStartTime;
+  private Instant overallStartTime;
 
-    /**
+  /**
    * Creates a new TwoStageFastSyncChainDownloader.
    *
-   * @param pipelineFactory     the pipeline factory for creating download pipelines
-   * @param scheduler           the scheduler for running pipelines
-   * @param syncState           the sync state tracker
-   * @param metricsSystem       the metrics system (unused but kept for API compatibility)
+   * @param pipelineFactory the pipeline factory for creating download pipelines
+   * @param scheduler the scheduler for running pipelines
+   * @param syncState the sync state tracker
+   * @param metricsSystem the metrics system (unused but kept for API compatibility)
    * @param syncDurationMetrics the sync duration metrics tracker
-   * @param initialPivotHeader  the initial pivot block header
-   * @param chainStateStorage   the storage for chain sync state
-   * @param checkpointBlock     the checkpoint block number (0 for full sync)
-   * @param genesisHash         the genesis hash
+   * @param initialPivotHeader the initial pivot block header
+   * @param chainStateStorage the storage for chain sync state
+   * @param checkpointBlock the checkpoint block number (0 for full sync)
+   * @param genesisHash the genesis hash
    */
   public TwoStageFastSyncChainDownloader(
       final FastSyncDownloadPipelineFactory pipelineFactory,
@@ -99,7 +99,8 @@ public class TwoStageFastSyncChainDownloader
             rlpInput -> BlockHeader.readFrom(rlpInput, pipelineFactory.getBlockHeaderFunctions()));
     if (chainSyncState == null) {
       // First time sync - create initial state
-      chainSyncState = ChainSyncState.initialSync(initialPivotHeader, 0L, genesisHash, checkpointBlock);
+      chainSyncState =
+          ChainSyncState.initialSync(initialPivotHeader, 0L, genesisHash, checkpointBlock);
       chainStateStorage.storeState(chainSyncState);
       LOG.info(
           "Created initial chain sync state: pivot={}, checkpoint={}",
@@ -132,7 +133,7 @@ public class TwoStageFastSyncChainDownloader
         "Starting two-stage fast sync chain download from pivot block {}",
         initialState.getPivotBlockHash());
 
-      overallStartTime = Instant.now();
+    overallStartTime = Instant.now();
 
     // Start chain download duration metrics
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
@@ -242,8 +243,8 @@ public class TwoStageFastSyncChainDownloader
 
   /**
    * Checks if the pivot block has been updated during sync and handles continuation if necessary.
-   * Waits for world state heal to be finished
-   * before declaring completion to ensure no pivot updates are missed.
+   * Waits for world state heal to be finished before declaring completion to ensure no pivot
+   * updates are missed.
    *
    * @return CompletableFuture that completes when all continuation is done
    */
@@ -259,8 +260,7 @@ public class TwoStageFastSyncChainDownloader
           updatedPivot.getNumber());
 
       // Update chain state to new pivot
-      chainState.updateAndGet(
-          state -> state.continueToNewPivot(updatedPivot, previousPivot));
+      chainState.updateAndGet(state -> state.continueToNewPivot(updatedPivot, previousPivot));
       chainStateStorage.storeState(chainState.get());
 
       return downloadAccordingToChainState();
@@ -269,18 +269,19 @@ public class TwoStageFastSyncChainDownloader
     LOG.info(
         "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
 
-    return CompletableFuture.anyOf(pivotUpdateFuture, worldStateHealFinishedFuture).thenCompose(
-        ignore -> {
-            if (pivotUpdateFuture.isDone()) {
+    return CompletableFuture.anyOf(pivotUpdateFuture, worldStateHealFinishedFuture)
+        .thenCompose(
+            ignore -> {
+              if (pivotUpdateFuture.isDone()) {
                 pivotUpdateFuture = new CompletableFuture<>();
                 return checkAndHandlePivotUpdate();
-            } else {
+              } else {
                 LOG.info(
-                        "World state heal finished (current pivot number: {}). Chain download complete.",
-                        previousPivot.getNumber());
+                    "World state heal finished (current pivot number: {}). Chain download complete.",
+                    previousPivot.getNumber());
                 return CompletableFuture.completedFuture(null);
-            }
-        });
+              }
+            });
   }
 
   /**
@@ -309,23 +310,23 @@ public class TwoStageFastSyncChainDownloader
             })
         .handle(
             (result, error) -> {
-                if (error != null && shouldRetry(error)) {
-                    LOG.warn("Chain sync encountered error, will retry from saved state", error);
-                    // Restart from saved state
-                    return downloadAccordingToChainState();
-                } else if (error != null) {
-                    // Stop metrics on failure
-                    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
-                    return CompletableFuture.<Void>failedFuture(error);
-                } else {
-                    final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
-                    LOG.info(
-                            "Two-stage fast sync chain download complete in {} seconds",
-                            totalDuration.getSeconds());
-                    // Stop metrics on success
-                    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
-                    return CompletableFuture.<Void>completedFuture(null);
-                }
+              if (error != null && shouldRetry(error)) {
+                LOG.warn("Chain sync encountered error, will retry from saved state", error);
+                // Restart from saved state
+                return downloadAccordingToChainState();
+              } else if (error != null) {
+                // Stop metrics on failure
+                syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                return CompletableFuture.<Void>failedFuture(error);
+              } else {
+                final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
+                LOG.info(
+                    "Two-stage fast sync chain download complete in {} seconds",
+                    totalDuration.getSeconds());
+                // Stop metrics on success
+                syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                return CompletableFuture.<Void>completedFuture(null);
+              }
             })
         .thenCompose(f -> f);
   }

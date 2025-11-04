@@ -75,12 +75,11 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
         pipelineFactory,
         ethContext.getScheduler(),
         syncState,
-            metricsSystem,
+        metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
         chainStateStorage,
         checkpointBlock,
-        genesisHash
-    );
+        genesisHash);
   }
 }

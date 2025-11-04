@@ -83,8 +83,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
   private Set<Bytes> accountsHealingList = new HashSet<>();
   private DynamicPivotBlockSelector pivotBlockSelector;
-  private WorldStateHealFinishedListener
-          worldStateHealFinishedListener;
+  private WorldStateHealFinishedListener worldStateHealFinishedListener;
 
   private final SnapSyncStatePersistenceManager snapContext;
   private final SnapSyncProcessState snapSyncState;
@@ -440,14 +439,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.pivotBlockSelector = pivotBlockSelector;
   }
 
-  public void setWorldStateHealFinishedListener(
-      final WorldStateHealFinishedListener listener) {
+  public void setWorldStateHealFinishedListener(final WorldStateHealFinishedListener listener) {
     this.worldStateHealFinishedListener = listener;
   }
 
   /**
-   * Notifies the registered listener that world state heal has finished and will
-   * not select any new pivot blocks. This notification is sent only once.
+   * Notifies the registered listener that world state heal has finished and will not select any new
+   * pivot blocks. This notification is sent only once.
    */
   private void notifyWorldStateHealFinished() {
     if (worldStateHealFinishedNotified.compareAndSet(false, true)) {
