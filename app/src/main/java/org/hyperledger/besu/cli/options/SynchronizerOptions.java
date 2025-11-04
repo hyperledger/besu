@@ -67,8 +67,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   // Regular (stable) flag
   private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
-  // Deprecated experimental flag
-  private static final String SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG = "--Xsnapsync-server-enabled";
 
   private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-window-validity";
@@ -307,12 +305,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   // TODO --Xsnapsync-server-enabled is deprecated, remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = {SNAP_SERVER_ENABLED_FLAG, SNAP_SERVER_ENABLED_EXPERIMENTAL_FLAG},
+      names = {SNAP_SERVER_ENABLED_FLAG},
       paramLabel = "<Boolean>",
       arity = "0..1",
       fallbackValue = "true",
-      description =
-          "Enable snap sync server capability. Note: --Xsnapsync-server-enabled is deprecated and will be removed in a future release. --snapsync-server-enabled is used instead. (default: ${DEFAULT-VALUE})")
+      description = "Enable snap sync server capability. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
@@ -338,12 +335,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = {
-        "--Xsnapsync-synchronizer-pre-merge-headers-only-enabled",
-        SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG
-      },
+      names = {SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG},
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =

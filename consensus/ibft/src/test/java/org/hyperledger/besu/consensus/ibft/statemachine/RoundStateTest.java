@@ -43,6 +43,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,22 +183,22 @@ public class RoundStateTest {
 
   @Test
   public void invalidPriorPrepareMessagesAreDiscardedUponSubsequentProposal() {
-    final Prepare firstPrepare =
+    final Prepare validPrepare =
         validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
-
-    final Prepare secondPrepare =
+    final Prepare invalidPrepare =
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
+    final Prepare validPrepare2 =
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, blockHash);
 
-    // RoundState has a quorum size of 3, meaning 1 proposal and 2 prepare are required to be
-    // 'prepared'.
     final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
-    when(messageValidator.validatePrepare(firstPrepare)).thenReturn(true);
-    when(messageValidator.validatePrepare(secondPrepare)).thenReturn(false);
+    when(messageValidator.validatePrepare(validPrepare)).thenReturn(true);
+    when(messageValidator.validatePrepare(invalidPrepare)).thenReturn(false);
+    when(messageValidator.validatePrepare(validPrepare2)).thenReturn(true);
 
-    roundState.addPrepareMessage(firstPrepare);
-    roundState.addPrepareMessage(secondPrepare);
+    roundState.addPrepareMessage(invalidPrepare);
+    roundState.addPrepareMessage(validPrepare);
     verify(messageValidator, never()).validatePrepare(any());
 
     final Proposal proposal =
@@ -207,6 +208,61 @@ public class RoundStateTest {
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
     assertThat(roundState.constructPreparedRoundArtifacts()).isEmpty();
+
+    roundState.addPrepareMessage(validPrepare2);
+    assertThat(roundState.isPrepared()).isTrue();
+
+    final Optional<PreparedRoundArtifacts> preparedRoundArtifacts =
+        roundState.constructPreparedRoundArtifacts();
+    assertThat(preparedRoundArtifacts).isNotEmpty();
+
+    final List<SignedData<PreparePayload>> expectedPrepares =
+        Stream.of(validPrepare, validPrepare2)
+            .map(BftMessage::getSignedPayload)
+            .collect(Collectors.toList());
+    assertThat(preparedRoundArtifacts.get().getPreparedCertificate().getPreparePayloads())
+        .isEqualTo(expectedPrepares);
+  }
+
+  @Test
+  public void invalidPriorCommitMessagesAreDiscardedUponSubsequentProposal() {
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+    final Commit validCommit =
+        validatorMessageFactories
+            .get(1)
+            .createCommit(
+                roundIdentifier,
+                blockHash,
+                signatureAlgorithm.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
+
+    final Commit invalidCommit =
+        validatorMessageFactories
+            .get(2)
+            .createCommit(
+                roundIdentifier,
+                blockHash,
+                signatureAlgorithm.createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
+
+    // RoundState has a quorum size of 3, meaning 1 proposal and 2 commits are required to be
+    // 'committed'.
+    final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
+
+    when(messageValidator.validateProposal(any())).thenReturn(true);
+    when(messageValidator.validateCommit(validCommit)).thenReturn(true);
+    when(messageValidator.validateCommit(invalidCommit)).thenReturn(false);
+
+    roundState.addCommitMessage(validCommit);
+    roundState.addCommitMessage(invalidCommit);
+    verify(messageValidator, never()).validateCommit(any());
+
+    final Proposal proposal =
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
+
+    assertThat(roundState.setProposedBlock(proposal)).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
+    assertThat(roundState.isCommitted()).isFalse();
+    assertThat(roundState.getCommitSeals()).containsOnly(validCommit.getCommitSeal());
   }
 
   @Test

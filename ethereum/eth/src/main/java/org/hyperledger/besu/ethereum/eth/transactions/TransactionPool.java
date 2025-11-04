@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -321,8 +322,8 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+      if (event.getEventType().equals(EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(EventType.CHAIN_REORG)) {
 
         blockAddedEventOrderedProcessor.submit(event);
       }
@@ -932,12 +933,13 @@ public class TransactionPool implements BlockAddedObserver {
 
       LOG.debug("Removing processed lines from save file");
 
-      final var tmp = File.createTempFile(saveFile.getName(), ".tmp");
+      // Create temporary file with default secure permissions
+      final var tmp =
+          Files.createTempFile(saveFile.getParentFile().toPath(), saveFile.getName(), ".tmp");
 
       try (final BufferedReader reader =
               Files.newBufferedReader(saveFile.toPath(), StandardCharsets.US_ASCII);
-          final BufferedWriter writer =
-              Files.newBufferedWriter(tmp.toPath(), StandardCharsets.US_ASCII)) {
+          final BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.US_ASCII)) {
         reader
             .lines()
             .skip(processedLines)
@@ -953,7 +955,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
 
       saveFile.delete();
-      Files.move(tmp.toPath(), saveFile.toPath());
+      Files.move(tmp, saveFile.toPath());
     }
   }
 }

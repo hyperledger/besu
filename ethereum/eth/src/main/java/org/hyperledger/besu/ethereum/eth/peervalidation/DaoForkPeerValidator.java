@@ -17,10 +17,8 @@ package org.hyperledger.besu.ethereum.eth.peervalidation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,32 +29,17 @@ public class DaoForkPeerValidator extends AbstractPeerBlockValidator {
   DaoForkPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
-    super(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        daoBlockNumber,
-        chainHeightEstimationBuffer);
+    super(protocolSchedule, peerTaskExecutor, daoBlockNumber, chainHeightEstimationBuffer);
   }
 
   public DaoForkPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
     this(
-        protocolSchedule,
-        peerTaskExecutor,
-        synchronizerConfiguration,
-        metricsSystem,
-        daoBlockNumber,
-        DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+        protocolSchedule, peerTaskExecutor, daoBlockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override
