@@ -34,51 +34,50 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockHeaderSource.class);
 
   private final Blockchain blockchain;
-  private final long endBlock;
+  private final long pivotBlockNumber;
   private final int batchSize;
 
   private long currentBlock;
-  private boolean exhausted = false;
 
   /**
    * Creates a new BlockHeaderSource.
    *
    * @param blockchain the blockchain to read headers from
-   * @param startBlock the block number to start reading from (inclusive)
-   * @param endBlock the block number to stop at (inclusive)
+   * @param checkpointBlockNumber the block number before the block to start with
+   * @param pivotBlockNumber the block number to stop at (inclusive)
    * @param batchSize the number of headers to return per batch
    */
   public BlockHeaderSource(
       final Blockchain blockchain,
-      final long startBlock,
-      final long endBlock,
+      final long checkpointBlockNumber,
+      final long pivotBlockNumber,
       final int batchSize) {
     this.blockchain = blockchain;
-    this.endBlock = endBlock;
+    this.pivotBlockNumber = pivotBlockNumber;
     this.batchSize = batchSize;
-    this.currentBlock = startBlock;
+    this.currentBlock = checkpointBlockNumber + 1;
 
     LOG.debug(
         "BlockHeaderSource created: start={}, end={}, batchSize={}",
-        startBlock,
-        endBlock,
+        checkpointBlockNumber,
+        pivotBlockNumber,
         batchSize);
   }
 
   @Override
   public synchronized boolean hasNext() {
-    return !exhausted && currentBlock <= endBlock;
+    return currentBlock <= pivotBlockNumber;
   }
 
   @Override
   public synchronized List<BlockHeader> next() {
-    if (exhausted || currentBlock > endBlock) {
+    if (currentBlock > pivotBlockNumber) {
       LOG.debug("BlockHeaderSource exhausted at block {}", currentBlock);
       return null;
     }
 
     final List<BlockHeader> batch = new ArrayList<>();
-    final long batchEnd = Math.min(currentBlock + batchSize - 1, endBlock);
+    final long batchEnd = Math.min(currentBlock + batchSize - 1, pivotBlockNumber);
 
     LOG.trace("BlockHeaderSource reading batch: blocks {} to {}", currentBlock, batchEnd);
 
@@ -86,19 +85,17 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
       final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
 
       if (blockHeader.isEmpty()) {
-        LOG.warn(
+        LOG.error(
             "Gap detected: missing header at block {}. Stopping forward header reading.",
             blockNumber);
-        exhausted = true;
-        break;
+        throw new IllegalStateException("Gap detected: missing header at block " + blockNumber);
       }
 
       batch.add(blockHeader.get());
     }
 
     if (batch.isEmpty()) {
-      LOG.debug("BlockHeaderSource returning empty batch, marking exhausted");
-      exhausted = true;
+      LOG.debug("BlockHeaderSource returning empty batch.");
       return null;
     }
 
@@ -119,14 +116,5 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
    */
   public synchronized long getCurrentBlock() {
     return currentBlock;
-  }
-
-  /**
-   * Check if this source has been exhausted (either completed or encountered a gap).
-   *
-   * @return true if exhausted
-   */
-  public synchronized boolean isExhausted() {
-    return exhausted;
   }
 }
