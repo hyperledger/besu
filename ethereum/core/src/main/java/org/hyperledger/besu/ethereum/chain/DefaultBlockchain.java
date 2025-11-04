@@ -737,6 +737,12 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
 
+    LOG.info(
+        "updateCanonicalChainData: newBlock parent hash and number: {} {}, chainHead hash: {}",
+        newBlock.getHeader().getParentHash(),
+        newBlock.getHeader().getNumber(),
+        chainHead);
+
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
       throw new IllegalStateException("Blockchain is missing chain head.");
     }
