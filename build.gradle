@@ -26,7 +26,7 @@ plugins {
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.3' apply false
-  id 'net.ltgt.errorprone' version '4.2.0'
+  id 'net.ltgt.errorprone' version '4.3.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
