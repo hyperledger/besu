@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -70,7 +71,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
 
-  private static final long FUTURE_EIPS_TIMESTAMP = 100L;
+  private static final long AMSTERDAM_TIMESTAMP = 100L;
 
   public EngineGetPayloadV6Test() {
     super();
@@ -83,8 +84,8 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     lenient().when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     lenient()
-        .when(protocolSchedule.milestoneFor(FUTURE_EIPS))
-        .thenReturn(Optional.of(FUTURE_EIPS_TIMESTAMP));
+        .when(protocolSchedule.milestoneFor(AMSTERDAM))
+        .thenReturn(Optional.of(AMSTERDAM_TIMESTAMP));
     this.method =
         new EngineGetPayloadV6(
             vertx,
@@ -108,7 +109,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
     final String encodedBlockAccessList = encodeBlockAccessList(blockAccessList);
     final BlockHeader header =
         new BlockHeaderTestFixture()
-            .timestamp(FUTURE_EIPS_TIMESTAMP + 1)
+            .timestamp(AMSTERDAM_TIMESTAMP + 1)
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .balHash(BodyValidation.balHash(blockAccessList))
@@ -141,7 +142,8 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
 
     final PayloadWrapper payload =
-        new PayloadWrapper(payloadIdentifier, blockWithReceipts, Optional.of(requests));
+        new PayloadWrapper(
+            payloadIdentifier, blockWithReceipts, Optional.of(requests), BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -160,7 +162,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforeEip7928Milestone() {
     final BlockHeader header =
         new BlockHeaderTestFixture()
-            .timestamp(FUTURE_EIPS_TIMESTAMP - 1)
+            .timestamp(AMSTERDAM_TIMESTAMP - 1)
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
@@ -178,7 +180,8 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
         new BlockWithReceipts(
             new Block(header, new BlockBody(emptyList(), emptyList())), emptyList());
     final PayloadWrapper payload =
-        new PayloadWrapper(payloadIdentifier, blockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            payloadIdentifier, blockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -215,5 +218,11 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
   @Override
   String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V6.getMethodName();
+  }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V6 works with Amsterdam (>= 100)
+    return AMSTERDAM_TIMESTAMP + 1;
   }
 }

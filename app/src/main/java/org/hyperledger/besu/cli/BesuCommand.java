@@ -29,6 +29,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAut
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
@@ -235,6 +236,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -296,6 +298,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
+  private final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory;
 
   // Unstable CLI options
   final NetworkingOptions unstableNetworkingOptions = NetworkingOptions.create();
@@ -655,6 +658,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
+   * @param era1BlockExporterFactory instance of {@code Function<Blockchain, Era1BlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder
    * @param besuPluginContext instance of BesuPluginContextImpl
@@ -666,6 +670,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
@@ -676,6 +681,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonBlockImporterFactory,
         era1BlockImporter,
         rlpBlockExporterFactory,
+        era1BlockExporterFactory,
         runnerBuilder,
         controllerBuilder,
         besuPluginContext,
@@ -699,6 +705,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param era1BlockImporter Era1BlockImporter supplier
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
+   * @param era1BlockExporterFactory instance of {@code Function<Blockchain, Era1BlockExporter>}
    * @param runnerBuilder instance of RunnerBuilder
    * @param controllerBuilder instance of BesuController.Builder
    * @param besuPluginContext instance of BesuPluginContextImpl
@@ -720,6 +727,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
@@ -740,6 +748,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
     this.era1BlockImporter = era1BlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
+    this.era1BlockExporterFactory = era1BlockExporterFactory;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilder = controllerBuilder;
     this.besuPluginContext = besuPluginContext;
@@ -763,16 +772,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Parse Besu command line arguments. Visible for testing.
-   *
-   * @param resultHandler execution strategy. See PicoCLI. Typical argument is RunLast.
-   * @param parameterExceptionHandler Exception handler for handling parameters
-   * @param executionExceptionHandler Exception handler for business logic
-   * @param in Standard input stream
-   * @param args arguments to Besu command
-   * @return success or failure exit code.
-   */
-  /**
    * Parses command line arguments and configures the application accordingly.
    *
    * @param resultHandler The strategy to handle the execution result.
@@ -783,6 +782,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param args The command line arguments.
    * @return The execution result status code.
    */
+  @VisibleForTesting
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,
@@ -1111,6 +1111,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonBlockImporterFactory,
             era1BlockImporter,
             rlpBlockExporterFactory,
+            era1BlockExporterFactory,
             commandLine.getOut()));
     commandLine.addSubcommand(
         TxParseSubCommand.COMMAND_NAME, new TxParseSubCommand(commandLine.getOut()));
@@ -1405,6 +1406,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || genesisConfigOptionsSupplier.get().getBpo3Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo4Time().isPresent()
         || genesisConfigOptionsSupplier.get().getBpo5Time().isPresent()
+        || genesisConfigOptionsSupplier.get().getAmsterdamTime().isPresent()
         || genesisConfigOptionsSupplier.get().getFutureEipsTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);

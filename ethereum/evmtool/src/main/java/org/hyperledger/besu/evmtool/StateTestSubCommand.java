@@ -36,8 +36,9 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -212,13 +214,16 @@ public class StateTestSubCommand implements Runnable {
       final boolean isLastIteration) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults && isLastIteration
-            ? new StandardJsonTracer(
+            ? new StreamingOperationTracer(
                 parentCommand.out,
-                parentCommand.showMemory,
-                !parentCommand.hideStack,
-                parentCommand.showReturnData,
-                parentCommand.showStorage,
-                parentCommand.eip3155strict)
+                OpCodeTracerConfigBuilder.create()
+                    .traceMemory(parentCommand.showMemory)
+                    .traceStack(!parentCommand.hideStack)
+                    .traceReturnData(parentCommand.showReturnData)
+                    .traceStorage(parentCommand.showStorage)
+                    .traceOpcodes(Collections.emptySet())
+                    .eip3155Strict(parentCommand.eip3155strict)
+                    .build())
             : OperationTracer.NO_TRACING;
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
@@ -307,7 +312,7 @@ public class StateTestSubCommand implements Runnable {
         final float mGps = gasUsed * 1000.0f / timeNs;
 
         if (parentCommand.eip3155strict) {
-          summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+          summaryLine.put("gasUsed", StreamingOperationTracer.shortNumber(gasUsed));
         } else {
           summaryLine.put("gasUsed", gasUsed);
         }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -75,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryBal;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -148,6 +150,7 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
   private static final int POW_SLOT_TIME_ESTIMATION = 13;
+  private static final Duration BAL_ROOT_TIMEOUT = Duration.ofSeconds(1);
 
   private MainnetProtocolSpecs() {}
 
@@ -572,6 +575,7 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                false,
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.london(
@@ -798,6 +802,7 @@ public abstract class MainnetProtocolSpecs {
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                true,
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.cancun(
@@ -1146,6 +1151,29 @@ public abstract class MainnetProtocolSpecs {
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, BPO5);
   }
 
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final boolean isBlockAccessListEnabled,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            isBlockAccessListEnabled,
+            metricsSystem)
+        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+        .stateRootCommitterFactory(new StateRootCommitterFactoryBal(false, BAL_ROOT_TIMEOUT))
+        .hardforkId(AMSTERDAM);
+  }
+
   private static ProtocolSpecBuilder applyBlobSchedule(
       final ProtocolSpecBuilder builder,
       final GenesisConfigOptions genesisConfigOptions,
@@ -1191,7 +1219,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        bpo5Definition(
+        amsterdamDefinition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,
@@ -1201,7 +1229,6 @@ public abstract class MainnetProtocolSpecs {
                 isBlockAccessListEnabled,
                 metricsSystem)
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
             .hardforkId(FUTURE_EIPS);
 
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
@@ -1377,10 +1404,15 @@ public abstract class MainnetProtocolSpecs {
       final long londonForkBlockNumber,
       final boolean isZeroBaseFee,
       final boolean isFixedBaseFee,
+      final boolean supportsBlobs,
       final Wei minTransactionGasPrice,
       final ProtocolSpecBuilder.FeeMarketBuilder feeMarketBuilder) {
     if (isZeroBaseFee) {
-      return blobSchedule -> FeeMarket.zeroBaseFee(londonForkBlockNumber);
+      var baseFeeMarket =
+          supportsBlobs
+              ? FeeMarket.zeroBlobFee(londonForkBlockNumber)
+              : FeeMarket.zeroBaseFee(londonForkBlockNumber);
+      return blobSchedule -> baseFeeMarket;
     }
     if (isFixedBaseFee) {
       return blobSchedule -> FeeMarket.fixedBaseFee(londonForkBlockNumber, minTransactionGasPrice);

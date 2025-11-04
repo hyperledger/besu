@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -85,6 +87,7 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
   @Mock private MutableBlockchain blockchain;
   @Mock private TransactionPool transactionPool;
   @Mock private BlockHeader blockHeader;
+  @Mock private MergeContext mergeContext;
 
   private EngineGetBlobsV1 method;
 
@@ -92,6 +95,9 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   @BeforeEach
   public void beforeEach() {
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.ofNullable(mergeContext));
+
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
@@ -253,6 +259,16 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(fromErrorResp(response).getCode())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  public void shouldReturnNullWhenSyncing() {
+    when(mergeContext.isSyncing()).thenReturn(true);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(response);
+    assertThat(blobAndProofV1s).hasSize(1);
+    assertThat(blobAndProofV1s.getFirst()).isNull();
   }
 
   Transaction createBlobTransaction() {

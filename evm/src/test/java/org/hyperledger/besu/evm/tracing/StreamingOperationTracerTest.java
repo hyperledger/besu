@@ -12,15 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm;
+package org.hyperledger.besu.evm.tracing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.fluent.EvmSpec;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -28,7 +29,7 @@ import java.io.PrintStream;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class StandardJsonTracerTest {
+class StreamingOperationTracerTest {
 
   @Test
   void eip3155ModifiedTestCaseStrictTypes() {
@@ -36,7 +37,15 @@ class StandardJsonTracerTest {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
     var executor = new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.ISTANBUL));
-    StandardJsonTracer tracer = new StandardJsonTracer(out, true, true, true, false, true);
+    StreamingOperationTracer tracer =
+        new StreamingOperationTracer(
+            out,
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceMemory(true)
+                .traceReturnData(true)
+                .traceStorage(false)
+                .eip3155Strict(true)
+                .build());
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 
@@ -79,7 +88,15 @@ class StandardJsonTracerTest {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
     var executor = new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.ISTANBUL));
-    StandardJsonTracer tracer = new StandardJsonTracer(out, true, true, true, false);
+    StreamingOperationTracer tracer =
+        new StreamingOperationTracer(
+            out,
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceMemory(true)
+                .traceStack(true)
+                .traceReturnData(true)
+                .traceStorage(false)
+                .build());
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 
@@ -122,7 +139,15 @@ class StandardJsonTracerTest {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(baos);
     var executor = new EVMExecutor(EvmSpec.evmSpec(EvmSpecVersion.ISTANBUL));
-    StandardJsonTracer tracer = new StandardJsonTracer(out, false, false, false, true);
+    StreamingOperationTracer tracer =
+        new StreamingOperationTracer(
+            out,
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceMemory(false)
+                .traceStack(false)
+                .traceReturnData(false)
+                .traceStorage(true)
+                .build());
     executor.tracer(tracer);
     executor.gas(10_000_000_000L);
 

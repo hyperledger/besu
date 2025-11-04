@@ -19,28 +19,29 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** The Standard json tracer. */
-public class StandardJsonTracer implements OperationTracer {
+/**
+ * The Streaming operation tracer. This tracer streams traces in JSON format to the chosen output
+ * stream
+ */
+public class StreamingOperationTracer implements OperationTracer {
 
   private static final Joiner commaJoiner = Joiner.on(',');
   private final PrintWriter out;
-  private final boolean showMemory;
-  private final boolean showStack;
-  private final boolean showReturnData;
-  private final boolean showStorage;
-  private final boolean eip3155strict;
+  private final OpCodeTracerConfig opCodeTracerConfig;
   private int pc;
   private int section;
   private List<String> stack;
@@ -51,96 +52,31 @@ public class StandardJsonTracer implements OperationTracer {
   private int functionDepth;
   private String storageString;
 
+  // Flags used for implementing traceOpcodes functionality
+  private boolean traceOpcode;
+  private Operation previousOpcode = null;
+
   /**
-   * Instantiates a new Standard json tracer.
+   * Instantiates a new StreamingOperationTracer
    *
-   * @param out the out
-   * @param showMemory show memory in trace lines
-   * @param showStack show the stack in trace lines
-   * @param showReturnData show return data in trace lines
-   * @param showStorage show the updated storage
+   * @param out the PrintStream to stream JSON traces to
+   * @param opCodeTracerConfig configuration for tracing
    */
-  public StandardJsonTracer(
-      final PrintWriter out,
-      final boolean showMemory,
-      final boolean showStack,
-      final boolean showReturnData,
-      final boolean showStorage) {
-    this(out, showMemory, showStack, showReturnData, showStorage, false);
+  public StreamingOperationTracer(
+      final PrintStream out, final OpCodeTracerConfig opCodeTracerConfig) {
+    this(new PrintWriter(out, true, StandardCharsets.UTF_8), opCodeTracerConfig);
   }
 
   /**
-   * Instantiates a new Standard json tracer.
+   * Instantiates a new StreamingOperationTracer
    *
-   * @param out the out
-   * @param showMemory show memory in trace lines
-   * @param showStack show the stack in trace lines
-   * @param showReturnData show return data in trace lines
-   * @param showStorage show the updated storage
-   * @param eip3155strict Output EIP-3155 compatible traces
+   * @param out the PrintWriter to stream JSON traces to
+   * @param opCodeTracerConfig configuration for tracing
    */
-  public StandardJsonTracer(
-      final PrintWriter out,
-      final boolean showMemory,
-      final boolean showStack,
-      final boolean showReturnData,
-      final boolean showStorage,
-      final boolean eip3155strict) {
+  public StreamingOperationTracer(
+      final PrintWriter out, final OpCodeTracerConfig opCodeTracerConfig) {
     this.out = out;
-    this.showMemory = showMemory;
-    this.showStack = showStack;
-    this.showReturnData = showReturnData;
-    this.showStorage = showStorage;
-    this.eip3155strict = eip3155strict;
-  }
-
-  /**
-   * Instantiates a new Standard json tracer.
-   *
-   * @param out the out
-   * @param showMemory show memory in trace lines
-   * @param showStack show the stack in trace lines
-   * @param showReturnData show return data in trace lines
-   * @param showStorage show updated storage
-   */
-  public StandardJsonTracer(
-      final PrintStream out,
-      final boolean showMemory,
-      final boolean showStack,
-      final boolean showReturnData,
-      final boolean showStorage) {
-    this(
-        new PrintWriter(out, true, StandardCharsets.UTF_8),
-        showMemory,
-        showStack,
-        showReturnData,
-        showStorage);
-  }
-
-  /**
-   * Instantiates a new Standard json tracer.
-   *
-   * @param out the out
-   * @param showMemory show memory in trace lines
-   * @param showStack show the stack in trace lines
-   * @param showReturnData show return data in trace lines
-   * @param showStorage show updated storage
-   * @param eip3155strict Output eip-3155 compatible traces
-   */
-  public StandardJsonTracer(
-      final PrintStream out,
-      final boolean showMemory,
-      final boolean showStack,
-      final boolean showReturnData,
-      final boolean showStorage,
-      final boolean eip3155strict) {
-    this(
-        new PrintWriter(out, true, StandardCharsets.UTF_8),
-        showMemory,
-        showStack,
-        showReturnData,
-        showStorage,
-        eip3155strict);
+    this.opCodeTracerConfig = opCodeTracerConfig;
   }
 
   /**
@@ -169,6 +105,10 @@ public class StandardJsonTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
+    final Operation currentOp = messageFrame.getCurrentOperation();
+    if (!(traceOpcode = traceOpcode(currentOp))) {
+      return;
+    }
     stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
@@ -177,7 +117,7 @@ public class StandardJsonTracer implements OperationTracer {
     section = messageFrame.getSection();
     gas = messageFrame.getRemainingGas();
     memorySize = messageFrame.memoryWordSize() * 32;
-    if (showMemory && memorySize > 0) {
+    if (opCodeTracerConfig.traceMemory() && memorySize > 0) {
       memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
     } else {
       memory = null;
@@ -187,7 +127,7 @@ public class StandardJsonTracer implements OperationTracer {
         messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
 
     StringBuilder sb = new StringBuilder();
-    if (showStorage) {
+    if (opCodeTracerConfig.traceStorage()) {
       var updater = messageFrame.getWorldUpdater();
       var account = updater.getAccount(messageFrame.getRecipientAddress());
       if (account != null && !account.getUpdatedStorage().isEmpty()) {
@@ -214,10 +154,34 @@ public class StandardJsonTracer implements OperationTracer {
     storageString = sb.toString();
   }
 
+  private boolean traceOpcode(final Operation currentOpcode) {
+    if (opCodeTracerConfig.traceOpcodes().isEmpty()) {
+      return true;
+    }
+    final boolean traceCurrentOpcode =
+        opCodeTracerConfig
+            .traceOpcodes()
+            .contains(currentOpcode.getName().toLowerCase(Locale.ROOT));
+    final boolean tracePreviousOpcode =
+        previousOpcode != null
+            && opCodeTracerConfig
+                .traceOpcodes()
+                .contains(previousOpcode.getName().toLowerCase(Locale.ROOT));
+
+    if (!traceCurrentOpcode && !tracePreviousOpcode) {
+      return false;
+    }
+    previousOpcode = currentOpcode;
+    return true;
+  }
+
   @Override
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
+    if (!traceOpcode) {
+      return;
+    }
     if (currentOp.isVirtualOperation()) {
       return;
     }
@@ -235,7 +199,7 @@ public class StandardJsonTracer implements OperationTracer {
     if (eofContract) {
       sb.append("\"section\":").append(section).append(",");
     }
-    if (eip3155strict) {
+    if (opCodeTracerConfig.eip3155Strict()) {
       sb.append("\"op\":").append(opcode).append(",");
     } else {
       sb.append("\"op\":\"").append(fastHexByte(opcode)).append("\",");
@@ -245,7 +209,7 @@ public class StandardJsonTracer implements OperationTracer {
       var immediate = messageFrame.getCode().getBytes().slice(pc + 1, opInfo.pcAdvance() - 1);
       sb.append("\"immediate\":\"").append(immediate.toHexString()).append("\",");
     }
-    if (eip3155strict) {
+    if (opCodeTracerConfig.eip3155Strict()) {
       sb.append("\"gas\":\"").append(shortNumber(gas)).append("\",");
       sb.append("\"gasCost\":\"").append(shortNumber(thisGasCost)).append("\",");
     } else {
@@ -256,10 +220,10 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
     }
     sb.append("\"memSize\":").append(memorySize).append(",");
-    if (showStack) {
+    if (opCodeTracerConfig.traceStack()) {
       sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
     }
-    if (showReturnData && !returnData.isEmpty()) {
+    if (opCodeTracerConfig.traceReturnData() && !returnData.isEmpty()) {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
