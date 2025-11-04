@@ -8,6 +8,7 @@
   - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
   - Remove `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
   - Remove `--Xhistory-expiry-prune` deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Upcoming Breaking Changes
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
@@ -17,6 +18,7 @@
 ### Additions and Improvements
 - Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
 - Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Bug fixes
 
