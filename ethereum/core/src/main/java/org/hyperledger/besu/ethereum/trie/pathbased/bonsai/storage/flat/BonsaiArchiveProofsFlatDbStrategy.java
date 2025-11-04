@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.ARCHIVE_PROOF_BLOCK_NUMBER_KEY;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.ARCHIVE_PROOF_CHECKPOINT_INTERVAL_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -48,13 +49,38 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
    * @param metricsSystem placeholder
    * @param codeStorageStrategy placeholder
    * @param trieNodeCheckpointInterval placeholder
+   * @param storage worldStorage
    */
   public BonsaiArchiveProofsFlatDbStrategy(
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy,
-      final Long trieNodeCheckpointInterval) {
+      final Long trieNodeCheckpointInterval,
+      final SegmentedKeyValueStorage storage) {
     super(metricsSystem, codeStorageStrategy);
     this.trieNodeCheckpointInterval = trieNodeCheckpointInterval;
+
+    storage
+        .get(TRIE_BRANCH_STORAGE, ARCHIVE_PROOF_CHECKPOINT_INTERVAL_KEY)
+        .ifPresentOrElse(
+            (persistedCheckpointInterval) -> {
+              if (trieNodeCheckpointInterval != Bytes.wrap(persistedCheckpointInterval).toLong()) {
+                throw new RuntimeException(
+                    "Checkpoint interval mismatch (DB="
+                        + Bytes.wrap(persistedCheckpointInterval).toLong()
+                        + ", config="
+                        + trieNodeCheckpointInterval
+                        + ")");
+              }
+              ;
+            },
+            () -> {
+              SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+              tx.put(
+                  TRIE_BRANCH_STORAGE,
+                  ARCHIVE_PROOF_CHECKPOINT_INTERVAL_KEY,
+                  Bytes.ofUnsignedLong(trieNodeCheckpointInterval).toArrayUnsafe());
+              tx.commit();
+            });
   }
 
   private Optional<BonsaiContext> getStateTrieArchiveContextForWrite(

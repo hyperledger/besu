@@ -58,7 +58,9 @@ public abstract class FlatDbStrategyProvider {
           deriveUseCodeStorageByHash(composedWorldStateStorage)
               ? new CodeHashCodeStorageStrategy()
               : new AccountHashCodeStorageStrategy();
-      this.flatDbStrategy = createFlatDbStrategy(flatDbMode, metricsSystem, codeStorageStrategy);
+      this.flatDbStrategy =
+          createFlatDbStrategy(
+              flatDbMode, metricsSystem, codeStorageStrategy, composedWorldStateStorage);
     }
   }
 
@@ -151,5 +153,6 @@ public abstract class FlatDbStrategyProvider {
   protected abstract FlatDbStrategy createFlatDbStrategy(
       final FlatDbMode flatDbMode,
       final MetricsSystem metricsSystem,
-      final CodeStorageStrategy codeStorageStrategy);
+      final CodeStorageStrategy codeStorageStrategy,
+      final SegmentedKeyValueStorage composedWorldStateStorage);
 }

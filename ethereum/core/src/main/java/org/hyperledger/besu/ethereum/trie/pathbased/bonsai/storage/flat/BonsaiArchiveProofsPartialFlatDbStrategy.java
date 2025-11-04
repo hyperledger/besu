@@ -40,12 +40,14 @@ public class BonsaiArchiveProofsPartialFlatDbStrategy extends BonsaiArchiveProof
    * @param metricsSystem placeholder
    * @param codeStorageStrategy placeholder
    * @param trieNodeCheckpointInterval placeholder
+   * @param storage world storage
    */
   public BonsaiArchiveProofsPartialFlatDbStrategy(
       final MetricsSystem metricsSystem,
       final CodeStorageStrategy codeStorageStrategy,
-      final Long trieNodeCheckpointInterval) {
-    super(metricsSystem, codeStorageStrategy, trieNodeCheckpointInterval);
+      final Long trieNodeCheckpointInterval,
+      final SegmentedKeyValueStorage storage) {
+    super(metricsSystem, codeStorageStrategy, trieNodeCheckpointInterval, storage);
   }
 
   @Override

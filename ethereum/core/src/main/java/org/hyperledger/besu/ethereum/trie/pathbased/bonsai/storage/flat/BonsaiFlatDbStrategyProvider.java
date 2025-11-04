@@ -78,7 +78,8 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
   protected FlatDbStrategy createFlatDbStrategy(
       final FlatDbMode flatDbMode,
       final MetricsSystem metricsSystem,
-      final CodeStorageStrategy codeStorageStrategy) {
+      final CodeStorageStrategy codeStorageStrategy,
+      final SegmentedKeyValueStorage storage) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case X_BONSAI_ARCHIVE ->
           flatDbMode == FlatDbMode.FULL
@@ -92,14 +93,16 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
                   dataStorageConfiguration
                       .getPathBasedExtraStorageConfiguration()
                       .getUnstable()
-                      .getArchiveTrieNodeCheckpointInterval())
+                      .getArchiveTrieNodeCheckpointInterval(),
+                  storage)
               : new BonsaiArchiveProofsPartialFlatDbStrategy(
                   metricsSystem,
                   codeStorageStrategy,
                   dataStorageConfiguration
                       .getPathBasedExtraStorageConfiguration()
                       .getUnstable()
-                      .getArchiveTrieNodeCheckpointInterval());
+                      .getArchiveTrieNodeCheckpointInterval(),
+                  storage);
       default ->
           flatDbMode == FlatDbMode.FULL
               ? new BonsaiFullFlatDbStrategy(metricsSystem, codeStorageStrategy)

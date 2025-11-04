@@ -71,6 +71,9 @@ public abstract class PathBasedWorldStateKeyValueStorage
   // 0x6172636869766550726f6f66426c6f636b4e756d626572
   public static final byte[] ARCHIVE_PROOF_BLOCK_NUMBER_KEY =
       "archiveProofBlockNumber".getBytes(StandardCharsets.UTF_8);
+  // 0x6172636869766550726f6f66436865636b706f696e74496e74657276616c
+  public static final byte[] ARCHIVE_PROOF_CHECKPOINT_INTERVAL_KEY =
+      "archiveProofCheckpointInterval".getBytes(StandardCharsets.UTF_8);
 
   // 0x6172636869766564426C6F636B73
   public static final byte[] ARCHIVED_BLOCKS = "archivedBlocks".getBytes(StandardCharsets.UTF_8);

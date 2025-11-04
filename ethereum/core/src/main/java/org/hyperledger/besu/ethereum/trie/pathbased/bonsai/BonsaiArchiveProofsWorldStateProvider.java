@@ -191,14 +191,10 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
 
           // We now have an updater with all of the account changes necessary. Persisting the
           // mutable state will store the new trie nodes defined in the updater. We can't yet assert
-          // that the mutable
-          // world state is at the target block because persisting involves reading the current trie
-          // nodes to
-          // validate the root hash. WORLD_BLOCK_NUMBER_KEY is therefore still set to the origin
-          // block. We
-          // use an additional key ARCHIVE_PROOF_BLOCK_NUMBER_KEY which persist() will use for PUTs
-          // to the
-          // state trie.
+          // that the mutable world state is at the target block because persisting involves reading
+          // the current trie nodes to validate the root hash. WORLD_BLOCK_NUMBER_KEY is therefore
+          // still set to the origin block. We use an additional key ARCHIVE_PROOF_BLOCK_NUMBER_KEY
+          // which persist() will use for PUTs to the state trie.
 
           // This will finish creating usable world state by setting the WORLD_BLOCK_NUMBER_KEY,
           // WORLD_BLOCK_HASH_KEY and WORLD_ROOT_HASH_KEY to the target block.
