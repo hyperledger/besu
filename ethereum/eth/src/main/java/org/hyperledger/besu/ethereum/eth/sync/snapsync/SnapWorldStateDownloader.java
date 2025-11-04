@@ -244,8 +244,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       newDownloadState.setPivotBlockSelector(dynamicPivotBlockManager);
 
       // Set the world state stable listener if available
-      final WorldStateHealFinishedListener
-              worldStateHealFinishedListener = fastSyncActions.getWorldStateStableListener();
+      final WorldStateHealFinishedListener worldStateHealFinishedListener =
+          fastSyncActions.getWorldStateStableListener();
       if (worldStateHealFinishedListener != null) {
         newDownloadState.setWorldStateHealFinishedListener(worldStateHealFinishedListener);
         LOG.debug("World state stable listener registered with download state");

@@ -34,19 +34,19 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
   private final MutableBlockchain blockchainStorage;
   private final long lowestHeaderToImport;
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
-    private final Hash checkpointBlockHash;
-    private BlockHeader currentChildHeader;
+  private final Hash checkpointBlockHash;
+  private BlockHeader currentChildHeader;
   private final long totalHeaders;
 
   public ImportHeadersStep(
-          final MutableBlockchain blockchain,
-          final long checkpointBlockNumber,
-          final Hash checkpointBlockHash,
-          final BlockHeader pivotBlockHeader) {
+      final MutableBlockchain blockchain,
+      final long checkpointBlockNumber,
+      final Hash checkpointBlockHash,
+      final BlockHeader pivotBlockHeader) {
     this.blockchainStorage = blockchain;
     this.lowestHeaderToImport = checkpointBlockNumber + 1;
-      this.checkpointBlockHash = checkpointBlockHash;
-      final long pivotBlockNumber = pivotBlockHeader.getNumber();
+    this.checkpointBlockHash = checkpointBlockHash;
+    final long pivotBlockNumber = pivotBlockHeader.getNumber();
     this.currentChildHeader = pivotBlockHeader;
     this.totalHeaders = pivotBlockNumber - checkpointBlockNumber;
     // store the pivot block header as the first imported header
@@ -69,9 +69,10 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
     currentChildHeader = blockHeaders.getLast();
     if (currentChildHeader.getNumber() == lowestHeaderToImport) {
-        if (!currentChildHeader.getParentHash().equals(checkpointBlockHash)) {
-            throw new IllegalStateException("The lower header parent hash does not match the checkpoint hash");
-        }
+      if (!currentChildHeader.getParentHash().equals(checkpointBlockHash)) {
+        throw new IllegalStateException(
+            "The lower header parent hash does not match the checkpoint hash");
+      }
     }
     blockHeaders.forEach(blockchainStorage::importHeader);
 

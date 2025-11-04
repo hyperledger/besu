@@ -211,7 +211,8 @@ public class FastSyncDownloader<REQUEST> {
 
       // Register chain downloader as world state stable listener if it implements the interface
       if (chainDownloader instanceof WorldStateHealFinishedListener) {
-        fastSyncActions.setWorldStateStableListener((WorldStateHealFinishedListener) chainDownloader);
+        fastSyncActions.setWorldStateStableListener(
+            (WorldStateHealFinishedListener) chainDownloader);
         LOG.debug("Registered chain downloader as world state stable listener");
       }
 

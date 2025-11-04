@@ -31,10 +31,11 @@ public class ChainSyncState {
 
   private final BlockHeader pivotBlockHeader;
   private final long
-          checkpointBlockNumber; // Where to stop backward download (0 or previous pivot+1)
-    private final Hash checkpointBlockHash;
+      checkpointBlockNumber; // Where to stop backward download (0 or previous pivot+1)
+  private final Hash checkpointBlockHash;
   private final long
-          bodiesDownloadStartBlockNumber; // Where to start forward download (checkpoint or previous pivot+1)
+      bodiesDownloadStartBlockNumber; // Where to start forward download (checkpoint or previous
+  // pivot+1)
   private final boolean headersDownloadComplete;
 
   /**
@@ -42,20 +43,21 @@ public class ChainSyncState {
    *
    * @param pivotBlockHeader the pivot block header (must not be null)
    * @param checkpointBlockNumber the block number to stop backward header download at
-   * @param bodiesDownloadStartBlockNumber the block number to start forward bodies/receipts download from
+   * @param bodiesDownloadStartBlockNumber the block number to start forward bodies/receipts
+   *     download from
    * @param headersDownloadComplete whether header download has completed
    */
   public ChainSyncState(
-          final BlockHeader pivotBlockHeader,
-          final long checkpointBlockNumber,
-          final Hash checkpointBlockHash,
-          final long bodiesDownloadStartBlockNumber,
-          final boolean headersDownloadComplete) {
+      final BlockHeader pivotBlockHeader,
+      final long checkpointBlockNumber,
+      final Hash checkpointBlockHash,
+      final long bodiesDownloadStartBlockNumber,
+      final boolean headersDownloadComplete) {
     this.pivotBlockHeader =
         Objects.requireNonNull(pivotBlockHeader, "pivotBlockHeader is required");
     this.checkpointBlockNumber = checkpointBlockNumber;
-      this.checkpointBlockHash = checkpointBlockHash;
-      this.bodiesDownloadStartBlockNumber = bodiesDownloadStartBlockNumber;
+    this.checkpointBlockHash = checkpointBlockHash;
+    this.bodiesDownloadStartBlockNumber = bodiesDownloadStartBlockNumber;
     this.headersDownloadComplete = headersDownloadComplete;
   }
 
@@ -63,12 +65,21 @@ public class ChainSyncState {
    * Creates a new state with an initial pivot block for full sync from genesis.
    *
    * @param pivotBlockHeader the pivot block header
-   * @param lowerHeaderDownloadBlockNumber the checkpoint block to start bodies download from (0 for full sync)
+   * @param lowerHeaderDownloadBlockNumber the checkpoint block to start bodies download from (0 for
+   *     full sync)
    * @return new ChainSyncState
    */
   public static ChainSyncState initialSync(
-      final BlockHeader pivotBlockHeader, final long lowerHeaderDownloadBlockNumber, final Hash lowerHeaderDownloadBlockHash, final long bodiesDownloadStartBlockNumber) {
-    return new ChainSyncState(pivotBlockHeader, lowerHeaderDownloadBlockNumber, lowerHeaderDownloadBlockHash, bodiesDownloadStartBlockNumber, false);
+      final BlockHeader pivotBlockHeader,
+      final long lowerHeaderDownloadBlockNumber,
+      final Hash lowerHeaderDownloadBlockHash,
+      final long bodiesDownloadStartBlockNumber) {
+    return new ChainSyncState(
+        pivotBlockHeader,
+        lowerHeaderDownloadBlockNumber,
+        lowerHeaderDownloadBlockHash,
+        bodiesDownloadStartBlockNumber,
+        false);
   }
 
   /**
@@ -95,7 +106,11 @@ public class ChainSyncState {
    */
   public ChainSyncState withHeadersDownloadComplete() {
     return new ChainSyncState(
-        this.pivotBlockHeader, this.checkpointBlockNumber, this.checkpointBlockHash, this.bodiesDownloadStartBlockNumber, true);
+        this.pivotBlockHeader,
+        this.checkpointBlockNumber,
+        this.checkpointBlockHash,
+        this.bodiesDownloadStartBlockNumber,
+        true);
   }
 
   public BlockHeader getPivotBlockHeader() {
@@ -114,11 +129,11 @@ public class ChainSyncState {
     return checkpointBlockNumber;
   }
 
-    public Hash getCheckpointBlockHash() {
-        return checkpointBlockHash;
-    }
+  public Hash getCheckpointBlockHash() {
+    return checkpointBlockHash;
+  }
 
-    public long getBodiesDownloadStartBlockNumber() {
+  public long getBodiesDownloadStartBlockNumber() {
     return bodiesDownloadStartBlockNumber;
   }
 
@@ -141,8 +156,8 @@ public class ChainSyncState {
   public int hashCode() {
     return Objects.hash(
         pivotBlockHeader,
-            checkpointBlockNumber,
-            bodiesDownloadStartBlockNumber,
+        checkpointBlockNumber,
+        bodiesDownloadStartBlockNumber,
         headersDownloadComplete);
   }
 

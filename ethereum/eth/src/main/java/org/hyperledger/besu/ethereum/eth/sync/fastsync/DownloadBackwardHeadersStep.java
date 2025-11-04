@@ -43,25 +43,25 @@ public class DownloadBackwardHeadersStep
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final int headerRequestSize;
-    private final long checkpointBlockNumber;
+  private final long checkpointBlockNumber;
 
-    /**
+  /**
    * Creates a new DownloadBackwardHeadersStep.
    *
-   * @param protocolSchedule               the protocol schedule
-   * @param ethContext                     the eth context
-   * @param syncConfig                     the synchronizer configuration (unused but kept for API compatibility)
-   * @param headerRequestSize              the number of headers to request per batch
-   * @param metricsSystem                  the metrics system (unused but kept for consistency)
-   * @param checkpointBlockNumber         the lowest header that we want to download
+   * @param protocolSchedule the protocol schedule
+   * @param ethContext the eth context
+   * @param syncConfig the synchronizer configuration (unused but kept for API compatibility)
+   * @param headerRequestSize the number of headers to request per batch
+   * @param metricsSystem the metrics system (unused but kept for consistency)
+   * @param checkpointBlockNumber the lowest header that we want to download
    */
   public DownloadBackwardHeadersStep(
-          final ProtocolSchedule protocolSchedule,
-          final EthContext ethContext,
-          final SynchronizerConfiguration syncConfig,
-          final int headerRequestSize,
-          final MetricsSystem metricsSystem,
-          final long checkpointBlockNumber) {
+      final ProtocolSchedule protocolSchedule,
+      final EthContext ethContext,
+      final SynchronizerConfiguration syncConfig,
+      final int headerRequestSize,
+      final MetricsSystem metricsSystem,
+      final long checkpointBlockNumber) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.headerRequestSize = headerRequestSize;
@@ -105,7 +105,7 @@ public class DownloadBackwardHeadersStep
             // do nothing
           }
         } else if (result.result().isEmpty()) {
-            // TODO: we should punish the peer here
+          // TODO: we should punish the peer here
         } else {
           LOG.warn(
               "Failed to download headers from block {} (response: {})",
