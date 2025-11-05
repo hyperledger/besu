@@ -18,16 +18,27 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class CreateAccessListResult {
   List<AccessListEntry> accessListList;
   String gasUsed;
+  Optional<String> errorMessage;
 
   public CreateAccessListResult(final List<AccessListEntry> accessListEntries, final long gasUsed) {
+    this(accessListEntries, gasUsed, Optional.empty());
+  }
+
+  public CreateAccessListResult(
+      final List<AccessListEntry> accessListEntries,
+      final long gasUsed,
+      final Optional<String> errorMessage) {
     this.accessListList = accessListEntries;
     this.gasUsed = Quantity.create(gasUsed);
+    this.errorMessage = errorMessage;
   }
 
   @JsonGetter(value = "accessList")
@@ -38,5 +49,11 @@ public class CreateAccessListResult {
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
+  }
+
+  @JsonGetter(value = "error")
+  @JsonInclude(JsonInclude.Include.NON_ABSENT)
+  public Optional<String> getErrorMessage() {
+    return errorMessage;
   }
 }
