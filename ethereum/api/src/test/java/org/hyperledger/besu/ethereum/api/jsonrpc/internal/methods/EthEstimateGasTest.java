@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -519,22 +520,24 @@ public class EthEstimateGasTest {
   @Test
   public void shouldEstimateGasForEIP7702Transaction() {
     // Setup authorization list
-    final List<SetCodeAuthorization> authorizationList =
+    final List<org.hyperledger.besu.datatypes.CodeDelegation> authorizationList =
         List.of(
-            new SetCodeAuthorization(
+            CodeDelegation.createCodeDelegation(
                 java.math.BigInteger.valueOf(1L), // chainId
-                Address.fromHexString("0x..."), // contract address
-                0L, // nonce
-                (byte) 0, // yParity
-                Bytes.fromHexString("0x..."), // r
-                Bytes.fromHexString("0x...") // s
-                ));
+                Address.fromHexString("0x1234567890123456789012345678901234567890"), // address
+                "0x0", // nonce
+                null, // v (not used when yParity provided)
+                "0x0", // yParity
+                "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", // r
+                "0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321")); // s
 
     // Create transaction with authorization list
     final JsonRpcRequestContext request = requestWithAuthorizationList(authorizationList);
+    mockTransientProcessorResultGasEstimate(MIN_TX_GAS_COST, true, false, pendingBlockHeader);
 
     // Execute estimation
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x...");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, Quantity.create(MIN_TX_GAS_COST));
     final JsonRpcResponse actualResponse = method.response(request);
 
     // Verify
@@ -765,7 +768,14 @@ public class EthEstimateGasTest {
   }
 
   private JsonRpcRequestContext requestWithAuthorizationList(
-      List<SetCodeAuthorization> authorizationList) {
-    throw new UnsupportedOperationException("Not supported yet.");
+      List<org.hyperledger.besu.datatypes.CodeDelegation> authorizationList) {
+    CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"))
+            .to(Address.fromHexString("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"))
+            .value(Wei.of(1))
+            .codeDelegationAuthorizations(authorizationList)
+            .build();
+    return ethEstimateGasRequest(callParameter);
   }
 }

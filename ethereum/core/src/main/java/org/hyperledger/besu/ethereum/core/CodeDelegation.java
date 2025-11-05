@@ -87,7 +87,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final String nonce,
       @JsonProperty("v") final String v,
-      @JsonProperty("yParity") final String yParity, // ← Add this parameter
+      @JsonProperty("yParity") final String yParity,
       @JsonProperty("r") final String r,
       @JsonProperty("s") final String s) {
 
@@ -108,7 +108,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
             .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(recoveryId).get(0))); // ← Use recoveryId instead of v
+                Bytes.fromHexStringLenient(recoveryId).get(0)));
   }
 
   @JsonProperty("chainId")
