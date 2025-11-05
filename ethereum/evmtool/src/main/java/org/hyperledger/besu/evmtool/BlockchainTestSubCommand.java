@@ -105,13 +105,8 @@ public class BlockchainTestSubCommand implements Runnable {
   private String testName = null;
 
   @Option(
-      names = {"-t", "--trace-transactions"},
-      description = "Enable transaction tracing to stderr")
-  private boolean enableTracing = false;
-
-  @Option(
       names = {"--trace-output"},
-      description = "Output file for traces (default: stderr)")
+      description = "Output file for traces (default: stderr). Requires --json or --trace flag.")
   private String traceOutput = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
@@ -266,9 +261,10 @@ public class BlockchainTestSubCommand implements Runnable {
     boolean testPassed = true;
     String failureReason = "";
 
-    if (enableTracing) {
+    if (parentCommand.showJsonResults) {
       try {
-        if (traceOutput != null) {
+        final boolean isFileOutput = traceOutput != null;
+        if (isFileOutput) {
           traceWriter =
               new PrintWriter(Files.newBufferedWriter(Paths.get(traceOutput), UTF_8), true);
         } else {
@@ -277,6 +273,7 @@ public class BlockchainTestSubCommand implements Runnable {
         tracerManager =
             new BlockTestTracerManager(
                 traceWriter,
+                isFileOutput, // Only close if writing to a file, not System.err
                 parentCommand.showMemory,
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
@@ -335,7 +332,7 @@ public class BlockchainTestSubCommand implements Runnable {
 
           timer.stop();
 
-          if (enableTracing && finalTracerManager != null) {
+          if (parentCommand.showJsonResults && finalTracerManager != null) {
             totalGasUsed += block.getHeader().getGasUsed();
             totalTxCount += block.getBody().getTransactions().size();
           }
@@ -571,9 +568,14 @@ public class BlockchainTestSubCommand implements Runnable {
    * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
    * creating and managing StreamingOperationTracer instances for transaction-level tracing during
    * block test execution.
+   *
+   * <p>Note: Trace output is separated from test execution status output to ensure JSONL purity.
+   * Test status messages go to stdout (parentCommand.out), while traces go to stderr or a file to
+   * prevent mixing human-readable messages with machine-parseable JSONL trace data.
    */
   private static class BlockTestTracerManager {
     private final PrintWriter output;
+    private final boolean shouldCloseOutput;
     private final boolean showMemory;
     private final boolean showStack;
     private final boolean showReturnData;
@@ -584,6 +586,8 @@ public class BlockchainTestSubCommand implements Runnable {
      * Constructs a BlockTestTracerManager with specified tracing options.
      *
      * @param output the PrintWriter for trace output
+     * @param shouldCloseOutput whether to close the output writer (true for files, false for
+     *     System.err)
      * @param showMemory whether to include memory in traces
      * @param showStack whether to include stack in traces
      * @param showReturnData whether to include return data in traces
@@ -591,11 +595,13 @@ public class BlockchainTestSubCommand implements Runnable {
      */
     public BlockTestTracerManager(
         final PrintWriter output,
+        final boolean shouldCloseOutput,
         final boolean showMemory,
         final boolean showStack,
         final boolean showReturnData,
         final boolean showStorage) {
       this.output = output;
+      this.shouldCloseOutput = shouldCloseOutput;
       this.showMemory = showMemory;
       this.showStack = showStack;
       this.showReturnData = showReturnData;
@@ -648,14 +654,18 @@ public class BlockchainTestSubCommand implements Runnable {
     }
 
     /**
-     * Closes the output writer.
+     * Closes the output writer if it wraps a file. System.err is not closed as it's a shared
+     * system resource. The PrintWriter is created with autoFlush=true, so explicit flush() is
+     * primarily for safety before close().
      *
      * @throws IOException if an I/O error occurs
      */
     public void close() throws IOException {
       if (output != null) {
         output.flush();
-        output.close();
+        if (shouldCloseOutput) {
+          output.close();
+        }
       }
     }
   }
