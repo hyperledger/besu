@@ -241,9 +241,12 @@ public class BlockchainTestSubCommand implements Runnable {
     }
     parentCommand.out.println("Considering " + test);
 
+    final ProtocolContext context = spec.buildProtocolContext();
+
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
-        spec.getWorldStateArchive()
+        context
+            .getWorldStateArchive()
             .getWorldState(
                 WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(
                     genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))

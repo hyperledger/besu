@@ -120,7 +120,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
           blobsValidator.validate(transaction);
       if (!blobTransactionResult.isValid()) {
-        LOG.info(
+        LOG.debug(
             "Blob transaction {} validation failed: {}",
             transaction.getHash().toHexString(),
             blobTransactionResult.getErrorMessage());

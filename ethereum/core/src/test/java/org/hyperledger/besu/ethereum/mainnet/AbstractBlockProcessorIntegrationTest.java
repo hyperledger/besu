@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -92,12 +93,13 @@ class AbstractBlockProcessorIntegrationTest {
   private DefaultBlockchain blockchain;
   private Address coinbase;
 
+  private static final String GENESIS_RESOURCE =
+      "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json";
+
   @BeforeEach
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(
-                GenesisConfig.fromResource(
-                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+        ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
@@ -107,44 +109,50 @@ class AbstractBlockProcessorIntegrationTest {
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
   }
 
-  private static Stream<Arguments> blockProcessorProvider() {
+  private static Stream<Arguments> blockProcessors(
+      final Wei coinbaseReward, final boolean skipRewards) {
     final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(
-                GenesisConfig.fromResource(
-                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+        ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
+
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
+    final var protocolSpec =
+        protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+
+    final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
+    final var receiptFactory = protocolSpec.getTransactionReceiptFactory();
 
     final BlockProcessor sequentialBlockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
-            protocolSchedule
-                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                .getTransactionReceiptFactory(),
-            COINBASE_REWARD,
+            receiptFactory,
+            coinbaseReward,
             BlockHeader::getCoinbase,
-            false,
+            skipRewards,
             protocolSchedule);
 
     final BlockProcessor parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
             transactionProcessor,
-            protocolSchedule
-                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                .getTransactionReceiptFactory(),
-            COINBASE_REWARD,
+            receiptFactory,
+            coinbaseReward,
             BlockHeader::getCoinbase,
-            false,
+            skipRewards,
             protocolSchedule,
             new NoOpMetricsSystem());
 
     return Stream.of(
         Arguments.of("sequential", sequentialBlockProcessor),
         Arguments.of("parallel", parallelBlockProcessor));
+  }
+
+  private static Stream<Arguments> blockProcessorProvider() {
+    return blockProcessors(COINBASE_REWARD, false);
+  }
+
+  private static Stream<Arguments> blockProcessorProviderWithoutRewards() {
+    return blockProcessors(Wei.ZERO, true);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -187,6 +195,68 @@ class AbstractBlockProcessorIntegrationTest {
   void testProcessSlotReadThenUpdateTx(
       final String ignoredName, final BlockProcessor blockProcessor) {
     processSlotReadThenUpdateTx(blockProcessor);
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProviderWithoutRewards")
+  void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(
+      final String ignoredName, final BlockProcessor blockProcessor) {
+    Transaction transactionTransfer1 =
+        createTransferTransaction(
+            0, 1_000_000_000_000_000_000L, 300000L, 0L, 5L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR);
+    Transaction transactionTransfer2 =
+        createTransferTransaction(
+            0, 2_000_000_000_000_000_000L, 300000L, 0L, 5L, ACCOUNT_3, ACCOUNT_GENESIS_2_KEYPAIR);
+
+    MutableWorldState worldState = worldStateArchive.getWorldState();
+    Block blockWithTransactions =
+        createBlockWithTransactions(
+            "0x208233dfcdccdb3d90195c35db976564cc817db44576152e6a919d78333abec2",
+            Wei.of(5),
+            transactionTransfer1,
+            transactionTransfer2);
+
+    BlockProcessingResult blockProcessingResult =
+        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+
+    assertTrue(blockProcessingResult.isSuccessful());
+    assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProviderWithoutRewards")
+  void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(
+      final String ignoredName, final BlockProcessor blockProcessor) {
+    Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
+
+    Transaction setSlot1Transaction =
+        createContractUpdateSlotTransaction(
+            0, contractAddress, "setSlot1", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(100));
+    Transaction getSlot1Transaction =
+        createContractUpdateSlotTransaction(
+            0, contractAddress, "getSlot1", ACCOUNT_GENESIS_2_KEYPAIR, Optional.empty());
+    Transaction setSlot3Transaction =
+        createContractUpdateSlotTransaction(
+            1, contractAddress, "setSlot2", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(200));
+    Transaction setSlot4Transaction =
+        createContractUpdateSlotTransaction(
+            2, contractAddress, "setSlot3", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(300));
+
+    MutableWorldState worldState = worldStateArchive.getWorldState();
+    Block blockWithTransactions =
+        createBlockWithTransactions(
+            "0x3853fb24fc30252a1d15986b0c7bce7e70ab29fc025736950e6dba8d7b7dcc33",
+            Wei.of(5),
+            setSlot1Transaction,
+            getSlot1Transaction,
+            setSlot3Transaction,
+            setSlot4Transaction);
+
+    BlockProcessingResult blockProcessingResult =
+        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+
+    assertTrue(blockProcessingResult.isSuccessful());
+    assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -272,10 +342,14 @@ class AbstractBlockProcessorIntegrationTest {
     assertTrue(sequentialResult.isSuccessful());
     assertTrue(parallelResult.isSuccessful());
 
+    assertBalComputesHeaderRoot(block, sequentialResult);
+    assertBalComputesHeaderRoot(block, parallelResult);
+
     assertThat(worldStateSequential.rootHash()).isEqualTo(worldStateParallel.rootHash());
 
     assertBlockAccessListAddresses(
         sequentialResult,
+        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),
@@ -294,6 +368,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertBlockAccessListAddresses(
         parallelResult,
+        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),
@@ -1049,14 +1124,21 @@ class AbstractBlockProcessorIntegrationTest {
 
   private Block createBlockWithTransactions(
       final String stateRoot, final Wei baseFeePerGas, final Transaction... transactions) {
+    final BlockHeader parentHeader = blockchain.getChainHeadHeader();
     BlockHeader blockHeader =
         new BlockHeaderTestFixture()
-            .number(1L)
+            .number(parentHeader.getNumber() + 1L)
+            .parentHash(parentHeader.getHash())
             .stateRoot(Hash.fromHexString(stateRoot))
             .gasLimit(30_000_000L)
             .baseFeePerGas(baseFeePerGas)
             .buildHeader();
-    BlockBody blockBody = new BlockBody(Arrays.asList(transactions), Collections.emptyList());
+    BlockBody blockBody =
+        new BlockBody(
+            Arrays.asList(transactions),
+            Collections.emptyList(),
+            Optional.empty(),
+            Optional.of(BlockAccessList.builder().build()));
     return new Block(blockHeader, blockBody);
   }
 
@@ -1166,5 +1248,19 @@ class AbstractBlockProcessorIntegrationTest {
     final BlockAccessList.StorageChange last = slotChanges.changes().getLast();
     assertThat(last.txIndex()).isEqualTo(txIndex + 1);
     assertThat(last.newValue()).isEqualTo(UInt256.valueOf(newValue));
+  }
+
+  private void assertBalComputesHeaderRoot(final Block block, final BlockProcessingResult result) {
+    final Hash expectedRoot = block.getHeader().getStateRoot();
+
+    final BlockAccessList blockAccessList =
+        result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
+
+    final Hash computedRoot =
+        BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+                protocolContext, block.getHeader(), blockAccessList)
+            .join();
+
+    assertThat(computedRoot).isEqualTo(expectedRoot);
   }
 }

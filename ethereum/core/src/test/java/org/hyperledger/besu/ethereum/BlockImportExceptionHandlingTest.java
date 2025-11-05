@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -123,6 +124,8 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
+    when(protocolSpec.getStateRootCommitterFactory())
+        .thenReturn(new StateRootCommitterFactoryDefault());
     mainnetBlockValidator =
         MainnetBlockValidatorBuilder.frontier(
             blockHeaderValidator, blockBodyValidator, blockProcessor);
@@ -131,7 +134,7 @@ class BlockImportExceptionHandlingTest {
   @Test
   void shouldNotBadBlockWhenInternalErrorDuringPersisting() {
 
-    Mockito.doThrow(new StorageException("database problem")).when(persisted).persist(any());
+    Mockito.doThrow(new StorageException("database problem")).when(persisted).persist(any(), any());
     Mockito.doReturn(persisted).when(worldStateArchive).getWorldState();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getWorldState(any());
 
@@ -237,7 +240,7 @@ class BlockImportExceptionHandlingTest {
 
   @Test
   void shouldNotBadBlockWhenInternalErrorDuringValidateBody() {
-    Mockito.doNothing().when(persisted).persist(any());
+    Mockito.doNothing().when(persisted).persist(any(), any());
     Mockito.doReturn(persisted).when(worldStateArchive).getWorldState();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getWorldState(any());
 

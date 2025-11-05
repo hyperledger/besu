@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.log.LogTopic;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class LogTest {
@@ -47,7 +48,8 @@ public class LogTest {
     final Bytes logData = bytesWithLeadingZeros(10, 100);
     final List<LogTopic> logTopics =
         List.of(
-            LogTopic.of(bytesWithLeadingZeros(20, 32)), LogTopic.of(bytesWithLeadingZeros(30, 32)));
+            LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(20, 32))),
+            LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(30, 32))));
     final Log log = new Log(gen.address(), logData, logTopics);
     final Log copy = Log.readFrom(RLP.input(RLP.encode(rlpOut -> log.writeTo(rlpOut, true))), true);
     assertThat(copy).isEqualTo(log);
