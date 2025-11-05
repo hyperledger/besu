@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -69,6 +70,9 @@ abstract class AbstractBlockProcessorTest {
     lenient()
         .when(protocolSpec.getPreExecutionProcessor())
         .thenReturn(new FrontierPreExecutionProcessor());
+    lenient()
+        .when(protocolSpec.getStateRootCommitterFactory())
+        .thenReturn(new StateRootCommitterFactoryDefault());
     blockProcessor =
         new TestBlockProcessor(
             transactionProcessor,
@@ -84,7 +88,7 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
   @Test
@@ -92,7 +96,7 @@ abstract class AbstractBlockProcessorTest {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
   @Test
@@ -102,7 +106,7 @@ abstract class AbstractBlockProcessorTest {
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
-    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any());
+    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any(), any());
   }
 
   @Test
@@ -113,7 +117,7 @@ abstract class AbstractBlockProcessorTest {
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
         protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
   private static class TestBlockProcessor extends AbstractBlockProcessor {

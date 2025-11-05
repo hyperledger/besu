@@ -54,6 +54,9 @@ public class DifficultyCalculatorTests {
     postMergeOverrides.put("shanghaiTime", "999999999999");
     postMergeOverrides.put("cancunTime","999999999999");
     postMergeOverrides.put("pragueTime","999999999999");
+    postMergeOverrides.put("osakaTime","999999999999");
+    postMergeOverrides.put("bpo1Time","999999999999");
+    postMergeOverrides.put("bpo2Time","999999999999");
     return Stream.of(
         Arguments.of(
             "/BasicTests/difficultyMainNetwork.json",
