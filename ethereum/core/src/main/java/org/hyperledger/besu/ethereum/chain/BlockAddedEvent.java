@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,13 +36,6 @@ public class BlockAddedEvent {
   private final List<LogWithMetadata> logsWithMetadata;
   private final Hash commonAncestorHash;
   private final BlockHeader header;
-
-  public enum EventType {
-    HEAD_ADVANCED,
-    FORK,
-    CHAIN_REORG,
-    STORED_ONLY
-  }
 
   private BlockAddedEvent(
       final EventType eventType,

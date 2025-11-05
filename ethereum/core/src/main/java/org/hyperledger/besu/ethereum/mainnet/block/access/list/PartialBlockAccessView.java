@@ -96,7 +96,7 @@ public final class PartialBlockAccessView {
 
   public static final class AccountChanges {
     private final Address address;
-    private final Optional<Wei> postBalance;
+    private Optional<Wei> postBalance;
     private final Optional<Long> nonceChange;
     private final Optional<Bytes> newCode;
     private final List<StorageSlotKey> storageReads;
@@ -123,6 +123,10 @@ public final class PartialBlockAccessView {
 
     public Optional<Wei> getPostBalance() {
       return postBalance;
+    }
+
+    public void setPostBalance(final Wei postBalance) {
+      this.postBalance = Optional.ofNullable(postBalance);
     }
 
     public Optional<Long> getNonceChange() {

@@ -105,7 +105,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -802,8 +801,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+        createPivotSelector(protocolSchedule, protocolContext, ethContext, syncState, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -1033,7 +1031,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
@@ -1066,9 +1063,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           protocolContext,
           protocolSchedule,
           ethContext,
-          metricsSystem,
           genesisConfigOptions,
-          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {
@@ -1349,8 +1344,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
@@ -1358,11 +1352,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (classicBlock.isPresent()) {
       validators.add(
           new ClassicForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              classicBlock.getAsLong()));
+              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
@@ -1370,8 +1360,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
     }
