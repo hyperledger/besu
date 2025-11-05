@@ -120,7 +120,8 @@ The fuzzer can be integrated into CI pipelines:
 
 ```bash
 # Run fuzzer for 10 minutes in CI
-timeout 600 ./gradlew fuzzP256Verify || echo "Fuzzer found issues"
+# Exit code 124 = timeout reached, 0 = success, other = issues found
+timeout 600 ./gradlew fuzzP256Verify
 ```
 
 ## Architecture Details
@@ -172,9 +173,16 @@ Solution: This is EXPECTED behavior when fuzzing with synthetic/mutated inputs. 
 
 ## Files Generated
 
+The fuzzer generates several types of files during execution:
+
 - `corpus/`: Initial seed test cases
 - `new-corpus/`: Newly discovered interesting inputs
-- `crash-<hash>`: Inputs that caused discrepancies
+- `crash-<hash>.hex`: Inputs that caused discrepancies (INVESTIGATE BEFORE DELETING)
+- `slow-<hash>.hex`: Inputs that caused slow execution (INVESTIGATE BEFORE DELETING)
+
+**Note**: Crash and slow files are intentionally not in `.gitignore`. Always review them before
+committing to ensure no issues are overlooked. These files help identify performance problems
+and implementation discrepancies that need attention.
 
 ## Performance Considerations
 

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -59,6 +59,11 @@ import org.slf4j.LoggerFactory;
  *   <li>Native-generated signature → Java verification
  *   <li>Native-generated signature → Native verification
  * </ul>
+ *
+ * <p><b>THREAD SAFETY:</b> This class is designed for single-threaded use only. It uses static
+ * methods to toggle between Java and BoringSSL implementations, which would not be safe in a
+ * multi-threaded context. The javafuzz framework executes fuzz() calls sequentially, making this
+ * safe for fuzzing.
  */
 @SuppressWarnings({
   "DoNotCreateSecureRandomDirectly",
@@ -117,18 +122,33 @@ public class P256VerifyFuzzTarget implements FuzzTarget {
     this.random = new SecureRandom();
   }
 
-  /** Creates a SECP256R1 instance configured to use Java implementation. */
+  /**
+   * Creates a SECP256R1 instance configured to use Java implementation for signature generation.
+   *
+   * <p>Note: This controls signature GENERATION, not verification. Verification implementation
+   * (Java vs BoringSSL) is controlled by P256VerifyPrecompiledContract static methods.
+   */
   private SignatureAlgorithm createJavaSignatureAlgorithm() {
     SECP256R1 algo = new SECP256R1();
-    algo.disableNative(); // Force Java implementation
+    algo.disableNative(); // Force Java implementation for signature generation
     return algo;
   }
 
-  /** Creates a SECP256R1 instance configured to use Native implementation. */
+  /**
+   * Creates a SECP256R1 instance for native signature generation.
+   *
+   * <p>Note: This instance is only used for signature GENERATION during testing. The verification
+   * implementation (Java vs BoringSSL) is controlled separately via
+   * P256VerifyPrecompiledContract.disableNativeBoringSSL() and
+   * P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL() static methods.
+   *
+   * <p>The SignatureAlgorithm has its own native implementation (different from BoringSSL), but it
+   * is not typically used in production. This fuzzer focuses on comparing BoringSSL vs Java for
+   * verification.
+   */
   private SignatureAlgorithm createNativeSignatureAlgorithm() {
-    SECP256R1 algo = new SECP256R1();
-    algo.maybeEnableNative(); // Try to enable native implementation
-    return algo;
+    // Return basic SECP256R1 instance - verification implementation is controlled separately
+    return new SECP256R1();
   }
 
   @Override
@@ -719,6 +739,11 @@ public class P256VerifyFuzzTarget implements FuzzTarget {
   /**
    * Verifies a signature test case with both Java and Native implementations. Checks for
    * discrepancies between the two implementations.
+   *
+   * <p>THREAD SAFETY: This method uses static toggles (disableNativeBoringSSL() and
+   * maybeEnableNativeBoringSSL()) to switch between implementations. It is designed for
+   * single-threaded fuzzing ONLY. The javafuzz framework executes fuzz() calls sequentially, not in
+   * parallel, making this safe.
    */
   private void verifySignatureWithBothImplementations(SignatureTestCase testCase) {
     // First, validate gasRequirement method

@@ -37,7 +37,8 @@ generation and verification to ensure consistency across implementations.
 ### Prototypical CLI Usage:
 
 ```shell
-BesuFuzz p256verify \
+cd testfuzz/build/install/BesuFuzz
+./bin/BesuFuzz p256verify \
   --corpus-dir=build/generated/p256-corpus \
   --timeout-seconds=3600
 ```
@@ -47,12 +48,6 @@ BesuFuzz p256verify \
 ```shell
 # Quick test with default settings
 ./gradlew fuzzP256Verify
-
-# Guided fuzzing with coverage feedback (slower but more thorough)
-./gradlew fuzzP256VerifyGuided
-
-# Long-running test (1 hour)
-./gradlew fuzzP256VerifyLong
 ```
 
 The P256 fuzzer tests multiple mutation strategies including bit flips, boundary values,
