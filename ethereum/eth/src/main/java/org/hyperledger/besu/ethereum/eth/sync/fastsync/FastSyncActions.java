@@ -147,8 +147,6 @@ public class FastSyncActions {
                             new PivotBlockRetriever(
                                     protocolSchedule,
                                     ethContext,
-                                    metricsSystem,
-                                    syncConfig,
                                     currentState.getPivotBlockNumber().getAsLong(),
                                     syncConfig.getSyncMinimumPeerCount(),
                                     syncConfig.getSyncPivotDistance())
