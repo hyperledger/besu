@@ -50,10 +50,15 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
       final WorldStateKeyValueStorage.Updater stateUpdater,
       final BlockHeader blockHeader,
       final WorldStateConfig cfg) {
-    final Hash computed =
-        computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
     final Duration balRootTimeout = balConfiguration.getBalStateRootTimeout();
+
+    if (balConfiguration.isBalStateRootTrusted()) {
+      return waitForBalRootStrict(balRootTimeout);
+    }
+
+    final Hash computed =
+        computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
     if (balConfiguration.isBalLenientOnStateRootMismatch()) {
       final Optional<Hash> maybeBalRoot = waitForBalRootLenient(balRootTimeout);
