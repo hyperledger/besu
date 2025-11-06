@@ -72,7 +72,6 @@ public class ConfigurationOverviewBuilder {
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
   private boolean isBalOptimizationEnabled = true;
-  private boolean isBalStateRootTrusted = false;
   private boolean isBalLenientOnMismatch = false;
   private boolean isBalApiEnabled = false;
   private Duration balStateRootTimeout = Duration.ofSeconds(1);
@@ -396,7 +395,6 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setBalConfiguration(final BalConfiguration balConfiguration) {
     this.isBalOptimizationEnabled = balConfiguration.isBalOptimisationEnabled();
-    this.isBalStateRootTrusted = balConfiguration.isBalStateRootTrusted();
     this.isBalLenientOnMismatch = balConfiguration.isBalLenientOnMismatch();
     this.isBalApiEnabled = balConfiguration.isBalApiEnabled();
     this.balStateRootTimeout = balConfiguration.getBalStateRootTimeout();
@@ -476,7 +474,6 @@ public class ConfigurationOverviewBuilder {
     }
 
     lines.add("BAL optimizations " + (isBalOptimizationEnabled ? "enabled" : "disabled"));
-    lines.add("BAL state root trust " + (isBalStateRootTrusted ? "enabled" : "disabled"));
     lines.add("BAL mismatch leniency " + (isBalLenientOnMismatch ? "enabled" : "disabled"));
     lines.add("BAL API " + (isBalApiEnabled ? "enabled" : "disabled"));
     lines.add("BAL state root timeout: " + balStateRootTimeout.toMillis() + " ms");

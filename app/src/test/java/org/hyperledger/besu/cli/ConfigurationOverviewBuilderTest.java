@@ -286,7 +286,6 @@ class ConfigurationOverviewBuilderTest {
     builder.setBalConfiguration(
         ImmutableBalConfiguration.builder()
             .isBalOptimisationEnabled(false)
-            .isBalStateRootTrusted(true)
             .isBalLenientOnMismatch(true)
             .isBalApiEnabled(true)
             .balStateRootTimeout(Duration.ofMillis(2500))
@@ -294,7 +293,6 @@ class ConfigurationOverviewBuilderTest {
 
     final String configuration = builder.build();
     assertThat(configuration).contains("BAL optimizations disabled");
-    assertThat(configuration).contains("BAL state root trust enabled");
     assertThat(configuration).contains("BAL mismatch leniency enabled");
     assertThat(configuration).contains("BAL API enabled");
     assertThat(configuration).contains("BAL state root timeout: 2500 ms");

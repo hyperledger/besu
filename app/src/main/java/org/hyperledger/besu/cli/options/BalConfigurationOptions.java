@@ -31,12 +31,6 @@ public class BalConfigurationOptions {
   boolean balOptimizationEnabled = true;
 
   @CommandLine.Option(
-      names = {"--Xbal-trust-state-root"},
-      hidden = true,
-      description = "Trust the BAL-computed state root without verification.")
-  boolean balTrustStateRoot = false;
-
-  @CommandLine.Option(
       names = {"--Xbal-lenient-on-mismatch"},
       hidden = true,
       description =
@@ -61,7 +55,6 @@ public class BalConfigurationOptions {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
-        .isBalStateRootTrusted(balTrustStateRoot)
         .isBalLenientOnMismatch(balLogErrorOnMismatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .build();

@@ -56,10 +56,6 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
 
     final Hash balRoot = waitForBalRoot();
 
-    if (balConfiguration.isBalStateRootTrusted()) {
-      return balRoot;
-    }
-
     final Hash computed =
         computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
