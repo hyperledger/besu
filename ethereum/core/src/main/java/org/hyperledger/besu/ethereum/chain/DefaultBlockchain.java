@@ -614,10 +614,6 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
-    //    if (blockIsAlreadyTracked(block.getHeader())) {
-    //      return;
-    //    }
-
     final Hash hash = block.getHash();
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();

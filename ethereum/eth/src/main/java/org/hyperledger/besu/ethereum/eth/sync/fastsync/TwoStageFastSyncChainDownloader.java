@@ -351,14 +351,18 @@ public class TwoStageFastSyncChainDownloader
             })
         .handle(
             (result, error) -> {
-              if (error != null && shouldRetry(error)) {
-                LOG.warn("Chain sync encountered error, will retry from saved state", error);
-                // Restart from saved state
-                return downloadAccordingToChainState();
-              } else if (error != null) {
-                // Stop metrics on failure
-                syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
-                return CompletableFuture.<Void>failedFuture(error);
+              if (error != null) {
+                chainState.set(
+                    currentState.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
+                chainStateStorage.storeState(chainState.get());
+                if (shouldRetry(error)) {
+                  LOG.warn("Chain sync encountered error, will retry from saved state", error);
+                  return downloadAccordingToChainState();
+                } else {
+                  // Stop metrics on failure
+                  syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                  return CompletableFuture.<Void>failedFuture(error);
+                }
               } else {
                 final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
                 LOG.info(

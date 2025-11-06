@@ -104,6 +104,11 @@ public record ChainSyncState(
     return new ChainSyncState(this.pivotBlockHeader, this.checkpointBlockHeader, true, false);
   }
 
+  public ChainSyncState fromHead(final BlockHeader chainHeadHeader) {
+    return new ChainSyncState(
+        pivotBlockHeader, chainHeadHeader, headersDownloadComplete, initialSync);
+  }
+
   public static BlockHeader downloadCheckpointHeader(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
