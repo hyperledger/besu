@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -49,7 +48,6 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -214,9 +212,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   /**
-   * Creates Pipeline 1: Backward header download from pivot block to stop block. Downloads headers
-   * in reverse direction, validates boundaries, and stores in database. Supports out-of-order
-   * parallel execution with resume capability.
+   * Creates Pipeline 1: Backward header download from pivot block to checkpoint block. Downloads
+   * headers in reverse direction, validates boundaries, and stores in database. Supports
+   * out-of-order parallel execution with resume capability.
    *
    * @param chainState chain sync state containing pivot and progress
    * @return the backward header download pipeline
@@ -225,10 +223,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
+    long stopBlock = chainState.initialSync() ? 0L : chainState.checkpointBlockHeader().getNumber();
+
     LOG.debug(
-        "Creating backward header download pipeline: pivot={}, stopBlock={}, parallelism={}, batchSize={}",
-        chainState.getPivotBlockNumber(),
-        chainState.getCheckpointBlockNumber(),
+        "Creating backward header download pipeline: pivot={}, checkpoint block={}, parallelism={}, batchSize={}",
+        chainState.pivotBlockHeader().getNumber(),
+        stopBlock,
         downloaderParallelism,
         headerRequestSize);
 
@@ -237,19 +237,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule,
-            ethContext,
-            syncConfig,
-            headerRequestSize,
-            metricsSystem,
-            chainState.getCheckpointBlockNumber());
+            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem, stopBlock);
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
             protocolContext.getBlockchain(),
-            chainState.getCheckpointBlockNumber(),
-            chainState.getCheckpointBlockHash(),
-            chainState.getPivotBlockHeader());
+            stopBlock,
+            chainState.checkpointBlockHeader().getBlockHash(),
+            chainState.pivotBlockHeader());
 
     return PipelineBuilder.createPipelineFrom(
             "backwardHeaderSource",
@@ -269,34 +264,23 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   /**
-   * Creates Pipeline 2: Forward bodies and receipts download from start block to pivot block. Reads
-   * stored headers from database and downloads corresponding bodies and receipts.
-   *
-   * @param pivotBlockNumber the pivot block number (end of range)
-   * @param syncState the sync state to use for determining the checkpoint block number and
-   *     reporting progress
-   * @return the forward bodies and receipts download pipeline
-   */
-  public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
-      final long pivotBlockNumber, final SyncState syncState) {
-    final long startBlock = getCheckpointBlockNumber(syncState);
-    return createForwardBodiesAndReceiptsDownloadPipelineFromTo(
-        startBlock, pivotBlockNumber, syncState);
-  }
-
-  /**
    * Creates Pipeline 2 with custom start and end blocks: Forward bodies and receipts download from
    * start block to end block. Used for continuing sync to an updated pivot.
    *
    * @param startBlock the block to start from
-   * @param endBlock the block to end at
+   * @param pivotHeader the block to end at
    * @param syncState the sync state for reporting progress
    * @return the forward bodies and receipts download pipeline
    */
-  public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipelineFromTo(
-      final long startBlock, final long endBlock, final SyncState syncState) {
+  public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
+      final long startBlock, final BlockHeader pivotHeader, final SyncState syncState) {
+
+    long endBlock = pivotHeader.getNumber();
+
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
+
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     LOG.info(
         "Creating forward bodies and receipts download pipeline: startBlock={}, endBlock={}, parallelism={}, batchSize={}",
@@ -304,13 +288,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         endBlock,
         downloaderParallelism,
         headerRequestSize);
-
-    final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    if (startBlock > 0) {
-      // block headers have been downloaded in the first stage
-      final Optional<BlockHeader> previousBlockHeader = blockchain.getBlockHeader(startBlock - 1);
-      blockchain.unsafeSetChainHead(previousBlockHeader.get(), Difficulty.ZERO);
-    }
 
     final BlockHeaderSource headerSource =
         new BlockHeaderSource(blockchain, startBlock, endBlock, headerRequestSize);
@@ -320,10 +297,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final DownloadSyncReceiptsStep downloadReceiptsStep =
         new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-
-    // Headers have been downloaded from the pivot down to the start block, so the pivot header is
-    // available
-    final BlockHeader pivotHeader = blockchain.getBlockHeader(endBlock).get();
 
     final ImportSyncBlocksStep importBlocksStep =
         new ImportSyncBlocksStep(
@@ -347,11 +320,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "action"),
             true,
             "forwardBodiesReceipts")
-        .thenFlatMap(
-            "flattenHeaders",
-            headers -> headers.stream(),
-            headerRequestSize * downloaderParallelism)
-        .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
         .andFinishWith("importBlocks", importBlocksStep);

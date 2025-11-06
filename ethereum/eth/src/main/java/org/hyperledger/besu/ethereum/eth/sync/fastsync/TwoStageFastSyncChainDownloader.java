@@ -16,7 +16,9 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -51,6 +53,7 @@ public class TwoStageFastSyncChainDownloader
   private static final Logger LOG = LoggerFactory.getLogger(TwoStageFastSyncChainDownloader.class);
 
   private final FastSyncDownloadPipelineFactory pipelineFactory;
+  private final ProtocolContext protocolContext;
   private final EthScheduler scheduler;
   private final SyncState syncState;
   private final SyncDurationMetrics syncDurationMetrics;
@@ -68,26 +71,29 @@ public class TwoStageFastSyncChainDownloader
    * Creates a new TwoStageFastSyncChainDownloader.
    *
    * @param pipelineFactory the pipeline factory for creating download pipelines
+   * @param protocolContext the protocol context providing access to blockchain
    * @param scheduler the scheduler for running pipelines
    * @param syncState the sync state tracker
    * @param metricsSystem the metrics system (unused but kept for API compatibility)
    * @param syncDurationMetrics the sync duration metrics tracker
    * @param initialPivotHeader the initial pivot block header
    * @param chainStateStorage the storage for chain sync state
-   * @param checkpointBlock the checkpoint block number (0 for full sync)
+   * @param checkpointBlockHeader the checkpoint block number
    * @param genesisHash the genesis hash
    */
   public TwoStageFastSyncChainDownloader(
       final FastSyncDownloadPipelineFactory pipelineFactory,
+      final ProtocolContext protocolContext,
       final EthScheduler scheduler,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final SyncDurationMetrics syncDurationMetrics,
       final BlockHeader initialPivotHeader,
       final ChainSyncStateStorage chainStateStorage,
-      final long checkpointBlock,
+      final BlockHeader checkpointBlockHeader,
       final Hash genesisHash) {
     this.pipelineFactory = pipelineFactory;
+    this.protocolContext = protocolContext;
     this.scheduler = scheduler;
     this.syncState = syncState;
     this.syncDurationMetrics = syncDurationMetrics;
@@ -100,12 +106,15 @@ public class TwoStageFastSyncChainDownloader
     if (chainSyncState == null) {
       // First time sync - create initial state
       chainSyncState =
-          ChainSyncState.initialSync(initialPivotHeader, 0L, genesisHash, checkpointBlock);
+          ChainSyncState.initialSync(
+              initialPivotHeader,
+              checkpointBlockHeader,
+              genesisHash.equals(checkpointBlockHeader.getHash()));
       chainStateStorage.storeState(chainSyncState);
       LOG.info(
           "Created initial chain sync state: pivot={}, checkpoint={}",
           initialPivotHeader.getNumber(),
-          checkpointBlock);
+          checkpointBlockHeader);
     } else {
       LOG.info("Loaded existing chain sync state: {}", chainSyncState);
     }
@@ -129,13 +138,22 @@ public class TwoStageFastSyncChainDownloader
   @Override
   public CompletableFuture<Void> start() {
     final ChainSyncState initialState = chainState.get();
+    final BlockHeader pivotBlockHeader = initialState.pivotBlockHeader();
+    final BlockHeader checkpointBlockHeader = initialState.checkpointBlockHeader();
     LOG.info(
-        "Starting two-stage fast sync chain download from pivot block {}",
-        initialState.getPivotBlockHash());
+        "Starting two-stage fast sync chain download from pivot block {}, {}, and checkpoint block {}.",
+        pivotBlockHeader.getHash(),
+        pivotBlockHeader.getNumber(),
+        checkpointBlockHeader.getNumber());
+
+    if (initialState.initialSync() && checkpointBlockHeader.getNumber() != 0) {
+      // This is needed because the import step for the blocks and receipts checks the chain head.
+      // TODO: is that check necessary?
+      protocolContext.getBlockchain().unsafeSetChainHead(checkpointBlockHeader, Difficulty.ZERO);
+    }
 
     overallStartTime = Instant.now();
 
-    // Start chain download duration metrics
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
     return downloadAccordingToChainState()
@@ -176,10 +194,10 @@ public class TwoStageFastSyncChainDownloader
    * @return CompletableFuture that completes when Stage 1 is done (or skipped)
    */
   private CompletableFuture<Void> determineStage1Execution(final ChainSyncState state) {
-    if (state.isHeadersDownloadComplete()) {
+    if (state.headersDownloadComplete()) {
       LOG.info(
           "Backward header download already complete for pivot {}. Skipping Stage 1.",
-          state.getPivotBlockNumber());
+          state.pivotBlockHeader().getNumber());
       return CompletableFuture.completedFuture(null);
     } else {
       return runStage1BackwardHeaderDownload(state);
@@ -189,8 +207,8 @@ public class TwoStageFastSyncChainDownloader
   private CompletableFuture<Void> runStage1BackwardHeaderDownload(final ChainSyncState state) {
     LOG.info(
         "Stage 1: Starting backward header download from pivot {} to stop block {}",
-        state.getPivotBlockNumber(),
-        state.getCheckpointBlockNumber());
+        state.pivotBlockHeader().getNumber(),
+        state.initialSync() ? "genesis" : state.checkpointBlockHeader().getNumber());
 
     final Instant stage1StartTime = Instant.now();
 
@@ -217,16 +235,39 @@ public class TwoStageFastSyncChainDownloader
   }
 
   private CompletableFuture<Void> runStage2ForwardBodiesAndReceipts(final ChainSyncState state) {
+    // Always start from current blockchain head (handles fresh start and restart cases)
+    final long blockchainHead = protocolContext.getBlockchain().getChainHeadBlockNumber();
+    final BlockHeader pivotBlockHeader = state.pivotBlockHeader();
+    final long pivotBlockNumber = pivotBlockHeader.getNumber();
+
+    // Validate blockchain head is in expected range
+    final long expectedMinStart = state.checkpointBlockHeader().getNumber();
+    if (blockchainHead < expectedMinStart) {
+      throw new IllegalStateException(
+          String.format(
+              "Blockchain head (%d) is before expected start (%d). Headers may not have been downloaded yet.",
+              blockchainHead, expectedMinStart));
+    }
+
+    // Check if already at or past pivot
+    if (blockchainHead >= pivotBlockNumber) {
+      LOG.info(
+          "Stage 2: Blockchain head ({}) already at or past pivot ({}). Skipping bodies/receipts download.",
+          blockchainHead,
+          pivotBlockNumber);
+      return CompletableFuture.completedFuture(null);
+    }
+
     LOG.info(
         "Stage 2: Starting forward bodies and receipts download from {} to pivot {}",
-        state.getBodiesDownloadStartBlockNumber(),
-        state.getPivotBlockNumber());
+        blockchainHead,
+        pivotBlockNumber);
 
     final Instant stage2StartTime = Instant.now();
 
     final Pipeline<List<BlockHeader>> bodiesReceiptsPipeline =
-        pipelineFactory.createForwardBodiesAndReceiptsDownloadPipelineFromTo(
-            state.getBodiesDownloadStartBlockNumber(), state.getPivotBlockNumber(), syncState);
+        pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(
+            blockchainHead, pivotBlockHeader, syncState);
     currentPipeline = bodiesReceiptsPipeline;
 
     return scheduler
@@ -251,7 +292,7 @@ public class TwoStageFastSyncChainDownloader
   private CompletableFuture<Void> checkAndHandlePivotUpdate() {
 
     final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
-    final BlockHeader previousPivot = chainState.get().getPivotBlockHeader();
+    final BlockHeader previousPivot = chainState.get().pivotBlockHeader();
 
     if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
       LOG.info(
@@ -291,7 +332,7 @@ public class TwoStageFastSyncChainDownloader
    */
   private CompletableFuture<Void> downloadAccordingToChainState() {
     // Snapshot state once - both stages use the same snapshot
-    // (only the headers complete flag changes, which is for persistence/restart logic)
+    // (only the headers complete flag changes, which is needed for the restart logic)
     final ChainSyncState currentState = chainState.get();
 
     return determineStage1Execution(currentState)

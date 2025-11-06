@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -51,8 +54,6 @@ public class FastSyncChainDownloader {
         new FastSyncDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
 
-    // Use two-stage sync approach which works directly with pivot block hash
-    // and doesn't require SyncTargetManager
     final BlockHeader pivotBlockHeader =
         fastSyncState
             .getPivotBlockHeader()
@@ -63,25 +64,44 @@ public class FastSyncChainDownloader {
         pivotBlockHash,
         pivotBlockHeader.getNumber());
 
-    // Create chain sync state storage (separate from world state storage)
     final ChainSyncStateStorage chainStateStorage =
         new ChainSyncStateStorage(fastSyncDataDirectory);
 
-    // Determine checkpoint block for bodies download
-    final long checkpointBlock =
-        syncState.getCheckpoint().map(checkpoint -> checkpoint.blockNumber()).orElse(0L);
+    // Determine checkpoint block for bodies download. If checkpoint is not set, use the chain head
+    final Hash checkpointHash =
+        syncState
+            .getCheckpoint()
+            .map(Checkpoint::blockHash)
+            .orElse(protocolContext.getBlockchain().getChainHeadHeader().getHash());
+
+    // get the checkpoint block header
+    final BlockHeader checkpointBlockHeader =
+        getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
 
     final Hash genesisHash = protocolContext.getBlockchain().getChainHeadHeader().getHash();
 
     return new TwoStageFastSyncChainDownloader(
         pipelineFactory,
+        protocolContext,
         ethContext.getScheduler(),
         syncState,
         metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
         chainStateStorage,
-        checkpointBlock,
+        checkpointBlockHeader,
         genesisHash);
+  }
+
+  private static BlockHeader getCheckpointBlockHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final Hash checkpointHash) {
+    // try the blockchain first, if not successful, download the header from the peers
+    return protocolContext
+        .getBlockchain()
+        .getBlockHeader(checkpointHash)
+        .orElse(downloadCheckpointHeader(protocolSchedule, ethContext, checkpointHash));
   }
 }
