@@ -40,11 +40,12 @@ public class BackwardHeaderSource implements Iterator<Long> {
    */
   public BackwardHeaderSource(final int batchSize, final ChainSyncState chainSyncState) {
 
-    final long pivotBlockNumber = chainSyncState.getPivotBlockNumber();
+    final long pivotBlockNumber = chainSyncState.pivotBlockHeader().getNumber();
 
     this.currentBlock = new AtomicLong(pivotBlockNumber - 1);
     this.batchSize = batchSize;
-    this.stopBlock = chainSyncState.getCheckpointBlockNumber() + 1;
+    this.stopBlock =
+        chainSyncState.initialSync() ? 1 : chainSyncState.checkpointBlockHeader().getNumber() + 1;
 
     LOG.info(
         "BackwardHeaderSource starting fresh: pivot={}, stopBlock={}, batchSize={}",

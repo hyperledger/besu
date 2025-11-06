@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -73,34 +72,33 @@ public class ChainSyncStateStorage {
         // Read version
         final byte version = input.readByte();
         if (version != FORMAT_VERSION) {
-          LOG.warn("Unknown chain sync state format version: {}", version);
+          LOG.warn("Old chain sync state format version: {}", version);
           return null;
         }
 
         // Read pivot block header
         final BlockHeader pivotBlockHeader = headerReader.apply(input);
 
+        // Read checkpoint block header
+        final BlockHeader checkpointBlockHeader = headerReader.apply(input);
+
         // Read progress fields
-        final long headerDownloadStopBlock = input.readLongScalar();
-        final Hash lowerHeaderDownloadBlockHash = Hash.wrap(input.readBytes32());
-        final long bodiesDownloadStartBlock = input.readLongScalar();
         final boolean headersDownloadComplete = input.readByte() == 1;
+
+        // Read the initial sync state
+        final boolean isInitialSync = input.readByte() == 1;
 
         input.leaveList();
 
         LOG.debug(
-            "Loaded chain sync state: pivot={}, stopBlock={}, startBlock={}, complete={}",
+            "Loaded chain sync state: pivot={}, checkpoint block={}, headers complete={}, initial sync={}",
             pivotBlockHeader.getNumber(),
-            headerDownloadStopBlock,
-            bodiesDownloadStartBlock,
-            headersDownloadComplete);
+            checkpointBlockHeader.getNumber(),
+            headersDownloadComplete,
+            isInitialSync);
 
         return new ChainSyncState(
-            pivotBlockHeader,
-            headerDownloadStopBlock,
-            lowerHeaderDownloadBlockHash,
-            bodiesDownloadStartBlock,
-            headersDownloadComplete);
+            pivotBlockHeader, checkpointBlockHeader, headersDownloadComplete, isInitialSync);
 
       } catch (final IOException e) {
         throw new IllegalStateException(
@@ -130,13 +128,16 @@ public class ChainSyncStateStorage {
         output.writeByte(FORMAT_VERSION);
 
         // Write pivot block header
-        state.getPivotBlockHeader().writeTo(output);
+        state.pivotBlockHeader().writeTo(output);
+
+        // Write the checkpoint block header
+        state.checkpointBlockHeader().writeTo(output);
 
         // Write progress fields
-        output.writeLongScalar(state.getCheckpointBlockNumber());
-        output.writeBytes(state.getCheckpointBlockHash());
-        output.writeLongScalar(state.getBodiesDownloadStartBlockNumber());
-        output.writeByte((byte) (state.isHeadersDownloadComplete() ? 1 : 0));
+        output.writeByte((byte) (state.headersDownloadComplete() ? 1 : 0));
+
+        // Write isInitialSync field
+        output.writeByte((byte) (state.initialSync() ? 1 : 0));
 
         output.endList();
 
@@ -151,11 +152,10 @@ public class ChainSyncStateStorage {
             StandardCopyOption.REPLACE_EXISTING);
 
         LOG.debug(
-            "Stored chain sync state: pivot={}, stopBlock={}, startBlock={}, complete={}",
-            state.getPivotBlockNumber(),
-            state.getCheckpointBlockNumber(),
-            state.getBodiesDownloadStartBlockNumber(),
-            state.isHeadersDownloadComplete());
+            "Stored chain sync state: pivot={}, checkpoint block={}, headers complete={}",
+            state.pivotBlockHeader().getNumber(),
+            state.checkpointBlockHeader().getNumber(),
+            state.headersDownloadComplete());
 
       } catch (final IOException e) {
         throw new IllegalStateException(

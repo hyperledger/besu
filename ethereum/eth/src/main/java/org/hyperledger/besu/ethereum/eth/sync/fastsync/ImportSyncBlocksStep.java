@@ -47,9 +47,9 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final long startBlock;
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
-  private final BlockHeader pivotHeader;
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
+  private final long pivotHeaderNumber;
 
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -80,7 +80,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.startBlock = startBlock;
-    this.pivotHeader = pivotHeader;
+    this.pivotHeaderNumber = pivotHeader.getNumber();
     this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
@@ -108,15 +108,15 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     final long endTime = System.nanoTime();
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
 
-    syncState.setSyncProgress(startBlock, lastBlock, pivotHeader.getNumber());
+    syncState.setSyncProgress(startBlock, lastBlock, pivotHeaderNumber);
 
     if (shouldLog.get()) {
-      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
+      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeaderNumber);
       throttledLog(
           LOG::info,
           String.format(
               "Block import progress: %s of %s (%s%%), Peer count: %s",
-              lastBlock, pivotHeader.getNumber(), blocksPercent, peerCount),
+              lastBlock, pivotHeaderNumber, blocksPercent, peerCount),
           shouldLog,
           PRINT_DELAY_SECONDS);
       LOG.debug(
