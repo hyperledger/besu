@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateC
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -53,23 +54,32 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
       final WorldStateKeyValueStorage.Updater stateUpdater,
       final BlockHeader blockHeader,
       final WorldStateConfig cfg) {
-
-    final Hash balRoot = waitForBalRoot();
-
     final Hash computed =
         computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
-    if (!computed.equals(balRoot)) {
-      final String mismatchMessage =
-          String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot);
-      if (balConfiguration.isBalLenientOnMismatch()) {
-        LOG.error(mismatchMessage);
+    if (balConfiguration.isBalLenientOnMismatch()) {
+      final Optional<Hash> maybeBalRoot = waitForBalRootLenient();
+      if (maybeBalRoot.isEmpty()) {
+        LOG.warn(
+            "BAL root unavailable (lenient mode); proceeding with computed state root {}",
+            computed);
         return computed;
       }
-      throw new IllegalStateException(mismatchMessage);
-    }
 
-    return computed;
+      final Hash balRoot = maybeBalRoot.get();
+      if (!computed.equals(balRoot)) {
+        LOG.error("BAL root mismatch: computed {} vs BAL {}", computed, balRoot);
+      }
+      return computed;
+    } else {
+      final Hash balRoot = waitForBalRootStrict();
+      if (!computed.equals(balRoot)) {
+        final String msg =
+            String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot);
+        throw new IllegalStateException(msg);
+      }
+      return computed;
+    }
   }
 
   @Override
@@ -77,12 +87,9 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     balRootFuture.cancel(true);
   }
 
-  private Hash waitForBalRoot() {
+  private Hash waitForBalRootStrict() {
     try {
-      if (balRootTimeout.isNegative()) {
-        return balRootFuture.join();
-      }
-      return balRootFuture.get(balRootTimeout.toNanos(), TimeUnit.NANOSECONDS);
+      return getWithConfiguredTimeout();
     } catch (final TimeoutException e) {
       balRootFuture.cancel(true);
       throw new IllegalStateException(
@@ -93,5 +100,31 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Interrupted while waiting for BAL state root", e);
     }
+  }
+
+  private Optional<Hash> waitForBalRootLenient() {
+    try {
+      return Optional.of(getWithConfiguredTimeout());
+    } catch (final TimeoutException e) {
+      balRootFuture.cancel(true);
+      LOG.warn(
+          "Timed out waiting {} for BAL state root (lenient mode); proceeding.", balRootTimeout);
+      return Optional.empty();
+    } catch (final ExecutionException e) {
+      LOG.warn("Failed to compute BAL state root (lenient mode); proceeding.", e.getCause());
+      return Optional.empty();
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.warn("Interrupted while waiting for BAL state root (lenient mode); proceeding.");
+      return Optional.empty();
+    }
+  }
+
+  private Hash getWithConfiguredTimeout()
+      throws InterruptedException, ExecutionException, TimeoutException {
+    if (balRootTimeout.isNegative()) {
+      return balRootFuture.join();
+    }
+    return balRootFuture.get(balRootTimeout.toNanos(), TimeUnit.NANOSECONDS);
   }
 }
