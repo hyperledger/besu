@@ -178,8 +178,7 @@ class PivotBlockConfirmer {
                     new RuntimeException("Unexpected internal issue"));
               } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                   || taskResult.result().isEmpty()) {
-                // recursively call executePivotQuery to retry with a different
-                // peer.
+                // recursively call executePivotQuery to retry with a different peer.
                 try {
                   return executePivotQuery(
                       blockNumber,
