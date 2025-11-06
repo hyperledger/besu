@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The SDiv operation. */
 public class SDivOperationOptimized extends AbstractFixedCostOperation {
@@ -51,7 +52,7 @@ public class SDivOperationOptimized extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
     Bytes resultBytes;
     if (value1.isZero()) {
-      resultBytes = Bytes.EMPTY;
+      resultBytes = Bytes32.ZERO;
     } else {
       UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
       UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());

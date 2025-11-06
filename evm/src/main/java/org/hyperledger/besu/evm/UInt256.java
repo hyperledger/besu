@@ -545,7 +545,7 @@ public final class UInt256 {
   private static int[] knuthDivision(final int[] numerator, final int[] denominator) {
     int n = nSetLimbs(denominator);
     if (n == 0) {
-      throw new ArithmeticException("divided by zero");
+      throw new ArithmeticException("division by zero");
     }
     int m = nSetLimbs(numerator);
     int cmp = compareLimbs(numerator, m, denominator, n);
@@ -630,7 +630,7 @@ public final class UInt256 {
   private static int[] knuthRemainder(final int[] dividend, final int[] modulus) {
     int n = nSetLimbs(modulus);
     if (n == 0) {
-      throw new ArithmeticException("divided by zero");
+      throw new ArithmeticException("division by zero");
     }
     int m = nSetLimbs(dividend);
     int cmp = compareLimbs(dividend, m, modulus, n);
