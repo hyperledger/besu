@@ -105,7 +105,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -802,8 +801,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+        createPivotSelector(protocolSchedule, protocolContext, ethContext, syncState, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -1033,7 +1031,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
@@ -1066,9 +1063,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           protocolContext,
           protocolSchedule,
           ethContext,
-          metricsSystem,
           genesisConfigOptions,
-          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {
@@ -1328,7 +1323,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         chainPrunerConfiguration.preMergePruningBlocksQuantity(),
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
-            1,
             1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
