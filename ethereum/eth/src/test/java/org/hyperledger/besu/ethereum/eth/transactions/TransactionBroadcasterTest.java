@@ -69,9 +69,7 @@ public class TransactionBroadcasterTest {
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
-  private final EthPeer ethPeerNoEth65 = mockPeer();
   private final EthPeer ethPeerWithEth65 = mockPeer();
-  private final EthPeer ethPeerNoEth65_2 = mockPeer();
   private final EthPeer ethPeerWithEth65_2 = mockPeer();
   private final EthPeer ethPeerWithEth65_3 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
@@ -81,10 +79,6 @@ public class TransactionBroadcasterTest {
 
   @BeforeEach
   public void setUp() {
-    when(ethPeerNoEth65.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.FALSE);
-    when(ethPeerNoEth65_2.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.FALSE);
     when(ethPeerWithEth65.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
     when(ethPeerWithEth65_2.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
@@ -112,25 +106,9 @@ public class TransactionBroadcasterTest {
   public void doNotRelayTransactionsWhenPoolIsEmpty() {
     Collection<PendingTransaction> pendingTxs = setupTransactionPool(0, 0);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
     txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
     verifyNothingSent();
-  }
-
-  @Test
-  public void relayFullTransactionsFromPoolWhenPeerDoesNotSupportEth65() {
-    Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
-    List<Transaction> txs = toTransactionList(pendingTxs);
-
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
-
-    sendTaskCapture.getValue().run();
-
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerNoEth65);
-    verifyNoInteractions(newPooledTransactionHashesMessageSender);
   }
 
   @Test
@@ -158,27 +136,6 @@ public class TransactionBroadcasterTest {
   }
 
   @Test
-  public void onTransactionsAddedWithOnlyNonEth65PeersSendFullTransactions() {
-    when(ethPeers.peerCount()).thenReturn(2);
-    when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.of(ethPeerNoEth65, ethPeerNoEth65_2).map(EthPeerImmutableAttributes::from));
-
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
-
-    txBroadcaster.onTransactionsAdded(txs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65_2, txs);
-
-    sendTaskCapture.getAllValues().forEach(Runnable::run);
-
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerNoEth65);
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerNoEth65_2);
-    verifyNoInteractions(newPooledTransactionHashesMessageSender);
-  }
-
-  @Test
   public void onTransactionsAddedWithOnlyFewEth65PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
     when(ethPeers.streamAvailablePeers())
@@ -189,15 +146,15 @@ public class TransactionBroadcasterTest {
 
     txBroadcaster.onTransactionsAdded(txs);
     // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
-    // so ethPeerWithEth65 and ethPeerWithEth65_2 are moved to the mixed broadcast list
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
+    // [ethPeerWithEth65, ethPeerWithEth65_2]
+    // so ethPeerWithEth65 is full transaction peer and ethPeerWithEth65_2 is hash only peer
+    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerWithEth65_2);
-    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeerWithEth65);
+    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerWithEth65);
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeerWithEth65_2);
   }
 
   @Test
@@ -214,9 +171,9 @@ public class TransactionBroadcasterTest {
     // the shuffled hash only peer list is always:
     // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
     // so ethPeerWithEth65 and ethPeerWithEth65_2 are moved to the mixed broadcast list
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_3, txs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_3, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
@@ -225,81 +182,12 @@ public class TransactionBroadcasterTest {
   }
 
   @Test
-  public void onTransactionsAddedWithMixedPeersSendFullTransactionsAndTransactionHashes() {
-    List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2);
+  public void onTransactionsAddedWithMixedBroadcastKind() {
+    List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2, ethPeerWithEth65_3);
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
-                .map(EthPeerImmutableAttributes::from));
-
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
-
-    txBroadcaster.onTransactionsAdded(txs);
-    // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65, ethPeerWithEth65_2]
-    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
-
-    sendTaskCapture.getAllValues().forEach(Runnable::run);
-
-    ArgumentCaptor<EthPeer> capPeerFullTransactions = ArgumentCaptor.forClass(EthPeer.class);
-    verify(transactionsMessageSender, times(2))
-        .sendTransactionsToPeer(capPeerFullTransactions.capture());
-    List<EthPeer> fullTransactionPeers = new ArrayList<>(capPeerFullTransactions.getAllValues());
-    assertThat(fullTransactionPeers.remove(ethPeerNoEth65)).isTrue();
-    assertThat(fullTransactionPeers).hasSize(1).first().isIn(eth65Peers);
-
-    ArgumentCaptor<EthPeer> capPeerTransactionHashes = ArgumentCaptor.forClass(EthPeer.class);
-    verify(newPooledTransactionHashesMessageSender)
-        .sendTransactionHashesToPeer(capPeerTransactionHashes.capture());
-    assertThat(capPeerTransactionHashes.getValue()).isIn(eth65Peers);
-  }
-
-  @Test
-  public void
-      onTransactionsAddedWithMixedPeersAndHashOnlyBroadcastTransactionsSendTransactionHashes() {
-    List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2);
-
-    when(ethPeers.peerCount()).thenReturn(3);
-    when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
-                .map(EthPeerImmutableAttributes::from));
-
-    List<Transaction> txs = toTransactionList(setupTransactionPool(BLOB, 0, 1));
-
-    txBroadcaster.onTransactionsAdded(txs);
-    // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65, ethPeerWithEth65_2]
-    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, txs);
-    verifyNoTransactionAddedToPeerSendingQueue(ethPeerNoEth65);
-
-    sendTaskCapture.getAllValues().forEach(Runnable::run);
-
-    verify(transactionsMessageSender, times(0)).sendTransactionsToPeer(any());
-
-    ArgumentCaptor<EthPeer> capPeerOnlyHashes = ArgumentCaptor.forClass(EthPeer.class);
-    verify(newPooledTransactionHashesMessageSender, times(2))
-        .sendTransactionHashesToPeer(capPeerOnlyHashes.capture());
-    List<EthPeer> onlyHashPeers = new ArrayList<>(capPeerOnlyHashes.getAllValues());
-    assertThat(onlyHashPeers).hasSameElementsAs(eth65Peers);
-  }
-
-  @Test
-  public void onTransactionsAddedWithMixedPeersAndMixedBroadcastKind() {
-    List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2);
-
-    when(ethPeers.peerCount()).thenReturn(3);
-    when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.concat(eth65Peers.stream(), Stream.of(ethPeerNoEth65))
-                .map(EthPeerImmutableAttributes::from));
+        .thenReturn(eth65Peers.stream().map(EthPeerImmutableAttributes::from));
 
     // 1 full broadcast transaction type
     // 1 hash only broadcast transaction type
@@ -312,22 +200,24 @@ public class TransactionBroadcasterTest {
 
     txBroadcaster.onTransactionsAdded(mixedTxs);
     // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65, ethPeerWithEth65_2]
-    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
+    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
+    // so ethPeerWithEth65_3 and ethPeerWithEth65_2 are full transaction peers
     verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, mixedTxs);
     verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, hashBroadcastTxs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, fullBroadcastTxs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, fullBroadcastTxs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_3, hashBroadcastTxs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_3, fullBroadcastTxs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
-    verify(transactionsMessageSender, times(1)).sendTransactionsToPeer(ethPeerNoEth65);
-
-    ArgumentCaptor<EthPeer> capPeerOnlyHashes = ArgumentCaptor.forClass(EthPeer.class);
-    verify(newPooledTransactionHashesMessageSender, times(2))
-        .sendTransactionHashesToPeer(capPeerOnlyHashes.capture());
-    List<EthPeer> onlyHashPeers = new ArrayList<>(capPeerOnlyHashes.getAllValues());
-    assertThat(onlyHashPeers).hasSameElementsAs(eth65Peers);
+    verify(newPooledTransactionHashesMessageSender, times(3))
+        .sendTransactionHashesToPeer(any(EthPeer.class));
+    ArgumentCaptor<EthPeer> capPeerFullTransaction = ArgumentCaptor.forClass(EthPeer.class);
+    verify(transactionsMessageSender, times(2))
+        .sendTransactionsToPeer(capPeerFullTransaction.capture());
+    List<EthPeer> fullTransactionPeers = new ArrayList<>(capPeerFullTransaction.getAllValues());
+    assertThat(fullTransactionPeers)
+        .hasSameElementsAs(List.of(ethPeerWithEth65_2, ethPeerWithEth65_3));
   }
 
   private void verifyNothingSent() {
@@ -385,11 +275,6 @@ public class TransactionBroadcasterTest {
         .addToPeerHashSendQueue(eq(peer), trackedTransactions.capture());
     assertThat(trackedTransactions.getAllValues())
         .containsExactlyInAnyOrderElementsOf(transactions);
-  }
-
-  private void verifyNoTransactionAddedToPeerSendingQueue(final EthPeer peer) {
-
-    verify(transactionTracker, times(0)).addToPeerSendQueue(eq(peer), any());
   }
 
   private EthPeer mockPeer() {
