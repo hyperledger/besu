@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -79,7 +78,6 @@ public class FastSyncActionsTest {
   private MutableBlockchain blockchain;
   private BlockchainSetupUtil blockchainSetupUtil;
   private SyncState syncState;
-  private MetricsSystem metricsSystem;
 
   static class FastSyncActionsTestArguments implements ArgumentsProvider {
     @Override
@@ -121,7 +119,6 @@ public class FastSyncActionsTest {
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
-    metricsSystem = new NoOpMetricsSystem();
     fastSyncActions =
         createFastSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
@@ -428,9 +425,7 @@ public class FastSyncActionsTest {
                 blockchainSetupUtil.getProtocolContext(),
                 blockchainSetupUtil.getProtocolSchedule(),
                 ethContext,
-                metricsSystem,
                 genesisConfig,
-                syncConfig,
                 () -> finalizedEvent,
                 () -> {}));
 

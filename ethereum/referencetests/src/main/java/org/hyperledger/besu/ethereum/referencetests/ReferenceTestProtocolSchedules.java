@@ -163,7 +163,7 @@ public class ReferenceTestProtocolSchedules {
                     "Osaka", createSchedule(genesisStub.clone().osakaTime(0), evmConfiguration)),
                 Map.entry(
                     "Amsterdam",
-                    createSchedule(genesisStub.clone().futureEipsTime(0), evmConfiguration)),
+                    createSchedule(genesisStub.clone().amsterdamTime(0), evmConfiguration)),
                 Map.entry(
                     "Bogota",
                     createSchedule(genesisStub.clone().futureEipsTime(0), evmConfiguration)),

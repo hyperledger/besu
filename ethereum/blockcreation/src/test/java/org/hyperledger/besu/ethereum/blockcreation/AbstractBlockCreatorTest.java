@@ -177,7 +177,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             1L,
             false,
             miningOn.parentHeader);
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
@@ -196,7 +196,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             1L,
             false,
             miningOn.parentHeader);
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
@@ -219,7 +219,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             miningOn.parentHeader);
 
     final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
-    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any());
+    verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot())
         .hasValue(withdrawalsRoot);
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).hasValue(withdrawals);
@@ -241,7 +241,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             1L,
             false,
             miningOn.parentHeader);
-    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any());
+    verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }

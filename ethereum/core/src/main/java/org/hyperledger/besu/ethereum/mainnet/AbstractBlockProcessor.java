@@ -331,7 +331,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           maybeWithdrawalsProcessor
               .get()
               .processWithdrawals(
-                  maybeWithdrawals.get(), worldState.updater(), postExecutionAccessLocationTracker);
+                  maybeWithdrawals.get(),
+                  worldState.updater(),
+                  postExecutionAccessLocationTracker,
+                  blockAccessListBuilder);
         } catch (final Exception e) {
           LOG.error("failed processing withdrawals", e);
           if (worldState instanceof BonsaiWorldState) {

@@ -349,6 +349,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertBlockAccessListAddresses(
         sequentialResult,
+        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),
@@ -367,6 +368,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertBlockAccessListAddresses(
         parallelResult,
+        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),
