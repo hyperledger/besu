@@ -737,12 +737,6 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
 
-    LOG.info(
-        "updateCanonicalChainData: newBlock parent hash and number: {} {}, chainHead hash: {}",
-        newBlock.getHeader().getParentHash(),
-        newBlock.getHeader().getNumber(),
-        chainHead);
-
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
       throw new IllegalStateException("Blockchain is missing chain head.");
     }
@@ -751,6 +745,13 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
         return handleNewHead(updater, newBlock, receipts, transactionIndexing);
       } else {
+        LOG.error(
+            "New block {} parent hash {} does not match current head block {} hash {} (chainHead= {}).",
+            newBlock.getHeader().getNumber(),
+            newBlock.getHeader().getParentHash(),
+            chainHeader.getNumber(),
+            chainHeader.getHash(),
+            chainHead);
         throw new RuntimeException("Blocks during sync should always be in order");
       }
     } catch (final NoSuchElementException e) {
