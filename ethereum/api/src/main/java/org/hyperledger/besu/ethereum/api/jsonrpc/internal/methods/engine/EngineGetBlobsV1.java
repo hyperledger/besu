@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -90,12 +91,6 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
-    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
-    }
-
     final VersionedHash[] versionedHashes;
     try {
       versionedHashes = requestContext.getRequiredParameter(0, VersionedHash[].class);
@@ -110,6 +105,15 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
+    }
+    if (mergeContext.get().isSyncing()) {
+      final List<BlobAndProofV1> emptyResults = Collections.nCopies(versionedHashes.length, null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), emptyResults);
+    }
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
     }
 
     final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
