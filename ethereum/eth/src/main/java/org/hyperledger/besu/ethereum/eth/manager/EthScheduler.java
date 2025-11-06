@@ -76,12 +76,11 @@ public class EthScheduler {
       final MetricsSystem metricsSystem) {
     this(
         MonitoredExecutors.newFixedThreadPool(
-            EthScheduler.class.getSimpleName() + "-Workers", 1, syncWorkerCount, metricsSystem),
+            EthScheduler.class.getSimpleName() + "-Workers", syncWorkerCount, metricsSystem),
         MonitoredExecutors.newScheduledThreadPool(
             EthScheduler.class.getSimpleName() + "-Timer", 1, metricsSystem),
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-Transactions",
-            1,
             txWorkerCount,
             txWorkerQueueSize,
             metricsSystem),
@@ -89,7 +88,6 @@ public class EthScheduler {
             EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
         MonitoredExecutors.newFixedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",
-            1,
             computationWorkerCount,
             metricsSystem),
         MonitoredExecutors.newCachedThreadPool(
