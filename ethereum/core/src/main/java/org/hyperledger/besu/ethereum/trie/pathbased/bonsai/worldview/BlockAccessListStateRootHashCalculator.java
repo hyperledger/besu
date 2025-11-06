@@ -26,7 +26,11 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.C
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.worldstate.BufferingTrieWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.TrieWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateWriteSet;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
@@ -60,8 +64,11 @@ public class BlockAccessListStateRootHashCalculator {
     return ws;
   }
 
-  private static Hash accumulateAccessListAndComputeRoot(
+  private static BalRootComputation accumulateAccessListAndComputeRoot(
       final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
+
+    final WorldStateWriteSet writeSet = new WorldStateWriteSet();
+    final TrieWriteSink trieWriteSink = new BufferingTrieWriteSink(writeSet);
     final BonsaiWorldStateUpdateAccumulator accumulator =
         (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
 
@@ -116,10 +123,12 @@ public class BlockAccessListStateRootHashCalculator {
 
     accumulator.clearAccountsThatAreEmpty();
     accumulator.commit();
-    return worldState.calculateRootHash(Optional.empty(), accumulator);
+    final Hash root = worldState.calculateRootHash(accumulator, trieWriteSink);
+    writeSet.setComputedRoot(root);
+    return new BalRootComputation(root, writeSet, accumulator);
   }
 
-  public static CompletableFuture<Hash> computeStateRootFromBlockAccessListAsync(
+  public static CompletableFuture<BalRootComputation> computeAsync(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final BlockAccessList bal) {

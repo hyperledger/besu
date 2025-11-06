@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
+import org.hyperledger.besu.ethereum.worldstate.TrieWriteSink;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -75,7 +75,8 @@ class BonsaiWorldStateTest {
     final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
         Map.of(Address.ZERO, new PathBasedValue<>(prior, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+    worldState.updateCode(
+        TrieWriteSink.forUpdater(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verifyNoInteractions(bonsaiUpdater);
   }
@@ -85,7 +86,8 @@ class BonsaiWorldStateTest {
     final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
         Map.of(Address.ZERO, new PathBasedValue<>(CODE, CODE));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+    worldState.updateCode(
+        TrieWriteSink.forUpdater(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verifyNoInteractions(bonsaiUpdater);
   }
@@ -96,7 +98,8 @@ class BonsaiWorldStateTest {
     final Map<Address, PathBasedValue<Bytes>> codeToUpdate =
         Map.of(Address.ZERO, new PathBasedValue<>(CODE, updated));
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+    worldState.updateCode(
+        TrieWriteSink.forUpdater(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verify(bonsaiUpdater).removeCode(ACCOUNT_HASH, CODE_HASH);
   }
@@ -108,7 +111,8 @@ class BonsaiWorldStateTest {
         Map.of(ACCOUNT, new PathBasedValue<>(prior, CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+    worldState.updateCode(
+        TrieWriteSink.forUpdater(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verify(bonsaiUpdater).putCode(ACCOUNT_HASH, CODE_HASH, CODE);
   }
@@ -121,7 +125,8 @@ class BonsaiWorldStateTest {
     codeToUpdate.put(Address.fromHexString("0x3"), new PathBasedValue<>(Bytes.of(9), CODE));
 
     when(bonsaiWorldStateUpdateAccumulator.getCodeToUpdate()).thenReturn(codeToUpdate);
-    worldState.updateCode(Optional.of(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
+    worldState.updateCode(
+        TrieWriteSink.forUpdater(bonsaiUpdater), bonsaiWorldStateUpdateAccumulator);
 
     verify(bonsaiUpdater).putCode(Address.fromHexString("0x1").addressHash(), CODE_HASH, CODE);
     verify(bonsaiUpdater).removeCode(Address.fromHexString("0x2").addressHash(), CODE_HASH);

@@ -12,29 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateWriteSet;
 
-import java.util.Collection;
-
-import org.apache.tuweni.bytes.Bytes32;
-
-public interface WorldStateKeyValueStorage {
-
-  DataStorageFormat getDataStorageFormat();
-
-  Updater updater();
-
-  void clear();
-
-  interface NodesAddedListener {
-    void onNodesAdded(Collection<Bytes32> nodeHash);
-  }
-
-  interface Updater {
-    void commit();
-
-    TrieWriteSink getTrieWriteSink();
-  }
-}
+public record BalRootComputation(
+    Hash root, WorldStateWriteSet writeSet, BonsaiWorldStateUpdateAccumulator accumulator) {}
