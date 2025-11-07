@@ -37,6 +37,7 @@ plugins {
 
 dependencyCheck {
   nvd {
+    outputDirectory = "${buildDir}/reports/dependency-check"
     apiKey = System.getenv('NVD_API_KEY')
     // TODO set up the api key in github repo
     // apiKey = ${{ secrets.NVD_API_KEY }}
@@ -243,6 +244,12 @@ configure(allprojects - project(':platform')) {
     }
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
+    }
+
+    // dependency check plugin for some reason tries to find a non-existent version of web3j
+    // pinning to this version fixes that. see https://github.com/hyperledger/besu/pull/9155
+    resolutionStrategy {
+      force 'org.web3j:core:4.12.3'
     }
 
     // transitive versions conflict with io.protocols.tuweni, prefer ours
@@ -507,14 +514,6 @@ checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
 check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
-
-  // dependency check plugin for some reason tries to find a non-existent version of web3j
-  // pinning to this version fixes that
-  configurations.all {
-    resolutionStrategy {
-      force 'org.web3j:core:4.12.3'
-    }
-  }
 
   if (file('src/test-support').directory) {
     sourceSets {
