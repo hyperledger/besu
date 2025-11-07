@@ -91,9 +91,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/* for running tests, comment @Disabled annotation and run each test on a singe-run
-The setup method access the DB concurrently. DB lock doesn't allow for a concurrent access. */
-
 /** Tests for {@link BesuCommand}. */
 @ExtendWith(MockitoExtension.class)
 public class EphemeryTest extends CommandTestAbstract {
