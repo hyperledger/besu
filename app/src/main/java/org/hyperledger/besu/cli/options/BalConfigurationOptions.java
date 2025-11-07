@@ -23,6 +23,8 @@ import picocli.CommandLine;
 
 /** Command-line options for configuring Block Access List behaviour. */
 public class BalConfigurationOptions {
+  /** Default constructor. */
+  public BalConfigurationOptions() {}
 
   @CommandLine.Option(
       names = {"--Xbal-optimization-enabled"},
@@ -51,6 +53,11 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for the BAL-computed state root.")
   private long balStateRootTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  /**
+   * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
+   *
+   * @return an immutable BAL configuration reflecting the current option values
+   */
   public BalConfiguration toDomainObject() {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
