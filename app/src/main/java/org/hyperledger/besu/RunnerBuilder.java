@@ -71,7 +71,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -172,7 +171,7 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
-  private BalConfiguration balConfiguration = ImmutableBalConfiguration.builder().build();
+  private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;

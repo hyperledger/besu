@@ -22,6 +22,8 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface BalConfiguration {
 
+  BalConfiguration DEFAULT = ImmutableBalConfiguration.builder().build();
+
   /** Returns whether block access list support is enabled. */
   @Value.Default
   default boolean isBalApiEnabled() {

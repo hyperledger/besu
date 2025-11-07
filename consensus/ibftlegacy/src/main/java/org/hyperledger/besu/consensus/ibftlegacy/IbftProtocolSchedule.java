@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -68,7 +68,7 @@ public class IbftProtocolSchedule {
             null,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             null)
         .createProtocolSchedule();
   }

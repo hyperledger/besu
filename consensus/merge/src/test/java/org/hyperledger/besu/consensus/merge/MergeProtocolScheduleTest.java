@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -59,7 +59,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
 
@@ -82,7 +82,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
 
@@ -125,7 +125,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
 
@@ -160,7 +160,7 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
 
@@ -196,7 +196,7 @@ public class MergeProtocolScheduleTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                ImmutableBalConfiguration.builder().build(),
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem(),
                 EvmConfiguration.DEFAULT)
             .getByBlockHeader(blockHeader(0));

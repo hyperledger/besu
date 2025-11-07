@@ -56,7 +56,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -126,7 +126,7 @@ public class CliqueMinerExecutorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();

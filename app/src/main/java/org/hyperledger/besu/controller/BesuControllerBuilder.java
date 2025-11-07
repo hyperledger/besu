@@ -79,7 +79,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -217,7 +216,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected boolean isParallelTxProcessingEnabled;
 
   /** Configuration flags related to block access lists. */
-  protected BalConfiguration balConfiguration = ImmutableBalConfiguration.builder().build();
+  protected BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;

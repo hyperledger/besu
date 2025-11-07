@@ -29,8 +29,8 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -187,7 +187,7 @@ public class CombinedProtocolScheduleFactoryTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            ImmutableBalConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return new BftProtocolSchedule(

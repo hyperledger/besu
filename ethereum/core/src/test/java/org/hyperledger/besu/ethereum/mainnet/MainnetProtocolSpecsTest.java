@@ -64,7 +64,7 @@ public class MainnetProtocolSpecsTest {
   private final Optional<BigInteger> chainId = Optional.of(BigInteger.ONE);
   private final boolean enableRevertReason = false;
   private final boolean isParallelTxProcessingEnabled = false;
-  private final BalConfiguration balConfiguration = ImmutableBalConfiguration.builder().build();
+  private final BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private final long londonForkBlockNumber = 0L;
 
   @BeforeEach

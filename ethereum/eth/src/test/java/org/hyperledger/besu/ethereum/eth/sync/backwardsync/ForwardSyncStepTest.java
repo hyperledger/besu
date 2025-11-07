@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -90,7 +90,7 @@ public class ForwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          ImmutableBalConfiguration.builder().build(),
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;

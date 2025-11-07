@@ -21,7 +21,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -84,7 +84,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
-        ImmutableBalConfiguration.builder().build(),
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 
@@ -222,7 +222,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                ImmutableBalConfiguration.builder().build(),
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
   }
