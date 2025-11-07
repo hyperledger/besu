@@ -1160,18 +1160,20 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
-    return bpo5Definition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
-            metricsSystem)
-        .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
-        .stateRootCommitterFactory(new StateRootCommitterFactoryBal(false, BAL_ROOT_TIMEOUT))
-        .hardforkId(AMSTERDAM);
+    final ProtocolSpecBuilder builder =
+        bpo5Definition(
+                chainId,
+                enableRevertReason,
+                genesisConfigOptions,
+                evmConfiguration,
+                miningConfiguration,
+                isParallelTxProcessingEnabled,
+                isBlockAccessListEnabled,
+                metricsSystem)
+            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
+            .stateRootCommitterFactory(new StateRootCommitterFactoryBal(false, BAL_ROOT_TIMEOUT));
+    return applyBlobSchedule(
+        builder, genesisConfigOptions, BlobScheduleOptions::getAmsterdam, AMSTERDAM);
   }
 
   private static ProtocolSpecBuilder applyBlobSchedule(
