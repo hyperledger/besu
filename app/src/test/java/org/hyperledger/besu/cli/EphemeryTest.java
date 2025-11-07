@@ -17,11 +17,6 @@ package org.hyperledger.besu.cli;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -38,6 +33,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -57,18 +53,12 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -80,7 +70,6 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -95,7 +84,6 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -108,12 +96,12 @@ The setup method access the DB concurrently. DB lock doesn't allow for a concurr
 
 /** Tests for {@link BesuCommand}. */
 @ExtendWith(MockitoExtension.class)
-@Disabled("needs to run each test on a single-run")
 public class EphemeryTest extends CommandTestAbstract {
   private static final Logger LOG = LoggerFactory.getLogger(EphemeryTest.class);
 
   private TestBesuCommand besuCommand;
   private Runner runner;
+  private BesuController controller;
   private final Vertx vertx = Vertx.vertx();
   private final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
   final SynchronizerConfiguration syncConfig =
@@ -134,17 +122,38 @@ public class EphemeryTest extends CommandTestAbstract {
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
   private Path dataDir;
-  private Path db;
   private Path pidPath;
   private NodeKey dbNodeKey;
+  private KeyPair keyPair;
   private final MiningConfiguration miningParameters = MiningConfiguration.newDefault();
-  private final DataStorageConfiguration dataStorageConfiguration =
-      DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
 
   @AfterEach
-  public void stop() {
+  public void tearDown() throws IOException {
+    // Clean up
+    if (runner != null) {
+      try {
+        runner.stop();
+      } catch (Exception e) {
+        LOG.warn("Error stopping runner", e);
+      }
+    }
+    if (controller != null) {
+      try {
+        controller.close();
+      } catch (Exception e) {
+        LOG.warn("Error stopping controller", e);
+      }
+    }
+
     if (vertx != null) {
       vertx.close();
+    }
+
+    besuCommand.clearAllocatedPorts();
+
+    // Delete the test data directory
+    if (besuCommand.dataPath != null && Files.exists(besuCommand.dataPath)) {
+      clearDirectory(besuCommand.dataPath);
     }
   }
 
@@ -158,16 +167,12 @@ public class EphemeryTest extends CommandTestAbstract {
 
       initDataPaths();
 
-      storageProvider =
-          createKeyValueStorageProvider(dataDir, db, dataStorageConfiguration, miningParameters);
+      storageProvider = new InMemoryKeyValueStorageProvider();
 
-      mockController = setController();
+      controller = setController();
       runner = setRunner();
       runner.startExternalServices();
       runner.startEthereumMainLoop();
-
-      when(besuCommand.buildController()).thenReturn(mockController);
-      when(besuCommand.buildRunner()).thenReturn(runner);
 
       cycleIdField = BesuCommand.class.getDeclaredField("ephemeryNextCycleId");
       cycleIdField.setAccessible(true);
@@ -203,12 +208,11 @@ public class EphemeryTest extends CommandTestAbstract {
     runner.stopEphemery(besuCommand);
     runner.startEphemery(besuCommand);
 
-    mockController = setController();
+    controller = setController();
     runner = setRunner();
     runner.startExternalServices();
     runner.startEthereumMainLoop();
-    when(besuCommand.buildController()).thenReturn(mockController);
-    when(besuCommand.buildRunner()).thenReturn(runner);
+    KeyPairUtil.storeKeyFile(keyPair, besuCommand.dataPath);
 
     Awaitility.await()
         .atMost(180, TimeUnit.SECONDS)
@@ -302,7 +306,8 @@ public class EphemeryTest extends CommandTestAbstract {
   }
 
   @Test
-  void testClearAllocatedPorts() throws NoSuchFieldException, IllegalAccessException, IOException {
+  public void testClearAllocatedPorts()
+      throws NoSuchFieldException, IllegalAccessException, IOException {
     Field portsField = BesuCommand.class.getDeclaredField("allocatedPorts");
     portsField.setAccessible(true);
     @SuppressWarnings("unchecked")
@@ -318,7 +323,7 @@ public class EphemeryTest extends CommandTestAbstract {
   }
 
   @Test
-  void testSetDataPathToParent() throws IOException {
+  public void testSetDataPathToParent() throws IOException {
     Path childPath = besuCommand.dataPath.resolve("parent").resolve("child");
     Files.createDirectories(childPath);
     besuCommand.dataPath = childPath;
@@ -326,6 +331,27 @@ public class EphemeryTest extends CommandTestAbstract {
     besuCommand.setDataPathToParent();
 
     assertThat(besuCommand.dataPath).isEqualTo(childPath.getParent());
+  }
+
+  @Test
+  public void testKeyShouldBeSameAfterRestart() throws Exception {
+    var keyPairBefore = KeyPairUtil.loadKeyPair(besuCommand.dataPath);
+
+    runner.stopEphemery(besuCommand);
+    runner.startEphemery(besuCommand);
+    KeyPairUtil.storeKeyFile(keyPair, besuCommand.dataPath);
+
+    var keyPairAfter = besuCommand.loadKeyPair(besuCommand.dataPath.resolve("key").toFile());
+
+    assertThat(keyPairBefore).isNotNull();
+    assertThat(dbNodeKey.getPublicKey()).isEqualTo(keyPairAfter.getPublicKey());
+    assertThat(keyPairBefore).isEqualTo(keyPairAfter); // key loaded and not generated after restart
+  }
+
+  @Test
+  public void testLoadKeyPairShouldNotGenerateKnewKey() {
+    var key = besuCommand.loadKeyPair(besuCommand.dataPath.resolve("key").toFile());
+    assertThat(key).isEqualTo(keyPair); // key loaded and not generated
   }
 
   private void getPeers(final long timeout, final long leastExpectedPeers, final int cycle) {
@@ -349,7 +375,7 @@ public class EphemeryTest extends CommandTestAbstract {
 
   private BesuController setController() {
     try {
-      mockController =
+      controller =
           getController(
               getFastSyncGenesis(EPHEMERY),
               syncConfig,
@@ -362,7 +388,7 @@ public class EphemeryTest extends CommandTestAbstract {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return mockController;
+    return controller;
   }
 
   private Runner setRunner() {
@@ -382,7 +408,7 @@ public class EphemeryTest extends CommandTestAbstract {
 
     runner =
         runnerBuilder
-            .besuController(mockController)
+            .besuController(controller)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(EPHEMERY))
             .jsonRpcConfiguration(jsonRpcConfiguration())
             .graphQLConfiguration(graphQLConfiguration())
@@ -432,10 +458,9 @@ public class EphemeryTest extends CommandTestAbstract {
 
   private void initDataPaths() {
     dataDir = besuCommand.dataDir();
-    db = dataDir.resolve("database");
-
     pidPath = dataDir.resolve("pid");
-    dbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDir));
+    keyPair = KeyPairUtil.loadKeyPair(dataDir);
+    dbNodeKey = NodeKeyUtils.createFrom(keyPair);
   }
 
   private GenesisConfig getFastSyncGenesis(final NetworkName networkName) throws IOException {
@@ -452,35 +477,6 @@ public class EphemeryTest extends CommandTestAbstract {
           node.remove("terminalTotalDifficulty");
         });
     return GenesisConfig.fromConfig(jsonNode);
-  }
-
-  private StorageProvider createKeyValueStorageProvider(
-      final Path dataDir,
-      final Path dbDir,
-      final DataStorageConfiguration dataStorageConfiguration,
-      final MiningConfiguration miningConfiguration) {
-    final var besuConfiguration = new BesuConfigurationImpl();
-    besuConfiguration
-        .init(dataDir, dbDir, dataStorageConfiguration)
-        .withMiningParameters(miningConfiguration);
-    return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            new RocksDBKeyValueStorageFactory(
-                () ->
-                    new RocksDBFactoryConfiguration(
-                        DEFAULT_MAX_OPEN_FILES,
-                        DEFAULT_BACKGROUND_THREAD_COUNT,
-                        DEFAULT_CACHE_CAPACITY,
-                        DEFAULT_IS_HIGH_SPEC,
-                        DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS,
-                        false,
-                        Optional.empty(),
-                        Optional.empty()),
-                Arrays.asList(KeyValueSegmentIdentifier.values()),
-                RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(besuConfiguration)
-        .withMetricsSystem(new NoOpMetricsSystem())
-        .build();
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
@@ -508,5 +504,23 @@ public class EphemeryTest extends CommandTestAbstract {
 
   private MetricsConfiguration metricsConfiguration() {
     return MetricsConfiguration.builder().enabled(false).port(0).build();
+  }
+
+  private void clearDirectory(final Path directory) throws IOException {
+    if (Files.exists(directory)) {
+      try (Stream<Path> pathStream = Files.walk(directory)) {
+        pathStream
+            .sorted((a, b) -> b.compareTo(a)) // Delete files before directories
+            .forEach(
+                path -> {
+                  try {
+                    Files.delete(path);
+                    LOG.debug("Deleted: {}", path);
+                  } catch (IOException e) {
+                    LOG.warn("Could not delete {}: {}", path, e.getMessage());
+                  }
+                });
+      }
+    }
   }
 }
