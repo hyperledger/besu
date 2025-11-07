@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -28,13 +30,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
-import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -45,14 +50,43 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   public static final int REQUEST_MAX_VERSIONED_HASHES = 128;
 
   private final TransactionPool transactionPool;
+  private final Counter requestedCounter;
+  private final Counter availableCounter;
+  private final Counter hitCounter;
+  private final Counter missCounter;
+  private final Optional<Long> osakaMilestone;
 
   public EngineGetBlobsV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
-      final TransactionPool transactionPool) {
-    super(vertx, protocolContext, engineCallListener);
+      final TransactionPool transactionPool,
+      final MetricsSystem metricsSystem) {
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
+    // create counters
+    this.requestedCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.RPC,
+            "execution_engine_getblobs_requested_total",
+            "Number of blobs requested via engine_getBlobsV2");
+    this.availableCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.RPC,
+            "execution_engine_getblobs_available_total",
+            "Number of blobs requested via engine_getBlobsV2 that are present in the blob pool");
+    this.hitCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.RPC,
+            "execution_engine_getblobs_hit_total",
+            "Number of calls to engine_getBlobsV2 that returned at least one blob");
+    this.missCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.RPC,
+            "execution_engine_getblobs_miss_total",
+            "Number of calls to engine_getBlobsV2 that returned zero blobs");
+    this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
   }
 
   @Override
@@ -66,10 +100,55 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST);
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
-    final List<BlobAndProofV2> result = getBlobV2Result(versionedHashes);
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+    if (mergeContext.get().isSyncing()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
+    }
+    requestedCounter.inc(versionedHashes.length);
+    List<BlobProofBundle> validBundles = new ArrayList<>(versionedHashes.length);
+    int missingBlobs = 0;
+    int unsupportedBlobs = 0;
+    for (VersionedHash hash : versionedHashes) {
+      final BlobProofBundle bundle = transactionPool.getBlobProofBundle(hash);
+      if (bundle == null) {
+        LOG.trace("No BlobProofBundle found for versioned hash: {}", hash);
+        missingBlobs++;
+        continue;
+      }
+      if (bundle.getBlobType() == BlobType.KZG_PROOF) {
+        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", hash);
+        unsupportedBlobs++;
+        continue;
+      }
+      validBundles.add(bundle);
+    }
+    // count how many of the requested blobs are actually available
+    availableCounter.inc(validBundles.size());
+
+    LOG.debug(
+        "Requested {} bundles, found {} valid bundles, {} missing, {} unsupported",
+        versionedHashes.length,
+        validBundles.size(),
+        missingBlobs,
+        unsupportedBlobs);
+
+    // V2 returns null if any requested blobs are missing or unsupported
+    if (missingBlobs > 0 || unsupportedBlobs > 0) {
+      missCounter.inc();
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+
+    final List<BlobAndProofV2> results =
+        validBundles.stream().map(this::createBlobAndProofV2).toList();
+
+    hitCounter.inc();
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 
   private VersionedHash[] extractVersionedHashes(final JsonRpcRequestContext requestContext) {
@@ -83,38 +162,16 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     }
   }
 
-  private @Nonnull List<BlobAndProofV2> getBlobV2Result(final VersionedHash[] versionedHashes) {
-    return Arrays.stream(versionedHashes)
-        .map(transactionPool::getBlobProofBundle)
-        .map(this::getBlobAndProofV2)
-        .toList();
-  }
-
-  private @Nullable BlobAndProofV2 getBlobAndProofV2(final BlobProofBundle blobProofBundle) {
-    if (blobProofBundle == null) {
-      return null;
-    }
-    BlobProofBundle proofBundle = processBundle(blobProofBundle);
-    return createBlobAndProofV2(proofBundle);
-  }
-
-  private BlobProofBundle processBundle(final BlobProofBundle blobProofBundle) {
-    // This may occur during fork transitions when the pool contains outdated blob types.
-    // It should not happen once the pool is refreshed with new transactions.
-    if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-      LOG.warn(
-          "BlobProofBundle {} with KZG_PROOF type found, converting to KZG_CELL_PROOFS type.",
-          blobProofBundle.getVersionedHash());
-      return CKZG4844Helper.unsafeConvertToVersion1(blobProofBundle);
-    }
-    return blobProofBundle;
-  }
-
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
     return new BlobAndProofV2(
         blobProofBundle.getBlob().getData().toHexString(),
         blobProofBundle.getKzgProof().stream()
             .map(proof -> proof.getData().toHexString())
             .toList());
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long currentTimestamp) {
+    return ForkSupportHelper.validateForkSupported(OSAKA, osakaMilestone, currentTimestamp);
   }
 }

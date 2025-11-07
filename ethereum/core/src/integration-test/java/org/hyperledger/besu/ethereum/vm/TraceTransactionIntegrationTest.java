@@ -30,8 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -41,6 +39,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
@@ -83,7 +84,7 @@ public class TraceTransactionIntegrationTest {
     transactionProcessor = protocolSpec.getTransactionProcessor();
     blockHashLookup =
         protocolSpec
-            .getBlockHashProcessor()
+            .getPreExecutionProcessor()
             .createBlockHashLookup(blockchain, genesisBlock.getHeader());
   }
 
@@ -127,7 +128,13 @@ public class TraceTransactionIntegrationTest {
 
     // Now call the transaction to execute the SSTORE.
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new TraceOptions(true, true, true), false);
+        new DebugOperationTracer(
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceStorage(true)
+                .traceMemory(true)
+                .traceStack(true)
+                .build(),
+            false);
     final Transaction executeTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -171,7 +178,13 @@ public class TraceTransactionIntegrationTest {
   @Test
   public void shouldTraceContractCreation() {
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(new TraceOptions(true, true, true), false);
+        new DebugOperationTracer(
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceStorage(true)
+                .traceMemory(true)
+                .traceStack(true)
+                .build(),
+            false);
     final Transaction transaction =
         Transaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));

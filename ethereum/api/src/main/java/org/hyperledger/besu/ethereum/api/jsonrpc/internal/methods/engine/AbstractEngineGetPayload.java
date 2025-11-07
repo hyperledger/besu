@@ -26,7 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -77,46 +78,69 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       throw new InvalidJsonRpcParameters(
           "Invalid payload ID parameter (index 0)", RpcErrorType.INVALID_PAYLOAD_ID_PARAMS, e);
     }
+
+    // Check if we only have an empty block available
+    Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+
+    // Signal to finish current iteration and stop building
     mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+
+    // If we only have an empty block, wait for the current iteration to complete until the timeout
+    if (maybePayload.isPresent()
+        && maybePayload
+            .get()
+            .blockWithReceipts()
+            .getBlock()
+            .getBody()
+            .getTransactions()
+            .isEmpty()) {
+      LOG.debug(
+          "Only empty block available for payload {}, waiting for block building to complete",
+          payloadId);
+      mergeMiningCoordinator.awaitCurrentBuildCompletion(payloadId);
+      // Retrieve again after waiting
+      maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+    }
+
     if (maybePayload.isPresent()) {
-      final BlockWithReceipts proposal = maybePayload.get().blockWithReceipts();
-      LOG.atDebug()
-          .setMessage("assembledBlock for payloadId {}: {}")
-          .addArgument(() -> payloadId)
-          .addArgument(() -> proposal.getBlock().toLogString())
-          .log();
-      LOG.atTrace().setMessage("assembledBlock with receipts {}").addArgument(() -> proposal).log();
+      final PayloadWrapper payload = maybePayload.get();
+      final BlockWithReceipts proposal = payload.blockWithReceipts();
+      LOG.trace("assembledBlock with receipts {}", proposal);
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
-      return createResponse(request, maybePayload.get());
+      logProducedBlock(
+          payload.blockWithReceipts().getBlock(),
+          payload.getBlockCreationTimings(),
+          payload.payloadIdentifier());
+      return createResponse(request, payload);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
-  protected void logProposal(final PayloadWrapper payload) {
-    final BlockHeader proposalHeader = payload.blockWithReceipts().getHeader();
-    final float gasUsedPerc = 100.0f * proposalHeader.getGasUsed() / proposalHeader.getGasLimit();
+  private void logProducedBlock(
+      final Block block,
+      final BlockCreationTiming blockCreationTiming,
+      final PayloadIdentifier payloadIdentifier) {
+    final String withdrawalsInfo =
+        block.getBody().getWithdrawals().isPresent()
+            ? String.format(" | %d ws", block.getBody().getWithdrawals().get().size())
+            : "";
 
-    final String message =
-        "Fetch block proposal by identifier: {}, hash: {}, "
-            + "number: {}, coinbase: {}, transaction count: {}, gas used: {}%"
-            + " reward: {}";
-
-    LOG.atInfo()
-        .setMessage(message)
-        .addArgument(payload.payloadIdentifier()::toHexString)
-        .addArgument(proposalHeader::getHash)
-        .addArgument(proposalHeader::getNumber)
-        .addArgument(proposalHeader::getCoinbase)
-        .addArgument(
-            () -> payload.blockWithReceipts().getBlock().getBody().getTransactions().size())
-        .addArgument(() -> String.format("%1.2f", gasUsedPerc))
-        .addArgument(payload.blockValue()::toHumanReadableString)
-        .log();
+    LOG.info(
+        String.format(
+            "Produced #%,d  (%s)| %4d tx%s | %,d (%01.1f%%) gas in %01.3fs | Timing(%s) | PayloadId %s",
+            block.getHeader().getNumber(),
+            block.getHash().toShortLogString(),
+            block.getBody().getTransactions().size(),
+            withdrawalsInfo,
+            block.getHeader().getGasUsed(),
+            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            blockCreationTiming.end("log").toMillis() / 1000.0,
+            blockCreationTiming,
+            payloadIdentifier.toHexString()));
   }
 
   protected abstract JsonRpcResponse createResponse(

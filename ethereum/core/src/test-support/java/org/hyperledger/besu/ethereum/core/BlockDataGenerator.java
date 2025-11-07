@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -304,6 +305,7 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .requestsHash(options.getRequestsHash(null))
+            .balHash(options.getBalHash(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -534,7 +536,7 @@ public class BlockDataGenerator {
   }
 
   private LogTopic logTopic() {
-    return LogTopic.wrap(bytesValue(Bytes32.SIZE));
+    return LogTopic.wrap(bytes32());
   }
 
   public Bytes32 bytes32() {
@@ -653,6 +655,7 @@ public class BlockDataGenerator {
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
     private Optional<Hash> requestsHash = Optional.empty();
+    private Optional<Hash> balHash = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
 
@@ -725,6 +728,10 @@ public class BlockDataGenerator {
       return requestsHash.orElse(defaultValue);
     }
 
+    public Hash getBalHash(final Hash defaultValue) {
+      return balHash.orElse(defaultValue);
+    }
+
     public Optional<List<Request>> getRequests(final Optional<List<Request>> defaultValue) {
       return requests.orElse(defaultValue);
     }
@@ -753,6 +760,19 @@ public class BlockDataGenerator {
 
     public BlockOptions setWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
       this.withdrawals = Optional.of(withdrawals);
+      if (withdrawals.isPresent()) {
+        final List<Withdrawal> withdrawalList = withdrawals.get();
+        final ArrayList<Bytes> bytesList = new ArrayList<>(withdrawalList.size());
+        withdrawalList.forEach(
+            w -> {
+              final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+              w.writeTo(rlpOutput);
+              bytesList.add(rlpOutput.encoded());
+            });
+        this.withdrawalsRoot = Optional.of(Util.getRootFromListOfBytes(bytesList));
+      } else {
+        this.withdrawalsRoot = Optional.empty();
+      }
       return this;
     }
 
@@ -851,6 +871,11 @@ public class BlockDataGenerator {
 
     public BlockOptions setRequestsHash(final Hash requestsHash) {
       this.requestsHash = Optional.of(requestsHash);
+      return this;
+    }
+
+    public BlockOptions setBalHash(final Hash balHash) {
+      this.balHash = Optional.of(balHash);
       return this;
     }
 

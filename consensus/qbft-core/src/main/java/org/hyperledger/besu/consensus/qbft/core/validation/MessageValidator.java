@@ -53,7 +53,7 @@ public class MessageValidator {
         final QbftBlock proposalBlock,
         final QbftBlockInterface blockInterface) {
       final QbftBlock commitBlock =
-          blockInterface.replaceRoundInBlock(proposalBlock, targetRound.getRoundNumber());
+          blockInterface.replaceRoundForCommitBlock(proposalBlock, targetRound.getRoundNumber());
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
       commitValidator =
           new CommitValidator(
@@ -118,12 +118,29 @@ public class MessageValidator {
    * @return the boolean
    */
   public boolean validateProposal(final Proposal msg) {
+    return validateProposal(msg, true);
+  }
+
+  /**
+   * Validate proposal payload without block validation.
+   *
+   * @param msg the Proposal payload msg
+   * @return whether the proposal is valid
+   */
+  public boolean validateProposalWithoutBlockValidation(final Proposal msg) {
+    return validateProposal(msg, false);
+  }
+
+  private boolean validateProposal(final Proposal msg, final boolean validateBlock) {
     if (subsequentMessageValidator.isPresent()) {
       LOG.info("Received subsequent Proposal for current round, discarding.");
       return false;
     }
 
-    final boolean result = proposalValidator.validate(msg);
+    final boolean result =
+        validateBlock
+            ? proposalValidator.validate(msg)
+            : proposalValidator.validateWithoutBlockValidation(msg);
     if (result) {
       subsequentMessageValidator =
           Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock()));

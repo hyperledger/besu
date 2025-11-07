@@ -25,4 +25,9 @@ public class NoBlobRule implements AttachedBlockHeaderValidationRule {
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     return header.getBlobGasUsed().isEmpty() && header.getExcessBlobGas().isEmpty();
   }
+
+  @Override
+  public String toString() {
+    return "NoBlob";
+  }
 }

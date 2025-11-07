@@ -24,9 +24,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.F
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -84,7 +85,13 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
                     .trace(
                         mutableWorldState,
                         block,
-                        new DebugOperationTracer(new TraceOptions(false, false, true), false))
+                        new DebugOperationTracer(
+                            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                                .traceStorage(false)
+                                .traceMemory(false)
+                                .traceStack(true)
+                                .build(),
+                            false))
                     .map(BlockTrace::getTransactionTraces)
                     .orElse(Collections.emptyList())
                     .stream()

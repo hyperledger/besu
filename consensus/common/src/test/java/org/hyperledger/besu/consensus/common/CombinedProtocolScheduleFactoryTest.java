@@ -15,6 +15,13 @@
 package org.hyperledger.besu.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.HOMESTEAD;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -22,6 +29,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -62,18 +70,18 @@ public class CombinedProtocolScheduleFactoryTest {
     final BftProtocolSchedule combinedProtocolSchedule =
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getName())
-        .isEqualTo("Frontier");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getHardforkId())
+        .isEqualTo(FRONTIER);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L))
         .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(0L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getName())
-        .isEqualTo("Homestead");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getHardforkId())
+        .isEqualTo(HOMESTEAD);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L))
         .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(5L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getName())
-        .isEqualTo("Constantinople");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getHardforkId())
+        .isEqualTo(CONSTANTINOPLE);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L))
         .isSameAs(protocolSchedule.getByBlockNumberOrTimestamp(10L, 0L));
 
@@ -111,51 +119,52 @@ public class CombinedProtocolScheduleFactoryTest {
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     // consensus schedule 1
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getName())
-        .isEqualTo("Frontier");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L).getHardforkId())
+        .isEqualTo(FRONTIER);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 0L))
         .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(0L, 0L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getName())
-        .isEqualTo("Homestead");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L).getHardforkId())
+        .isEqualTo(HOMESTEAD);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(5L, 0L))
         .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(5L, 0L));
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getName())
-        .isEqualTo("Byzantium");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L).getHardforkId())
+        .isEqualTo(BYZANTIUM);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(10L, 0L))
         .isSameAs(protocolSchedule1.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2 migration block
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L).getName())
-        .isEqualTo("Byzantium");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L).getHardforkId())
+        .isEqualTo(BYZANTIUM);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(100L, 0L))
         .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(10L, 0L));
 
     // consensus schedule 2
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L).getName())
-        .isEqualTo("Constantinople");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L).getHardforkId())
+        .isEqualTo(CONSTANTINOPLE);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(105L, 0L))
         .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(105L, 0L));
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L).getName())
-        .isEqualTo("Berlin");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L).getHardforkId())
+        .isEqualTo(BERLIN);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(110L, 0L))
         .isSameAs(protocolSchedule2.getByBlockNumberOrTimestamp(110L, 0L));
 
     // consensus schedule 3 migration block
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(200L, 0L).getName())
-        .isEqualTo("Berlin");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(200L, 0L).getHardforkId())
+        .isEqualTo(BERLIN);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(200L, 0L))
         .isSameAs(protocolSchedule3.getByBlockNumberOrTimestamp(110L, 0L));
 
     // consensus schedule 3
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 0L).getName())
-        .isEqualTo("London");
+    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 0L).getHardforkId())
+        .isEqualTo(LONDON);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 0L))
         .isSameAs(protocolSchedule3.getByBlockNumberOrTimestamp(220L, 0L));
 
     // consensus schedule 4
-    assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 1000000050L).getName())
-        .isEqualTo("Shanghai");
+    assertThat(
+            combinedProtocolSchedule.getByBlockNumberOrTimestamp(0L, 1000000050L).getHardforkId())
+        .isEqualTo(SHANGHAI);
     assertThat(combinedProtocolSchedule.getByBlockNumberOrTimestamp(220L, 1000000050L))
         .isSameAs(protocolSchedule4.getByBlockNumberOrTimestamp(220L, 1000000050L));
 
@@ -178,6 +187,7 @@ public class CombinedProtocolScheduleFactoryTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return new BftProtocolSchedule(

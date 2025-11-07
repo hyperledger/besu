@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -143,6 +144,16 @@ public interface FeeMarket {
   }
 
   /**
+   * Creates a fee market with a zero blob fee.
+   *
+   * @param londonForkBlockNumber the block number at which the London fork activates.
+   * @return a {@link BaseFeeMarket} instance with a zero blob fee.
+   */
+  static BaseFeeMarket zeroBlobFee(final long londonForkBlockNumber) {
+    return new ZeroBlobFeeMarket(londonForkBlockNumber);
+  }
+
+  /**
    * Creates a fee market with a fixed base fee.
    *
    * @param londonForkBlockNumber the block number at which the London fork activates.
@@ -170,5 +181,14 @@ public interface FeeMarket {
    */
   default Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     return Wei.ZERO;
+  }
+
+  /**
+   * Returns the base fee update fraction. Only for blobs.
+   *
+   * @return the base fee update fraction.
+   */
+  default BigInteger getBaseFeeUpdateFraction() {
+    return BigInteger.ZERO;
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -83,7 +84,8 @@ public class BlockRangeBroadcaster {
             "Invalid block range update message received: earliest={}, latest={}",
             earliestBlockNumber,
             latestBlockNumber);
-        handleInvalidMessage(message, DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
+        handleInvalidMessage(
+            message, DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_BLOCK_RANGE);
       }
     } catch (final RLPException e) {
       LOG.atTrace()
@@ -165,6 +167,7 @@ public class BlockRangeBroadcaster {
     return ethContext
         .getEthPeers()
         .streamAvailablePeers()
+        .map(EthPeerImmutableAttributes::ethPeer)
         .filter(peer -> peer.hasSupportForMessage(EthProtocolMessages.BLOCK_RANGE_UPDATE))
         .toList();
   }

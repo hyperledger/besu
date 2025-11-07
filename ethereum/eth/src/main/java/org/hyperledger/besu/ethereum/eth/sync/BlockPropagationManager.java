@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,7 +32,12 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -47,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -59,6 +64,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -185,21 +191,20 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
-    final Block newBlock = blockAddedEvent.getBlock();
     LOG.atTrace()
         .setMessage("Block added event type {} for block {}. Current status {}")
         .addArgument(blockAddedEvent::getEventType)
-        .addArgument(newBlock::toLogString)
+        .addArgument(blockAddedEvent.getHeader()::toLogString)
         .addArgument(this)
         .log();
 
     // If there is no children to process, maybe try non announced blocks
-    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+    if (!maybeProcessPendingChildrenBlocks(blockAddedEvent.getHeader())) {
       LOG.atTrace()
           .setMessage("There are no pending blocks ready to import for block {}")
-          .addArgument(newBlock::toLogString)
+          .addArgument(blockAddedEvent.getHeader()::toLogString)
           .log();
-      maybeProcessNonAnnouncedBlocks(newBlock);
+      maybeProcessNonAnnouncedBlocks(blockAddedEvent);
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -212,17 +217,17 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   /**
    * Process pending Children if any
    *
-   * @param block the block to process the children
+   * @param header the header of the block to process the children of
    * @return true if block has any pending child
    */
-  private boolean maybeProcessPendingChildrenBlocks(final Block block) {
+  private boolean maybeProcessPendingChildrenBlocks(final BlockHeader header) {
     final List<Block> readyForImport;
     synchronized (pendingBlocksManager) {
       // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(block);
+      pendingBlocksManager.deregisterPendingBlock(header);
 
       // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(block.getHash());
+      readyForImport = pendingBlocksManager.childrenOf(header.getHash());
     }
 
     if (!readyForImport.isEmpty()) {
@@ -232,7 +237,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           .addArgument(
               () ->
                   readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")))
-          .addArgument(block::toLogString)
+          .addArgument(header::toLogString)
           .log();
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
@@ -262,7 +267,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     return !readyForImport.isEmpty();
   }
 
-  private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
+  private void maybeProcessNonAnnouncedBlocks(final BlockAddedEvent newBlock) {
     final long localHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
 
     if (newBlock.getHeader().getNumber() > localHeadBlockNumber) {
@@ -534,26 +539,72 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final Optional<EthPeer> maybePreferredPeer,
       final long blockNumber,
       final Optional<Hash> maybeBlockHash) {
-    final RetryingGetBlockFromPeersTask getBlockTask =
-        RetryingGetBlockFromPeersTask.create(
-            protocolSchedule,
-            ethContext,
-            config,
-            metricsSystem,
+
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(() -> getBlockHeader(maybePreferredPeer, blockNumber, maybeBlockHash))
+        .thenApply((blockHeader) -> getBlock(maybePreferredPeer, blockHeader))
+        .thenCompose(
+            blockExecutorResult ->
+                importOrSavePendingBlock(
+                    blockExecutorResult.result().get().getFirst(),
+                    blockExecutorResult.ethPeers().getLast().nodeId()))
+        .orTimeout(getBlockTimeoutMillis.toMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  private CompletableFuture<BlockHeader> getBlockHeader(
+      final Optional<EthPeer> maybePreferredPeer,
+      final long blockNumber,
+      final Optional<Hash> maybeBlockHash) {
+    GetHeadersFromPeerTask headersFromPeerTask =
+        new GetHeadersFromPeerTask(
+            maybeBlockHash.orElse(null),
+            blockNumber,
+            1,
+            0,
+            Direction.FORWARD,
             Math.max(1, ethContext.getEthPeers().peerCount()),
-            maybeBlockHash,
-            blockNumber);
-    maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
+            protocolSchedule);
+    if (maybePreferredPeer.isPresent()) {
+      PeerTaskExecutorResult<List<BlockHeader>> executorResult =
+          ethContext
+              .getPeerTaskExecutor()
+              .executeAgainstPeer(headersFromPeerTask, maybePreferredPeer.get());
+      if (executorResult.result().isPresent()
+          && executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+        return CompletableFuture.completedFuture(executorResult.result().get().getFirst());
+      }
+    }
+    PeerTaskExecutorResult<List<BlockHeader>> executorResult =
+        ethContext.getPeerTaskExecutor().execute(headersFromPeerTask);
+    if (executorResult.result().isEmpty()
+        || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+      return CompletableFuture.failedFuture(new InvalidPeerTaskResponseException());
+    } else {
+      return CompletableFuture.completedFuture(executorResult.result().get().getFirst());
+    }
+  }
 
-    var future =
-        ethContext
-            .getScheduler()
-            .scheduleSyncWorkerTask(getBlockTask::run)
-            .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
-
-    ethContext.getScheduler().failAfterTimeout(future, getBlockTimeoutMillis);
-
-    return future;
+  private PeerTaskExecutorResult<List<Block>> getBlock(
+      final Optional<EthPeer> maybePreferredPeer, final BlockHeader blockHeader) {
+    GetBodiesFromPeerTask bodiesTask =
+        new GetBodiesFromPeerTask(List.of(blockHeader), protocolSchedule);
+    if (maybePreferredPeer.isPresent()) {
+      PeerTaskExecutorResult<List<Block>> executorResult =
+          ethContext.getPeerTaskExecutor().executeAgainstPeer(bodiesTask, maybePreferredPeer.get());
+      if (executorResult.result().isPresent()
+          && executorResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS) {
+        return executorResult;
+      }
+    }
+    PeerTaskExecutorResult<List<Block>> executorResult =
+        ethContext.getPeerTaskExecutor().execute(bodiesTask);
+    if (executorResult.result().isEmpty()
+        || executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS) {
+      throw new RuntimeException(new InvalidPeerTaskResponseException());
+    } else {
+      return executorResult;
+    }
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -659,7 +710,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       } else {
         LOG.trace("Parent block is already in the chain");
         // if the parent is already imported, process its children
-        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock.getHeader());
       }
     }
   }

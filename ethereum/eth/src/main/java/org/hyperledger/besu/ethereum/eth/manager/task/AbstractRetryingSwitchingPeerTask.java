@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -27,7 +28,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,24 +114,25 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   private Optional<EthPeer> selectNextPeer() {
-    final Optional<EthPeer> maybeNextPeer = remainingPeersToTry().findFirst();
+    final Optional<EthPeer> maybeNextPeer = nextPeerToTry();
 
     if (maybeNextPeer.isEmpty()) {
       // tried all the peers, restart from the best one but excluding the failed ones
       refreshPeers();
       triedPeers.retainAll(failedPeers);
-      return remainingPeersToTry().findFirst();
+      return nextPeerToTry();
     }
 
     return maybeNextPeer;
   }
 
-  protected Stream<EthPeer> remainingPeersToTry() {
+  protected Optional<EthPeer> nextPeerToTry() {
     return getEthContext()
         .getEthPeers()
         .streamBestPeers()
-        .filter(this::isSuitablePeer)
-        .filter(peer -> !triedPeers.contains(peer));
+        .filter((peer) -> isSuitablePeer(peer) && !triedPeers.contains(peer.ethPeer()))
+        .map(EthPeerImmutableAttributes::ethPeer)
+        .findFirst();
   }
 
   private void refreshPeers() {
@@ -140,7 +141,9 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     // or the least useful
 
     if (peers.peerCount() >= peers.getMaxPeers()) {
-      failedPeers.stream().filter(peer -> !peer.isDisconnected()).findAny().stream()
+      failedPeers.stream()
+          .map(EthPeerImmutableAttributes::from)
+          .filter(peer -> !peer.isDisconnected())
           .min(EthPeers.MOST_USEFUL_PEER)
           .or(() -> peers.streamAvailablePeers().min(EthPeers.MOST_USEFUL_PEER))
           .ifPresent(
@@ -148,11 +151,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                 LOG.atDebug()
                     .setMessage(
                         "Refresh peers disconnecting peer {} Waiting for better peers. Current {} of max {}")
-                    .addArgument(peer::getLoggableId)
+                    .addArgument(peer.ethPeer().getLoggableId())
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)
                     .log();
-                peer.disconnect(DisconnectReason.USELESS_PEER_BY_REPUTATION);
+                peer.ethPeer().disconnect(DisconnectReason.USELESS_PEER_BY_REPUTATION);
               });
     }
   }

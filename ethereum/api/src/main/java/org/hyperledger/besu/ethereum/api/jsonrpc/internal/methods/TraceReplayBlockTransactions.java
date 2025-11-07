@@ -31,12 +31,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -143,9 +144,14 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
               final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
 
               final TransactionSource transactionSource = new TransactionSource(block);
-
               final DebugOperationTracer debugOperationTracer =
-                  new DebugOperationTracer(new TraceOptions(false, false, true), false);
+                  new DebugOperationTracer(
+                      OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                          .traceStorage(false)
+                          .traceMemory(false)
+                          .traceStack(true)
+                          .build(),
+                      false);
               final ExecuteTransactionStep executeTransactionStep =
                   new ExecuteTransactionStep(
                       chainUpdater,

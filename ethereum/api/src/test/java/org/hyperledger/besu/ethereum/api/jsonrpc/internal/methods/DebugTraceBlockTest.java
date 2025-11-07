@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -103,6 +104,7 @@ public class DebugTraceBlockTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
+                        BalConfiguration.DEFAULT,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();
@@ -142,10 +144,10 @@ public class DebugTraceBlockTest {
     when(blockchain.getBlockByHash(block.getHeader().getParentHash()))
         .thenReturn(Optional.of(parentBlock));
 
-    DebugTraceTransactionDetails result1 = mock(DebugTraceTransactionDetails.class);
-    DebugTraceTransactionDetails result2 = mock(DebugTraceTransactionDetails.class);
+    OpCodeLoggerTracerResult result1 = mock(OpCodeLoggerTracerResult.class);
+    OpCodeLoggerTracerResult result2 = mock(OpCodeLoggerTracerResult.class);
 
-    List<DebugTraceTransactionDetails> resultList = Arrays.asList(result1, result2);
+    List<OpCodeLoggerTracerResult> resultList = Arrays.asList(result1, result2);
 
     try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
       mockedTracer
@@ -161,7 +163,7 @@ public class DebugTraceBlockTest {
       assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
       JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
 
-      final Collection<DebugTraceTransactionDetails> traceResult = getResult(response);
+      final Collection<OpCodeLoggerTracerResult> traceResult = getResult(response);
       assertThat(traceResult).isNotEmpty();
       assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
       assertThat(traceResult).containsExactly(result1, result2);
@@ -169,9 +171,8 @@ public class DebugTraceBlockTest {
   }
 
   @SuppressWarnings("unchecked")
-  private Collection<DebugTraceTransactionDetails> getResult(
-      final JsonRpcSuccessResponse response) {
-    return (Collection<DebugTraceTransactionDetails>) response.getResult();
+  private Collection<OpCodeLoggerTracerResult> getResult(final JsonRpcSuccessResponse response) {
+    return (Collection<OpCodeLoggerTracerResult>) response.getResult();
   }
 
   @Test

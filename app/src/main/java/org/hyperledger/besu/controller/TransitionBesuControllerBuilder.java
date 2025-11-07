@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -383,6 +384,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final boolean isParallelTxProcessingEnabled) {
     super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
     return propagateConfig(z -> z.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
+  }
+
+  @Override
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    super.balConfiguration(balConfiguration);
+    return propagateConfig(z -> z.balConfiguration(balConfiguration));
   }
 
   @Override

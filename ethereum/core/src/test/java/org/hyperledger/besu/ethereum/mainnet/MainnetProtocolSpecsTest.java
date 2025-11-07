@@ -14,13 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
+import org.hyperledger.besu.config.JsonBftConfigOptions;
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -30,6 +36,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,19 +50,21 @@ public class MainnetProtocolSpecsTest {
   private GenesisConfigOptions genesisConfigOptions;
 
   @Mock(lenient = true)
-  private MiningConfiguration miningConfiguration;
-
-  @Mock(lenient = true)
   private BlobSchedule pragueBlobSchedule;
 
   @Mock(lenient = true)
   private BlobScheduleOptions blobScheduleOptions;
+
+  @Mock private ProtocolSchedule protocolSchedule;
+
+  @Mock private BadBlockManager badBlockManager;
 
   private final EvmConfiguration evmConfiguration = EvmConfiguration.DEFAULT;
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Optional<BigInteger> chainId = Optional.of(BigInteger.ONE);
   private final boolean enableRevertReason = false;
   private final boolean isParallelTxProcessingEnabled = false;
+  private final BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private final long londonForkBlockNumber = 0L;
 
   @BeforeEach
@@ -87,8 +96,9 @@ public class MainnetProtocolSpecsTest {
                     enableRevertReason,
                     genesisConfigOptions,
                     evmConfiguration,
-                    miningConfiguration,
+                    MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
@@ -110,8 +120,9 @@ public class MainnetProtocolSpecsTest {
                     enableRevertReason,
                     genesisConfigOptions,
                     evmConfiguration,
-                    miningConfiguration,
+                    MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Withdrawal Request Contract Address not found");
   }
@@ -134,8 +145,9 @@ public class MainnetProtocolSpecsTest {
                     enableRevertReason,
                     genesisConfigOptions,
                     evmConfiguration,
-                    miningConfiguration,
+                    MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Deposit Contract Address not found");
   }
@@ -159,9 +171,134 @@ public class MainnetProtocolSpecsTest {
                     enableRevertReason,
                     genesisConfigOptions,
                     evmConfiguration,
-                    miningConfiguration,
+                    MiningConfiguration.newDefault(),
                     isParallelTxProcessingEnabled,
+                    balConfiguration,
                     metricsSystem))
         .withMessageContaining("Consolidation Request Contract Address not found");
+  }
+
+  @Test
+  public void genesisCliqueBlockPeriodIsReturnedAsSlotTime() {
+    when(genesisConfigOptions.isClique()).thenReturn(true);
+    when(genesisConfigOptions.getCliqueConfigOptions())
+        .thenReturn(
+            ImmutableCliqueConfigOptions.builder()
+                .blockPeriodSeconds(2)
+                .createEmptyBlocks(false)
+                .epochLength(30)
+                .build());
+
+    final var protocolSpec =
+        MainnetProtocolSpecs.frontierDefinition(
+                genesisConfigOptions,
+                evmConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration()).hasSeconds(2);
+  }
+
+  @Test
+  public void genesisQbftBlockPeriodIsReturnedAsSlotTime() {
+
+    final var jsonQbftOptions = new JsonQbftConfigOptions(JsonNodeFactory.instance.objectNode());
+
+    when(genesisConfigOptions.isQbft()).thenReturn(true);
+    when(genesisConfigOptions.getQbftConfigOptions()).thenReturn(jsonQbftOptions);
+
+    final var protocolSpec =
+        MainnetProtocolSpecs.frontierDefinition(
+                genesisConfigOptions,
+                evmConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration()).hasSeconds(1);
+  }
+
+  @Test
+  public void genesisIbft2BlockPeriodIsReturnedAsSlotTime() {
+
+    final var jsonBftOptions = new JsonBftConfigOptions(JsonNodeFactory.instance.objectNode());
+
+    when(genesisConfigOptions.isIbft2()).thenReturn(true);
+    when(genesisConfigOptions.getBftConfigOptions()).thenReturn(jsonBftOptions);
+
+    final var protocolSpec =
+        MainnetProtocolSpecs.frontierDefinition(
+                genesisConfigOptions,
+                evmConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration()).hasSeconds(1);
+  }
+
+  @Test
+  public void defaultToPowEstimatedSlotTimePrePos() {
+    final var protocolSpec =
+        MainnetProtocolSpecs.frontierDefinition(
+                genesisConfigOptions,
+                evmConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration()).hasSeconds(13);
+  }
+
+  @Test
+  public void posSlotTimeIsReturnedFromParisOnward() {
+    final var miningConfiguration = MiningConfiguration.newDefault();
+    final var protocolSpec =
+        MainnetProtocolSpecs.parisDefinition(
+                Optional.of(BigInteger.ONE),
+                true,
+                genesisConfigOptions,
+                evmConfiguration,
+                miningConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration())
+        .hasSeconds(miningConfiguration.getUnstable().getPosSlotDuration());
+  }
+
+  @Test
+  public void changeDefaultPosSlotTimeByConfiguration() {
+    final var miningConfiguration =
+        ImmutableMiningConfiguration.builder()
+            .unstable(ImmutableMiningConfiguration.Unstable.builder().posSlotDuration(2).build())
+            .build();
+    final var protocolSpec =
+        MainnetProtocolSpecs.cancunDefinition(
+                Optional.of(BigInteger.ONE),
+                true,
+                genesisConfigOptions,
+                evmConfiguration,
+                miningConfiguration,
+                isParallelTxProcessingEnabled,
+                balConfiguration,
+                metricsSystem)
+            .badBlocksManager(badBlockManager)
+            .build(protocolSchedule);
+
+    assertThat(protocolSpec.getSlotDuration())
+        .hasSeconds(miningConfiguration.getUnstable().getPosSlotDuration());
   }
 }

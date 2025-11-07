@@ -61,7 +61,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
    */
   BigIntegerModularExponentiationPrecompiledContract(
       final GasCalculator gasCalculator, final long upperBound) {
-    super("BigIntModExp", gasCalculator);
+    super("MODEXP", gasCalculator);
     this.upperBound = upperBound;
   }
 
@@ -121,10 +121,8 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (LibArithmetic.ENABLED) {
       final int baseOffset = clampedToInt(BASE_OFFSET);
       final int baseLength = clampedToInt(length_of_BASE);
-      final int modulusOffset = clampedToInt(BASE_OFFSET + length_of_BASE + length_of_EXPONENT);
       final int modulusLength = clampedToInt(length_of_MODULUS);
-      if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1
-          && (extractLastByte(input, modulusOffset, modulusLength) & 1) != 1) {
+      if ((extractLastByte(input, baseOffset, baseLength) & 1) != 1) {
         return computeNative(input, modulusLength);
       }
     }

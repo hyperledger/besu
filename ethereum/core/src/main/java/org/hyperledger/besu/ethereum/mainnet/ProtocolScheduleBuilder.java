@@ -49,6 +49,7 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
+  private final BalConfiguration balConfiguration;
   private final MetricsSystem metricsSystem;
   private final MiningConfiguration miningConfiguration;
 
@@ -61,6 +62,7 @@ public class ProtocolScheduleBuilder {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
@@ -69,6 +71,7 @@ public class ProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
     this.badBlockManager = badBlockManager;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    this.balConfiguration = balConfiguration;
     this.metricsSystem = metricsSystem;
     this.miningConfiguration = miningConfiguration;
   }
@@ -76,22 +79,22 @@ public class ProtocolScheduleBuilder {
   public ProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
     DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(chainId);
-    initSchedule(protocolSchedule, chainId);
+    initSchedule(protocolSchedule);
     return protocolSchedule;
   }
 
-  public void initSchedule(
-      final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
+  public void initSchedule(final ProtocolSchedule protocolSchedule) {
 
     final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
-            chainId,
+            protocolSchedule.getChainId(),
             isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
+            config,
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningConfiguration,
             isParallelTxProcessingEnabled,
+            balConfiguration,
             metricsSystem);
 
     final List<BuilderMapEntry> mileStones = createMilestones(specFactory);
@@ -101,8 +104,7 @@ public class ProtocolScheduleBuilder {
     final NavigableMap<Long, BuilderMapEntry> builders = buildFlattenedMilestoneMap(mileStones);
 
     // At this stage, all milestones are flagged with the correct modifier, but ProtocolSpecs must
-    // be
-    // inserted _AT_ the modifier block entry.
+    // be inserted _AT_ the modifier block entry.
     if (!builders.isEmpty()) {
       protocolSpecAdapters.stream()
           .forEach(
@@ -181,7 +183,11 @@ public class ProtocolScheduleBuilder {
                   MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      evmConfiguration, isParallelTxProcessingEnabled, metricsSystem),
+                      config,
+                      evmConfiguration,
+                      isParallelTxProcessingEnabled,
+                      balConfiguration,
+                      metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

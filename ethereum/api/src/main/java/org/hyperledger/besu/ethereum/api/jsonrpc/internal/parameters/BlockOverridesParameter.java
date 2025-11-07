@@ -18,6 +18,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
+import org.hyperledger.besu.ethereum.core.json.OptionalUnsignedLongDeserializer;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.math.BigInteger;
@@ -25,6 +27,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -50,7 +53,7 @@ public class BlockOverridesParameter extends BlockOverrides {
       @JsonProperty("time") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("number") final Optional<UnsignedLongParameter> blockNumber,
       @JsonProperty("hash") final Optional<Hash> blockHash,
-      @JsonProperty("prevRandao") final Optional<Bytes32> prevRandao,
+      @JsonProperty("prevRandao") final Optional<String> prevRandao,
       @JsonProperty("gasLimit") final Optional<UnsignedLongParameter> gasLimit,
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("baseFeePerGas") final Optional<Wei> baseFeePerGas,
@@ -58,7 +61,7 @@ public class BlockOverridesParameter extends BlockOverrides {
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
       @JsonProperty("difficulty") final Optional<BigInteger> difficulty,
       @JsonProperty("extraData") final Optional<Bytes> extraData,
-      @JsonProperty("mixHash") final Optional<Bytes32> mixHash) {
+      @JsonProperty("mixHash") final Optional<String> mixHash) {
     super(
         timestamp,
         blockNumber,
@@ -71,5 +74,29 @@ public class BlockOverridesParameter extends BlockOverrides {
         difficulty,
         extraData,
         mixHash.isPresent() ? mixHash : prevRandao);
+  }
+
+  @Override
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
+  public Optional<Long> getTimestamp() {
+    return super.getTimestamp();
+  }
+
+  @Override
+  @JsonDeserialize(using = OptionalUnsignedLongDeserializer.class)
+  public Optional<Long> getBlockNumber() {
+    return super.getBlockNumber();
+  }
+
+  @Override
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  public Optional<Bytes32> getMixHashOrPrevRandao() {
+    return super.getMixHashOrPrevRandao();
+  }
+
+  @Override
+  @JsonDeserialize(contentUsing = HexStringDeserializer.class)
+  public Optional<Bytes> getExtraData() {
+    return super.getExtraData();
   }
 }

@@ -21,8 +21,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.CodeDelegationAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -38,7 +40,7 @@ class CodeDelegationHelperTest {
 
   private @Mock WorldUpdater worldUpdater;
   private @Mock GasCalculator gasCalculator;
-  private @Mock CodeDelegationAccount account;
+  private @Mock Account account;
 
   @Test
   void hasCodeDelegationReturnsFalseForNull() {
@@ -65,40 +67,42 @@ class CodeDelegationHelperTest {
   }
 
   @Test
-  void getTargetAccountReturnsEmptyIfAccountIsNull() {
+  void getTargetAccountReturnsEmptyIfCodeIsNull() {
     assertThatThrownBy(
             () ->
-                CodeDelegationHelper.getTargetAccount(
-                    worldUpdater, gasCalculator::isPrecompile, null))
+                CodeDelegationHelper.getTarget(
+                    worldUpdater, gasCalculator::isPrecompile, null, Optional.empty()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account must not be null.");
   }
 
   @Test
-  void getTargetAccountReturnsEmptyIfNoDelegation() {
+  void getTargetReturnsEmptyIfNoDelegation() {
     Bytes code = Bytes.fromHexString("600035"); // random code, not delegated
     when(account.getCode()).thenReturn(code);
 
     assertThatThrownBy(
             () ->
-                CodeDelegationHelper.getTargetAccount(
-                    worldUpdater, gasCalculator::isPrecompile, account))
+                CodeDelegationHelper.getTarget(
+                    worldUpdater, gasCalculator::isPrecompile, account, Optional.empty()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Account does not have code delegation.");
   }
 
   @Test
-  void getTargetAccountReturnsEmptyIfTargetAccountIsNull() {
+  void getTargetAccountReturnsEmptyIfTargetCodeIsNull() {
     Bytes validCode = Bytes.concatenate(CODE_PREFIX, Bytes.random(20));
     when(account.getCode()).thenReturn(validCode);
 
     Address targetAddress = Address.wrap(validCode.slice(CODE_PREFIX.size()));
     when(worldUpdater.get(targetAddress)).thenReturn(null);
 
-    CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
-    assertThat(result.getCode()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 
   @Test
@@ -112,10 +116,12 @@ class CodeDelegationHelperTest {
     when(worldUpdater.get(targetAddress)).thenReturn(targetAccount);
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(true);
 
-    CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
-    assertThat(result.getCode()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.code().getBytes()).isEqualTo(Bytes.EMPTY);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 
   @Test
@@ -128,13 +134,14 @@ class CodeDelegationHelperTest {
     Bytes targetCode = Bytes.fromHexString("60006000");
 
     when(worldUpdater.get(targetAddress)).thenReturn(targetAccount);
-    when(targetAccount.getCode()).thenReturn(targetCode);
+    when(targetAccount.getOrCreateCachedCode()).thenReturn(new CodeV0(targetCode));
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
-    CodeDelegationAccount result =
-        CodeDelegationHelper.getTargetAccount(worldUpdater, gasCalculator::isPrecompile, account);
+    CodeDelegationHelper.Target target =
+        CodeDelegationHelper.getTarget(
+            worldUpdater, gasCalculator::isPrecompile, account, Optional.empty());
 
-    assertThat(result.getTargetAddress()).isEqualTo(targetAddress);
-    assertThat(result.getCode()).isEqualTo(targetCode);
+    assertThat(target.code().getBytes()).isEqualTo(targetCode);
+    assertThat(target.address()).isEqualTo(targetAddress);
   }
 }

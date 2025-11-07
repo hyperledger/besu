@@ -67,4 +67,9 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "BlobGasValidation";
+  }
 }

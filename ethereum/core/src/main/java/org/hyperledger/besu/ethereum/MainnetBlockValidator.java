@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -24,8 +25,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -176,6 +179,34 @@ public class MainnetBlockValidator implements BlockValidator {
         handleFailedBlockProcessing(block, retval, false, context);
         return retval;
       }
+
+      final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
+      final Optional<Hash> expectedBalHash =
+          block.getBody().getBlockAccessList().map(BodyValidation::balHash);
+
+      if (!headerBalHash.equals(expectedBalHash)) {
+        final String errorMessage;
+        if (headerBalHash.isPresent() && expectedBalHash.isPresent()) {
+          errorMessage =
+              String.format(
+                  "Block access list hash mismatch, calculated: %s header: %s",
+                  expectedBalHash.get().toHexString(), headerBalHash.get().toHexString());
+        } else if (headerBalHash.isPresent()) {
+          errorMessage =
+              String.format(
+                  "Block access list hash present in header %s but block body has no access list",
+                  headerBalHash.get().toHexString());
+        } else {
+          errorMessage =
+              String.format(
+                  "Block access list present in body with hash %s but header is missing balHash",
+                  expectedBalHash.get().toHexString());
+        }
+        var result = new BlockProcessingResult(errorMessage);
+        handleFailedBlockProcessing(block, result, shouldRecordBadBlock, context);
+        return result;
+      }
+
       var result = processBlock(context, worldState, block);
       if (result.isFailed()) {
         handleFailedBlockProcessing(block, result, shouldRecordBadBlock, context);
@@ -185,6 +216,8 @@ public class MainnetBlockValidator implements BlockValidator {
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         Optional<List<Request>> maybeRequests =
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
+        Optional<BlockAccessList> blockAccessList =
+            result.getYield().flatMap(BlockProcessingOutputs::getBlockAccessList);
         if (!blockBodyValidator.validateBody(
             context,
             block,
@@ -198,7 +231,8 @@ public class MainnetBlockValidator implements BlockValidator {
         }
 
         return new BlockProcessingResult(
-            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)),
+            Optional.of(
+                new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
             result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {
@@ -247,7 +281,11 @@ public class MainnetBlockValidator implements BlockValidator {
         // Result.errorMessage should not be empty on failure, but add a default to be safe
         String description = result.errorMessage.orElse("Unknown cause");
         final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
-        context.getBadBlockManager().addBadBlock(failedBlock, cause);
+        final Optional<BlockAccessList> generatedBlockAccessList =
+            result instanceof BlockProcessingResult
+                ? ((BlockProcessingResult) result).getGeneratedBlockAccessList()
+                : Optional.empty();
+        context.getBadBlockManager().addBadBlock(failedBlock, cause, generatedBlockAccessList);
       } else {
         LOG.debug("Invalid block {} not added to badBlockManager ", failedBlock.toLogString());
       }

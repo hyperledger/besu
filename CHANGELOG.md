@@ -3,16 +3,215 @@
 ## Unreleased
 
 ### Breaking Changes
-- Change in behavior for `eth_estimateGas`, to improve accuracy, when used on a network with a base fee market, the internal transaction simulation does not anymore underprice transactions, so if there are no gas pricing related fields specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)  
+- Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)
+  - Remove`--Xbonsai-parallel-tx-processing-enabled` deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - Remove `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - Remove `--Xhistory-expiry-prune` deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Upcoming Breaking Changes
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
 
 ### Additions and Improvements
-- Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
-#### Fusaka
+- Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
+- Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
+- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 
 ### Bug fixes
 
+## 25.11.0
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Add Osaka, BPO1 and BPO2 fork times for mainnet [#9380](https://github.com/hyperledger/besu/pull/9380)
+- Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
+- Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
+- Update to netty 4.2.7.Final [#9330](https://github.com/hyperledger/besu/pull/9330)
+- Ability to enable/disable stack, storage and returnData tracing data in debug_traceStandardBlockToFile and debug_traceStandardBadBlockToFile endpoints [#9183](https://github.com/hyperledger/besu/pull/9183)
+- Increase mainnet gas limit to 60M [#9339](https://github.com/hyperledger/besu/pull/9339)
+- Update to tuweni 2.7.2 [#9338](https://github.com/hyperledger/besu/pull/9338)
+
+### Bug fixes
+
+## 25.10.0
+This is a recommended update for Hoodi users for the Fusaka hardfork.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Add blockTimestamp to `eth_getLogs` result [#9278](https://github.com/hyperledger/besu/pull/9278)
+- Add `--ethstats-report-interval` CLI option to control ethstats reporting frequency instead of using hardcoded 5-second interval [#9271](https://github.com/hyperledger/besu/pull/9271)
+- Add `isCancelled` method to `TransactionEvaluationContext`. That way selectors could check if the block creation has been cancelled or in timeout [#9285](https://github.com/hyperledger/besu/pull/9285)
+- Performance improvements for MOD related opcodes [#9188](https://github.com/hyperledger/besu/pull/9188) thanks to [@thomas-quadratic](https://github.com/thomas-quadratic)
+
+### Bug fixes
+
+## 25.10.0-RC2
+This RC is a pre-release, recommended update for Holesky and Sepolia users for the Fusaka hardfork.
+This updates a dependency used for PeerDAS.
+This RC is still pending burn in for mainnet.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Performance improvements to EQ opcode [#9229](https://github.com/hyperledger/besu/pull/9229)
+- Update jc-kzg dependency [#9261](https://github.com/hyperledger/besu/pull/9261)
+
+### Bug fixes
+
+## 25.10.0-RC1
+This RC is a pre-release for Holesky and Sepolia users.
+Only upgrade to this release if you're experiencing the eth_subscribe or ethstats known issue from 25.9.0.
+- fixes and more info [#9212](https://github.com/hyperledger/besu/pull/9212) and [#9220](https://github.com/hyperledger/besu/pull/9220)
+This RC is still pending burn in for mainnet.
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Update spring security framework (toml parsing) [#9153](https://github.com/hyperledger/besu/pull/9153)
+- Update grpc and guava [#9150](https://github.com/hyperledger/besu/pull/9150)
+- Implement optional sender balance checks in the layered txpool [#9176](https://github.com/hyperledger/besu/pull/9176)
+- Add `--cache-last-block-headers` flag to cache the last n block headers persisted to the blockchain [#9223](https://github.com/hyperledger/besu/pull/9223)
+- Manage unexpected exceptions during block creation [#9208](https://github.com/hyperledger/besu/pull/9208)
+- Upgrade to execution-spec-tests v5.1.0 [#9226](https://github.com/hyperledger/besu/pull/9226)
+- Add `--cache-last-block-headers-preload-enabled` flag to enable preloading the block headers cache during startup time [#9248](https://github.com/hyperledger/besu/pull/9248)
+- Upgrade to execution-spec-tests v5.2.0 [#9226](https://github.com/hyperledger/besu/pull/9226), [#9242](https://github.com/hyperledger/besu/pull/9242)
+
+### Bug fixes
+- Fix eth_subscribe RPC failing returning a block response [#9212](https://github.com/hyperledger/besu/pull/9212)
+- Fix ethstats integration failing to provide block updates to ethstats server [#9220](https://github.com/hyperledger/besu/pull/9220)
+
+## 25.9.0
+
+### Breaking Changes
+- Remove deprecated option `--bonsai-maximum-back-layers-to-load` (deprecated since 23.4.0). Use `--bonsai-historical-block-limit` instead 
+
+### Known issue 
+Affects users of eth_subscribe (WebSocket) eg SSV, and ethstats integration
+- symptom: `io.vertx.core.json.EncodeException: Failed to encode as JSON: Java 8 optional type`
+- fixes and more info [#9212](https://github.com/hyperledger/besu/pull/9212) and [#9220](https://github.com/hyperledger/besu/pull/9220)
+- if you experience this issue, you can downgrade to the previous released version of Besu, or build off main if that is an option for your environment.
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Update log4j [#9131](https://github.com/hyperledger/besu/pull/9131)
+- Update netty [#9156](https://github.com/hyperledger/besu/pull/9156)
+- Expose new method to query hardfork by block number Plugin API [#9115](https://github.com/hyperledger/besu/pull/9115)
+- Support loading multiple transaction selector plugins [#8743](https://github.com/hyperledger/besu/pull/9139)
+- Configurable limit for how much time plugins are allowed to take, to propose transactions, during block creation [#9184](https://github.com/hyperledger/besu/pull/9184)
+- Add Osaka, BPO1 and BPO2 fork times for holesky, hoodi and sepolia [#9196](https://github.com/hyperledger/besu/pull/9196)
+- Ability to export ERA1 files [#9081](https://github.com/hyperledger/besu/pull/9081)
+
+#### Performance
+- Add jmh benchmarks for some compute-related opcodes [#9069](https://github.com/hyperledger/besu/pull/9069)
+- Improve EcRecover precompile performance [#9053](https://github.com/hyperledger/besu/pull/9053)
+
+## 25.8.0
+### Breaking Changes
+- Change in behavior for `eth_estimateGas` to improve accuracy when used on a network with a base fee market. 
+  - if there are no gas pricing parameters specified in the request, then gas price for the transaction is set to the base fee value [#8888](https://github.com/hyperledger/besu/pull/8888)
+  - however, if you specify gas price of 0, the estimation will fail if the baseFee is > 0
+- Remove PoAMetricsService and IbftQueryService which have been deprecated since 2019 and are replaced by PoaQueryService and BftQueryService respectively [#8940](https://github.com/hyperledger/besu/pull/8940)
+- Remove deprecated `Quantity.getValue` method (deprecated since 2019) [#8968](https://github.com/hyperledger/besu/pull/8968)
+- Support for block creation on networks running a pre-Byzantium fork is removed, after being deprecated for a few months. If still running a pre-Byzantium network, it needs to be updated to continue to produce blocks [#9005](https://github.com/hyperledger/besu/pull/9005)
+- Remove support for Ethereum protocol version `eth/67`. [#9008](https://github.com/hyperledger/besu/pull/9008). 
+- Abort startup if boolean command line options are specified more than once [#8898](https://github.com/hyperledger/besu/pull/8898)
+- Ubuntu 20.04 is no longer supported. You need at least 22.04 (required for native libraries).
+- Improve performance of OperandStack resizes for deep stacks (> 100 elements). Impacts general EVM performance while working with deep stacks [#8869](https://github.com/hyperledger/besu/pull/8869)
+
+### Upcoming Breaking Changes
+- Deprecated CLI options
+  - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` is deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - `--Xhistory-expiry-prune` is deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Fast Sync
+
+### Additions and Improvements
+- Improve transaction simulation and gas estimation when no gas pricing is present [#8888](https://github.com/hyperledger/besu/pull/8888)
+- Add option to trace reference tests during execution [#8878](https://github.com/hyperledger/besu/pull/8878)
+- Expose methods to query hardfork by block header or for the next block in the Plugin API [#8909](https://github.com/hyperledger/besu/pull/8909)
+- Add `WorldStateService` to the plugin API [#9024](https://github.com/hyperledger/besu/pull/9024)
+- Wait for peers before starting Backward Sync [#9003](https://github.com/hyperledger/besu/pull/9003)
+- LUKSO Mainnet Pectra Hardfork [#9070](https://github.com/hyperledger/besu/pull/9070)
+- More informative logs during block creation [#9020](https://github.com/hyperledger/besu/pull/9020)
+- Faster block creation, reducing the time spent committing world state changes [#9023](https://github.com/hyperledger/besu/pull/9023)
+
+#### Dependencies
+- Generate distribution dependencies catalog [#8987](https://github.com/hyperledger/besu/pull/8987)
+- Update commons dependencies [#9114](https://github.com/hyperledger/besu/pull/9114)
+  - resolves CVE-2025-48924
+  - resolves CVE-2020-15250
+- Update Netty [#9112](https://github.com/hyperledger/besu/pull/9112)
+  - resolves CVE-2025-55163
+
+#### Performance
+- Improve the sync performance by not RLP decoding bodies during sync. This means we are using less memory and CPU, allowing us to increase the parallelism of the download pipeline, which has been increased from 4 to 8. Can be reduced again with  `--Xsynchronizer-downloader-parallelism=4` [#8959](https://github.com/hyperledger/besu/pull/8959)
+- Enable decoding for large RPC requests [#8877](https://github.com/hyperledger/besu/pull/8877)
+- Add `--attempt-cache-bust` to evmtool benchmark subcommand [#8985](https://github.com/hyperledger/besu/pull/8985)
+- Add gas usage metric to eth_call [#9019](https://github.com/hyperledger/besu/pull/9019)
+- Improve P256Verify precompile performance [#9035](https://github.com/hyperledger/besu/pull/9035)
+
+#### Fusaka devnets
+- EIP-7910 - `eth_config` JSON-RPC Method [#8417](https://github.com/hyperledger/besu/pull/8417), [#8946](https://github.com/hyperledger/besu/pull/8946), [#9015](https://github.com/hyperledger/besu/pull/9015)
+
+### Bug fixes
+- Fix bug with `eth_estimateGas` on QBFT - use zero address when doing simulation against `pending` block [#9031](https://github.com/hyperledger/besu/pull/9031)
 
 ## 25.7.0
 ### Breaking Changes
@@ -26,6 +225,7 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Stratum mining has been removed (part of PoW) [#8802](https://github.com/hyperledger/besu/pull/8802)
   - PoW RPCs removed: `eth_getWork`, `eth_submitWork`, `eth_getHashrate`, `eth_submitHashrate`, `eth_hashrate`
+  - Privacy RPC API groups removed: `EEA` and `PRIV` [#8803](https://github.com/hyperledger/besu/pull/8803)
 - Introduce history expiry behaviour for mainnet [8875](https://github.com/hyperledger/besu/pull/8875)
   - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
   - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks

@@ -15,6 +15,9 @@
 package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -23,9 +26,11 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
@@ -54,7 +59,9 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockHeader(blockHeader(1559));
@@ -75,7 +82,9 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT);
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -84,8 +93,8 @@ public class MergeProtocolScheduleTest {
         protocolSchedule.getByBlockHeader(
             new BlockHeaderTestFixture().timestamp(1681338455).buildHeader());
 
-    assertThat(parisSpec.getName()).isEqualTo("Paris");
-    assertThat(shanghaiSpec.getName()).isEqualTo("Shanghai");
+    assertThat(parisSpec.getHardforkId()).isEqualTo(PARIS);
+    assertThat(shanghaiSpec.getHardforkId()).isEqualTo(SHANGHAI);
 
     // ensure PUSH0 is enabled in Shanghai
     final int PUSH0 = 0x5f;
@@ -116,7 +125,9 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT);
 
     final ProtocolSpec parisSpec =
         protocolSchedule.getByBlockHeader(
@@ -125,8 +136,8 @@ public class MergeProtocolScheduleTest {
         protocolSchedule.getByBlockHeader(
             new BlockHeaderTestFixture().number(10).timestamp(1000).buildHeader());
 
-    assertThat(parisSpec.getName()).isEqualTo("Paris");
-    assertThat(cancunSpec.getName()).isEqualTo("Cancun");
+    assertThat(parisSpec.getHardforkId()).isEqualTo(PARIS);
+    assertThat(cancunSpec.getHardforkId()).isEqualTo(CANCUN);
 
     // ensure PUSH0 is enabled in Cancun (i.e. it has picked up the Shanghai change rather than been
     // reverted to Paris)
@@ -149,19 +160,21 @@ public class MergeProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT);
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
         protocolSchedule.getByBlockHeader(blockHeader(lastParisBlockNumber));
-    assertThat(parisSpec.getName()).isEqualTo("Paris");
+    assertThat(parisSpec.getHardforkId()).isEqualTo(PARIS);
 
     for (long forkTimestamp : config.getForkBlockTimestamps()) {
       final ProtocolSpec postParisSpec =
           protocolSchedule.getByBlockHeader(
               new BlockHeaderTestFixture().timestamp(forkTimestamp).buildHeader());
 
-      assertThat(postParisSpec.getName()).isNotEqualTo("Paris");
+      assertThat(postParisSpec.getHardforkId()).isNotEqualTo(PARIS);
       // ensure PUSH0 is enabled from Shanghai onwards
       final int PUSH0 = 0x5f;
       assertThat(parisSpec.getEvm().getOperationsUnsafe()[PUSH0])
@@ -183,10 +196,12 @@ public class MergeProtocolScheduleTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem())
+                BalConfiguration.DEFAULT,
+                new NoOpMetricsSystem(),
+                EvmConfiguration.DEFAULT)
             .getByBlockHeader(blockHeader(0));
 
-    assertThat(london.getName()).isEqualTo("Paris");
+    assertThat(london.getHardforkId()).isEqualTo(PARIS);
     assertProofOfStakeConfigIsEnabled(london);
   }
 

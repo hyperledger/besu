@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionDetails;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
@@ -71,6 +70,10 @@ public class DebugTraceCall extends AbstractTraceCall {
           "Invalid transaction trace parameter (index 2)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
+    } catch (IllegalArgumentException e) {
+      // Handle invalid tracer type from TracerType.fromString()
+      throw new InvalidJsonRpcParameters(
+          e.getMessage(), RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
     }
   }
 
@@ -103,8 +106,10 @@ public class DebugTraceCall extends AbstractTraceCall {
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
                       result.transaction(), result.result(), tracer.getTraceFrames());
-
-              return new DebugTraceTransactionDetails(transactionTrace);
+              return DebugTraceTransactionStepFactory.create(
+                      getTraceOptions(requestContext).tracerType())
+                  .apply(transactionTrace)
+                  .getResult();
             });
   }
 

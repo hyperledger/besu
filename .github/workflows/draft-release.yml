@@ -41,7 +41,7 @@ jobs:
 
       # Perform a tag checkout to ensure tag is available
       - name: Verify tag Exist
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ steps.validate_release_version.outputs.release_version }}
           fetch-depth: 1
@@ -59,12 +59,12 @@ jobs:
       zipSha: ${{steps.hashes.outputs.zipSha}}
     steps:
       - name: Checkout tag
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -123,7 +123,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -149,7 +149,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -175,7 +175,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}  # Use the output from the pre_process_release job
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -207,7 +207,7 @@ jobs:
           fi
 
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -216,7 +216,7 @@ jobs:
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -225,11 +225,6 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-
-      - name: install goss
-        run: |
-          mkdir -p docker/reports
-          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
 
       - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
@@ -258,12 +253,12 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -304,7 +299,7 @@ jobs:
             runner: besu-arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           sparse-checkout: '.github/workflows/BesuContainerVerify.sh'
 
@@ -333,7 +328,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -376,12 +371,12 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
       - name: Set up Java
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
           java-version: 21
@@ -402,7 +397,7 @@ jobs:
     needs: [artifactory, validate, test-linux, test-windows]
     steps:
       - name: checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.RELEASE_VERSION }}
 

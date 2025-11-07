@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -46,7 +47,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(
         worldStateKeyValueStorage,
         blockchain,
@@ -54,7 +56,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
         bonsaiCachedMerkleTrieLoader,
         pluginContext,
         evmConfiguration,
-        worldStateHealerSupplier);
+        worldStateHealerSupplier,
+        codeCache);
   }
 
   @VisibleForTesting
@@ -65,7 +68,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final Supplier<WorldStateHealer> worldStateHealerSupplier,
+      final CodeCache codeCache) {
     super(
         bonsaiCachedWorldStorageManager,
         trieLogManager,
@@ -73,7 +77,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
         blockchain,
         bonsaiCachedMerkleTrieLoader,
         evmConfiguration,
-        worldStateHealerSupplier);
+        worldStateHealerSupplier,
+        codeCache);
   }
 
   @Override
@@ -91,21 +96,17 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - queryParams.getBlockHeader().getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
-        LOG.info(
-            "Returning archive state without verifying state root",
-            trieLogManager.getMaxLayersToLoad());
-        Optional<MutableWorldState> cachedWorldState =
-            cachedWorldStorageManager
-                .getWorldState(chainHeadBlockHeader.getHash())
-                .map(MutableWorldState::disableTrie)
-                .flatMap(
-                    worldState ->
-                        rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
-                            // state
-                            (PathBasedWorldState) worldState,
-                            queryParams.getBlockHeader().getHash()))
-                .map(MutableWorldState::freezeStorage);
-        return cachedWorldState;
+        LOG.debug(
+            "Returning archive state without verifying state root");
+        return cachedWorldStorageManager
+            .getWorldState(chainHeadBlockHeader.getHash())
+            .map(MutableWorldState::disableTrie)
+            .flatMap(
+                worldState ->
+                    rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
+                        // state
+                        (PathBasedWorldState) worldState, queryParams.getBlockHeader().getHash()))
+            .map(MutableWorldState::freezeStorage);
       }
       return super.getWorldState(queryParams);
     }

@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
-import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
@@ -70,22 +69,22 @@ import org.slf4j.LoggerFactory;
 
 public class EthPeers implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
-  public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
-      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty());
+  public static final Comparator<EthPeerImmutableAttributes> TOTAL_DIFFICULTY =
+      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.estimatedTotalDifficulty());
 
-  public static final Comparator<EthPeer> CHAIN_HEIGHT =
-      Comparator.comparing((final EthPeer p) -> p.chainState().getEstimatedHeight());
+  public static final Comparator<EthPeerImmutableAttributes> CHAIN_HEIGHT =
+      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.estimatedChainHeight());
 
-  public static final Comparator<EthPeer> MOST_USEFUL_PEER =
-      Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
+  public static final Comparator<EthPeerImmutableAttributes> MOST_USEFUL_PEER =
+      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.reputationScore())
           .thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> TOTAL_DIFFICULTY_THEN_HEIGHT =
+  public static final Comparator<EthPeerImmutableAttributes> TOTAL_DIFFICULTY_THEN_HEIGHT =
       TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
-      Comparator.comparing(EthPeer::outstandingRequests)
-          .thenComparing(EthPeer::getLastRequestTimestamp);
+  public static final Comparator<EthPeerImmutableAttributes> LEAST_TO_MOST_BUSY =
+      Comparator.comparing(EthPeerImmutableAttributes::outstandingRequests)
+          .thenComparing(EthPeerImmutableAttributes::lastRequestTimestamp);
   public static final int NODE_ID_LENGTH = 64;
   public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
 
@@ -113,7 +112,7 @@ public class EthPeers implements PeerSelector {
   private final int snapServerTargetNumber;
   private final boolean shouldLimitRemoteConnections;
 
-  private Comparator<EthPeer> bestPeerComparator;
+  private Comparator<EthPeerImmutableAttributes> bestPeerComparator;
   private final Bytes localNodeId;
   private RlpxAgent rlpxAgent;
 
@@ -161,7 +160,8 @@ public class EthPeers implements PeerSelector {
         BesuMetricCategory.ETHEREUM,
         "peer_count_snap_server",
         "The current number of peers connected that serve snap data",
-        () -> (int) streamAvailablePeers().filter(EthPeer::isServingSnap).count());
+        () ->
+            (int) streamAvailablePeers().filter(EthPeerImmutableAttributes::isServingSnap).count());
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -320,9 +320,10 @@ public class EthPeers implements PeerSelector {
   @VisibleForTesting
   void reattemptPendingPeerRequests() {
     synchronized (this) {
-      final List<EthPeer> peers = streamAvailablePeers().toList();
       final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
-      while (iterator.hasNext() && peers.stream().anyMatch(EthPeer::hasAvailableRequestCapacity)) {
+      while (iterator.hasNext()
+          && streamAvailablePeers()
+              .anyMatch(EthPeerImmutableAttributes::hasAvailableRequestCapacity)) {
         final PendingPeerRequest request = iterator.next();
         if (request.attemptExecution()) {
           pendingRequests.remove(request);
@@ -352,8 +353,8 @@ public class EthPeers implements PeerSelector {
     return peerUpperBound;
   }
 
-  public Stream<EthPeer> streamAllPeers() {
-    return activeConnections.values().stream();
+  public Stream<EthPeerImmutableAttributes> streamAllPeers() {
+    return activeConnections.values().stream().map(EthPeerImmutableAttributes::from);
   }
 
   private void removeDisconnectedPeers() {
@@ -367,35 +368,40 @@ public class EthPeers implements PeerSelector {
             });
   }
 
-  public Stream<EthPeer> streamAvailablePeers() {
+  public Stream<EthPeerImmutableAttributes> streamAvailablePeers() {
     return streamAllPeers().filter(peer -> !peer.isDisconnected());
   }
 
-  public Stream<EthPeer> streamBestPeers() {
+  public Stream<EthPeerImmutableAttributes> streamBestPeers() {
     return streamAvailablePeers()
-        .filter(EthPeer::isFullyValidated)
+        .filter(EthPeerImmutableAttributes::isFullyValidated)
         .sorted(getBestPeerComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {
-    return streamAvailablePeers().max(getBestPeerComparator());
+    return streamAvailablePeers()
+        .max(getBestPeerComparator())
+        .map(EthPeerImmutableAttributes::ethPeer);
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
-    return bestPeerMatchingCriteria(
-        p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
+    return bestPeerMatchingCriteria(p -> p.isFullyValidated() && p.hasEstimatedChainHeight());
   }
 
-  public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria).max(getBestPeerComparator());
+  public Optional<EthPeer> bestPeerMatchingCriteria(
+      final Predicate<EthPeerImmutableAttributes> matchesCriteria) {
+    return streamAvailablePeers()
+        .filter(matchesCriteria)
+        .max(getBestPeerComparator())
+        .map(EthPeerImmutableAttributes::ethPeer);
   }
 
-  public void setBestPeerComparator(final Comparator<EthPeer> comparator) {
+  public void setBestPeerComparator(final Comparator<EthPeerImmutableAttributes> comparator) {
     LOG.info("Updating the default best peer comparator");
     bestPeerComparator = comparator;
   }
 
-  public Comparator<EthPeer> getBestPeerComparator() {
+  public Comparator<EthPeerImmutableAttributes> getBestPeerComparator() {
     return bestPeerComparator;
   }
 
@@ -455,18 +461,19 @@ public class EthPeers implements PeerSelector {
 
   public void disconnectWorstUselessPeer() {
     streamAvailablePeers()
-        .filter(p -> !canExceedPeerLimits(p.getId()))
+        .filter(p -> !canExceedPeerLimits(p.ethPeer().getId()))
         .min(getBestPeerComparator())
         .ifPresent(
             peer -> {
               LOG.atDebug()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getLoggableId)
+                  .addArgument(peer.ethPeer().getLoggableId())
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
+              peer.ethPeer()
+                  .disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
             });
   }
 
@@ -489,17 +496,19 @@ public class EthPeers implements PeerSelector {
 
   // Part of the PeerSelector interface, to be split apart later
   @Override
-  public Optional<EthPeer> getPeer(final Predicate<EthPeer> filter) {
+  public Optional<EthPeer> getPeer(final Predicate<EthPeerImmutableAttributes> filter) {
     return streamAvailablePeers()
         .filter(filter)
-        .filter(EthPeer::hasAvailableRequestCapacity)
-        .filter(EthPeer::isFullyValidated)
-        .min(LEAST_TO_MOST_BUSY);
+        .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
+        .filter(EthPeerImmutableAttributes::isFullyValidated)
+        .min(LEAST_TO_MOST_BUSY)
+        .map(EthPeerImmutableAttributes::ethPeer);
   }
 
   // Part of the PeerSelector interface, to be split apart later
   @Override
-  public CompletableFuture<EthPeer> waitForPeer(final Predicate<EthPeer> filter) {
+  public CompletableFuture<EthPeer> waitForPeer(
+      final Predicate<EthPeerImmutableAttributes> filter) {
     final CompletableFuture<EthPeer> future = new CompletableFuture<>();
     LOG.debug("Waiting for peer matching filter. {} peers currently connected.", peerCount());
     // check for an existing peer matching the filter and use that if one is found
@@ -513,7 +522,7 @@ public class EthPeers implements PeerSelector {
       final long subscriptionId =
           subscribeConnect(
               (peer) -> {
-                if (!future.isDone() && filter.test(peer)) {
+                if (!future.isDone() && filter.test(EthPeerImmutableAttributes.from(peer))) {
                   LOG.debug("Found new peer matching filter!");
                   future.complete(peer);
                 } else {
@@ -784,29 +793,32 @@ public class EthPeers implements PeerSelector {
           // find and disconnect the least useful peer we can disconnect
           activeConnections.values().stream()
               .filter(p -> !canExceedPeerLimits(p.getId()))
+              .map(EthPeerImmutableAttributes::from)
               .filter(filterOutSnapServers ? p -> !p.isServingSnap() : p -> true)
-              .filter(inboundLimitExceeded ? p -> p.getConnection().inboundInitiated() : p -> true)
+              .filter(inboundLimitExceeded ? p -> p.isInboundInitiated() : p -> true)
               .min(MOST_USEFUL_PEER)
               .ifPresentOrElse(
                   pe -> {
-                    pe.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                    pe.ethPeer().disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
                     LOG.atTrace()
                         .setMessage("Disconnecting peer {} to be replaced by prioritised peer {}")
-                        .addArgument(pe.getLoggableId())
+                        .addArgument(pe.ethPeer().getLoggableId())
                         .addArgument(peer.getLoggableId())
                         .log();
                   },
                   () -> // disconnect the least useful peer
                   activeConnections.values().stream()
                           .filter(p -> !canExceedPeerLimits(p.getId()))
+                          .map(EthPeerImmutableAttributes::from)
                           .min(MOST_USEFUL_PEER)
                           .ifPresent(
                               p -> {
-                                p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                                p.ethPeer()
+                                    .disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
                                 LOG.atTrace()
                                     .setMessage(
                                         "Disconnecting peer {} to be replaced by prioritised peer {}")
-                                    .addArgument(p.getLoggableId())
+                                    .addArgument(p.ethPeer().getLoggableId())
                                     .addArgument(peer.getLoggableId())
                                     .log();
                               }));
@@ -851,7 +863,7 @@ public class EthPeers implements PeerSelector {
 
   private long getNumTrailingPeers(final long minimumHeightToBeUpToDate) {
     return streamAvailablePeers()
-        .filter(p -> p.chainState().getEstimatedHeight() < minimumHeightToBeUpToDate)
+        .filter(p -> p.estimatedChainHeight() < minimumHeightToBeUpToDate)
         .count();
   }
 

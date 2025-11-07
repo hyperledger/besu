@@ -39,7 +39,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -88,6 +90,7 @@ public class ForwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
@@ -133,6 +136,7 @@ public class ForwardSyncStepTest {
         localBlockchain.appendBlock(block, receipts);
       }
     }
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
 
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
@@ -176,7 +180,7 @@ public class ForwardSyncStepTest {
               return new PeerTaskExecutorResult<List<Block>>(
                   Optional.of(blocks),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(peer.getEthPeer()));
+                  List.of(peer.getEthPeer()));
             });
   }
 

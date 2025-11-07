@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
   private static final Logger LOG = LoggerFactory.getLogger(AltBN128AddPrecompiledContract.class);
   private static final int PARAMETER_LENGTH = 128;
-  private static final String PRECOMPILE_NAME = "AltBN128Add";
+  private static final String PRECOMPILE_NAME = "BN254_ADD";
 
   private final long gasCost;
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =

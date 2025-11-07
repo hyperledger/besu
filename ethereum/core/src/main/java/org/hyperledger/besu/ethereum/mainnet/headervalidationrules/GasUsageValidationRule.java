@@ -41,4 +41,9 @@ public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "GasUsageValidation";
+  }
 }

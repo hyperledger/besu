@@ -25,12 +25,16 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.messages.BlockRangeUpdateMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -44,6 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +92,18 @@ public class BlockRangeBroadcasterTest {
 
   private void setupPeers(final EthPeer... peers) {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(peers));
+    when(ethPeers.streamAvailablePeers())
+        .thenReturn(Stream.of(peers).map(EthPeerImmutableAttributes::from));
+    for (EthPeer ethPeer : peers) {
+      ChainState chainState = Mockito.mock(ChainState.class);
+
+      Mockito.when(ethPeer.chainState()).thenReturn(chainState);
+      Mockito.when(chainState.getEstimatedHeight()).thenReturn(0L);
+      Mockito.when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+      Mockito.when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+      PeerConnection connection = mock(PeerConnection.class);
+      Mockito.when(ethPeer.getConnection()).thenReturn(connection);
+    }
   }
 
   private void broadcastBlockRange() {
@@ -138,7 +154,8 @@ public class BlockRangeBroadcasterTest {
   public void shouldDisconnectIfLatestBlockNumberIsLessThanEarliest() {
     final EthPeer peer = mock(EthPeer.class);
     handleBlockRangeUpdateMessage(peer, 1L, 0L);
-    verify(peer).disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED);
+    verify(peer)
+        .disconnect(DisconnectMessage.DisconnectReason.SUBPROTOCOL_TRIGGERED_INVALID_BLOCK_RANGE);
   }
 
   private void handleBlockRangeUpdateMessage(

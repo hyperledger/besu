@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -37,7 +38,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
@@ -52,6 +56,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -99,8 +104,18 @@ public class CliqueMinerExecutorTest {
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     CliqueHelpers.setCliqueContext(cliqueContext);
+
+    final Block genesis =
+        new Block(
+            new BlockHeaderTestFixture().buildHeader(),
+            new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+    final MutableBlockchain blockchain = createInMemoryBlockchain(genesis);
+
     cliqueProtocolContext =
-        new ProtocolContext.Builder().withConsensusContext(cliqueContext).build();
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withConsensusContext(cliqueContext)
+            .build();
     cliqueProtocolSchedule =
         CliqueProtocolSchedule.create(
             GENESIS_CONFIG_OPTIONS,
@@ -111,6 +126,7 @@ public class CliqueMinerExecutorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();

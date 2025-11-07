@@ -682,6 +682,7 @@ public class BlockchainQueries {
               gasUsed,
               header.getBaseFee(),
               blockHash,
+              header.getTimestamp(),
               header.getNumber(),
               maybeBlobGasUsed,
               maybeBlobGasPrice,
@@ -745,6 +746,7 @@ public class BlockchainQueries {
             gasUsed,
             header.getBaseFee(),
             blockhash,
+            header.getTimestamp(),
             header.getNumber(),
             maybeBlobGasUsed,
             maybeBlobGasPrice,
@@ -929,6 +931,7 @@ public class BlockchainQueries {
       final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
       final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
+      final long blockTimestamp = blockHeader.get().getTimestamp();
       final boolean removed = getRemoved(blockHash, isQueryAlive);
 
       final AtomicInteger logIndexOffset = new AtomicInteger();
@@ -943,6 +946,7 @@ public class BlockchainQueries {
                           receipts.get(i),
                           number,
                           blockHash,
+                          blockTimestamp,
                           transactions.get(i).getHash(),
                           i,
                           removed);
@@ -980,6 +984,7 @@ public class BlockchainQueries {
       final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
       final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
+      final long blockTimestamp = blockHeader.get().getTimestamp();
       final boolean removed = getRemoved(blockHash, isQueryAlive);
 
       final int transactionIndex = transactionWithMetaData.getTransactionIndex().get();
@@ -992,6 +997,7 @@ public class BlockchainQueries {
           receipts.get(transactionIndex),
           number,
           blockHash,
+          blockTimestamp,
           transactions.get(transactionIndex).getHash(),
           transactionIndex,
           removed);
@@ -1222,7 +1228,11 @@ public class BlockchainQueries {
       final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
     return BackendQuery.runIfAlive(
         "matchingLogs - getBlockBody",
-        () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
+        () ->
+            blockchain
+                .getBlockBody(blockHash)
+                .map((bb) -> bb.getTransactions())
+                .orElse(Collections.emptyList()),
         isQueryAlive);
   }
 
@@ -1230,7 +1240,7 @@ public class BlockchainQueries {
       final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
     return BackendQuery.runIfAlive(
         "matchingLogs - getTxReceipts",
-        () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+        () -> blockchain.getTxReceipts(blockHash).orElse(Collections.emptyList()),
         isQueryAlive);
   }
 

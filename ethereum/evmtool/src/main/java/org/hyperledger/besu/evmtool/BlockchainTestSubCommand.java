@@ -43,12 +43,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -90,6 +94,44 @@ public class BlockchainTestSubCommand implements Runnable {
   // picocli does it magically
   @Parameters private final List<Path> blockchainTestFiles = new ArrayList<>();
 
+  /** Helper class to track test execution results for summary reporting. */
+  private static class TestResults {
+    private static final String SEPARATOR = "=".repeat(80);
+    private final AtomicInteger passedTests = new AtomicInteger(0);
+    private final AtomicInteger failedTests = new AtomicInteger(0);
+    private final Map<String, String> failures = new LinkedHashMap<>();
+
+    void recordPass() {
+      passedTests.incrementAndGet();
+    }
+
+    void recordFailure(final String testName, final String reason) {
+      failedTests.incrementAndGet();
+      failures.put(testName, reason);
+    }
+
+    boolean hasTests() {
+      return passedTests.get() + failedTests.get() > 0;
+    }
+
+    void printSummary(final java.io.PrintWriter out) {
+      final int totalTests = passedTests.get() + failedTests.get();
+      out.println();
+      out.println(SEPARATOR);
+      out.println("TEST SUMMARY");
+      out.println(SEPARATOR);
+      out.printf("Total tests:  %d%n", totalTests);
+      out.printf("Passed:       %d%n", passedTests.get());
+      out.printf("Failed:       %d%n", failedTests.get());
+
+      if (!failures.isEmpty()) {
+        out.println("\nFailed tests:");
+        failures.forEach((testName, reason) -> out.printf("  - %s: %s%n", testName, reason));
+      }
+      out.println(SEPARATOR);
+    }
+  }
+
   /**
    * Default constructor for the BlockchainTestSubCommand class. This constructor doesn't take any
    * arguments and initializes the parentCommand to null. PicoCLI requires this constructor.
@@ -109,6 +151,7 @@ public class BlockchainTestSubCommand implements Runnable {
     // presume ethereum mainnet for reference and state tests
     SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper blockchainTestMapper = JsonUtils.createObjectMapper();
+    final TestResults results = new TestResults();
 
     final JavaType javaType =
         blockchainTestMapper
@@ -130,7 +173,7 @@ public class BlockchainTestSubCommand implements Runnable {
           if (file.isFile()) {
             final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests =
                 blockchainTestMapper.readValue(file, javaType);
-            executeBlockchainTest(blockchainTests);
+            executeBlockchainTest(blockchainTests, results);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -143,7 +186,7 @@ public class BlockchainTestSubCommand implements Runnable {
           } else {
             blockchainTests = blockchainTestMapper.readValue(blockchainTestFile.toFile(), javaType);
           }
-          executeBlockchainTest(blockchainTests);
+          executeBlockchainTest(blockchainTests, results);
         }
       }
     } catch (final JsonProcessingException jpe) {
@@ -151,34 +194,47 @@ public class BlockchainTestSubCommand implements Runnable {
     } catch (final IOException e) {
       System.err.println("Unable to read state file");
       e.printStackTrace(System.err);
+    } finally {
+      // Always print summary, even if there were errors
+      if (results.hasTests()) {
+        results.printSummary(parentCommand.out);
+      }
     }
   }
 
   private void executeBlockchainTest(
-      final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests) {
-    blockchainTests.forEach(this::traceTestSpecs);
+      final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
+      final TestResults results) {
+    blockchainTests.forEach((testName, spec) -> traceTestSpecs(testName, spec, results));
   }
 
-  private void traceTestSpecs(final String test, final BlockchainReferenceTestCaseSpec spec) {
+  private void traceTestSpecs(
+      final String test, final BlockchainReferenceTestCaseSpec spec, final TestResults results) {
     if (testName != null && !testName.equals(test)) {
       parentCommand.out.println("Skipping test: " + test);
       return;
     }
     parentCommand.out.println("Considering " + test);
 
+    final ProtocolContext context = spec.buildProtocolContext();
+
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
-        spec.getWorldStateArchive()
+        context
+            .getWorldStateArchive()
             .getWorldState(
                 WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(
                     genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
+        ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+            .getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext context = spec.getProtocolContext();
+
+    boolean testFailed = false;
+    String failureReason = "";
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {
@@ -198,38 +254,65 @@ public class BlockchainTestSubCommand implements Runnable {
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT
                 : HeaderValidationMode.FULL;
+        final Stopwatch timer = Stopwatch.createStarted();
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
-
+        timer.stop();
         if (importResult.isImported() != candidateBlock.isValid()) {
-          parentCommand.out.printf(
-              "Block %d (%s) %s%n",
-              block.getHeader().getNumber(),
-              block.getHash(),
-              importResult.isImported() ? "Failed to be rejected" : "Failed to import");
+          testFailed = true;
+          failureReason =
+              String.format(
+                  "Block %d (%s) %s",
+                  block.getHeader().getNumber(),
+                  block.getHash(),
+                  importResult.isImported() ? "Failed to be rejected" : "Failed to import");
+          parentCommand.out.println(failureReason);
         } else {
-          parentCommand.out.printf(
-              "Block %d (%s) %s%n",
-              block.getHeader().getNumber(),
-              block.getHash(),
-              importResult.isImported() ? "Imported" : "Rejected (correctly)");
+          if (importResult.isImported()) {
+            final long gasUsed = block.getHeader().getGasUsed();
+            final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+            final float mGps = gasUsed * 1000.0f / timeNs;
+            final double timeMs = timeNs / 1_000_000.0;
+            parentCommand.out.printf(
+                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
+                block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
+          } else {
+            parentCommand.out.printf(
+                "Block %d (%s) Rejected (correctly)%n",
+                block.getHeader().getNumber(), block.getHash());
+          }
         }
       } catch (final RLPException e) {
         if (candidateBlock.isValid()) {
-          parentCommand.out.printf(
-              "Block %d (%s) should have imported but had an RLP exception %s%n",
-              candidateBlock.getBlock().getHeader().getNumber(),
-              candidateBlock.getBlock().getHash(),
-              e.getMessage());
+          testFailed = true;
+          failureReason =
+              String.format(
+                  "Block %d (%s) RLP exception: %s",
+                  candidateBlock.getBlock().getHeader().getNumber(),
+                  candidateBlock.getBlock().getHash(),
+                  e.getMessage());
+          parentCommand.out.println(failureReason);
         }
       }
     }
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
+      testFailed = true;
+      failureReason =
+          String.format(
+              "Chain header mismatch, have %s want %s",
+              blockchain.getChainHeadHash(), spec.getLastBlockHash());
       parentCommand.out.printf(
           "Chain header mismatch, have %s want %s - %s%n",
           blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
     } else {
       parentCommand.out.println("Chain import successful - " + test);
+    }
+
+    // Record test result
+    if (testFailed) {
+      results.recordFailure(test, failureReason);
+    } else {
+      results.recordPass();
     }
   }
 

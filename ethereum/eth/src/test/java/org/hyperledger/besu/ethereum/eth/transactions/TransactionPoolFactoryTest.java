@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -301,7 +302,8 @@ public class TransactionPoolFactoryTest {
 
   private void setupInitialSyncPhase(final SyncState syncState) {
     pool = createTransactionPool(LAYERED, syncState);
-
+    SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     ethProtocolManager =
         new EthProtocolManager(
             blockchain,
@@ -314,7 +316,7 @@ public class TransactionPoolFactoryTest {
             ethContext,
             Collections.emptyList(),
             Optional.empty(),
-            mock(SynchronizerConfiguration.class),
+            syncConfig,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));
   }
@@ -378,6 +380,7 @@ public class TransactionPoolFactoryTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
 
@@ -410,8 +413,7 @@ public class TransactionPoolFactoryTest {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
-        MiningConfiguration.newDefault(),
-        false);
+        MiningConfiguration.newDefault());
   }
 
   private TransactionPool createAndEnableTransactionPool(

@@ -58,7 +58,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredTransactionPoolBaseFeeTest;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.LegacyTransactionPoolBaseFeeTest;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -145,6 +147,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   protected EthContext ethContext;
   protected ArgumentCaptor<Runnable> syncTaskCapture;
   protected PeerTransactionTracker peerTransactionTracker;
+  protected SenderBalanceChecker senderBalanceChecker = new SenderBalanceChecker.NoOpChecker();
   private BlobTestFixture blobTestFixture;
 
   protected abstract PendingTransactions createPendingTransactions(
@@ -184,6 +187,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =

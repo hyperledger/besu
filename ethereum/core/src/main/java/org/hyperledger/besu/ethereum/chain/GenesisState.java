@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -70,8 +72,9 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(GenesisConfig.fromConfig(json), protocolSchedule);
+  public static GenesisState fromJson(
+      final String json, final ProtocolSchedule protocolSchedule, final CodeCache codeCache) {
+    return fromConfig(GenesisConfig.fromConfig(json), protocolSchedule, codeCache);
   }
 
   /**
@@ -89,7 +92,10 @@ public final class GenesisState {
       final URL jsonSource,
       final ProtocolSchedule protocolSchedule) {
     return fromConfig(
-        dataStorageConfiguration, GenesisConfig.fromConfig(jsonSource), protocolSchedule);
+        dataStorageConfiguration,
+        GenesisConfig.fromConfig(jsonSource),
+        protocolSchedule,
+        new CodeCache());
   }
 
   /**
@@ -100,8 +106,10 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfig config, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule);
+      final GenesisConfig config,
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule, codeCache);
   }
 
   /**
@@ -116,8 +124,10 @@ public final class GenesisState {
   public static GenesisState fromConfig(
       final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfig genesisConfig,
-      final ProtocolSchedule protocolSchedule) {
-    final var genesisStateRoot = calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig);
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    final var genesisStateRoot =
+        calculateGenesisStateRoot(dataStorageConfiguration, genesisConfig, codeCache);
     final Block block =
         new Block(
             buildHeader(genesisConfig, genesisStateRoot, protocolSchedule),
@@ -148,7 +158,12 @@ public final class GenesisState {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    return new BlockBody(emptyList(), emptyList(), withdrawals);
+    final Optional<BlockAccessList> blockAccessList =
+        isAmsterdamAtGenesis(config)
+            ? Optional.of(BlockAccessList.builder().build())
+            : Optional.empty();
+
+    return new BlockBody(emptyList(), emptyList(), withdrawals, blockAccessList);
   }
 
   public Block getBlock() {
@@ -204,8 +219,10 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateRoot(
-      final DataStorageConfiguration dataStorageConfiguration, final GenesisConfig genesisConfig) {
-    try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final GenesisConfig genesisConfig,
+      final CodeCache codeCache) {
+    try (var worldState = createGenesisWorldState(dataStorageConfiguration, codeCache)) {
       writeAccountsTo(worldState, genesisConfig.streamAllocations(), null);
       return worldState.rootHash();
     } catch (Exception e) {
@@ -242,6 +259,7 @@ public final class GenesisState {
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
+        .balHash(isAmsterdamAtGenesis(genesis) ? Hash.EMPTY_BAL_HASH : null)
         .buildBlockHeader();
   }
 
@@ -348,6 +366,14 @@ public final class GenesisState {
     final OptionalLong osakaTimestamp = genesis.getConfigOptions().getOsakaTime();
     if (osakaTimestamp.isPresent()) {
       return genesis.getTimestamp() >= osakaTimestamp.getAsLong();
+    }
+    return isAmsterdamAtGenesis(genesis);
+  }
+
+  private static boolean isAmsterdamAtGenesis(final GenesisConfig genesis) {
+    final OptionalLong amsterdamTimestamp = genesis.getConfigOptions().getAmsterdamTime();
+    if (amsterdamTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= amsterdamTimestamp.getAsLong();
     }
     return isFutureEipsTimeAtGenesis(genesis);
   }

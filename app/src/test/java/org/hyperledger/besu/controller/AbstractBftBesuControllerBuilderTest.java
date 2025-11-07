@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -56,6 +57,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -130,11 +132,15 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     lenient().when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     lenient().when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
+    lenient().when(synchronizerConfiguration.getSyncMode()).thenReturn(SyncMode.FULL);
 
     lenient()
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
+    lenient()
+        .when(ethProtocolConfiguration.getMaxEthCapability())
+        .thenReturn(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY);
     setupBftGenesisConfig();
 
     bftBesuControllerBuilder =
@@ -165,6 +171,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
   public void miningParametersBlockPeriodSecondsIsUpdatedOnTransition() {
     final var besuController = bftBesuControllerBuilder.build();
     final var protocolContext = besuController.getProtocolContext();
+    final var protocolSchedule = besuController.getProtocolSchedule();
 
     final BlockHeader header1 =
         new BlockHeader(
@@ -189,13 +196,17 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             null,
             null,
             null,
+            null,
             getBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 
     protocolContext.getBlockchain().appendBlock(block1, List.of());
 
     assertThat(miningConfiguration.getBlockPeriodSeconds()).isNotEmpty().hasValue(2);
-    assertThat(miningConfiguration.getBlockTxsSelectionMaxTime()).isEqualTo(2000 * 75 / 100);
+    assertThat(
+            miningConfiguration.getBlockTxsSelectionMaxTime(
+                protocolSchedule.getByBlockHeader(header1).isPoS()))
+        .isEqualTo(Duration.ofMillis(2000 * 75 / 100));
   }
 
   protected abstract BlockHeaderFunctions getBlockHeaderFunctions();

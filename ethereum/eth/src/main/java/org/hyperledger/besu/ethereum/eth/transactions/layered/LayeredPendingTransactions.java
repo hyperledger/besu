@@ -20,7 +20,9 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logConfirmed;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.AddReason.NEW_RECONCILED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.RECONCILED;
 
@@ -46,10 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
-import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -57,7 +56,6 @@ import org.slf4j.MarkerFactory;
 
 public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
-  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private static final Marker INVALID_TX_REMOVED = MarkerFactory.getMarker("INVALID_TX_REMOVED");
   private final TransactionPoolConfiguration poolConfig;
   private final AbstractPrioritizedTransactions prioritizedTransactions;
@@ -82,8 +80,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
     final long stateSenderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
-
-    logTransactionForReplayAdd(pendingTransaction, stateSenderNonce);
 
     if (hasAccountNonceDisparity(pendingTransaction, stateSenderNonce)) {
       reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
@@ -208,7 +204,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW_RECONCILED));
     }
 
     LOG.atDebug()
@@ -219,47 +215,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
-  private void logTransactionForReplayAdd(
-      final PendingTransaction pendingTransaction, final long senderNonce) {
-    // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("T,{},{},{},{},{},{},{},{}")
-        .addArgument(pendingTransaction.getSequence())
-        .addArgument(pendingTransaction.getAddedAt())
-        .addArgument(pendingTransaction.getSender())
-        .addArgument(senderNonce)
-        .addArgument(pendingTransaction.getNonce())
-        .addArgument(pendingTransaction.getTransaction().getType())
-        .addArgument(pendingTransaction::getHash)
-        .addArgument(
-            () -> {
-              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-              pendingTransaction.getTransaction().writeTo(rlp);
-              return rlp.encoded().toHexString();
-            })
-        .log();
-  }
-
-  private void logDiscardedTransaction(
+  private void logInvalidTransaction(
       final PendingTransaction pendingTransaction, final TransactionSelectionResult result) {
-    // csv fields: sequence, addedAt, sender, nonce, type, hash, rlp
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("D,{},{},{},{},{},{},{}")
-        .addArgument(pendingTransaction.getSequence())
-        .addArgument(pendingTransaction.getAddedAt())
-        .addArgument(pendingTransaction.getSender())
-        .addArgument(pendingTransaction.getNonce())
-        .addArgument(pendingTransaction.getTransaction().getType())
-        .addArgument(pendingTransaction::getHash)
-        .addArgument(
-            () -> {
-              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-              pendingTransaction.getTransaction().writeTo(rlp);
-              return rlp.encoded().toHexString();
-            })
-        .log();
     LOG.atInfo()
         .addMarker(INVALID_TX_REMOVED)
         .addKeyValue("txhash", pendingTransaction::getHash)
@@ -338,24 +295,28 @@ public class LayeredPendingTransactions implements PendingTransactions {
               .log();
 
           if (selectionResult.discard()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
                     prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
+                    logInvalidTransaction(candidatePendingTx, selectionResult);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} remove by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
-            logDiscardedTransaction(candidatePendingTx, selectionResult);
           } else if (selectionResult.penalize()) {
-            ethScheduler.scheduleTxWorkerTask(
+            ethScheduler.scheduleServiceTask(
                 () -> {
                   synchronized (this) {
-                    prioritizedTransactions.penalize(candidatePendingTx);
+                    prioritizedTransactions.penalize(candidatePendingTx, selectionResult);
+                    LOG.atTrace()
+                        .setMessage("Transaction {} penalized by block selection")
+                        .addArgument(candidatePendingTx::toTraceLog)
+                        .log();
                   }
                 });
-            LOG.atTrace()
-                .setMessage("Transaction {} penalized")
-                .addArgument(candidatePendingTx::toTraceLog)
-                .log();
           }
 
           if (selectionResult.stop()) {
@@ -384,7 +345,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
   @Override
   public synchronized Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
-    return prioritizedTransactions.getByHash(transactionHash);
+    return prioritizedTransactions
+        .getByHash(transactionHash)
+        .map(PendingTransaction::getTransaction);
   }
 
   @Override
@@ -430,8 +393,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final var maxConfirmedNonceBySender = maxNonceBySender(confirmedTransactions);
 
-    final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
-
     synchronized (this) {
       try {
         prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
@@ -445,43 +406,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
         LOG.warn("Stack trace", throwable);
       }
 
-      logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+      logConfirmed(blockHeader, maxConfirmedNonceBySender, reorgTransactions);
     }
-  }
-
-  private void logBlockHeaderForReplay(
-      final BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender,
-      final Map<Address, LongRange> reorgNonceRangeBySender) {
-    // block number, block hash, sender, max nonce ..., rlp
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("B,{},{},{},R,{},{}")
-        .addArgument(blockHeader.getNumber())
-        .addArgument(blockHeader.getBlockHash())
-        .addArgument(
-            () ->
-                maxConfirmedNonceBySender.entrySet().stream()
-                    .map(e -> e.getKey().toHexString() + "," + e.getValue())
-                    .collect(Collectors.joining(",")))
-        .addArgument(
-            () ->
-                reorgNonceRangeBySender.entrySet().stream()
-                    .map(
-                        e ->
-                            e.getKey().toHexString()
-                                + ","
-                                + e.getValue().getStart()
-                                + ","
-                                + e.getValue().getEndInclusive())
-                    .collect(Collectors.joining(",")))
-        .addArgument(
-            () -> {
-              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-              blockHeader.writeTo(rlp);
-              return rlp.encoded().toHexString();
-            })
-        .log();
   }
 
   private Map<Address, Long> maxNonceBySender(final List<Transaction> confirmedTransactions) {
@@ -504,46 +430,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
             })
         .collect(
             groupingBy(SenderNonce::sender, mapping(SenderNonce::nonce, reducing(0L, Math::max))));
-  }
-
-  private Map<Address, LongRange> nonceRangeBySender(
-      final List<Transaction> confirmedTransactions) {
-
-    class MutableLongRange {
-      long start = Long.MAX_VALUE;
-      long end = 0;
-
-      void update(final long nonce) {
-        if (nonce < start) {
-          start = nonce;
-        }
-        if (nonce > end) {
-          end = nonce;
-        }
-      }
-
-      MutableLongRange combine(final MutableLongRange other) {
-        update(other.start);
-        update(other.end);
-        return this;
-      }
-
-      LongRange toImmutable() {
-        return new LongRange(start, end);
-      }
-    }
-
-    return confirmedTransactions.stream()
-        .collect(
-            groupingBy(
-                Transaction::getSender,
-                mapping(
-                    Transaction::getNonce,
-                    Collector.of(
-                        MutableLongRange::new,
-                        MutableLongRange::update,
-                        MutableLongRange::combine,
-                        MutableLongRange::toImmutable))));
   }
 
   @Override

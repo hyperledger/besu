@@ -28,12 +28,14 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -169,6 +171,7 @@ public class BlockchainSetupUtil {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 
@@ -192,7 +195,9 @@ public class BlockchainSetupUtil {
       final GenesisConfig genesisConfig = GenesisConfig.fromSource(chainResources.getGenesisURL());
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfig);
 
-      final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+      // only used in tests no global code cache is needed
+      final GenesisState genesisState =
+          GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache());
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive =
           storageFormat == DataStorageFormat.BONSAI

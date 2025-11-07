@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -97,7 +98,7 @@ class CliqueBlockMinerTest {
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
+    when(protocolSpec.getHardforkId()).thenReturn(FRONTIER);
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
@@ -153,7 +154,7 @@ class CliqueBlockMinerTest {
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
+    when(protocolSpec.getHardforkId()).thenReturn(FRONTIER);
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -34,19 +35,22 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
@@ -88,10 +92,12 @@ class ParallelizedConcurrentTransactionProcessorTest {
         new BonsaiWorldState(
             bonsaiWorldStateKeyValueStorage,
             new NoopBonsaiCachedMerkleTrieLoader(),
-            new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+            new NoOpBonsaiCachedWorldStorageManager(
+                bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,
-            createStatefulConfigWithTrie());
+            createStatefulConfigWithTrie(),
+            new CodeCache());
 
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
     when(chainHeadBlockHeader.getStateRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
@@ -115,10 +121,15 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,
@@ -127,18 +138,20 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(PathBasedWorldStateUpdateAccumulator.class),
+            any(WorldUpdater.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
             eq(TransactionValidationParams.processingBlock()),
-            eq(blobGasPrice));
+            eq(blobGasPrice),
+            eq(Optional.empty()));
 
     assertTrue(
         processor
@@ -154,7 +167,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
     Wei blobGasPrice = Wei.ZERO;
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.failed(
                 0,
@@ -162,6 +175,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 ValidationResult.invalid(
                     TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE),
                 Optional.of(Bytes.EMPTY),
+                Optional.empty(),
                 Optional.empty()));
 
     processor.runTransaction(
@@ -171,7 +185,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     Optional<TransactionProcessingResult> result =
         processor.applyParallelizedTransactionResult(
@@ -187,10 +202,15 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     Mockito.when(
             transactionProcessor.processTransaction(
-                any(), any(), any(), any(), any(), any(), any(), any()))
+                any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
-                Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.empty(),
+                ValidationResult.valid()));
 
     processor.runTransaction(
         protocolContext,
@@ -199,18 +219,20 @@ class ParallelizedConcurrentTransactionProcessorTest {
         transaction,
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
-        blobGasPrice);
+        blobGasPrice,
+        Optional.empty());
 
     verify(transactionProcessor, times(1))
         .processTransaction(
-            any(PathBasedWorldStateUpdateAccumulator.class),
+            any(WorldUpdater.class),
             eq(blockHeader),
             eq(transaction),
             eq(miningBeneficiary),
             any(OperationTracer.class),
             any(BlockHashLookup.class),
             eq(TransactionValidationParams.processingBlock()),
-            eq(blobGasPrice));
+            eq(blobGasPrice),
+            eq(Optional.empty()));
 
     // simulate a conflict
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(true);
@@ -219,5 +241,64 @@ class ParallelizedConcurrentTransactionProcessorTest {
         processor.applyParallelizedTransactionResult(
             worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
     assertTrue(result.isEmpty(), "Expected no transaction result to be applied due to conflict");
+  }
+
+  @Test
+  void testApplyResultUsesAccessLocationTrackerAndUpdatesPartialBlockAccessView() {
+    Address miningBeneficiary = Address.fromHexString("0x1");
+    Wei blobGasPrice = Wei.ZERO;
+
+    PartialBlockAccessView partialView = mock(PartialBlockAccessView.class);
+    PartialBlockAccessView.AccountChanges beneficiaryChanges =
+        mock(PartialBlockAccessView.AccountChanges.class);
+    when(beneficiaryChanges.getAddress()).thenReturn(miningBeneficiary);
+    when(partialView.accountChanges()).thenReturn(Collections.singletonList(beneficiaryChanges));
+
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(
+            TransactionProcessingResult.successful(
+                Collections.emptyList(),
+                0,
+                0,
+                Bytes.EMPTY,
+                Optional.of(partialView),
+                ValidationResult.valid()));
+
+    BlockAccessListBuilder balBuilder = mock(BlockAccessListBuilder.class);
+
+    processor.runTransaction(
+        protocolContext,
+        blockHeader,
+        0,
+        transaction,
+        miningBeneficiary,
+        (__, ___) -> Hash.EMPTY,
+        blobGasPrice,
+        Optional.of(balBuilder));
+
+    verify(transactionProcessor)
+        .processTransaction(
+            any(WorldUpdater.class),
+            eq(blockHeader),
+            eq(transaction),
+            eq(miningBeneficiary),
+            any(OperationTracer.class),
+            any(BlockHashLookup.class),
+            eq(TransactionValidationParams.processingBlock()),
+            eq(blobGasPrice),
+            argThat(Optional::isPresent));
+
+    when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
+
+    Optional<TransactionProcessingResult> maybeResult =
+        processor.applyParallelizedTransactionResult(
+            worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
+
+    assertTrue(
+        maybeResult.isPresent(), "Expected the parallelized transaction result to be applied");
+    TransactionProcessingResult result = maybeResult.get();
+    assertTrue(result.getPartialBlockAccessView().isPresent(), "Expected BAL view to be present");
+    verify(beneficiaryChanges).setPostBalance(any(Wei.class));
   }
 }

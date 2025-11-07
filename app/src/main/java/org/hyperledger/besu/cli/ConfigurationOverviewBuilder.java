@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import oshi.PlatformEnum;
 import oshi.SystemInfo;
@@ -60,10 +64,17 @@ public class ConfigurationOverviewBuilder {
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
+  private boolean enabledOpcodeOptimizations;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
   private boolean isHistoryExpiryPruneEnabled = false;
+  private boolean isParallelTxProcessingEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
+  private Long targetGasLimit;
+  private boolean isBalOptimizationEnabled = true;
+  private boolean isBalLenientOnMismatch = false;
+  private boolean isBalApiEnabled = false;
+  private Duration balStateRootTimeout = Duration.ofSeconds(1);
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -284,6 +295,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Whether opcodes optimizations are enabled or not.
+   *
+   * @param enabledOpcodeOptimizations flag that tells whether optimizations are enabled.
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEnabledOpcodeOptimizations(
+      final boolean enabledOpcodeOptimizations) {
+    this.enabledOpcodeOptimizations = enabledOpcodeOptimizations;
+    return this;
+  }
+
+  /**
    * Sets the engine jwt file path.
    *
    * @param engineJwtFilePath the engine apis
@@ -338,6 +361,43 @@ public class ConfigurationOverviewBuilder {
   public ConfigurationOverviewBuilder setBlobDBSettings(
       final RocksDBCLIOptions.BlobDBSettings blobDBSettings) {
     this.blobDBSettings = blobDBSettings;
+    return this;
+  }
+
+  /**
+   * Sets the parallel transaction processing enabled.
+   *
+   * @param isParallelTxProcessingEnabled parallel transaction processing enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    return this;
+  }
+
+  /**
+   * Sets the target gas limit.
+   *
+   * @param targetGasLimit the target gas limit
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setTargetGasLimit(final Long targetGasLimit) {
+    this.targetGasLimit = targetGasLimit;
+    return this;
+  }
+
+  /**
+   * Sets the BAL configuration.
+   *
+   * @param balConfiguration the BAL configuration
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setBalConfiguration(final BalConfiguration balConfiguration) {
+    this.isBalOptimizationEnabled = balConfiguration.isBalOptimisationEnabled();
+    this.isBalLenientOnMismatch = balConfiguration.isBalLenientOnMismatch();
+    this.isBalApiEnabled = balConfiguration.isBalApiEnabled();
+    this.balStateRootTimeout = balConfiguration.getBalStateRootTimeout();
     return this;
   }
 
@@ -405,6 +465,19 @@ public class ConfigurationOverviewBuilder {
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
 
+    lines.add("Opcode optimizations " + (enabledOpcodeOptimizations ? "enabled" : "disabled"));
+
+    if (isParallelTxProcessingEnabled) {
+      lines.add("Parallel transaction processing enabled");
+    } else {
+      lines.add("Parallel transaction processing disabled");
+    }
+
+    lines.add("BAL optimizations " + (isBalOptimizationEnabled ? "enabled" : "disabled"));
+    lines.add("BAL mismatch leniency " + (isBalLenientOnMismatch ? "enabled" : "disabled"));
+    lines.add("BAL API " + (isBalApiEnabled ? "enabled" : "disabled"));
+    lines.add("BAL state root timeout: " + balStateRootTimeout.toMillis() + " ms");
+
     if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
       trieLogPruningString
@@ -446,6 +519,10 @@ public class ConfigurationOverviewBuilder {
             .append(blobDBSettings.blobGarbageCollectionForceThreshold().get());
       }
       lines.add(blobDBString.toString());
+    }
+
+    if (targetGasLimit != null) {
+      lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
     }
 
     lines.add("");
@@ -511,6 +588,30 @@ public class ConfigurationOverviewBuilder {
                     "jemalloc library not found, memory usage may be reduced by installing it");
               }
             });
+  }
+
+  /**
+   * Normalize gas string.<br>
+   * The implemented logic is<br>
+   * - if the received gas is greater than 1 million, calculates the precision and returns the
+   * number as a floating point number with the calculated precision plus an 'M' at the end (e.g.,
+   * 50.55M)<br>
+   * - if the received gas is lower than 1 million, returns the number as a decimal integer grouping
+   * digits by thousands (e.g., 100,000)
+   *
+   * @param gas the gas
+   * @return the formatted string
+   */
+  static String normalizeGas(final long gas) {
+    final double normalizedGas = gas / 1_000_000D;
+    if (normalizedGas < 1) {
+      return String.format("%,d", gas);
+    } else {
+      final int decimals =
+          (Iterables.get(Splitter.on('.').split(String.valueOf(normalizedGas)), 1)).length();
+      final String format = normalizedGas % 1 == 0 ? "%.0fM" : "%." + decimals + "fM";
+      return String.format(format, normalizedGas);
+    }
   }
 
   private String normalizeSize(final long size) {

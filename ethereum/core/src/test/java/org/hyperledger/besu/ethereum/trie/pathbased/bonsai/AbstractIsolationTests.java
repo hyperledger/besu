@@ -61,12 +61,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacement
 import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -108,9 +111,11 @@ public abstract class AbstractIsolationTests {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfig.fromResource("/dev.json"), protocolSchedule);
+      GenesisState.fromConfig(
+          GenesisConfig.fromResource("/dev.json"), protocolSchedule, new CodeCache());
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -129,6 +134,8 @@ public abstract class AbstractIsolationTests {
   protected TransactionPoolMetrics txPoolMetrics =
       new TransactionPoolMetrics(new NoOpMetricsSystem());
 
+  protected SenderBalanceChecker senderBalanceChecker = new SenderBalanceChecker.NoOpChecker();
+
   protected final PendingTransactions sorter =
       new LayeredPendingTransactions(
           poolConfiguration,
@@ -139,7 +146,8 @@ public abstract class AbstractIsolationTests {
               txPoolMetrics,
               transactionReplacementTester,
               new BlobCache(),
-              MiningConfiguration.newDefault()),
+              MiningConfiguration.newDefault(),
+              senderBalanceChecker),
           ethScheduler);
 
   protected final List<GenesisAccount> accounts =
@@ -169,7 +177,8 @@ public abstract class AbstractIsolationTests {
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier());
+            throwingWorldStateHealerSupplier(),
+            new CodeCache());
     var ws = archive.getWorldState();
     genesisState.writeStateTo(ws);
     protocolContext =
@@ -229,6 +238,11 @@ public abstract class AbstractIsolationTests {
 
               @Override
               public Integer getConfiguredRpcHttpPort() {
+                return 0;
+              }
+
+              @Override
+              public long getConfiguredRpcHttpTimeoutSec() {
                 return 0;
               }
 

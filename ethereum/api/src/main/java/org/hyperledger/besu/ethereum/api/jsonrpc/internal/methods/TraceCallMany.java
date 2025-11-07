@@ -156,7 +156,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(buildTraceOptions(traceTypes), false);
+        new DebugOperationTracer(buildTraceOptions(traceTypes).opCodeTracerConfig(), false);
     final var miningBeneficiary =
         protocolSchedule
             .getByBlockHeader(header)
@@ -170,7 +170,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
             tracer,
             header,
             worldUpdater,
-            miningBeneficiary);
+            miningBeneficiary,
+            Optional.empty());
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {

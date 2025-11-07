@@ -14,6 +14,45 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-public record TraceOptions(boolean traceStorage, boolean traceMemory, boolean traceStack) {
-  public static final TraceOptions DEFAULT = new TraceOptions(true, false, true);
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+
+import java.util.Map;
+
+/**
+ * Configuration options for tracing.
+ *
+ * <p>Contains the tracer type and configuration options for the tracers. Default Tracer Config is
+ * top-level configuration option and is typically used by default tracer. Non-default tracers
+ * typically use tracer Config object.
+ */
+public record TraceOptions(
+    TracerType tracerType,
+    OpCodeTracerConfig opCodeTracerConfig,
+    Map<String, Object> tracerConfig) {
+  /**
+   * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
+   * specified.
+   */
+  public static final TraceOptions DEFAULT =
+      new TraceOptions(TracerType.OPCODE_TRACER, OpCodeTracerConfig.DEFAULT, Map.of());
+
+  /**
+   * Constructor for TraceOptions. The default tracer (opcode) options are specified by
+   * OpcodeTracerConfig. All other tracer type options are specified by tracerConfig.
+   *
+   * @param tracerType the type of tracer to use. Defaults to OPCODE_TRACER if null.
+   * @param opCodeTracerConfig the default (opcode) tracer's configuration. Defaults to
+   *     OPCODE_TRACER_CONFIG if null.
+   * @param tracerConfig the tracer configuration options for non-default tracers. Empty map if
+   *     null.
+   */
+  public TraceOptions(
+      final TracerType tracerType,
+      final OpCodeTracerConfig opCodeTracerConfig,
+      final Map<String, Object> tracerConfig) {
+    this.tracerType = tracerType == null ? TracerType.OPCODE_TRACER : tracerType;
+    this.opCodeTracerConfig =
+        opCodeTracerConfig == null ? OpCodeTracerConfig.DEFAULT : opCodeTracerConfig;
+    this.tracerConfig = tracerConfig == null ? Map.of() : tracerConfig;
+  }
 }

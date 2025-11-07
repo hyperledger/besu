@@ -51,7 +51,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long ECREC_PRECOMPILED_GAS_COST = 3_000L;
 
-  private static final long P256VERIFY_PRECOMPILED_GAS_COST = 3_450L;
+  private static final long P256VERIFY_PRECOMPILED_GAS_COST = 6_900L;
 
   private static final long SHA256_PRECOMPILED_BASE_GAS_COST = 60L;
 
@@ -295,8 +295,7 @@ public class FrontierGasCalculator implements GasCalculator {
       final long outputDataOffset,
       final long outputDataLength,
       final Wei transferValue,
-      final Account recipient,
-      final Address to,
+      final Address recipientAddress,
       final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
@@ -311,6 +310,7 @@ public class FrontierGasCalculator implements GasCalculator {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
+    final Account recipient = frame.getWorldUpdater().get(recipientAddress);
     if (recipient == null) {
       cost = clampedAdd(cost, newAccountGasCost());
     }

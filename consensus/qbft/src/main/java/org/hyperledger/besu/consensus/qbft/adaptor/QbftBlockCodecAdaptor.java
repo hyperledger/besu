@@ -45,6 +45,6 @@ public class QbftBlockCodecAdaptor implements QbftBlockCodec {
 
   @Override
   public void writeTo(final QbftBlock block, final RLPOutput rlpOutput) {
-    BlockUtil.toBesuBlock(block).writeTo(rlpOutput);
+    AdaptorUtil.toBesuBlock(block).writeTo(rlpOutput);
   }
 }

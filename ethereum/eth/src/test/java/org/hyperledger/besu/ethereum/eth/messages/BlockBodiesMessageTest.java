@@ -17,13 +17,20 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -41,9 +48,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +72,7 @@ public final class BlockBodiesMessageTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
   }
 
@@ -95,6 +105,61 @@ public final class BlockBodiesMessageTest {
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));
     }
+  }
+
+  @Test
+  public void syncBlockBodiesRoots() throws IOException {
+    final List<BlockBody> bodies = new ArrayList<>();
+    final ByteBuffer buffer =
+        ByteBuffer.wrap(Resources.toByteArray(this.getClass().getResource("/50.blocks")));
+    final BlockHeader[] blockHeaders = new BlockHeader[50];
+    for (int i = 0; i < 50; ++i) {
+      final int blockSize = RLP.calculateSize(Bytes.wrapByteBuffer(buffer));
+      final byte[] block = new byte[blockSize];
+      buffer.get(block);
+      buffer.compact().position(0);
+      final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
+      oneBlock.enterList();
+      // We don't care about the header, just the body
+      blockHeaders[i] = BlockHeader.readFrom(oneBlock, new MainnetBlockHeaderFunctions());
+      bodies.add(
+          // We know the test data to only contain Frontier blocks
+          new BlockBody(
+              oneBlock.readList(Transaction::readFrom),
+              oneBlock.readList(
+                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
+    }
+    final MessageData initialMessage = BlockBodiesMessage.create(bodies);
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
+    final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
+    final Iterator<SyncBlockBody> readBodies = message.syncBodies(protocolSchedule).iterator();
+    for (int i = 0; i < 50; ++i) {
+      final SyncBlockBody next = readBodies.next();
+      Assertions.assertThat(next.getTransactionsRoot())
+          .isEqualTo(blockHeaders[i].getTransactionsRoot());
+      Assertions.assertThat(next.getOmmersHash()).isEqualTo(blockHeaders[i].getOmmersHash());
+      Assertions.assertThat(next.getWithdrawalsRoot())
+          .isEqualTo(blockHeaders[i].getWithdrawalsRoot().orElse(null));
+    }
+  }
+
+  @Test
+  public void testWithWithdrawl() {
+    BlockDataGenerator generator = new BlockDataGenerator();
+    BlockDataGenerator.BlockOptions options = new BlockDataGenerator.BlockOptions();
+    final Withdrawal withdrawal =
+        new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE);
+    options.setWithdrawals(Optional.of(List.of(withdrawal)));
+    final Block block = generator.block(options);
+    final MessageData initialMessage = BlockBodiesMessage.create(List.of(block.getBody()));
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
+    final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
+    final List<SyncBlockBody> bodies = message.syncBodies(protocolSchedule);
+    Assertions.assertThat(bodies.size()).isEqualTo(1);
+    Assertions.assertThat(bodies.getFirst().getWithdrawalsRoot())
+        .isEqualTo(block.getHeader().getWithdrawalsRoot().get());
   }
 
   @Test

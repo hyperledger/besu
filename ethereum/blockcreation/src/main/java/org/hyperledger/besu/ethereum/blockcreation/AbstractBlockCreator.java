@@ -47,6 +47,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -87,6 +91,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+  private volatile BlockTransactionSelector selector;
 
   protected AbstractBlockCreator(
       final MiningConfiguration miningConfiguration,
@@ -177,14 +182,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         parentHeader);
   }
 
-  protected BlockCreationResult createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final long timestamp,
-      boolean rewardCoinbase,
+      final boolean rewardCoinbase,
       final BlockHeader parentHeader) {
 
     final var timings = new BlockCreationTiming();
@@ -207,11 +212,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(timestamp, processableBlockHeader);
 
-      throwIfStopped();
-
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
-
-      throwIfStopped();
 
       final var selectorsStateManager = new SelectorsStateManager();
       final var pluginTransactionSelector =
@@ -219,17 +220,31 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .getTransactionSelectionService()
               .createPluginTransactionSelector(selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
-      operationTracer.traceStartBlock(processableBlockHeader, miningBeneficiary);
+      operationTracer.traceStartBlock(
+          disposableWorldState, processableBlockHeader, miningBeneficiary);
+
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder =
+          newProtocolSpec
+              .getBlockAccessListFactory()
+              .filter(BlockAccessListFactory::isForkActivated)
+              .map(BlockAccessListFactory::newBlockAccessListBuilder);
+      final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+          blockAccessListBuilder.map(
+              b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
+
       BlockProcessingContext blockProcessingContext =
           new BlockProcessingContext(
               processableBlockHeader,
               disposableWorldState,
               newProtocolSpec,
               newProtocolSpec
-                  .getBlockHashProcessor()
+                  .getPreExecutionProcessor()
                   .createBlockHashLookup(protocolContext.getBlockchain(), processableBlockHeader),
-              operationTracer);
-      newProtocolSpec.getBlockHashProcessor().process(blockProcessingContext);
+              operationTracer,
+              blockAccessListBuilder);
+      newProtocolSpec
+          .getPreExecutionProcessor()
+          .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
       timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
@@ -241,22 +256,31 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               newProtocolSpec,
               pluginTransactionSelector,
               selectorsStateManager,
-              parentHeader);
+              parentHeader,
+              blockAccessListBuilder);
       transactionResults.logSelectionStats();
       timings.register("txsSelection");
-      throwIfStopped();
+
+      final Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
+          blockAccessListBuilder.map(
+              b ->
+                  BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
+                      transactionResults.getSelectedTransactions().size()));
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
           newProtocolSpec.getWithdrawalsProcessor();
+
       final boolean withdrawalsCanBeProcessed =
           maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent();
       if (withdrawalsCanBeProcessed) {
         maybeWithdrawalsProcessor
             .get()
-            .processWithdrawals(maybeWithdrawals.get(), disposableWorldState.updater());
+            .processWithdrawals(
+                maybeWithdrawals.get(),
+                disposableWorldState.updater(),
+                postExecutionAccessLocationTracker,
+                blockAccessListBuilder);
       }
-
-      throwIfStopped();
 
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
@@ -265,9 +289,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           new RequestProcessingContext(blockProcessingContext, transactionResults.getReceipts());
 
       Optional<List<Request>> maybeRequests =
-          requestProcessor.map(processor -> processor.process(requestProcessingContext));
+          requestProcessor.map(
+              processor ->
+                  processor.process(requestProcessingContext, postExecutionAccessLocationTracker));
 
-      throwIfStopped();
+      postExecutionAccessLocationTracker.ifPresent(
+          tracker ->
+              blockAccessListBuilder.ifPresent(
+                  builder -> builder.apply(tracker, disposableWorldState.updater().updater())));
 
       if (rewardCoinbase
           && !rewardBeneficiary(
@@ -282,12 +311,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         throw new RuntimeException("Failed to apply mining reward.");
       }
 
-      throwIfStopped();
-
       final GasUsage usage =
           computeExcessBlobGas(transactionResults, newProtocolSpec, parentHeader);
-
-      throwIfStopped();
 
       BlockHeaderBuilder builder =
           BlockHeaderBuilder.create()
@@ -305,6 +330,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null));
+
+      final Optional<BlockAccessList> blockAccessList =
+          blockAccessListBuilder.map(BlockAccessListBuilder::build);
+      blockAccessList.ifPresent(b -> builder.balHash(BodyValidation.balHash(b)));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -316,7 +345,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
-          new BlockBody(transactionResults.getSelectedTransactions(), ommers, withdrawals);
+          new BlockBody(
+              transactionResults.getSelectedTransactions(), ommers, withdrawals, blockAccessList);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
@@ -364,7 +394,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec,
       final PluginTransactionSelector pluginTransactionSelector,
       final SelectorsStateManager selectorsStateManager,
-      final BlockHeader parentHeader)
+      final BlockHeader parentHeader,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
@@ -376,7 +407,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, parentHeader));
 
-    final BlockTransactionSelector selector =
+    this.selector =
         new BlockTransactionSelector(
             miningConfiguration,
             transactionProcessor,
@@ -385,13 +416,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             transactionPool,
             processableBlockHeader,
             transactionReceiptFactory,
-            isCancelled::get,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,
             pluginTransactionSelector,
             ethScheduler,
-            selectorsStateManager);
+            selectorsStateManager,
+            blockAccessListBuilder);
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
@@ -422,18 +453,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   @Override
   public void cancel() {
+    LOG.debug("Block creation cancellation requested");
     isCancelled.set(true);
+    final var currSelector = selector;
+    if (currSelector != null) {
+      currSelector.cancel();
+    }
   }
 
   @Override
   public boolean isCancelled() {
     return isCancelled.get();
-  }
-
-  private void throwIfStopped() throws CancellationException {
-    if (isCancelled.get()) {
-      throw new CancellationException();
-    }
   }
 
   /* Copied from BlockProcessor (with modifications). */

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.systemcall.InvalidSystemCallAddress
 import org.hyperledger.besu.ethereum.mainnet.systemcall.SystemCallProcessor;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -59,6 +60,8 @@ public class MainnetBlockContextProcessorTest {
     mockMessageCallProcessor = mock(MessageCallProcessor.class);
     mockBlockHashLookup = mock(BlockHashLookup.class);
     when(mockTransactionProcessor.getMessageProcessor(any())).thenReturn(mockMessageCallProcessor);
+    when(mockMessageCallProcessor.getOrCreateCachedJumpDest(any(), any()))
+        .thenReturn(CodeV0.EMPTY_CODE);
   }
 
   @Test
@@ -142,7 +145,8 @@ public class MainnetBlockContextProcessorTest {
             OperationTracer.NO_TRACING);
 
     when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
-    return systemCallProcessor.process(CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY);
+    return systemCallProcessor.process(
+        CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY, Optional.empty());
   }
 
   private MutableWorldState createWorldState(final Address address) {

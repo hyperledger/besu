@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedL
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public interface TransactionsLayer {
 
   void reset();
 
-  Optional<Transaction> getByHash(Hash transactionHash);
+  Optional<PendingTransaction> getByHash(Hash transactionHash);
 
   boolean contains(Transaction transaction);
 
@@ -73,8 +74,10 @@ public interface TransactionsLayer {
    * it is pushed down in the order of prioritized pending txs.
    *
    * @param penalizedTransaction the tx to penalize
+   * @param selectionResult the reason of the penalization
    */
-  void penalize(PendingTransaction penalizedTransaction);
+  void penalize(
+      PendingTransaction penalizedTransaction, final TransactionSelectionResult selectionResult);
 
   void blockAdded(
       FeeMarket feeMarket,

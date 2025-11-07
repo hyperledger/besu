@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.time.Duration;
 import java.util.function.Predicate;
 
 /**
@@ -68,11 +69,20 @@ public interface PeerTask<T> {
   }
 
   /**
-   * Gets a Predicate that checks if an EthPeer is suitable for this PeerTask
+   * Gets the delay between retries against the same peer
    *
-   * @return a Predicate that checks if an EthPeer is suitable for this PeerTask
+   * @return the delay between retries against the same peer
    */
-  Predicate<EthPeer> getPeerRequirementFilter();
+  default Duration getDelayBetweenSamePeerRetries() {
+    return Duration.ofSeconds(1);
+  }
+
+  /**
+   * Gets a Predicate that checks if an EthPeerImmutableAttributes is suitable for this PeerTask
+   *
+   * @return a Predicate that checks if an EthPeerImmutableAttributes is suitable for this PeerTask
+   */
+  Predicate<EthPeerImmutableAttributes> getPeerRequirementFilter();
 
   /**
    * Performs a high level check of the results, returning a PeerTaskValidationResponse to describe

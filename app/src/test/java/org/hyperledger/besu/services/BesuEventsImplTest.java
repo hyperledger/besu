@@ -173,8 +173,7 @@ public class BesuEventsImplTest {
             syncState,
             txPoolConfig,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
 
     serviceImpl =
         new BesuEventsImpl(
@@ -220,7 +219,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null, null, null, null));
+            null, null, null, null, null, null));
   }
 
   private void clearSyncTarget() {
@@ -285,6 +284,7 @@ public class BesuEventsImplTest {
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
     assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
+    assertThat(result.get().getEventType()).isEqualTo(AddedBlockContext.EventType.HEAD_ADVANCED);
   }
 
   @Test
@@ -442,7 +442,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventFiresAfterSubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    serviceImpl.addTransactionDroppedListener(result::set);
+    serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     // sending a replacement with higher gas should drop the previous one
@@ -456,7 +456,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    final long id = serviceImpl.addTransactionDroppedListener(result::set);
+    final long id = serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     transactionPool.addTransactionViaApi(TX1);

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,9 +45,15 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("minerNode");
+    minerNode =
+        besu.createQbftNode(
+            "minerNode",
+            besuNodeConfigurationBuilder ->
+                besuNodeConfigurationBuilder.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
-        besu.createPluginsNode("node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"));
+        besu.createQbftPluginsNode(
+            "node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"), "DEBUG");
     cluster.start(minerNode, pluginNode);
     client = new OkHttpClient();
   }
@@ -54,7 +61,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 will set block")
   public void canUpdateFinalizedBlock() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     // RPC Call. Set the safe block number to 3
     final ObjectNode resultJson = callTestMethod("updater_updateSafeBlockV1", List.of(3L));
@@ -78,7 +85,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with non-existing block number returns error")
   public void nonExistingBlockNumberReturnsError() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(250L));
@@ -96,7 +103,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @ValueSource(longs = {-1, 0})
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with block number <= 0 returns error")
   public void invalidBlockNumberReturnsError(final long blockNumber) throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(blockNumber));
@@ -113,7 +120,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   @Test
   @DisplayName("Calling update{Finalized/Safe}BlockV1 with invalid block number type returns error")
   public void invalidBlockNumberTypeReturnsError() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(5));
+    waitForBlockHeight(pluginNode, 5);
 
     final ObjectNode[] resultsJson = new ObjectNode[2];
     resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of("testblock"));

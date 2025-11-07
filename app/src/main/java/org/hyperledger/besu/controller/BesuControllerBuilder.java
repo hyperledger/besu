@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS;
 
+import org.hyperledger.besu.chainimport.BlockHeadersCachePreload;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
@@ -78,6 +79,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -90,6 +92,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveProofsWo
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
@@ -105,7 +108,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -209,9 +211,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
   private int numberOfBlocksToCache = 0;
+  private int numberOfBlockHeadersToCache = 0;
+  private boolean isCacheLastBlockHeadersPreloadEnabled;
 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
+
+  /** Configuration flags related to block access lists. */
+  protected BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
@@ -221,6 +228,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** When enabled, round changes on f+1 RC messages from higher rounds */
   protected boolean isEarlyRoundChangeEnabled = false;
+
+  /** The global code cache */
+  protected CodeCache codeCache;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -498,6 +508,30 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets the number of block headers to cache.
+   *
+   * @param numberOfBlockHeadersToCache the number of block headers to cache
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder cacheLastBlockHeaders(final Integer numberOfBlockHeadersToCache) {
+    this.numberOfBlockHeadersToCache = numberOfBlockHeadersToCache;
+    return this;
+  }
+
+  /**
+   * Sets whether the block header cache should be preloaded.
+   *
+   * @param isCacheLastBlockHeadersPreloadEnabled {@code true} to enable preloading of the block
+   *     header cache, {@code false} to disable it
+   * @return this builder instance
+   */
+  public BesuControllerBuilder isCacheLastBlockHeadersPreloadEnabled(
+      final Boolean isCacheLastBlockHeadersPreloadEnabled) {
+    this.isCacheLastBlockHeadersPreloadEnabled = isCacheLastBlockHeadersPreloadEnabled;
+    return this;
+  }
+
+  /**
    * sets the networkConfiguration in the builder
    *
    * @param networkingConfiguration the networking config
@@ -535,6 +569,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets configuration for functionality related to block-level access lists.
+   *
+   * @param balConfiguration configuration related to block access lists
+   * @return the besu controller
+   */
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
+    return this;
+  }
+
+  /**
    * check if early round change is enabled when f+1 RC messages from higher rounds are received
    *
    * @param isEarlyRoundChangeEnabled whether to enable early round change
@@ -568,6 +613,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(apiConfiguration, "Missing API configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     checkNotNull(besuComponent, "Must supply a BesuComponent");
+
+    this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(new CodeCache());
+    this.codeCache.setupMetricsSystem(metricsSystem);
+
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -586,7 +635,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final var genesisState =
         getGenesisState(
             maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
-            protocolSchedule);
+            protocolSchedule,
+            codeCache);
+
+    final EthScheduler scheduler =
+        new EthScheduler(
+            syncConfig.getDownloaderParallelism(),
+            syncConfig.getTransactionsParallelism(),
+            syncConfig.getComputationParallelism(),
+            metricsSystem);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -595,7 +652,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             reorgLoggingThreshold,
             dataDirectory.toString(),
-            numberOfBlocksToCache);
+            numberOfBlocksToCache,
+            numberOfBlockHeadersToCache);
+
+    if (isCacheLastBlockHeadersPreloadEnabled && numberOfBlockHeadersToCache > 0) {
+      LOG.info(
+          "--cache-last-block-headers and --cache-last-block-headers-preload-enabled are enabled, start preloading block headers cache");
+      preloadBlockHeaderCache(blockchain, scheduler);
+    }
+
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -660,13 +725,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
 
-    final EthScheduler scheduler =
-        new EthScheduler(
-            syncConfig.getDownloaderParallelism(),
-            syncConfig.getTransactionsParallelism(),
-            syncConfig.getComputationParallelism(),
-            metricsSystem);
-
     Optional<Checkpoint> checkpoint = Optional.empty();
     if (genesisConfigOptions.getCheckpointOptions().isValid()) {
       checkpoint =
@@ -724,8 +782,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             transactionPoolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
-            miningConfiguration,
-            syncConfig.isPeerTaskSystemEnabled());
+            miningConfiguration);
 
     final List<PeerValidator> peerValidators =
         createPeerValidators(protocolSchedule, peerTaskExecutor);
@@ -745,8 +802,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+        createPivotSelector(protocolSchedule, protocolContext, ethContext, syncState, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -847,9 +903,37 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         transactionSimulator);
   }
 
+  private void preloadBlockHeaderCache(
+      final MutableBlockchain blockchain, final EthScheduler scheduler) {
+    final BlockHeadersCachePreload blockHeaderCachePreload =
+        new BlockHeadersCachePreload(blockchain, scheduler, numberOfBlockHeadersToCache);
+    long startTime = System.nanoTime();
+    blockHeaderCachePreload
+        .preloadCache()
+        .thenRun(
+            () -> {
+              long duration = System.nanoTime() - startTime;
+              LOG.info(
+                  "Preloading {} block headers to the cache finished in {} ms",
+                  numberOfBlockHeadersToCache,
+                  duration / 1_000_000);
+            })
+        .exceptionally(
+            throwable -> {
+              long duration = System.nanoTime() - startTime;
+              LOG.error(
+                  "Preloading {} block headers to the cache failed after {} ms",
+                  numberOfBlockHeadersToCache,
+                  duration / 1_000_000,
+                  throwable);
+              return null;
+            });
+  }
+
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
     final Optional<Hash> maybeGenesisStateRoot =
         genesisStateHashCacheEnabled
             ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
@@ -861,7 +945,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 GenesisState.fromStorage(genesisStateRoot, genesisConfig, protocolSchedule))
         .orElseGet(
             () ->
-                GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule));
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfig, protocolSchedule, codeCache));
   }
 
   private TrieLogPruner createTrieLogPruner(
@@ -948,7 +1033,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
@@ -981,9 +1065,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           protocolContext,
           protocolSchedule,
           ethContext,
-          metricsSystem,
           genesisConfigOptions,
-          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {
@@ -1190,7 +1272,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier);
+            worldStateHealerSupplier,
+            codeCache);
       }
       case X_BONSAI_ARCHIVE -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1206,7 +1289,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier);
+            worldStateHealerSupplier,
+            codeCache);
       }
       case X_BONSAI_ARCHIVE_PROOFS -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1261,7 +1345,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
-            1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
   }
@@ -1281,8 +1364,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
@@ -1290,11 +1372,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (classicBlock.isPresent()) {
       validators.add(
           new ClassicForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              classicBlock.getAsLong()));
+              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
@@ -1302,8 +1380,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
     }

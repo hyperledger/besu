@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
@@ -65,7 +66,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
     return ethContext
         .getEthPeers()
-        .waitForPeer((peer) -> peer.chainState().getEstimatedHeight() >= estimatedPivotBlock)
+        .waitForPeer((peer) -> peer.estimatedChainHeight() >= estimatedPivotBlock)
         .thenRun(() -> {});
   }
 
@@ -83,15 +84,15 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
       return Optional.empty();
     }
     LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-    return Optional.of(new FastSyncState(pivotBlockNumber));
+    return Optional.of(new FastSyncState(pivotBlockNumber, false));
   }
 
   protected Optional<EthPeer> selectBestPeer() {
-    List<EthPeer> peers =
+    List<EthPeerImmutableAttributes> peers =
         ethContext
             .getEthPeers()
             .streamAvailablePeers()
-            .filter((peer) -> peer.chainState().hasEstimatedHeight() && peer.isFullyValidated())
+            .filter((peer) -> peer.hasEstimatedChainHeight() && peer.isFullyValidated())
             .toList();
 
     // Only select a pivot block number when we have a minimum number of height estimates
@@ -103,7 +104,9 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
           minPeerCount);
       return Optional.empty();
     } else {
-      return peers.stream().max(ethContext.getEthPeers().getBestPeerComparator());
+      return peers.stream()
+          .max(ethContext.getEthPeers().getBestPeerComparator())
+          .map(EthPeerImmutableAttributes::ethPeer);
     }
   }
 

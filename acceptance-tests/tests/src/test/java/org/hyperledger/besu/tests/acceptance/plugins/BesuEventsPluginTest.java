@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,15 +16,10 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,30 +29,20 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
 
   @BeforeEach
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("minerNode");
+    minerNode =
+        besu.createQbftNode(
+            "minerNode",
+            b ->
+                b.genesisConfigProvider(
+                    GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
-        besu.createPluginsNode(
+        besu.createQbftPluginsNode(
             "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
     cluster.start(pluginNode, minerNode);
   }
 
   @Test
-  public void blockIsAnnounced() {
-    waitForFile(pluginNode.homeDirectory().resolve("plugins/newBlock.2"));
-  }
-
-  private void waitForFile(final Path path) {
-    final File file = path.toFile();
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(path)) {
-                  return s.count() > 0;
-                }
-              } else {
-                return false;
-              }
-            });
+  public void blockIsAdded() {
+    waitForFile(pluginNode.homeDirectory().resolve("plugins/addedBlock.2"));
   }
 }

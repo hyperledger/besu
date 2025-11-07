@@ -17,8 +17,11 @@ package org.hyperledger.besu.ethereum.mainnet.systemcall;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+
+import java.util.Optional;
 
 public class BlockProcessingContext {
 
@@ -27,6 +30,7 @@ public class BlockProcessingContext {
   private final OperationTracer operationTracer;
   private final BlockHashLookup blockHashLookup;
   private final ProtocolSpec protocolSpec;
+  private final Optional<BlockAccessListBuilder> blockAccessListBuilder;
 
   public BlockProcessingContext(
       final ProcessableBlockHeader blockHeader,
@@ -39,6 +43,22 @@ public class BlockProcessingContext {
     this.protocolSpec = protocolSpec;
     this.blockHashLookup = blockHashLookup;
     this.operationTracer = operationTracer;
+    this.blockAccessListBuilder = Optional.empty();
+  }
+
+  public BlockProcessingContext(
+      final ProcessableBlockHeader blockHeader,
+      final MutableWorldState worldState,
+      final ProtocolSpec protocolSpec,
+      final BlockHashLookup blockHashLookup,
+      final OperationTracer operationTracer,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+    this.blockHeader = blockHeader;
+    this.worldState = worldState;
+    this.protocolSpec = protocolSpec;
+    this.blockHashLookup = blockHashLookup;
+    this.operationTracer = operationTracer;
+    this.blockAccessListBuilder = blockAccessListBuilder;
   }
 
   public MutableWorldState getWorldState() {
@@ -59,5 +79,9 @@ public class BlockProcessingContext {
 
   public ProtocolSpec getProtocolSpec() {
     return protocolSpec;
+  }
+
+  public Optional<BlockAccessListBuilder> getBlockAccessListBuilder() {
+    return blockAccessListBuilder;
   }
 }

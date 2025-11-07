@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -71,6 +72,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
@@ -183,7 +185,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             uniqueMessageMulticaster,
             new RoundTimer(
                 bftEventQueue,
-                Duration.ofSeconds(bftConfig.getRequestTimeoutSeconds()),
+                new BftRoundExpiryTimeCalculator(
+                    Duration.ofSeconds(bftConfig.getRequestTimeoutSeconds())),
                 bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, clock),
             blockCreatorFactory,
@@ -197,8 +200,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     minedBlockObservers.subscribe(ethProtocolManager);
     minedBlockObservers.subscribe(blockLogger(transactionPool, localAddress));
 
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<Message> futureMessageBuffer =
+        new FutureMessageBuffer<>(
             bftConfig.getFutureMessagesMaxDistance(),
             bftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber());
@@ -247,7 +250,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             o ->
                 miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
-                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getFork(o.getHeader().getNumber() + 1)
                         .getValue()
                         .getBlockPeriodSeconds()));
 
@@ -303,6 +306,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        balConfiguration,
         metricsSystem);
   }
 

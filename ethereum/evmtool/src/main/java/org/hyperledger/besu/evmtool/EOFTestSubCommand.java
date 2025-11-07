@@ -93,7 +93,7 @@ public class EOFTestSubCommand implements Runnable {
       fork = parentCommand.getFork();
     }
     ProtocolSpec protocolSpec =
-        ReferenceTestProtocolSchedules.getInstance()
+        ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
             .geSpecByName(fork == null ? EvmSpecVersion.FUTURE_EIPS.getName() : fork);
     evm = protocolSpec.getEvm();
 
@@ -232,7 +232,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed("layout - " + layout.invalidReason());
     }
 
-    var code = evm.getCodeUncached(codeBytes);
+    var code = evm.wrapCode(codeBytes);
     if (!code.isValid()) {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
     }

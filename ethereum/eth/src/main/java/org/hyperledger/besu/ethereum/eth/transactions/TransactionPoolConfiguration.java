@@ -87,12 +87,13 @@ public interface TransactionPoolConfiguration {
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 25_000_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 4000;
   EnumMap<TransactionType, Integer> DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE =
-      new EnumMap<>(Map.of(TransactionType.BLOB, 20));
+      new EnumMap<>(Map.of(TransactionType.BLOB, 72));
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
   Wei DEFAULT_TX_POOL_MIN_GAS_PRICE = Wei.of(1000);
   byte DEFAULT_TX_POOL_MIN_SCORE = -128;
+  boolean DEFAULT_TX_POOL_ENABLE_BALANCE_CHECK = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -189,6 +190,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default byte getMinScore() {
     return DEFAULT_TX_POOL_MIN_SCORE;
+  }
+
+  @Value.Default
+  default boolean getEnableBalanceCheck() {
+    return DEFAULT_TX_POOL_ENABLE_BALANCE_CHECK;
   }
 
   @Value.Default

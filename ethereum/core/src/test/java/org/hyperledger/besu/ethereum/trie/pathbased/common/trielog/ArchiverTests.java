@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
@@ -147,6 +148,7 @@ public class ArchiverTests {
             Wei.ZERO,
             Hash.EMPTY,
             0,
+            null,
             null,
             null,
             null,
@@ -714,7 +716,8 @@ public class ArchiverTests {
             Wei.fromHexString("0x123"),
             Hash.EMPTY,
             Hash.EMPTY,
-            false);
+            false,
+            new CodeCache());
     final BonsaiAccount block151Account =
         new BonsaiAccount(
             bonsaiWorldState,
@@ -724,7 +727,8 @@ public class ArchiverTests {
             Wei.fromHexString("0x234"),
             Hash.EMPTY,
             Hash.EMPTY,
-            false);
+            false,
+            new CodeCache());
     final BonsaiAccount block152Account =
         new BonsaiAccount(
             bonsaiWorldState,
@@ -734,7 +738,8 @@ public class ArchiverTests {
             Wei.fromHexString("0x345"),
             Hash.EMPTY,
             Hash.EMPTY,
-            false);
+            false,
+            new CodeCache());
     // The key for a bonsai-archive flat DB account entry is suffixed with the block number where
     // that state change took place, hence the "0x0000000000000096" suffix to the address hash below
     BytesValueRLPOutput out = new BytesValueRLPOutput();

@@ -17,31 +17,42 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.BlobSchedule;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProtocolSpecBuilder {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolSpecBuilder.class);
+
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
@@ -67,21 +78,26 @@ public class ProtocolSpecBuilder {
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
-  private String name;
+  private HardforkId hardforkId;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
   private RequestsValidator requestsValidator = new ProhibitedRequestValidator();
   private RequestProcessorCoordinator requestProcessorCoordinator;
-  protected BlockHashProcessor blockHashProcessor;
+  protected PreExecutionProcessor preExecutionProcessor;
   private FeeMarketBuilder feeMarketBuilder = (__) -> FeeMarket.legacy();
   private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
+  private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
+  private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
+  private BlockAccessListFactory blockAccessListFactory;
+  private StateRootCommitterFactory stateRootCommitterFactory =
+      new StateRootCommitterFactoryDefault();
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -204,8 +220,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder name(final String name) {
-    this.name = name;
+  public ProtocolSpecBuilder hardforkId(final HardforkId hardforkId) {
+    this.hardforkId = hardforkId;
     return this;
   }
 
@@ -256,13 +272,19 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder blockHashProcessor(final BlockHashProcessor blockHashProcessor) {
-    this.blockHashProcessor = blockHashProcessor;
+  public ProtocolSpecBuilder preExecutionProcessor(
+      final PreExecutionProcessor preExecutionProcessor) {
+    this.preExecutionProcessor = preExecutionProcessor;
     return this;
   }
 
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
+    return this;
+  }
+
+  public ProtocolSpecBuilder slotDuration(final Duration slotDuration) {
+    this.slotDuration = slotDuration;
     return this;
   }
 
@@ -275,6 +297,23 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder transactionPoolPreProcessor(
       final TransactionPoolPreProcessor transactionPoolPreProcessor) {
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
+    return this;
+  }
+
+  public ProtocolSpecBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
+    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    return this;
+  }
+
+  public ProtocolSpecBuilder blockAccessListFactory(
+      final BlockAccessListFactory blockAccessListFactory) {
+    this.blockAccessListFactory = blockAccessListFactory;
+    return this;
+  }
+
+  public ProtocolSpecBuilder stateRootCommitterFactory(
+      final StateRootCommitterFactory stateRootCommitterFactory) {
+    this.stateRootCommitterFactory = stateRootCommitterFactory;
     return this;
   }
 
@@ -297,18 +336,23 @@ public class ProtocolSpecBuilder {
     checkNotNull(blockReward, "Missing block reward");
     checkNotNull(difficultyCalculator, "Missing difficulty calculator");
     checkNotNull(transactionReceiptFactory, "Missing transaction receipt factory");
-    checkNotNull(name, "Missing name");
+    checkNotNull(hardforkId, "Missing hardfork id");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(feeMarketBuilder, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
+    checkNotNull(slotDuration, "Missing slot duration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
+    LOGGER.debug(
+        "Opcode optimizations {} for milestone {}",
+        evm.getEvmConfiguration().enableOptimizedOpcodes() ? "enabled" : "disabled",
+        hardforkId);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator);
     final TransactionValidatorFactory transactionValidatorFactory =
@@ -342,8 +386,23 @@ public class ProtocolSpecBuilder {
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
+
+    final boolean isStackedModeEnabled =
+        evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.STACKED;
+    BlockAccessListFactory finalBalFactory = isStackedModeEnabled ? blockAccessListFactory : null;
+
+    if (isStackedModeEnabled && isBlockAccessListEnabled) {
+      // Ensure we have a factory and its CLI flag reflects the CLI setting.
+      final boolean forkActivated = finalBalFactory != null && finalBalFactory.isForkActivated();
+      final boolean cliActivated = finalBalFactory != null && finalBalFactory.isCliActivated();
+
+      if (!cliActivated) {
+        finalBalFactory = new BlockAccessListFactory(true, forkActivated);
+      }
+    }
+
     return new ProtocolSpec(
-        name,
+        hardforkId,
         evm,
         transactionValidatorFactory,
         transactionProcessor,
@@ -368,10 +427,13 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         requestsValidator,
         Optional.ofNullable(requestProcessorCoordinator),
-        blockHashProcessor,
+        preExecutionProcessor,
         isPoS,
+        slotDuration,
         isReplayProtectionSupported,
-        Optional.ofNullable(transactionPoolPreProcessor));
+        Optional.ofNullable(transactionPoolPreProcessor),
+        Optional.ofNullable(finalBalFactory),
+        stateRootCommitterFactory);
   }
 
   private BlockProcessor createBlockProcessor(

@@ -45,6 +45,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class DownloadReceiptsStepTest {
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
-            .setProtocolSchedule(ProtocolScheduleFixture.MAINNET)
+            .setProtocolSchedule(ProtocolScheduleFixture.TESTING_NETWORK)
             .setBlockchain(blockchain)
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
@@ -131,7 +132,9 @@ public class DownloadReceiptsStepTest {
         (b) -> receiptsMap.put(b.getHeader(), List.of(Mockito.mock(TransactionReceipt.class))));
     PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> peerTaskResult =
         new PeerTaskExecutorResult<>(
-            Optional.of(receiptsMap), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+            Optional.of(receiptsMap),
+            PeerTaskExecutorResponseCode.SUCCESS,
+            Collections.emptyList());
     Mockito.when(peerTaskExecutor.execute(Mockito.any(GetReceiptsFromPeerTask.class)))
         .thenReturn(peerTaskResult);
 

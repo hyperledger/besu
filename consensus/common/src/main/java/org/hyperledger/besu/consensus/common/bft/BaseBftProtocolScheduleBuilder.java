@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -59,6 +60,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param balConfiguration configuration related to block access lists.
    * @param metricsSystem metricsSystem A metricSystem instance to be able to expose metrics in the
    *     underlying calls
    * @return the protocol schedule
@@ -72,6 +74,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
@@ -95,6 +98,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 miningConfiguration,
                 badBlockManager,
                 isParallelTxProcessingEnabled,
+                balConfiguration,
                 metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);

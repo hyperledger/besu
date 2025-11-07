@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -55,6 +56,7 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
+    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -62,7 +64,8 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals());
+        blockWithMetadata.getWithdrawals(),
+        Optional.empty());
   }
 
   public BlockResult transactionComplete(final Block block) {
@@ -90,7 +93,14 @@ public class BlockResultFactory {
             .map(TextNode::new)
             .collect(Collectors.toList());
     return new BlockResult(
-        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.getSize());
+        block.getHeader(),
+        txs,
+        ommers,
+        block.getHeader().getDifficulty(),
+        block.getSize(),
+        false,
+        block.getBody().getWithdrawals(),
+        block.getBody().getBlockAccessList());
   }
 
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
@@ -215,6 +225,53 @@ public class BlockResultFactory {
         blobsBundleV2);
   }
 
+  public EngineGetPayloadResultV6 payloadTransactionCompleteV6(final PayloadWrapper payload) {
+    final var blockWithReceipts = payload.blockWithReceipts();
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(
+                transaction ->
+                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+    final Optional<List<String>> requestsWithoutRequestId =
+        payload
+            .requests()
+            .map(
+                rqs ->
+                    rqs.stream()
+                        .sorted(Comparator.comparing(Request::getType))
+                        .filter(r -> !r.getData().isEmpty())
+                        .map(Request::getEncodedRequest)
+                        .map(Bytes::toHexString)
+                        .toList());
+
+    final BlobsBundleV2 blobsBundleV2 =
+        new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
+
+    final String blockAccessList =
+        blockWithReceipts
+            .getBlock()
+            .getBody()
+            .getBlockAccessList()
+            .map(
+                bal -> {
+                  final BytesValueRLPOutput output = new BytesValueRLPOutput();
+                  bal.writeTo(output);
+                  return output.encoded().toHexString();
+                })
+            .orElse(null);
+
+    return new EngineGetPayloadResultV6(
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        requestsWithoutRequestId,
+        Quantity.create(payload.blockValue()),
+        blobsBundleV2,
+        blockAccessList);
+  }
+
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     return transactionHash(blockWithMetadata, false);
   }
@@ -231,6 +288,7 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
+    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -238,6 +296,7 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals());
+        blockWithMetadata.getWithdrawals(),
+        Optional.empty());
   }
 }

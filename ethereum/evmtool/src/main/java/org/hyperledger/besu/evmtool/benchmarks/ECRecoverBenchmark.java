@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.SequencedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -44,7 +45,7 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
   public void runBenchmark(final Boolean attemptNative, final String fork) {
     EvmSpecVersion evmSpecVersion = EvmSpecVersion.fromName(fork);
 
-    final Map<String, Bytes> testCases = new LinkedHashMap<>();
+    final SequencedMap<String, Bytes> testCases = new LinkedHashMap<>();
     testCases.put(
         "0x0c65a9d9ffc02c7c99e36e32ce0f950c7804ceda",
         Bytes.fromHexString(
@@ -455,13 +456,12 @@ public class ECRecoverBenchmark extends BenchmarkExecutor {
     if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
       signatureAlgorithm.disableNative();
     }
-    output.println(signatureAlgorithm.isNative() ? "Native EcRecover" : "Java EcRecover");
+    output.println(
+        signatureAlgorithm.isNative() ? "Native LibSecp256k1JNI EcRecover" : "Java EcRecover");
 
     final PrecompiledContract contract =
         EvmSpec.evmSpec(evmSpecVersion).getPrecompileContractRegistry().get(Address.ECREC);
 
-    warmIterations = warmIterations / testCases.size();
-    execIterations = execIterations / testCases.size();
     double execTime = Double.MIN_VALUE; // a way to dodge divide by zero
     long gasCost = 0;
     for (final Map.Entry<String, Bytes> testCase : testCases.entrySet()) {
