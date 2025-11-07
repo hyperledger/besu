@@ -69,12 +69,6 @@ public class BonsaiArchiveProofsPartialFlatDbStrategy extends BonsaiArchiveProof
                     new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
-        // TODO MRW - metrics
-        /*if (response.isEmpty()) {
-          getAccountMissingMerkleTrieCounter.inc();
-        } else {
-          getAccountMerkleTrieCounter.inc();
-        }*/
       }
     }
     return response;

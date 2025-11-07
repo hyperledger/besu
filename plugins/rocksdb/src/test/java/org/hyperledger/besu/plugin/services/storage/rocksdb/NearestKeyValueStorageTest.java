@@ -303,7 +303,7 @@ public class NearestKeyValueStorageTest {
   }
 
   @Test
-  public void testNearestRocksdbWithInMemoryKeyValueStorage2() {
+  public void testNearestRocksdbWithInMemoryKeyValueStorageArchivePrefix() {
     final SegmentedKeyValueStorage rockdDBKeyValueStorage =
         getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
     final SegmentedKeyValueStorageTransaction rocksDbTransaction =
@@ -336,9 +336,6 @@ public class NearestKeyValueStorageTest {
     // 0x0000000000000001
     // 0x000000000000000100  <-- search for this
 
-    // 0x0000000000000001    <-- want to find this
-    // 0x0000000000000006    <-- search for this
-
     rocksDbTransaction.commit();
     inMemoryDBTransaction.commit();
 
@@ -366,9 +363,8 @@ public class NearestKeyValueStorageTest {
         .isEqualTo("0XBB0000000000000000FA");
   }
 
-  // MRW TODO - rename this and previous test function
   @Test
-  public void testNearestRocksdbWithInMemoryKeyValueStorage3() {
+  public void testNearestRocksdbWithInMemoryKeyValueStorageArchivePrefixAlternative() {
     final SegmentedKeyValueStorage rockdDBKeyValueStorage =
         getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
     final SegmentedKeyValueStorageTransaction rocksDbTransaction =
@@ -395,13 +391,10 @@ public class NearestKeyValueStorageTest {
     rocksDbTransaction.put(TRIE_BRANCH_STORAGE, otherKeyThatMightBeInTheWay, otherValue);
     inMemoryDBTransaction.put(TRIE_BRANCH_STORAGE, otherKeyThatMightBeInTheWay, otherValue);
 
-    // 0x0000000000000000CA
-    // 0x0000000000000000FA  <-- want to find this
-    // 0x0000000000000001
-    // 0x000000000000000100  <-- search for this
-
-    // 0x0000000000000001    <-- want to find this
-    // 0x0000000000000006    <-- search for this
+    // 0x000000000000000001
+    // 0x0000000000000001  <-- want to find this
+    // 0x040000000000000001
+    // 0x0000000000000005  <-- search for this
 
     rocksDbTransaction.commit();
     inMemoryDBTransaction.commit();

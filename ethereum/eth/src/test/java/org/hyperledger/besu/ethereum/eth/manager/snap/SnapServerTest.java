@@ -651,7 +651,6 @@ public class SnapServerTest {
     SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 1, inMemoryStorage);
     insertTestAccounts(testAccount);
 
-    // MRW TODO
     updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
 
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
@@ -673,7 +672,6 @@ public class SnapServerTest {
     setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
-    // MRW TODO
     updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
 
     final int trieNodeSize = 69;
@@ -713,7 +711,6 @@ public class SnapServerTest {
     setup(flatDbMode, storageFormat);
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
-    // MRW TODO
     updateStorageArchiveBlock(inMemoryStorage.getComposedWorldStateStorage(), 2);
 
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));

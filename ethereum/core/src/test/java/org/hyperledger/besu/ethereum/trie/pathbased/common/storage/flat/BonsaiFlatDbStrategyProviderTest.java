@@ -45,7 +45,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-// TODO MRW - paramaterize these tests properly for archive & archive proof
+// TODO - paramaterize these tests properly for archive & archive proof
 
 @ExtendWith(MockitoExtension.class)
 class FlatDbStrategyProviderTest {
