@@ -35,7 +35,7 @@ public class BalConfigurationOptions {
       hidden = true,
       description =
           "Log an error instead of throwing when the BAL-computed state root does not match the synchronously computed root.")
-  boolean balLogErrorOnMismatch = false;
+  boolean balLenientOnMismatch = true;
 
   @CommandLine.Option(
       names = {"--Xbal-api-enabled"},
@@ -55,7 +55,7 @@ public class BalConfigurationOptions {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
-        .isBalLenientOnMismatch(balLogErrorOnMismatch)
+        .isBalLenientOnMismatch(balLenientOnMismatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .build();
   }

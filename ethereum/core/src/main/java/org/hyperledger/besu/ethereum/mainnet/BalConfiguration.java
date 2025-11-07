@@ -40,7 +40,7 @@ public interface BalConfiguration {
    */
   @Value.Default
   default boolean isBalLenientOnMismatch() {
-    return false;
+    return true;
   }
 
   /** Returns the timeout to use when waiting for the BAL-computed state root. */
