@@ -36,20 +36,18 @@ public class BackwardHeaderSource implements Iterator<Long> {
    * Creates a new BackwardHeaderSource with resume capability using ChainSyncState.
    *
    * @param batchSize the number of blocks in each batch
-   * @param chainSyncState the chain sync state containing pivot and progress
+   * @param stopBlock the lowest header to download
+   * @param startBlock the highest header to download
    */
-  public BackwardHeaderSource(final int batchSize, final ChainSyncState chainSyncState) {
+  public BackwardHeaderSource(final int batchSize, final long stopBlock, final long startBlock) {
 
-    final long pivotBlockNumber = chainSyncState.pivotBlockHeader().getNumber();
-
-    this.currentBlock = new AtomicLong(pivotBlockNumber - 1);
+    this.currentBlock = new AtomicLong(startBlock);
+    this.stopBlock = stopBlock;
     this.batchSize = batchSize;
-    this.stopBlock =
-        chainSyncState.initialSync() ? 1 : chainSyncState.checkpointBlockHeader().getNumber() + 1;
 
     LOG.info(
-        "BackwardHeaderSource starting fresh: pivot={}, stopBlock={}, batchSize={}",
-        pivotBlockNumber,
+        "BackwardHeaderSource starting fresh: startBlock={}, stopBlock={}, batchSize={}",
+        startBlock,
         stopBlock,
         batchSize);
   }

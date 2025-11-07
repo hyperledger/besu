@@ -40,15 +40,15 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
   public ImportHeadersStep(
       final MutableBlockchain blockchain,
-      final long checkpointBlockNumber,
-      final Hash checkpointBlockHash,
+      final BlockHeader anchorForHeaderImport,
       final BlockHeader pivotBlockHeader) {
     this.blockchainStorage = blockchain;
-    this.lowestHeaderToImport = checkpointBlockNumber + 1;
-    this.checkpointBlockHash = checkpointBlockHash;
+    final long anchorForHeaderImportNumber = anchorForHeaderImport.getNumber();
+    this.lowestHeaderToImport = anchorForHeaderImportNumber + 1;
+    this.checkpointBlockHash = anchorForHeaderImport.getHash();
     final long pivotBlockNumber = pivotBlockHeader.getNumber();
     this.currentChildHeader = pivotBlockHeader;
-    this.totalHeaders = pivotBlockNumber - checkpointBlockNumber;
+    this.totalHeaders = pivotBlockNumber - anchorForHeaderImportNumber;
     // store the pivot block header as the first imported header
     this.blockchainStorage.importHeader(pivotBlockHeader);
   }

@@ -105,16 +105,23 @@ public class TwoStageFastSyncChainDownloader
             rlpInput -> BlockHeader.readFrom(rlpInput, pipelineFactory.getBlockHeaderFunctions()));
     if (chainSyncState == null) {
       // First time sync - create initial state
+      // This downloads headers from the pivot down to the genesis block
+      final BlockHeader genesisBlockHeader =
+          protocolContext.getBlockchain().getGenesisBlockHeader();
       chainSyncState =
-          ChainSyncState.initialSync(
-              initialPivotHeader,
-              checkpointBlockHeader,
-              genesisHash.equals(checkpointBlockHeader.getHash()));
-      chainStateStorage.storeState(chainSyncState);
+          ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
+      final long chainHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
+      if (chainHeadBlockNumber == 0) {
+        // This is needed because the import step for the blocks and receipts eventually checks the
+        // chain head.
+        // TODO: is that still necessary?
+        protocolContext.getBlockchain().unsafeSetChainHead(checkpointBlockHeader, Difficulty.ZERO);
+      }
       LOG.info(
-          "Created initial chain sync state: pivot={}, checkpoint={}",
+          "Created initial chain sync state: pivot={}, checkpoint={}, headers anchor={}",
           initialPivotHeader.getNumber(),
-          checkpointBlockHeader);
+          checkpointBlockHeader.getNumber(),
+          genesisBlockHeader.getNumber());
     } else {
       LOG.info("Loaded existing chain sync state: {}", chainSyncState);
     }
@@ -145,12 +152,6 @@ public class TwoStageFastSyncChainDownloader
         pivotBlockHeader.getHash(),
         pivotBlockHeader.getNumber(),
         checkpointBlockHeader.getNumber());
-
-    if (initialState.initialSync() && checkpointBlockHeader.getNumber() != 0) {
-      // This is needed because the import step for the blocks and receipts checks the chain head.
-      // TODO: is that check necessary?
-      protocolContext.getBlockchain().unsafeSetChainHead(checkpointBlockHeader, Difficulty.ZERO);
-    }
 
     overallStartTime = Instant.now();
 
@@ -206,9 +207,11 @@ public class TwoStageFastSyncChainDownloader
 
   private CompletableFuture<Void> runStage1BackwardHeaderDownload(final ChainSyncState state) {
     LOG.info(
-        "Stage 1: Starting backward header download from pivot {} to stop block {}",
+        "Stage 1: Starting backward header download from pivot {} down to stop block {}",
         state.pivotBlockHeader().getNumber(),
-        state.initialSync() ? "genesis" : state.checkpointBlockHeader().getNumber());
+        state.headerDownloadAnchor() != null
+            ? state.headerDownloadAnchor().getNumber()
+            : state.checkpointBlockHeader().getNumber());
 
     final Instant stage1StartTime = Instant.now();
 
