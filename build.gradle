@@ -41,7 +41,7 @@ dependencyCheck {
     // TODO set up the api key in github repo
     // apiKey = ${{ secrets.NVD_API_KEY }}
     delay = 16000 // Optional: delay between API calls in milliseconds
-    autoUpdate = false
+    autoUpdate = true
     skipConfigurations = [
       'integrationTestCompileClasspath',
       'integrationTestRuntimeClasspath',
