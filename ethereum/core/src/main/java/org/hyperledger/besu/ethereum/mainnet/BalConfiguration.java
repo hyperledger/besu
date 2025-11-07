@@ -41,7 +41,7 @@ public interface BalConfiguration {
    * an error instead of throwing an exception.
    */
   @Value.Default
-  default boolean isBalLenientOnMismatch() {
+  default boolean isBalLenientOnStateRootMismatch() {
     return true;
   }
 

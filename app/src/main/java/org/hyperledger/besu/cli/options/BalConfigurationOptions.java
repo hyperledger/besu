@@ -33,11 +33,11 @@ public class BalConfigurationOptions {
   boolean balOptimizationEnabled = true;
 
   @CommandLine.Option(
-      names = {"--Xbal-lenient-on-mismatch"},
+      names = {"--Xbal-lenient-on-state-root-mismatch"},
       hidden = true,
       description =
           "Log an error instead of throwing when the BAL-computed state root does not match the synchronously computed root.")
-  boolean balLenientOnMismatch = true;
+  boolean balLenientOnStateRootMismatch = true;
 
   @CommandLine.Option(
       names = {"--Xbal-log-bals-on-mismatch"},
@@ -69,7 +69,7 @@ public class BalConfigurationOptions {
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
-        .isBalLenientOnMismatch(balLenientOnMismatch)
+        .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .build();
   }

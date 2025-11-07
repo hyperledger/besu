@@ -328,7 +328,8 @@ class AbstractBlockProcessorIntegrationTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     BlockProcessingResult parallelResult =
         blockProcessor.processBlock(

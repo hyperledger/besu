@@ -286,7 +286,7 @@ class ConfigurationOverviewBuilderTest {
     builder.setBalConfiguration(
         ImmutableBalConfiguration.builder()
             .isBalOptimisationEnabled(false)
-            .isBalLenientOnMismatch(true)
+            .isBalLenientOnStateRootMismatch(true)
             .shouldLogBalsOnMismatch(true)
             .isBalApiEnabled(true)
             .balStateRootTimeout(Duration.ofMillis(2500))
