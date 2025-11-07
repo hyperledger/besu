@@ -175,10 +175,11 @@ public abstract class PathBasedWorldState
     return this;
   }
 
-   public boolean isTrieDisabled() {
+  @Override
+  public boolean isTrieDisabled() {
     return this.worldStateConfig.isTrieDisabled();
   }
-  
+
   @Override
   public Hash calculateOrReadRootHash(
       final WorldStateKeyValueStorage.Updater stateUpdater,

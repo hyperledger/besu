@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
@@ -60,6 +61,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected PathBasedWorldState headWorldState;
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
+  protected CodeCache codeCache;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
 
@@ -399,5 +401,6 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig);
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache);
 }

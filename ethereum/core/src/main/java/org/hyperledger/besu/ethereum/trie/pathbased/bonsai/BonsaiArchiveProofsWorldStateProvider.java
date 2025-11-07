@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiveWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -59,7 +60,8 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
-      final Long trieNodeCheckpointInterval) {
+      final Long trieNodeCheckpointInterval,
+      final CodeCache codeCache) {
     super(
         worldStateKeyValueStorage,
         blockchain,
@@ -67,7 +69,8 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
         bonsaiCachedMerkleTrieLoader,
         pluginContext,
         evmConfiguration,
-        worldStateHealerSupplier);
+        worldStateHealerSupplier,
+        codeCache);
     this.trieNodeCheckpointInterval = trieNodeCheckpointInterval;
   }
 
@@ -75,7 +78,7 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
   public PathBasedWorldState createWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new BonsaiArchiveWorldState(
-        this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+        this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
   }
 
   @Override
@@ -83,9 +86,10 @@ public class BonsaiArchiveProofsWorldStateProvider extends BonsaiWorldStateProvi
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     return new BonsaiArchiveWorldState(
-        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
   }
 
   private Optional<BlockHeader> getCheckpointStateStartBlock(

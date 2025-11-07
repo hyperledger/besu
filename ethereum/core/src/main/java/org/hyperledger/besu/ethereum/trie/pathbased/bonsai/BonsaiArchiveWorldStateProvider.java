@@ -96,8 +96,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - queryParams.getBlockHeader().getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
-        LOG.debug(
-            "Returning archive state without verifying state root");
+        LOG.debug("Returning archive state without verifying state root");
         return cachedWorldStorageManager
             .getWorldState(chainHeadBlockHeader.getHash())
             .map(MutableWorldState::disableTrie)

@@ -104,22 +104,6 @@ public class BonsaiWorldState extends PathBasedWorldState {
     this.codeCache = codeCache;
   }
 
-  private BonsaiWorldState(
-      final BonsaiWorldState worldState,
-      final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader) {
-    this(
-        new BonsaiWorldStateLayerStorage(worldState.getWorldStateStorage()),
-        cachedMerkleTrieLoader,
-        worldState.cachedWorldStorageManager,
-        worldState.trieLogManager,
-        worldState.accumulator.getEvmConfiguration(),
-        WorldStateConfig.newBuilder(worldState.worldStateConfig).build());
-  }
-
-  public BonsaiWorldState duplicateWithNoopCachedTrieLoader() {
-    return new BonsaiWorldState(this, new NoopBonsaiCachedMerkleTrieLoader());
-  }
-
   @Override
   public Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash) {
     return getWorldStateStorage().getCode(codeHash, address.addressHash());

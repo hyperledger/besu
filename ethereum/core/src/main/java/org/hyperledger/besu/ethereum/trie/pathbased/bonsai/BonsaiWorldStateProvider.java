@@ -63,7 +63,8 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage, worldStateConfig));
+        new BonsaiCachedWorldStorageManager(
+            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
     loadHeadWorldState(createWorldState(worldStateKeyValueStorage));
   }
 
@@ -81,6 +82,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
+    this.codeCache = codeCache;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadHeadWorldState(createWorldState(worldStateKeyValueStorage));
   }
@@ -88,7 +90,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
   public PathBasedWorldState createWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
     return new BonsaiWorldState(
-        this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+        this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
   }
 
   @Override
@@ -96,9 +98,10 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     return new BonsaiWorldState(
-        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig);
+        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

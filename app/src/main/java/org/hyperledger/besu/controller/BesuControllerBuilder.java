@@ -1309,7 +1309,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataStorageConfiguration
                 .getPathBasedExtraStorageConfiguration()
                 .getUnstable()
-                .getArchiveTrieNodeCheckpointInterval());
+                .getArchiveTrieNodeCheckpointInterval(),
+            codeCache);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

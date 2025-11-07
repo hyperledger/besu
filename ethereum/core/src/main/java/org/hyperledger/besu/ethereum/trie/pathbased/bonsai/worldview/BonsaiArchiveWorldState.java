@@ -22,9 +22,8 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBa
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
@@ -39,14 +38,16 @@ public class BonsaiArchiveWorldState extends BonsaiWorldState {
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     this(
         worldStateKeyValueStorage,
         archive.getCachedMerkleTrieLoader(),
         archive.getCachedWorldStorageManager(),
         archive.getTrieLogManager(),
         evmConfiguration,
-        worldStateConfig);
+        worldStateConfig,
+        codeCache);
   }
 
   public BonsaiArchiveWorldState(
@@ -55,31 +56,16 @@ public class BonsaiArchiveWorldState extends BonsaiWorldState {
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
     super(
         worldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
         evmConfiguration,
-        worldStateConfig);
-  }
-
-  private BonsaiArchiveWorldState(
-      final BonsaiArchiveWorldState worldState,
-      final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader) {
-    this(
-        new BonsaiWorldStateLayerStorage(worldState.getWorldStateStorage()),
-        cachedMerkleTrieLoader,
-        worldState.cachedWorldStorageManager,
-        worldState.trieLogManager,
-        worldState.accumulator.getEvmConfiguration(),
-        WorldStateConfig.newBuilder(worldState.worldStateConfig).build());
-  }
-
-  @Override
-  public BonsaiWorldState duplicateWithNoopCachedTrieLoader() {
-    return new BonsaiArchiveWorldState(this, new NoopBonsaiCachedMerkleTrieLoader());
+        worldStateConfig,
+        codeCache);
   }
 
   /**

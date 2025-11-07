@@ -54,11 +54,12 @@ public class GenesisWorldStateProvider {
           DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, codeCache);
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.X_BONSAI_ARCHIVE) {
-      return createGenesisBonsaiWorldState(DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
+      return createGenesisBonsaiWorldState(
+          DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG, codeCache);
     } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS) {
       return createGenesisBonsaiArchiveWorldState(
-          DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG);
+          DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG, codeCache);
     } else {
       return createGenesisForestWorldState();
     }
@@ -98,7 +99,7 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   private static MutableWorldState createGenesisBonsaiArchiveWorldState(
-      final DataStorageConfiguration storageConfiguration) {
+      final DataStorageConfiguration storageConfiguration, final CodeCache codeCache) {
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
@@ -112,10 +113,12 @@ public class GenesisWorldStateProvider {
     return new BonsaiArchiveWorldState(
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
-        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        new NoOpBonsaiCachedWorldStorageManager(
+            bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, codeCache),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
-        createStatefulConfigWithTrie());
+        createStatefulConfigWithTrie(),
+        codeCache);
   }
 
   /**
