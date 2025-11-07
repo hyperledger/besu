@@ -76,7 +76,7 @@ public record ChainSyncState(
    */
   public ChainSyncState continueToNewPivot(
       final BlockHeader newPivotHeader, final BlockHeader previousPivotHeader) {
-    return new ChainSyncState(newPivotHeader, previousPivotHeader, null, true);
+    return new ChainSyncState(newPivotHeader, previousPivotHeader, null, false);
   }
 
   /**
