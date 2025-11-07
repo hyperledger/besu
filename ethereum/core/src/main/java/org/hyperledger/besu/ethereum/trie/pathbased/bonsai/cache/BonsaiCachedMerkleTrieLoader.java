@@ -54,9 +54,8 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash worldStateRootHash,
       final Address account) {
-    // CompletableFuture.runAsync(
-    //  () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account));
-    // MRW TODO - needed to comment this out. Is that still the case?
+    CompletableFuture.runAsync(
+        () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account));
   }
 
   @VisibleForTesting

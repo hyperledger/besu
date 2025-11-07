@@ -138,22 +138,16 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
     // If there isn't a match look in the archive DB segment
     if (nearestAccount.isEmpty()) {
-      nearestAccount =
+      accountFound =
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
               .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
-
-      if (nearestAccount.isPresent()) {
-        // accountFound =
-        // nearestAccount.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes); // MRW MERGE
-        // TODO
-        accountFound = null; // MRW MERGE TODO
+      if (accountFound.isPresent()) {
         getAccountFromArchiveCounter.inc();
       } else {
-        accountFound = Optional.empty();
+        getAccountNotFoundInFlatDatabaseCounter.inc();
       }
     } else {
-
       accountFound = nearestAccount;
       getAccountFoundInFlatDatabaseCounter.inc();
     }
