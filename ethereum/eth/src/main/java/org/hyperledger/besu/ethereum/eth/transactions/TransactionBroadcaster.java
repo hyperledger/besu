@@ -110,18 +110,19 @@ public class TransactionBroadcaster
 
     Collections.shuffle(peers, random);
 
-    final List<EthPeer> sendFullTransactionsPeers = peers.subList(0, numPeersToSendFullTransactions);
+    final List<EthPeer> sendFullTransactionsPeers =
+        peers.subList(0, numPeersToSendFullTransactions);
     final List<EthPeer> sendOnlyHashesPeers =
         peers.subList(numPeersToSendFullTransactions, peers.size());
 
     LOG.atTrace()
         .setMessage("Sending full transactions to {} peers, transaction hashes only to {} peers")
-        .addArgument(sendFullTransactionPeers::size)
-        .addArgument(sendOnlyHashPeers::size)
+        .addArgument(sendFullTransactionsPeers::size)
+        .addArgument(sendOnlyHashesPeers::size)
         .log();
 
-    sendToOnlyHashPeers(transactionByBroadcastMode, sendOnlyHashPeers);
-    sendToFullTransactionsPeers(transactionByBroadcastMode, sendFullTransactionPeers);
+    sendToOnlyHashPeers(transactionByBroadcastMode, sendOnlyHashesPeers);
+    sendToFullTransactionsPeers(transactionByBroadcastMode, sendFullTransactionsPeers);
   }
 
   private void sendToOnlyHashPeers(
@@ -136,8 +137,8 @@ public class TransactionBroadcaster
   private void sendToFullTransactionsPeers(
       final Map<Boolean, List<Transaction>> txsByHashOnlyBroadcast,
       final List<EthPeer> fullTransactionsPeers) {
-    sendFullTransactions(txsByHashOnlyBroadcast.get(FULL_BROADCAST), fullTransactionPeers);
-    sendTransactionHashes(txsByHashOnlyBroadcast.get(HASH_ONLY_BROADCAST), fullTransactionPeers);
+    sendFullTransactions(txsByHashOnlyBroadcast.get(FULL_BROADCAST), fullTransactionsPeers);
+    sendTransactionHashes(txsByHashOnlyBroadcast.get(HASH_ONLY_BROADCAST), fullTransactionsPeers);
   }
 
   private void sendFullTransactions(

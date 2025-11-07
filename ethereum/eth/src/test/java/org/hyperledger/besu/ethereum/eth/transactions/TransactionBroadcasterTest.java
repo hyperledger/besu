@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
-import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.ArrayList;
@@ -69,9 +68,9 @@ public class TransactionBroadcasterTest {
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
-  private final EthPeer ethPeerWithEth65 = mockPeer();
-  private final EthPeer ethPeerWithEth65_2 = mockPeer();
-  private final EthPeer ethPeerWithEth65_3 = mockPeer();
+  private final EthPeer ethPeer = mockPeer();
+  private final EthPeer ethPeer2 = mockPeer();
+  private final EthPeer ethPeer3 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
   private TransactionBroadcaster txBroadcaster;
@@ -79,13 +78,6 @@ public class TransactionBroadcasterTest {
 
   @BeforeEach
   public void setUp() {
-    when(ethPeer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.TRUE);
-    when(ethPeer2(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.TRUE);
-    when(ethPeerWithEth65_3.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.TRUE);
-
     sendTaskCapture = ArgumentCaptor.forClass(Runnable.class);
     doNothing().when(ethScheduler).scheduleSyncWorkerTask(sendTaskCapture.capture());
 
@@ -106,7 +98,7 @@ public class TransactionBroadcasterTest {
   public void doNotRelayTransactionsWhenPoolIsEmpty() {
     Collection<PendingTransaction> pendingTxs = setupTransactionPool(0, 0);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
+    txBroadcaster.relayTransactionPoolTo(ethPeer, pendingTxs);
 
     verifyNothingSent();
   }
@@ -116,13 +108,13 @@ public class TransactionBroadcasterTest {
     Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
     List<Transaction> txs = toTransactionList(pendingTxs);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
+    txBroadcaster.relayTransactionPoolTo(ethPeer, pendingTxs);
 
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer, txs);
 
     sendTaskCapture.getValue().run();
 
-    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeerWithEth65);
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeer);
     verifyNoInteractions(transactionsMessageSender);
   }
 
@@ -139,41 +131,38 @@ public class TransactionBroadcasterTest {
   public void onTransactionsAddedWithOnlyFewEth65PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.of(ethPeerWithEth65, ethPeerWithEth65_2).map(EthPeerImmutableAttributes::from));
+        .thenReturn(Stream.of(ethPeer, ethPeer2).map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
     // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65, ethPeerWithEth65_2]
-    // so ethPeerWithEth65 is full transaction peer and ethPeerWithEth65_2 is hash only peer
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, txs);
+    // [ethPeer, ethPeer2]
+    // so ethPeer is full transaction peer and ethPeer2 is hash only peer
+    verifyTransactionAddedToPeerSendingQueue(ethPeer, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer2, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerWithEth65);
-    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeerWithEth65_2);
+    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeer);
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeer2);
   }
 
   @Test
   public void onTransactionsAddedWithOnlyEth65PeersSendFullTransactionsAndTransactionHashes() {
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(
-            Stream.of(ethPeerWithEth65, ethPeerWithEth65_2, ethPeerWithEth65_3)
-                .map(EthPeerImmutableAttributes::from));
+        .thenReturn(Stream.of(ethPeer, ethPeer2, ethPeer3).map(EthPeerImmutableAttributes::from));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
     // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
-    // so ethPeerWithEth65 and ethPeerWithEth65_2 are moved to the mixed broadcast list
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_3, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
+    // [ethPeer3, ethPeer2, ethPeer]
+    // so ethPeer and ethPeer2 are moved to the mixed broadcast list
+    verifyTransactionAddedToPeerSendingQueue(ethPeer3, txs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeer2, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
@@ -182,12 +171,12 @@ public class TransactionBroadcasterTest {
   }
 
   @Test
-  public void onTransactionsAddedWithMixedBroadcastKind() {
-    List<EthPeer> ethPeers = List.of(ethPeer, ethPeer2, ethPeer3);
+  public void onTransactionsAddedWithMixedTransactionBroadcastKind() {
+    List<EthPeer> peers = List.of(ethPeer, ethPeer2, ethPeer3);
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
-        .thenReturn(eth65Peers.stream().map(EthPeerImmutableAttributes::from));
+        .thenReturn(peers.stream().map(EthPeerImmutableAttributes::from));
 
     // 1 full broadcast transaction type
     // 1 hash only broadcast transaction type
@@ -200,13 +189,13 @@ public class TransactionBroadcasterTest {
 
     txBroadcaster.onTransactionsAdded(mixedTxs);
     // the shuffled hash only peer list is always:
-    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
-    // so ethPeerWithEth65_3 and ethPeerWithEth65_2 are full transaction peers
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, mixedTxs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, hashBroadcastTxs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, fullBroadcastTxs);
-    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_3, hashBroadcastTxs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_3, fullBroadcastTxs);
+    // [ethPeer3, ethPeer2, ethPeer]
+    // so ethPeer3 and ethPeer2 are full transaction peers
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer, mixedTxs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer2, hashBroadcastTxs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeer2, fullBroadcastTxs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeer3, hashBroadcastTxs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeer3, fullBroadcastTxs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
@@ -216,8 +205,7 @@ public class TransactionBroadcasterTest {
     verify(transactionsMessageSender, times(2))
         .sendTransactionsToPeer(capPeerFullTransaction.capture());
     List<EthPeer> fullTransactionPeers = new ArrayList<>(capPeerFullTransaction.getAllValues());
-    assertThat(fullTransactionPeers)
-        .hasSameElementsAs(List.of(ethPeerWithEth65_2, ethPeerWithEth65_3));
+    assertThat(fullTransactionPeers).hasSameElementsAs(List.of(ethPeer2, ethPeer3));
   }
 
   private void verifyNothingSent() {
