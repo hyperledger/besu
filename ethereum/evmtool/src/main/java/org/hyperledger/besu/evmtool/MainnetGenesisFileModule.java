@@ -160,7 +160,6 @@ class MainnetGenesisFileModule extends GenesisFileModule {
             createSchedule(
                 new StubGenesisConfigOptions()
                     .pragueTime(0)
-                    .osakaTime(0) // TODO remove this once osaka_devnet_0 launches
                     .baseFeePerGas(0x0a)
                     .chainId(chainId))),
         Map.entry(
