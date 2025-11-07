@@ -1170,9 +1170,7 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         .blockAccessListFactory(
             new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
-        .stateRootCommitterFactory(
-            new StateRootCommitterFactoryBal(
-                balConfiguration, balConfiguration.getBalStateRootTimeout()))
+        .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
         .hardforkId(AMSTERDAM);
   }
 

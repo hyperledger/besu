@@ -22,19 +22,15 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public final class StateRootCommitterFactoryBal implements StateRootCommitterFactory {
 
   private final BalConfiguration balConfiguration;
-  private final Duration balRootTimeout;
 
-  public StateRootCommitterFactoryBal(
-      final BalConfiguration balConfiguration, final Duration balRootTimeout) {
+  public StateRootCommitterFactoryBal(final BalConfiguration balConfiguration) {
     this.balConfiguration = balConfiguration;
-    this.balRootTimeout = balRootTimeout;
   }
 
   @Override
@@ -59,6 +55,6 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
     final CompletableFuture<Hash> balRootFuture =
         BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
             protocolContext, blockHeader, maybeBal.get());
-    return new StateRootCommitterImplBal(balRootFuture, balConfiguration, balRootTimeout);
+    return new StateRootCommitterImplBal(balRootFuture, balConfiguration);
   }
 }

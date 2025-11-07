@@ -36,16 +36,12 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
 
   private final CompletableFuture<Hash> balRootFuture;
   private final BalConfiguration balConfiguration;
-  private final Duration balRootTimeout;
   private final StateRootCommitterImplSync computeAndCommitRoot = new StateRootCommitterImplSync();
 
   StateRootCommitterImplBal(
-      final CompletableFuture<Hash> balRootFuture,
-      final BalConfiguration balConfiguration,
-      final Duration balRootTimeout) {
+      final CompletableFuture<Hash> balRootFuture, final BalConfiguration balConfiguration) {
     this.balRootFuture = balRootFuture;
     this.balConfiguration = balConfiguration;
-    this.balRootTimeout = balRootTimeout;
   }
 
   @Override
@@ -57,8 +53,10 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     final Hash computed =
         computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
+    final Duration balRootTimeout = balConfiguration.getBalStateRootTimeout();
+
     if (balConfiguration.isBalLenientOnMismatch()) {
-      final Optional<Hash> maybeBalRoot = waitForBalRootLenient();
+      final Optional<Hash> maybeBalRoot = waitForBalRootLenient(balRootTimeout);
       if (maybeBalRoot.isEmpty()) {
         LOG.warn(
             "BAL root unavailable (lenient mode); proceeding with computed state root {}",
@@ -72,7 +70,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
       }
       return computed;
     } else {
-      final Hash balRoot = waitForBalRootStrict();
+      final Hash balRoot = waitForBalRootStrict(balRootTimeout);
       if (!computed.equals(balRoot)) {
         final String msg =
             String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot);
@@ -87,9 +85,9 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     balRootFuture.cancel(true);
   }
 
-  private Hash waitForBalRootStrict() {
+  private Hash waitForBalRootStrict(final Duration balRootTimeout) {
     try {
-      return getWithConfiguredTimeout();
+      return getWithConfiguredTimeout(balRootTimeout);
     } catch (final TimeoutException e) {
       balRootFuture.cancel(true);
       throw new IllegalStateException(
@@ -102,9 +100,9 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     }
   }
 
-  private Optional<Hash> waitForBalRootLenient() {
+  private Optional<Hash> waitForBalRootLenient(final Duration balRootTimeout) {
     try {
-      return Optional.of(getWithConfiguredTimeout());
+      return Optional.of(getWithConfiguredTimeout(balRootTimeout));
     } catch (final TimeoutException e) {
       balRootFuture.cancel(true);
       LOG.warn(
@@ -120,7 +118,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     }
   }
 
-  private Hash getWithConfiguredTimeout()
+  private Hash getWithConfiguredTimeout(final Duration balRootTimeout)
       throws InterruptedException, ExecutionException, TimeoutException {
     if (balRootTimeout.isNegative()) {
       return balRootFuture.join();
