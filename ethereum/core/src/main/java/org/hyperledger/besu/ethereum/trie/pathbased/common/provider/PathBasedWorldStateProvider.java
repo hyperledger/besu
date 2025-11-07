@@ -373,7 +373,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
                 new WorldStateStorageCoordinator(ws.getWorldStateStorage()));
         return mapper.apply(
             worldStateProofProvider.getAccountProof(
-                blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
+                ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
       }
     } catch (Exception ex) {
       LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);
