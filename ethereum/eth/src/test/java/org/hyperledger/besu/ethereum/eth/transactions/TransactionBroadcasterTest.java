@@ -79,9 +79,9 @@ public class TransactionBroadcasterTest {
 
   @BeforeEach
   public void setUp() {
-    when(ethPeerWithEth65.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
-    when(ethPeerWithEth65_2.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
+    when(ethPeer2(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
     when(ethPeerWithEth65_3.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
@@ -183,7 +183,7 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void onTransactionsAddedWithMixedBroadcastKind() {
-    List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2, ethPeerWithEth65_3);
+    List<EthPeer> ethPeers = List.of(ethPeer, ethPeer2, ethPeer3);
 
     when(ethPeers.peerCount()).thenReturn(3);
     when(ethPeers.streamAvailablePeers())
