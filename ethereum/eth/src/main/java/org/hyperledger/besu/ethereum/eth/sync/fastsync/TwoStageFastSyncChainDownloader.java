@@ -355,8 +355,8 @@ public class TwoStageFastSyncChainDownloader
         .handle(
             (result, error) -> {
               if (error != null) {
-                chainState.set(
-                    currentState.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
+                chainState.updateAndGet(
+                    state -> state.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
                 chainStateStorage.storeState(chainState.get());
                 if (shouldRetry(error)) {
                   LOG.warn("Chain sync encountered error, will retry from saved state", error);
