@@ -85,6 +85,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
+  private final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -95,13 +96,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.balConfiguration = balConfiguration;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -411,17 +414,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                       expectedHash.toHexString(), headerBalHash.get().toHexString());
               LOG.error(errorMessage);
 
-              final String constructedBalStr = bal.toString();
-              final String blockBalStr =
-                  blockBody
-                      .getBlockAccessList()
-                      .map(Object::toString)
-                      .orElse("<no BAL present in block body>");
-              LOG.error(
-                  "--- BAL constructed during execution ---\n{}\n"
-                      + "--- BAL from block body ---\n{}",
-                  constructedBalStr,
-                  blockBalStr);
+              if (balConfiguration.shouldLogBalsOnMismatch()) {
+                final String constructedBalStr = bal.toString();
+                final String blockBalStr =
+                    blockBody
+                        .getBlockAccessList()
+                        .map(Object::toString)
+                        .orElse("<no BAL present in block body>");
+                LOG.error(
+                    "--- BAL constructed during execution ---\n{}\n"
+                        + "--- BAL from block body ---\n{}",
+                    constructedBalStr,
+                    blockBalStr);
+              }
 
               if (worldState instanceof BonsaiWorldState) {
                 ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();

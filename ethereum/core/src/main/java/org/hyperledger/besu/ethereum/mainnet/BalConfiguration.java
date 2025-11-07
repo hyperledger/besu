@@ -45,6 +45,12 @@ public interface BalConfiguration {
     return true;
   }
 
+  /** Returns whether the BALs should be logged when a constructed and block's BALs mismatch. */
+  @Value.Default
+  default boolean shouldLogBalsOnMismatch() {
+    return false;
+  }
+
   /** Returns the timeout to use when waiting for the BAL-computed state root. */
   @Value.Default
   default Duration getBalStateRootTimeout() {

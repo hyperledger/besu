@@ -40,6 +40,12 @@ public class BalConfigurationOptions {
   boolean balLenientOnMismatch = true;
 
   @CommandLine.Option(
+      names = {"--Xbal-log-bals-on-mismatch"},
+      hidden = true,
+      description = "Log the constructed and block's BAL when they differ.")
+  boolean balLogBalsOnMismatch = false;
+
+  @CommandLine.Option(
       names = {"--Xbal-api-enabled"},
       hidden = true,
       description =
@@ -62,6 +68,7 @@ public class BalConfigurationOptions {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
+        .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnMismatch(balLenientOnMismatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .build();

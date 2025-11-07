@@ -130,7 +130,8 @@ class AbstractBlockProcessorIntegrationTest {
             coinbaseReward,
             BlockHeader::getCoinbase,
             skipRewards,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     final BlockProcessor parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
@@ -140,6 +141,7 @@ class AbstractBlockProcessorIntegrationTest {
             BlockHeader::getCoinbase,
             skipRewards,
             protocolSchedule,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return Stream.of(

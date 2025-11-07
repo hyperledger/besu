@@ -287,13 +287,15 @@ class ConfigurationOverviewBuilderTest {
         ImmutableBalConfiguration.builder()
             .isBalOptimisationEnabled(false)
             .isBalLenientOnMismatch(true)
+            .shouldLogBalsOnMismatch(true)
             .isBalApiEnabled(true)
             .balStateRootTimeout(Duration.ofMillis(2500))
             .build());
 
     final String configuration = builder.build();
     assertThat(configuration).contains("BAL optimizations disabled");
-    assertThat(configuration).contains("BAL mismatch leniency enabled");
+    assertThat(configuration).contains("BAL state root mismatch leniency enabled");
+    assertThat(configuration).contains("BAL logging on BAL mismatch enabled");
     assertThat(configuration).contains("BAL API enabled");
     assertThat(configuration).contains("BAL state root timeout: 2500 ms");
   }
