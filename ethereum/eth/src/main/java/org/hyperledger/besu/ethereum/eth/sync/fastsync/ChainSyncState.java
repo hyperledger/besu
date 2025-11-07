@@ -41,46 +41,30 @@ import java.util.concurrent.ExecutionException;
  *
  * <p>All fields are non-null and immutable. Updates create new instances.
  *
- * @param initialSync if initial sync is true, we are downloading headers down to the genesis block
+ * @param pivotBlockHeader header of the pivot block
+ * @param checkpointBlockHeader header of the checkpoint block
+ * @param headerDownloadAnchor set if the anchor is different from the checkpoint block header
+ * @param headersDownloadComplete true if the header download has finished
  */
 public record ChainSyncState(
     BlockHeader pivotBlockHeader,
     BlockHeader checkpointBlockHeader,
-    boolean headersDownloadComplete,
-    boolean initialSync) {
-
-  /**
-   * Creates a new ChainSyncState.
-   *
-   * @param pivotBlockHeader the pivot block header (must not be null)
-   * @param checkpointBlockHeader the block number to stop backward header download at
-   * @param headersDownloadComplete whether header download has completed
-   */
-  public ChainSyncState(
-      final BlockHeader pivotBlockHeader,
-      final BlockHeader checkpointBlockHeader,
-      final boolean headersDownloadComplete,
-      final boolean initialSync) {
-    this.pivotBlockHeader =
-        Objects.requireNonNull(pivotBlockHeader, "pivotBlockHeader is required");
-    this.checkpointBlockHeader = checkpointBlockHeader;
-    this.headersDownloadComplete = headersDownloadComplete;
-    this.initialSync = initialSync;
-  }
+    BlockHeader headerDownloadAnchor,
+    boolean headersDownloadComplete) {
 
   /**
    * Creates a new state with an initial pivot block for full sync from genesis.
    *
    * @param pivotBlockHeader the pivot block header
    * @param checkpointBlockHeader the checkpoint block to start bodies download from
-   * @param isInitialSync whether this is an initial sync (header download to genesis)
+   * @param headerDownloadAnchor set if the anchor is different from the checkpoint block header
    * @return new ChainSyncState
    */
   public static ChainSyncState initialSync(
       final BlockHeader pivotBlockHeader,
       final BlockHeader checkpointBlockHeader,
-      final boolean isInitialSync) {
-    return new ChainSyncState(pivotBlockHeader, checkpointBlockHeader, false, isInitialSync);
+      final BlockHeader headerDownloadAnchor) {
+    return new ChainSyncState(pivotBlockHeader, checkpointBlockHeader, headerDownloadAnchor, false);
   }
 
   /**
@@ -92,7 +76,7 @@ public record ChainSyncState(
    */
   public ChainSyncState continueToNewPivot(
       final BlockHeader newPivotHeader, final BlockHeader previousPivotHeader) {
-    return new ChainSyncState(newPivotHeader, previousPivotHeader, false, false);
+    return new ChainSyncState(newPivotHeader, previousPivotHeader, null, true);
   }
 
   /**
@@ -101,12 +85,15 @@ public record ChainSyncState(
    * @return new ChainSyncState instance
    */
   public ChainSyncState withHeadersDownloadComplete() {
-    return new ChainSyncState(this.pivotBlockHeader, this.checkpointBlockHeader, true, false);
+    return new ChainSyncState(this.pivotBlockHeader, this.checkpointBlockHeader, null, true);
   }
 
   public ChainSyncState fromHead(final BlockHeader chainHeadHeader) {
     return new ChainSyncState(
-        pivotBlockHeader, chainHeadHeader, headersDownloadComplete, initialSync);
+        this.pivotBlockHeader,
+        chainHeadHeader,
+        this.headerDownloadAnchor,
+        this.headersDownloadComplete);
   }
 
   public static BlockHeader downloadCheckpointHeader(
@@ -190,15 +177,15 @@ public record ChainSyncState(
     if (o == null || getClass() != o.getClass()) return false;
     final ChainSyncState that = (ChainSyncState) o;
     return Objects.equals(checkpointBlockHeader, that.checkpointBlockHeader)
-        && headersDownloadComplete == that.headersDownloadComplete
-        && initialSync == that.initialSync
-        && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
+        && Objects.equals(pivotBlockHeader, that.pivotBlockHeader)
+        && Objects.equals(headerDownloadAnchor, that.headerDownloadAnchor)
+        && headersDownloadComplete == that.headersDownloadComplete;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        pivotBlockHeader, checkpointBlockHeader, headersDownloadComplete, initialSync);
+        pivotBlockHeader, checkpointBlockHeader, headerDownloadAnchor, headersDownloadComplete);
   }
 
   @Override
@@ -210,10 +197,10 @@ public record ChainSyncState(
         + pivotBlockHeader.getHash()
         + ", checkpointBlockNumber="
         + checkpointBlockHeader.getNumber()
+        + ", headerDownloadAnchorNumber="
+        + headerDownloadAnchor.getNumber()
         + ", headersDownloadComplete="
         + headersDownloadComplete
-        + ", isInitialSync="
-        + initialSync
         + '}';
   }
 }

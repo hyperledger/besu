@@ -223,27 +223,36 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
-    long stopBlock = chainState.initialSync() ? 0L : chainState.checkpointBlockHeader().getNumber();
+    BlockHeader anchorForHeaderDownload =
+        chainState.headerDownloadAnchor() == null
+            ? chainState.checkpointBlockHeader()
+            : chainState.headerDownloadAnchor();
 
+    final long pivotBlockNumber = chainState.pivotBlockHeader().getNumber();
     LOG.debug(
-        "Creating backward header download pipeline: pivot={}, checkpoint block={}, parallelism={}, batchSize={}",
-        chainState.pivotBlockHeader().getNumber(),
-        stopBlock,
+        "Creating backward header download pipeline from pivot={} down to lowest block={}, parallelism={}, batchSize={}",
+        pivotBlockNumber,
+        anchorForHeaderDownload.getNumber(),
         downloaderParallelism,
         headerRequestSize);
 
     final BackwardHeaderSource headerSource =
-        new BackwardHeaderSource(headerRequestSize, chainState);
+        new BackwardHeaderSource(
+            headerRequestSize, anchorForHeaderDownload.getNumber() + 1L, pivotBlockNumber - 1L);
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule, ethContext, syncConfig, headerRequestSize, metricsSystem, stopBlock);
+            protocolSchedule,
+            ethContext,
+            syncConfig,
+            headerRequestSize,
+            metricsSystem,
+            anchorForHeaderDownload.getNumber());
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
             protocolContext.getBlockchain(),
-            stopBlock,
-            chainState.checkpointBlockHeader().getBlockHash(),
+            anchorForHeaderDownload,
             chainState.pivotBlockHeader());
 
     return PipelineBuilder.createPipelineFrom(

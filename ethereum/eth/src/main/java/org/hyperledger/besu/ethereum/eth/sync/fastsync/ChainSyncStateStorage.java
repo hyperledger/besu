@@ -85,20 +85,25 @@ public class ChainSyncStateStorage {
         // Read progress fields
         final boolean headersDownloadComplete = input.readByte() == 1;
 
-        // Read the initial sync state
-        final boolean isInitialSync = input.readByte() == 1;
+        BlockHeader headerDownloadAnchor = null;
+        if (input.nextIsList()) {
+          // Read the header download anchor
+          headerDownloadAnchor = headerReader.apply(input);
+        }
 
         input.leaveList();
 
         LOG.debug(
-            "Loaded chain sync state: pivot={}, checkpoint block={}, headers complete={}, initial sync={}",
+            "Loaded chain sync state: pivot={}, checkpoint={}, headers anchor={}, header download complete={}",
             pivotBlockHeader.getNumber(),
             checkpointBlockHeader.getNumber(),
-            headersDownloadComplete,
-            isInitialSync);
+            headerDownloadAnchor == null
+                ? checkpointBlockHeader.getNumber()
+                : headerDownloadAnchor.getNumber(),
+            headersDownloadComplete);
 
         return new ChainSyncState(
-            pivotBlockHeader, checkpointBlockHeader, headersDownloadComplete, isInitialSync);
+            pivotBlockHeader, checkpointBlockHeader, headerDownloadAnchor, headersDownloadComplete);
 
       } catch (final IOException e) {
         throw new IllegalStateException(
@@ -136,8 +141,10 @@ public class ChainSyncStateStorage {
         // Write progress fields
         output.writeByte((byte) (state.headersDownloadComplete() ? 1 : 0));
 
-        // Write isInitialSync field
-        output.writeByte((byte) (state.initialSync() ? 1 : 0));
+        // Write headers anchor
+        if (state.headerDownloadAnchor() != null) {
+          state.headerDownloadAnchor().writeTo(output);
+        }
 
         output.endList();
 
