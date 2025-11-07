@@ -134,10 +134,6 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      /*if (Optional.ofNullable(accountNodes.getIfPresent(nodeHash)).isPresent()) {
-      // MRW TODO - cached account nodes needs thinking about for bonsai archive state proofs
-        System.out.println("Warning - cached account value returned");
-      }*/
       return Optional.ofNullable(accountNodes.getIfPresent(nodeHash))
           .or(() -> worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash));
     }

@@ -107,10 +107,6 @@ public class BonsaiArchiveProofsPartialFlatDbStrategy extends BonsaiArchiveProof
                     storageRoot.get())
                 .get(storageSlotKey.getSlotHash())
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-
-        // TODO MRW - metrics
-        // if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
-        // else getStorageValueMerkleTrieCounter.inc();
       }
     }
     return response;

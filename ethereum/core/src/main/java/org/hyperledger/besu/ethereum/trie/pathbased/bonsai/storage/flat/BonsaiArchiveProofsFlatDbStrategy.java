@@ -43,6 +43,8 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiArchiveProofsFlatDbStrategy.class);
 
+  private static final int KEY_SUFFIX_LENGTH = 8;
+
   /**
    * Placeholder
    *
@@ -124,7 +126,6 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
       final Bytes location,
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
     Optional<Bytes> accountFound;
 
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
@@ -136,11 +137,8 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
         storage
             .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, keyNearest)
-            .filter(
-                found ->
-                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length
+            .filter(found -> found.key().size() == (location.size() + KEY_SUFFIX_LENGTH))
             .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
-    // .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
 
     accountFound =
         nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
@@ -164,14 +162,11 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
         calculateArchiveKeyWithMaxSuffix(
             getStateArchiveContextForRead(storage), location.toArrayUnsafe());
 
-    // MRW todo - is common prefix length check valid for state proof DB?
     // Find the nearest account state for this address and block context
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
         storage
             .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, keyNearest)
-            .filter(
-                found ->
-                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length);
+            .filter(found -> found.key().size() == (location.size() + KEY_SUFFIX_LENGTH))
             .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
 
     accountFound =
@@ -191,14 +186,14 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
       final Bytes location,
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
     Optional<Bytes> storageFound;
+
+    Bytes accountHashLocation = Bytes.concatenate(accountHash, location);
 
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest =
         calculateArchiveKeyWithMaxSuffix(
-            getStateArchiveContextForRead(storage),
-            Bytes.concatenate(accountHash, location).toArrayUnsafe());
+            getStateArchiveContextForRead(storage), accountHashLocation.toArrayUnsafe());
 
     // Find the nearest account state for this address and block context
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
@@ -207,14 +202,11 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
             .filter(
                 found ->
                     found.key().size()
-                        == (accountHash.size()
-                            + location.size()
-                            + 8)) // TODO - change for CONST length
+                        == (accountHash.size() + location.size() + KEY_SUFFIX_LENGTH))
             .filter(
                 found ->
-                    Bytes.concatenate(accountHash, location).commonPrefixLength(found.key())
-                        >= Bytes.concatenate(accountHash, location).size());
-    // .filter(found -> Hash.hash(Bytes.wrap(found.value().get())).equals(nodeHash));
+                    accountHashLocation.commonPrefixLength(found.key())
+                        >= accountHashLocation.size());
 
     storageFound =
         nearestAccountPreSizeCheck.flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
@@ -252,9 +244,7 @@ public class BonsaiArchiveProofsFlatDbStrategy extends BonsaiArchiveFlatDbStrate
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccountPreSizeCheck =
         storage
             .getNearestBeforeMatchLength(TRIE_BRANCH_STORAGE, Bytes.of(keySuffixed))
-            .filter(
-                found ->
-                    found.key().size() == (location.size() + 8)) // TODO - change for CONST length);
+            .filter(found -> found.key().size() == (location.size() + KEY_SUFFIX_LENGTH))
             .filter(found -> location.commonPrefixLength(found.key()) >= location.size());
 
     if (nearestAccountPreSizeCheck.isPresent()

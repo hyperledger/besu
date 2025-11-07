@@ -67,7 +67,6 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Bytes location,
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
     return storage
         .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
         .map(Bytes::wrap)
@@ -95,7 +94,6 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Bytes location,
       final Bytes32 nodeHash,
       final SegmentedKeyValueStorage storage) {
-    // TODO - metrics?
     return storage
         .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
         .map(Bytes::wrap)
