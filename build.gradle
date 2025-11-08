@@ -236,7 +236,7 @@ configure(allprojects - project(':platform')) {
     java {
       // This path needs to be relative to each project
       target 'src/**/*.java'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**', '**/build/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.25.2')
       importOrder 'org.hyperledger', 'java', ''

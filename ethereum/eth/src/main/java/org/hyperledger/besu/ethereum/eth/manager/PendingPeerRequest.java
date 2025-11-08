@@ -59,11 +59,6 @@ public class PendingPeerRequest {
     final Optional<EthPeer> maybePeer = getPeerToUse();
     if (maybePeer.isEmpty()) {
       // No peers have the required height.
-      LOG.info(
-          "AAAAA PEER_REQUEST: No suitable peers available for request {}. Min block: {}, Assigned peer: {}",
-          request.getClass().getSimpleName(),
-          minimumBlockNumber,
-          peer);
       result.completeExceptionally(new NoAvailablePeersException());
       return true;
     } else {
