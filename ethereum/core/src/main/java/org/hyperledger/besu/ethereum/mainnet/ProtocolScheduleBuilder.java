@@ -49,7 +49,7 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
-  private final boolean isBlockAccessListEnabled;
+  private final BalConfiguration balConfiguration;
   private final MetricsSystem metricsSystem;
   private final MiningConfiguration miningConfiguration;
 
@@ -62,7 +62,7 @@ public class ProtocolScheduleBuilder {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
@@ -71,7 +71,7 @@ public class ProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
     this.badBlockManager = badBlockManager;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+    this.balConfiguration = balConfiguration;
     this.metricsSystem = metricsSystem;
     this.miningConfiguration = miningConfiguration;
   }
@@ -94,7 +94,7 @@ public class ProtocolScheduleBuilder {
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
 
     final List<BuilderMapEntry> mileStones = createMilestones(specFactory);
@@ -186,7 +186,7 @@ public class ProtocolScheduleBuilder {
                       config,
                       evmConfiguration,
                       isParallelTxProcessingEnabled,
-                      isBlockAccessListEnabled,
+                      balConfiguration,
                       metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
