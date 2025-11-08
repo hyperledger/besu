@@ -640,16 +640,7 @@ public class EthPeers implements PeerSelector {
         Boolean isServer;
         try {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(6L, TimeUnit.SECONDS);
-          LOG.info(
-              "AAAAA SNAP_STATUS: Peer {} snap check completed with result: {}",
-              peer.getLoggableId(),
-              isServer);
         } catch (Exception e) {
-          LOG.info(
-              "AAAAA SNAP_STATUS: Peer {} snap check timed out or failed after 6s. Setting to false. Exception: {} - {}",
-              peer.getLoggableId(),
-              e.getClass().getSimpleName(),
-              e.getMessage());
           peer.setIsServingSnap(false);
           return;
         }

@@ -47,10 +47,6 @@ public class SnapServerChecker {
   }
 
   public CompletableFuture<Boolean> check(final EthPeer peer, final BlockHeader peersHeadHeader) {
-    LOG.info(
-        "AAAAA SNAP_CHECK: Starting snap server check for peer {} at block {}",
-        peer.getLoggableId(),
-        peersHeadHeader.getNumber());
     final long startTime = System.currentTimeMillis();
 
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
@@ -69,13 +65,6 @@ public class SnapServerChecker {
             boolean isSnapServer =
                 !peerResult.getResult().accounts().isEmpty()
                     || !peerResult.getResult().proofs().isEmpty();
-            LOG.info(
-                "AAAAA SNAP_CHECK: Check for peer {} completed after {}ms - Result: {} (accounts: {}, proofs: {})",
-                peer.getLoggableId(),
-                duration,
-                isSnapServer,
-                peerResult.getResult().accounts().size(),
-                peerResult.getResult().proofs().size());
             if (isSnapServer) {
               future.complete(true);
             } else {
