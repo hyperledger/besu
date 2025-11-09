@@ -536,6 +536,7 @@ public class T8nExecutor {
                       p.processWithdrawals(
                           referenceTestEnv.getWithdrawals(),
                           worldState.updater(),
+                          Optional.empty(),
                           Optional.empty()));
         } catch (RuntimeException re) {
           resultObject.put("exception", re.getMessage());
