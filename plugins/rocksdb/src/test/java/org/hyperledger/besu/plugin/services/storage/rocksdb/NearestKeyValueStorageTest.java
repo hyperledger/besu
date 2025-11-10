@@ -47,7 +47,7 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -56,13 +56,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class NearestKeyValueStorageTest {
 
-  @TempDir private static Path tempDir;
+  @TempDir private Path tempDir;
 
   private static RocksDBKeyValueStorageFactory rocksdbStorageFactory;
   private static BesuConfiguration commonConfiguration;
 
-  @BeforeAll
-  public static void setup() throws IOException {
+  @BeforeEach
+  public void setup() throws IOException {
     rocksdbStorageFactory =
         new RocksDBKeyValueStorageFactory(
             () ->
