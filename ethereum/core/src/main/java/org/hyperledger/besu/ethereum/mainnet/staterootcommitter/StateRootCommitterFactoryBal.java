@@ -17,22 +17,20 @@ package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public final class StateRootCommitterFactoryBal implements StateRootCommitterFactory {
 
-  private final boolean trustBalRoot;
-  private final Duration balRootTimeout;
+  private final BalConfiguration balConfiguration;
 
-  public StateRootCommitterFactoryBal(final boolean trustBalRoot, final Duration balRootTimeout) {
-    this.trustBalRoot = trustBalRoot;
-    this.balRootTimeout = balRootTimeout;
+  public StateRootCommitterFactoryBal(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
   }
 
   @Override
@@ -40,6 +38,10 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final Optional<BlockAccessList> maybeBal) {
+    if (!balConfiguration.isBalOptimisationEnabled()) {
+      return new StateRootCommitterImplSync();
+    }
+
     if (maybeBal.isEmpty()) {
       throw new IllegalStateException(
           "No BAL present in the block, falling back to synchronous state root computation");
@@ -53,6 +55,6 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
     final CompletableFuture<Hash> balRootFuture =
         BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
             protocolContext, blockHeader, maybeBal.get());
-    return new StateRootCommitterImplBal(balRootFuture, trustBalRoot, balRootTimeout);
+    return new StateRootCommitterImplBal(balRootFuture, balConfiguration);
   }
 }

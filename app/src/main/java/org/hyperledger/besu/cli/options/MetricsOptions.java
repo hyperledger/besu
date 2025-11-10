@@ -36,7 +36,6 @@ import java.util.Set;
 import picocli.CommandLine;
 
 /** Command line options for configuring metrics. */
-// TODO: implement CLIOption<MetricsConfiguration>
 public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> {
   private MetricCategoryRegistryImpl metricCategoryRegistry;
 

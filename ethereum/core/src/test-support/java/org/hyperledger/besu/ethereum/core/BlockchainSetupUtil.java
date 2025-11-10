@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -170,7 +171,7 @@ public class BlockchainSetupUtil {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
-        false,
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 
