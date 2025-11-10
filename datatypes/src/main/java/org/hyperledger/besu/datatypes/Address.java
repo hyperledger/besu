@@ -107,7 +107,6 @@ public class Address extends DelegatingBytes {
                   return Hash.hash(key);
                 }
               });
-  private Integer hashCode;
 
   /**
    * Instantiates a new Address.
@@ -265,17 +264,16 @@ public class Address extends DelegatingBytes {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof Address other)) {
+    if (!(obj instanceof Address)) {
       return false;
     }
+    Address other = (Address) obj;
     return Arrays.equals(this.toArrayUnsafe(), other.toArrayUnsafe());
   }
 
   @Override
   public int hashCode() {
-    if (this.hashCode == null) {
-      this.hashCode = this.computeHashcode();
-    }
-    return this.hashCode;
+    // Delegate to parent's hashCode implementation which uses delegate.hashCode()
+    return super.hashCode();
   }
 }
