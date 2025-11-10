@@ -390,14 +390,6 @@ public class PivotBlockRetrieverTest {
         .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
-  private void waitUntilComplete(final CompletableFuture<?> future) {
-    try {
-      future.join();
-    } catch (RuntimeException e) {
-      // do nothing
-    }
-  }
-
   @ParameterizedTest
   @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
   public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry(
@@ -448,6 +440,14 @@ public class PivotBlockRetrieverTest {
         .hasRootCauseInstanceOf(SyncException.class)
         .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
         .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+  }
+
+  private void waitUntilComplete(final CompletableFuture<?> future) {
+    try {
+      future.join();
+    } catch (RuntimeException e) {
+      // do nothing
+    }
   }
 
   @Test
