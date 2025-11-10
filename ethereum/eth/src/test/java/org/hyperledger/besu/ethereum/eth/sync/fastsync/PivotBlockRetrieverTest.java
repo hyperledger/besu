@@ -68,7 +68,6 @@ public class PivotBlockRetrieverTest {
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
           Arguments.of(DataStorageFormat.BONSAI),
-          Arguments.of(DataStorageFormat.X_BONSAI_ARCHIVE),
           Arguments.of(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS),
           Arguments.of(DataStorageFormat.FOREST));
     }
