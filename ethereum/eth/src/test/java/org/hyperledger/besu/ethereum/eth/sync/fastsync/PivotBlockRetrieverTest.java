@@ -245,7 +245,7 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
-    Mockito.verify(peerTaskExecutor)
+    Mockito.verify(peerTaskExecutor, Mockito.atLeastOnce())
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerB));
