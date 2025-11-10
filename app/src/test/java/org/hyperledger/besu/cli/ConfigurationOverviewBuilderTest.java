@@ -21,9 +21,11 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.InternalProfileName;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -277,5 +279,22 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     assertThat(targetGasLimitSelected)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setBalConfiguration() {
+    builder.setBalConfiguration(
+        ImmutableBalConfiguration.builder()
+            .isBalOptimisationEnabled(false)
+            .isBalLenientOnMismatch(true)
+            .isBalApiEnabled(true)
+            .balStateRootTimeout(Duration.ofMillis(2500))
+            .build());
+
+    final String configuration = builder.build();
+    assertThat(configuration).contains("BAL optimizations disabled");
+    assertThat(configuration).contains("BAL mismatch leniency enabled");
+    assertThat(configuration).contains("BAL API enabled");
+    assertThat(configuration).contains("BAL state root timeout: 2500 ms");
   }
 }
