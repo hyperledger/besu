@@ -26,20 +26,20 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -55,7 +55,6 @@ public class PivotBlockRetrieverTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
 
-  private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
   private TransactionPool transactionPool;
@@ -82,7 +81,7 @@ public class PivotBlockRetrieverTest {
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
             .setBlockchain(blockchain)
-            .setEthScheduler(new DeterministicEthScheduler(timeout::get))
+            .setEthScheduler(new EthScheduler(1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
             .setTransactionPool(transactionPool)
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
@@ -143,6 +142,8 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
+    waitUntilComplete(future);
+
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
     Mockito.verify(peerTaskExecutor)
@@ -190,6 +191,8 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
+    waitUntilComplete(future);
+
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
     Mockito.verify(peerTaskExecutor, Mockito.never())
@@ -218,22 +221,24 @@ public class PivotBlockRetrieverTest {
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA)))
-        .thenReturn(
-            new PeerTaskExecutorResult<>(
-                Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS,
-                List.of(peerA)))
-        .thenReturn(
-            new PeerTaskExecutorResult<>(
-                Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
-                PeerTaskExecutorResponseCode.SUCCESS,
-                List.of(peerA)));
+        .thenAnswer(
+            (invocationOnMock) -> {
+              Thread.sleep(200);
+              return new PeerTaskExecutorResult<>(
+                  Optional.of(List.of(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get())),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  List.of(peerA));
+            });
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerB)))
-        .thenReturn(
-            new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, List.of(peerB)));
+        .thenAnswer(
+            (invocationOnMock) -> {
+              Thread.sleep(200);
+              return new PeerTaskExecutorResult<>(
+                  Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, List.of(peerB));
+            });
+
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerC)))
@@ -245,7 +250,9 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
-    Mockito.verify(peerTaskExecutor, Mockito.atLeastOnce())
+    waitUntilComplete(future);
+
+    Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerB));
@@ -303,6 +310,8 @@ public class PivotBlockRetrieverTest {
                 List.of(peerB)));
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+
+    waitUntilComplete(future);
 
     Mockito.verify(peerTaskExecutor, Mockito.times(2))
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
@@ -367,6 +376,8 @@ public class PivotBlockRetrieverTest {
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
+    waitUntilComplete(future);
+
     Mockito.verify(peerTaskExecutor, Mockito.times(2))
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
     Mockito.verify(peerTaskExecutor, Mockito.times(2))
@@ -377,6 +388,14 @@ public class PivotBlockRetrieverTest {
         .hasRootCauseInstanceOf(SyncException.class)
         .extracting(e -> ((SyncException) ExceptionUtils.rootCause(e)).getError())
         .isEqualTo(SyncError.PIVOT_BLOCK_HEADER_MISMATCH);
+  }
+
+  private void waitUntilComplete(final CompletableFuture<?> future) {
+    try {
+      future.join();
+    } catch (RuntimeException e) {
+      // do nothing
+    }
   }
 
   @ParameterizedTest
@@ -416,6 +435,8 @@ public class PivotBlockRetrieverTest {
 
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+
+    waitUntilComplete(future);
 
     Mockito.verify(peerTaskExecutor)
         .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peerA));
