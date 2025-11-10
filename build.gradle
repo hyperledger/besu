@@ -650,15 +650,15 @@ subprojects {
       excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
+      jvmArgs = ['-XX:+EnableDynamicAgentLoading']
       if (asyncProfiler != null) {
         profilers = [
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
+        // Force debug symbols of stack traces to the profiler
+        jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
       }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
-      jvmArgs = [
-        '-XX:+EnableDynamicAgentLoading'
-      ]
     }
 
     dependencies {
