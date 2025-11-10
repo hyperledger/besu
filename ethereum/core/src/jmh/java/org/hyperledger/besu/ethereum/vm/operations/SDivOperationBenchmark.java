@@ -17,10 +17,14 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
+import org.hyperledger.besu.evm.operation.SDivOperationOptimized;
 
-public class SDivOperationBenchmark extends BinaryOperationBenchmark {
+public class SDivOperationBenchmark extends DivOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SDivOperation.staticOperation(frame);
+    return switch (algorithm) {
+      case NON_OPTIMIZED -> SDivOperation.staticOperation(frame);
+      case OPTIMIZED -> SDivOperationOptimized.staticOperation(frame);
+    };
   }
 }
