@@ -93,11 +93,12 @@ public class WorldStateBonsaiProofProviderTest {
 
     // Define account value
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
-    final PmtStateTrieAccountValue accountValue =
-        new PmtStateTrieAccountValue(
-            1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
+    final Optional<PmtStateTrieAccountValue> accountValue =
+        Optional.of(
+            new PmtStateTrieAccountValue(
+                1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash));
     // Save to storage
-    worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
+    worldStateTrie.put(addressHash, RLP.encode(accountValue.get()::writeTo));
     worldStateTrie.commit(
         (location, hash, value) -> updater.putAccountStateTrieNode(location, hash, value));
 
@@ -114,9 +115,10 @@ public class WorldStateBonsaiProofProviderTest {
             Hash.wrap(worldStateTrie.getRootHash()), address, storageKeys);
 
     assertThat(accountProof).isPresent();
-    Assertions.assertThat(accountProof.get().getStateTrieAccountValue())
-        .usingRecursiveComparison()
-        .isEqualTo(accountValue);
+    assertThat(accountProof.get().getStateTrieAccountValue().get().getBalance())
+        .isEqualTo(accountValue.get().getBalance());
+    assertThat(accountProof.get().getStateTrieAccountValue().get().getNonce())
+        .isEqualTo(accountValue.get().getNonce());
     assertThat(accountProof.get().getAccountProof().size()).isGreaterThanOrEqualTo(1);
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);
@@ -132,6 +134,15 @@ public class WorldStateBonsaiProofProviderTest {
     storageKey = UInt256.valueOf(6L);
     assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
+    assertThat(accountProof.get().getStateTrieAccountValue().get().getCodeHash())
+        .isEqualTo(accountValue.get().getCodeHash());
+    assertThat(accountProof.get().getStateTrieAccountValue().get().getStorageRoot())
+        .isEqualTo(accountValue.get().getStorageRoot());
+
+    Assertions.assertThat(accountProof.get().getStateTrieAccountValue().get())
+        .usingRecursiveComparison()
+        .usingOverriddenEquals()
+        .isEqualTo(accountValue.get());
   }
 
   @Test
