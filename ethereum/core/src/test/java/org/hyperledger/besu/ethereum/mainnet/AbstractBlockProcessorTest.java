@@ -80,7 +80,8 @@ abstract class AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
   }
 
   @Test
@@ -128,14 +129,16 @@ abstract class AbstractBlockProcessorTest {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final ProtocolSchedule protocolSchedule) {
+        final ProtocolSchedule protocolSchedule,
+        final BalConfiguration balConfiguration) {
       super(
           transactionProcessor,
           transactionReceiptFactory,
           blockReward,
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
-          protocolSchedule);
+          protocolSchedule,
+          balConfiguration);
     }
 
     @Override
