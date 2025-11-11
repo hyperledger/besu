@@ -92,7 +92,6 @@ public class BackwardSyncStepTest {
 
   private MutableBlockchain localBlockchain;
   private MutableBlockchain remoteBlockchain;
-  private RespondingEthPeer peer;
   @Mock private PeerTaskExecutor peerTaskExecutor;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
@@ -148,11 +147,13 @@ public class BackwardSyncStepTest {
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
 
-    peer =
-        RespondingEthPeer.builder()
-            .ethProtocolManager(ethProtocolManager)
-            .estimatedHeight(REMOTE_HEIGHT)
-            .build();
+    // building the peer also inserts it into the EthPeers, which is necessary so we have a peer to
+    // use
+    RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(REMOTE_HEIGHT)
+        .build();
+
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
 
@@ -169,12 +170,8 @@ public class BackwardSyncStepTest {
     when(context.getBatchSize()).thenReturn(5);
     BackwardSyncStep step = spy(new BackwardSyncStep(context, backwardChain));
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-
     final CompletableFuture<Void> future =
         step.executeAsync(backwardChain.getFirstAncestorHeader().orElseThrow());
-    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
     future.get();
   }
 
@@ -192,12 +189,8 @@ public class BackwardSyncStepTest {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
-    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
@@ -224,12 +217,8 @@ public class BackwardSyncStepTest {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
-    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
@@ -249,11 +238,8 @@ public class BackwardSyncStepTest {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
-
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
-    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     assertThatThrownBy(future::get).cause().isInstanceOf(RuntimeException.class);
   }
