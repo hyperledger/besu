@@ -19,6 +19,7 @@
 - Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
 - Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
 - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
+- Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 
 ### Bug fixes
 
