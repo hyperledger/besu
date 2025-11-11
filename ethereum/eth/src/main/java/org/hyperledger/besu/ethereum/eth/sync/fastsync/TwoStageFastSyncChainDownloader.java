@@ -15,13 +15,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
@@ -29,6 +33,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -54,7 +59,7 @@ public class TwoStageFastSyncChainDownloader
 
   private final FastSyncDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
-  private final EthScheduler scheduler;
+  private final EthContext ethContext;
   private final SyncState syncState;
   private final SyncDurationMetrics syncDurationMetrics;
   private final ChainSyncStateStorage chainStateStorage;
@@ -72,29 +77,26 @@ public class TwoStageFastSyncChainDownloader
    *
    * @param pipelineFactory the pipeline factory for creating download pipelines
    * @param protocolContext the protocol context providing access to blockchain
-   * @param scheduler the scheduler for running pipelines
+   * @param ethContext the ethContext for running pipelines
    * @param syncState the sync state tracker
    * @param metricsSystem the metrics system (unused but kept for API compatibility)
    * @param syncDurationMetrics the sync duration metrics tracker
    * @param initialPivotHeader the initial pivot block header
    * @param chainStateStorage the storage for chain sync state
-   * @param checkpointBlockHeader the checkpoint block number
-   * @param genesisHash the genesis hash
    */
   public TwoStageFastSyncChainDownloader(
       final FastSyncDownloadPipelineFactory pipelineFactory,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final EthScheduler scheduler,
+      final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final SyncDurationMetrics syncDurationMetrics,
       final BlockHeader initialPivotHeader,
-      final ChainSyncStateStorage chainStateStorage,
-      final BlockHeader checkpointBlockHeader,
-      final Hash genesisHash) {
+      final ChainSyncStateStorage chainStateStorage) {
     this.pipelineFactory = pipelineFactory;
     this.protocolContext = protocolContext;
-    this.scheduler = scheduler;
+    this.ethContext = ethContext;
     this.syncState = syncState;
     this.syncDurationMetrics = syncDurationMetrics;
     this.chainStateStorage = chainStateStorage;
@@ -106,17 +108,41 @@ public class TwoStageFastSyncChainDownloader
     if (chainSyncState == null) {
       // First time sync - create initial state
       // This downloads headers from the pivot down to the genesis block
+
+      final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
+      Hash checkpointHash;
+      final BlockHeader checkpointBlockHeader;
+      if (maybeCheckpoint.isEmpty()) {
+        // the current head of chain is the lower trust anchor
+        checkpointBlockHeader = protocolContext.getBlockchain().getChainHeadHeader();
+        checkpointHash = checkpointBlockHeader.getHash();
+        LOG.info(
+            "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
+            checkpointBlockHeader.getNumber(),
+            checkpointHash);
+      } else {
+        // use the checkpoint as the lower trust anchor
+        final Checkpoint checkpoint = maybeCheckpoint.get();
+        checkpointHash = checkpoint.blockHash();
+        Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
+        checkpointBlockHeader =
+            getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
+        protocolContext
+            .getBlockchain()
+            .unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
+        LOG.info(
+            "Using checkpoint {} as lower trust anchor: {}, {}",
+            checkpoint.blockNumber(),
+            checkpoint.blockHash(),
+            checkpoint.totalDifficulty());
+      }
+
       final BlockHeader genesisBlockHeader =
           protocolContext.getBlockchain().getGenesisBlockHeader();
+
       chainSyncState =
           ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
-      final long chainHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
-      if (chainHeadBlockNumber == 0) {
-        // This is needed because the import step for the blocks and receipts eventually checks the
-        // chain head.
-        // TODO: is that still necessary?
-        protocolContext.getBlockchain().unsafeSetChainHead(checkpointBlockHeader, Difficulty.ZERO);
-      }
+
       LOG.info(
           "Created initial chain sync state: pivot={}, checkpoint={}, headers anchor={}",
           initialPivotHeader.getNumber(),
@@ -219,7 +245,8 @@ public class TwoStageFastSyncChainDownloader
         pipelineFactory.createBackwardHeaderDownloadPipeline(state);
     currentPipeline = headerPipeline;
 
-    return scheduler
+    return ethContext
+        .getScheduler()
         .startPipeline(headerPipeline)
         .thenApply(
             ignore -> {
@@ -273,7 +300,8 @@ public class TwoStageFastSyncChainDownloader
             blockchainHead, pivotBlockHeader, syncState);
     currentPipeline = bodiesReceiptsPipeline;
 
-    return scheduler
+    return ethContext
+        .getScheduler()
         .startPipeline(bodiesReceiptsPipeline)
         .thenApply(
             ignore -> {
@@ -388,5 +416,17 @@ public class TwoStageFastSyncChainDownloader
     if (pipeline != null) {
       pipeline.abort();
     }
+  }
+
+  private static BlockHeader getCheckpointBlockHeader(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final Hash checkpointHash) {
+    // try the blockchain first, if not successful, download the header from the peers
+    return protocolContext
+        .getBlockchain()
+        .getBlockHeader(checkpointHash)
+        .orElse(downloadCheckpointHeader(protocolSchedule, ethContext, checkpointHash));
   }
 }
