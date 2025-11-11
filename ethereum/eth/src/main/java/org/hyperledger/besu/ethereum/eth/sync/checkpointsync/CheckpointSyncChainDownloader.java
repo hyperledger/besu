@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineF
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.TwoStageFastSyncChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
@@ -70,37 +67,15 @@ public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
         new org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage(
             fastSyncDataDirectory);
 
-    // Checkpoint sync always starts from the checkpoint block
-    final long checkpointBlock = syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L);
-
-    final BlockHeader checkpointBlockHeader =
-        protocolContext
-            .getBlockchain()
-            .getBlockHeader(checkpointBlock)
-            .orElse(
-                downloadCheckpointHeader(
-                    protocolSchedule,
-                    ethContext,
-                    syncState
-                        .getCheckpoint()
-                        .map(Checkpoint::blockHash)
-                        .orElseThrow(
-                            () ->
-                                new IllegalStateException(
-                                    "Checkpoint block hash not available."))));
-
-    final Hash genesisHash = protocolContext.getBlockchain().getChainHeadHeader().getHash();
-
     return new TwoStageFastSyncChainDownloader(
         pipelineFactory,
+        protocolSchedule,
         protocolContext,
-        ethContext.getScheduler(),
+        ethContext,
         syncState,
         metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
-        chainStateStorage,
-        checkpointBlockHeader,
-        genesisHash);
+        chainStateStorage);
   }
 }
