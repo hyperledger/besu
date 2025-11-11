@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
-import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
 import java.util.ArrayList;
@@ -83,17 +82,7 @@ public class TransactionBroadcaster
   public void relayTransactionPoolTo(
       final EthPeer peer, final Collection<PendingTransaction> pendingTransactions) {
     if (!pendingTransactions.isEmpty()) {
-      if (peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES)) {
-        sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
-      } else {
-        // we need to exclude txs that support hash only broadcasting
-        final var fullBroadcastTxs =
-            pendingTransactions.stream()
-                .map(PendingTransaction::getTransaction)
-                .filter(tx -> !ANNOUNCE_HASH_ONLY_TX_TYPES.contains(tx.getType()))
-                .toList();
-        sendFullTransactions(fullBroadcastTxs, List.of(peer));
-      }
+      sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
     }
   }
 
@@ -112,57 +101,28 @@ public class TransactionBroadcaster
                 Collectors.partitioningBy(
                     tx -> ANNOUNCE_HASH_ONLY_TX_TYPES.contains(tx.getType())));
 
-    final List<EthPeer> sendOnlyFullTransactionPeers = new ArrayList<>(currPeerCount);
-    final List<EthPeer> sendOnlyHashPeers = new ArrayList<>(currPeerCount);
-    final List<EthPeer> sendMixedPeers = new ArrayList<>(currPeerCount);
+    final List<EthPeer> peers =
+        ethContext
+            .getEthPeers()
+            .streamAvailablePeers()
+            .map(EthPeerImmutableAttributes::ethPeer)
+            .collect(Collectors.toCollection(ArrayList::new));
 
-    ethContext
-        .getEthPeers()
-        .streamAvailablePeers()
-        .map(EthPeerImmutableAttributes::ethPeer)
-        .forEach(
-            peer -> {
-              if (peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES)) {
-                sendOnlyHashPeers.add(peer);
-              } else {
-                sendOnlyFullTransactionPeers.add(peer);
-              }
-            });
+    Collections.shuffle(peers, random);
 
-    if (sendOnlyFullTransactionPeers.size() < numPeersToSendFullTransactions) {
-      final int delta =
-          Math.min(
-              numPeersToSendFullTransactions - sendOnlyFullTransactionPeers.size(),
-              sendOnlyHashPeers.size());
-
-      Collections.shuffle(sendOnlyHashPeers, random);
-
-      // move peers from the mixed list to reach the required size for full transaction peers
-      movePeersBetweenLists(sendOnlyHashPeers, sendMixedPeers, delta);
-    }
+    final List<EthPeer> sendFullTransactionsPeers =
+        peers.subList(0, numPeersToSendFullTransactions);
+    final List<EthPeer> sendOnlyHashesPeers =
+        peers.subList(numPeersToSendFullTransactions, peers.size());
 
     LOG.atTrace()
-        .setMessage(
-            "Sending full transactions to {} peers, transaction hashes only to {} peers and mixed to {} peers."
-                + " Peers w/o eth/65 {}, peers with eth/65 {}")
-        .addArgument(sendOnlyFullTransactionPeers::size)
-        .addArgument(sendOnlyHashPeers::size)
-        .addArgument(sendMixedPeers::size)
-        .addArgument(sendOnlyFullTransactionPeers)
-        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers)
+        .setMessage("Sending full transactions to {} peers, transaction hashes only to {} peers")
+        .addArgument(sendFullTransactionsPeers::size)
+        .addArgument(sendOnlyHashesPeers::size)
         .log();
 
-    sendToFullTransactionsPeers(
-        transactionByBroadcastMode.get(FULL_BROADCAST), sendOnlyFullTransactionPeers);
-
-    sendToOnlyHashPeers(transactionByBroadcastMode, sendOnlyHashPeers);
-
-    sendToMixedPeers(transactionByBroadcastMode, sendMixedPeers);
-  }
-
-  private void sendToFullTransactionsPeers(
-      final List<Transaction> fullBroadcastTransactions, final List<EthPeer> fullTransactionPeers) {
-    sendFullTransactions(fullBroadcastTransactions, fullTransactionPeers);
+    sendToOnlyHashPeers(transactionByBroadcastMode, sendOnlyHashesPeers);
+    sendToFullTransactionsPeers(transactionByBroadcastMode, sendFullTransactionsPeers);
   }
 
   private void sendToOnlyHashPeers(
@@ -174,11 +134,11 @@ public class TransactionBroadcaster
     sendTransactionHashes(allTransactions, hashOnlyPeers);
   }
 
-  private void sendToMixedPeers(
+  private void sendToFullTransactionsPeers(
       final Map<Boolean, List<Transaction>> txsByHashOnlyBroadcast,
-      final List<EthPeer> mixedPeers) {
-    sendFullTransactions(txsByHashOnlyBroadcast.get(FULL_BROADCAST), mixedPeers);
-    sendTransactionHashes(txsByHashOnlyBroadcast.get(HASH_ONLY_BROADCAST), mixedPeers);
+      final List<EthPeer> fullTransactionsPeers) {
+    sendFullTransactions(txsByHashOnlyBroadcast.get(FULL_BROADCAST), fullTransactionsPeers);
+    sendTransactionHashes(txsByHashOnlyBroadcast.get(HASH_ONLY_BROADCAST), fullTransactionsPeers);
   }
 
   private void sendFullTransactions(
@@ -211,15 +171,6 @@ public class TransactionBroadcaster
                             newPooledTransactionHashesMessageSender.sendTransactionHashesToPeer(
                                 peer));
               });
-    }
-  }
-
-  private void movePeersBetweenLists(
-      final List<EthPeer> sourceList, final List<EthPeer> destinationList, final int num) {
-
-    final int stopIndex = sourceList.size() - num;
-    for (int i = sourceList.size() - 1; i >= stopIndex; i--) {
-      destinationList.add(sourceList.remove(i));
     }
   }
 
