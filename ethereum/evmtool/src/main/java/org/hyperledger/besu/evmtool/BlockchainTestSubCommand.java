@@ -48,13 +48,11 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.file.Files;
+import java.io.PrintStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -253,7 +251,7 @@ public class BlockchainTestSubCommand implements Runnable {
     final MutableBlockchain blockchain = spec.getBlockchain();
 
     BlockTestTracerManager tracerManager = null;
-    PrintWriter traceWriter;
+    PrintStream traceWriter;
     long totalGasUsed = 0;
     int totalTxCount = 0;
     int blockCount = 0;
@@ -266,22 +264,21 @@ public class BlockchainTestSubCommand implements Runnable {
       try {
         final boolean isFileOutput = traceOutput != null;
         if (isFileOutput) {
-          traceWriter =
-              new PrintWriter(Files.newBufferedWriter(Paths.get(traceOutput), UTF_8), true);
+          traceWriter = new PrintStream(new FileOutputStream(traceOutput, true), true, UTF_8);
         } else {
-          traceWriter = new PrintWriter(new OutputStreamWriter(System.err, UTF_8), true);
+          traceWriter = new PrintStream(System.err, true, UTF_8);
         }
         tracerManager =
             new BlockTestTracerManager(
                 traceWriter,
-                isFileOutput, // Only close if writing to a file, not System.err
                 parentCommand.showMemory,
                 !parentCommand.hideStack,
                 parentCommand.showReturnData,
                 parentCommand.showStorage);
 
         final ServiceManager serviceManager = context.getPluginServiceManager();
-        final BlockchainTestTracerProvider tracerProvider = new BlockchainTestTracerProvider(tracerManager);
+        final BlockchainTestTracerProvider tracerProvider =
+            new BlockchainTestTracerProvider(tracerManager);
         serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
       } catch (final IOException e) {
         parentCommand.out.println("Failed to open trace output: " + e.getMessage());
@@ -289,104 +286,99 @@ public class BlockchainTestSubCommand implements Runnable {
       }
     }
 
-    try {
-      for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-          spec.getCandidateBlocks()) {
-        if (!candidateBlock.isExecutable()) {
-          return;
+    for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
+        spec.getCandidateBlocks()) {
+      if (!candidateBlock.isExecutable()) {
+        return;
+      }
+
+      try {
+        final Block block = candidateBlock.getBlock();
+        blockCount++;
+
+        final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
+        final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+
+        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
+
+        final HeaderValidationMode validationMode =
+            "NoProof".equalsIgnoreCase(spec.getSealEngine())
+                ? HeaderValidationMode.LIGHT
+                : HeaderValidationMode.FULL;
+
+        final Stopwatch timer = Stopwatch.createStarted();
+
+        final BlockImportResult importResult =
+            blockImporter.importBlock(context, block, validationMode, validationMode);
+
+        timer.stop();
+
+        if (parentCommand.showJsonResults) {
+          totalGasUsed += block.getHeader().getGasUsed();
+          totalTxCount += block.getBody().getTransactions().size();
         }
 
-        try {
-          final Block block = candidateBlock.getBlock();
-          blockCount++;
-
-          final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
-          final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-
-          verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
-
-          final HeaderValidationMode validationMode =
-              "NoProof".equalsIgnoreCase(spec.getSealEngine())
-                  ? HeaderValidationMode.LIGHT
-                  : HeaderValidationMode.FULL;
-
-          final Stopwatch timer = Stopwatch.createStarted();
-
-          final BlockImportResult importResult =
-              blockImporter.importBlock(context, block, validationMode, validationMode);
-
-          timer.stop();
-
-          if (parentCommand.showJsonResults) {
-            totalGasUsed += block.getHeader().getGasUsed();
-            totalTxCount += block.getBody().getTransactions().size();
-          }
-
-          if (importResult.isImported() != candidateBlock.isValid()) {
-            testPassed = false;
-            failureReason =
-                String.format(
-                    "Block %d (%s) %s",
-                    block.getHeader().getNumber(),
-                    block.getHash(),
-                    importResult.isImported() ? "Failed to be rejected" : "Failed to import");
-            parentCommand.out.println(failureReason);
+        if (importResult.isImported() != candidateBlock.isValid()) {
+          testPassed = false;
+          failureReason =
+              String.format(
+                  "Block %d (%s) %s",
+                  block.getHeader().getNumber(),
+                  block.getHash(),
+                  importResult.isImported() ? "Failed to be rejected" : "Failed to import");
+          parentCommand.out.println(failureReason);
+        } else {
+          if (importResult.isImported()) {
+            final long gasUsed = block.getHeader().getGasUsed();
+            final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+            final float mGps = gasUsed * 1000.0f / timeNs;
+            final double timeMs = timeNs / 1_000_000.0;
+            parentCommand.out.printf(
+                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
+                block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
           } else {
-            if (importResult.isImported()) {
-              final long gasUsed = block.getHeader().getGasUsed();
-              final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-              final float mGps = gasUsed * 1000.0f / timeNs;
-              final double timeMs = timeNs / 1_000_000.0;
-              parentCommand.out.printf(
-                  "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
-                  block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
-            } else {
-              parentCommand.out.printf(
-                  "Block %d (%s) Rejected (correctly)%n",
-                  block.getHeader().getNumber(), block.getHash());
-            }
-          }
-        } catch (final RLPException e) {
-          if (candidateBlock.isValid()) {
-            testPassed = false;
-            failureReason =
-                String.format(
-                    "Block %d (%s) RLP exception: %s",
-                    candidateBlock.getBlock().getHeader().getNumber(),
-                    candidateBlock.getBlock().getHash(),
-                    e.getMessage());
-            parentCommand.out.println(failureReason);
+            parentCommand.out.printf(
+                "Block %d (%s) Rejected (correctly)%n",
+                block.getHeader().getNumber(), block.getHash());
           }
         }
+      } catch (final RLPException e) {
+        if (candidateBlock.isValid()) {
+          testPassed = false;
+          failureReason =
+              String.format(
+                  "Block %d (%s) RLP exception: %s",
+                  candidateBlock.getBlock().getHeader().getNumber(),
+                  candidateBlock.getBlock().getHash(),
+                  e.getMessage());
+          parentCommand.out.println(failureReason);
+        }
       }
+    }
 
-      if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
-        testPassed = false;
-        failureReason =
-            String.format(
-                "Chain header mismatch, have %s want %s",
-                blockchain.getChainHeadHash(), spec.getLastBlockHash());
-        parentCommand.out.printf(
-            "Chain header mismatch, have %s want %s - %s%n",
-            blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
-      } else {
-        parentCommand.out.println("Chain import successful - " + test);
-      }
+    if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
+      testPassed = false;
+      failureReason =
+          String.format(
+              "Chain header mismatch, have %s want %s",
+              blockchain.getChainHeadHash(), spec.getLastBlockHash());
+      parentCommand.out.printf(
+          "Chain header mismatch, have %s want %s - %s%n",
+          blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
+    } else {
+      parentCommand.out.println("Chain import successful - " + test);
+    }
 
-      if (parentCommand.showJsonResults) {
-        final long testDuration = System.currentTimeMillis() - testStartTime;
-        tracerManager.writeTestEnd(
-            test,
-            testPassed,
-            spec.getNetwork(),
-            testDuration,
-            totalGasUsed,
-            totalTxCount,
-            blockCount);
-        tracerManager.close();
-      }
-    } catch (final IOException e) {
-      parentCommand.out.println("Failed to close trace output: " + e.getMessage());
+    if (parentCommand.showJsonResults) {
+      final long testDuration = System.currentTimeMillis() - testStartTime;
+      tracerManager.writeTestEnd(
+          test,
+          testPassed,
+          spec.getNetwork(),
+          testDuration,
+          totalGasUsed,
+          totalTxCount,
+          blockCount);
     }
 
     if (!testPassed) {
@@ -414,41 +406,42 @@ public class BlockchainTestSubCommand implements Runnable {
   }
 
   /**
-     * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
-     * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
-     * BlockImportTracerProvider infrastructure.
-     */
-    private record BlockchainTestTracerProvider(BlockTestTracerManager tracerManager)
-    implements BlockImportTracerProvider {
+   * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
+   * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
+   * BlockImportTracerProvider infrastructure.
+   */
+  private record BlockchainTestTracerProvider(BlockTestTracerManager tracerManager)
+      implements BlockImportTracerProvider {
 
     @Override
-      public BlockAwareOperationTracer getBlockImportTracer(
-      final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
-        return new BlockchainTestTracer(tracerManager.createTracer());
-      }
+    public BlockAwareOperationTracer getBlockImportTracer(
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
+      return new BlockchainTestTracer(tracerManager.createTracer());
     }
+  }
 
   /**
-     * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
-     * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
-     * while providing default implementations for block-level tracing methods.
-     */
-    private record BlockchainTestTracer(StreamingOperationTracer delegate) implements BlockAwareOperationTracer {
+   * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
+   * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
+   * while providing default implementations for block-level tracing methods.
+   */
+  private record BlockchainTestTracer(StreamingOperationTracer delegate)
+      implements BlockAwareOperationTracer {
 
     @Override
-      public void tracePrepareTransaction(
-      final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
-        delegate.tracePrepareTransaction(worldView, transaction);
-      }
-
-      @Override
-      public void traceStartTransaction(
+    public void tracePrepareTransaction(
         final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
-        delegate.traceStartTransaction(worldView, transaction);
-      }
+      delegate.tracePrepareTransaction(worldView, transaction);
+    }
 
-      @Override
-      public void traceEndTransaction(
+    @Override
+    public void traceStartTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      delegate.traceStartTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceEndTransaction(
         final WorldView worldView,
         final org.hyperledger.besu.datatypes.Transaction tx,
         final boolean status,
@@ -457,65 +450,65 @@ public class BlockchainTestSubCommand implements Runnable {
         final long gasUsed,
         final Set<Address> selfDestructs,
         final long timeNs) {
-        delegate.traceEndTransaction(
+      delegate.traceEndTransaction(
           worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
-      }
+    }
 
-      @Override
-      public void traceBeforeRewardTransaction(
+    @Override
+    public void traceBeforeRewardTransaction(
         final WorldView worldView,
         final org.hyperledger.besu.datatypes.Transaction transaction,
         final Wei miningReward) {
-        delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
-      }
+      delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
+    }
 
-      @Override
-      public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-        delegate.traceContextEnter(frame);
-      }
+    @Override
+    public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextEnter(frame);
+    }
 
-      @Override
-      public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-        delegate.traceContextReEnter(frame);
-      }
+    @Override
+    public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextReEnter(frame);
+    }
 
-      @Override
-      public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-        delegate.traceContextExit(frame);
-      }
+    @Override
+    public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextExit(frame);
+    }
 
-      @Override
-      public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-        delegate.tracePreExecution(frame);
-      }
+    @Override
+    public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.tracePreExecution(frame);
+    }
 
-      @Override
-      public void tracePostExecution(
+    @Override
+    public void tracePostExecution(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final org.hyperledger.besu.evm.operation.Operation.OperationResult operationResult) {
-        delegate.tracePostExecution(frame, operationResult);
-      }
+      delegate.tracePostExecution(frame, operationResult);
+    }
 
-      @Override
-      public void tracePrecompileCall(
+    @Override
+    public void tracePrecompileCall(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final long gasRequirement,
         final org.apache.tuweni.bytes.Bytes output) {
-        delegate.tracePrecompileCall(frame, gasRequirement, output);
-      }
+      delegate.tracePrecompileCall(frame, gasRequirement, output);
+    }
 
-      @Override
-      public void traceAccountCreationResult(
+    @Override
+    public void traceAccountCreationResult(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final java.util.Optional<org.hyperledger.besu.evm.frame.ExceptionalHaltReason> haltReason) {
-        delegate.traceAccountCreationResult(frame, haltReason);
-      }
-
-      @Override
-      public boolean isExtendedTracing() {
-        return true;
-      }
+      delegate.traceAccountCreationResult(frame, haltReason);
     }
+
+    @Override
+    public boolean isExtendedTracing() {
+      return true;
+    }
+  }
 
   /**
    * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
@@ -527,8 +520,7 @@ public class BlockchainTestSubCommand implements Runnable {
    * prevent mixing human-readable messages with machine-parseable JSONL trace data.
    */
   private static class BlockTestTracerManager {
-    private final PrintWriter output;
-    private final boolean shouldCloseOutput;
+    private final PrintStream output;
     private final boolean showMemory;
     private final boolean showStack;
     private final boolean showReturnData;
@@ -539,22 +531,18 @@ public class BlockchainTestSubCommand implements Runnable {
      * Constructs a BlockTestTracerManager with specified tracing options.
      *
      * @param output the PrintWriter for trace output
-     * @param shouldCloseOutput whether to close the output writer (true for files, false for
-     *     System.err)
      * @param showMemory whether to include memory in traces
      * @param showStack whether to include stack in traces
      * @param showReturnData whether to include return data in traces
      * @param showStorage whether to include storage changes in traces
      */
     public BlockTestTracerManager(
-        final PrintWriter output,
-        final boolean shouldCloseOutput,
+        final PrintStream output,
         final boolean showMemory,
         final boolean showStack,
         final boolean showReturnData,
         final boolean showStorage) {
       this.output = output;
-      this.shouldCloseOutput = shouldCloseOutput;
       this.showMemory = showMemory;
       this.showStack = showStack;
       this.showReturnData = showReturnData;
@@ -604,22 +592,6 @@ public class BlockchainTestSubCommand implements Runnable {
               + "\"gasUsed\":%d,\"txCount\":%d,\"blockCount\":%d}%n",
           testName, passed, fork, durationMs, gasUsed, txCount, blockCount);
       output.flush();
-    }
-
-    /**
-     * Closes the output writer if it wraps a file. System.err is not closed as it's a shared
-     * system resource. The PrintWriter is created with autoFlush=true, so explicit flush() is
-     * primarily for safety before close().
-     *
-     * @throws IOException if an I/O error occurs
-     */
-    public void close() throws IOException {
-      if (output != null) {
-        output.flush();
-        if (shouldCloseOutput) {
-          output.close();
-        }
-      }
     }
   }
 }
