@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.dow
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -112,9 +113,10 @@ public class TwoStageFastSyncChainDownloader
       final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
       Hash checkpointHash;
       final BlockHeader checkpointBlockHeader;
+      final MutableBlockchain blockchain = protocolContext.getBlockchain();
       if (maybeCheckpoint.isEmpty()) {
         // the current head of chain is the lower trust anchor
-        checkpointBlockHeader = protocolContext.getBlockchain().getChainHeadHeader();
+        checkpointBlockHeader = blockchain.getChainHeadHeader();
         checkpointHash = checkpointBlockHeader.getHash();
         LOG.info(
             "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
@@ -127,9 +129,8 @@ public class TwoStageFastSyncChainDownloader
         Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
         checkpointBlockHeader =
             getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
-        protocolContext
-            .getBlockchain()
-            .unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
+        blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
+        blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
         LOG.info(
             "Using checkpoint {} as lower trust anchor: {}, {}",
             checkpoint.blockNumber(),
@@ -137,8 +138,7 @@ public class TwoStageFastSyncChainDownloader
             checkpoint.totalDifficulty());
       }
 
-      final BlockHeader genesisBlockHeader =
-          protocolContext.getBlockchain().getGenesisBlockHeader();
+      final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
 
       chainSyncState =
           ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
