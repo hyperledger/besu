@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
+import org.hyperledger.besu.cli.options.BalConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
@@ -122,6 +123,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -600,6 +602,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // API Configuration Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold API Configuration Options|@%n")
   ApiConfigurationOptions apiConfigurationOptions = new ApiConfigurationOptions();
+
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Block Access List Options|@%n")
+  BalConfigurationOptions balConfigurationOptions = new BalConfigurationOptions();
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -1241,6 +1246,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcIpcConfiguration,
         inProcessRpcConfiguration,
         apiConfigurationSupplier.get(),
+        balConfigurationOptions.toDomainObject(),
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -1811,6 +1817,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .withMiningParameters(miningParametersSupplier.get())
         .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+    final ApiConfiguration apiConfiguration = apiConfigurationSupplier.get();
+    final BalConfiguration balConfiguration = balConfigurationOptions.toDomainObject();
+
     BesuControllerBuilder besuControllerBuilder =
         controllerBuilder
             .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
@@ -1839,7 +1848,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .cacheLastBlockHeaders(numberOfBlockHeadersToCache)
             .isCacheLastBlockHeadersPreloadEnabled(isCacheLastBlockHeadersPreloadEnabled)
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
-            .apiConfiguration(apiConfigurationSupplier.get())
+            .apiConfiguration(apiConfiguration)
+            .balConfiguration(balConfiguration)
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
@@ -1847,8 +1857,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       besuControllerBuilder.isParallelTxProcessingEnabled(
           subStorageConfiguration.getParallelTxProcessingEnabled());
     }
-    besuControllerBuilder.isBlockAccessListEnabled(
-        apiConfigurationOptions.apiConfiguration().isBlockAccessListEnabled());
     return besuControllerBuilder;
   }
 
@@ -2112,6 +2120,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final InProcessRpcConfiguration inProcessRpcConfiguration,
       final ApiConfiguration apiConfiguration,
+      final BalConfiguration balConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Collection<EnodeURL> staticNodes,
@@ -2140,6 +2149,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
             .inProcessRpcConfiguration(inProcessRpcConfiguration)
             .apiConfiguration(apiConfiguration)
+            .balConfiguration(balConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(p2PDiscoveryConfig.bannedNodeIds())
@@ -2586,6 +2596,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private String generateConfigurationOverview() {
     final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
+
+    final BalConfiguration balConfiguration = balConfigurationOptions.toDomainObject();
+    builder.setBalConfiguration(balConfiguration);
 
     if (environment != null) {
       builder.setEnvironment(environment);
