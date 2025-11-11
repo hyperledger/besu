@@ -93,12 +93,17 @@ class AbstractBlockProcessorIntegrationTest {
   private DefaultBlockchain blockchain;
   private Address coinbase;
 
+  private MainnetBlockProcessor sequentialBlockProcessor;
+  private MainnetParallelBlockProcessor parallelBlockProcessor;
+  private MainnetBlockProcessor sequentialBlockProcessorNoRewards;
+  private MainnetParallelBlockProcessor parallelBlockProcessorNoRewards;
+
   private static final String GENESIS_RESOURCE =
       "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json";
 
   @BeforeEach
   public void setUp() {
-    final ExecutionContextTestFixture contextTestFixture =
+    final var contextTestFixture =
         ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
@@ -107,15 +112,8 @@ class AbstractBlockProcessorIntegrationTest {
     worldStateArchive = contextTestFixture.getStateArchive();
     protocolContext = contextTestFixture.getProtocolContext();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
-  }
 
-  private static Stream<Arguments> blockProcessors(
-      final Wei coinbaseReward, final boolean skipRewards) {
-    final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
-            .dataStorageFormat(DataStorageFormat.BONSAI)
-            .build();
-
+    // Create block processors with rewards
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final var protocolSpec =
         protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
@@ -123,84 +121,111 @@ class AbstractBlockProcessorIntegrationTest {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final var receiptFactory = protocolSpec.getTransactionReceiptFactory();
 
-    final BlockProcessor sequentialBlockProcessor =
+    sequentialBlockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
+            COINBASE_REWARD,
             BlockHeader::getCoinbase,
-            skipRewards,
+            false,
             protocolSchedule);
 
-    final BlockProcessor parallelBlockProcessor =
+    parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
+            COINBASE_REWARD,
             BlockHeader::getCoinbase,
-            skipRewards,
+            false,
             protocolSchedule,
             new NoOpMetricsSystem());
 
-    return Stream.of(
-        Arguments.of("sequential", sequentialBlockProcessor),
-        Arguments.of("parallel", parallelBlockProcessor));
+    // Create block processors without rewards
+    sequentialBlockProcessorNoRewards =
+        new MainnetBlockProcessor(
+            transactionProcessor,
+            receiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            true,
+            protocolSchedule);
+
+    parallelBlockProcessorNoRewards =
+        new MainnetParallelBlockProcessor(
+            transactionProcessor,
+            receiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            true,
+            protocolSchedule,
+            new NoOpMetricsSystem());
   }
 
   private static Stream<Arguments> blockProcessorProvider() {
-    return blockProcessors(COINBASE_REWARD, false);
+    return Stream.of(Arguments.of("sequential"), Arguments.of("parallel"));
   }
 
   private static Stream<Arguments> blockProcessorProviderWithoutRewards() {
-    return blockProcessors(Wei.ZERO, true);
+    return Stream.of(Arguments.of("sequential"), Arguments.of("parallel"));
+  }
+
+  private BlockProcessor getBlockProcessor(final String processorType) {
+    return switch (processorType) {
+      case "sequential" -> sequentialBlockProcessor;
+      case "parallel" -> parallelBlockProcessor;
+      default -> throw new IllegalArgumentException("Unknown processor type: " + processorType);
+    };
+  }
+
+  private BlockProcessor getBlockProcessorNoRewards(final String processorType) {
+    return switch (processorType) {
+      case "sequential" -> sequentialBlockProcessorNoRewards;
+      case "parallel" -> parallelBlockProcessorNoRewards;
+      default -> throw new IllegalArgumentException("Unknown processor type: " + processorType);
+    };
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testBlockProcessingWithTransfers(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processSimpleTransfers(blockProcessor);
+  void testBlockProcessingWithTransfers(final String processorType) {
+    processSimpleTransfers(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersSameSender(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersSameSender(blockProcessor);
+  void testProcessConflictedSimpleTransfersSameSender(final String processorType) {
+    processConflictedSimpleTransfersSameSender(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
   void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
+      final String processorType) {
+    processConflictedSimpleTransfersSameAddressReceiverAndSender(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersWithCoinbase(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processConflictedSimpleTransfersWithCoinbase(blockProcessor);
+  void testProcessConflictedSimpleTransfersWithCoinbase(final String processorType) {
+    processConflictedSimpleTransfersWithCoinbase(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessContractSlotUpdateThenReadTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processContractSlotUpdateThenReadTx(blockProcessor);
+  void testProcessContractSlotUpdateThenReadTx(final String processorType) {
+    processContractSlotUpdateThenReadTx(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessSlotReadThenUpdateTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processSlotReadThenUpdateTx(blockProcessor);
+  void testProcessSlotReadThenUpdateTx(final String processorType) {
+    processSlotReadThenUpdateTx(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
-  void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(
-      final String ignoredName, final BlockProcessor blockProcessor) {
+  void blockAccessListStateRootMatchesAccumulatorForSimpleTransfers(final String processorType) {
+    BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Transaction transactionTransfer1 =
         createTransferTransaction(
             0, 1_000_000_000_000_000_000L, 300000L, 0L, 5L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR);
@@ -225,8 +250,8 @@ class AbstractBlockProcessorIntegrationTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProviderWithoutRewards")
-  void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(
-      final String ignoredName, final BlockProcessor blockProcessor) {
+  void blockAccessListStateRootMatchesAccumulatorForStorageAndReads(final String processorType) {
+    BlockProcessor blockProcessor = getBlockProcessorNoRewards(processorType);
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
 
     Transaction setSlot1Transaction =
@@ -261,30 +286,26 @@ class AbstractBlockProcessorIntegrationTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountReadThenUpdateTx(blockProcessor);
+  void testProcessAccountReadThenUpdateTx(final String processorType) {
+    processAccountReadThenUpdateTx(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTx(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountUpdateThenReadTx(blockProcessor);
+  void testProcessAccountUpdateThenReadTx(final String processorType) {
+    processAccountUpdateThenReadTx(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTxWithTwoAccounts(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
+  void testProcessAccountReadThenUpdateTxWithTwoAccounts(final String processorType) {
+    processAccountReadThenUpdateTxWithTwoAccounts(getBlockProcessor(processorType));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(
-      final String ignoredName, final BlockProcessor blockProcessor) {
-    processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
+  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(final String processorType) {
+    processAccountUpdateThenReadTxWithTwoAccounts(getBlockProcessor(processorType));
   }
 
   @Test
