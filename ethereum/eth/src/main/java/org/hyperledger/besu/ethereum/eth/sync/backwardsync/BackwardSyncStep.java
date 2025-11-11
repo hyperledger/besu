@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
-import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersEndingAtFromPeerByHashTask;
 
 import java.util.List;
 import java.util.Optional;
@@ -73,57 +72,37 @@ public class BackwardSyncStep {
     final int batchSize = context.getBatchSize();
     LOG.trace("Requesting headers for hash {}, with batch size {}", hash, batchSize);
 
-    CompletableFuture<List<BlockHeader>> headersResult;
-    if (context.getSynchronizerConfiguration().isPeerTaskSystemEnabled()) {
-      headersResult =
-          context
-              .getEthContext()
-              .getScheduler()
-              .scheduleServiceTask(
-                  () -> {
-                    GetHeadersFromPeerTask task =
-                        new GetHeadersFromPeerTask(
-                            hash,
-                            0,
-                            batchSize,
-                            0,
-                            Direction.REVERSE,
-                            context.getEthContext().getEthPeers().peerCount(),
-                            context.getProtocolSchedule());
-                    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                        context.getEthContext().getPeerTaskExecutor().execute(task);
-                    if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                        || taskResult.result().isEmpty()) {
-                      throw new RuntimeException("Unable to retrieve headers");
-                    }
-                    return CompletableFuture.completedFuture(taskResult.result().get());
-                  });
-    } else {
-      final RetryingGetHeadersEndingAtFromPeerByHashTask
-          retryingGetHeadersEndingAtFromPeerByHashTask =
-              RetryingGetHeadersEndingAtFromPeerByHashTask.endingAtHash(
-                  context.getProtocolSchedule(),
-                  context.getEthContext(),
-                  hash,
-                  0,
-                  batchSize,
-                  context.getMetricsSystem(),
-                  context.getEthContext().getEthPeers().peerCount());
-      headersResult =
-          context
-              .getEthContext()
-              .getScheduler()
-              .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run);
-    }
-    return headersResult.thenApply(
-        blockHeaders -> {
-          LOG.atDebug()
-              .setMessage("Got headers {} -> {}")
-              .addArgument(blockHeaders.get(0)::getNumber)
-              .addArgument(blockHeaders.get(blockHeaders.size() - 1)::getNumber)
-              .log();
-          return blockHeaders;
-        });
+    return context
+        .getEthContext()
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              GetHeadersFromPeerTask task =
+                  new GetHeadersFromPeerTask(
+                      hash,
+                      0,
+                      batchSize,
+                      0,
+                      Direction.REVERSE,
+                      context.getEthContext().getEthPeers().peerCount(),
+                      context.getProtocolSchedule());
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                  context.getEthContext().getPeerTaskExecutor().execute(task);
+              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                throw new RuntimeException("Unable to retrieve headers");
+              }
+              return CompletableFuture.completedFuture(taskResult.result().get());
+            })
+        .thenApply(
+            blockHeaders -> {
+              LOG.atDebug()
+                  .setMessage("Got headers {} -> {}")
+                  .addArgument(blockHeaders.get(0)::getNumber)
+                  .addArgument(blockHeaders.get(blockHeaders.size() - 1)::getNumber)
+                  .log();
+              return blockHeaders;
+            });
   }
 
   @VisibleForTesting
