@@ -71,6 +71,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -93,6 +94,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
+  private final BalConfiguration balConfiguration;
   private final GenesisConfigOptions genesisConfigOptions;
   private final TransactionSimulator transactionSimulator;
   private final MetricsSystem metricsSystem;
@@ -107,6 +109,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningConfiguration miningConfiguration,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
+      final BalConfiguration balConfiguration,
       final GenesisConfigOptions genesisConfigOptions,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
@@ -119,6 +122,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningConfiguration = miningConfiguration;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
+    this.balConfiguration = balConfiguration;
     this.genesisConfigOptions = genesisConfigOptions;
     this.transactionSimulator = transactionSimulator;
     this.metricsSystem = metricsSystem;
@@ -184,7 +188,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 transactionSimulator,
                 miningConfiguration,
                 apiConfiguration));
-    if (apiConfiguration.isBlockAccessListEnabled()) {
+    if (balConfiguration.isBalApiEnabled()) {
       final EthGetBlockAccessListByNumber method =
           new EthGetBlockAccessListByNumber(blockchainQueries);
       map.put(method.getName(), method);

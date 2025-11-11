@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -228,6 +229,7 @@ public class JsonRpcTestMethodsFactory {
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             ImmutableApiConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             Optional.empty(),
             transactionSimulator,
             new DeterministicEthScheduler());

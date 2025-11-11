@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -199,7 +200,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
@@ -210,7 +211,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem(),
                     EvmConfiguration.DEFAULT));
     final MilestoneStreamingTransitionProtocolSchedule schedule =

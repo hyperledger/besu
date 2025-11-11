@@ -196,18 +196,4 @@ public class ApiConfigurationOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
-
-  @Test
-  public void blockAccessListEnabledOptionMustBeUsed() {
-    parseCommand("--Xapi-block-access-list-enabled");
-
-    verify(mockRunnerBuilder).apiConfiguration(apiConfigurationCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(apiConfigurationCaptor.getValue())
-        .isEqualTo(ImmutableApiConfiguration.builder().isBlockAccessListEnabled(true).build());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
 }

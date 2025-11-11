@@ -41,16 +41,20 @@ public class BlockAccessListStateRootHashCalculator {
 
   private static BonsaiWorldState prepareWorldState(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
-    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-    if (!chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      throw new IllegalStateException("Chain head is not the parent of the processed block");
+    final Hash parentHash = blockHeader.getParentHash();
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(parentHash);
+    if (maybeParentHeader.isEmpty()) {
+      throw new IllegalStateException(
+          String.format("Parent %s of block %s not found", parentHash, blockHeader.getHash()));
     }
     final BonsaiWorldState ws =
         (BonsaiWorldState)
             protocolContext
                 .getWorldStateArchive()
                 .getWorldState(
-                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
+                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(
+                        maybeParentHeader.get()))
                 .orElseThrow();
     ws.disableCacheMerkleTrieLoader();
     return ws;

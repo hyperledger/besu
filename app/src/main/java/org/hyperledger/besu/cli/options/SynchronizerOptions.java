@@ -302,8 +302,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int snapsyncFlatStorageHealedCountPerRequest =
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
-  // TODO --Xsnapsync-server-enabled is deprecated, remove in a future release
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {SNAP_SERVER_ENABLED_FLAG},
       paramLabel = "<Boolean>",

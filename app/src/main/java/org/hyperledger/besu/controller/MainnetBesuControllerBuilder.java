@@ -101,7 +101,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         super.miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
+        balConfiguration,
         metricsSystem);
   }
 

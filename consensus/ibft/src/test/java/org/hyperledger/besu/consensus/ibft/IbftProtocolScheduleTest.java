@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -128,7 +129,7 @@ public class IbftProtocolScheduleTest {
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        false,
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 

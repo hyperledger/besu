@@ -69,8 +69,6 @@ import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.openjdk.jol.info.ClassLayout;
 import org.openjdk.jol.info.GraphPathRecord;
 import org.openjdk.jol.info.GraphVisitor;
@@ -98,7 +96,6 @@ import org.openjdk.jol.info.GraphWalker;
  * then complete the writing of the test that will verify the current amount of memory used by that
  * class.
  */
-@EnabledOnOs({OS.LINUX})
 public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPoolTest {
   /**
    * Classes that represent constant instances, across all pending transaction types, and are
@@ -265,7 +262,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     assertThat(cSize).isEqualTo(calculateListShallowSize(blobCount));
 
-    final var blobProofBundle = blobProofBundles.get(0);
+    final var blobProofBundle = blobProofBundles.getFirst();
     final long blobProofBundleSize = retainedSizeOfField(blobProofBundle, Set.of(), Set.of());
 
     System.out.println("BlobProofBundle size: " + blobProofBundleSize);
@@ -308,19 +305,19 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     assertThat(blobProofBundlesSize).isEqualTo(calculateListShallowSize(blobCount));
 
-    final var kzgProofList = blobProofBundles.get(0).getKzgProof();
+    final var kzgProofList = blobProofBundles.getFirst().getKzgProof();
     // the list of proof is a sublist view on the single big shared list of all the proofs,
     // so we are just interested in the size of the sublist container here
     final long kzgProofContainerSize = retainedSizeOfField(kzgProofList, Set.of(), Set.of(".root"));
     System.out.println("KZGProof container size: " + kzgProofContainerSize);
     assertThat(kzgProofContainerSize).isEqualTo(KZG_PROOF_CONTAINER_SHALLOW_SIZE);
 
-    final var kzgProof = kzgProofList.get(0);
+    final var kzgProof = kzgProofList.getFirst();
     final long kzgProofSize = retainedSizeOfField(kzgProof, Set.of(), Set.of());
     System.out.println("KZGProof size: " + kzgProofSize);
     assertThat(kzgProofSize).isEqualTo(KZG_PROOF_SIZE);
 
-    final var blobProofBundle = blobProofBundles.get(0);
+    final var blobProofBundle = blobProofBundles.getFirst();
     // get the size of the bundle w/o the dynamic part of the KZG proof list,
     // since it will be calculated at runtime
     final long blobProofBundleSize =
@@ -429,7 +426,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     assertThat(optionalClassLayout.instanceSize() + listClassLayout.instanceSize())
         .isEqualTo(OPTIONAL_ACCESS_LIST_SHALLOW_SIZE);
 
-    final AccessListEntry ale = optAL.get().get(0);
+    final AccessListEntry ale = optAL.get().getFirst();
 
     long aleSize = retainedSizeOfField(ale, Set.of(), Set.of(".storageKeys.elements["));
 
@@ -437,7 +434,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     assertThat(aleSize).isEqualTo(ACCESS_LIST_ENTRY_SHALLOW_SIZE);
 
-    final Bytes32 storageKey = ale.storageKeys().get(0);
+    final Bytes32 storageKey = ale.storageKeys().getFirst();
     final ClassLayout cl4 = ClassLayout.parseInstance(storageKey);
     System.out.println(cl4.toPrintable());
     System.out.println("Single storage key size: " + cl4.instanceSize());
@@ -484,7 +481,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     assertThat(optionalClassLayout.instanceSize() + listClassLayout.instanceSize())
         .isEqualTo(OPTIONAL_CODE_DELEGATION_LIST_SHALLOW_SIZE);
 
-    final CodeDelegation codeDelegation = optCD.get().get(0);
+    final CodeDelegation codeDelegation = optCD.get().getFirst();
 
     long cdSize = retainedSizeOfField(codeDelegation, Set.of(), Set.of());
     System.out.println("CodeDelegation container size: " + cdSize);
@@ -536,9 +533,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
         gpr -> {
           if (!startWithAnyOf(skipPrefixes, gpr)) {
             if (SHARED_CLASSES.stream().anyMatch(scz -> scz.isAssignableFrom(gpr.klass()))) {
-              System.out.println(
-                  "Not counting field: %s, since of the shared class: %s"
-                      .formatted(gpr.path(), gpr.klass()));
+              System.out.printf(
+                  "Not counting field: %s, since of the shared class: %s%n",
+                  gpr.path(), gpr.klass());
               skipPrefixes.add(gpr.path());
             } else if (startWithAnyOf(constantFieldPaths, gpr)) {
               var constantFieldPrefix = getMatchingPrefix(constantFieldPaths, gpr);
@@ -555,7 +552,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
                     "Not counting variable size field with prefix: " + variableSizePrefix);
               }
             } else {
-              System.out.println("Counting field %s, size %s".formatted(gpr.path(), gpr.size()));
+              System.out.printf("Counting field %s, size %s%n", gpr.path(), gpr.size());
               fieldSizes.add(new FieldSize(gpr.path(), gpr.klass(), gpr.size()));
             }
           }
