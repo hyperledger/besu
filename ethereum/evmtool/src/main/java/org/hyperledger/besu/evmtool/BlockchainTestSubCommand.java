@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -40,10 +39,10 @@ import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -252,10 +251,9 @@ public class BlockchainTestSubCommand implements Runnable {
             .getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
-    ProtocolContext context = spec.getProtocolContext();
 
     BlockTestTracerManager tracerManager = null;
-    PrintWriter traceWriter = null;
+    PrintWriter traceWriter;
     long totalGasUsed = 0;
     int totalTxCount = 0;
     int blockCount = 0;
@@ -282,30 +280,14 @@ public class BlockchainTestSubCommand implements Runnable {
                 parentCommand.showReturnData,
                 parentCommand.showStorage);
 
-        final ServiceManager serviceManager;
-        if (context.getPluginServiceManager() == null) {
-          serviceManager = new ServiceManager.SimpleServiceManager();
-          context =
-              new ProtocolContext.Builder()
-                  .withBlockchain(context.getBlockchain())
-                  .withWorldStateArchive(context.getWorldStateArchive())
-                  .withConsensusContext(context.getConsensusContext(ConsensusContext.class))
-                  .withBadBlockManager(context.getBadBlockManager())
-                  .withServiceManager(serviceManager)
-                  .build();
-        } else {
-          serviceManager = context.getPluginServiceManager();
-        }
-
-        final BlockTestTracerProvider tracerProvider = new BlockTestTracerProvider(tracerManager);
+        final ServiceManager serviceManager = context.getPluginServiceManager();
+        final BlockchainTestTracerProvider tracerProvider = new BlockchainTestTracerProvider(tracerManager);
         serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
       } catch (final IOException e) {
         parentCommand.out.println("Failed to open trace output: " + e.getMessage());
         return;
       }
     }
-
-    final BlockTestTracerManager finalTracerManager = tracerManager;
 
     try {
       for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
@@ -335,7 +317,7 @@ public class BlockchainTestSubCommand implements Runnable {
 
           timer.stop();
 
-          if (parentCommand.showJsonResults && finalTracerManager != null) {
+          if (parentCommand.showJsonResults) {
             totalGasUsed += block.getHeader().getGasUsed();
             totalTxCount += block.getBody().getTransactions().size();
           }
@@ -391,7 +373,7 @@ public class BlockchainTestSubCommand implements Runnable {
         parentCommand.out.println("Chain import successful - " + test);
       }
 
-      if (tracerManager != null) {
+      if (parentCommand.showJsonResults) {
         final long testDuration = System.currentTimeMillis() - testStartTime;
         tracerManager.writeTestEnd(
             test,
@@ -432,73 +414,41 @@ public class BlockchainTestSubCommand implements Runnable {
   }
 
   /**
-   * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
-   * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
-   * BlockImportTracerProvider infrastructure.
-   */
-  private static class BlockTestTracerProvider implements BlockImportTracerProvider {
-    private final BlockTestTracerManager tracerManager;
-
-    BlockTestTracerProvider(final BlockTestTracerManager tracerManager) {
-      this.tracerManager = tracerManager;
-    }
+     * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
+     * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
+     * BlockImportTracerProvider infrastructure.
+     */
+    private record BlockchainTestTracerProvider(BlockTestTracerManager tracerManager)
+    implements BlockImportTracerProvider {
 
     @Override
-    public BlockAwareOperationTracer getBlockImportTracer(
-        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
-      return new BlockAwareOperationTracerAdapter(tracerManager.createTracer());
+      public BlockAwareOperationTracer getBlockImportTracer(
+      final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
+        return new BlockchainTestTracer(tracerManager.createTracer());
+      }
     }
-  }
 
   /**
-   * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
-   * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
-   * while providing default implementations for block-level tracing methods.
-   */
-  private static class BlockAwareOperationTracerAdapter implements BlockAwareOperationTracer {
-    private final StreamingOperationTracer delegate;
-
-    BlockAwareOperationTracerAdapter(final StreamingOperationTracer delegate) {
-      this.delegate = delegate;
-    }
+     * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
+     * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
+     * while providing default implementations for block-level tracing methods.
+     */
+    private record BlockchainTestTracer(StreamingOperationTracer delegate) implements BlockAwareOperationTracer {
 
     @Override
-    public void traceStartBlock(
-        final WorldView worldView,
-        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader,
-        final BlockBody blockBody,
-        final Address miningBeneficiary) {
-      // No-op: StreamingOperationTracer doesn't need block-level events
-    }
+      public void tracePrepareTransaction(
+      final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+        delegate.tracePrepareTransaction(worldView, transaction);
+      }
 
-    @Override
-    public void traceEndBlock(
-        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader, final BlockBody blockBody) {
-      // No-op: StreamingOperationTracer doesn't need block-level events
-    }
-
-    @Override
-    public void traceStartBlock(
-        final WorldView worldView,
-        final org.hyperledger.besu.plugin.data.ProcessableBlockHeader processableBlockHeader,
-        final Address miningBeneficiary) {
-      // No-op: StreamingOperationTracer doesn't need block-level events
-    }
-
-    @Override
-    public void tracePrepareTransaction(
+      @Override
+      public void traceStartTransaction(
         final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
-      delegate.tracePrepareTransaction(worldView, transaction);
-    }
+        delegate.traceStartTransaction(worldView, transaction);
+      }
 
-    @Override
-    public void traceStartTransaction(
-        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
-      delegate.traceStartTransaction(worldView, transaction);
-    }
-
-    @Override
-    public void traceEndTransaction(
+      @Override
+      public void traceEndTransaction(
         final WorldView worldView,
         final org.hyperledger.besu.datatypes.Transaction tx,
         final boolean status,
@@ -507,65 +457,65 @@ public class BlockchainTestSubCommand implements Runnable {
         final long gasUsed,
         final Set<Address> selfDestructs,
         final long timeNs) {
-      delegate.traceEndTransaction(
+        delegate.traceEndTransaction(
           worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
-    }
+      }
 
-    @Override
-    public void traceBeforeRewardTransaction(
+      @Override
+      public void traceBeforeRewardTransaction(
         final WorldView worldView,
         final org.hyperledger.besu.datatypes.Transaction transaction,
         final Wei miningReward) {
-      delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
-    }
+        delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
+      }
 
-    @Override
-    public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-      delegate.traceContextEnter(frame);
-    }
+      @Override
+      public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+        delegate.traceContextEnter(frame);
+      }
 
-    @Override
-    public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-      delegate.traceContextReEnter(frame);
-    }
+      @Override
+      public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+        delegate.traceContextReEnter(frame);
+      }
 
-    @Override
-    public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-      delegate.traceContextExit(frame);
-    }
+      @Override
+      public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+        delegate.traceContextExit(frame);
+      }
 
-    @Override
-    public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
-      delegate.tracePreExecution(frame);
-    }
+      @Override
+      public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+        delegate.tracePreExecution(frame);
+      }
 
-    @Override
-    public void tracePostExecution(
+      @Override
+      public void tracePostExecution(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final org.hyperledger.besu.evm.operation.Operation.OperationResult operationResult) {
-      delegate.tracePostExecution(frame, operationResult);
-    }
+        delegate.tracePostExecution(frame, operationResult);
+      }
 
-    @Override
-    public void tracePrecompileCall(
+      @Override
+      public void tracePrecompileCall(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final long gasRequirement,
         final org.apache.tuweni.bytes.Bytes output) {
-      delegate.tracePrecompileCall(frame, gasRequirement, output);
-    }
+        delegate.tracePrecompileCall(frame, gasRequirement, output);
+      }
 
-    @Override
-    public void traceAccountCreationResult(
+      @Override
+      public void traceAccountCreationResult(
         final org.hyperledger.besu.evm.frame.MessageFrame frame,
         final java.util.Optional<org.hyperledger.besu.evm.frame.ExceptionalHaltReason> haltReason) {
-      delegate.traceAccountCreationResult(frame, haltReason);
-    }
+        delegate.traceAccountCreationResult(frame, haltReason);
+      }
 
-    @Override
-    public boolean isExtendedTracing() {
-      return true;
+      @Override
+      public boolean isExtendedTracing() {
+        return true;
+      }
     }
-  }
 
   /**
    * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
@@ -620,7 +570,7 @@ public class BlockchainTestSubCommand implements Runnable {
       currentTracer =
           new StreamingOperationTracer(
               output,
-              OpCodeTracerConfigBuilder.create()
+              OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
                   .traceMemory(showMemory)
                   .traceStack(showStack)
                   .traceReturnData(showReturnData)
