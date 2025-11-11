@@ -641,14 +641,19 @@ public class EthPeers implements PeerSelector {
         try {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(6L, TimeUnit.SECONDS);
         } catch (Exception e) {
+          LOG.atTrace()
+              .setMessage("Error checking if peer {} is a snap server. Setting to false.")
+              .addArgument(peer.getLoggableId())
+              .log();
           peer.setIsServingSnap(false);
           return;
         }
         peer.setIsServingSnap(isServer);
-        LOG.info(
-            "AAAAA SNAP_STATUS: Peer {} marked as {} snap",
-            peer.getLoggableId(),
-            isServer ? "SERVING" : "NOT SERVING");
+        LOG.atTrace()
+            .setMessage("{}: peer {}")
+            .addArgument(isServer ? "Is a snap server" : "Is NOT a snap server")
+            .addArgument(peer.getLoggableId())
+            .log();
       }
     }
     // Log overall snap peer status after each check
