@@ -615,11 +615,12 @@ public class DefaultBlockchain implements MutableBlockchain {
       final boolean transactionIndexing) {
 
     final Hash hash = block.getHash();
-    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
+    final BlockHeader header = block.getHeader();
+    final Difficulty td = calculateTotalDifficultyForSyncing(header);
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
-    updater.putBlockHeader(hash, block.getHeader());
+    updater.putBlockHeader(hash, header);
     updater.putSyncBlockBody(hash, block.getBody());
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
