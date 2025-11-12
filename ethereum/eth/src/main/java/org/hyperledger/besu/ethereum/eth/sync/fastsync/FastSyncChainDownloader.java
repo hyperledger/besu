@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -64,7 +65,7 @@ public class FastSyncChainDownloader {
     final ChainSyncStateStorage chainStateStorage =
         new ChainSyncStateStorage(fastSyncDataDirectory);
 
-    return new TwoStageFastSyncChainDownloader(
+    return new SnapSyncChainDownloader(
         pipelineFactory,
         protocolSchedule,
         protocolContext,
