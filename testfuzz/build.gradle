@@ -44,6 +44,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
   implementation 'org.jacoco:org.jacoco.core'
+  implementation 'org.mockito:mockito-core'
 }
 
 application {
@@ -128,9 +129,49 @@ tasks.register("fuzzAll") {
   dependsOn fuzzEvmone, fuzzEthereumJS, fuzzGeth, fuzzNethermind, fuzzReth
 }
 
+// P256 signature verification fuzzer tasks
+def p256CorpusDir = "${buildDir}/generated/p256-corpus"
+
+tasks.register("runP256Fuzzer", JavaExec) {
+  doNotTrackState("Produces no artifacts")
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
+
+  args = [
+    "p256verify",
+    "--corpus-dir=${p256CorpusDir}"
+  ]
+
+  doFirst {
+    mkdir p256CorpusDir
+  }
+}
+
+// Standard P256 fuzzing task
+tasks.register("fuzzP256Verify") {
+  dependsOn "generateP256Corpus"
+  doLast {
+    runP256Fuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
+    runP256Fuzzer.args += "--new-corpus-dir=${p256CorpusDir}/new"
+  }
+  finalizedBy("runP256Fuzzer")
+}
+
+// Task to generate initial P256 corpus
+tasks.register("generateP256Corpus", JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.testfuzz.P256VerifyCorpusGenerator'
+  args = [p256CorpusDir]
+
+  doFirst {
+    mkdir p256CorpusDir
+  }
+}
+
 jacoco {
   applyTo run
   applyTo runFuzzer
+  applyTo runP256Fuzzer
 }
 
 // Copies jacoco into the lib directory
