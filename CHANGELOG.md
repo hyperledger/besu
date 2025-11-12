@@ -13,6 +13,7 @@
 
 ### Upcoming Breaking Changes
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - ETC (Ethereum Classic) network support
   - Proof of Work consensus (PoW)
   - Fast Sync
 
