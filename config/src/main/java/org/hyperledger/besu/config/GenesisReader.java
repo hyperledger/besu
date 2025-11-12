@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKey;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -74,7 +75,7 @@ interface GenesisReader {
 
     @Override
     public Stream<GenesisAccount> streamAllocations() {
-      return Streams.stream(allocations.fields())
+      return allocations.propertyStream()
           .map(
               entry -> {
                 final var on = normalizeKeys((ObjectNode) entry.getValue());
@@ -233,7 +234,7 @@ interface GenesisReader {
       return JsonUtil.getObjectNode(json, key)
           .map(
               storageMap ->
-                  Streams.stream(storageMap.fields())
+                  storageMap.propertyStream()
                       .collect(
                           Collectors.toMap(
                               e -> UInt256.fromHexString(e.getKey()),
