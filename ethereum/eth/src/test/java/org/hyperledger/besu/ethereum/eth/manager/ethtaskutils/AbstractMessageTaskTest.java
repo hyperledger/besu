@@ -155,7 +155,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             .setBlockchain(blockchain)
             .setEthScheduler(ethScheduler)
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .setEthPeers(ethPeers)
             .setEthMessages(ethMessages)
             .setEthContext(ethContext)
