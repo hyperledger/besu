@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Random;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -161,6 +162,69 @@ public class BenchmarkHelper {
       } while (!condition.test(a, b));
       aPool[i] = a;
       bPool[i] = b;
+    }
+  }
+
+  /**
+   * Fill 2 arrays with random byte values.
+   *
+   * @param aPool destination array for pool a
+   * @param bPool destination array for pool b
+   * @param aSizeSupplier size of the Bytes for pool a
+   * @param bSizeSupplier size of the Bytes for pool b
+   */
+  public static <T> void fillPools(
+    final Bytes[] aPool,
+    final Bytes[] bPool,
+    final Supplier<Integer> aSizeSupplier,
+    final Supplier<Integer> bSizeSupplier) {
+    fillPools(
+      aPool,
+      bPool,
+      aSizeSupplier,
+      bSizeSupplier,
+      byteArray -> byteArray,
+      (__, ___) -> false);
+  }
+  /**
+   * Fill 2 arrays with random byte values, but at each index, insertion is dictated by a certain
+   * criteria.
+   *
+   * @param aPool destination array for pool a
+   * @param bPool destination array for pool b
+   * @param aSizeSupplier size of the Bytes for pool a
+   * @param bSizeSupplier size of the Bytes for pool b
+   * @param transform what transformation should apply beforehand before criteria is checked
+   * @param swapOperands criteria, at each index, to say whether element on aPool should be swapped
+   *     with element on bPool
+   */
+  public static <T> void fillPools(
+      final Bytes[] aPool,
+      final Bytes[] bPool,
+      final Supplier<Integer> aSizeSupplier,
+      final Supplier<Integer> bSizeSupplier,
+      final Function<byte[], T> transform,
+      final BiPredicate<T, T> swapOperands) {
+
+    if (aPool.length != bPool.length) {
+      throw new IllegalArgumentException("pools should have same length");
+    }
+
+    final Random random = new Random();
+    for (int i = 0; i < aPool.length; i++) {
+      final int aSize = aSizeSupplier.get();
+      final int bSize = bSizeSupplier.get();
+      final byte[] a = new byte[aSize];
+      final byte[] b = new byte[bSize];
+      random.nextBytes(a);
+      random.nextBytes(b);
+      if (swapOperands.test(transform.apply(a), transform.apply(b))) {
+        bPool[i] = Bytes.wrap(a);
+        aPool[i] = Bytes.wrap(b);
+      } else {
+        aPool[i] = Bytes.wrap(a);
+        bPool[i] = Bytes.wrap(b);
+      }
     }
   }
 

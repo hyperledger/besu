@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.fillPools;
+
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DivOperationOptimized;
@@ -72,13 +74,15 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case LARGER_QUOTIENT:
         fillPools(
+            aPool,
+            bPool,
             () -> 22 + RANDOM.nextInt(10),
-            () -> 1 + RANDOM.nextInt(10),
-            byteArray -> new BigInteger(1, byteArray),
-            (__, ___) -> true);
+            () -> 1 + RANDOM.nextInt(10));
         break;
       case SMALL_QUOTIENT:
         fillPools(
+            aPool,
+            bPool,
             () -> 24 + RANDOM.nextInt(9),
             () -> 24 + RANDOM.nextInt(9),
             byteArray -> new BigInteger(1, byteArray),
@@ -86,6 +90,8 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case UNIFORM_OPERATORS:
         fillPools(
+            aPool,
+            bPool,
             () -> 1 + RANDOM.nextInt(32),
             () -> 1 + RANDOM.nextInt(32),
             byteArray -> new BigInteger(1, byteArray),
@@ -93,20 +99,22 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case INT_OPERATORS:
         fillPools(
+            aPool,
+            bPool,
             () -> 5 + RANDOM.nextInt(4),
-            () -> 1 + RANDOM.nextInt(4),
-            byteArray -> new BigInteger(1, byteArray),
-            (__, ___) -> true);
+            () -> 1 + RANDOM.nextInt(4));
         break;
       case LONG_OPERATORS:
         fillPools(
+            aPool,
+            bPool,
             () -> 9 + RANDOM.nextInt(5),
-            () -> 4 + RANDOM.nextInt(5),
-            byteArray -> new BigInteger(1, byteArray),
-            (__, ___) -> true);
+            () -> 4 + RANDOM.nextInt(5));
         break;
       case BIG_OPERATORS:
         fillPools(
+            aPool,
+            bPool,
             () -> 17 + RANDOM.nextInt(16),
             () -> 17 + RANDOM.nextInt(16),
             byteArray -> new BigInteger(1, byteArray),
@@ -114,7 +122,10 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         break;
       case FULL_RANDOM:
         fillPools(
-            () -> 1 + RANDOM.nextInt(32), () -> 1 + RANDOM.nextInt(32), __ -> 0, (__, ___) -> true);
+            aPool,
+            bPool,
+            () -> 1 + RANDOM.nextInt(32),
+            () -> 1 + RANDOM.nextInt(32));
         break;
     }
     index = 0;
