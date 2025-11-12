@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -51,7 +52,8 @@ public class TransactionsMessageSenderTest {
   private final PeerTransactionTracker transactionTracker =
       new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
   private final TransactionsMessageSender messageSender =
-      new TransactionsMessageSender(transactionTracker);
+      new TransactionsMessageSender(
+          transactionTracker, EthProtocolConfiguration.DEFAULT.getMaxTransactionsMessageSize());
 
   @Test
   public void shouldSendTransactionsToEachPeer() throws Exception {
