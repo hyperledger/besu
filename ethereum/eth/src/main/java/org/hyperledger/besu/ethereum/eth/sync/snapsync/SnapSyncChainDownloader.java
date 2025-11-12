@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedLis
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
@@ -110,7 +111,7 @@ public class SnapSyncChainDownloader
     // Initialize or load chain sync state
     ChainSyncState chainSyncState =
         chainStateStorage.loadState(
-            rlpInput -> BlockHeader.readFrom(rlpInput, pipelineFactory.getBlockHeaderFunctions()));
+            rlpInput -> BlockHeader.readFrom(rlpInput, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     if (chainSyncState == null) {
       // First time sync - create initial state
       // This downloads headers from the pivot down to the genesis block
@@ -148,11 +149,7 @@ public class SnapSyncChainDownloader
       chainSyncState =
           ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
 
-      LOG.info(
-          "Created initial chain sync state: pivot={}, checkpoint={}, headers anchor={}",
-          initialPivotHeader.getNumber(),
-          checkpointBlockHeader.getNumber(),
-          genesisBlockHeader.getNumber());
+      LOG.info("Created initial chain sync state: {}", chainSyncState);
     } else {
       LOG.info("Loaded existing chain sync state: {}", chainSyncState);
     }
@@ -168,7 +165,7 @@ public class SnapSyncChainDownloader
   }
 
   @Override
-  public void onWorldStateFinished() {
+  public void onWorldStateHealFinished() {
     LOG.info("World state download is stable, no more pivot updates expected");
     worldStateHealFinishedFuture.complete(null);
   }

@@ -451,7 +451,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     if (worldStateHealFinishedNotified.compareAndSet(false, true)) {
       if (worldStateHealFinishedListener != null) {
         LOG.info("Notifying that world state download has finished");
-        worldStateHealFinishedListener.onWorldStateFinished();
+        worldStateHealFinishedListener.onWorldStateHealFinished();
       }
     }
   }

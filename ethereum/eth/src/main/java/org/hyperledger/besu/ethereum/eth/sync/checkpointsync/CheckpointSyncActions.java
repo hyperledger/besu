@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.nio.file.Path;
+
 public class CheckpointSyncActions extends FastSyncActions {
   public CheckpointSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -39,7 +41,7 @@ public class CheckpointSyncActions extends FastSyncActions {
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem,
       final FastSyncStateStorage fastSyncStateStorage,
-      final java.nio.file.Path fastSyncDataDirectory) {
+      final Path fastSyncDataDirectory) {
     super(
         syncConfig,
         worldStateStorageCoordinator,
@@ -58,14 +60,13 @@ public class CheckpointSyncActions extends FastSyncActions {
       final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
     return CheckpointSyncChainDownloader.create(
         syncConfig,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         metricsSystem,
         currentState,
-        syncDurationMetrics,
-        fastSyncStateStorage,
-        fastSyncDataDirectory);
+        syncDurationMetrics);
   }
 }

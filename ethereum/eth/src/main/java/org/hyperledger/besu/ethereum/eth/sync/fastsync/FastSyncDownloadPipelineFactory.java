@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -64,7 +66,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   protected final MetricsSystem metricsSystem;
   protected final FastSyncValidationPolicy detachedValidationPolicy;
   protected final ValidationPolicy downloadHeaderValidation;
-  protected final org.hyperledger.besu.ethereum.core.BlockHeaderFunctions blockHeaderFunctions;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -79,9 +80,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     this.ethContext = ethContext;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
-    this.blockHeaderFunctions =
-        org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions.create(
-            protocolSchedule);
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -100,10 +98,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     if (fastSyncState.isSourceTrusted()) {
       LOG.trace("Pivot block is from trusted source, skipping header validation");
     }
-  }
-
-  public org.hyperledger.besu.ethereum.core.BlockHeaderFunctions getBlockHeaderFunctions() {
-    return blockHeaderFunctions;
   }
 
   @Override
@@ -157,6 +151,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
+            syncState,
+            0L,
             fastSyncState.getPivotBlockHeader().get(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 

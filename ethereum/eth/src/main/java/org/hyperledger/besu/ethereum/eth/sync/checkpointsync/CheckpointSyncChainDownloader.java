@@ -14,68 +14,50 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.nio.file.Path;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class CheckpointSyncChainDownloader extends FastSyncChainDownloader {
-  private static final Logger LOG = LoggerFactory.getLogger(CheckpointSyncChainDownloader.class);
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
-      final SyncDurationMetrics syncDurationMetrics,
-      final FastSyncStateStorage fastSyncStateStorage,
-      final Path fastSyncDataDirectory) {
+      final SyncDurationMetrics syncDurationMetrics) {
 
-    final FastSyncDownloadPipelineFactory pipelineFactory =
-        new CheckpointSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+    final SyncTargetManager syncTargetManager =
+        new SyncTargetManager(
+            config,
+            worldStateStorageCoordinator,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            fastSyncState);
 
-    // Use two-stage sync approach for checkpoint sync
-    final BlockHeader pivotBlockHeader =
-        fastSyncState
-            .getPivotBlockHeader()
-            .orElseThrow(() -> new RuntimeException("checkpoint block header not available"));
-    final Hash pivotBlockHash = pivotBlockHeader.getHash();
-    LOG.info("Using two-stage checkpoint sync with checkpoint block={}", pivotBlockHash);
-
-    // Create chain sync state storage (separate from world state storage)
-    final org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage chainStateStorage =
-        new org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage(
-            fastSyncDataDirectory);
-
-    return new SnapSyncChainDownloader(
-        pipelineFactory,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
+    return new PipelineChainDownloader(
         syncState,
+        syncTargetManager,
+        new CheckpointSyncDownloadPipelineFactory(
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+        ethContext.getScheduler(),
         metricsSystem,
-        syncDurationMetrics,
-        pivotBlockHeader,
-        chainStateStorage);
+        syncDurationMetrics);
   }
 }
