@@ -63,13 +63,13 @@ public final class UInt256 {
   // region Constructors
   // --------------------------------------------------------------------------
 
-  UInt256(final int[] limbs, final int length) {
+  private UInt256(final int[] limbs, final int length) {
     // Unchecked length: assumes limbs have length == N_LIMBS
     this.limbs = limbs;
     this.length = length;
   }
 
-  UInt256(final int[] limbs) {
+  private UInt256(final int[] limbs) {
     this(limbs, N_LIMBS);
   }
 
