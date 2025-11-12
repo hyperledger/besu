@@ -24,6 +24,7 @@
 - Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 
 ### Bug fixes
+- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 
 ## 25.11.0
 
@@ -95,7 +96,6 @@ This RC is still pending burn in for mainnet.
 - Update jc-kzg dependency [#9261](https://github.com/hyperledger/besu/pull/9261)
 
 ### Bug fixes
-- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 
 ## 25.10.0-RC1
 This RC is a pre-release for Holesky and Sepolia users.
