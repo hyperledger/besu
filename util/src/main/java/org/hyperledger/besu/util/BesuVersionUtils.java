@@ -41,20 +41,16 @@ public final class BesuVersionUtils {
 
   static {
     String className = BesuVersionUtils.class.getSimpleName() + ".class";
-    String classPath =
-        Optional.ofNullable(BesuVersionUtils.class.getResource(className))
-            .map(URL::toString)
-            .orElse(null);
+    final URL classUrl = BesuVersionUtils.class.getResource(className);
 
     String commit = null;
     String implVersion =
         Optional.ofNullable(BesuVersionUtils.class.getPackage())
             .map(Package::getImplementationVersion)
             .orElse(null);
-    if (classPath != null) {
+    if (classUrl != null) {
       try {
-        URL url = new URL(classPath);
-        JarURLConnection jarConnection = (JarURLConnection) url.openConnection();
+        JarURLConnection jarConnection = (JarURLConnection) classUrl.openConnection();
         Manifest manifest = jarConnection.getManifest();
         Attributes attributes = manifest.getMainAttributes();
         commit = attributes.getValue("Commit-Hash");
