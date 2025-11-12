@@ -13,7 +13,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
 
@@ -24,6 +24,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -54,9 +59,9 @@ import org.slf4j.LoggerFactory;
  * <p>Supports incremental continuation when the world state downloader updates the pivot block,
  * avoiding re-downloading already synced data.
  */
-public class TwoStageFastSyncChainDownloader
+public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
-  private static final Logger LOG = LoggerFactory.getLogger(TwoStageFastSyncChainDownloader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
 
   private final FastSyncDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
@@ -85,7 +90,7 @@ public class TwoStageFastSyncChainDownloader
    * @param initialPivotHeader the initial pivot block header
    * @param chainStateStorage the storage for chain sync state
    */
-  public TwoStageFastSyncChainDownloader(
+  public SnapSyncChainDownloader(
       final FastSyncDownloadPipelineFactory pipelineFactory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
