@@ -209,7 +209,7 @@ public class FastSyncDownloader<REQUEST> {
         LOG.debug("Registered chain downloader as pivot update listener");
       }
 
-      // Register chain downloader as world state stable listener if it implements the interface
+      // Register chain downloader as world state heal finished listener if it implements the interface
       if (chainDownloader instanceof WorldStateHealFinishedListener) {
         fastSyncActions.setWorldStateStableListener(
             (WorldStateHealFinishedListener) chainDownloader);

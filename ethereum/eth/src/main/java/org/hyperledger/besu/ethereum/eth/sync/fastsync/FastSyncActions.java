@@ -35,6 +35,7 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +74,7 @@ public class FastSyncActions {
       final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem,
       final FastSyncStateStorage fastSyncStateStorage,
-      final java.nio.file.Path fastSyncDataDirectory) {
+      final Path fastSyncDataDirectory) {
     this.syncConfig = syncConfig;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
