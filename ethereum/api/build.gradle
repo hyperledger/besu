@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-api'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -38,7 +38,6 @@ dependencies {
   implementation project(':consensus:merge')
   implementation project(':crypto:services')
   implementation project(':datatypes')
-  implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
@@ -65,10 +64,10 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-codegen'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-net'
-  implementation 'io.tmio:tuweni-toml'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-net'
+  implementation 'io.consensys.tuweni:tuweni-toml'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.antlr:antlr4-runtime'
   implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.springframework.security:spring-security-crypto'
@@ -76,8 +75,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'org.web3j:abi'
   implementation 'com.github.ben-manes.caffeine:caffeine'
 
@@ -96,7 +95,7 @@ dependencies {
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
 
-  testResourceGeneration project(':besu')
+  testResourceGeneration project(':app')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'

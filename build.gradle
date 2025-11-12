@@ -13,7 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
@@ -23,15 +22,16 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '7.0.2'
+  id 'com.diffplug.spotless' version '7.0.3'
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'com.jfrog.artifactory' version '5.2.5'
-  id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.1.0'
+  id 'me.champeau.jmh' version '0.7.3' apply false
+  id 'net.ltgt.errorprone' version '4.2.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
-  id 'org.sonarqube' version '6.0.1.5171'
+  id 'org.sonarqube' version '6.2.0.5505'
+  id 'de.undercouch.download' version '5.6.0'
 }
 
 sonarqube {
@@ -42,6 +42,10 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
     property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+    // Exclude OptionalUsedAsFieldOrParameterType rule - common pattern in Besu codebase
+    property "sonar.issue.ignore.multicriteria", "e1"
+    property "sonar.issue.ignore.multicriteria.e1.ruleKey", "java:S3553"
+    property "sonar.issue.ignore.multicriteria.e1.resourceKey", "**/*.java"
   }
 }
 
@@ -79,6 +83,14 @@ def _intCmdArg(name, defaultValue) {
 
 def _intCmdArg(name) {
   return _intCmdArg(name, null)
+}
+
+def _strCmdArg(name, defaultValue) {
+  return project.hasProperty(name) ? project.property(name) as String : defaultValue
+}
+
+def _strCmdArg(name) {
+  return _strCmdArg(name, null)
 }
 
 def _strListCmdArg(name, defaultValue) {
@@ -149,19 +161,23 @@ configure(allprojects - project(':platform')) {
   java {
     sourceCompatibility = 21
     targetCompatibility = 21
+
+    consistentResolution {
+      useCompileClasspathVersions()
+    }
   }
 
   repositories {
     maven {
-      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      url = 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content { includeGroupByRegex('org\\.hyperledger\\..*') }
     }
     maven {
-      url 'https://artifacts.consensys.net/public/maven/maven/'
+      url = 'https://artifacts.consensys.net/public/maven/maven/'
       content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
     maven {
-      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      url = 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
 
@@ -169,7 +185,7 @@ configure(allprojects - project(':platform')) {
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
     def ethExecSpecTestsRepo = ivy {
-      url 'https://github.com'
+      url = 'https://github.com'
       patternLayout {
         artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
       }
@@ -190,6 +206,9 @@ configure(allprojects - project(':platform')) {
 
     testAnnotationProcessor(platform(project(':platform')))
 
+    // for validation annotations like @NotNull
+    implementation 'jakarta.validation:jakarta.validation-api'
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
@@ -203,6 +222,12 @@ configure(allprojects - project(':platform')) {
     resolutionStrategy.capabilitiesResolution.withCapability('org.bouncycastle:bcpkix-jdk18on') {
       selectHighestVersion()
     }
+
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
   }
 
 
@@ -373,7 +398,7 @@ configure(allprojects - project(':platform')) {
   javadoc {
     options.addBooleanOption('Xdoclint:all', true)
     // disable doc lint checking for generated code and acceptance tests dsl.
-    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+    options.addBooleanOption('Xdoclint/package:' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
       // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
@@ -397,8 +422,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.forkid,' +
       '-org.hyperledger.besu.ethereum.mainnet,' +
       '-org.hyperledger.besu.ethereum.mainnet.*,' +
-      '-org.hyperledger.besu.ethereum.privacy,' +
-      '-org.hyperledger.besu.ethereum.privacy.*,' +
       '-org.hyperledger.besu.ethereum.processing,' +
       '-org.hyperledger.besu.ethereum.proof,' +
       '-org.hyperledger.besu.ethereum.storage,' +
@@ -422,8 +445,6 @@ configure(allprojects - project(':platform')) {
       '-org.hyperledger.besu.ethereum.referencetests,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
-      // stratum module
-      '-org.hyperledger.besu.ethereum.stratum,' +
       // trie module
       '-org.hyperledger.besu.ethereum.trie.*,' +
       '-org.hyperledger.besu.ethereum.trie,' +
@@ -450,7 +471,7 @@ task checkMavenCoordinateCollisions {
           if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
             throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
             "both ${coordinates[coordinate]} and ${it.path}.\n" +
-            "Please add a `publishing` script block to one or both subprojects.")
+            "Prefer automatic artifactId creation or if not possible disambiguate manually.")
           }
           coordinates[coordinate] = it.path
         }
@@ -481,7 +502,7 @@ subprojects {
     dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
-      archiveBaseName = "${project.name}-support-test"
+      archiveBaseName = calculateArtifactId(project) + '-support-test'
       archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
@@ -534,8 +555,9 @@ subprojects {
     publishing {
       publications {
         mavenJava(MavenPublication) {
-          groupId "org.hyperledger.besu.internal"
-          version "${project.version}"
+          groupId = "org.hyperledger.besu.internal"
+          artifactId = calculateArtifactId(project)
+          version = "${project.version}"
           if (sourceSetIsPopulated("main")) {
             from components.java
             artifact sourcesJar
@@ -611,27 +633,36 @@ subprojects {
 
   if (file('src/jmh').directory) {
     apply plugin: 'me.champeau.jmh'
+    tasks.named("jmh") {
+      description = "Usage: gradle jmh -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
+        "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
+        "\t-Pincludes=<includePattern>\tInclude pattern (regular expression) for benchmarks to be executed. Defaults to including all benchmarks.\n" +
+        "\t-Pexcludes=<excludePattern>\tComma-separated exclude pattern (regular expression) for benchmarks to not be executed. Defaults to including all benchmarks.\n" +
+        "\t-PasyncProfiler=<libPath>\tLibrary path to fetch the Async profiler from. Default is to disable profiling.\n" +
+        "\t-PasyncProfilerOptions=<asyncProfilerOptions>\tOptions to pass on to the Async profiler separated by ';'. Default is to produce a flamegraph with all other default profiler options.\n"
+    }
 
     jmh {
-      // Allows to control JMH execution directly from the command line. I typical execution may look
-      // like:
-      //    gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pinclude=MyBench
-      // which will run 2 forks with 3 warmup iterations and 5 normal ones for each, and will only
-      // run the benchmark matching 'MyBench' (a regexp).
-      warmupForks = _intCmdArg('wf')
-      warmupIterations = _intCmdArg('wi')
-      fork = _intCmdArg('f')
-      iterations = _intCmdArg('i')
-      benchmarkMode = _strListCmdArg('bm')
-      includes = _strListCmdArg('include', [''])
-      humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
-      resultFormat = 'JSON'
-      duplicateClassesStrategy = DuplicatesStrategy.WARN
+      jmhVersion = '1.37'
+      fork = 3
+      var inc = _strListCmdArg('includes', [''])
+      includes = inc.size() > 1 ? [".*(${inc.join('|')}).*"] : inc
+      excludes = _strListCmdArg('excludes', [])
+      var asyncProfiler = _strCmdArg('asyncProfiler')
+      var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
+      if (asyncProfiler != null) {
+        profilers = [
+          'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
+        ]
+      }
+      duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
+      jvmArgs = [
+        '-XX:+EnableDynamicAgentLoading'
+      ]
     }
 
     dependencies {
       jmhAnnotationProcessor(platform(project(':platform')))
-      jmh 'org.slf4j:slf4j-api'
     }
   }
 
@@ -671,7 +702,8 @@ application {
     "--add-exports",
     "java.base/jdk.internal.misc=ALL-UNNAMED",
     "--add-opens",
-    "java.base/java.nio=ALL-UNNAMED"
+    "java.base/java.nio=ALL-UNNAMED",
+    "--enable-native-access=ALL-UNNAMED"
   ]
 }
 
@@ -708,8 +740,8 @@ startScripts {
     "-XX:StartFlightRecording,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
 }
 
@@ -718,8 +750,9 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  defaultJvmOpts = application.applicationDefaultJvmArgs
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(untunedStartScripts) }
 }
 
@@ -731,15 +764,15 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(evmToolStartScripts) }
 }
 
 task autocomplete(type: JavaExec) {
   dependsOn compileJava
   def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
-  standardOutput tempAutocompleteFile.newOutputStream()
+  standardOutput = tempAutocompleteFile.newOutputStream()
   outputs.file "$buildDir/besu.autocomplete.sh"
 
   mainClass = application.mainClass
@@ -791,9 +824,9 @@ artifactoryPublish {
   dependsOn distZip
 }
 
-def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
-def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
+def dockerBuildVersion = project.hasProperty('release.releaseVersion') && project.property('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+def dockerOrgName = project.hasProperty('dockerOrgName') && project.property('dockerOrgName') && project.property('dockerOrgName').trim() != '/' ? project.getProperty("dockerOrgName").trim() : "hyperledger"
+def dockerArtifactName = project.hasProperty("dockerArtifactName") && project.property("dockerArtifactName")?.trim() ? project.getProperty("dockerArtifactName").trim() : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -824,10 +857,18 @@ task distDocker {
   doLast {
     copy {
       from file("${projectDir}/docker/Dockerfile")
+      from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
     exec {
       def image = "${dockerImageName}:${dockerBuildVersion}"
+
+      println "Docker Build Version: $dockerBuildVersion"
+      println "Docker Organization Name: $dockerOrgName"
+      println "Docker Artifact Name: $dockerArtifactName"
+      println "Docker Image Name: $dockerImageName"
+      println "Building docker image name ${image}"
+
       def dockerPlatform = ""
       if (project.hasProperty('docker-platform')){
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
@@ -841,22 +882,68 @@ task distDocker {
   }
 }
 
-task testDocker {
-  dependsOn distDocker
-  def dockerReportsDir = "docker/reports/"
+tasks.register("downloadGossBinaries") {
+  def gossVersion = 'v0.4.9'
+  def baseUrl = "https://github.com/goss-org/goss/releases/download/${gossVersion}"
+  def testDir = "${projectDir}/docker/tests"
 
-  doFirst {
-    new File(dockerReportsDir).mkdir()
-  }
+  // Detect current architecture
+  def osArch = System.getProperty("os.arch").toLowerCase()
+  def currentArch = (osArch.contains("aarch64") || osArch.contains("arm64")) ? "arm64" : "amd64"
 
   doLast {
-    exec {
-      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-      workingDir "${projectDir}/docker"
-      executable shell
-      args "-c", "./test.sh ${image}"
+    // Download goss binary for current architecture
+    def binaryFile = new File(testDir, "goss-linux-${currentArch}")
+
+    // Download binary if it doesn't exist
+    if (!binaryFile.exists()) {
+      println "Downloading goss-linux-${currentArch}..."
+      download.run {
+        src "${baseUrl}/goss-linux-${currentArch}"
+        dest binaryFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      binaryFile.setExecutable(true)
+      println "Successfully downloaded goss-linux-${currentArch}"
+    } else {
+      println "goss-linux-${currentArch} already exists"
+    }
+
+    // Download dgoss if it doesn't exist
+    def dgossFile = new File(testDir, 'dgoss')
+    if (!dgossFile.exists()) {
+      println "Downloading dgoss..."
+      download.run {
+        src "${baseUrl}/dgoss"
+        dest dgossFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      dgossFile.setExecutable(true)
+      println "Successfully downloaded dgoss"
+    } else {
+      println "dgoss already exists"
     }
   }
+}
+
+tasks.register("testDocker", Exec) {
+  dependsOn("distDocker", "downloadGossBinaries")
+
+  doFirst {
+    new File("docker/reports/").mkdir()
+  }
+
+  def image = project.hasProperty('release.releaseVersion')
+    ? "${dockerImageName}:" + project.property('release.releaseVersion')
+    : "${dockerImageName}:${project.version}"
+
+  workingDir "${projectDir}/docker"
+  executable shell
+  args "-c", "./test.sh ${image}"
 }
 
 task dockerUpload {
@@ -1003,22 +1090,43 @@ def calculateVersion() {
   }
 }
 
-def getGitCommitDetails(length = 8) {
+def calculateArtifactId(configuringProject) {
+  def currentProject = configuringProject
+  def projectNames = [currentProject.name]
+  while((currentProject = currentProject.getParent()) != null) {
+    projectNames << currentProject.name
+  }
+  return projectNames.reverse().join('-')
+}
+
+def getGitCommitDetails(takeFromHash = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
-      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
+      // this is a worktree or submodule
+      gitFolder = file(gitFolder).text.replaceAll("^gitdir:", "").trim()
+      if (!gitFolder.endsWith("/")) {
+        gitFolder += "/"
+      }
     }
-    def takeFromHash = length
-    def head = new File(gitFolder + "HEAD").text.split(":")
+
+    def headFile = new File(gitFolder + "HEAD")
+    def head = headFile.text.split(":")
     def isCommit = head.length == 1
 
     def commitHash, refHeadFile
     if (isCommit) {
       commitHash = head[0].trim().take(takeFromHash)
-      refHeadFile = new File(gitFolder + "HEAD")
+      refHeadFile = headFile
     } else {
-      refHeadFile = new File(gitFolder + head[1].trim())
+      def refPath = head[1].trim()
+
+      refHeadFile = new File(gitFolder + refPath)
+      if (!refHeadFile.exists()) {
+        // For worktrees have to check in main .git directory
+        def mainGitDir = gitFolder.replaceFirst("\\.git/worktrees/.*", ".git/")
+        refHeadFile = new File(mainGitDir + refPath)
+      }
       commitHash = refHeadFile.text.trim().take(takeFromHash)
     }
 
@@ -1064,7 +1172,7 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
   // https://github.com/hyperledger/besu-errorprone-checks/
   errorprone 'org.hyperledger.besu:besu-errorprone-checks'
-  implementation project(':besu')
+  implementation project(':app')
   implementation project(':ethereum:evmtool')
 }
 
@@ -1095,12 +1203,75 @@ distributions {
   main {
     contents {
       from("./LICENSE") { into "." }
-      from("build/reports/license/license-dependency.html") { into "." }
-      from("./docs/GettingStartedBinaries.md") { into "." }
-      from("./docs/DocsArchive0.8.0.html") { into "." }
-      from("./besu/src/main/scripts/besu-entry.sh") { into "./bin/" }
+      from("./build/reports/dependency-license/index.html") { into "."}
+      rename("index.html","license-dependency.html")
+      from("./docs/README.md") { into "." }
+      from("./app/src/main/scripts/besu-entry.sh") { into "./bin/" }
       from(autocomplete) { into "." }
     }
+  }
+}
+
+tasks.register('generateArtifactsCatalog') {
+  description = 'Create a catalog with all dependencies included in the distribution with detailed information'
+  group = 'Distribution'
+
+  // Set output file
+  def jsonOutputFile = file("$buildDir/reports/dependencies/besu-artifacts-catalog.json")
+
+  outputs.upToDateWhen { false }
+  outputs.file(jsonOutputFile)
+
+  doLast {
+    // Get the runtime classpath configuration
+    def runtimeClasspath = configurations.runtimeClasspath
+
+    // Create a list to store dependency information
+    def artifactsInfoList = []
+
+    // Get all resolved artifacts
+    runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+      def id = artifact.moduleVersion.id
+      def groupId = id.group
+      def artifactId = id.name
+
+      if(id.group.startsWith('besu')) {
+        def projectName = (id.group + "." + id.name).replace('besu.', '').replace('.', ':')
+        def currPrj = project(projectName)
+        groupId = 'org.hyperledger.besu.internal'
+        currPrj.publishing.publications.forEach { // some project have a different groupId
+          pub ->
+          groupId = pub.getGroupId()
+        }
+
+        artifactId = (id.group + "." + id.name).replace('.', '-')
+      }
+
+      def properties = [
+        group: groupId,
+        name: artifactId,
+        version: id.version,
+        filename: artifact.file.name
+      ]
+
+      if(artifact.classifier) {
+        properties << [classifier: artifact.classifier]
+      }
+
+      // Create a map with dependency information
+      artifactsInfoList.add(properties)
+    }
+
+    // Write to JSON output file
+    jsonOutputFile.withWriter { writer ->
+      def json = groovy.json.JsonOutput.toJson(
+        artifactsInfoList
+        )
+      writer.println(groovy.json.JsonOutput.prettyPrint(json))
+    }
+
+    logger.lifecycle("Artifacts catalog written to:")
+    logger.lifecycle("  JSON: ${jsonOutputFile.absolutePath}")
   }
 }
 

@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -29,10 +30,13 @@ import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -189,7 +193,7 @@ public class SyncBlockBodyTest {
   private static ProtocolSpec getProtocolSpec() {
     return new ProtocolSpec(
         "root",
-        null,
+        HardforkId.MainnetHardforkId.CANCUN,
         null,
         null,
         null,
@@ -205,6 +209,7 @@ public class SyncBlockBodyTest {
         null,
         BlockHeader::getCoinbase,
         null,
+        new PrecompileContractRegistry(),
         false,
         null,
         GasLimitCalculator.constant(),
@@ -214,8 +219,12 @@ public class SyncBlockBodyTest {
         Optional.empty(),
         null,
         Optional.empty(),
-        new FrontierBlockHashProcessor(),
+            new FrontierBlockHashProcessor(),
         true,
-        true);
+        Duration.ofSeconds(12),
+        true,
+        Optional.empty(),
+        Optional.empty(),
+        new StateRootCommitterFactoryDefault());
   }
 }

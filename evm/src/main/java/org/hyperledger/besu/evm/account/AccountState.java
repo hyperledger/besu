@@ -16,9 +16,10 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.CodeV0;
 
 import java.util.NavigableMap;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -76,12 +77,15 @@ public interface AccountState {
   Bytes getCode();
 
   /**
-   * The optional EVM bytecode if the account has set a 7702 code delegation.
+   * The EVM bytecode associated with this account, wrapped in a {@link Code} object.
    *
-   * @return the code of the target account that this account delegates to (which may be empty).
+   * <p>This is the default implementation that returns a {@link CodeV0} object wrapping the {@link
+   * #getCode()} result. It can be overridden to provide a different implementation of {@link Code}.
+   *
+   * @return the account code wrapped in a {@link Code} object.
    */
-  default Optional<Bytes> getCodeDelegationTargetCode() {
-    return Optional.empty();
+  default Code getOrCreateCachedCode() {
+    return new CodeV0(this.getCode());
   }
 
   /**
@@ -90,15 +94,6 @@ public interface AccountState {
    * @return the hash of the account code (which may be {@link Hash#EMPTY}).
    */
   Hash getCodeHash();
-
-  /**
-   * The optional hash of the delegated EVM bytecode if the account has set a 7702 code delegation.
-   *
-   * @return the hash of the code of the target account (which may be empty).
-   */
-  default Optional<Hash> getCodeDelegationTargetHash() {
-    return Optional.empty();
-  }
 
   /**
    * Whether the account has (non empty) EVM bytecode associated to it.

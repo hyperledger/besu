@@ -15,13 +15,14 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
@@ -47,18 +48,25 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   protected Object simulate(
       final JsonRpcRequestContext requestContext,
       final CallParameter callParams,
-      final long gasLimit,
-      final TransactionSimulationFunction simulationFunction) {
+      final ProcessableBlockHeader blockHeader,
+      final TransactionSimulationFunction simulationFunction,
+      final long gasLimitUpperBound,
+      final long minTxCost) {
 
     final AccessListOperationTracer tracer = AccessListOperationTracer.create();
+    if (attemptOptimisticSimulationWithMinimumBlockGasUsed(
+        minTxCost, callParams, simulationFunction, tracer)) {
+      return new CreateAccessListResult(tracer.getAccessList(), minTxCost);
+    }
+    // Otherwise, do the calculation with the provided gasLimit
     final Optional<TransactionSimulatorResult> firstResult =
-        simulationFunction.simulate(overrideGasLimit(callParams, gasLimit), tracer);
+        simulationFunction.simulate(overrideGasLimit(callParams, gasLimitUpperBound), tracer);
 
     // if the call accessList is different from the simulation result, calculate gas and return
     if (shouldProcessWithAccessListOverride(callParams, tracer)) {
       final AccessListSimulatorResult result =
           processTransactionWithAccessListOverride(
-              callParams, gasLimit, tracer.getAccessList(), simulationFunction);
+              callParams, gasLimitUpperBound, tracer.getAccessList(), simulationFunction);
       return createResponse(requestContext, result);
     } else {
       return createResponse(requestContext, new AccessListSimulatorResult(firstResult, tracer));
@@ -69,7 +77,7 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final JsonRpcRequestContext requestContext, final AccessListSimulatorResult result) {
     return result
         .result()
-        .map(createResponse(requestContext, result.tracer()))
+        .map(createResponse(result.tracer()))
         .orElseGet(() -> errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR));
   }
 
@@ -91,12 +99,13 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   }
 
   private Function<TransactionSimulatorResult, Object> createResponse(
-      final JsonRpcRequestContext request, final AccessListOperationTracer operationTracer) {
+      final AccessListOperationTracer operationTracer) {
+    // access list is created regardless, but include error message if result was not successful
     return result ->
-        result.isSuccessful()
-            ? new CreateAccessListResult(
-                operationTracer.getAccessList(), processEstimateGas(result, operationTracer))
-            : errorResponse(request, result);
+        new CreateAccessListResult(
+            operationTracer.getAccessList(),
+            result.getGasEstimate(),
+            result.isSuccessful() ? Optional.empty() : Optional.of("execution reverted"));
   }
 
   private AccessListSimulatorResult processTransactionWithAccessListOverride(
@@ -118,17 +127,12 @@ public class EthCreateAccessList extends AbstractEstimateGas {
       final CallParameter callParams,
       final long gasLimit,
       final List<AccessListEntry> accessListEntries) {
-    return new CallParameter(
-        callParams.getFrom(),
-        callParams.getTo(),
-        gasLimit,
-        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
-        callParams.getMaxPriorityFeePerGas(),
-        callParams.getMaxFeePerGas(),
-        callParams.getValue(),
-        callParams.getPayload(),
-        Optional.of(accessListEntries),
-        callParams.getNonce());
+
+    return ImmutableCallParameter.builder()
+        .from(callParams)
+        .gas(gasLimit)
+        .accessList(accessListEntries)
+        .build();
   }
 
   private record AccessListSimulatorResult(

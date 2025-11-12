@@ -16,8 +16,10 @@ package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -31,12 +33,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AltBN128PairingPrecompiledContractTest {
 
   @Mock MessageFrame messageFrame;
-  @Mock GasCalculator gasCalculator;
 
-  private final AltBN128PairingPrecompiledContract byzantiumContract =
-      AltBN128PairingPrecompiledContract.byzantium(gasCalculator);
-  private final AltBN128PairingPrecompiledContract istanbulContract =
-      AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
+  private final PrecompiledContract byzantiumContract =
+      EvmSpec.evmSpec(EvmSpecVersion.BYZANTIUM)
+          .getPrecompileContractRegistry()
+          .get(Address.ALTBN128_PAIRING);
+  private final PrecompiledContract istanbulContract =
+      EvmSpec.evmSpec(EvmSpecVersion.ISTANBUL)
+          .getPrecompileContractRegistry()
+          .get(Address.ALTBN128_PAIRING);
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
@@ -47,7 +52,7 @@ class AltBN128PairingPrecompiledContractTest {
       AbstractAltBnPrecompiledContract.disableNative();
     }
     final Bytes input = validPointBytes();
-    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).output();
     assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
   }
 
@@ -130,7 +135,7 @@ class AltBN128PairingPrecompiledContractTest {
                 "0x1fbf8045ce3e79b5cde4112d38bcd0efbdb1295d2eefdf58151ae309d7ded7db"));
 
     final Bytes input = Bytes.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
-    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).getOutput();
+    final Bytes result = byzantiumContract.computePrecompile(input, messageFrame).output();
     assertThat(result).isNull();
   }
 

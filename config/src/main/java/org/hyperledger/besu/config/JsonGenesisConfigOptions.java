@@ -160,6 +160,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean hasPos() {
+    return getTerminalTotalDifficulty().isPresent();
+  }
+
+  @Override
   public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
         .map(IbftLegacyConfigOptions::new)
@@ -326,6 +331,36 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getOsakaTime() {
     return getOptionalLong("osakatime");
+  }
+
+  @Override
+  public OptionalLong getBpo1Time() {
+    return getOptionalLong("bpo1time");
+  }
+
+  @Override
+  public OptionalLong getBpo2Time() {
+    return getOptionalLong("bpo2time");
+  }
+
+  @Override
+  public OptionalLong getBpo3Time() {
+    return getOptionalLong("bpo3time");
+  }
+
+  @Override
+  public OptionalLong getBpo4Time() {
+    return getOptionalLong("bpo4time");
+  }
+
+  @Override
+  public OptionalLong getBpo5Time() {
+    return getOptionalLong("bpo5time");
+  }
+
+  @Override
+  public OptionalLong getAmsterdamTime() {
+    return getOptionalLong("amsterdamtime");
   }
 
   @Override
@@ -503,6 +538,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
     getOsakaTime().ifPresent(l -> builder.put("osakaTime", l));
+    getBpo1Time().ifPresent(l -> builder.put("bpo1Time", l));
+    getBpo2Time().ifPresent(l -> builder.put("bpo2Time", l));
+    getBpo3Time().ifPresent(l -> builder.put("bpo3Time", l));
+    getBpo4Time().ifPresent(l -> builder.put("bpo4Time", l));
+    getBpo5Time().ifPresent(l -> builder.put("bpo5Time", l));
+    getAmsterdamTime().ifPresent(l -> builder.put("amsterdamTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -664,6 +705,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getCancunEOFTime(),
             getPragueTime(),
             getOsakaTime(),
+            getBpo1Time(),
+            getBpo2Time(),
+            getBpo3Time(),
+            getBpo4Time(),
+            getBpo5Time(),
+            getAmsterdamTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json

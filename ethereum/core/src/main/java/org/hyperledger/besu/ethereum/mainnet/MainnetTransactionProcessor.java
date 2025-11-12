@@ -14,21 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
-import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
-import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
-import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -45,7 +46,7 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -54,7 +55,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -117,7 +117,6 @@ public class MainnetTransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     MainnetTransactionValidator}
    * @return the transaction result
@@ -130,7 +129,6 @@ public class MainnetTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
@@ -140,48 +138,7 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingPrivateState,
         transactionValidationParams,
-        null,
-        blobGasPrice);
-  }
-
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param transactionValidationParams Validation parameters that will be used by the {@link
-   *     MainnetTransactionValidator}
-   * @param operationTracer operation tracer {@link OperationTracer}
-   * @return the transaction result
-   * @see MainnetTransactionValidator
-   * @see TransactionValidationParams
-   */
-  public TransactionProcessingResult processTransaction(
-      final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final Wei blobGasPrice) {
-    return processTransaction(
-        worldState,
-        blockHeader,
-        transaction,
-        miningBeneficiary,
-        operationTracer,
-        blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams,
-        null,
         blobGasPrice);
   }
 
@@ -194,7 +151,6 @@ public class MainnetTransactionProcessor {
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
@@ -204,7 +160,6 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final Wei blobGasPrice) {
     return processTransaction(
         worldState,
@@ -213,25 +168,10 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
-        null,
         blobGasPrice);
   }
 
-  /**
-   * Applies a transaction to the current system state.
-   *
-   * @param worldState The current world state
-   * @param blockHeader The current block header
-   * @param transaction The transaction to process
-   * @param miningBeneficiary The address which is to receive the transaction fee
-   * @param operationTracer The tracer to record results of each EVM operation
-   * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the resulting private state will be persisted
-   * @param transactionValidationParams The transaction validation parameters to use
-   * @return the transaction result
-   */
   public TransactionProcessingResult processTransaction(
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -239,7 +179,6 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
@@ -249,10 +188,9 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        isPersistingPrivateState,
-        transactionValidationParams,
-        null,
-        blobGasPrice);
+        ImmutableTransactionValidationParams.builder().build(),
+        blobGasPrice,
+        Optional.empty());
   }
 
   public TransactionProcessingResult processTransaction(
@@ -262,11 +200,9 @@ public class MainnetTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final PrivateMetadataUpdater privateMetadataUpdater,
-      final Wei blobGasPrice) {
-    final EVMWorldUpdater evmWorldUpdater = new EVMWorldUpdater(worldState, gasCalculator);
+      final Wei blobGasPrice,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -285,7 +221,8 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-      final MutableAccount sender = evmWorldUpdater.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+      accessLocationTracker.ifPresent(t -> t.addTouchedAccount(senderAddress));
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -294,9 +231,9 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      operationTracer.tracePrepareTransaction(evmWorldUpdater, transaction);
+      operationTracer.tracePrepareTransaction(worldState, transaction);
 
-      final Set<Address> warmAddressList = new BytesTrieSet<>(Address.SIZE);
+      final Set<Address> eip2930WarmAddressList = new BytesTrieSet<>(Address.SIZE);
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -321,46 +258,47 @@ public class MainnetTransactionProcessor {
           sender.getBalance());
 
       long codeDelegationRefund = 0L;
-      if (transaction.getCodeDelegationList().isPresent()) {
+      if (transaction.getType().equals(TransactionType.DELEGATE_CODE)) {
         if (maybeCodeDelegationProcessor.isEmpty()) {
           throw new RuntimeException("Code delegation processor is required for 7702 transactions");
         }
 
+        final WorldUpdater delegationUpdater = worldState.updater();
         final CodeDelegationResult codeDelegationResult =
-            maybeCodeDelegationProcessor.get().process(evmWorldUpdater, transaction);
-        warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
+            maybeCodeDelegationProcessor
+                .get()
+                .process(delegationUpdater, transaction, accessLocationTracker);
+        eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
                 (codeDelegationResult.alreadyExistingDelegators()));
-
-        evmWorldUpdater.commit();
+        delegationUpdater.commit();
       }
 
-      final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
+      final List<AccessListEntry> eip2930AccessListEntries =
+          transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      final Multimap<Address, Bytes32> storageList = HashMultimap.create();
+      final Multimap<Address, Bytes32> eip2930StorageList = HashMultimap.create();
       int accessListStorageCount = 0;
-      for (final var entry : accessListEntries) {
+      for (final var entry : eip2930AccessListEntries) {
         final Address address = entry.address();
-        warmAddressList.add(address);
+        eip2930WarmAddressList.add(address);
         final List<Bytes32> storageKeys = entry.storageKeys();
-        storageList.putAll(address, storageKeys);
+        eip2930StorageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
       if (warmCoinbase) {
-        warmAddressList.add(miningBeneficiary);
+        eip2930WarmAddressList.add(miningBeneficiary);
       }
 
       final long accessListGas =
-          gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
+          gasCalculator.accessListGasCost(eip2930AccessListEntries.size(), accessListStorageCount);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
-              transaction.getPayload(),
-              transaction.isContractCreation(),
-              clampedAdd(accessListGas, codeDelegationGas));
+              transaction, clampedAdd(accessListGas, codeDelegationGas));
 
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
       LOG.trace(
@@ -369,15 +307,7 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas);
 
-      final WorldUpdater worldUpdater = evmWorldUpdater.updater();
-      final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
-          ImmutableMap.<String, Object>builder()
-              .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
-              .put(KEY_TRANSACTION, transaction)
-              .put(KEY_TRANSACTION_HASH, transaction.getHash());
-      if (privateMetadataUpdater != null) {
-        contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
-      }
+      final WorldUpdater worldUpdater = worldState.updater();
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
 
@@ -396,8 +326,9 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .contextVariables(contextVariablesBuilder.build())
-              .accessListWarmStorage(storageList);
+              .eip2930AccessListWarmStorage(eip2930StorageList);
+
+      accessLocationTracker.ifPresent(commonMessageFrameBuilder::eip7928AccessList);
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
@@ -410,9 +341,10 @@ public class MainnetTransactionProcessor {
       if (transaction.isContractCreation()) {
         final Address contractAddress =
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+        accessLocationTracker.ifPresent(t -> t.addTouchedAccount(contractAddress));
 
         final Bytes initCodeBytes = transaction.getPayload();
-        Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
+        Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -420,16 +352,15 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
-                .accessListWarmAddresses(warmAddressList)
+                .eip2930AccessListWarmAddresses(eip2930WarmAddressList)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(evmWorldUpdater.get(to));
-
-        if (maybeContract.isPresent() && maybeContract.get().hasDelegatedCode()) {
-          warmAddressList.add(maybeContract.get().codeDelegationAddress().get());
-        }
+        accessLocationTracker.ifPresent(t -> t.addTouchedAccount(to));
+        final Code code =
+            processCodeFromAccount(
+                worldState, eip2930WarmAddressList, worldState.get(to), accessLocationTracker);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -437,21 +368,8 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(
-                    maybeContract
-                        .map(
-                            c -> {
-                              if (c.hasDelegatedCode()) {
-                                return messageCallProcessor.getCodeFromEVM(
-                                    c.getCodeDelegationTargetHash().get(),
-                                    c.getCodeDelegationTargetCode().get());
-                              }
-
-                              return messageCallProcessor.getCodeFromEVM(
-                                  c.getCodeHash(), c.getCode());
-                            })
-                        .orElse(CodeV0.EMPTY_CODE))
-                .accessListWarmAddresses(warmAddressList)
+                .code(code)
+                .eip2930AccessListWarmAddresses(eip2930WarmAddressList)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
@@ -510,16 +428,27 @@ public class MainnetTransactionProcessor {
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
         final Wei baseFee = blockHeader.getBaseFee().get();
-        if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return TransactionProcessingResult.failed(
-              gasUsedByTransaction,
-              refundedGas,
-              ValidationResult.invalid(
-                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                  "transaction price must be greater than base fee"),
-              Optional.empty());
+        final boolean gasPriceBelowBaseFee = transactionGasPrice.compareTo(baseFee) < 0;
+        if (transactionValidationParams.allowUnderpriced()) {
+          coinbaseCalculator =
+              gasPriceBelowBaseFee ? (a, b, c) -> Wei.ZERO : coinbaseFeePriceCalculator;
+        } else {
+          if (gasPriceBelowBaseFee) {
+            final Optional<PartialBlockAccessView> partialBlockAccessView =
+                accessLocationTracker.map(
+                    tracker -> tracker.createPartialBlockAccessView(worldState));
+            return TransactionProcessingResult.failed(
+                gasUsedByTransaction,
+                refundedGas,
+                ValidationResult.invalid(
+                    TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                    "transaction price must be greater than base fee"),
+                Optional.empty(),
+                Optional.empty(),
+                partialBlockAccessView);
+          }
+          coinbaseCalculator = coinbaseFeePriceCalculator;
         }
-        coinbaseCalculator = coinbaseFeePriceCalculator;
       } else {
         coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
       }
@@ -528,13 +457,17 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
-      if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
-        final var coinbase = evmWorldUpdater.getOrCreate(miningBeneficiary);
+
+      // EIP-158 & EIP-7928: coinbase is considered "touched" even when fees are zero.
+      // Touching ensures an *empty* coinbase can be deleted during state clearing.
+      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
+      accessLocationTracker.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
+      if (!coinbaseWeiDelta.isZero()) {
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
 
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
           initialFrame.getOutputData(),
@@ -543,11 +476,14 @@ public class MainnetTransactionProcessor {
           initialFrame.getSelfDestructs(),
           0L);
 
-      initialFrame.getSelfDestructs().forEach(evmWorldUpdater::deleteAccount);
+      initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        evmWorldUpdater.clearAccountsThatAreEmpty();
+        worldState.clearAccountsThatAreEmpty();
       }
+
+      final Optional<PartialBlockAccessView> partialBlockAccessView =
+          accessLocationTracker.map(tracker -> tracker.createPartialBlockAccessView(worldState));
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
@@ -555,6 +491,7 @@ public class MainnetTransactionProcessor {
             gasUsedByTransaction,
             refundedGas,
             initialFrame.getOutputData(),
+            partialBlockAccessView,
             validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
@@ -570,11 +507,16 @@ public class MainnetTransactionProcessor {
               initialFrame.getRevertReason().get());
         }
         return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+            gasUsedByTransaction,
+            refundedGas,
+            validationResult,
+            initialFrame.getRevertReason(),
+            initialFrame.getExceptionalHaltReason(),
+            partialBlockAccessView);
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
@@ -587,7 +529,7 @@ public class MainnetTransactionProcessor {
       throw re;
     } catch (final RuntimeException re) {
       operationTracer.traceEndTransaction(
-          evmWorldUpdater.updater(),
+          worldState.updater(),
           transaction,
           false,
           Bytes.EMPTY,
@@ -598,6 +540,10 @@ public class MainnetTransactionProcessor {
 
       final var cause = re.getCause();
       if (cause != null && cause instanceof InterruptedException) {
+        LOG.atDebug()
+            .setMessage("Interrupted while processing the transaction with hash {}")
+            .addArgument(transaction::getHash)
+            .log();
         return TransactionProcessingResult.invalid(
             ValidationResult.invalid(TransactionInvalidReason.EXECUTION_INTERRUPTED));
       }
@@ -627,6 +573,10 @@ public class MainnetTransactionProcessor {
     return messageCallProcessor;
   }
 
+  public boolean getClearEmptyAccounts() {
+    return clearEmptyAccounts;
+  }
+
   private String printableStackTraceFromThrowable(final RuntimeException re) {
     final StringBuilder builder = new StringBuilder();
 
@@ -635,6 +585,47 @@ public class MainnetTransactionProcessor {
     }
 
     return builder.toString();
+  }
+
+  private Code processCodeFromAccount(
+      final WorldUpdater worldUpdater,
+      final Set<Address> warmAddressList,
+      final Account contract,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
+    if (contract == null) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    final Hash codeHash = contract.getCodeHash();
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return CodeV0.EMPTY_CODE;
+    }
+
+    if (hasCodeDelegation(contract.getCode())) {
+      return delegationTargetCode(worldUpdater, warmAddressList, contract, accessLocationTracker);
+    }
+
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (contract.getCodeCache() != null) {
+      return contract.getOrCreateCachedCode();
+    }
+
+    // Any other account can only use the cached jump dest analysis if available
+    return messageCallProcessor.getOrCreateCachedJumpDest(
+        contract.getCodeHash(), contract.getCode());
+  }
+
+  private Code delegationTargetCode(
+      final WorldUpdater worldUpdater,
+      final Set<Address> warmAddressList,
+      final Account contract,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
+    // we need to look up the target account and its code, but do NOT charge gas for it
+    final CodeDelegationHelper.Target target =
+        getTarget(worldUpdater, gasCalculator::isPrecompile, contract, accessLocationTracker);
+    warmAddressList.add(target.address());
+
+    return target.code();
   }
 
   public static Builder builder() {

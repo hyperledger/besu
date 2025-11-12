@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.worldstate.DiffBasedSubStorageConfiguration.DiffBasedUnstable;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.PathBasedUnstable;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.immutables.value.Value;
@@ -24,39 +24,50 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
+  boolean DEFAULT_HISTORY_EXPIRY_PRUNE_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DEFAULT)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
           .build();
 
   DataStorageConfiguration DEFAULT_BONSAI_CONFIG = DEFAULT_CONFIG;
 
+  DataStorageConfiguration DEFAULT_BONSAI_ARCHIVE_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+          .build();
+
   DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
-          .diffBasedSubStorageConfiguration(
-              ImmutableDiffBasedSubStorageConfiguration.builder()
-                  .unstable(DiffBasedUnstable.PARTIAL_MODE)
+          .pathBasedExtraStorageConfiguration(
+              ImmutablePathBasedExtraStorageConfiguration.builder()
+                  .unstable(PathBasedUnstable.PARTIAL_MODE)
                   .build())
           .build();
 
   DataStorageConfiguration DEFAULT_FOREST_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
-          .diffBasedSubStorageConfiguration(DiffBasedSubStorageConfiguration.DISABLED)
+          .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DISABLED)
           .build();
 
   DataStorageFormat getDataStorageFormat();
 
   @Value.Default
-  default DiffBasedSubStorageConfiguration getDiffBasedSubStorageConfiguration() {
-    return DiffBasedSubStorageConfiguration.DEFAULT;
+  default PathBasedExtraStorageConfiguration getPathBasedExtraStorageConfiguration() {
+    return PathBasedExtraStorageConfiguration.DEFAULT;
   }
 
   @Value.Default
   default boolean getReceiptCompactionEnabled() {
     return DEFAULT_RECEIPT_COMPACTION_ENABLED;
+  }
+
+  @Value.Default
+  default boolean getHistoryExpiryPruneEnabled() {
+    return DEFAULT_HISTORY_EXPIRY_PRUNE_ENABLED;
   }
 }

@@ -24,8 +24,10 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +37,18 @@ import org.slf4j.LoggerFactory;
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
+  private static final String PRECOMPILE_NAME = "BLAKE2F";
+
+  private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /**
    * Instantiates a new BLAKE2BF precompile contract.
    *
    * @param gasCalculator the gas calculator
    */
-  public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
-    super("BLAKE2f", gasCalculator);
+  BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
+    super(PRECOMPILE_NAME, gasCalculator);
   }
 
   @Override
@@ -62,10 +68,10 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
     return rounds.longValueExact();
   }
 
-  @Nonnull
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());
@@ -77,6 +83,39 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    return PrecompileContractResult.success(Hash.blake2bf(input));
+    PrecompileInputResultTuple res = null;
+    Integer cacheKey = null;
+    if (enableResultCaching) {
+      cacheKey = getCacheKey(input);
+      res = blakeCache.getIfPresent(cacheKey);
+      if (res != null) {
+        if (res.cachedInput().equals(input)) {
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.HIT));
+          return res.cachedResult();
+        } else {
+          LOG.info(
+              "false positive blake2bf {}, cache key {}, cached input: {}, input: {}",
+              input.getClass().getSimpleName(),
+              cacheKey,
+              res.cachedInput().toHexString(),
+              input.toHexString());
+
+          cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.FALSE_POSITIVE));
+        }
+      } else {
+        cacheEventConsumer.accept(new CacheEvent(PRECOMPILE_NAME, CacheMetric.MISS));
+      }
+    }
+
+    res =
+        new PrecompileInputResultTuple(
+            enableResultCaching ? input.copy() : input,
+            PrecompileContractResult.success(Hash.blake2bf(input)));
+
+    if (cacheKey != null) {
+      blakeCache.put(cacheKey, res);
+    }
+
+    return res.cachedResult();
   }
 }

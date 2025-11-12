@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import java.io.IOException;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
@@ -34,32 +33,30 @@ import org.slf4j.LoggerFactory;
 public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
 
-  // Default timeout for RPC calls in seconds
-  private static final long DEFAULT_TIMEOUT_MILLISECONDS = 30_000L;
-
   private JsonRpcExecutorHandler() {}
-
-  public static Handler<RoutingContext> handler(
-      final ObjectMapper jsonObjectMapper,
-      final JsonRpcExecutor jsonRpcExecutor,
-      final Tracer tracer,
-      final JsonRpcConfiguration jsonRpcConfiguration) {
-    return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
-  }
 
   public static Handler<RoutingContext> handler(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,
       final JsonRpcConfiguration jsonRpcConfiguration) {
     return ctx -> {
+      long timeoutMillis = jsonRpcConfiguration.getHttpTimeoutSec() * 1000;
       final long timerId =
           ctx.vertx()
               .setTimer(
-                  DEFAULT_TIMEOUT_MILLISECONDS,
+                  timeoutMillis,
                   id -> {
-                    final String method =
+                    final String requestBodyAsJson =
                         ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-                    LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
+                    LOG.error(
+                        "Timeout ({} ms) occurred in JSON-RPC executor for method {}",
+                        timeoutMillis,
+                        getShortLogString(requestBodyAsJson));
+                    LOG.atTrace()
+                        .setMessage("Timeout ({} ms) occurred in JSON-RPC executor for method {}")
+                        .addArgument(timeoutMillis)
+                        .addArgument(requestBodyAsJson)
+                        .log();
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.TIMEOUT_ERROR);
                   });
 
@@ -73,7 +70,13 @@ public class JsonRpcExecutorHandler {
                     executor.execute();
                   } catch (IOException e) {
                     final String method = executor.getRpcMethodName(ctx);
+                    final String requestBodyAsJson =
+                        ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
                     LOG.error("{} - Error streaming JSON-RPC response", method, e);
+                    LOG.atTrace()
+                        .setMessage("{} - Error streaming JSON-RPC response")
+                        .addArgument(requestBodyAsJson)
+                        .log();
                     handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
                   } finally {
                     cancelTimer(ctx);
@@ -84,12 +87,27 @@ public class JsonRpcExecutorHandler {
                   cancelTimer(ctx);
                 });
       } catch (final RuntimeException e) {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-        LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
+        final String requestBodyAsJson =
+            ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
+        LOG.error(
+            "Unhandled exception in JSON-RPC executor for method {}",
+            getShortLogString(requestBodyAsJson),
+            e);
+        LOG.atTrace()
+            .setMessage("Unhandled exception in JSON-RPC executor for method {}")
+            .addArgument(requestBodyAsJson)
+            .log();
         handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
         cancelTimer(ctx);
       }
     };
+  }
+
+  private static Object getShortLogString(final String requestBodyAsJson) {
+    final int maxLogLength = 256;
+    return requestBodyAsJson == null || requestBodyAsJson.length() < maxLogLength
+        ? requestBodyAsJson
+        : requestBodyAsJson.substring(0, maxLogLength).concat("...");
   }
 
   private static void cancelTimer(final RoutingContext ctx) {

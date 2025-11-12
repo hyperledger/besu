@@ -154,12 +154,13 @@ public class PeerTaskExecutorTest {
           InvalidPeerTaskResponseException {
     Object responseObject = new Object();
     int requestMessageDataCode = 123;
+    String protocolName = "snap";
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(2);
 
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
-    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(subprotocol.getName()).thenReturn(protocolName);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenThrow(new TimeoutException())
         .thenReturn(responseMessageData);
@@ -170,7 +171,7 @@ public class PeerTaskExecutorTest {
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
-    Mockito.verify(ethPeer).recordRequestTimeout(requestMessageDataCode);
+    Mockito.verify(ethPeer).recordRequestTimeout(protocolName, requestMessageDataCode);
     Mockito.verify(ethPeer).recordUsefulResponse();
 
     Assertions.assertNotNull(result);
@@ -207,18 +208,19 @@ public class PeerTaskExecutorTest {
           InterruptedException,
           TimeoutException {
     int requestMessageDataCode = 123;
+    String protocolName = "snap";
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
-    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(subprotocol.getName()).thenReturn(protocolName);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenThrow(new TimeoutException());
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
 
-    Mockito.verify(ethPeer).recordRequestTimeout(requestMessageDataCode);
+    Mockito.verify(ethPeer).recordRequestTimeout(protocolName, requestMessageDataCode);
 
     Assertions.assertNotNull(result);
     Assertions.assertTrue(result.result().isEmpty());
@@ -295,6 +297,7 @@ public class PeerTaskExecutorTest {
           InvalidPeerTaskResponseException {
     Object responseObject = new Object();
     int requestMessageDataCode = 123;
+    String protocolName = "snap";
     EthPeer peer2 = Mockito.mock(EthPeer.class);
 
     Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
@@ -305,6 +308,7 @@ public class PeerTaskExecutorTest {
     Mockito.when(peerTask.getRetriesWithOtherPeer()).thenReturn(2);
     Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
     Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
+    Mockito.when(subprotocol.getName()).thenReturn(protocolName);
     Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
         .thenThrow(new TimeoutException());
     Mockito.when(requestMessageData.getCode()).thenReturn(requestMessageDataCode);
@@ -316,7 +320,7 @@ public class PeerTaskExecutorTest {
 
     PeerTaskExecutorResult<Object> result = peerTaskExecutor.execute(peerTask);
 
-    Mockito.verify(ethPeer).recordRequestTimeout(requestMessageDataCode);
+    Mockito.verify(ethPeer).recordRequestTimeout(protocolName, requestMessageDataCode);
     Mockito.verify(peer2).recordUsefulResponse();
 
     Assertions.assertNotNull(result);

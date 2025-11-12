@@ -13,6 +13,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+apply plugin: 'java-library'
+
+jar {
+  archiveBaseName = calculateArtifactId(project)
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash
+      )
+  }
+}
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
@@ -172,6 +186,9 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':consensus:merge')
   implementation project(':metrics:core')
   implementation project(':util')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -179,7 +196,7 @@ dependencies {
   implementation project(':evm')
   implementation project(':services:kvstore')
 
-  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.consensys.tuweni:tuweni-rlp'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
@@ -188,6 +205,9 @@ dependencies {
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
   referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':ethereum:eth')
+  referenceTestImplementation project(path: ':ethereum:blockcreation')
+  referenceTestImplementation project(path: ':consensus:merge')
   referenceTestImplementation project(path: ':metrics:core')
   referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:rlp')
@@ -198,11 +218,11 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:4.1.0:fixtures_develop@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:5.3.0:fixtures_develop@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'io.tmio:tuweni-bytes'
-  referenceTestImplementation 'io.tmio:tuweni-units'
+  referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
+  referenceTestImplementation 'io.consensys.tuweni:tuweni-units'
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'

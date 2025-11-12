@@ -19,6 +19,7 @@
 .settings
 .springBeans
 .vertx
+.profileconfig.json
 bin/
 local.properties
 target/
@@ -31,3 +32,5 @@ site/
 **/src/*/generated
 jitpack.yml
 /ethereum/eth/src/test/resources/tx.csv.gz
+**/**/.factorypath
+**/**/.jqwik-database

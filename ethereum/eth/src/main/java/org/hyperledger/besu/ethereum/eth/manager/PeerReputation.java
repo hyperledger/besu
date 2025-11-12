@@ -26,8 +26,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +41,8 @@ public class PeerReputation implements Comparable<PeerReputation> {
   public static final int TIMEOUT_THRESHOLD = 5;
   public static final int USELESS_RESPONSE_THRESHOLD = 5;
 
-  private final ConcurrentMap<Integer, AtomicInteger> timeoutCountByRequestType =
-      new ConcurrentHashMap<>();
+  private final ConcurrentMap<ImmutablePair<String, Integer>, AtomicInteger>
+      timeoutCountByRequestType = new ConcurrentHashMap<>();
   private final Queue<Long> uselessResponseTimes = new ConcurrentLinkedQueue<>();
 
   private static final int SMALL_ADJUSTMENT = 1;
@@ -63,12 +64,14 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   public Optional<DisconnectReason> recordRequestTimeout(
-      final int requestCode, final EthPeer peer) {
-    final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
+      final String protocolName, final int requestCode, final EthPeer peer) {
+    final int newTimeoutCount =
+        getOrCreateTimeoutCount(protocolName, requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
       LOG.debug(
-          "Disconnection triggered by {} repeated timeouts for requestCode {} for peer {}",
+          "Disconnection triggered by {} repeated timeouts for protocol {} for requestCode {} for peer {}",
           newTimeoutCount,
+          protocolName,
           requestCode,
           peer.getLoggableId());
       score -= LARGE_ADJUSTMENT;
@@ -79,15 +82,16 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
   }
 
-  public void resetTimeoutCount(final int requestCode) {
-    timeoutCountByRequestType.remove(requestCode);
+  public void resetTimeoutCount(final String protocolName, final int requestCode) {
+    timeoutCountByRequestType.remove(new ImmutablePair<>(protocolName, requestCode));
   }
 
-  private AtomicInteger getOrCreateTimeoutCount(final int requestCode) {
-    return timeoutCountByRequestType.computeIfAbsent(requestCode, code -> new AtomicInteger());
+  private AtomicInteger getOrCreateTimeoutCount(final String protocolName, final int requestCode) {
+    return timeoutCountByRequestType.computeIfAbsent(
+        new ImmutablePair<>(protocolName, requestCode), code -> new AtomicInteger());
   }
 
-  public Map<Integer, AtomicInteger> timeoutCounts() {
+  public Map<ImmutablePair<String, Integer>, AtomicInteger> timeoutCounts() {
     return timeoutCountByRequestType;
   }
 
@@ -127,7 +131,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   }
 
   @Override
-  public int compareTo(final @Nonnull PeerReputation otherReputation) {
+  public int compareTo(final @NotNull PeerReputation otherReputation) {
     return Integer.compare(this.score, otherReputation.score);
   }
 

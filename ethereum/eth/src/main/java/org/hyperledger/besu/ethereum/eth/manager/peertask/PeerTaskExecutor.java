@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -24,8 +25,8 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,17 +92,17 @@ public class PeerTaskExecutor {
   public <T> PeerTaskExecutorResult<T> execute(final PeerTask<T> peerTask) {
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithOtherPeer();
-    final Collection<EthPeer> usedEthPeers = new HashSet<>();
+    final List<EthPeer> usedEthPeers = new ArrayList<>();
     do {
       Optional<EthPeer> peer =
           peerSelector.getPeer(
               (candidatePeer) ->
                   peerTask.getPeerRequirementFilter().test(candidatePeer)
-                      && !usedEthPeers.contains(candidatePeer));
+                      && !usedEthPeers.contains(candidatePeer.ethPeer()));
       if (peer.isEmpty()) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, Optional.empty());
+                Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, usedEthPeers);
         break;
       }
       usedEthPeers.add(peer.get());
@@ -109,7 +110,8 @@ public class PeerTaskExecutor {
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS);
 
-    return executorResult;
+    return new PeerTaskExecutorResult<>(
+        executorResult.result(), executorResult.responseCode(), usedEthPeers);
   }
 
   public <T> PeerTaskExecutorResult<T> executeAgainstPeer(
@@ -124,6 +126,7 @@ public class PeerTaskExecutor {
               return inflightRequests;
             });
     MessageData requestMessageData = peerTask.getRequestMessage();
+    SubProtocol peerTaskSubProtocol = peerTask.getSubProtocol();
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithSamePeer();
     do {
@@ -134,7 +137,7 @@ public class PeerTaskExecutor {
           inflightRequestCountForThisTaskClass.incrementAndGet();
 
           MessageData responseMessageData =
-              requestSender.sendRequest(peerTask.getSubProtocol(), requestMessageData, peer);
+              requestSender.sendRequest(peerTaskSubProtocol, requestMessageData, peer);
 
           if (responseMessageData == null) {
             throw new InvalidPeerTaskResponseException();
@@ -150,36 +153,30 @@ public class PeerTaskExecutor {
           peer.recordUsefulResponse();
           executorResult =
               new PeerTaskExecutorResult<>(
-                  Optional.ofNullable(result),
-                  PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(peer));
+                  Optional.ofNullable(result), PeerTaskExecutorResponseCode.SUCCESS, List.of(peer));
           peerTask.postProcessResult(executorResult);
         } else {
           LOG.debug(
               "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
-          validationResponse
-              .getDisconnectReason()
-              .ifPresent((disconnectReason) -> peer.disconnect(disconnectReason));
+          validationResponse.getDisconnectReason().ifPresent(peer::disconnect);
           executorResult =
               new PeerTaskExecutorResult<>(
                   Optional.ofNullable(result),
                   PeerTaskExecutorResponseCode.INVALID_RESPONSE,
-                  Optional.of(peer));
+                  List.of(peer));
         }
 
       } catch (PeerNotConnected e) {
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(),
-                PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
-                Optional.of(peer));
+                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, List.of(peer));
 
       } catch (InterruptedException | TimeoutException e) {
-        peer.recordRequestTimeout(requestMessageData.getCode());
+        peer.recordRequestTimeout(peerTaskSubProtocol.getName(), requestMessageData.getCode());
         timeoutCounter.labels(taskClassName).inc();
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, Optional.of(peer));
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, List.of(peer));
 
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
@@ -188,7 +185,7 @@ public class PeerTaskExecutor {
             "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
-                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, Optional.of(peer));
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, List.of(peer));
 
       } catch (Exception e) {
         internalExceptionCounter.labels(taskClassName).inc();
@@ -197,20 +194,19 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.empty(),
                 PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
-                Optional.of(peer));
+                List.of(peer));
       }
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
-        && sleepBetweenRetries());
+        && sleepBetweenRetries(peerTask));
 
     return executorResult;
   }
 
-  private boolean sleepBetweenRetries() {
+  private <T> boolean sleepBetweenRetries(final PeerTask<T> peerTask) {
     try {
-      // sleep for 1 second to match implemented wait between retries in AbstractRetryingPeerTask
-      Thread.sleep(1000);
+      Thread.sleep(peerTask.getDelayBetweenSamePeerRetries());
       return true;
     } catch (InterruptedException e) {
       return false;

@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -103,7 +105,7 @@ public class DefaultBlockchainTest {
                     kvStore, kvStoreVariables, gen.genesisBlock(), "/test/path"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Supplied genesis block does not match chain data stored in /test/path.\n"
+            "Supplied genesis block does not match chain data stored in /test/path\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
                 + "--genesis-file or supply a testnet/mainnet option with --network.");
   }
@@ -975,7 +977,7 @@ public class DefaultBlockchainTest {
     final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain =
-        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512);
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 512, 0);
 
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
@@ -1011,6 +1013,36 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(1);
     assertThat(blockchain.getTotalDifficultyCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getHeader().getDifficulty());
+  }
+
+  @Test
+  public void testCacheUsedWhenNumberOfBlockHeadersToCacheNotZero() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock, "/data/test", 0, 10000);
+
+    final BlockDataGenerator.BlockOptions options =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(1L)
+            .setParentHash(genesisBlock.getHash());
+    final Block newBlock = gen.block(options);
+    final List<TransactionReceipt> receipts = gen.receipts(newBlock);
+
+    assertThat(blockchain.getBlockHeadersCache()).isNotEmpty();
+    assertThat(blockchain.getBlockBodiesCache()).isEmpty();
+    assertThat(blockchain.getTransactionReceiptsCache()).isEmpty();
+    assertThat(blockchain.getTotalDifficultyCache()).isEmpty();
+
+    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(0);
+
+    blockchain.appendBlock(newBlock, receipts);
+
+    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
+    assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))
+        .isEqualTo(newBlock.getHeader());
   }
 
   /*
@@ -1104,7 +1136,8 @@ public class DefaultBlockchainTest {
       final KeyValueStorage kvStorageVariables,
       final Block genesisBlock,
       final String dataDirectory,
-      final int numberOfBlocksToCache) {
+      final int numberOfBlocksToCache,
+      final int numberOfBlockHeadersToCache) {
     return (DefaultBlockchain)
         DefaultBlockchain.createMutable(
             genesisBlock,
@@ -1112,6 +1145,86 @@ public class DefaultBlockchainTest {
             new NoOpMetricsSystem(),
             0,
             dataDirectory,
-            numberOfBlocksToCache);
+            numberOfBlocksToCache,
+            numberOfBlockHeadersToCache);
+  }
+
+  @Test
+  void testGetEarliestBlockNumber() {
+    final long earliestBlockNumber = 3L;
+    final long lastBlockNumber = 5L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(earliestBlockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWhenNoBlocksExist() {
+    DefaultBlockchain blockchain = mockMutableBlockchain(0L, 0L);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithSingleBlock() {
+    final long blockNumber = 2L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(blockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithSingleBlockIsGenesis() {
+    final long blockNumber = 1L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(BlockHeader.GENESIS_BLOCK_NUMBER);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithAllBlocks() {
+    final long earliestBlockNumber = 0L;
+    final long lastBlockNumber = 10L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(earliestBlockNumber);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWithWholeChainIsGenesis() {
+    final long earliestBlockNumber = 1L;
+    final long lastBlockNumber = 10L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(earliestBlockNumber, lastBlockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(BlockHeader.GENESIS_BLOCK_NUMBER);
+  }
+
+  @Test
+  void testGetEarliestBlockNumberWhenChainHeadIsEarliest() {
+    final long blockNumber = 5L;
+    DefaultBlockchain blockchain = mockMutableBlockchain(blockNumber, blockNumber);
+    Optional<Long> result = blockchain.getEarliestBlockNumber();
+    assertThat(result).isPresent();
+    assertThat(result.get()).isEqualTo(blockNumber);
+  }
+
+  private DefaultBlockchain mockMutableBlockchain(
+      final long earliestBlockNumber, final long lastBlockNumber) {
+    DefaultBlockchain blockchain = mock(DefaultBlockchain.class);
+    when(blockchain.getEarliestBlockNumber()).thenCallRealMethod();
+    for (long i = earliestBlockNumber; i <= lastBlockNumber; i++) {
+      Block block = mock(Block.class);
+      BlockHeader blockHeader = mock(BlockHeader.class);
+      when(blockHeader.getNumber()).thenReturn(i);
+      when(block.getHeader()).thenReturn(blockHeader);
+      when(blockchain.getBlockByNumber(i)).thenReturn(Optional.of(block));
+    }
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(lastBlockNumber);
+    return blockchain;
   }
 }

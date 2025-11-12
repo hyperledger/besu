@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +27,7 @@ public class BlockProcessingResult extends BlockValidationResult {
   private final Optional<BlockProcessingOutputs> yield;
   private final boolean isPartial;
   private Optional<Integer> nbParallelizedTransactions = Optional.empty();
+  private final Optional<BlockAccessList> maybeGeneratedBlockAccessList;
 
   /** A result indicating that processing failed. */
   public static final BlockProcessingResult FAILED = new BlockProcessingResult("processing failed");
@@ -37,8 +38,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    * @param yield the outputs of processing a block
    */
   public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, false);
   }
 
   /**
@@ -51,8 +51,7 @@ public class BlockProcessingResult extends BlockValidationResult {
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield,
       final Optional<Integer> nbParallelizedTransactions) {
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, false);
     this.nbParallelizedTransactions = nbParallelizedTransactions;
   }
 
@@ -66,6 +65,7 @@ public class BlockProcessingResult extends BlockValidationResult {
       final Optional<BlockProcessingOutputs> yield, final boolean isPartial) {
     this.yield = yield;
     this.isPartial = isPartial;
+    this.maybeGeneratedBlockAccessList = Optional.empty();
   }
 
   /**
@@ -76,9 +76,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final String errorMessage) {
-    super(errorMessage);
-    this.yield = yield;
-    this.isPartial = false;
+    this(yield, errorMessage, false);
   }
 
   /**
@@ -92,6 +90,7 @@ public class BlockProcessingResult extends BlockValidationResult {
     super(cause.getLocalizedMessage(), cause);
     this.yield = yield;
     this.isPartial = false;
+    this.maybeGeneratedBlockAccessList = Optional.empty();
   }
 
   /**
@@ -105,9 +104,26 @@ public class BlockProcessingResult extends BlockValidationResult {
       final Optional<BlockProcessingOutputs> yield,
       final String errorMessage,
       final boolean isPartial) {
+    this(yield, errorMessage, isPartial, Optional.empty());
+  }
+
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param errorMessage the error message if any
+   * @param isPartial whether the processing was incomplete
+   * @param generatedBlockAccessList the generated block access list, if available
+   */
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield,
+      final String errorMessage,
+      final boolean isPartial,
+      final Optional<BlockAccessList> generatedBlockAccessList) {
     super(errorMessage);
     this.yield = yield;
     this.isPartial = isPartial;
+    this.maybeGeneratedBlockAccessList = generatedBlockAccessList;
   }
 
   /**
@@ -119,6 +135,7 @@ public class BlockProcessingResult extends BlockValidationResult {
     super(errorMessage);
     this.isPartial = false;
     this.yield = Optional.empty();
+    this.maybeGeneratedBlockAccessList = Optional.empty();
   }
 
   /**
@@ -145,11 +162,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    * @return the transaction receipts of the result
    */
   public List<TransactionReceipt> getReceipts() {
-    if (yield.isEmpty()) {
-      return new ArrayList<>();
-    } else {
-      return yield.get().getReceipts();
-    }
+    return yield.map(BlockProcessingOutputs::getReceipts).orElse(List.of());
   }
 
   /**
@@ -168,5 +181,14 @@ public class BlockProcessingResult extends BlockValidationResult {
    */
   public Optional<Integer> getNbParallelizedTransactions() {
     return nbParallelizedTransactions;
+  }
+
+  /**
+   * Returns the generated block access list produced during processing, when available.
+   *
+   * @return the generated block access list
+   */
+  public Optional<BlockAccessList> getGeneratedBlockAccessList() {
+    return maybeGeneratedBlockAccessList;
   }
 }

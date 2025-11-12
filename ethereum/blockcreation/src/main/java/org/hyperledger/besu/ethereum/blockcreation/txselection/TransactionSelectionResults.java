@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -139,11 +140,18 @@ public class TransactionSelectionResults {
         + cumulativeGasUsed
         + ", selectedTransactions="
         + selectedTransactions.stream()
-            .map(Transaction::toTraceLog)
-            .collect(Collectors.joining("; "))
+            .map(Transaction::getHash)
+            .map(Hash::toHexString)
+            .collect(Collectors.joining(", "))
         + ", notSelectedTransactions="
         + notSelectedTransactions.entrySet().stream()
-            .map(e -> e.getValue() + ":" + e.getKey().toTraceLog())
-            .collect(Collectors.joining(";"));
+            .collect(
+                Collectors.groupingBy(
+                    Map.Entry::getValue,
+                    Collectors.mapping(e -> e.getKey().getHash(), Collectors.toList())))
+            .entrySet()
+            .stream()
+            .map(e -> e.getKey() + ":" + e.getValue())
+            .collect(Collectors.joining(", "));
   }
 }

@@ -67,29 +67,33 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
     final UInt256 newValue = UInt256.fromBytes(frame.popStackItem());
 
-    final MutableAccount account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
+    final MutableAccount account = getMutableAccount(frame.getRecipientAddress(), frame);
     if (account == null) {
       return ILLEGAL_STATE_CHANGE;
+    }
+
+    final long remainingGas = frame.getRemainingGas();
+
+    if (frame.isStatic()) {
+      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
+    if (remainingGas <= minimumGasRemaining) {
+      return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final Supplier<UInt256> currentValueSupplier =
-        Suppliers.memoize(() -> account.getStorageValue(key));
+        Suppliers.memoize(() -> getStorageValue(account, key, frame));
     final Supplier<UInt256> originalValueSupplier =
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
     final long cost =
         gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
-
-    final long remainingGas = frame.getRemainingGas();
-    if (frame.isStatic()) {
-      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (remainingGas < cost) {
+    if (remainingGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    } else if (remainingGas <= minimumGasRemaining) {
-      return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     // Increment the refund counter.
@@ -99,6 +103,8 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
+    frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(address, key));
+
     return new OperationResult(cost, null);
   }
 }

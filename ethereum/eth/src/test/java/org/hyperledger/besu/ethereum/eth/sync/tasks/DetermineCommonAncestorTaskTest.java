@@ -27,9 +27,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -77,7 +75,7 @@ import org.mockito.stubbing.Answer;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final int defaultHeaderRequestSize = 10;
@@ -105,11 +103,10 @@ public class DetermineCommonAncestorTaskTest {
             .build();
     ethContext = ethProtocolManager.ethContext();
     protocolContext =
-        new ProtocolContext(
-            localBlockchain,
-            worldStateArchive,
-            mock(ConsensusContext.class),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(localBlockchain)
+            .withWorldStateArchive(worldStateArchive)
+            .build();
   }
 
   @Test
@@ -168,7 +165,7 @@ public class DetermineCommonAncestorTaskTest {
         new PeerTaskExecutorResult<>(
             Optional.of(Collections.emptyList()),
             PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
-            Optional.of(respondingEthPeer.getEthPeer()));
+            List.of(respondingEthPeer.getEthPeer()));
     Mockito.when(
             peerTaskExecutor.executeAgainstPeer(
                 Mockito.any(GetHeadersFromPeerTask.class),
@@ -527,7 +524,7 @@ public class DetermineCommonAncestorTaskTest {
         }
 
         return new PeerTaskExecutorResult<List<BlockHeader>>(
-            Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS, Optional.empty());
+            Optional.of(headers), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
       }
     };
   }

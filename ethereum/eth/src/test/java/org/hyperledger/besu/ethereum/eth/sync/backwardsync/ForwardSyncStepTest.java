@@ -39,7 +39,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -53,8 +55,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,6 +90,7 @@ public class ForwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
@@ -133,6 +136,7 @@ public class ForwardSyncStepTest {
         localBlockchain.appendBlock(block, receipts);
       }
     }
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
 
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
@@ -176,7 +180,7 @@ public class ForwardSyncStepTest {
               return new PeerTaskExecutorResult<List<Block>>(
                   Optional.of(blocks),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(peer.getEthPeer()));
+                  List.of(peer.getEthPeer()));
             });
   }
 
@@ -267,7 +271,7 @@ public class ForwardSyncStepTest {
     return chain;
   }
 
-  @Nonnull
+  @NotNull
   private BackwardChain backwardChainFromBlock(final int number) {
     final BackwardChain backwardChain =
         new BackwardChain(headersStorage, blocksStorage, chainStorage, sessionDataStorage);
@@ -275,7 +279,7 @@ public class ForwardSyncStepTest {
     return backwardChain;
   }
 
-  @Nonnull
+  @NotNull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }

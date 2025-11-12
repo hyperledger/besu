@@ -15,25 +15,41 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.TransactionReceipt;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockSimulationResult {
   final Block block;
-  final List<TransactionReceipt> receipts;
-  List<TransactionSimulatorResult> transactionSimulationResults;
+  final BlockStateCallSimulationResult blockStateCallSimulationResult;
+  final Optional<TrieLog> trieLog;
+  final Optional<Function<TrieLog, Bytes>> trieLogSerializer;
+
+  public BlockSimulationResult(
+      final Block block, final BlockStateCallSimulationResult blockStateCallSimulationResult) {
+    this.block = block;
+    this.blockStateCallSimulationResult = blockStateCallSimulationResult;
+    this.trieLog = Optional.empty();
+    this.trieLogSerializer = Optional.empty();
+  }
 
   public BlockSimulationResult(
       final Block block,
-      final List<? extends TransactionReceipt> receipts,
-      final List<TransactionSimulatorResult> transactionSimulationResults) {
+      final BlockStateCallSimulationResult blockStateCallSimulationResult,
+      final TrieLog trieLog,
+      final Function<TrieLog, Bytes> trieLogSerializer) {
     this.block = block;
-    this.receipts = new ArrayList<>(receipts);
-    this.transactionSimulationResults = transactionSimulationResults;
+    this.blockStateCallSimulationResult = blockStateCallSimulationResult;
+    this.trieLog = Optional.ofNullable(trieLog);
+    this.trieLogSerializer = Optional.ofNullable(trieLogSerializer);
   }
 
   public BlockHeader getBlockHeader() {
@@ -44,15 +60,43 @@ public class BlockSimulationResult {
     return block.getBody();
   }
 
-  public List<? extends TransactionReceipt> getReceipts() {
-    return receipts;
+  public List<TransactionReceipt> getReceipts() {
+    return blockStateCallSimulationResult.getReceipts();
   }
 
   public List<TransactionSimulatorResult> getTransactionSimulations() {
-    return transactionSimulationResults;
+    return blockStateCallSimulationResult.getTransactionSimulationResults();
   }
 
   public Block getBlock() {
     return block;
+  }
+
+  public List<LogWithMetadata> getLogsWithMetadata() {
+    return blockStateCallSimulationResult.getTransactionSimulatorResults().stream()
+        .flatMap(
+            transactionSimulation ->
+                LogWithMetadata.generate(
+                    0,
+                    transactionSimulation.logs(),
+                    block.getHeader().getNumber(),
+                    block.getHash(),
+                    block.getHeader().getTimestamp(),
+                    transactionSimulation.result().transaction().getHash(),
+                    block
+                        .getBody()
+                        .getTransactions()
+                        .indexOf(transactionSimulation.result().transaction()),
+                    false)
+                    .stream())
+        .toList();
+  }
+
+  public Optional<TrieLog> getTrieLog() {
+    return trieLog;
+  }
+
+  public Optional<Bytes> getSerializedTrieLog() {
+    return trieLogSerializer.flatMap(trieLog::map);
   }
 }

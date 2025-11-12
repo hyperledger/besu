@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,7 +17,6 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -86,14 +85,17 @@ public class CodeValidateSubCommand implements Runnable {
     String fork =
         parentCommand != null && parentCommand.hasFork()
             ? parentCommand.getFork()
-            : EvmSpecVersion.OSAKA.getName();
+            : EvmSpecVersion.FUTURE_EIPS.getName();
 
     evm =
         Suppliers.memoize(
             () -> {
-              ProtocolSpec protocolSpec =
-                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
-              return protocolSpec.getEvm();
+              if (parentCommand == null) {
+                return ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
+              }
+              return ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+                  .geSpecByName(fork)
+                  .getEvm();
             });
   }
 
@@ -173,7 +175,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: layout - " + layout.invalidReason();
     }
 
-    Code code = evm.get().getCodeUncached(codeBytes);
+    Code code = evm.get().wrapCode(codeBytes);
     if (code instanceof CodeInvalid codeInvalid) {
       return "err: " + codeInvalid.getInvalidReason();
     } else if (EOFContainerMode.INITCODE.equals(

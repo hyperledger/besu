@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -49,13 +49,17 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class TransactionTest {
+  private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
+
+  static {
+    PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
+  }
 
   private static TransactionValidator transactionValidator(final String name) {
-    return ReferenceTestProtocolSchedules.getInstance()
-        .getByName(name)
-        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
-        .getTransactionValidatorFactory()
-        .get();
+    return PROTOCOL_SCHEDULES.getByName(name)
+      .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
+      .getTransactionValidatorFactory()
+      .get();
   }
 
   private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
@@ -195,10 +199,7 @@ public class TransactionTest {
       final long baselineGas =
         transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L) +
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-      final long intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(
-        transaction.getPayload(),
-        transaction.isContractCreation(),
-        baselineGas);
+      final long intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction, baselineGas);
       assertThat(intrinsicGasCost).isEqualTo(expected.getIntrinsicGas());
     } catch (final Exception e) {
       if (expected.isSucceeds()) {

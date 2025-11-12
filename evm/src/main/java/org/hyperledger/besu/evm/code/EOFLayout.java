@@ -396,7 +396,8 @@ public record EOFLayout(
                 + Integer.toHexString(typeData[i][2]));
       }
       codeSections[i] =
-          new CodeSection(codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
+          new CodeSection(
+              () -> codeSectionSize, typeData[i][0], typeData[i][1], typeData[i][2], pos);
       if (i == 0 && typeData[0][1] != 0x80) {
         return invalidLayout(
             step.container,
@@ -580,7 +581,7 @@ public record EOFLayout(
       out.writeByte(SECTION_CODE);
       out.writeShort(codeSections.length);
       for (CodeSection cs : codeSections) {
-        out.writeShort(cs.length);
+        out.writeShort(cs.lengthSupplier.get());
       }
 
       // Subcontainers header
@@ -621,7 +622,7 @@ public record EOFLayout(
 
       // Code sections
       for (CodeSection cs : codeSections) {
-        out.write(container.slice(cs.entryPoint, cs.length).toArray());
+        out.write(container.slice(cs.entryPoint, cs.lengthSupplier.get()).toArray());
       }
 
       // Subcontainers
@@ -727,20 +728,21 @@ public record EOFLayout(
       out.print(prefix);
       out.printf("  %04x # max stack:  %1$d%n", cs.getMaxStackHeight());
     }
+    byte[] byteCode = container.toArray();
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
           "       # Code section %d - in=%d out=%s height=%d%n",
           i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackHeight);
-      byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
-      int pc = 0;
-      while (pc < byteCode.length) {
+      int pc = cs.getEntryPoint();
+      int endPc = pc + cs.getLength();
+      while (pc < endPc) {
         out.print(prefix);
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          if (byteCode.length <= pc + 1) {
+          if (pc + 1 >= byteCode.length) {
             out.printf(
                 "    %02x # [%d] %s(<truncated instruction>)%n", byteCode[pc], pc, ci.name());
             pc++;
@@ -762,7 +764,7 @@ public record EOFLayout(
               int b1 = byteCode[j] & 0xff;
               out.print(b0 << 8 | b1);
             }
-            if (byteCode.length < calculatedTableEnd) {
+            if (calculatedTableEnd > byteCode.length) {
               out.print("<truncated immediate>");
             }
             pc += tableSize * 2 + 4;
@@ -808,7 +810,7 @@ public record EOFLayout(
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            if (byteCode.length <= pc + 1) {
+            if (pc + 1 >= byteCode.length) {
               out.print("(<truncated immediate>)");
             } else {
               out.printf("(%d)", byteCode[pc + 1] & 0xff);
@@ -818,7 +820,7 @@ public record EOFLayout(
             for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
               out.printf("%02x", byteCode[pc + j]);
             }
-            if ((pc + advance) >= byteCode.length) {
+            if ((pc + advance) > byteCode.length) {
               out.print(" <truncated immediate>");
             }
             out.print(")");

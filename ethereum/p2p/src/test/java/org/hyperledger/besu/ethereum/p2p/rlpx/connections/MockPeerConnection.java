@@ -74,7 +74,7 @@ public class MockPeerConnection extends AbstractPeerConnection {
       final PeerConnectionEventDispatcher eventDispatcher,
       final boolean inboundInitiated) {
     final List<SubProtocol> subProtocols = Arrays.asList(MockSubProtocol.create("eth"));
-    final List<Capability> caps = Arrays.asList(Capability.create("eth", 63));
+    final List<Capability> caps = Arrays.asList(Capability.create("eth", 68));
     final CapabilityMultiplexer multiplexer = new CapabilityMultiplexer(subProtocols, caps, caps);
     final PeerInfo peerInfo =
         new PeerInfo(5, "test", caps, peer.getEnodeURL().getListeningPortOrZero(), peer.getId());

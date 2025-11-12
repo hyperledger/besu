@@ -22,7 +22,6 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -51,8 +50,9 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null, null, setupContextWithValidators(validators), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -72,8 +72,9 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(
-            null, null, setupContextWithValidators(validators), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withConsensusContext(setupContextWithValidators(validators))
+            .build();
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 

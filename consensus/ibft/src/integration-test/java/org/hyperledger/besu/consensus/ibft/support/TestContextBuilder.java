@@ -35,6 +35,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
@@ -91,6 +93,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -337,6 +341,7 @@ public class TestContextBuilder {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -350,11 +355,11 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface);
 
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(new BftContext(validatorProvider, epochManager, blockInterface))
+            .build();
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
 
@@ -393,7 +398,7 @@ public class TestContextBuilder {
             ethScheduler);
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
+        new BftProposerSelector(blockChain, blockInterface, true, validatorProvider);
 
     final BftExecutors bftExecutors =
         BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.IBFT);
@@ -404,7 +409,10 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
-            new RoundTimer(bftEventQueue, Duration.ofSeconds(ROUND_TIMER_SEC), bftExecutors),
+            new RoundTimer(
+                bftEventQueue,
+                new BftRoundExpiryTimeCalculator(Duration.ofSeconds(ROUND_TIMER_SEC)),
+                bftExecutors),
             new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             clock);
@@ -418,8 +426,8 @@ public class TestContextBuilder {
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<Message> futureMessageBuffer =
+        new FutureMessageBuffer<>(
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());

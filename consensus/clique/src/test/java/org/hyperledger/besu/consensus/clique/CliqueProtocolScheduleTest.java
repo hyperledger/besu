@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +34,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -67,12 +68,12 @@ public class CliqueProtocolScheduleTest {
             config,
             new ForksSchedule<>(List.of()),
             NODE_KEY,
-            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
@@ -94,16 +95,16 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfig.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
-    assertThat(homestead.getName()).isEqualTo("Frontier");
+    assertThat(homestead.getHardforkId()).isEqualTo(FRONTIER);
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
@@ -121,12 +122,12 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
-                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
@@ -144,12 +145,12 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
-                    PrivacyParameters.DEFAULT,
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
@@ -171,12 +172,12 @@ public class CliqueProtocolScheduleTest {
             config,
             forksSchedule,
             NODE_KEY,
-            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     BlockHeader emptyFrontierParent =

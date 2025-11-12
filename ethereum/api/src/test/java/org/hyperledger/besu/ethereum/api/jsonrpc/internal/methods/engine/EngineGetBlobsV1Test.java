@@ -16,15 +16,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -39,8 +40,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
@@ -63,9 +66,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EngineGetBlobsV1Test {
+public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -83,16 +86,25 @@ public class EngineGetBlobsV1Test {
   @Mock private EngineCallListener engineCallListener;
   @Mock private MutableBlockchain blockchain;
   @Mock private TransactionPool transactionPool;
+  @Mock private BlockHeader blockHeader;
+  @Mock private MergeContext mergeContext;
 
   private EngineGetBlobsV1 method;
 
   private static final Vertx vertx = Vertx.vertx();
 
   @BeforeEach
-  public void before() {
+  public void beforeEach() {
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.ofNullable(mergeContext));
+
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     this.method =
-        spy(new EngineGetBlobsV1(vertx, protocolContext, engineCallListener, transactionPool));
+        spy(
+            new EngineGetBlobsV1(
+                vertx, protocolContext, protocolSchedule, engineCallListener, transactionPool));
   }
 
   @Test
@@ -120,9 +132,12 @@ public class EngineGetBlobsV1Test {
     // for loop to check each blob and proof
     for (int i = 0; i < versionedHashes.length; i++) {
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
+          .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+      assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
+          .isEqualTo(1);
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-          .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).kzgProof().getData());
+          .isEqualTo(
+              blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().getFirst().getData());
     }
   }
 
@@ -150,9 +165,17 @@ public class EngineGetBlobsV1Test {
     for (int i = 0; i < versionedHashesList.size(); i++) {
       if (i != 1) {
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
-            .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
+            .isEqualTo(blobsWithCommitments.getBlobProofBundles().get(i).getBlob().getData());
+        assertThat(blobsWithCommitments.getBlobProofBundles().get(i).getKzgProof().size())
+            .isEqualTo(1);
         assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
-            .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).kzgProof().getData());
+            .isEqualTo(
+                blobsWithCommitments
+                    .getBlobProofBundles()
+                    .get(i)
+                    .getKzgProof()
+                    .getFirst()
+                    .getData());
       } else {
         assertThat(blobAndProofV1s.get(i)).isNull();
       }
@@ -203,9 +226,49 @@ public class EngineGetBlobsV1Test {
     final JsonRpcResponse jsonRpcResponse = resp(versionedHashes);
 
     assertThat(fromErrorResp(jsonRpcResponse).getCode())
-        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST.getCode());
+        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getCode());
     assertThat(fromErrorResp(jsonRpcResponse).getMessage())
-        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_V1_TOO_LARGE_REQUEST.getMessage());
+        .isEqualTo(RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST.getMessage());
+  }
+
+  @Test
+  void shouldFailWhenCancunNotActive() {
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone() - 1);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(fromErrorResp(response).getCode())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  void shouldSucceedWhenCancunActive() {
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+  }
+
+  @Test
+  void shouldSucceedWhenOsakaNotActive() {
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone() - 1);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+  }
+
+  @Test
+  void shouldFailWhenOsakaActive() {
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(fromErrorResp(response).getCode())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  public void shouldReturnNullWhenSyncing() {
+    when(mergeContext.isSyncing()).thenReturn(true);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(response);
+    assertThat(blobAndProofV1s).hasSize(1);
+    assertThat(blobAndProofV1s.getFirst()).isNull();
   }
 
   Transaction createBlobTransaction() {
@@ -228,10 +291,11 @@ public class EngineGetBlobsV1Test {
 
   private void mockTransactionPoolMethod(final BlobsWithCommitments blobsWithCommitments) {
     blobsWithCommitments
-        .getBlobQuads()
+        .getBlobProofBundles()
         .forEach(
-            blobQuad ->
-                when(transactionPool.getBlobQuad(blobQuad.versionedHash())).thenReturn(blobQuad));
+            blobProofBundle ->
+                when(transactionPool.getBlobProofBundle(blobProofBundle.getVersionedHash()))
+                    .thenReturn(blobProofBundle));
   }
 
   private JsonRpcResponse resp(final VersionedHash[] versionedHashes) {

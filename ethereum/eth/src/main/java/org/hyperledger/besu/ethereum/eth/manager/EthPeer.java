@@ -18,17 +18,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
@@ -55,9 +53,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -108,11 +107,12 @@ public class EthPeer implements Comparable<EthPeer> {
 
   static {
     roundMessages = new HashMap<>();
-    roundMessages.put(EthPV62.BLOCK_HEADERS, EthPV62.GET_BLOCK_HEADERS);
-    roundMessages.put(EthPV62.BLOCK_BODIES, EthPV62.GET_BLOCK_BODIES);
-    roundMessages.put(EthPV63.RECEIPTS, EthPV63.GET_RECEIPTS);
-    roundMessages.put(EthPV63.NODE_DATA, EthPV63.GET_NODE_DATA);
-    roundMessages.put(EthPV65.POOLED_TRANSACTIONS, EthPV65.GET_POOLED_TRANSACTIONS);
+    roundMessages.put(EthProtocolMessages.BLOCK_HEADERS, EthProtocolMessages.GET_BLOCK_HEADERS);
+    roundMessages.put(EthProtocolMessages.BLOCK_BODIES, EthProtocolMessages.GET_BLOCK_BODIES);
+    roundMessages.put(EthProtocolMessages.RECEIPTS, EthProtocolMessages.GET_RECEIPTS);
+    roundMessages.put(EthProtocolMessages.NODE_DATA, EthProtocolMessages.GET_NODE_DATA);
+    roundMessages.put(
+        EthProtocolMessages.POOLED_TRANSACTIONS, EthProtocolMessages.GET_POOLED_TRANSACTIONS);
 
     roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
     roundMessages.put(SnapV1.STORAGE_RANGE, SnapV1.GET_STORAGE_RANGE);
@@ -146,27 +146,20 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   private void initEthRequestManagers() {
-    final boolean supportsRequestId =
-        getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
     requestManagers.put(
         EthProtocol.NAME,
         Map.ofEntries(
             Map.entry(
-                EthPV62.GET_BLOCK_HEADERS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_BLOCK_HEADERS, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV62.GET_BLOCK_BODIES,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_BLOCK_BODIES, new RequestManager(this, EthProtocol.NAME)),
+            Map.entry(EthProtocolMessages.GET_RECEIPTS, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV63.GET_RECEIPTS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthProtocolMessages.GET_NODE_DATA, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
-                EthPV63.GET_NODE_DATA,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
-            Map.entry(
-                EthPV65.GET_POOLED_TRANSACTIONS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME))));
+                EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+                new RequestManager(this, EthProtocol.NAME))));
   }
 
   private void initSnapRequestManagers() {
@@ -174,10 +167,10 @@ public class EthPeer implements Comparable<EthPeer> {
     requestManagers.put(
         SnapProtocol.NAME,
         Map.ofEntries(
-            Map.entry(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_STORAGE_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_BYTECODES, new RequestManager(this, true, SnapProtocol.NAME)),
-            Map.entry(SnapV1.GET_TRIE_NODES, new RequestManager(this, true, SnapProtocol.NAME))));
+            Map.entry(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_STORAGE_RANGE, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_BYTECODES, new RequestManager(this, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_TRIE_NODES, new RequestManager(this, SnapProtocol.NAME))));
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -209,13 +202,13 @@ public class EthPeer implements Comparable<EthPeer> {
     chainHeadState.removeEstimatedHeightListener(listenerId);
   }
 
-  public void recordRequestTimeout(final int requestCode) {
+  public void recordRequestTimeout(final String protocolName, final int requestCode) {
     LOG.atDebug()
         .setMessage("Timed out while waiting for response from peer {}")
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode, this).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout(protocolName, requestCode, this).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
@@ -316,7 +309,7 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
     final RequestManager requestManager =
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_HEADERS);
     return sendRequest(requestManager, message);
   }
 
@@ -326,33 +319,36 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_HEADERS), message);
   }
 
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_BODIES), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_BODIES), message);
   }
 
   public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_RECEIPTS), message);
+    return sendRequest(
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_RECEIPTS), message);
   }
 
   public RequestManager.ResponseStream getNodeData(final Iterable<Hash> nodeHashes)
       throws PeerNotConnected {
     final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_NODE_DATA), message);
+    return sendRequest(
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_NODE_DATA), message);
   }
 
   public RequestManager.ResponseStream getPooledTransactions(final List<Hash> hashes)
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
+        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_POOLED_TRANSACTIONS),
+        message);
   }
 
   public RequestManager.ResponseStream getSnapAccountRange(
@@ -441,7 +437,7 @@ public class EthPeer implements Comparable<EthPeer> {
     checkArgument(
         ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
-    reputation.resetTimeoutCount(messageCode);
+    reputation.resetTimeoutCount(protocolName, messageCode);
 
     Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
@@ -486,7 +482,7 @@ public class EthPeer implements Comparable<EthPeer> {
     return Optional.empty();
   }
 
-  public Map<Integer, AtomicInteger> timeoutCounts() {
+  public Map<ImmutablePair<String, Integer>, AtomicInteger> timeoutCounts() {
     return reputation.timeoutCounts();
   }
 
@@ -513,12 +509,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusReceived(
-      final Hash hash,
-      final Difficulty td,
-      final int protocolVersion,
-      final PeerConnection connection) {
-    chainHeadState.statusReceived(hash, td);
-    lastProtocolVersion.set(protocolVersion);
+      final StatusMessage statusMessage, final PeerConnection connection) {
+    chainHeadState.statusReceived(statusMessage);
+    lastProtocolVersion.set(statusMessage.protocolVersion());
     statusHasBeenReceivedFromPeer.set(true);
     synchronized (this) {
       connection.setStatusReceived();
@@ -601,6 +594,11 @@ public class EthPeer implements Comparable<EthPeer> {
     chainHeadState.update(blockHash, height);
   }
 
+  public void registerBlockRange(
+      final Hash blockHash, final long height, final long earliestBlockHeight) {
+    chainHeadState.update(blockHash, height, earliestBlockHeight);
+  }
+
   public int outstandingRequests() {
     return requestManagers.values().stream()
         .flatMap(m -> m.values().stream())
@@ -649,14 +647,14 @@ public class EthPeer implements Comparable<EthPeer> {
         System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
-  @Nonnull
+  @NotNull
   public String getLoggableId() {
     // 8 bytes plus the 0x prefix is 18 characters
     return nodeId().toString().substring(0, 18) + "...";
   }
 
   @Override
-  public int compareTo(final @Nonnull EthPeer ethPeer) {
+  public int compareTo(final @NotNull EthPeer ethPeer) {
     final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 

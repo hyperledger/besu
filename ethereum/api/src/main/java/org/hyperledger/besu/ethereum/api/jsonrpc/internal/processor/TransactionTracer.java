@@ -25,13 +25,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
@@ -41,6 +42,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -95,11 +97,30 @@ public class TransactionTracer {
         transactionTraceParams
             .map(TransactionTraceParams::getTransactionHash)
             .map(Hash::fromHexString);
-    final boolean showMemory =
-        transactionTraceParams
-            .map(TransactionTraceParams::traceOptions)
-            .map(TraceOptions::isMemoryEnabled)
-            .orElse(true);
+    final OpCodeTracerConfig opCodeTracerConfig =
+        OpCodeTracerConfigBuilder.create()
+            .traceMemory(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableMemoryNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStack(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStackNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(true))
+            .traceStorage(
+                transactionTraceParams
+                    .map(TransactionTraceParams::disableStorageNullable)
+                    .map(Boolean.FALSE::equals)
+                    .orElse(false))
+            .traceReturnData(true)
+            .traceOpcodes(
+                transactionTraceParams
+                    .map(TransactionTraceParams::opcodes)
+                    .orElse(Collections.emptySet()))
+            .eip3155Strict(true)
+            .build();
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
@@ -135,7 +156,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true, false),
+                            new StreamingOperationTracer(out, opCodeTracerConfig),
                             blobGasPrice);
                     out.println(
                         summaryTrace(
@@ -193,9 +214,8 @@ public class TransactionTracer {
         tracer,
         blockReplay
             .getProtocolSpec(header)
-            .getBlockHashProcessor()
+            .getPreExecutionProcessor()
             .createBlockHashLookup(blockchain, header),
-        false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
         blobGasPrice);
   }
@@ -206,7 +226,7 @@ public class TransactionTracer {
     summaryLine.put("output", result.getOutput().toUnprefixedHexString());
     summaryLine.put(
         "gasUsed",
-        StandardJsonTracer.shortNumber(
+        StreamingOperationTracer.shortNumber(
             UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
     summaryLine.put("time", timer);
     return summaryLine.toString();

@@ -56,15 +56,15 @@ public enum EvmSpecVersion {
   /** Prague evm spec version. */
   PRAGUE(MainnetHardforkId.PRAGUE, 0x6000, 0xc000, 0),
   /** Osaka evm spec version. */
-  OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 1),
+  OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 0),
   /** Amsterdam evm spec version. */
-  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x6000, 0xc000, 1),
+  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x6000, 0xc000, 0),
   /** Bogota evm spec version. */
-  BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 1),
+  BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 0),
   /** Polis evm spec version. */
-  POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 1),
+  POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 0),
   /** Bangkok evm spec version. */
-  BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 1),
+  BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 0),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x6000, 0xc000, 1),
   /** Development fork for EIPs that are not yet accepted to Mainnet */
@@ -88,11 +88,11 @@ public enum EvmSpecVersion {
   boolean versionWarned = false;
 
   EvmSpecVersion(
-      final HardforkId initialHarfork,
+      final HardforkId initialHardfork,
       final int maxCodeSize,
       final int maxInitcodeSize,
       final int maxEofVersion) {
-    this.initialHardfork = initialHarfork;
+    this.initialHardfork = initialHardfork;
     this.maxEofVersion = maxEofVersion;
     this.maxCodeSize = maxCodeSize;
     this.maxInitcodeSize = maxInitcodeSize;
@@ -181,14 +181,6 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
-    // TODO remove once CancunEOF tests are removed from EEST
-    if ("prague".equalsIgnoreCase(name)) {
-      return EvmSpecVersion.OSAKA;
-    }
-    // TODO remove once CancunEOF tests are removed from EEST
-    if ("cancuneof".equalsIgnoreCase(name)) {
-      return EvmSpecVersion.CANCUN_EOF;
-    }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {
         return version;

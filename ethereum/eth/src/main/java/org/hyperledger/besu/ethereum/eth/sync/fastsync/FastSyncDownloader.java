@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -91,8 +92,8 @@ public class FastSyncDownloader<REQUEST> {
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    worldStateStorageCoordinator.applyOnMatchingStrategy(
-        DataStorageFormat.BONSAI,
+    worldStateStorageCoordinator.applyOnMatchingStrategies(
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           BonsaiWorldStateKeyValueStorage onBonsai =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;

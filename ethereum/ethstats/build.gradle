@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-ethereum-ethstats'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -32,10 +32,11 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'io.vertx:vertx-core'
-  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
 
   implementation project(':consensus:clique')
   implementation project(':config')

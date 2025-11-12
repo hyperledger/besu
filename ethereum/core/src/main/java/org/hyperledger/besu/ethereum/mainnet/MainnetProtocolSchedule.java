@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -37,45 +36,45 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
-   * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param balConfiguration configuration related to block access lists
    * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
-      final Optional<PrivacyParameters> privacyParameters,
       final Optional<Boolean> isRevertReasonEnabled,
       final Optional<EvmConfiguration> evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
-          privacyParameters.orElse(PrivacyParameters.DEFAULT),
           isRevertReasonEnabled.orElse(false),
           evmConfiguration.orElse(EvmConfiguration.DEFAULT),
           miningConfiguration,
           badBlockManager,
           isParallelTxProcessingEnabled,
+          balConfiguration,
           metricsSystem);
     }
     return new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            privacyParameters.orElse(PrivacyParameters.DEFAULT),
             isRevertReasonEnabled.orElse(false),
             evmConfiguration.orElse(EvmConfiguration.DEFAULT),
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            balConfiguration,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -99,15 +98,16 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
-        Optional.empty(),
         Optional.of(isRevertReasonEnabled),
         Optional.of(evmConfiguration),
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        balConfiguration,
         metricsSystem);
   }
 
@@ -128,15 +128,16 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
-        Optional.empty(),
         Optional.empty(),
         Optional.of(evmConfiguration),
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        balConfiguration,
         metricsSystem);
   }
 
@@ -155,15 +156,16 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
+        balConfiguration,
         metricsSystem);
   }
 }

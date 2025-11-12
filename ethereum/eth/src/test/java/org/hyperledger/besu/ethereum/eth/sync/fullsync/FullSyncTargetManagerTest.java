@@ -18,9 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -77,10 +75,12 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            localBlockchain, localWorldState, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(localBlockchain)
+            .withWorldStateArchive(localWorldState)
+            .build();
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -137,8 +137,7 @@ public class FullSyncTargetManagerTest {
     when(localWorldState.isWorldStateAvailable(
             chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
-    final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 0);
+    final RespondingEthPeer bestPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
     bestPeer.respond(responder);

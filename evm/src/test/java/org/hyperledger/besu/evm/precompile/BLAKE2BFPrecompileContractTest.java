@@ -18,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest.Blake2bfDigest;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.fluent.EvmSpec;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class BLAKE2BFPrecompileContractTest {
-  private final BLAKE2BFPrecompileContract contract =
-      new BLAKE2BFPrecompileContract(new PetersburgGasCalculator());
+  private final PrecompiledContract contract =
+      EvmSpec.evmSpec(EvmSpecVersion.ISTANBUL)
+          .getPrecompileContractRegistry()
+          .get(Address.BLAKE2B_F_COMPRESSION);
 
   BLAKE2BFPrecompileContractTest() {}
 
@@ -89,7 +93,7 @@ class BLAKE2BFPrecompileContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput())
+    assertThat(contract.computePrecompile(input, messageFrame).output())
         .isEqualTo(expectedComputation);
     assertThat(contract.gasRequirement(input)).isEqualTo(expectedGasUsed);
   }

@@ -25,15 +25,17 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.JumpDestOnlyCodeCache;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
+import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
+import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -45,7 +47,9 @@ import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
 import org.hyperledger.besu.evm.operation.ModOperation;
+import org.hyperledger.besu.evm.operation.ModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulModOperation;
+import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -59,6 +63,7 @@ import org.hyperledger.besu.evm.operation.SDivOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
 import org.hyperledger.besu.evm.operation.SModOperation;
+import org.hyperledger.besu.evm.operation.SModOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -89,12 +94,14 @@ public class EVM {
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
   private final CodeFactory codeFactory;
-  private final CodeCache codeCache;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
   private final boolean enableShanghai;
+  private final boolean enableOsaka;
+
+  private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
 
   /**
    * Instantiates a new Evm.
@@ -113,8 +120,8 @@ public class EVM {
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
     this.evmConfiguration = evmConfiguration;
-    this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
+    this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
     codeFactory =
         new CodeFactory(
@@ -122,6 +129,7 @@ public class EVM {
             evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
+    enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
   }
 
   /**
@@ -235,10 +243,22 @@ public class EVM {
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);
               case 0x05 -> SDivOperation.staticOperation(frame);
-              case 0x06 -> ModOperation.staticOperation(frame);
-              case 0x07 -> SModOperation.staticOperation(frame);
-              case 0x08 -> AddModOperation.staticOperation(frame);
-              case 0x09 -> MulModOperation.staticOperation(frame);
+              case 0x06 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? ModOperationOptimized.staticOperation(frame)
+                      : ModOperation.staticOperation(frame);
+              case 0x07 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SModOperationOptimized.staticOperation(frame)
+                      : SModOperation.staticOperation(frame);
+              case 0x08 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddModOperationOptimized.staticOperation(frame)
+                      : AddModOperation.staticOperation(frame);
+              case 0x09 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? MulModOperationOptimized.staticOperation(frame)
+                      : MulModOperation.staticOperation(frame);
               case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
               case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
@@ -252,6 +272,10 @@ public class EVM {
               case 0x18 -> XorOperation.staticOperation(frame);
               case 0x19 -> NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
+              case 0x1e ->
+                  enableOsaka
+                      ? CountLeadingZerosOperation.staticOperation(frame)
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x50 -> PopOperation.staticOperation(frame);
               case 0x56 -> JumpOperation.staticOperation(frame);
               case 0x57 -> JumpiOperation.staticOperation(frame);
@@ -367,39 +391,41 @@ public class EVM {
   }
 
   /**
-   * Gets code.
+   * Gets or creates code instance with a cached jump destination.
    *
    * @param codeHash the code hash
    * @param codeBytes the code bytes
-   * @return the code
+   * @return the code instance with the cached jump destination
    */
-  public Code getCode(final Hash codeHash, final Bytes codeBytes) {
+  public Code getOrCreateCachedJumpDest(final Hash codeHash, final Bytes codeBytes) {
     checkNotNull(codeHash);
-    Code result = codeCache.getIfPresent(codeHash);
+
+    Code result = jumpDestOnlyCodeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = getCodeUncached(codeBytes);
-      codeCache.put(codeHash, result);
+      result = wrapCode(codeBytes);
+      jumpDestOnlyCodeCache.put(codeHash, result);
     }
+
     return result;
   }
 
   /**
-   * Gets code skipping the code cache.
+   * Wraps code bytes into the correct Code object
    *
    * @param codeBytes the code bytes
-   * @return the code
+   * @return the wrapped code
    */
-  public Code getCodeUncached(final Bytes codeBytes) {
+  public Code wrapCode(final Bytes codeBytes) {
     return codeFactory.createCode(codeBytes);
   }
 
   /**
-   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   * Wraps code for creation. Allows dangling data, which is not allowed in a transaction.
    *
    * @param codeBytes the code bytes
-   * @return the code
+   * @return the wrapped code
    */
-  public Code getCodeForCreation(final Bytes codeBytes) {
+  public Code wrapCodeForCreation(final Bytes codeBytes) {
     return codeFactory.createCode(codeBytes, true);
   }
 

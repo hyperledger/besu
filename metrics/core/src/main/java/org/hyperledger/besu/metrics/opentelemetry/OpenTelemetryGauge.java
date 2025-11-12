@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.metrics.opentelemetry;
 
-import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
+import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 
 import java.util.List;
 
 import io.opentelemetry.api.metrics.Meter;
 
 /** The Open telemetry gauge. */
-@SuppressWarnings("removal") // remove when deprecated LabelledGauge is removed
 public class OpenTelemetryGauge extends OpenTelemetryLabelledSuppliedMetric
-    implements LabelledGauge {
+    implements LabelledSuppliedMetric {
   /**
    * Instantiates a new Open telemetry gauge.
    *

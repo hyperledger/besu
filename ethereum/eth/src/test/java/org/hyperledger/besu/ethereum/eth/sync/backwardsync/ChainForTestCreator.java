@@ -28,8 +28,8 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ChainForTestCreator {
@@ -56,6 +56,7 @@ public class ChainForTestCreator {
         null,
         Hash.EMPTY,
         0,
+        null,
         null,
         null,
         null,
@@ -89,6 +90,7 @@ public class ChainForTestCreator {
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
         blockHeader.getRequestsHash().orElse(null),
+        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -115,7 +117,7 @@ public class ChainForTestCreator {
     return prepareHeader(number, Optional.empty());
   }
 
-  @Nonnull
+  @NotNull
   private static BlockHeader prepareEmptyHeader(final BlockHeader parent) {
     return new BlockHeader(
         parent.getHash(),
@@ -134,6 +136,7 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
+        null,
         null,
         null,
         null,

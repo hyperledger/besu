@@ -82,16 +82,23 @@ public class GenesisConfigurationFactory {
         filteredList, template, IbftExtraDataCodec::createGenesisExtraDataString);
   }
 
-  public static Optional<String> createPrivacyIbft2GenesisConfig(
-      final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("/ibft/privacy-ibft.json");
-    return updateGenesisExtraData(
-        validators, template, IbftExtraDataCodec::createGenesisExtraDataString);
-  }
-
   public static Optional<String> createQbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/qbft.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
+  public static Optional<String> createQbft256r1GenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/crypto/secp256r1.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
+  public static Optional<String> createQbftLondonGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/qbft/qbft-london.json");
     return updateGenesisExtraData(
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }

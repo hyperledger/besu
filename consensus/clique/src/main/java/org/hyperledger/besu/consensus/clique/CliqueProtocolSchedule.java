@@ -21,14 +21,14 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -58,12 +58,12 @@ public class CliqueProtocolSchedule {
    * @param config the config
    * @param forksSchedule the transitions
    * @param nodeKey the node key
-   * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
    * @param miningConfiguration the mining configuration
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param balConfiguration configuration related to block-level access lists
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
    * @return the protocol schedule
@@ -72,12 +72,12 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
-      final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
@@ -110,12 +110,12 @@ public class CliqueProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             specAdapters,
-            privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
+            balConfiguration,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -129,15 +129,15 @@ public class CliqueProtocolSchedule {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
-            baseFeeMarket ->
+            (baseFeeMarket, gasCalculator, gasLimitCalculator) ->
                 getBlockHeaderValidator(
                     epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .ommerHeaderValidatorBuilder(
-            baseFeeMarket ->
+            (baseFeeMarket, gasCalculator, gasLimitCalculator) ->
                 getBlockHeaderValidator(
                     epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)

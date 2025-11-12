@@ -84,6 +84,13 @@ public interface RLPInput {
   int nextSize();
 
   /**
+   * Returns the size of the current item
+   *
+   * @return the size of the current item
+   */
+  int currentSize();
+
+  /**
    * Returns the offset of the next item, counting from the start of the RLP Input as a whole.
    *
    * @return offset from buffer start

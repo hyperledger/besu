@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-ethereum-rlp'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -32,8 +32,8 @@ jar {
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
 
   jmh project(':util')

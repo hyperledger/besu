@@ -23,7 +23,6 @@ import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -62,12 +62,12 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             genesisConfig.getConfigOptions(),
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem())
         .createProtocolSchedule();
   }

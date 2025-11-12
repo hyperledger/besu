@@ -16,8 +16,8 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -105,7 +105,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
   }
 
   @Override
-  public int compareTo(@Nonnull final StorageSlotKey other) {
+  public int compareTo(@NotNull final StorageSlotKey other) {
     return this.slotHash.compareTo(other.slotHash);
   }
 }

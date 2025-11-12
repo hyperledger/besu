@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.bft.statemachine;
 
 import static java.util.Arrays.copyOfRange;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.bft.network.MockPeerFactory;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -32,16 +33,17 @@ import java.util.stream.IntStream;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class FutureMessageBufferTest {
   private Message message;
-  private FutureMessageBuffer futureMsgBuffer;
+  private FutureMessageBuffer<Message> futureMsgBuffer;
   private final PeerConnection peerConnection = MockPeerFactory.create(AddressHelpers.ofValue(9));
 
   @BeforeEach
   public void setup() {
     message = createMessage(10);
-    futureMsgBuffer = new FutureMessageBuffer(5, 5, 0);
+    futureMsgBuffer = new FutureMessageBuffer<>(5, 5, 0);
   }
 
   @Test
@@ -113,7 +115,7 @@ public class FutureMessageBufferTest {
 
   @Test
   public void doNotAddMessageLessThanOrEqualToCurrentChainHeight() {
-    futureMsgBuffer = new FutureMessageBuffer(5, 5, 2);
+    futureMsgBuffer = new FutureMessageBuffer<>(5, 5, 2);
     futureMsgBuffer.addMessage(0, message);
     futureMsgBuffer.addMessage(1, message);
     futureMsgBuffer.addMessage(2, message);
@@ -125,7 +127,7 @@ public class FutureMessageBufferTest {
 
   @Test
   public void doNotAddMessagesWhenLimitIsZero() {
-    futureMsgBuffer = new FutureMessageBuffer(1, 0, 0);
+    futureMsgBuffer = new FutureMessageBuffer<>(1, 0, 0);
     futureMsgBuffer.addMessage(1, message);
     assertThat(futureMsgBuffer.retrieveMessagesForHeight(0)).isEmpty();
   }
@@ -143,7 +145,7 @@ public class FutureMessageBufferTest {
 
   @Test
   public void totalMessagesSizeUpdatedWhenMessagesAdded() {
-    futureMsgBuffer = new FutureMessageBuffer(5, 10, 0);
+    futureMsgBuffer = new FutureMessageBuffer<>(5, 10, 0);
 
     addMessages(1, 2);
     assertThat(futureMsgBuffer.totalMessagesSize()).isEqualTo(2);
@@ -157,7 +159,7 @@ public class FutureMessageBufferTest {
 
   @Test
   public void totalMessagesSizeUpdatedWhenMessagesAreRetrieved() {
-    futureMsgBuffer = new FutureMessageBuffer(10, 10, 0);
+    futureMsgBuffer = new FutureMessageBuffer<>(10, 10, 0);
     addMessages(1, 2);
     addMessages(2, 3);
     addMessages(3, 4);
@@ -174,7 +176,7 @@ public class FutureMessageBufferTest {
 
   @Test
   public void totalSizeUpdatedWhenMessagesAreEvicted() {
-    futureMsgBuffer = new FutureMessageBuffer(5, 5, 0);
+    futureMsgBuffer = new FutureMessageBuffer<>(5, 5, 0);
     addMessages(1, 2);
     addMessages(2, 3);
 
@@ -186,6 +188,21 @@ public class FutureMessageBufferTest {
       futureMsgBuffer.addMessage(1, message);
     }
     assertThat(futureMsgBuffer.totalMessagesSize()).isEqualTo(5);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void triggersHandlerWhenFutureMessageAreAdded() {
+    final var futureMessageHandler =
+        (FutureMessageBuffer.FutureMessageHandler<Message>)
+            Mockito.mock(FutureMessageBuffer.FutureMessageHandler.class);
+    final var futureMsgBuffer = new FutureMessageBuffer<>(5, 5, 0, futureMessageHandler);
+
+    futureMsgBuffer.addMessage(1, message);
+    verify(futureMessageHandler).handleFutureMessage(1, message);
+
+    futureMsgBuffer.addMessage(2, message);
+    verify(futureMessageHandler).handleFutureMessage(2, message);
   }
 
   private DefaultMessage[] addMessages(final long height, final int count) {

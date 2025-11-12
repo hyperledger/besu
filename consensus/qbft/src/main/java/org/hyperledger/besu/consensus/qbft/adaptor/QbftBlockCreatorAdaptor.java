@@ -51,17 +51,17 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
       final long headerTimeStampSeconds, final QbftBlockHeader parentHeader) {
     var blockResult =
         besuBlockCreator.createBlock(
-            headerTimeStampSeconds, BlockUtil.toBesuBlockHeader(parentHeader));
+            headerTimeStampSeconds, AdaptorUtil.toBesuBlockHeader(parentHeader));
     return new QbftBlockAdaptor(blockResult.getBlock());
   }
 
   @Override
   public QbftBlock createSealedBlock(
       final QbftBlock block, final int roundNumber, final Collection<SECPSignature> commitSeals) {
-    final Block besuBlock = BlockUtil.toBesuBlock(block);
+    final Block besuBlock = AdaptorUtil.toBesuBlock(block);
     final QbftBlockHeader initialHeader = block.getHeader();
     final BftExtraData initialExtraData =
-        bftExtraDataCodec.decode(BlockUtil.toBesuBlockHeader(initialHeader));
+        bftExtraDataCodec.decode(AdaptorUtil.toBesuBlockHeader(initialHeader));
 
     final BftExtraData sealedExtraData =
         new BftExtraData(
@@ -72,7 +72,7 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
             initialExtraData.getValidators());
 
     final BlockHeader sealedHeader =
-        BlockHeaderBuilder.fromHeader(BlockUtil.toBesuBlockHeader(initialHeader))
+        BlockHeaderBuilder.fromHeader(AdaptorUtil.toBesuBlockHeader(initialHeader))
             .extraData(bftExtraDataCodec.encode(sealedExtraData))
             .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();

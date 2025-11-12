@@ -27,6 +27,9 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -97,9 +100,14 @@ public final class BodyValidation {
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
     final ArrayList<Bytes> bytesList = new ArrayList<>(receipts.size());
     receipts.forEach(
-        r ->
+        receipt ->
             bytesList.add(
-                RLP.encode(rlpOutput -> r.writeToForReceiptTrie(rlpOutput, false, false))));
+                RLP.encode(
+                    rlpOutput ->
+                        TransactionReceiptEncoder.writeTo(
+                            receipt,
+                            rlpOutput,
+                            TransactionReceiptEncodingConfiguration.TRIE_ROOT))));
 
     return Util.getRootFromListOfBytes(bytesList);
   }
@@ -126,5 +134,15 @@ public final class BodyValidation {
     receipts.forEach(receipt -> filterBuilder.insertFilter(receipt.getBloomFilter()));
 
     return filterBuilder.build();
+  }
+
+  /**
+   * Generates the block access list hash.
+   *
+   * @param bal the block access list
+   * @return the block access list hash
+   */
+  public static Hash balHash(final BlockAccessList bal) {
+    return Hash.wrap(keccak256(RLP.encode(bal::writeTo)));
   }
 }

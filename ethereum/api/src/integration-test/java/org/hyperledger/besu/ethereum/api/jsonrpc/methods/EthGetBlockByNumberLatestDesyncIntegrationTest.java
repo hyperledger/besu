@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
@@ -30,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -43,9 +41,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -61,7 +59,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
   @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
     BlockchainImporter importer =
         new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
     MutableBlockchain chain =
@@ -69,7 +67,7 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     importer.getGenesisState().writeStateTo(state.getWorldState());
     ProtocolContext context =
-        new ProtocolContext(chain, state, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext.Builder().withBlockchain(chain).withWorldStateArchive(state).build();
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();

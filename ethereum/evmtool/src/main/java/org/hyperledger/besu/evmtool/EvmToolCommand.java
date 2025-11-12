@@ -36,9 +36,11 @@ import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -52,6 +54,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -200,6 +203,13 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonAlloc = false;
 
   @Option(
+      names = {"--noeip-3155", "--trace.noeip-3155"},
+      description = "Produce a trace with types strictly compatible with EIP-3155.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean eip3155strict = true;
+
+  @Option(
       names = {"--memory", "--trace.memory"},
       description =
           "Show the full memory output in tracing for each op. Default is not to show memory.",
@@ -257,6 +267,10 @@ public class EvmToolCommand implements Runnable {
       versionHelp = true,
       description = "display version info")
   boolean versionInfoRequested;
+
+  Integer getRepeatCount() {
+    return repeat;
+  }
 
   static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
@@ -367,6 +381,15 @@ public class EvmToolCommand implements Runnable {
     return daggerOptions.provideFork().isPresent();
   }
 
+  /**
+   * Returns the EVM configuration options.
+   *
+   * @return The EVM configuration.
+   */
+  public EvmConfiguration getEvmConfiguration() {
+    return daggerOptions.provideEvmConfiguration();
+  }
+
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
@@ -413,8 +436,7 @@ public class EvmToolCommand implements Runnable {
         final long intrinsicGasCost =
             protocolSpec
                 .getGasCalculator()
-                .transactionIntrinsicGasCost(
-                    tx.getPayload(), tx.isContractCreation(), accessListCost + delegateCodeCost);
+                .transactionIntrinsicGasCost(tx, accessListCost + delegateCodeCost);
         txGas -= intrinsicGasCost;
       }
 
@@ -422,8 +444,7 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code =
-          createTransaction ? evm.getCodeForCreation(codeBytes) : evm.getCodeUncached(codeBytes);
+      Code code = createTransaction ? evm.wrapCodeForCreation(codeBytes) : evm.wrapCode(codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;
@@ -444,7 +465,16 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
+                ? new StreamingOperationTracer(
+                    out,
+                    OpCodeTracerConfigBuilder.create()
+                        .traceMemory(showMemory)
+                        .traceStack(!hideStack)
+                        .traceReturnData(showReturnData)
+                        .traceStorage(showStorage)
+                        .traceOpcodes(Collections.emptySet())
+                        .eip3155Strict(eip3155strict)
+                        .build())
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
@@ -516,9 +546,9 @@ public class EvmToolCommand implements Runnable {
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(
                     protocolSpec
-                        .getBlockHashProcessor()
+                        .getPreExecutionProcessor()
                         .createBlockHashLookup(component.getBlockchain(), blockHeader))
-                .accessListWarmAddresses(addressList)
+                .eip2930AccessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
@@ -553,7 +583,7 @@ public class EvmToolCommand implements Runnable {
               .put("output", initialMessageFrame.getOutputData().toHexString())
               .put("gasUsed", "0x" + Long.toHexString(evmGas))
               .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
-              .put("fork", protocolSpec.getName());
+              .put("fork", protocolSpec.getHardforkId().description());
           if (!noTime) {
             resultLine.put("timens", lastTime).put("time", lastTime / 1000);
           }
@@ -615,13 +645,10 @@ public class EvmToolCommand implements Runnable {
                             .toList()));
                 out.println("  },");
               }
-              out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+              out.print("  \"balance\": \"" + account.getBalance().toDecimalString() + "\"");
               if (account.getNonce() != 0) {
                 out.println(",");
-                out.println(
-                    "  \"nonce\": \""
-                        + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
-                        + "\"");
+                out.println("  \"nonce\": " + account.getNonce());
               } else {
                 out.println();
               }

@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -70,7 +72,7 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      out.writeBytes(reason.getValue());
+      out.writeBytes(reason.getCode());
       out.endList();
     }
 
@@ -105,11 +107,10 @@ public final class DisconnectMessage extends AbstractMessageData {
    *     Transport Protocol</a>
    */
   public enum DisconnectReason {
-    UNKNOWN(null),
-    REQUESTED((byte) 0x00),
-    TCP_SUBSYSTEM_ERROR((byte) 0x01),
-
-    BREACH_OF_PROTOCOL((byte) 0x02),
+    UNKNOWN(null, "Unknown reason"),
+    REQUESTED((byte) 0x00, "Requested disconnection"),
+    TCP_SUBSYSTEM_ERROR((byte) 0x01, "TCP subsystem error"),
+    BREACH_OF_PROTOCOL((byte) 0x02, "Breach of protocol"),
     BREACH_OF_PROTOCOL_RECEIVED_OTHER_MESSAGE_BEFORE_STATUS(
         (byte) 0x02, "Message other than status received first"),
     BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED((byte) 0x02, "Unsolicited message received"),
@@ -123,7 +124,7 @@ public final class DisconnectMessage extends AbstractMessageData {
         (byte) 0x02, "A message was received before hello's exchanged"),
     BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION(
         (byte) 0x02, "An exception was caught decoding message"),
-    USELESS_PEER((byte) 0x03),
+    USELESS_PEER((byte) 0x03, "Useless peer"),
     USELESS_PEER_USELESS_RESPONSES((byte) 0x03, "Useless responses: exceeded threshold"),
     USELESS_PEER_TRAILING_PEER((byte) 0x03, "Trailing peer requirement"),
     USELESS_PEER_NO_SHARED_CAPABILITIES((byte) 0x03, "No shared capabilities"),
@@ -134,25 +135,27 @@ public final class DisconnectMessage extends AbstractMessageData {
     USELESS_PEER_BY_REPUTATION((byte) 0x03, "Lowest reputation score"),
     USELESS_PEER_BY_CHAIN_COMPARATOR((byte) 0x03, "Lowest by chain height comparator"),
     USELESS_PEER_EXCEEDS_TRAILING_PEERS((byte) 0x03, "Adding peer would exceed max trailing peers"),
-    TOO_MANY_PEERS((byte) 0x04),
-    ALREADY_CONNECTED((byte) 0x05),
-    INCOMPATIBLE_P2P_PROTOCOL_VERSION((byte) 0x06),
-    NULL_NODE_ID((byte) 0x07),
-    CLIENT_QUITTING((byte) 0x08),
-    UNEXPECTED_ID((byte) 0x09),
-    LOCAL_IDENTITY((byte) 0x0a),
-    TIMEOUT((byte) 0x0b),
-    SUBPROTOCOL_TRIGGERED((byte) 0x10),
+    TOO_MANY_PEERS((byte) 0x04, "Too many peers"),
+    ALREADY_CONNECTED((byte) 0x05, "Already connected"),
+    INCOMPATIBLE_P2P_PROTOCOL_VERSION((byte) 0x06, "Incompatible P2P protocol version"),
+    NULL_NODE_ID((byte) 0x07, "Null node ID"),
+    CLIENT_QUITTING((byte) 0x08, "Client quitting"),
+    UNEXPECTED_ID((byte) 0x09, "Unexpected ID"),
+    LOCAL_IDENTITY((byte) 0x0a, "Local identity"),
+    TIMEOUT((byte) 0x0b, "Timeout"),
+    SUBPROTOCOL_TRIGGERED((byte) 0x10, "Sub protocol triggered"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK((byte) 0x10, "Mismatched network id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_FORKID((byte) 0x10, "Mismatched fork id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_GENESIS_HASH((byte) 0x10, "Mismatched genesis hash"),
     SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS((byte) 0x10, "Unparsable status message"),
     SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Peer has difficulty greater than POS TTD"),
-    SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition");
+    SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition"),
+    SUBPROTOCOL_TRIGGERED_INVALID_STATUS_MESSAGE((byte) 0x10, "Peer sent invalid status message"),
+    SUBPROTOCOL_TRIGGERED_INVALID_BLOCK_RANGE((byte) 0x10, "Invalid block range");
 
-    private static final DisconnectReason[] BY_ID;
+    private static final Map<Byte, DisconnectReason> BY_ID;
     private final Optional<Byte> code;
-    private final Optional<String> message;
+    private final String message;
 
     static {
       final int maxValue =
@@ -161,18 +164,18 @@ public final class DisconnectMessage extends AbstractMessageData {
               .mapToInt(r -> (int) r.code.get())
               .max()
               .getAsInt();
-      BY_ID = new DisconnectReason[maxValue + 1];
-      Stream.of(DisconnectReason.values())
-          .filter(r -> r.code.isPresent() && r.message.isEmpty())
-          .forEach(r -> BY_ID[r.code.get()] = r);
+      BY_ID = new HashMap<>(maxValue + 1);
+      for (DisconnectReason reason : DisconnectReason.values()) {
+        reason.code.ifPresent(code -> BY_ID.putIfAbsent(code, reason));
+      }
     }
 
     public static DisconnectReason forCode(final Byte code) {
-      if (code == null || code >= BY_ID.length || code < 0 || BY_ID[code] == null) {
+      if (code == null || code < 0 || !BY_ID.containsKey(code)) {
         // Be permissive and just return unknown if the disconnect reason is bad
         return UNKNOWN;
       }
-      return BY_ID[code];
+      return BY_ID.get(code);
     }
 
     public static DisconnectReason forCode(final Bytes codeBytes) {
@@ -183,27 +186,22 @@ public final class DisconnectMessage extends AbstractMessageData {
       }
     }
 
-    DisconnectReason(final Byte code) {
-      this.code = Optional.ofNullable(code);
-      this.message = Optional.empty();
-    }
-
     DisconnectReason(final Byte code, final String message) {
       this.code = Optional.ofNullable(code);
-      this.message = Optional.of(message);
+      this.message = message;
     }
 
-    public Bytes getValue() {
+    public Bytes getCode() {
       return code.map(Bytes::of).orElse(Bytes.EMPTY);
     }
 
     public String getMessage() {
-      return message.orElse("");
+      return message;
     }
 
     @Override
     public String toString() {
-      return getValue().toString() + " " + name() + " " + getMessage();
+      return getCode().toString() + " " + name() + " " + getMessage();
     }
   }
 }

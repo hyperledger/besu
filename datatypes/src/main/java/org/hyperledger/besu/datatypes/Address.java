@@ -90,6 +90,9 @@ public class Address extends DelegatingBytes {
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x11);
 
+  /** Precompile address for P256_VERIFY. */
+  public static final Address P256_VERIFY = Address.precompiled(0x0100);
+
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -214,21 +217,12 @@ public class Address extends DelegatingBytes {
    * @return the address
    */
   public static Address precompiled(final int value) {
-    // Keep it simple while we don't need precompiled above 127.
-    checkArgument(value < Byte.MAX_VALUE);
+    // Allow values up to 0x01FF (511) to encompass layer2 precompile address space
+    checkArgument(value < 0x01FF, "Precompiled value must be <= 0x01FF");
     final byte[] address = new byte[SIZE];
-    address[SIZE - 1] = (byte) value;
+    address[SIZE - 2] = (byte) (value >>> 8); // High byte
+    address[SIZE - 1] = (byte) (value & 0xFF); // Low byte
     return new Address(Bytes.wrap(address));
-  }
-
-  /**
-   * Privacy precompiled address.
-   *
-   * @param value the value
-   * @return the address
-   */
-  public static Address privacyPrecompiled(final int value) {
-    return precompiled(value);
   }
 
   /**
@@ -248,28 +242,6 @@ public class Address extends DelegatingBytes {
                   out.startList();
                   out.writeBytes(senderAddress);
                   out.writeLongScalar(nonce);
-                  out.endList();
-                })));
-  }
-
-  /**
-   * Address of the created private contract.
-   *
-   * @param senderAddress the address of the transaction sender.
-   * @param nonce the nonce of this transaction.
-   * @param privacyGroupId hash of participants list ordered from Enclave response.
-   * @return The generated address of the created private contract.
-   */
-  public static Address privateContractAddress(
-      final Address senderAddress, final long nonce, final Bytes privacyGroupId) {
-    return Address.extract(
-        keccak256(
-            RLP.encode(
-                out -> {
-                  out.startList();
-                  out.writeBytes(senderAddress);
-                  out.writeLongScalar(nonce);
-                  out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
   }

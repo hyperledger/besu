@@ -52,7 +52,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -63,7 +62,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -113,22 +114,27 @@ public class CliqueBlockCreatorTest {
             GenesisConfig.DEFAULT.getConfigOptions(),
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
-            PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     CliqueHelpers.setCliqueContext(cliqueContext);
 
     final Block genesis =
-        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule).getBlock();
+        GenesisState.fromConfig(GenesisConfig.mainnet(), protocolSchedule, new CodeCache())
+            .getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
-        new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(stateArchive)
+            .withConsensusContext(cliqueContext)
+            .build();
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis

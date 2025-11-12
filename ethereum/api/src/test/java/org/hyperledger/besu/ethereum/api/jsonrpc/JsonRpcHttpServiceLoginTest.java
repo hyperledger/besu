@@ -18,9 +18,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.list;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -37,12 +39,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -127,11 +131,17 @@ public class JsonRpcHttpServiceLoginTest {
     synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     final StubGenesisConfigOptions genesisConfigOptions =
         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
+
+    // mocks so that genesis hash is populated
+    Blockchain blockchain = mock(Blockchain.class);
+    Block block = mock(Block.class);
+    lenient().when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    lenient().when(blockchain.getGenesisBlock()).thenReturn(block);
+    lenient().when(block.getHash()).thenReturn(Hash.EMPTY);
 
     rpcMethods =
         new JsonRpcMethodsFactory()
@@ -149,6 +159,7 @@ public class JsonRpcHttpServiceLoginTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
@@ -160,7 +171,6 @@ public class JsonRpcHttpServiceLoginTest {
                 Optional.empty(),
                 Optional.empty(),
                 JSON_RPC_APIS,
-                mock(PrivacyParameters.class),
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
@@ -171,6 +181,7 @@ public class JsonRpcHttpServiceLoginTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
+                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

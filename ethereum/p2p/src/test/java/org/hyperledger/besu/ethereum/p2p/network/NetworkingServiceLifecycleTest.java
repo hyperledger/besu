@@ -28,10 +28,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -39,9 +39,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
 import io.vertx.core.Vertx;
+import jakarta.validation.constraints.NotNull;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ public class NetworkingServiceLifecycleTest {
     }
   }
 
-  @Nonnull
+  @NotNull
   private DefaultP2PNetwork.Builder getP2PNetworkBuilder() {
     final DefaultP2PNetwork.Builder builder = builder();
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
@@ -205,7 +205,7 @@ public class NetworkingServiceLifecycleTest {
         .nodeKey(nodeKey)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
+        .supportedCapabilities(Arrays.asList(EthProtocolHelper.LATEST))
         .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectio
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
+import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -42,6 +43,8 @@ public abstract class MiningConfiguration {
       PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt(75);
+  public static final PositiveNumber DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME =
+      PositiveNumber.fromInt(50);
   public static final MiningConfiguration MINING_DISABLED =
       ImmutableMiningConfiguration.builder()
           .mutableInitValues(
@@ -142,21 +145,6 @@ public abstract class MiningConfiguration {
   }
 
   @Value.Default
-  public boolean isStratumMiningEnabled() {
-    return false;
-  }
-
-  @Value.Default
-  public String getStratumNetworkInterface() {
-    return "0.0.0.0";
-  }
-
-  @Value.Default
-  public int getStratumPort() {
-    return 8008;
-  }
-
-  @Value.Default
   public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }
@@ -164,6 +152,11 @@ public abstract class MiningConfiguration {
   @Value.Default
   public PositiveNumber getPoaBlockTxsSelectionMaxTime() {
     return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  }
+
+  @Value.Default
+  public PositiveNumber getPluginBlockTxsSelectionMaxTime() {
+    return DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
   }
 
   @Value.Default
@@ -186,14 +179,24 @@ public abstract class MiningConfiguration {
     };
   }
 
-  public long getBlockTxsSelectionMaxTime() {
-    final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
-    if (maybeBlockPeriodSeconds.isPresent()) {
-      return (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
-              * getPoaBlockTxsSelectionMaxTime().getValue())
-          / 100;
+  public Duration getBlockTxsSelectionMaxTime(final boolean isPoS) {
+    if (!isPoS) {
+      final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
+      if (maybeBlockPeriodSeconds.isPresent()) {
+        return Duration.ofMillis(
+            (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
+                    * getPoaBlockTxsSelectionMaxTime().getValue())
+                / 100);
+      }
     }
-    return getNonPoaBlockTxsSelectionMaxTime().getValue();
+
+    return Duration.ofMillis(getNonPoaBlockTxsSelectionMaxTime().getValue());
+  }
+
+  public Duration getPluginTxsSelectionMaxTime(final Duration blockTxsSelectionMaxTime) {
+    return Duration.ofMillis(
+        (blockTxsSelectionMaxTime.toMillis() * getPluginBlockTxsSelectionMaxTime().getValue())
+            / 100);
   }
 
   @Value.Default
@@ -213,7 +216,9 @@ public abstract class MiningConfiguration {
 
   @Value.Immutable
   public interface MutableInitValues {
-    Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
+    // This is the default extra data containing version info, capped at 32 bytes.
+    Bytes DEFAULT_EXTRA_DATA = BesuVersionUtils.versionForExtraData();
+
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
@@ -345,6 +350,8 @@ public abstract class MiningConfiguration {
     int DEFAULT_MAX_OMMERS_DEPTH = 8;
     long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
     long DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION = Duration.ofMillis(500).toMillis();
+    long DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS = 800L;
+    Integer DEFAULT_POS_SLOT_DURATION_SECS = 12;
 
     MiningConfiguration.Unstable DEFAULT = ImmutableMiningConfiguration.Unstable.builder().build();
 
@@ -379,8 +386,13 @@ public abstract class MiningConfiguration {
     }
 
     @Value.Default
-    default String getStratumExtranonce() {
-      return "080c";
+    default Integer getPosSlotDuration() {
+      return DEFAULT_POS_SLOT_DURATION_SECS;
+    }
+
+    @Value.Default
+    default long getPosBlockFinalizationTimeoutMs() {
+      return DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS;
     }
   }
 }

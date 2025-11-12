@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.Optional;
 
@@ -49,7 +51,7 @@ public class BetterSyncTargetEvaluatorTest {
 
   @BeforeEach
   public void setupMocks() {
-    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
+    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT);
   }
 
   @Test
@@ -161,6 +163,9 @@ public class BetterSyncTargetEvaluatorTest {
     chainState.updateHeightEstimate(chainHeight);
     chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
+    when(peer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    when(peer.getConnection()).thenReturn(connection);
     return peer;
   }
 }

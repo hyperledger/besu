@@ -22,12 +22,13 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -73,40 +75,41 @@ class EthServer {
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     ethMessages.registerResponseConstructor(
-        EthPV62.GET_BLOCK_HEADERS,
-        messageData ->
+        EthProtocolMessages.GET_BLOCK_HEADERS,
+        (messageData, capability) ->
             constructGetHeadersResponse(
                 blockchain,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetBlockHeaders(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV62.GET_BLOCK_BODIES,
-        messageData ->
+        EthProtocolMessages.GET_BLOCK_BODIES,
+        (messageData, capability) ->
             constructGetBodiesResponse(
                 blockchain,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetBlockBodies(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV63.GET_RECEIPTS,
-        messageData ->
+        EthProtocolMessages.GET_RECEIPTS,
+        (messageData, capability) ->
             constructGetReceiptsResponse(
                 blockchain,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetReceipts(),
-                maxMessageSize));
+                maxMessageSize,
+                capability));
     ethMessages.registerResponseConstructor(
-        EthPV63.GET_NODE_DATA,
-        messageData ->
+        EthProtocolMessages.GET_NODE_DATA,
+        (messageData, capability) ->
             constructGetNodeDataResponse(
                 worldStateArchive,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetNodeData(),
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
-        EthPV65.GET_POOLED_TRANSACTIONS,
-        messageData ->
+        EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+        (messageData, capability) ->
             constructGetPooledTransactionsResponse(
                 transactionPool,
                 messageData,
@@ -215,7 +218,8 @@ class EthServer {
       final Blockchain blockchain,
       final MessageData message,
       final int requestLimit,
-      final int maxMessageSize) {
+      final int maxMessageSize,
+      final Capability cap) {
     final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
     final Iterable<Hash> hashes = getReceipts.hashes();
 
@@ -234,7 +238,14 @@ class EthServer {
       }
       final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
       encodedReceipts.startList();
-      maybeReceipts.get().forEach(r -> r.writeToForNetwork(encodedReceipts));
+      TransactionReceiptEncodingConfiguration encodingConfiguration =
+          EthProtocol.isEth69Compatible(cap)
+              ? TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION
+              : TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION;
+      maybeReceipts
+          .get()
+          .forEach(
+              r -> TransactionReceiptEncoder.writeTo(r, encodedReceipts, encodingConfiguration));
       encodedReceipts.endList();
       final int encodedSize = encodedReceipts.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {

@@ -58,7 +58,6 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -95,6 +94,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -382,7 +382,7 @@ public class EngineJsonRpcService {
     };
   }
 
-  @Nonnull
+  @NotNull
   private Handler<Buffer> handlerForUser(
       final SocketAddress socketAddress,
       final ServerWebSocket websocket,
@@ -417,10 +417,12 @@ public class EngineJsonRpcService {
     // Verify Host header to avoid rebind attack.
     router.route().handler(denyRouteToBlockedHost());
     router.errorHandler(403, new Logging403ErrorHandler());
+
     router
         .route()
         .handler(
-            CorsHandler.create(buildCorsRegexFromConfig())
+            CorsHandler.create()
+                .addOriginWithRegex(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router
@@ -428,7 +430,7 @@ public class EngineJsonRpcService {
         .handler(
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
-                .setBodyLimit(128 * 1024 * 1024)
+                .setBodyLimit(config.getMaxRequestContentLength())
                 .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
     router

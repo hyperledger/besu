@@ -53,31 +53,34 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+
+    // checking for static violations first means fewer account accesses
+    if (frame.isStatic()) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
     // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
-    final Account beneficiaryNullable = frame.getWorldUpdater().get(beneficiaryAddress);
+    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
 
     final Address originatorAddress = frame.getRecipientAddress();
-    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
+    final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
             + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
-    // With the cost we can test for two early WithdrawalRequests: static or not enough gas.
-    if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas() < cost) {
+    // With the cost we can test for out-of-gas early WithdrawalRequests
+    if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     // We passed preliminary checks, get mutable accounts.
-    final MutableAccount beneficiaryAccount =
-        frame.getWorldUpdater().getOrCreate(beneficiaryAddress);
+    final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);

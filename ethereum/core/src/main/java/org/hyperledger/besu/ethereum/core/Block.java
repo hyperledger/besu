@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -29,10 +32,18 @@ public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
+  private int size;
+
+  public Block(final BlockHeader header, final BlockBody body, final int size) {
+    this.header = header;
+    this.body = body;
+    this.size = size;
+  }
 
   public Block(final BlockHeader header, final BlockBody body) {
     this.header = header;
     this.body = body;
+    this.size = -1; // Size will be calculated on demand
   }
 
   public BlockHeader getHeader() {
@@ -51,8 +62,11 @@ public class Block {
     return RLP.encode(this::writeTo);
   }
 
-  public int calculateSize() {
-    return toRlp().size();
+  public int getSize() {
+    if (size < 0) {
+      size = toRlp().size();
+    }
+    return size;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -62,20 +76,26 @@ public class Block {
     out.writeList(body.getTransactions(), Transaction::writeTo);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
     body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
+    body.getBlockAccessList()
+        .ifPresent(accessList -> BlockAccessListEncoder.encode(accessList, out));
 
     out.endList();
   }
 
   public static Block readFrom(final RLPInput in, final BlockHeaderFunctions hashFunction) {
+    int size = in.currentSize();
     in.enterList();
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
     final Optional<List<Withdrawal>> withdrawals =
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Withdrawal::readFrom));
+    final Optional<BlockAccessList> blockAccessList =
+        in.isEndOfCurrentList() ? Optional.empty() : Optional.of(BlockAccessListDecoder.decode(in));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers, withdrawals));
+    return new Block(
+        header, new BlockBody(transactions, ommers, withdrawals, blockAccessList), size);
   }
 
   @Override

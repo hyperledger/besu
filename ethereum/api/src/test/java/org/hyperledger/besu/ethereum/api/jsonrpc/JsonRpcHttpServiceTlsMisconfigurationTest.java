@@ -19,9 +19,11 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS
 import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
 import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -36,12 +38,14 @@ import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -70,8 +74,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnJre;
-import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.io.TempDir;
 
 class JsonRpcHttpServiceTlsMisconfigurationTest {
@@ -101,8 +103,14 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
     final Synchronizer synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
+
+    // mocks so that genesis hash is populated
+    Blockchain blockchain = mock(Blockchain.class);
+    Block block = mock(Block.class);
+    lenient().when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    lenient().when(blockchain.getGenesisBlock()).thenReturn(block);
+    lenient().when(block.getHash()).thenReturn(Hash.EMPTY);
 
     rpcMethods =
         new JsonRpcMethodsFactory()
@@ -120,6 +128,7 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
@@ -131,7 +140,6 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                 DEFAULT_RPC_APIS,
-                mock(PrivacyParameters.class),
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
@@ -142,6 +150,7 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
+                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());
@@ -198,23 +207,6 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  @DisabledOnJre({JRE.JAVA_17, JRE.JAVA_18}) // error message changed
-  void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
-    service =
-        createJsonRpcHttpService(
-            rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
-    assertThatExceptionOfType(CompletionException.class)
-        .isThrownBy(
-            () -> {
-              service.start().join();
-              Assertions.fail("service.start should have failed");
-            })
-        .withCauseInstanceOf(JsonRpcServiceException.class)
-        .withMessageContaining("Tag number over 30 is not supported");
-  }
-
-  @Test
-  @DisabledOnJre({JRE.JAVA_11, JRE.JAVA_12, JRE.JAVA_13, JRE.JAVA_14, JRE.JAVA_15, JRE.JAVA_16})
   void exceptionRaisedWhenInvalidKeystoreFileIsSpecified_NewJava() throws IOException {
     service =
         createJsonRpcHttpService(
@@ -297,8 +289,6 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private JsonRpcHttpService createJsonRpcHttpService(
       final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig) {
-    final Path testDir = tempDir.resolve("createJsonRpcHttpSercice");
-    testDir.toFile().mkdirs();
     return new JsonRpcHttpService(
         vertx,
         tempDir,

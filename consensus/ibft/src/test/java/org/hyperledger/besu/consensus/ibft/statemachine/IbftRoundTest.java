@@ -50,7 +50,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -82,8 +81,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class IbftRoundTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final NodeKey nodeKey2 = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
+  private final MessageFactory messageFactory2 = new MessageFactory(nodeKey2);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new IbftExtraDataCodec();
   private ProtocolContext protocolContext;
@@ -112,11 +113,12 @@ public class IbftRoundTest {
   @BeforeEach
   public void setup() {
     protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()))
+            .build();
 
     lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
     lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);
@@ -269,7 +271,7 @@ public class IbftRoundTest {
     // Receive Commit Message
 
     round.handleCommitMessage(
-        messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+        messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
 
     // Should import block when both commit seals are available.
     final ArgumentCaptor<Block> capturedBlock = ArgumentCaptor.forClass(Block.class);
@@ -311,14 +313,14 @@ public class IbftRoundTest {
     verify(blockImporter, never()).importBlock(any(), any(), any());
 
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
 
     verify(transmitter, times(1))
         .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
     verify(blockImporter, never()).importBlock(any(), any(), any());
 
     round.handleCommitMessage(
-        messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+        messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
     verify(blockImporter, times(1)).importBlock(any(), any(), any());
   }
 
@@ -471,6 +473,9 @@ public class IbftRoundTest {
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+
+    round.handleCommitMessage(
+        messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
 
     round.handleProposalMessage(
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));

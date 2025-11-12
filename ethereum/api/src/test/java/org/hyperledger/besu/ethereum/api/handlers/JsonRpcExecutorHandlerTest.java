@@ -46,6 +46,7 @@ class JsonRpcExecutorHandlerTest {
   private RoutingContext mockContext;
   private Vertx mockVertx;
   private HttpServerResponse mockResponse;
+  private final long timeoutSeconds = 22;
 
   @BeforeEach
   void setUp() {
@@ -56,6 +57,7 @@ class JsonRpcExecutorHandlerTest {
     mockVertx = mock(Vertx.class);
     mockResponse = mock(HttpServerResponse.class);
 
+    when(mockConfig.getHttpTimeoutSec()).thenReturn(timeoutSeconds);
     when(mockContext.vertx()).thenReturn(mockVertx);
     when(mockContext.response()).thenReturn(mockResponse);
     when(mockResponse.ended()).thenReturn(false);
@@ -79,7 +81,8 @@ class JsonRpcExecutorHandlerTest {
     handler.handle(mockContext);
 
     // Assert
-    verify(mockVertx).setTimer(eq(30000L), any());
+    long timeoutMillis = timeoutSeconds * 1000;
+    verify(mockVertx).setTimer(eq(timeoutMillis), any());
 
     // Simulate timeout
     timerHandlerCaptor.getValue().handle(1L);

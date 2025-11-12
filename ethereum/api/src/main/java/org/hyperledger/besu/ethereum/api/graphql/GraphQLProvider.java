@@ -18,8 +18,8 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import graphql.GraphQL;
 import graphql.analysis.FieldComplexityEnvironment;
@@ -58,7 +58,7 @@ public class GraphQLProvider {
   public static GraphQL buildGraphQL(final GraphQLDataFetchers graphQLDataFetchers)
       throws IOException {
     final URL url = Resources.getResource("schema.graphqls");
-    final String sdl = Resources.toString(url, Charsets.UTF_8);
+    final String sdl = Resources.toString(url, StandardCharsets.UTF_8);
     final GraphQLSchema graphQLSchema = buildSchema(sdl, graphQLDataFetchers);
     return GraphQL.newGraphQL(graphQLSchema)
         .instrumentation(

@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
@@ -48,7 +50,7 @@ public class GetAccountRangeFromPeerTask
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, SnapV1.ACCOUNT_RANGE, metricsSystem);
+    super(ethContext, SnapProtocol.NAME, SnapV1.ACCOUNT_RANGE, metricsSystem);
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
     this.blockHeader = blockHeader;
@@ -92,7 +94,7 @@ public class GetAccountRangeFromPeerTask
           }
 
           @Override
-          public boolean isEthPeerSuitable(final EthPeer ethPeer) {
+          public boolean isEthPeerSuitable(final EthPeerImmutableAttributes ethPeer) {
             return ethPeer.isServingSnap();
           }
         },

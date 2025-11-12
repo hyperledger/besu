@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -33,16 +34,21 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ProtocolScheduleFixture {
+
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),
           Optional.empty(),
           Optional.empty(),
-          Optional.empty(),
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
+
+  // A pointer to a specific network. Used widely in tests.
+  // One spot to change if we permanently or temporarily want to run tests with a different network.
+  public static final ProtocolSchedule TESTING_NETWORK = ProtocolScheduleFixture.MAINNET;
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     return getGenesisConfigOptions("/mainnet.json");

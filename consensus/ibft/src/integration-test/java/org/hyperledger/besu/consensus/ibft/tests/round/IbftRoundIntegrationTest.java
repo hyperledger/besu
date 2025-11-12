@@ -41,7 +41,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -124,11 +123,12 @@ public class IbftRoundIntegrationTest {
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     protocolContext =
-        new ProtocolContext(
-            blockChain,
-            worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockChain)
+            .withWorldStateArchive(worldStateArchive)
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder))
+            .build();
   }
 
   @Test

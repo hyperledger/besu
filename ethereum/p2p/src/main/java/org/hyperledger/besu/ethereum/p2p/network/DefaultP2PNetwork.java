@@ -353,6 +353,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return wasRemoved;
   }
 
+  @Override
+  public Collection<Peer> getMaintainedConnectionPeers() {
+    return maintainedPeers.streamPeers().toList();
+  }
+
   @VisibleForTesting
   Optional<DNSDaemon> getDnsDaemon() {
     return dnsDaemonRef.get();
@@ -527,7 +532,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Blockchain blockchain;
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
-    private boolean legacyForkIdEnabled = false;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int maxPeers;
@@ -583,7 +587,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
       final ForkIdManager forkIdManager =
-          new ForkIdManager(blockchain, blockNumberForks, timestampForks, this.legacyForkIdEnabled);
+          new ForkIdManager(blockchain, blockNumberForks, timestampForks);
 
       return VertxPeerDiscoveryAgent.create(
           vertx,
@@ -701,11 +705,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder timestampForks(final List<Long> forks) {
       checkNotNull(forks);
       this.timestampForks = forks;
-      return this;
-    }
-
-    public Builder legacyForkIdEnabled(final boolean legacyForkIdEnabled) {
-      this.legacyForkIdEnabled = legacyForkIdEnabled;
       return this;
     }
 

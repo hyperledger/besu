@@ -25,10 +25,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
 
-import javax.annotation.Nonnull;
-
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -123,27 +121,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
           ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
     Address to = Words.toAddress(toBytes);
-    final Account contract = frame.getWorldUpdater().get(to);
-
-    if (contract != null && contract.hasDelegatedCode()) {
-      if (contract.getCodeDelegationTargetCode().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have delegated code");
-      }
-
-      if (contract.getCodeDelegationTargetHash().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have a delegated code hash");
-      }
-
-      final long codeDelegationResolutionGas =
-          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-        return new Operation.OperationResult(
-            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
-
-      frame.decrementRemainingGas(codeDelegationResolutionGas);
-    }
+    final Account contract = getAccount(to, frame);
 
     boolean accountCreation = (contract == null || contract.isEmpty()) && !zeroValue;
     long cost =
@@ -160,10 +138,15 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     if (currentGas < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
+    if (currentGas < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
     currentGas -= cost;
+
     frame.expandMemory(inputOffset, inputLength);
 
-    final Code code = getCode(evm, contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
@@ -181,7 +164,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     long retainedGas = Math.max(currentGas / 64, gasCalculator.getMinRetainedGas());
     long childGas = currentGas - retainedGas;
 
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.
@@ -192,6 +175,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     if (!zeroValue && (value.compareTo(balance) > 0)) {
       return softFailure(frame, cost);
     }
+
     // stack too deep, for large gas systems.
     if (frame.getDepth() >= 1024) {
       return softFailure(frame, cost);
@@ -200,26 +184,32 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     // all checks passed, do the call
     final Bytes inputData = frame.readMutableMemory(inputOffset, inputLength);
 
-    MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(childGas)
-        .address(address(frame))
-        .contract(to)
-        .inputData(inputData)
-        .sender(sender(frame))
-        .value(value(frame))
-        .apparentValue(apparentValue(frame))
-        .code(code)
-        .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child))
-        .build();
+    final MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(frame)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(childGas)
+            .address(address(frame))
+            .contract(to)
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(clampedAdd(cost, childGas), null, 0);
   }
 
-  private @Nonnull OperationResult softFailure(final MessageFrame frame, final long cost) {
+  private @NotNull OperationResult softFailure(final MessageFrame frame, final long cost) {
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
     return new OperationResult(cost, null);

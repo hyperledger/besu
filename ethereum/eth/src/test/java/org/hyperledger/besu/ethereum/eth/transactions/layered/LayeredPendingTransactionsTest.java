@@ -160,7 +160,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             transactionReplacementTester,
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE));
+            MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE),
+            senderBalanceChecker);
     return new CreatedLayers(
         prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
   }
@@ -416,6 +417,84 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   static Stream<TransactionSelectionResult> selectTransactionsUntilSelectorRequestsNoMore() {
     return Stream.of(BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_FULL);
+  }
+
+  @Test
+  public void selectTransactionsStopsOnBlockFull() {
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction0), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(transaction1), Optional.empty());
+
+    final List<Transaction> parsedTransactions = new ArrayList<>();
+    pendingTransactions.selectTransactions(
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
+          return BLOCK_FULL;
+        });
+
+    assertThat(parsedTransactions.size()).isEqualTo(1);
+    assertThat(parsedTransactions.get(0)).isEqualTo(transaction0);
+    // Verify both transactions are still in the pool
+    assertThat(pendingTransactions.size()).isEqualTo(2);
+  }
+
+  @Test
+  public void blockFullStopsSelectionImmediately() {
+    // Add multiple transactions
+    for (int i = 0; i < 5; i++) {
+      final Transaction tx = createTransaction(i, SIGNATURE_ALGORITHM.get().generateKeyPair());
+      pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.empty());
+    }
+
+    final List<Transaction> parsedTransactions = new ArrayList<>();
+
+    pendingTransactions.selectTransactions(
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
+          // BLOCK_FULL stops selection immediately after the first transaction
+          return BLOCK_FULL;
+        });
+
+    // Should have processed exactly 1 transaction before stopping
+    assertThat(parsedTransactions.size()).isEqualTo(1);
+
+    // All 5 transactions should still be in the pool since no transactions are discarded
+    assertThat(pendingTransactions.size()).isEqualTo(5);
+  }
+
+  @Test
+  public void finalizationRequestedMidSelection() {
+    // Create transactions from same sender to test nonce ordering
+    final Transaction tx0 = createTransaction(0, KEYS1);
+    final Transaction tx1 = createTransaction(1, KEYS1);
+    final Transaction tx2 = createTransaction(2, KEYS1);
+    final Transaction tx3 = createTransaction(3, KEYS1);
+
+    pendingTransactions.addTransaction(createRemotePendingTransaction(tx0), Optional.empty());
+    pendingTransactions.addTransaction(createRemotePendingTransaction(tx1), Optional.empty());
+    pendingTransactions.addTransaction(createRemotePendingTransaction(tx2), Optional.empty());
+    pendingTransactions.addTransaction(createRemotePendingTransaction(tx3), Optional.empty());
+
+    final List<Transaction> selectedTransactions = new ArrayList<>();
+    pendingTransactions.selectTransactions(
+        pendingTx -> {
+          selectedTransactions.add(pendingTx.getTransaction());
+
+          // Select first two transactions, then request finalization
+          if (selectedTransactions.size() >= 2) {
+            return BLOCK_FULL;
+          }
+          return SELECTED;
+        });
+
+    // Should have selected exactly 2 transactions in nonce order
+    assertThat(selectedTransactions).hasSize(2);
+    assertThat(selectedTransactions.get(0)).isEqualTo(tx0);
+    assertThat(selectedTransactions.get(1)).isEqualTo(tx1);
+
+    // All transactions should remain in pool
+    assertThat(pendingTransactions.size()).isEqualTo(4);
   }
 
   @Test

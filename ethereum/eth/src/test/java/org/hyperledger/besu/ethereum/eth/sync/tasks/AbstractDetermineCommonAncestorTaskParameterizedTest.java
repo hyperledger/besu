@@ -20,9 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -65,7 +63,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
-  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
@@ -155,11 +153,10 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        new ProtocolContext(
-            localBlockchain,
-            worldStateArchive,
-            mock(ConsensusContext.class),
-            new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(localBlockchain)
+            .withWorldStateArchive(worldStateArchive)
+            .build();
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(
@@ -192,7 +189,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
               return new PeerTaskExecutorResult<>(
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(respondingEthPeer.getEthPeer()));
+                  List.of(respondingEthPeer.getEthPeer()));
             });
 
     final CompletableFuture<BlockHeader> future = task.run();

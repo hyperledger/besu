@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,23 +29,29 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -63,14 +69,15 @@ public class MainnetBlockValidatorTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
-  private final BadBlockManager badBlockManager = new BadBlockManager();
+  private final BadBlockManager badBlockManager =
+      chainUtil.getProtocolContext().getBadBlockManager();
   private final BlockProcessor blockProcessor = mock(BlockProcessor.class);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
 
-  private final MainnetBlockValidator mainnetBlockValidator =
-      new MainnetBlockValidator(
-          blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+  private final BlockValidator mainnetBlockValidator =
+      MainnetBlockValidatorBuilder.frontier(
+          blockHeaderValidator, blockBodyValidator, blockProcessor);
 
   public static Stream<Arguments> getStorageExceptions() {
     return Stream.of(
@@ -92,6 +99,7 @@ public class MainnetBlockValidatorTest {
         new BlockProcessingResult(Optional.empty(), false);
 
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
@@ -103,14 +111,36 @@ public class MainnetBlockValidatorTest {
     when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any()))
-        .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any()))
-        .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any(), any()))
+    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();
+  }
+
+  @Test
+  public void validateAndProcessBlock_onStateRootMismatch() {
+    var spyBlock = chainUtil.getBlock(4);
+    BlockHeader badStateRootHeader =
+        BlockHeaderBuilder.fromHeader(spyBlock.getHeader())
+            .stateRoot(Hash.EMPTY_TRIE_HASH)
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .buildBlockHeader();
+
+    Block stateRootMismatchBlock = new Block(badStateRootHeader, spyBlock.getBody());
+
+    var spec = chainUtil.getProtocolSchedule().getByBlockHeader(badStateRootHeader);
+
+    BlockProcessingResult result =
+        spec.getBlockValidator()
+            .validateAndProcessBlock(
+                chainUtil.getProtocolContext(),
+                stateRootMismatchBlock,
+                HeaderValidationMode.NONE,
+                HeaderValidationMode.NONE);
+
+    assertThat(result.isSuccessful()).isFalse();
+    assertThat(badBlockManager.getBadBlock(stateRootMismatchBlock.getHash())).isPresent();
+    assertThat(badBlockManager.getBadBlocks()).containsExactly(stateRootMismatchBlock);
   }
 
   @Test
@@ -454,5 +484,66 @@ public class MainnetBlockValidatorTest {
     assertThat(result.errorMessage).isPresent();
     assertThat(result.errorMessage.get())
         .containsIgnoringWhitespaces(exception.getLocalizedMessage());
+  }
+
+  @Test
+  void validationFailsForBlockGreaterThanMaxBlockSize() {
+    BlockDataGenerator generator = new BlockDataGenerator();
+    BadBlockManager badBlockManager = new BadBlockManager();
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
+    final BlockValidator blockValidator =
+        MainnetBlockValidatorBuilder.osaka(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
+    int maxRlpBlockSize = blockValidator.maxRlpBlockSize();
+
+    final Transaction transaction = generator.transaction(Bytes.random(maxRlpBlockSize + 1));
+    BlockDataGenerator.BlockOptions blockOptions =
+        new BlockDataGenerator.BlockOptions().setBlockNumber(1).addTransaction(transaction);
+    Block block = generator.block(blockOptions);
+
+    BlockProcessingResult result =
+        blockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+    assertThat(result.isSuccessful()).isFalse();
+    assertThat(badBlockManager.getBadBlock(block.getHash())).isPresent();
+    assertThat(badBlockManager.getBadBlocks()).containsExactly(block);
+  }
+
+  @Test
+  void validationSuccessfulForBlockLessThanMaxBlockSize() {
+    var blockchainSetupUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
+    blockchainSetupUtil.importAllBlocks();
+    final BadBlockManager badBlockManager =
+        blockchainSetupUtil.getProtocolContext().getBadBlockManager();
+    final MutableBlockchain blockchain = spy(blockchainSetupUtil.getBlockchain());
+    final BlockProcessingResult successfulProcessingResult =
+        new BlockProcessingResult(Optional.empty(), false);
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(protocolContext.getWorldStateArchive()).thenReturn(blockchainSetupUtil.getWorldArchive());
+    when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
+    when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
+    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any()))
+        .thenReturn(successfulProcessingResult);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
+
+    final Block block = blockchainSetupUtil.getBlock(2);
+    final BlockValidator blockSizeBlockValidator =
+        MainnetBlockValidatorBuilder.osaka(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
+
+    BlockProcessingResult result =
+        blockSizeBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertThat(result.isSuccessful()).isTrue();
+    assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
 }

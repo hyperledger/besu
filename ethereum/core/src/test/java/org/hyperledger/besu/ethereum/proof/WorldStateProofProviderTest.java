@@ -99,8 +99,7 @@ public class WorldStateProofProviderTest {
             Hash.wrap(worldStateTrie.getRootHash()), address, storageKeys);
 
     assertThat(accountProof).isPresent();
-    Assertions.assertThat(accountProof.get().getStateTrieAccountValue())
-        .isEqualToComparingFieldByField(accountValue);
+    Assertions.assertThat(accountProof.get().getStateTrieAccountValue()).contains(accountValue);
     assertThat(accountProof.get().getAccountProof().size()).isGreaterThanOrEqualTo(1);
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);
@@ -120,13 +119,35 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
+    final Hash addressHash = address.addressHash();
     final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
+
+    final ForestWorldStateKeyValueStorage.Updater updater = worldStateKeyValueStorage.updater();
+
+    // Define account value
+    final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
+    final PmtStateTrieAccountValue accountValue =
+        new PmtStateTrieAccountValue(
+            1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
+    // Save to storage
+    worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
+    worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
+
+    // Persist updates
+    updater.commit();
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
-            Hash.wrap(worldStateTrie.getRootHash()), address, new ArrayList<>());
+            Hash.wrap(worldStateTrie.getRootHash()),
+            Address.ZERO,
+            new ArrayList<>()); // missing address
 
-    assertThat(accountProof).isEmpty();
+    assertThat(accountProof).isPresent();
+    assertThat(accountProof.get().getStateTrieAccountValue()).isEmpty();
+    assertThat(accountProof.get().getAccountProof()).hasSize(1);
+    assertThat(Hash.hash(accountProof.get().getAccountProof().get(0)))
+        .isEqualTo(worldStateTrie.getRootHash());
   }
 
   private void writeStorageValue(

@@ -15,14 +15,16 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logInvalid;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logStart;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logStop;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -34,7 +36,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -43,11 +45,15 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -56,9 +62,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -98,7 +104,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
-  private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
   private final BlobCache cacheForBlobsOfTransactionsAddedToABlock;
   private volatile PendingTransactions pendingTransactions = new DisabledPendingTransactions();
@@ -115,10 +120,9 @@ public class TransactionPool implements BlockAddedObserver {
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
-  private final ListMultimap<VersionedHash, BlobsWithCommitments.BlobQuad>
-      mapOfBlobsInTransactionPool =
-          Multimaps.synchronizedListMultimap(
-              Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
+  private final ListMultimap<VersionedHash, BlobProofBundle> mapOfBlobsInTransactionPool =
+      Multimaps.synchronizedListMultimap(
+          Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -140,48 +144,10 @@ public class TransactionPool implements BlockAddedObserver {
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
     initializeBlobMetrics();
-    initLogForReplay();
     subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
     subscribeDroppedTransactions(
         (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
     subscribeDroppedTransactions(transactionBroadcaster);
-  }
-
-  private void initLogForReplay() {
-    // log the initial block header data
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{},{},{},{}")
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getNumber).orElse(0L))
-        .addArgument(
-            () ->
-                getChainHeadBlockHeader()
-                    .flatMap(BlockHeader::getBaseFee)
-                    .map(Wei::getAsBigInteger)
-                    .orElse(BigInteger.ZERO))
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasUsed).orElse(0L))
-        .addArgument(() -> getChainHeadBlockHeader().map(BlockHeader::getGasLimit).orElse(0L))
-        .log();
-    // log the priority senders
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{}")
-        .addArgument(
-            () ->
-                configuration.getPrioritySenders().stream()
-                    .map(Address::toHexString)
-                    .collect(Collectors.joining(",")))
-        .log();
-    // log the max prioritized txs by type
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("{}")
-        .addArgument(
-            () ->
-                configuration.getMaxPrioritizedTransactionsByType().entrySet().stream()
-                    .map(e -> e.getKey().name() + "=" + e.getValue())
-                    .collect(Collectors.joining(",")))
-        .log();
   }
 
   @VisibleForTesting
@@ -193,17 +159,20 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
 
-    final var result = addTransaction(transaction, true, MAX_SCORE);
+    final boolean hasPriority = isPriorityTransaction(transaction, true);
+    final var result = addTransaction(transaction, true, hasPriority, MAX_SCORE);
     if (result.isValid()) {
       localSenders.add(transaction.getSender());
       transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+    } else {
+      logInvalid(transaction, result, true, hasPriority);
     }
     return result;
   }
 
   public Map<Hash, ValidationResult<TransactionInvalidReason>> addRemoteTransactions(
       final Collection<Transaction> transactions) {
-    final long started = System.currentTimeMillis();
+    final long started = System.nanoTime();
     final int initialCount = transactions.size();
     final List<Transaction> addedTransactions = new ArrayList<>(initialCount);
     LOG.trace("Adding {} remote transactions", initialCount);
@@ -214,25 +183,25 @@ public class TransactionPool implements BlockAddedObserver {
                 Collectors.toMap(
                     Transaction::getHash,
                     transaction -> {
-                      final var result = addTransaction(transaction, false, MAX_SCORE);
+                      final boolean hasPriority = isPriorityTransaction(transaction, false);
+                      final var result = addTransaction(transaction, false, hasPriority, MAX_SCORE);
                       if (result.isValid()) {
                         addedTransactions.add(transaction);
+                      } else {
+                        logInvalid(transaction, result, false, hasPriority);
                       }
                       return result;
                     },
                     (transaction1, transaction2) -> transaction1));
 
-    LOG_FOR_REPLAY
-        .atTrace()
-        .setMessage("S,{}")
-        .addArgument(() -> pendingTransactions.logStats())
-        .log();
+    if (isEnabled()) {
+      TransactionPoolStructuredLogUtils.logStats(pendingTransactions);
+    }
 
     LOG.atTrace()
-        .setMessage(
-            "Added {} transactions to the pool in {}ms, {} not added, current pool stats {}")
+        .setMessage("Added {} transactions to the pool in {}, {} not added, current pool stats {}")
         .addArgument(addedTransactions::size)
-        .addArgument(() -> System.currentTimeMillis() - started)
+        .addArgument(() -> Duration.ofNanos(System.nanoTime() - started))
         .addArgument(() -> initialCount - addedTransactions.size())
         .addArgument(pendingTransactions::logStats)
         .log();
@@ -244,19 +213,26 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> addTransaction(
-      final Transaction transaction, final boolean isLocal, final byte score) {
+      final Transaction baseTransaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final byte score) {
 
-    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
-
-    if (pendingTransactions.containsTransaction(transaction)) {
+    if (pendingTransactions.containsTransaction(baseTransaction)) {
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(baseTransaction::toTraceLog)
           .log();
       // We already have this transaction, don't even validate it.
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
+
+    // Apply any necessary fork related pre-processing before submitting the transaction to the pool
+    Transaction transaction =
+        getTransactionPoolPreProcessor()
+            .map(preProcessor -> preProcessor.prepareTransaction(baseTransaction, isLocal))
+            .orElse(baseTransaction);
 
     final ValidationResultAndAccount validationResult =
         validateTransaction(transaction, isLocal, hasPriority);
@@ -346,8 +322,8 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+      if (event.getEventType().equals(EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(EventType.CHAIN_REORG)) {
 
         blockAddedEventOrderedProcessor.submit(event);
       }
@@ -407,6 +383,12 @@ public class TransactionPool implements BlockAddedObserver {
         .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getTransactionValidatorFactory()
         .get();
+  }
+
+  private Optional<TransactionPoolPreProcessor> getTransactionPoolPreProcessor() {
+    return protocolSchedule
+        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+        .getTransactionPoolPreProcessor();
   }
 
   private ValidationResultAndAccount validateTransaction(
@@ -482,6 +464,9 @@ public class TransactionPool implements BlockAddedObserver {
             .getWorldStateArchive()
             .getWorldState(withBlockHeaderAndNoUpdateNodeHead(chainHeadBlockHeader))
             .orElseThrow()) {
+      if (worldState instanceof BonsaiWorldState bonsaiWorldState) {
+        bonsaiWorldState.disableCacheMerkleTrieLoader();
+      }
       final Account senderAccount = worldState.get(transaction.getSender());
       return new ValidationResultAndAccount(
           senderAccount,
@@ -629,6 +614,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
+      logStart(configuration, getChainHeadBlockHeader());
       pendingTransactions = pendingTransactionsSupplier.get();
       pendingTransactionsListenersProxy.subscribe();
       isPoolEnabled.set(true);
@@ -645,11 +631,27 @@ public class TransactionPool implements BlockAddedObserver {
     return CompletableFuture.completedFuture(null);
   }
 
+  /**
+   * Disables the transaction pool.
+   *
+   * <p>When called, this method:
+   *
+   * <ul>
+   *   <li>Marks the pool as disabled and unsubscribes listeners/events.
+   *   <li>Clears the blob map to prevent stale or duplicate entries (blobs are restored from disk
+   *       when the pool is re-enabled).
+   *   <li>Persists current pending transactions to disk asynchronously.
+   *   <li>Replaces the pending transactions with a disabled placeholder.
+   * </ul>
+   *
+   * @return a {@link CompletableFuture} that completes once the save-to-disk operation finishes
+   */
   public CompletableFuture<Void> setDisabled() {
     if (isEnabled()) {
       isPoolEnabled.set(false);
       subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
       pendingTransactionsListenersProxy.unsubscribe();
+      mapOfBlobsInTransactionPool.clear();
       final CompletableFuture<Void> saveOperation =
           saveRestoreManager
               .saveToDisk(pendingTransactions)
@@ -659,38 +661,35 @@ public class TransactionPool implements BlockAddedObserver {
                     return null;
                   });
       pendingTransactions = new DisabledPendingTransactions();
+      logStop();
       return saveOperation;
     }
     return CompletableFuture.completedFuture(null);
   }
 
-  private void mapBlobsOnTransactionAdded(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void mapBlobsOnTransactionAdded(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.put(bq.getVersionedHash(), bq));
   }
 
-  private void unmapBlobsOnTransactionDropped(
-      final org.hyperledger.besu.datatypes.Transaction transaction) {
-    final Optional<BlobsWithCommitments> maybeBlobsWithCommitments =
-        transaction.getBlobsWithCommitments();
+  private void unmapBlobsOnTransactionDropped(final Transaction transaction) {
+    final var maybeBlobsWithCommitments = transaction.getBlobsWithCommitments();
     if (maybeBlobsWithCommitments.isEmpty()) {
       return;
     }
-    final List<BlobsWithCommitments.BlobQuad> blobQuads =
-        maybeBlobsWithCommitments.get().getBlobQuads();
+    final List<BlobProofBundle> blobProofBundles =
+        maybeBlobsWithCommitments.get().getBlobProofBundles();
 
-    blobQuads.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.versionedHash(), bq));
+    blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.getVersionedHash(), bq));
   }
 
-  public BlobsWithCommitments.BlobQuad getBlobQuad(final VersionedHash vh) {
+  public BlobProofBundle getBlobProofBundle(final VersionedHash vh) {
     try {
       // returns an empty list if the key is not present, so getFirst() will throw
       return mapOfBlobsInTransactionPool.get(vh).getFirst();
@@ -825,8 +824,7 @@ public class TransactionPool implements BlockAddedObserver {
                 .map(
                     ptx -> {
                       final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                      TransactionEncoder.encodeRLP(
-                          ptx.getTransaction(), rlp, EncodingContext.POOLED_TRANSACTION);
+                      ptx.getTransaction().writeTo(rlp, EncodingContext.POOLED_TRANSACTION);
                       return ptx.getScore()
                           + (ptx.isReceivedFromLocalSource() ? "l" : "r")
                           + rlp.encoded().toBase64String();
@@ -881,10 +879,13 @@ public class TransactionPool implements BlockAddedObserver {
                           final boolean isLocal = line.charAt(scoreStr.length()) == 'l';
                           final Transaction tx =
                               Transaction.readFrom(
-                                  Bytes.fromBase64String(line.substring(scoreStr.length() + 1)));
-
+                                  RLP.input(
+                                      Bytes.fromBase64String(
+                                          line.substring(scoreStr.length() + 1))),
+                                  EncodingContext.POOLED_TRANSACTION);
+                          final boolean hasPriority = isPriorityTransaction(tx, isLocal);
                           final ValidationResult<TransactionInvalidReason> result =
-                              addTransaction(tx, isLocal, score);
+                              addTransaction(tx, isLocal, hasPriority, score);
                           return result.isValid() ? "OK" : result.getInvalidReason().name();
                         })
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
@@ -912,7 +913,7 @@ public class TransactionPool implements BlockAddedObserver {
               saveFile.delete();
             }
           } catch (IOException e) {
-            LOG.error("Error while saving txpool content to disk", e);
+            LOG.error("Error while loading txpool content from disk", e);
           }
         }
       }
@@ -932,12 +933,13 @@ public class TransactionPool implements BlockAddedObserver {
 
       LOG.debug("Removing processed lines from save file");
 
-      final var tmp = File.createTempFile(saveFile.getName(), ".tmp");
+      // Create temporary file with default secure permissions
+      final var tmp =
+          Files.createTempFile(saveFile.getParentFile().toPath(), saveFile.getName(), ".tmp");
 
       try (final BufferedReader reader =
               Files.newBufferedReader(saveFile.toPath(), StandardCharsets.US_ASCII);
-          final BufferedWriter writer =
-              Files.newBufferedWriter(tmp.toPath(), StandardCharsets.US_ASCII)) {
+          final BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.US_ASCII)) {
         reader
             .lines()
             .skip(processedLines)
@@ -953,7 +955,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
 
       saveFile.delete();
-      Files.move(tmp.toPath(), saveFile.toPath());
+      Files.move(tmp, saveFile.toPath());
     }
   }
 }

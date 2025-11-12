@@ -81,16 +81,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Supplier<Code> codeSupplier = Suppliers.memoize(() -> getInitCode(frame, evm));
 
-    final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
-      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
+    final long cost = cost(frame, codeSupplier);
+    if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldUpdater().getAccount(address);
+    final MutableAccount account = getMutableAccount(address, frame);
 
     frame.clearReturnData();
 
@@ -182,19 +184,25 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     parent.decrementRemainingGas(childGasStipend);
 
     // frame addition is automatically handled by parent messageFrameStack
-    MessageFrame.builder()
-        .parentMessageFrame(parent)
-        .type(MessageFrame.Type.CONTRACT_CREATION)
-        .initialGas(childGasStipend)
-        .address(contractAddress)
-        .contract(contractAddress)
-        .inputData(inputData)
-        .sender(parent.getRecipientAddress())
-        .value(value)
-        .apparentValue(value)
-        .code(code)
-        .completer(child -> complete(parent, child, evm))
-        .build();
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(parent)
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .initialGas(childGasStipend)
+            .address(contractAddress)
+            .contract(contractAddress)
+            .inputData(inputData)
+            .sender(parent.getRecipientAddress())
+            .value(value)
+            .apparentValue(value)
+            .code(code)
+            .completer(child -> complete(parent, child, evm));
+
+    if (parent.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(parent.getEip7928AccessList().get());
+    }
+
+    builder.build();
 
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
@@ -223,7 +231,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code outputCode =
           (childFrame.getCreatedCode() != null)
               ? childFrame.getCreatedCode()
-              : evm.getCodeForCreation(childFrame.getOutputData());
+              : evm.wrapCodeForCreation(childFrame.getOutputData());
       if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));

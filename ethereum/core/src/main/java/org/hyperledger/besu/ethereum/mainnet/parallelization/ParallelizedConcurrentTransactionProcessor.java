@@ -22,14 +22,17 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -39,7 +42,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -51,9 +53,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ParallelizedConcurrentTransactionProcessor {
-
-  private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private static final Executor executor = Executors.newFixedThreadPool(NCPU);
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -97,7 +96,8 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param miningBeneficiary Address of the beneficiary to receive mining rewards.
    * @param blockHashLookup Function for block hash lookup.
    * @param blobGasPrice Gas price for blob transactions.
-   * @param privateMetadataUpdater Updater for private transaction metadata.
+   * @param executor The executor to use for asynchronous execution.
+   * @param blockAccessListBuilder BAL builder.
    */
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
@@ -106,7 +106,8 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final Executor executor,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
     completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
@@ -125,7 +126,7 @@ public class ParallelizedConcurrentTransactionProcessor {
                   miningBeneficiary,
                   blockHashLookup,
                   blobGasPrice,
-                  privateMetadataUpdater),
+                  blockAccessListBuilder),
           executor);
     }
   }
@@ -139,7 +140,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
     if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
       try (BonsaiWorldState ws =
@@ -153,11 +154,17 @@ public class ParallelizedConcurrentTransactionProcessor {
           ws.disableCacheMerkleTrieLoader();
           final ParallelizedTransactionContext.Builder contextBuilder =
               new ParallelizedTransactionContext.Builder();
-          final DiffBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
-              (DiffBasedWorldStateUpdateAccumulator<?>) ws.updater();
+          final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
+              (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+          final WorldUpdater transactionUpdater = roundWorldStateUpdater.updater();
+          final Optional<AccessLocationTracker> transactionLocationTracker =
+              blockAccessListBuilder.map(
+                  b ->
+                      BlockAccessListBuilder.createTransactionAccessLocationTracker(
+                          transactionLocation));
           final TransactionProcessingResult result =
               transactionProcessor.processTransaction(
-                  roundWorldStateUpdater,
+                  transactionUpdater,
                   blockHeader,
                   transaction.detachedCopy(),
                   miningBeneficiary,
@@ -183,13 +190,13 @@ public class ParallelizedConcurrentTransactionProcessor {
                     }
                   },
                   blockHashLookup,
-                  true,
                   TransactionValidationParams.processingBlock(),
-                  privateMetadataUpdater,
-                  blobGasPrice);
+                  blobGasPrice,
+                  transactionLocationTracker);
 
           // commit the accumulator in order to apply all the modifications
-          ws.getAccumulator().commit();
+          transactionUpdater.commit();
+          roundWorldStateUpdater.commit();
 
           contextBuilder
               .transactionAccumulator(ws.getAccumulator())
@@ -244,16 +251,16 @@ public class ParallelizedConcurrentTransactionProcessor {
       final int transactionLocation,
       final Optional<Counter> confirmedParallelizedTransactionCounter,
       final Optional<Counter> conflictingButCachedTransactionCounter) {
-    final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
-    final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
-        (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
+    final PathBasedWorldState pathBasedWorldState = (PathBasedWorldState) worldState;
+    final PathBasedWorldStateUpdateAccumulator blockAccumulator =
+        (PathBasedWorldStateUpdateAccumulator) pathBasedWorldState.updater();
     final ParallelizedTransactionContext parallelizedTransactionContext =
         parallelizedTransactionContextByLocation.remove(transactionLocation);
     /*
      * If `parallelizedTransactionContext` is not null, it means that the transaction had time to complete in the background.
      */
     if (parallelizedTransactionContext != null) {
-      final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
+      final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
           parallelizedTransactionContext.transactionAccumulator();
       final TransactionProcessingResult transactionProcessingResult =
           parallelizedTransactionContext.transactionProcessingResult();
@@ -261,9 +268,25 @@ public class ParallelizedConcurrentTransactionProcessor {
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
-        blockAccumulator
-            .getOrCreate(miningBeneficiary)
-            .incrementBalance(parallelizedTransactionContext.miningBeneficiaryReward());
+        final MutableAccount miningBeneficiaryAccount =
+            blockAccumulator.getOrCreate(miningBeneficiary);
+        Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
+        if (!reward.isZero() || !transactionProcessor.getClearEmptyAccounts()) {
+          miningBeneficiaryAccount.incrementBalance(reward);
+        }
+
+        final Wei miningBeneficiaryPostBalance = miningBeneficiaryAccount.getBalance();
+        transactionProcessingResult
+            .getPartialBlockAccessView()
+            .ifPresent(
+                partialBlockAccessView ->
+                    partialBlockAccessView.accountChanges().stream()
+                        .filter(
+                            accountChanges -> accountChanges.getAddress().equals(miningBeneficiary))
+                        .findFirst()
+                        .ifPresent(
+                            accountChanges ->
+                                accountChanges.setPostBalance(miningBeneficiaryPostBalance)));
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 

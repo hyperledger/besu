@@ -61,8 +61,8 @@ class EofCreateOperationTest {
 
   @Test
   void innerContractIsCorrect() {
-    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
-    Code code = evm.getCodeUncached(INNER_CONTRACT);
+    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
+    Code code = evm.wrapCode(INNER_CONTRACT);
     assertThat(code.isValid()).isTrue();
 
     final MessageFrame messageFrame = testMemoryFrame(code, CALL_DATA);
@@ -91,9 +91,9 @@ class EofCreateOperationTest {
   @Test
   void eofCreatePassesInCallData() {
     Bytes outerContract = EOF_CREATE_CONTRACT;
-    final EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
 
-    Code code = evm.getCodeUncached(outerContract);
+    Code code = evm.wrapCode(outerContract);
     if (!code.isValid()) {
       System.out.println(outerContract);
       fail(((CodeInvalid) code).getInvalidReason());

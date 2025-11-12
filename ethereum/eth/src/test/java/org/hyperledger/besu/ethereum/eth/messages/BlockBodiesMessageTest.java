@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -71,6 +72,7 @@ public final class BlockBodiesMessageTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
   }
 
@@ -96,7 +98,8 @@ public final class BlockBodiesMessageTest {
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final Iterator<BlockBody> readBodies = message.bodies(protocolSchedule).iterator();
     for (int i = 0; i < 50; ++i) {
@@ -127,7 +130,8 @@ public final class BlockBodiesMessageTest {
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final Iterator<SyncBlockBody> readBodies = message.syncBodies(protocolSchedule).iterator();
     for (int i = 0; i < 50; ++i) {
@@ -149,7 +153,8 @@ public final class BlockBodiesMessageTest {
     options.setWithdrawals(Optional.of(List.of(withdrawal)));
     final Block block = generator.block(options);
     final MessageData initialMessage = BlockBodiesMessage.create(List.of(block.getBody()));
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final List<SyncBlockBody> bodies = message.syncBodies(protocolSchedule);
     Assertions.assertThat(bodies.size()).isEqualTo(1);
@@ -160,7 +165,7 @@ public final class BlockBodiesMessageTest {
   @Test
   public void shouldEncodeEmptyBlocksInBlockBodiesMessage() {
     final Bytes bytes = Bytes.fromHexString("0xc2c0c0");
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, bytes);
+    final MessageData raw = new RawMessage(EthProtocolMessages.BLOCK_BODIES, bytes);
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final List<BlockBody> bodies = message.bodies(protocolSchedule);
     bodies.forEach(blockBody -> Assertions.assertThat(blockBody.isEmpty()).isTrue());

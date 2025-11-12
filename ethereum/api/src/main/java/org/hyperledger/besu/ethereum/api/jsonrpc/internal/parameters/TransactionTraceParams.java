@@ -15,10 +15,17 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.debug.TracerType;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -35,24 +42,69 @@ public interface TransactionTraceParams {
   String getTransactionHash();
 
   @JsonProperty(value = "disableStorage")
-  @Value.Default
+  @Nullable
+  Boolean disableStorageNullable();
+
   default boolean disableStorage() {
-    return false;
+    return Boolean.TRUE.equals(disableStorageNullable());
   }
 
   @JsonProperty(value = "disableMemory")
-  @Value.Default
+  @Nullable
+  Boolean disableMemoryNullable();
+
   default boolean disableMemory() {
-    return false;
+    return Boolean.TRUE.equals(disableMemoryNullable());
   }
 
   @JsonProperty(value = "disableStack")
-  @Value.Default
+  @Nullable
+  Boolean disableStackNullable();
+
   default boolean disableStack() {
-    return false;
+    return Boolean.TRUE.equals(disableStackNullable());
   }
 
+  @JsonProperty("tracer")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Nullable
+  String tracer();
+
+  @JsonProperty("tracerConfig")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  // The Immutable annotation generates a Guava map for which Jackson deserialization fails. We are
+  // explicitly using LinkedHashMap to overcome this issue. The suppression is to avoid warnings
+  // about using a non-API type.
+  @SuppressWarnings("NonApiType")
+  LinkedHashMap<String, Object> tracerConfig();
+
+  @JsonProperty("opcodes")
+  @Value.Default
+  default Set<String> opcodes() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Convert JSON-RPC parameters to a {@link TraceOptions} object.
+   *
+   * @return TraceOptions object containing the tracer type and configuration.
+   */
   default TraceOptions traceOptions() {
-    return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
+    var defaultTracerConfig =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceStorage(!disableStorage())
+            .traceMemory(!disableMemory())
+            .traceStack(!disableStack())
+            .traceOpcodes(opcodes())
+            .build();
+
+    // Convert string tracer to TracerType enum, handling null case
+    TracerType tracerType =
+        tracer() != null
+            ? TracerType.fromString(tracer())
+            : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
+
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig());
   }
 }

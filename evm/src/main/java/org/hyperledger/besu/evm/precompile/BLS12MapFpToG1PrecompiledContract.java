@@ -16,17 +16,21 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The BLS12MapFpToG1 precompiled contract. */
 public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledContract {
 
   private static final int PARAMETER_LENGTH = 64;
+  private static final Cache<Integer, PrecompileInputResultTuple> mapFpToG1Cache =
+      Caffeine.newBuilder().maximumSize(1000).build();
 
   /** Instantiates a new BLS12MapFpToG1 precompiled contract. */
-  public BLS12MapFpToG1PrecompiledContract() {
+  BLS12MapFpToG1PrecompiledContract() {
     super(
-        "BLS12_MAP_FIELD_TO_CURVE",
+        "BLS12_MAP_FP_TO_G1",
         LibGnarkEIP2537.BLS12_MAP_FP_TO_G1_OPERATION_SHIM_VALUE,
         PARAMETER_LENGTH);
   }
@@ -34,5 +38,10 @@ public class BLS12MapFpToG1PrecompiledContract extends AbstractBLS12PrecompiledC
   @Override
   public long gasRequirement(final Bytes input) {
     return 5_500;
+  }
+
+  @Override
+  protected Cache<Integer, PrecompileInputResultTuple> getCache() {
+    return mapFpToG1Cache;
   }
 }

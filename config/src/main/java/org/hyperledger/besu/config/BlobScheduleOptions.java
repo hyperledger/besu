@@ -27,7 +27,11 @@ public class BlobScheduleOptions {
 
   private static final String CANCUN_KEY = "cancun";
   private static final String PRAGUE_KEY = "prague";
-  private static final String OSAKA_KEY = "osaka";
+  private static final String BPO1_KEY = "bpo1";
+  private static final String BPO2_KEY = "bpo2";
+  private static final String BPO3_KEY = "bpo3";
+  private static final String BPO4_KEY = "bpo4";
+  private static final String BPO5_KEY = "bpo5";
 
   /**
    * Instantiates a new Blob Schedule config options.
@@ -44,7 +48,7 @@ public class BlobScheduleOptions {
    * @return the cancun blob schedule
    */
   public Optional<BlobSchedule> getCancun() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, CANCUN_KEY).map(BlobSchedule::new);
+    return getBlobSchedule(CANCUN_KEY);
   }
 
   /**
@@ -53,16 +57,62 @@ public class BlobScheduleOptions {
    * @return the prague blob schedule
    */
   public Optional<BlobSchedule> getPrague() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, PRAGUE_KEY).map(BlobSchedule::new);
+    return getBlobSchedule(PRAGUE_KEY);
   }
 
   /**
-   * Gets osaka blob schedule.
+   * Gets bpo1 blob schedule.
    *
-   * @return the osaka blob schedule
+   * @return the bpo1 blob schedule
    */
-  public Optional<BlobSchedule> getOsaka() {
-    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, OSAKA_KEY).map(BlobSchedule::new);
+  public Optional<BlobSchedule> getBpo1() {
+    return getBlobSchedule(BPO1_KEY);
+  }
+
+  /**
+   * Gets bpo2 blob schedule.
+   *
+   * @return the bpo2 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo2() {
+    return getBlobSchedule(BPO2_KEY);
+  }
+
+  /**
+   * Gets bpo3 blob schedule.
+   *
+   * @return the bpo3 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo3() {
+    return getBlobSchedule(BPO3_KEY);
+  }
+
+  /**
+   * Gets bpo4 blob schedule.
+   *
+   * @return the bpo4 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo4() {
+    return getBlobSchedule(BPO4_KEY);
+  }
+
+  /**
+   * Gets bpo5 blob schedule.
+   *
+   * @return the bpo5 blob schedule
+   */
+  public Optional<BlobSchedule> getBpo5() {
+    return getBlobSchedule(BPO5_KEY);
+  }
+
+  /**
+   * Gets blob schedule by key.
+   *
+   * @param key the key for the blob schedule
+   * @return the blob schedule
+   */
+  public Optional<BlobSchedule> getBlobSchedule(final String key) {
+    return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, key).map(BlobSchedule::create);
   }
 
   /**
@@ -74,77 +124,11 @@ public class BlobScheduleOptions {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getCancun().ifPresent(bs -> builder.put(CANCUN_KEY, bs.asMap()));
     getPrague().ifPresent(bs -> builder.put(PRAGUE_KEY, bs.asMap()));
-    getOsaka().ifPresent(bs -> builder.put(OSAKA_KEY, bs.asMap()));
+    getBpo1().ifPresent(bs -> builder.put(BPO1_KEY, bs.asMap()));
+    getBpo2().ifPresent(bs -> builder.put(BPO2_KEY, bs.asMap()));
+    getBpo3().ifPresent(bs -> builder.put(BPO3_KEY, bs.asMap()));
+    getBpo4().ifPresent(bs -> builder.put(BPO4_KEY, bs.asMap()));
+    getBpo5().ifPresent(bs -> builder.put(BPO5_KEY, bs.asMap()));
     return builder.build();
-  }
-
-  /** The Blob schedule for a particular fork. */
-  public static class BlobSchedule {
-    private final int target;
-    private final int max;
-    private final int baseFeeUpdateFraction;
-
-    /** The constant CANCUN_DEFAULT. */
-    public static final BlobSchedule CANCUN_DEFAULT = new BlobSchedule(3, 6, 3338477);
-
-    /** The constant PRAGUE_DEFAULT. */
-    public static final BlobSchedule PRAGUE_DEFAULT = new BlobSchedule(6, 9, 5007716);
-
-    /** The constant OSAKA_DEFAULT. */
-    public static final BlobSchedule OSAKA_DEFAULT = new BlobSchedule(9, 12, 5007716);
-
-    /**
-     * Instantiates a new Blob schedule.
-     *
-     * @param blobScheduleConfigRoot the blob schedule config root
-     */
-    public BlobSchedule(final ObjectNode blobScheduleConfigRoot) {
-      this.target = JsonUtil.getInt(blobScheduleConfigRoot, "target").orElseThrow();
-      this.max = JsonUtil.getInt(blobScheduleConfigRoot, "max").orElseThrow();
-      this.baseFeeUpdateFraction =
-          JsonUtil.getInt(blobScheduleConfigRoot, "basefeeupdatefraction").orElseThrow();
-    }
-
-    private BlobSchedule(final int target, final int max, final int baseFeeUpdateFraction) {
-      this.target = target;
-      this.max = max;
-      this.baseFeeUpdateFraction = baseFeeUpdateFraction;
-    }
-
-    /**
-     * Gets target.
-     *
-     * @return the target
-     */
-    public int getTarget() {
-      return target;
-    }
-
-    /**
-     * Gets max.
-     *
-     * @return the max
-     */
-    public int getMax() {
-      return max;
-    }
-
-    /**
-     * Gets base fee update fraction.
-     *
-     * @return the base fee update fraction
-     */
-    public int getBaseFeeUpdateFraction() {
-      return baseFeeUpdateFraction;
-    }
-
-    /**
-     * As map.
-     *
-     * @return the map
-     */
-    Map<String, Object> asMap() {
-      return Map.of("target", target, "max", max, "baseFeeUpdateFraction", baseFeeUpdateFraction);
-    }
   }
 }

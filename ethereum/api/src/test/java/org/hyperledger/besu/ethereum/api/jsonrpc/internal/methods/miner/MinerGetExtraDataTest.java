@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,9 @@ public class MinerGetExtraDataTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", method.getName(), new Object[] {}));
 
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getRequest().getId(), "0x");
+    final JsonRpcResponse expected =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), BesuVersionUtils.versionForExtraData().toHexString());
 
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);

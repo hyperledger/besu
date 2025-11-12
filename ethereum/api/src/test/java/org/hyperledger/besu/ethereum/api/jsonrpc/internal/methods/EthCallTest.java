@@ -35,7 +35,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -51,12 +50,18 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,17 +81,27 @@ public class EthCallTest {
   private EthCall method;
 
   @Mock private Blockchain blockchain;
-  @Mock ChainHead chainHead;
+  @Mock private ChainHead chainHead;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private TransactionSimulator transactionSimulator;
-
   @Mock private BlockHeader blockHeader;
+  @Mock private MetricsSystem metricsSystem;
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
+  @Captor ArgumentCaptor<CallParameter> callParameterCaptor;
 
   @BeforeEach
   public void setUp() {
-    method = new EthCall(blockchainQueries, transactionSimulator);
+    @SuppressWarnings("unchecked")
+    LabelledMetric<Counter> mockGasUsedCounter = mock(LabelledMetric.class);
+    Counter mockCounter = mock(Counter.class);
+    when(mockGasUsedCounter.labels(any(String[].class))).thenReturn(mockCounter);
+
+    when(metricsSystem.createLabelledCounter(
+            any(BesuMetricCategory.class), any(String.class), any(String.class), any(String.class)))
+        .thenReturn(mockGasUsedCounter);
+
+    method = new EthCall(blockchainQueries, transactionSimulator, metricsSystem);
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
   }
@@ -194,8 +209,9 @@ public class EthCallTest {
 
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder().withStrict(Boolean.FALSE).build();
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder().strict(Boolean.FALSE).build();
+
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -272,7 +288,14 @@ public class EthCallTest {
 
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
@@ -312,7 +335,14 @@ public class EthCallTest {
     final JsonRpcResponse response = method.response(request);
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
@@ -354,7 +384,14 @@ public class EthCallTest {
 
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
-            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+            null,
+            null,
+            0,
+            0,
+            null,
+            null,
+            Optional.of(Bytes.fromHexString(abiHexString)),
+            Optional.empty());
 
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
@@ -462,42 +499,81 @@ public class EthCallTest {
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZero() {
-    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final CallParameter callParameters = callParameter();
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
-    final JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    final CallParameter callParameters = callParameter();
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZero() {
-    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.of(Wei.ONE), Optional.empty(), Optional.empty(), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.empty(), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
-    final JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.of(Wei.ONE), Optional.empty(), Optional.empty(), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToTrueWhenFeesAreZero() {
-    final JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(), Optional.of(Wei.ZERO), Optional.of(Wei.ZERO), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExceedingBalanceToFalseWhenFeesAreZero() {
-    final JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(), Optional.of(Wei.ONE), Optional.of(Wei.ONE), OptionalLong.empty());
     internalAutoSelectIsAllowedExceedingBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
+  @Test
+  public void shouldAllowTxGasLimitBiggerThanCap() {
+    final long txGasLimitCap = 100_000L;
+    final long txGasLimitParameter = txGasLimitCap * 2;
+    final CallParameter callParameters =
+        callParameter(
+            Optional.empty(),
+            Optional.of(Wei.ONE),
+            Optional.of(Wei.ONE),
+            OptionalLong.of(txGasLimitParameter));
+    final JsonRpcRequestContext request = ethCallRequest(callParameters, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(null, Bytes.of(1).toString());
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getTransactionGasLimitCap(any())).thenReturn(txGasLimitCap);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+
+    verify(transactionSimulator)
+        .process(callParameterCaptor.capture(), eq(Optional.empty()), any(), any(), any(), any());
+
+    assertThat(callParameterCaptor.getValue().getGas()).hasValue(txGasLimitParameter);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
   private void internalAutoSelectIsAllowedExceedingBalance(
-      final JsonCallParameter callParameter,
+      final CallParameter callParameter,
       final Optional<Wei> baseFee,
       final boolean isAllowedExceedingBalance) {
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
@@ -521,21 +597,23 @@ public class EthCallTest {
         .process(any(), eq(Optional.empty()), eq(transactionValidationParams), any(), any(), any());
   }
 
-  private JsonCallParameter callParameter() {
-    return callParameter(Wei.ZERO, null, null);
+  private CallParameter callParameter() {
+    return callParameter(
+        Optional.of(Wei.ZERO), Optional.empty(), Optional.empty(), OptionalLong.empty());
   }
 
-  private JsonCallParameter callParameter(
-      final Wei gasPrice, final Wei maxFeesPerGas, final Wei maxPriorityFeesPerGas) {
-    return new JsonCallParameter.JsonCallParameterBuilder()
-        .withFrom(Address.fromHexString("0x0"))
-        .withTo(Address.fromHexString("0x0"))
-        .withGas(0L)
-        .withGasPrice(gasPrice)
-        .withMaxFeePerGas(maxFeesPerGas)
-        .withMaxPriorityFeePerGas(maxPriorityFeesPerGas)
-        .withValue(Wei.ZERO)
-        .withInput(Bytes.EMPTY)
+  private CallParameter callParameter(
+      final Optional<Wei> gasPrice,
+      final Optional<Wei> maxFeesPerGas,
+      final Optional<Wei> maxPriorityFeesPerGas,
+      final OptionalLong gasLimit) {
+    return ImmutableCallParameter.builder()
+        .sender(Address.fromHexString("0x0"))
+        .to(Address.fromHexString("0x0"))
+        .gasPrice(gasPrice)
+        .maxFeePerGas(maxFeesPerGas)
+        .maxPriorityFeePerGas(maxPriorityFeesPerGas)
+        .gas(gasLimit)
         .build();
   }
 

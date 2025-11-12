@@ -28,11 +28,8 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -40,6 +37,10 @@ import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionCon
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -64,6 +65,9 @@ class BlobSizeTransactionSelectorTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
+
+  @SuppressWarnings("UnnecessaryLambda")
+  private static final Supplier<Boolean> NEVER_CANCELLED = () -> false;
 
   private static final long BLOB_GAS_PER_BLOB = new CancunGasCalculator().getBlobGasPerBlob();
   private static final int MAX_BLOBS = 6;
@@ -94,7 +98,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            firstBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext);
 
@@ -103,7 +112,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var nonBlobTxEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), nonBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            nonBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(nonBlobTxEvaluationContext);
   }
@@ -114,7 +128,12 @@ class BlobSizeTransactionSelectorTest {
 
     final var txEvaluationContext =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
+            blockSelectionContext.pendingBlockHeader(),
+            firstBlobTx,
+            null,
+            null,
+            null,
+            NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext);
   }
@@ -124,7 +143,7 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx1 = createBlobPendingTransaction(MAX_BLOBS);
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null, NEVER_CANCELLED);
 
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
@@ -132,7 +151,7 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx2 = createBlobPendingTransaction(1);
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext2, BLOBS_FULL);
   }
@@ -144,14 +163,14 @@ class BlobSizeTransactionSelectorTest {
     final var blobTx1 = createBlobPendingTransaction(1);
     final var txEvaluationContext1 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx1, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertSelected(txEvaluationContext1);
 
     final var blobTx2 = createBlobPendingTransaction(MAX_BLOBS);
     final var txEvaluationContext2 =
         new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null);
+            blockSelectionContext.pendingBlockHeader(), blobTx2, null, null, null, NEVER_CANCELLED);
     selectorsStateManager.blockSelectionStarted();
     evaluateAndAssertNotSelected(txEvaluationContext2, TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS);
   }
@@ -206,7 +225,8 @@ class BlobSizeTransactionSelectorTest {
             IntStream.range(0, blobCount).mapToObj(i -> new Blob(Bytes.random(32 * 4096))).toList();
         tx.versionedHashes(Optional.of(versionHashes));
         final var blobsWithCommitments =
-            new BlobsWithCommitments(kgzCommitments, blobs, kzgProofs, versionHashes);
+            new BlobsWithCommitments(
+                BlobType.KZG_PROOF, kgzCommitments, blobs, kzgProofs, versionHashes);
         tx.blobsWithCommitments(Optional.of(blobsWithCommitments));
       } else {
         fail("At least 1 blob is required for blob tx type");

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,9 +36,15 @@ public interface MutableBlockchain extends Blockchain {
    * as long as they are connected.
    *
    * @param block The block to append.
+   * @param blockAccessList Block access list if not present in the block.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlock(Block block, List<TransactionReceipt> receipts);
+  void appendBlock(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
+
+  default void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlock(block, receipts, Optional.empty());
+  }
 
   /**
    * Adds a block to the blockchain without indexing transactions.
@@ -47,9 +54,16 @@ public interface MutableBlockchain extends Blockchain {
    * as long as they are connected.
    *
    * @param block The block to append.
+   * @param blockAccessList Block access list if not present in the block.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlockWithoutIndexingTransactions(Block block, List<TransactionReceipt> receipts);
+  void appendBlockWithoutIndexingTransactions(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
+
+  default void appendBlockWithoutIndexingTransactions(
+      final Block block, final List<TransactionReceipt> receipts) {
+    appendBlockWithoutIndexingTransactions(block, receipts, Optional.empty());
+  }
 
   /**
    * Adds a syncBlock to the blockchain.
@@ -76,49 +90,49 @@ public interface MutableBlockchain extends Blockchain {
   void appendSyncBlockWithoutIndexingTransactions(
       SyncBlock syncBlock, List<TransactionReceipt> receipts);
 
-  /**
-   * Adds a block to the blockchain without a header.
-   *
-   * <p>Block header must already be stored in the blockchain.
-   *
-   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
-   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected.
-   *
-   * @param block The block to append.
-   * @param receipts The list of receipts associated with this block's transactions.
-   * @param importWithTxIndexing Whether index transactions
-   */
-  void appendBlockWithoutHeader(
-      Block block, List<TransactionReceipt> receipts, boolean importWithTxIndexing);
+    /**
+     * Adds a block to the blockchain without a header.
+     *
+     * <p>Block header must already be stored in the blockchain.
+     *
+     * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+     * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+     * as long as they are connected.
+     *
+     * @param block The block to append.
+     * @param receipts The list of receipts associated with this block's transactions.
+     * @param importWithTxIndexing Whether index transactions
+     */
+    void appendBlockWithoutHeader(
+            Block block, List<TransactionReceipt> receipts, boolean importWithTxIndexing);
 
-  /**
-   * Adds a syncBlock to the blockchain without indexing transactions.
-   *
-   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
-   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected. TODO: This is not really appending, they are being stored when
-   * they are ready to be stored.
-   *
-   * @param syncBlocks The sync blocks to store.
-   */
-  void appendSyncBlocksForPoC(List<SyncBlock> syncBlocks);
+    /**
+     * Adds a syncBlock to the blockchain without indexing transactions.
+     *
+     * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+     * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+     * as long as they are connected. TODO: This is not really appending, they are being stored when
+     * they are ready to be stored.
+     *
+     * @param syncBlocks The sync blocks to store.
+     */
+    void appendSyncBlocksForPoC(List<SyncBlock> syncBlocks);
 
-  /**
-   * Adds a syncBlock to the blockchain without indexing transactions.
-   *
-   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
-   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected. TODO: This is not really appending, they are being stored when
-   * they are ready to be stored.
-   *
-   * @param blockHeaders The block headers
-   * @param syncReceiptsList The sync receipts to store.
-   */
-  void appendSyncTransactionReceiptsForPoC(
-      List<BlockHeader> blockHeaders, List<SyncTransactionReceipts> syncReceiptsList);
+    /**
+     * Adds a syncBlock to the blockchain without indexing transactions.
+     *
+     * <p>Block must be connected to the existing blockchain (its parent must already be stored),
+     * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
+     * as long as they are connected. TODO: This is not really appending, they are being stored when
+     * they are ready to be stored.
+     *
+     * @param blockHeaders The block headers
+     * @param syncReceiptsList The sync receipts to store.
+     */
+    void appendSyncTransactionReceiptsForPoC(
+            List<BlockHeader> blockHeaders, List<SyncTransactionReceipts> syncReceiptsList);
 
-  /**
+    /**
    * Adds a block to the blockchain, without updating the chain state.
    *
    * <p>Block must be connected to the existing blockchain (its parent must already be stored),
@@ -128,7 +142,19 @@ public interface MutableBlockchain extends Blockchain {
    * @param block The block to append.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void storeBlock(Block block, List<TransactionReceipt> receipts);
+  void storeBlock(
+      Block block, List<TransactionReceipt> receipts, Optional<BlockAccessList> blockAccessList);
+
+  default void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
+    storeBlock(block, receipts, Optional.empty());
+  }
+
+  /**
+   * Store a block header to the blockchain, updating the chain state.
+   *
+   * @param blockHeader The block header to store.
+   */
+  void unsafeStoreHeader(BlockHeader blockHeader, Difficulty totalDifficulty);
 
   /**
    * Adds a block header to the blockchain, without updating the chain state.

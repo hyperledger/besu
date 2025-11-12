@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -133,7 +133,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             new PeerTaskExecutorResult<>(
                 Optional.of(List.of(referenceHeader)),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingEthPeer.getEthPeer())));
+                List.of(respondingEthPeer.getEthPeer())));
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
             protocolSchedule,
@@ -178,7 +178,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     final RespondingEthPeer.Responder responder =
         (cap, message) -> {
           final Optional<MessageData> fullResponse = fullResponder.respond(cap, message);
-          if (!fullResponse.isPresent() || message.getCode() != EthPV62.GET_BLOCK_HEADERS) {
+          if (!fullResponse.isPresent()
+              || message.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
             return fullResponse;
           }
           final BlockHeadersMessage headersMessage =
@@ -213,7 +214,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                         referenceHeader,
                         blockchain.getBlockHeader(referenceHeader.getNumber() - 1).get())),
                 PeerTaskExecutorResponseCode.SUCCESS,
-                Optional.of(respondingPeer.getEthPeer())));
+                List.of(respondingPeer.getEthPeer())));
 
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
@@ -302,7 +303,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
               return new PeerTaskExecutorResult<List<BlockHeader>>(
                   Optional.of(headers),
                   PeerTaskExecutorResponseCode.SUCCESS,
-                  Optional.of(respondingPeer.getEthPeer()));
+                  List.of(respondingPeer.getEthPeer()));
             });
 
     Mockito.when(
@@ -322,7 +323,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                                   blockchain.getBlockBody(blockHeader.getBlockHash()).get()))
                       .toList();
               return new PeerTaskExecutorResult<List<Block>>(
-                  Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, Optional.of(peer));
+                  Optional.of(blocks), PeerTaskExecutorResponseCode.SUCCESS, List.of(peer));
             });
 
     // Execute the task

@@ -19,8 +19,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
@@ -53,7 +55,7 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
       final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, SnapV1.STORAGE_RANGE, metricsSystem);
+    super(ethContext, SnapProtocol.NAME, SnapV1.STORAGE_RANGE, metricsSystem);
     this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
   }
@@ -92,7 +94,7 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
           }
 
           @Override
-          public boolean isEthPeerSuitable(final EthPeer ethPeer) {
+          public boolean isEthPeerSuitable(final EthPeerImmutableAttributes ethPeer) {
             return ethPeer.isServingSnap();
           }
         },

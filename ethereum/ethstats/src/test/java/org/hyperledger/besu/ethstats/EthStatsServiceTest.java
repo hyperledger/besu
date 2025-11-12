@@ -22,8 +22,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -43,12 +49,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
+import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +83,7 @@ public class EthStatsServiceTest {
   @Mock private P2PNetwork p2PNetwork;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
-  @Mock private HttpClient httpClient;
+  @Mock private WebSocketClient webSocketClient;
   @Mock private WebSocket webSocket;
 
   final EthStatsConnectOptions ethStatsConnectOptions =
@@ -84,6 +93,7 @@ public class EthStatsServiceTest {
           .host("127.0.0.1")
           .port(1111)
           .contact("contact@test.net")
+          .ethStatsReportInterval(5)
           .build();
 
   final EnodeURL node =
@@ -101,7 +111,8 @@ public class EthStatsServiceTest {
   public void initMocks() {
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(vertx.createHttpClient(any(HttpClientOptions.class))).thenReturn(httpClient);
+    when(vertx.createWebSocketClient(any(WebSocketClientOptions.class)))
+        .thenReturn(webSocketClient);
     when(genesisConfigOptions.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(ethProtocolManager.getSupportedCapabilities())
         .thenReturn(List.of(Capability.create("eth64", 1)));
@@ -147,8 +158,8 @@ public class EthStatsServiceTest {
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<String> helloMessageCaptor = ArgumentCaptor.forClass(String.class);
@@ -179,8 +190,8 @@ public class EthStatsServiceTest {
 
     final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
         ArgumentCaptor.forClass(Handler.class);
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<Handler<AsyncResult<Void>>> helloMessageCaptor =
@@ -212,8 +223,8 @@ public class EthStatsServiceTest {
 
     ethStatsService.start();
 
-    verify(httpClient, times(1))
-        .webSocket(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
     webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
 
     final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
@@ -223,6 +234,67 @@ public class EthStatsServiceTest {
     textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
 
     verify(ethScheduler, times(1)).scheduleFutureTaskWithFixedDelay(any(), any(), any());
+  }
+
+  @Test
+  public void shouldSendBlockMessage() throws Exception {
+    ethStatsService =
+        new EthStatsService(
+            ethStatsConnectOptions,
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block testBlock = blockDataGenerator.block();
+    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
+        new BlockWithMetadata<>(
+            testBlock.getHeader(),
+            List.of(),
+            List.of(),
+            testBlock.getHeader().getDifficulty(),
+            testBlock.getSize(),
+            Optional.empty());
+
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    when(blockchainQueries.latestBlock()).thenReturn(Optional.of(blockWithMetadata));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    // send block message
+    ethStatsService.sendBlockReport();
+    final ArgumentCaptor<String> messagesCaptor = ArgumentCaptor.forClass(String.class);
+    verify(webSocket, times(2)).writeTextMessage(messagesCaptor.capture(), any(Handler.class));
+
+    final List<String> sentMessages = messagesCaptor.getAllValues();
+    assertThat(sentMessages.get(0)).contains("hello");
+
+    final String blockMessage = sentMessages.get(1);
+    assertThat(blockMessage).contains("\"block\"");
+
+    // verify block message
+    final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Jdk8Module());
+    final var jsonNode = objectMapper.readTree(blockMessage);
+    final var blockReportData = jsonNode.get("emit").get(1);
+    final var blockDataNode = blockReportData.get("block");
+
+    final var expectedBlockResult = new BlockResultFactory().transactionComplete(blockWithMetadata);
+    final JsonNode expectedBlockResultNode = objectMapper.valueToTree(expectedBlockResult);
+
+    assertThat(blockDataNode).isEqualTo(expectedBlockResultNode);
   }
 
   private <T> AsyncResult<T> succeededWebSocketEvent(final Optional<T> object) {
@@ -271,5 +343,105 @@ public class EthStatsServiceTest {
         return true;
       }
     };
+  }
+
+  @Test
+  public void shouldUseCustomReportInterval() {
+    // Test with custom 10-second interval
+    final EthStatsConnectOptions customIntervalOptions =
+        ImmutableEthStatsConnectOptions.builder()
+            .nodeName("besu-node")
+            .secret("secret")
+            .host("127.0.0.1")
+            .port(1111)
+            .contact("contact@test.net")
+            .ethStatsReportInterval(10) // Custom 10-second interval
+            .build();
+
+    ethStatsService =
+        new EthStatsService(
+            customIntervalOptions,
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket, times(1)).textMessageHandler(textMessageHandlerCaptor.capture());
+
+    textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
+
+    // Verify that scheduleFutureTaskWithFixedDelay is called with the custom 10-second interval
+    final ArgumentCaptor<Duration> initialDelayCaptor = ArgumentCaptor.forClass(Duration.class);
+    final ArgumentCaptor<Duration> intervalCaptor = ArgumentCaptor.forClass(Duration.class);
+    verify(ethScheduler, times(1))
+        .scheduleFutureTaskWithFixedDelay(
+            any(Runnable.class), initialDelayCaptor.capture(), intervalCaptor.capture());
+
+    // Verify the interval is 10 seconds (custom value)
+    assertThat(intervalCaptor.getValue()).isEqualTo(Duration.ofSeconds(10));
+    // Verify initial delay is 0 seconds
+    assertThat(initialDelayCaptor.getValue()).isEqualTo(Duration.ofSeconds(0));
+  }
+
+  @Test
+  public void shouldUseDefaultReportIntervalWhenNotSpecified() {
+    // Test with default 5-second interval (backward compatibility)
+    ethStatsService =
+        new EthStatsService(
+            ethStatsConnectOptions, // This uses the default 5-second interval
+            blockchainQueries,
+            ethProtocolManager,
+            transactionPool,
+            miningCoordinator,
+            syncState,
+            vertx,
+            "clientVersion",
+            genesisConfigOptions,
+            p2PNetwork);
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    final ArgumentCaptor<Handler<AsyncResult<WebSocket>>> webSocketCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+
+    ethStatsService.start();
+
+    verify(webSocketClient, times(1))
+        .connect(any(WebSocketConnectOptions.class), webSocketCaptor.capture());
+    webSocketCaptor.getValue().handle(succeededWebSocketEvent(Optional.of(webSocket)));
+
+    final ArgumentCaptor<Handler<String>> textMessageHandlerCaptor =
+        ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket, times(1)).textMessageHandler(textMessageHandlerCaptor.capture());
+
+    textMessageHandlerCaptor.getValue().handle("{\"emit\":[\"ready\"]}");
+
+    // Verify that scheduleFutureTaskWithFixedDelay is called with the default 5-second interval
+    final ArgumentCaptor<Duration> initialDelayCaptor = ArgumentCaptor.forClass(Duration.class);
+    final ArgumentCaptor<Duration> intervalCaptor = ArgumentCaptor.forClass(Duration.class);
+    verify(ethScheduler, times(1))
+        .scheduleFutureTaskWithFixedDelay(
+            any(Runnable.class), initialDelayCaptor.capture(), intervalCaptor.capture());
+
+    // Verify the interval is 5 seconds (default value)
+    assertThat(intervalCaptor.getValue()).isEqualTo(Duration.ofSeconds(5));
+    // Verify initial delay is 0 seconds
+    assertThat(initialDelayCaptor.getValue()).isEqualTo(Duration.ofSeconds(0));
   }
 }

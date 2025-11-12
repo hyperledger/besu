@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -26,12 +26,9 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -42,6 +39,10 @@ import org.hyperledger.besu.ethereum.core.encoding.CodeDelegationTransactionEnco
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.kzg.Blob;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -99,7 +100,7 @@ public class Transaction
 
   private final SECPSignature signature;
 
-  private final Bytes payload;
+  private final Payload payload;
 
   private final Optional<List<AccessListEntry>> maybeAccessList;
 
@@ -112,12 +113,13 @@ public class Transaction
   private volatile Bytes32 hashNoSignature;
 
   // Caches the transaction sender.
-  protected volatile Address sender;
+  private volatile Address sender;
 
   // Caches the hash used to uniquely identify the transaction.
-  protected volatile Hash hash;
+  private volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
-  protected volatile int size = -1;
+  private volatile int sizeForAnnouncement = -1;
+  private volatile int sizeForBlockInclusion = -1;
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -136,8 +138,25 @@ public class Transaction
     return readFrom(RLP.input(rlpBytes));
   }
 
+  /**
+   * Recreate a transaction from RLP serialized in the block body format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @return the transaction
+   */
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+    return readFrom(rlpInput, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Recreate a transaction from RLP serialized according to the specified format
+   *
+   * @param rlpInput the RLP input in block body format
+   * @param context specify in which format the RLP was serialized
+   * @return the transaction
+   */
+  public static Transaction readFrom(final RLPInput rlpInput, final EncodingContext context) {
+    return TransactionDecoder.decodeRLP(rlpInput, context);
   }
 
   /**
@@ -164,6 +183,9 @@ public class Transaction
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
+   * @param hash the transaction hash
+   * @param sizeForAnnouncement the size of the transaction, used for announcement
+   * @param sizeForBlockInclusion the size of the transaction, used for block inclusion
    */
   private Transaction(
       final boolean forCopy,
@@ -177,14 +199,17 @@ public class Transaction
       final Optional<Address> to,
       final Wei value,
       final SECPSignature signature,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
-      final Optional<Bytes> rawRlp) {
+      final Optional<Bytes> rawRlp,
+      final Optional<Hash> hash,
+      final Optional<Integer> sizeForAnnouncement,
+      final Optional<Integer> sizeForBlockInclusion) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -246,6 +271,9 @@ public class Transaction
     this.blobsWithCommitments = blobsWithCommitments;
     this.maybeCodeDelegationList = maybeCodeDelegationList;
     this.rawRlp = rawRlp;
+    hash.ifPresent(h -> this.hash = h);
+    sizeForAnnouncement.ifPresent(i -> this.sizeForAnnouncement = i);
+    sizeForBlockInclusion.ifPresent(i -> this.sizeForBlockInclusion = i);
   }
 
   /**
@@ -382,7 +410,12 @@ public class Transaction
    */
   @Override
   public Bytes getPayload() {
-    return payload;
+    return payload.getPayloadBytes();
+  }
+
+  @Override
+  public long getPayloadZeroBytes() {
+    return payload.getZeroBytesCount();
   }
 
   /**
@@ -392,7 +425,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getInit() {
-    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload.getPayloadBytes());
   }
 
   /**
@@ -402,7 +435,7 @@ public class Transaction
    */
   @Override
   public Optional<Bytes> getData() {
-    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
+    return getTo().isPresent() ? Optional.of(payload.getPayloadBytes()) : Optional.empty();
   }
 
   @Override
@@ -446,7 +479,7 @@ public class Transaction
                     new IllegalStateException(
                         "Cannot recover public key from signature for " + this));
     final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
-    senderCache.put(this.hash, calculatedSender);
+    senderCache.put(getHash(), calculatedSender);
     return calculatedSender;
   }
 
@@ -484,12 +517,22 @@ public class Transaction
   }
 
   /**
-   * Writes the transaction to RLP
+   * Writes the transaction to RLP using the block body format
    *
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    writeTo(out, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Writes the transaction to RLP using the specified format
+   *
+   * @param out the output to write the transaction to
+   * @param context the serialization format to use
+   */
+  public void writeTo(final RLPOutput out, final EncodingContext context) {
+    TransactionEncoder.encodeRLP(this, out, context);
   }
 
   @Override
@@ -541,7 +584,7 @@ public class Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      memoizeHashAndSize();
+      memoizeHashAndSizeForBlockInclusion();
     }
     return hash;
   }
@@ -552,30 +595,51 @@ public class Transaction
    * @return the size in bytes of the encoded transaction.
    */
   @Override
-  public int getSize() {
-    if (size == -1) {
-      memoizeHashAndSize();
+  public int getSizeForAnnouncement() {
+    if (sizeForAnnouncement == -1) {
+      memoizeSizeForAnnouncement();
     }
-    return size;
-  }
-
-  private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
-    hash = Hash.hash(bytes);
-    if (transactionType.supportsBlob() && getBlobsWithCommitments().isPresent()) {
-      final Bytes pooledBytes =
-          TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
-      size = pooledBytes.size();
-      return;
-    }
-    size = bytes.size();
+    return sizeForAnnouncement;
   }
 
   /**
-   * Returns whether the transaction is a contract creation
+   * Returns the size in bytes of the encoded transaction for block inclusion.
    *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
+   * @return the size in bytes of the encoded transaction for block inclusion.
    */
+  @Override
+  public int getSizeForBlockInclusion() {
+    if (sizeForBlockInclusion == -1) {
+      memoizeHashAndSizeForBlockInclusion();
+    }
+    return sizeForBlockInclusion;
+  }
+
+  private void memoizeHashAndSizeForBlockInclusion() {
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
+    hash = Hash.hash(bytes);
+    sizeForBlockInclusion = bytes.size();
+    if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
+      // for transactions not containing blobs the encoding is the same, so we can set this as well:
+      sizeForAnnouncement = sizeForBlockInclusion;
+    }
+  }
+
+  private void memoizeSizeForAnnouncement() {
+    final Bytes pooledBytes =
+        TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+    sizeForAnnouncement = pooledBytes.size();
+    if (!transactionType.supportsBlob() || this.getBlobsWithCommitments().isEmpty()) {
+      // for transactions not containing blobs the encoding is the same, so we can set these as
+      // well:
+      sizeForBlockInclusion = sizeForAnnouncement;
+      if (hash == null) {
+        hash = Hash.hash(pooledBytes);
+      }
+    }
+  }
+
+  @Override
   public boolean isContractCreation() {
     return getTo().isEmpty();
   }
@@ -719,7 +783,7 @@ public class Transaction
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
-      final Bytes payload,
+      final Payload payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
       final Optional<List<CodeDelegation>> codeDelegationList,
@@ -738,7 +802,7 @@ public class Transaction
             gasLimit,
             to,
             value,
-            payload,
+            payload.getPayloadBytes(),
             accessList,
             versionedHashes,
             codeDelegationList,
@@ -758,7 +822,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayloadBytes(),
         maybeAccessList,
         versionedHashes.orElse(null),
         maybeCodeDelegationList,
@@ -1035,7 +1099,7 @@ public class Transaction
         gasLimit,
         to,
         value,
-        payload,
+        payload.getPayloadBytes(),
         signature,
         chainId);
   }
@@ -1133,7 +1197,7 @@ public class Transaction
    * Creates a copy of this transaction that does not share any underlying byte array.
    *
    * <p>This is useful in case the transaction is built from a block body and fields, like to or
-   * payload, are wrapping (and so keeping references) sections of the large RPL encoded block body,
+   * payload, are wrapping (and so keeping references) sections of the large RLP encoded block body,
    * and we plan to keep the transaction around for some time, like in the txpool in case of a
    * reorg, and do not want to keep all the block body in memory for a long time, but only the
    * actual transaction.
@@ -1171,20 +1235,21 @@ public class Transaction
             detachedTo,
             value,
             signature,
-            payload.copy(),
+            payload,
             detachedAccessList,
             sender,
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
             detachedCodeDelegationList,
-            Optional.empty());
+            Optional.empty(),
+            Optional.ofNullable(hash),
+            Optional.of(sizeForAnnouncement),
+            Optional.of(sizeForBlockInclusion));
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
-    copiedTx.hash = this.hash;
     copiedTx.hashNoSignature = this.hashNoSignature;
-    copiedTx.size = this.size;
 
     return copiedTx;
   }
@@ -1218,9 +1283,12 @@ public class Transaction
         blobsWithCommitments.getKzgProofs().stream()
             .map(proof -> new KZGProof(proof.getData().copy()))
             .toList();
-
     return new BlobsWithCommitments(
-        detachedCommitments, detachedBlobs, detachedProofs, versionedHashes);
+        blobsWithCommitments.getBlobType(),
+        detachedCommitments,
+        detachedBlobs,
+        detachedProofs,
+        versionedHashes);
   }
 
   public static class Builder {
@@ -1245,7 +1313,7 @@ public class Transaction
 
     protected SECPSignature signature;
 
-    protected Bytes payload;
+    protected Payload payload;
 
     protected Optional<List<AccessListEntry>> accessList = Optional.empty();
 
@@ -1257,6 +1325,9 @@ public class Transaction
     private BlobsWithCommitments blobsWithCommitments;
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Bytes rawRlp = null;
+    private Optional<Hash> hash = Optional.empty();
+    private Optional<Integer> sizeForAnnouncement = Optional.empty();
+    private Optional<Integer> sizeForBlockInclusion = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1335,7 +1406,7 @@ public class Transaction
     }
 
     public Builder payload(final Bytes payload) {
-      this.payload = payload;
+      this.payload = new Payload(payload);
       return this;
     }
 
@@ -1364,6 +1435,21 @@ public class Transaction
 
     public Builder rawRlp(final Bytes rawRlp) {
       this.rawRlp = rawRlp;
+      return this;
+    }
+
+    public Builder hash(final Hash hash) {
+      this.hash = Optional.ofNullable(hash);
+      return this;
+    }
+
+    public Builder sizeForAnnouncement(final int sizeForAnnouncement) {
+      this.sizeForAnnouncement = Optional.of(sizeForAnnouncement);
+      return this;
+    }
+
+    public Builder sizeForBlockInclusion(final int sizeForBlockInclusion) {
+      this.sizeForBlockInclusion = Optional.of(sizeForBlockInclusion);
       return this;
     }
 
@@ -1407,7 +1493,10 @@ public class Transaction
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments),
           codeDelegationAuthorizations,
-          Optional.ofNullable(rawRlp));
+          Optional.ofNullable(rawRlp),
+          hash,
+          sizeForAnnouncement,
+          sizeForBlockInclusion);
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1440,6 +1529,7 @@ public class Transaction
     }
 
     public Builder kzgBlobs(
+        final BlobType blobType,
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
         final List<KZGProof> kzgProofs) {
@@ -1450,7 +1540,7 @@ public class Transaction
                 .toList();
       }
       this.blobsWithCommitments =
-          new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
+          new BlobsWithCommitments(blobType, kzgCommitments, blobs, kzgProofs, versionedHashes);
       return this;
     }
 

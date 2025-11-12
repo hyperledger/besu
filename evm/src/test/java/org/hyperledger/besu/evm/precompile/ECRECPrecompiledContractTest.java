@@ -15,8 +15,11 @@
 package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.crypto.SECP256R1;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 class ECRECPrecompiledContractTest {
 
@@ -350,11 +354,11 @@ class ECRECPrecompiledContractTest {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldRecoverAddressNative(final String inputString, final String expectedResult) {
-    contract.signatureAlgorithm.maybeEnableNative();
+    // uses LibSecp256k1JNI by default
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+    assertThat(contract.computePrecompile(input, messageFrame).output()).isEqualTo(expected);
   }
 
   @ParameterizedTest
@@ -364,7 +368,19 @@ class ECRECPrecompiledContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
-    assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+    assertThat(contract.computePrecompile(input, messageFrame).output()).isEqualTo(expected);
+  }
+
+  @Test
+  void r1CurveShouldUseR1EcRecover() {
+    var r1Spy = Mockito.spy(new SECP256R1());
+    final ECRECPrecompiledContract r1Contract =
+        new ECRECPrecompiledContract(new SpuriousDragonGasCalculator(), r1Spy);
+    final Bytes input =
+        Bytes.fromHexString(
+            "acb1c19ac0832320815b5e886c6b73ad7d6177853d44b026f2a7a9e11bb899fc000000000000000000000000000000000000000000000000000000000000001c89ea49159b334f9aebbf54481b69d000d285baa341899db355a4030f6838394e540e9f9fa17bef441e32d98d5f4554cfefdc6a56101352e4b92efafd0d9646e8");
+    assertThat(r1Contract.computePrecompile(input, messageFrame).output()).isEqualTo(Bytes.EMPTY);
+    verify(r1Spy).recoverPublicKeyFromSignature(any(), any());
   }
 
   @Test

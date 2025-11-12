@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -30,15 +30,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -80,6 +79,12 @@ public class JsonRpcTestMethodsFactory {
   private final Synchronizer synchronizer;
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
+  private Path dataDir = mock(Path.class);
+
+  public JsonRpcTestMethodsFactory(final BlockchainImporter importer, final Path dataDir) {
+    this(importer);
+    this.dataDir = dataDir;
+  }
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -87,8 +92,10 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = createInMemoryWorldStateArchive();
     this.importer.getGenesisState().writeStateTo(stateArchive.getWorldState());
     this.context =
-        new ProtocolContext(
-            blockchain, stateArchive, mock(ConsensusContext.class), new BadBlockManager());
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(stateArchive)
+            .build();
 
     this.protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);
@@ -98,7 +105,7 @@ public class JsonRpcTestMethodsFactory {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
-    final var miningConfiguration = MiningConfiguration.newDefault();
+    final var miningConfiguration = MiningConfiguration.newDefault().setCoinbase(Address.ZERO);
     this.blockchainQueries =
         new BlockchainQueries(protocolSchedule, blockchain, stateArchive, miningConfiguration);
 
@@ -171,13 +178,11 @@ public class JsonRpcTestMethodsFactory {
         Optional.of(mock(AccountLocalConfigPermissioningController.class));
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
         Optional.of(mock(NodeLocalConfigPermissioningController.class));
-    final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
     final FilterManager filterManager =
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)
             .transactionPool(transactionPool)
-            .privacyParameters(privacyParameters)
             .build();
 
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
@@ -191,10 +196,7 @@ public class JsonRpcTestMethodsFactory {
     apis.add(RpcApis.ETH.name());
     apis.add(RpcApis.NET.name());
     apis.add(RpcApis.WEB3.name());
-    apis.add(RpcApis.PRIV.name());
     apis.add(RpcApis.DEBUG.name());
-
-    final Path dataDir = mock(Path.class);
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -217,7 +219,6 @@ public class JsonRpcTestMethodsFactory {
             accountWhitelistController,
             nodeWhitelistController,
             apis,
-            privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,
             metricsConfiguration,
@@ -228,6 +229,7 @@ public class JsonRpcTestMethodsFactory {
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
             ImmutableApiConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             Optional.empty(),
             transactionSimulator,
             new DeterministicEthScheduler());

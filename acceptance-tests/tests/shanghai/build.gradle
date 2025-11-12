@@ -1,7 +1,7 @@
 
 plugins {
-  id 'org.web3j' version '4.12.2'
-  id 'org.web3j.solidity' version '0.5.2'
+  id 'org.web3j' version '4.14.0'
+  id 'org.web3j.solidity' version '0.6.0'
 }
 
 jar { enabled = true }
@@ -16,6 +16,6 @@ sourceSets.main.solidity.srcDirs = [
 
 solidity {
   resolvePackages = false
-  version '0.8.25'
-  evmVersion 'shanghai'
+  version = '0.8.25'
+  evmVersion = 'shanghai'
 }

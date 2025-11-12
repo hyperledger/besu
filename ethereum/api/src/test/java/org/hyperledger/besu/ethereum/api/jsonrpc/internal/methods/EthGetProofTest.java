@@ -15,14 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,31 +23,32 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -64,40 +57,35 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class EthGetProofTest {
-  @Mock private Blockchain blockchain;
-  @Mock private ProtocolSchedule protocolSchedule;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private WorldStateArchive archive;
-
-  @Mock private ChainHead chainHead;
-  @Mock private BlockHeader blockHeader;
-  private BlockchainQueries blockchainQueries;
 
   private EthGetProof method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getProof";
 
+  @Mock private BlockchainQueries blockchainQueries;
   private final Address address =
-      Address.fromHexString("0x1234567890123456789012345678901234567890");
+      Address.fromHexString("0x000d836201318ec6899a67540690382780743280");
   private final UInt256 storageKey =
       UInt256.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-  private final long blockNumber = 1;
+
+  private final long blockNumber = 500;
 
   @BeforeEach
   public void setUp() {
+    final BlockchainSetupUtil blockchainSetupUtil =
+        BlockchainSetupUtil.forSnapTesting(DataStorageFormat.BONSAI);
+    blockchainSetupUtil.importAllBlocks(
+        HeaderValidationMode.LIGHT_DETACHED_ONLY, HeaderValidationMode.LIGHT);
+    final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
+    final WorldStateArchive worldStateArchive = blockchainSetupUtil.getWorldArchive();
     blockchainQueries =
-        spy(
-            new BlockchainQueries(
-                protocolSchedule, blockchain, archive, MiningConfiguration.newDefault()));
-    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
-    when(blockchain.getChainHead()).thenReturn(chainHead);
-    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
-    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getBlockHashByNumber(blockNumber)).thenReturn(Optional.of(Hash.ZERO));
-    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
-    method = spy(new EthGetProof(blockchainQueries));
+        new BlockchainQueries(
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchain,
+            worldStateArchive,
+            MiningConfiguration.newDefault());
+
+    method = new EthGetProof(blockchainQueries);
   }
 
   @Test
@@ -133,34 +121,16 @@ class EthGetProofTest {
   }
 
   @Test
-  void errorWhenAccountNotFound() {
-    generateWorldState();
-
-    final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.NO_ACCOUNT_FOUND);
-
-    final JsonRpcRequestContext request =
-        requestWithParams(
-            Address.fromHexString("0x0000000000000000000000000000000000000000"),
-            new String[] {storageKey.toString()},
-            String.valueOf(blockNumber));
-
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-  }
-
-  @Test
   void errorWhenWorldStateUnavailable() {
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
+        new JsonRpcErrorResponse(null, RpcErrorType.BLOCK_NOT_FOUND);
 
     final JsonRpcRequestContext request =
         requestWithParams(
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
             new String[] {storageKey.toString()},
-            String.valueOf(2));
+            String.valueOf(501));
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
 
@@ -168,78 +138,136 @@ class EthGetProofTest {
   }
 
   @Test
-  void getProof() {
-
-    final GetProofResult expectedResponse = generateWorldState();
+  void getProofWithAccount() {
+    // Define the address to fetch proof for
+    final Address address = Address.fromHexString("8bebc8ba651aee624937e7d897853ac30c95a067");
 
     final JsonRpcRequestContext request =
         requestWithParams(
             address.toString(), new String[] {storageKey.toString()}, String.valueOf(blockNumber));
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
-
     final GetProofResult result = (GetProofResult) response.getResult();
 
-    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
-    assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
-    assertThat(result.getStorageProof().size()).isGreaterThan(0);
-    assertThat(result.getStorageProof().get(0).getKey())
-        .isEqualTo(storageKey.trimLeadingZeros().toHexString());
+    // Initialize a map to store the decoded nodes (key-value pairs)
+    final Map<Bytes32, Bytes> storage = new HashMap<>();
+
+    // Calculate the state root hash from the Merkle Patricia trie proof
+    final Bytes32 stateroot = Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0)));
+
+    // Decode the account proof nodes and store them in the `storage` map
+    result
+        .getAccountProof()
+        .forEach(
+            proof -> {
+              final Bytes node = Bytes.fromHexString(proof);
+              storage.put(Hash.hash(node), node);
+            });
+    result
+        .getStorageProof()
+        .forEach(
+            storageEntry -> {
+              storageEntry
+                  .getStorageProof()
+                  .forEach(
+                      proof -> {
+                        final Bytes node = Bytes.fromHexString(proof);
+                        storage.put(Hash.hash(node), node);
+                      });
+            });
+
+    // Create a Merkle Patricia Trie backed by the `proof`
+    StoredMerklePatriciaTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> Optional.ofNullable(storage.get(hash)),
+            stateroot,
+            Function.identity(),
+            Function.identity());
+
+    // Retrieve the account from the trie and decode it if present
+    Optional<PmtStateTrieAccountValue> accountInTrie =
+        trie.get(address.addressHash())
+            .map(
+                rlp -> {
+                  return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));
+                });
+    final Hash storageRoot =
+        Hash.fromHexString("0xbe3d75a1729be157e79c3b77f00206db4d54e3ea14375a015451c88ec067c790");
+
+    // Validate that the account is present in the trie and matches the expected values
+    assertThat(accountInTrie).isPresent();
+    assertThat(accountInTrie)
+        .contains(
+            new PmtStateTrieAccountValue(
+                1L, // account nonce
+                Wei.fromHexString("0x01"), // account balance
+                storageRoot,
+                Hash.EMPTY // code hash (empty in this case)
+                ));
+    assertThat(result.getBalance()).isNotNull();
+    assertThat(result.getNonce()).isNotNull();
+    assertThat(result.getStorageHash()).isNotNull();
+    assertThat(result.getCodeHash()).isNotNull();
+
+    // Check the storage
+    StoredMerklePatriciaTrie<Bytes, Bytes> trieStorage =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> Optional.ofNullable(storage.get(hash)),
+            storageRoot,
+            Function.identity(),
+            Function.identity());
+    // Retrieve the slot from the trie and decode it if present
+    Optional<Bytes> slotInTrie = trieStorage.get(Hash.hash(storageKey));
+    assertThat(slotInTrie).isPresent();
+    assertThat(slotInTrie).contains(Bytes.fromHexString("0x01"));
+  }
+
+  @Test
+  void getProofWithoutAccount() {
+    // Define the address to fetch proof for (missing account)
+    final Address address = Address.fromHexString("7bebc8ba651aee624937e7d897853ac30c95a067");
+
+    final JsonRpcRequestContext request =
+        requestWithParams(
+            address.toString(), new String[] {storageKey.toString()}, String.valueOf(blockNumber));
+
+    final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
+    final GetProofResult result = (GetProofResult) response.getResult();
+    // Initialize a map to store the decoded nodes (key-value pairs)
+    final Map<Bytes32, Bytes> storage = new HashMap<>();
+
+    // Calculate the state root hash from the Merkle Patricia trie proof
+    final Bytes32 stateroot = Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0)));
+
+    // Decode the account proof nodes and store them in the `storage` map
+    result
+        .getAccountProof()
+        .forEach(
+            proof -> {
+              final Bytes node = Bytes.fromHexString(proof);
+              storage.put(Hash.hash(node), node);
+            });
+
+    // Create a Merkle Patricia Trie backed by the `proof`
+    StoredMerklePatriciaTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> Optional.ofNullable(storage.get(hash)),
+            stateroot,
+            Function.identity(),
+            Function.identity());
+
+    // Retrieve the account from the trie and decode it if present
+    Optional<PmtStateTrieAccountValue> accountInTrie =
+        trie.get(address.addressHash())
+            .map(
+                rlp -> {
+                  return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));
+                });
+    // Validate that the account is empty
+    assertThat(accountInTrie).isEmpty();
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
-  }
-
-  private GetProofResult generateWorldState() {
-
-    final Wei balance = Wei.of(1);
-    final Hash codeHash =
-        Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    final long nonce = MAX_NONCE - 1;
-    final Hash storageRoot =
-        Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-
-    when(blockchainQueries.getWorldStateArchive()).thenReturn(archive);
-
-    final PmtStateTrieAccountValue stateTrieAccountValue = mock(PmtStateTrieAccountValue.class);
-    when(stateTrieAccountValue.getBalance()).thenReturn(balance);
-    when(stateTrieAccountValue.getCodeHash()).thenReturn(codeHash);
-    when(stateTrieAccountValue.getNonce()).thenReturn(nonce);
-    when(stateTrieAccountValue.getStorageRoot()).thenReturn(storageRoot);
-
-    final WorldStateProof worldStateProof = mock(WorldStateProof.class);
-    when(worldStateProof.getAccountProof())
-        .thenReturn(
-            Collections.singletonList(
-                Bytes.fromHexString(
-                    "0x1111111111111111111111111111111111111111111111111111111111111111")));
-    when(worldStateProof.getStateTrieAccountValue()).thenReturn(stateTrieAccountValue);
-    when(worldStateProof.getStorageKeys()).thenReturn(Collections.singletonList(storageKey));
-    when(worldStateProof.getStorageProof(storageKey))
-        .thenReturn(
-            Collections.singletonList(
-                Bytes.fromHexString(
-                    "0x2222222222222222222222222222222222222222222222222222222222222222")));
-    when(worldStateProof.getStorageValue(storageKey)).thenReturn(UInt256.ZERO);
-
-    when(archive.getAccountProof(eq(blockHeader), eq(address), anyList(), any()))
-        .thenAnswer(
-            invocation -> {
-              Function<Optional<WorldStateProof>, Optional<JsonRpcResponse>> realMapper =
-                  invocation.getArgument(3);
-              return realMapper.apply(Optional.of(worldStateProof));
-            });
-
-    when(archive.getAccountProof(
-            eq(blockHeader), argThat(arg -> !arg.equals(address)), anyList(), any()))
-        .thenAnswer(
-            invocation -> {
-              Function<Optional<WorldStateProof>, Optional<JsonRpcResponse>> realMapper =
-                  invocation.getArgument(3);
-              return realMapper.apply(Optional.empty());
-            });
-
-    return GetProofResult.buildGetProofResult(address, worldStateProof);
   }
 }

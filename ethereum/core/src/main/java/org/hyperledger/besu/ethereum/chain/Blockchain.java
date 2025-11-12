@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Comparator;
 import java.util.List;
@@ -50,6 +51,13 @@ public interface Blockchain {
    * @return The hash of the last safe block
    */
   Optional<Hash> getSafeBlock();
+
+  /**
+   * Return the number of the earliest block in the canonical chain.
+   *
+   * @return The number of the earliest block in the chain.
+   */
+  Optional<Long> getEarliestBlockNumber();
 
   /**
    * Return the block number of the head of the canonical chain.
@@ -176,6 +184,8 @@ public interface Blockchain {
    */
   Optional<BlockBody> getBlockBodySafe(Hash blockHeaderHash);
 
+  Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
+
   /**
    * Given a block's hash, returns the list of transaction receipts associated with this block's
    * transactions. Associated block is not necessarily on the canonical chain.
@@ -229,6 +239,9 @@ public interface Blockchain {
    * @return the observer ID that can be used to remove it later.
    */
   long observeBlockAdded(BlockAddedObserver observer);
+
+  /** Removes all observers previously added via {@link #observeBlockAdded(BlockAddedObserver)}. */
+  default void removeAllBlockAddedObservers() {}
 
   /**
    * Adds an observer that will get called on for every added and removed log when a new block is

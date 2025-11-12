@@ -34,8 +34,10 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedExce
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -45,6 +47,7 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 public class EthPeersTest {
@@ -70,50 +73,54 @@ public class EthPeersTest {
   @Test
   public void comparesPeersWithHeightAndTd() {
     // Set peerA with better height, lower td
-    final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
-            .getEthPeer();
-    final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 10)
-            .getEthPeer();
+    final EthPeerImmutableAttributes peerA =
+        EthPeerImmutableAttributes.from(
+            EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
+                .getEthPeer());
+    final EthPeerImmutableAttributes peerB =
+        EthPeerImmutableAttributes.from(
+            EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 10)
+                .getEthPeer());
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
 
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isLessThan(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerB)).isLessThan(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerA)).isGreaterThan(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerB)).isEqualTo(0);
 
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB.ethPeer());
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
-        .contains(peerB);
+        .contains(peerB.ethPeer());
   }
 
   @Test
   public void comparesPeersWithTdAndNoHeight() {
-    final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(100), OptionalLong.empty())
-            .getEthPeer();
-    final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(50), OptionalLong.empty())
-            .getEthPeer();
+    final EthPeerImmutableAttributes peerA =
+        EthPeerImmutableAttributes.from(
+            EthProtocolManagerTestUtil.createPeer(
+                    ethProtocolManager, Difficulty.of(100), OptionalLong.empty())
+                .getEthPeer());
+    final EthPeerImmutableAttributes peerB =
+        EthPeerImmutableAttributes.from(
+            EthProtocolManagerTestUtil.createPeer(
+                    ethProtocolManager, Difficulty.of(50), OptionalLong.empty())
+                .getEthPeer());
 
     // Sanity check
-    assertThat(peerA.chainState().getEstimatedHeight()).isEqualTo(0);
-    assertThat(peerB.chainState().getEstimatedHeight()).isEqualTo(0);
+    assertThat(peerA.estimatedChainHeight()).isEqualTo(0);
+    assertThat(peerB.estimatedChainHeight()).isEqualTo(0);
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isEqualTo(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isGreaterThan(0);
 
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isGreaterThan(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerA)).isLessThan(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY_THEN_HEIGHT.compare(peerB, peerB)).isEqualTo(0);
 
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA.ethPeer());
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
         .isEmpty();
   }
@@ -122,7 +129,8 @@ public class EthPeersTest {
   public void shouldExecutePeerRequestImmediatelyWhenPeerIsAvailable() throws Exception {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
+    when(peerRequest.isEthPeerSuitable(EthPeerImmutableAttributes.from(peer.getEthPeer())))
+        .thenReturn(true);
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 10, Optional.empty());
@@ -196,7 +204,8 @@ public class EthPeersTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useAllAvailableCapacity(suitablePeer.getEthPeer());
 
-    when(peerRequest.isEthPeerSuitable(suitablePeer.getEthPeer())).thenReturn(true);
+    when(peerRequest.isEthPeerSuitable(EthPeerImmutableAttributes.from(suitablePeer.getEthPeer())))
+        .thenReturn(true);
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 200, Optional.empty());
@@ -244,7 +253,13 @@ public class EthPeersTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
+    when(peerRequest.isEthPeerSuitable(Mockito.any()))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              EthPeerImmutableAttributes ethPeer =
+                  invocationOnMock.getArgument(0, EthPeerImmutableAttributes.class);
+              return ethPeer.ethPeer().equals(peer.getEthPeer());
+            });
     useAllAvailableCapacity(peer.getEthPeer());
 
     final PendingPeerRequest pendingRequest =
@@ -262,7 +277,8 @@ public class EthPeersTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useAllAvailableCapacity(peer.getEthPeer());
 
-    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
+    when(peerRequest.isEthPeerSuitable(EthPeerImmutableAttributes.from(peer.getEthPeer())))
+        .thenReturn(true);
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
@@ -429,7 +445,10 @@ public class EthPeersTest {
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {
-    ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, NodeDataMessage.create(emptyList())));
+    MessageData message = NodeDataMessage.create(emptyList());
+    ethPeers.dispatchMessage(
+        ethPeer, new EthMessage(ethPeer, message.wrapMessageData(BigInteger.ONE)));
+    assertThat(ethPeer.hasAvailableRequestCapacity()).isTrue();
   }
 
   private void useAllAvailableCapacity(final EthPeer peer) throws PeerNotConnected {

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.Collection;
@@ -38,15 +39,18 @@ public class PeerTransactionTracker
     implements EthPeer.DisconnectCallback, PendingTransactionDroppedListener {
   private static final Logger LOG = LoggerFactory.getLogger(PeerTransactionTracker.class);
 
-  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
-
   private final EthPeers ethPeers;
+  private final int maxTrackedSeenTxsPerPeer;
+  private final boolean forgetEvictedTxsEnabled;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionHashesToSend = new ConcurrentHashMap<>();
 
-  public PeerTransactionTracker(final EthPeers ethPeers) {
+  public PeerTransactionTracker(
+      final TransactionPoolConfiguration txPoolConfig, final EthPeers ethPeers) {
     this.ethPeers = ethPeers;
+    this.maxTrackedSeenTxsPerPeer = txPoolConfig.getUnstable().getMaxTrackedSeenTxsPerPeer();
+    this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
   }
 
   public void reset() {
@@ -128,7 +132,7 @@ public class PeerTransactionTracker
             new LinkedHashMap<>(16, 0.75f, true) {
               @Override
               protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
-                return size() > MAX_TRACKED_SEEN_TRANSACTIONS;
+                return size() > maxTrackedSeenTxsPerPeer;
               }
             }));
   }
@@ -151,7 +155,10 @@ public class PeerTransactionTracker
         .log();
 
     final Set<EthPeer> connectedPeers =
-        ethPeers.streamAllPeers().collect(Collectors.toUnmodifiableSet());
+        ethPeers
+            .streamAllPeers()
+            .map(EthPeerImmutableAttributes::ethPeer)
+            .collect(Collectors.toUnmodifiableSet());
 
     final var disconnectedPeers = trackedPeers;
     disconnectedPeers.removeAll(connectedPeers);
@@ -180,7 +187,7 @@ public class PeerTransactionTracker
 
   @Override
   public void onTransactionDropped(final Transaction transaction, final RemovalReason reason) {
-    if (reason.stopTracking()) {
+    if (reason.stopTracking() && forgetEvictedTxsEnabled) {
       seenTransactions.values().stream().forEach(st -> st.remove(transaction.getHash()));
     }
   }

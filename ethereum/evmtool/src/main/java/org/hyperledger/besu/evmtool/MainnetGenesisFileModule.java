@@ -21,7 +21,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -84,6 +84,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
         false,
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 
@@ -158,15 +159,38 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         Map.entry(
             "prague",
             createSchedule(
-                new StubGenesisConfigOptions()
-                    .pragueTime(0)
-                    .osakaTime(0) // TODO remove this once osaka_devnet_0 launches
-                    .baseFeePerGas(0x0a)
-                    .chainId(chainId))),
+                new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a).chainId(chainId))),
         Map.entry(
             "osaka",
             createSchedule(
                 new StubGenesisConfigOptions().osakaTime(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "bpo1",
+            createSchedule(
+                new StubGenesisConfigOptions().bpo1Time(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "bpo2",
+            createSchedule(
+                new StubGenesisConfigOptions().bpo2Time(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "bpo3",
+            createSchedule(
+                new StubGenesisConfigOptions().bpo3Time(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "bpo4",
+            createSchedule(
+                new StubGenesisConfigOptions().bpo4Time(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "bpo5",
+            createSchedule(
+                new StubGenesisConfigOptions().bpo5Time(0).baseFeePerGas(0x0a).chainId(chainId))),
+        Map.entry(
+            "amsterdam",
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .amsterdamTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "futureeips",
             createSchedule(
@@ -189,12 +213,12 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 options,
                 options.getChainId(),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
   }

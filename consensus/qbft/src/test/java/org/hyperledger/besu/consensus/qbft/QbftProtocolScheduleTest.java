@@ -37,8 +37,8 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -57,11 +57,11 @@ public class QbftProtocolScheduleTest {
   private final List<Address> validators = singletonList(proposerAddress);
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(
-        null,
-        null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
-        new BadBlockManager());
+    return new ProtocolContext.Builder()
+        .withConsensusContext(
+            setupContextWithBftExtraDataEncoder(
+                BftContext.class, validators, new QbftExtraDataCodec()))
+        .build();
   }
 
   @Test
@@ -134,13 +134,13 @@ public class QbftProtocolScheduleTest {
     return QbftProtocolScheduleBuilder.create(
         genesisConfig,
         new ForksSchedule<>(forks),
-        PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
         false,
+        BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
 

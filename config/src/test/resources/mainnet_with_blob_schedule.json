@@ -27,9 +27,29 @@
         "max": 10,
         "baseFeeUpdateFraction": 5007716
       },
-      "osaka": {
-        "target": 10,
-        "max": 13,
+      "bpo1": {
+        "target": 11,
+        "max": 12,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo2": {
+        "target": 21,
+        "max": 22,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo3": {
+        "target": 31,
+        "max": 32,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo4": {
+        "target": 41,
+        "max": 42,
+        "baseFeeUpdateFraction": 5007716
+      },
+      "bpo5": {
+        "target": 51,
+        "max": 52,
         "baseFeeUpdateFraction": 5007716
       }
     },

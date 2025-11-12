@@ -119,7 +119,7 @@ public class EofContainerSubCommand implements Runnable {
           .constructParametricType(Map.class, String.class, EOFTestCaseSpec.class);
 
   List<FuzzingClient> fuzzingClients = new ArrayList<>();
-  EVM evm = MainnetEVMs.osaka(EvmConfiguration.DEFAULT);
+  EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
   long validContainers;
   long totalContainers;
 
@@ -217,7 +217,7 @@ public class EofContainerSubCommand implements Runnable {
                     initialCorpus,
                     f.toPath().getFileName() + "_" + (index++) + "_" + vector.getKey()))) {
           Bytes codeBytes = Bytes.fromHexString(vector.getValue().code());
-          evm.getCodeUncached(codeBytes);
+          evm.wrapCode(codeBytes);
           fos.write(codeBytes.toArrayUnsafe());
         } catch (IOException e) {
           parentCommand.out.println("Invalid file " + f + ": " + e.getMessage());

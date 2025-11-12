@@ -90,7 +90,7 @@ public class BlockReplay {
         blockHash,
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final BlockHashLookup blockHashLookup =
-              protocolSpec.getBlockHashProcessor().createBlockHashLookup(blockchain, header);
+              protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
           final Wei blobGasPrice =
               protocolSpec
                   .getFeeMarket()
@@ -112,7 +112,6 @@ public class BlockReplay {
                   transaction,
                   protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                   blockHashLookup,
-                  false,
                   TransactionValidationParams.blockReplay(),
                   blobGasPrice);
             }
@@ -137,8 +136,7 @@ public class BlockReplay {
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
-              spec.getBlockHashProcessor().createBlockHashLookup(blockchain, blockHeader),
-              false,
+              spec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader),
               TransactionValidationParams.blockReplay(),
               blobGasPrice);
           return action.performAction(

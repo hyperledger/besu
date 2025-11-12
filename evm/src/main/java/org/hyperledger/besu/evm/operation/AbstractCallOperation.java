@@ -14,9 +14,15 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
+import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -25,8 +31,9 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.CodeDelegationGasCostHelper;
+import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -181,7 +188,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
-    final long cost = cost(frame, accountIsWarm);
+    long cost = cost(frame, accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    final Account contract = getAccount(to, frame);
+    cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
+
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -189,33 +203,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    final Account contract = frame.getWorldUpdater().get(to);
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
 
-    if (contract != null && contract.hasDelegatedCode()) {
-      if (contract.getCodeDelegationTargetCode().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have delegated code");
-      }
-
-      if (contract.getCodeDelegationTargetHash().isEmpty()) {
-        throw new RuntimeException("A delegated code account must have a delegated code hash");
-      }
-
-      final long codeDelegationResolutionGas =
-          CodeDelegationGasCostHelper.codeDelegationGasCost(frame, gasCalculator(), contract);
-
-      if (frame.getRemainingGas() < codeDelegationResolutionGas) {
-        return new Operation.OperationResult(
-            codeDelegationResolutionGas, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
-
-      frame.decrementRemainingGas(codeDelegationResolutionGas);
-    }
-
-    final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
-    // If the call is sending more value than the account has or the message frame is to deep
+
+    // If the call is sending more value than the account has or the message frame is too deep
     // return a failed call
-    if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
+    final boolean insufficientBalance = value(frame).compareTo(balance) > 0;
+    final boolean isFrameDepthTooDeep = frame.getDepth() >= 1024;
+    if (insufficientBalance || isFrameDepthTooDeep) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       // For the following, we either increment the gas or return zero, so we don't get double
@@ -223,50 +219,45 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      return new OperationResult(cost, null);
+      final SoftFailureReason softFailureReason =
+          insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
+      return new OperationResult(cost, 1, softFailureReason);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
-    final Code code = getCode(evm, contract);
+    final Code code = getCode(evm, frame, contract);
 
     // invalid code results in a quick exit
     if (!code.isValid()) {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
-    MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.MESSAGE_CALL)
-        .initialGas(gasAvailableForChildCall(frame))
-        .address(address(frame))
-        .contract(to)
-        .inputData(inputData)
-        .sender(sender(frame))
-        .value(value(frame))
-        .apparentValue(apparentValue(frame))
-        .code(code)
-        .isStatic(isStatic(frame))
-        .completer(child -> complete(frame, child))
-        .build();
+    MessageFrame.Builder builder =
+        MessageFrame.builder()
+            .parentMessageFrame(frame)
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .initialGas(gasAvailableForChildCall(frame))
+            .address(address(frame))
+            .contract(to)
+            .inputData(inputData)
+            .sender(sender(frame))
+            .value(value(frame))
+            .apparentValue(apparentValue(frame))
+            .code(code)
+            .isStatic(isStatic(frame))
+            .completer(child -> complete(frame, child));
+
+    if (frame.getEip7928AccessList().isPresent()) {
+      builder.eip7928AccessList(frame.getEip7928AccessList().get());
+    }
+
+    builder.build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
-  }
-
-  /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
-   * @return the long
-   * @deprecated use the form with the `accountIsWarm` boolean
-   */
-  @Deprecated(since = "24.2.0", forRemoval = true)
-  @SuppressWarnings("InlineMeSuggester") // downstream users override, so @InlineMe is inappropriate
-  public long cost(final MessageFrame frame) {
-    return cost(frame, true);
   }
 
   /**
@@ -282,8 +273,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
     final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
-    final Address to = to(frame);
+    final Address recipientAddress = address(frame);
     GasCalculator gasCalculator = gasCalculator();
 
     return gasCalculator.callOperationGasCost(
@@ -294,8 +284,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         outputDataOffset,
         outputDataLength,
         value(frame),
-        recipient,
-        to,
+        recipientAddress,
         accountIsWarm);
   }
 
@@ -349,19 +338,51 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * Gets the code from the contract or EOA with delegated code.
    *
    * @param evm the evm
-   * @param account the account which needs to be retrieved
+   * @param frame the message frame
+   * @param account the account which codes needs to be retrieved
    * @return the code
    */
-  protected static Code getCode(final EVM evm, final Account account) {
+  protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
       return CodeV0.EMPTY_CODE;
     }
 
-    if (account.hasDelegatedCode()) {
-      return evm.getCode(
-          account.getCodeDelegationTargetHash().get(), account.getCodeDelegationTargetCode().get());
+    final Hash codeHash = account.getCodeHash();
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
+    if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
+      return CodeV0.EMPTY_CODE;
     }
 
-    return evm.getCode(account.getCodeHash(), account.getCode());
+    final boolean accountHasCodeCache = account.getCodeCache() != null;
+
+    final Code code;
+    // Bonsai accounts may have a fully cached code, so we use that one
+    if (accountHasCodeCache) {
+      code = account.getOrCreateCachedCode();
+    }
+    // Any other account can only use the cached jump dest analysis if available
+    else {
+      code = evm.getOrCreateCachedJumpDest(codeHash, account.getCode());
+    }
+
+    if (!hasCodeDelegation(code.getBytes())) {
+      return code;
+    }
+
+    final CodeDelegationHelper.Target target =
+        getTarget(
+            frame.getWorldUpdater(),
+            evm.getGasCalculator()::isPrecompile,
+            account,
+            frame.getEip7928AccessList());
+
+    if (accountHasCodeCache) {
+      // If the account has a code cache, we can return the cached code of the target
+      return target.code();
+    }
+
+    // otherwise we can only use the cached jump destination analysis
+    final Code targetCode = target.code();
+    return evm.getOrCreateCachedJumpDest(targetCode.getCodeHash(), targetCode.getBytes());
   }
 }

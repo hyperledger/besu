@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -30,12 +32,13 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -90,6 +93,7 @@ public class JsonRpcHttpServiceTestBase {
   protected static Blockchain blockchain;
   protected static BlockchainQueries blockchainQueries;
   protected static ChainHead chainHead;
+  protected static Block block;
   protected static Synchronizer synchronizer;
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
@@ -103,12 +107,15 @@ public class JsonRpcHttpServiceTestBase {
     ethPeersMock = mock(EthPeers.class);
     blockchain = mock(Blockchain.class);
     blockchainQueries = mock(BlockchainQueries.class);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    block = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(block);
+    when(block.getHash()).thenReturn(Hash.EMPTY);
     chainHead = mock(ChainHead.class);
     synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
 
     rpcMethods =
         new JsonRpcMethodsFactory()
@@ -127,6 +134,7 @@ public class JsonRpcHttpServiceTestBase {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
@@ -138,7 +146,6 @@ public class JsonRpcHttpServiceTestBase {
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                 JSON_RPC_APIS,
-                mock(PrivacyParameters.class),
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
@@ -149,6 +156,7 @@ public class JsonRpcHttpServiceTestBase {
                 ethPeersMock,
                 vertx,
                 mock(ApiConfiguration.class),
+                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

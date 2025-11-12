@@ -20,9 +20,11 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS
 import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
 import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -37,12 +39,14 @@ import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -115,8 +119,14 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     final Synchronizer synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
+    supportedCapabilities.add(EthProtocol.LATEST);
+
+    // mocks so that genesis hash is populated
+    Blockchain blockchain = mock(Blockchain.class);
+    Block block = mock(Block.class);
+    lenient().when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    lenient().when(blockchain.getGenesisBlock()).thenReturn(block);
+    lenient().when(block.getHash()).thenReturn(Hash.EMPTY);
 
     rpcMethods =
         new JsonRpcMethodsFactory()
@@ -134,6 +144,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
@@ -145,7 +156,6 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                 Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                 DEFAULT_RPC_APIS,
-                mock(PrivacyParameters.class),
                 mock(JsonRpcConfiguration.class),
                 mock(WebSocketConfiguration.class),
                 mock(MetricsConfiguration.class),
@@ -156,6 +166,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
+                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

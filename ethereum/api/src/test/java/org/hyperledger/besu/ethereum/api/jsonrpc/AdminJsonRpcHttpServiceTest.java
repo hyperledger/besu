@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.testutil.TestClock;
@@ -53,8 +55,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   @Test
   public void getPeers() throws Exception {
     final List<Capability> caps = new ArrayList<>();
-    caps.add(Capability.create("eth", 61));
-    caps.add(Capability.create("eth", 62));
+    caps.add(EthProtocol.LATEST);
     final List<EthPeer> peerList = new ArrayList<>();
     final PeerInfo info1 =
         new PeerInfo(
@@ -99,7 +100,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             Collections.emptyList(),
             Bytes.random(64)));
 
-    when(ethPeersMock.streamAllPeers()).thenReturn(peerList.stream());
+    when(ethPeersMock.streamAllPeers())
+        .thenReturn(peerList.stream().map(EthPeerImmutableAttributes::from));
     when(peerDiscoveryMock.getPeerCount()).thenReturn(peerList.size());
 
     final String id = "123";

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -33,6 +32,7 @@ public class LogWithMetadata extends Log
   private final int logIndex;
   private final long blockNumber;
   private final Hash blockHash;
+  private final long blockTimestamp;
   private final Hash transactionHash;
   private final int transactionIndex;
   private final boolean removed;
@@ -41,6 +41,7 @@ public class LogWithMetadata extends Log
       final int logIndex,
       final long blockNumber,
       final Hash blockHash,
+      final long blockTimestamp,
       final Hash transactionHash,
       final int transactionIndex,
       final Address address,
@@ -51,6 +52,7 @@ public class LogWithMetadata extends Log
     this.logIndex = logIndex;
     this.blockNumber = blockNumber;
     this.blockHash = blockHash;
+    this.blockTimestamp = blockTimestamp;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
     this.removed = removed;
@@ -61,6 +63,7 @@ public class LogWithMetadata extends Log
       final TransactionReceipt receipt,
       final long number,
       final Hash blockHash,
+      final long blockTimestamp,
       final Hash transactionHash,
       final int transactionIndex,
       final boolean removed) {
@@ -69,6 +72,7 @@ public class LogWithMetadata extends Log
         receipt.getLogsList(),
         number,
         blockHash,
+        blockTimestamp,
         transactionHash,
         transactionIndex,
         removed);
@@ -79,6 +83,7 @@ public class LogWithMetadata extends Log
     return generate(
         block.getHeader().getNumber(),
         block.getHash(),
+        block.getHeader().getTimestamp(),
         block.getBody().getTransactions().stream().map(Transaction::getHash).toList(),
         receipts,
         removed);
@@ -87,6 +92,7 @@ public class LogWithMetadata extends Log
   public static List<LogWithMetadata> generate(
       final long blockNumber,
       final Hash blockHash,
+      final long blockTimestamp,
       final List<Hash> txHashes,
       final List<TransactionReceipt> receipts,
       final boolean removed) {
@@ -100,6 +106,7 @@ public class LogWithMetadata extends Log
               receipts.get(txi),
               blockNumber,
               blockHash,
+              blockTimestamp,
               txHashes.get(txi),
               txi,
               removed);
@@ -111,27 +118,10 @@ public class LogWithMetadata extends Log
 
   public static List<LogWithMetadata> generate(
       final int logIndexOffset,
-      final PrivateTransactionReceipt receipt,
-      final long number,
-      final Hash blockHash,
-      final Hash transactionHash,
-      final int transactionIndex,
-      final boolean removed) {
-    return generate(
-        logIndexOffset,
-        receipt.getLogs(),
-        number,
-        blockHash,
-        transactionHash,
-        transactionIndex,
-        removed);
-  }
-
-  private static List<LogWithMetadata> generate(
-      final int logIndexOffset,
       final List<Log> receiptLogs,
       final long number,
       final Hash blockHash,
+      final long blockTimestamp,
       final Hash transactionHash,
       final int transactionIndex,
       final boolean removed) {
@@ -143,6 +133,7 @@ public class LogWithMetadata extends Log
               logIndexOffset + logIndex,
               number,
               blockHash,
+              blockTimestamp,
               transactionHash,
               transactionIndex,
               receiptLogs.get(logIndex).getLogger(),
@@ -181,6 +172,10 @@ public class LogWithMetadata extends Log
     return transactionIndex;
   }
 
+  public long getBlockTimestamp() {
+    return blockTimestamp;
+  }
+
   @Override
   public boolean isRemoved() {
     return removed;
@@ -207,6 +202,7 @@ public class LogWithMetadata extends Log
         pluginObject.getLogIndex(),
         pluginObject.getBlockNumber(),
         pluginObject.getBlockHash(),
+        0L, // Plugin interface doesn't provide timestamp, set to 0
         pluginObject.getTransactionHash(),
         pluginObject.getTransactionIndex(),
         pluginObject.getLogger(),

@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-datatypes'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -36,8 +36,8 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -48,8 +48,7 @@ configurations { testArtifacts }
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      groupId 'org.hyperledger.besu'
-      artifactId 'besu-datatypes'
+      groupId = 'org.hyperledger.besu'
       pom {
         name = 'Besu Datatypes'
         description = 'Cross-module datatypes'

@@ -19,14 +19,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
@@ -72,6 +73,40 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
       }
     }
     return null;
+  }
+
+  @Override
+  public Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime) {
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
+
+    ScheduledProtocolSpec chosenSpec = null;
+    for (final ScheduledProtocolSpec spec : protocolSpecs) {
+      if (currentTime < spec.fork().milestone()
+          && (chosenSpec == null || chosenSpec.fork().milestone() > spec.fork().milestone())) {
+        // if we haven't chosen a valid spec, or we find an earlier spec, choose it.
+        chosenSpec = spec;
+      }
+    }
+    return Optional.ofNullable(chosenSpec);
+  }
+
+  /**
+   * spec from the genesis file with the max ie latest timestamp
+   *
+   * @return the last defined spec from the genesis file
+   */
+  @Override
+  public Optional<ScheduledProtocolSpec> getLatestProtocolSpec() {
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
+    return protocolSpecs.stream().max(Comparator.comparing(ScheduledProtocolSpec::fork));
   }
 
   @Override
@@ -144,14 +179,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
+  public void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules) {
     protocolSpecs.forEach(
-        spec -> {
-          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
-          if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
-            ((PrivacyBlockProcessor) blockProcessor)
-                .setPublicWorldStateArchive(publicWorldStateArchive);
-        });
+        spec ->
+            spec.spec()
+                .getTransactionValidatorFactory()
+                .setAdditionalValidationRules(additionalValidationRules));
   }
 }

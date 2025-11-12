@@ -79,8 +79,6 @@ public class PoWSolver {
 
   private final PoWHasher poWHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
-  private final Boolean stratumMiningEnabled;
-  private final Subscribers<PoWObserver> ethHashObservers;
   private final EpochCalculator epochCalculator;
   private volatile Optional<PoWSolverJob> currentJob = Optional.empty();
   private final ExpiringMap<Bytes, PoWSolverJob> currentJobs = new ExpiringMap<>();
@@ -88,13 +86,10 @@ public class PoWSolver {
   public PoWSolver(
       final MiningConfiguration miningConfiguration,
       final PoWHasher poWHasher,
-      final Boolean stratumMiningEnabled,
       final Subscribers<PoWObserver> ethHashObservers,
       final EpochCalculator epochCalculator) {
     this.miningConfiguration = miningConfiguration;
     this.poWHasher = poWHasher;
-    this.stratumMiningEnabled = stratumMiningEnabled;
-    this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
   }
@@ -106,14 +101,8 @@ public class PoWSolver {
         job.getInputs().getPrePowHash(),
         job,
         System.currentTimeMillis() + miningConfiguration.getUnstable().getPowJobTimeToLive());
-    if (stratumMiningEnabled) {
-      LOG.debug(
-          "solving with stratum miner for {} observers", ethHashObservers.getSubscriberCount());
-      ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
-    } else {
-      LOG.debug("solving with cpu miner");
-      findValidNonce();
-    }
+    LOG.debug("solving with cpu miner");
+    findValidNonce();
     return job.getSolution();
   }
 

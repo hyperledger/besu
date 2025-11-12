@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-util'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -29,12 +29,25 @@ jar {
   }
 }
 
+compileJava {
+  options.generatedSourceOutputDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
+  options.compilerArgs += [
+    '-Alog4j.graalvm.groupId=' + project.group,
+    '-Alog4j.graalvm.artifactId=' + project.name
+  ]
+}
+
 dependencies {
   api 'org.slf4j:slf4j-api'
 
   annotationProcessor 'org.apache.logging.log4j:log4j-core'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'

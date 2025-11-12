@@ -110,7 +110,7 @@ public class EthProtocolManagerTestUtil {
       final RespondingEthPeer peer,
       final MessageData message) {
     ethProtocolManager.processMessage(
-        EthProtocol.ETH63, new DefaultMessage(peer.getPeerConnection(), message));
+        EthProtocol.LATEST, new DefaultMessage(peer.getPeerConnection(), message));
   }
 
   public static RespondingEthPeer.Builder peerBuilder() {
@@ -122,6 +122,7 @@ public class EthProtocolManagerTestUtil {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
+        .capability(EthProtocol.ETH68)
         .build();
   }
 
@@ -133,6 +134,7 @@ public class EthProtocolManagerTestUtil {
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
+        .capability(EthProtocol.ETH68)
         .build();
   }
 
@@ -144,6 +146,18 @@ public class EthProtocolManagerTestUtil {
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
+        .capability(EthProtocol.ETH68)
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final OptionalLong estimatedHeight,
+      final PeerValidator... validators) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(estimatedHeight)
+        .peerValidators(validators)
         .build();
   }
 
@@ -156,6 +170,7 @@ public class EthProtocolManagerTestUtil {
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
         .estimatedHeight(estimatedHeight)
+        .capability(EthProtocol.ETH68)
         .peerValidators(validators)
         .build();
   }

@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -34,16 +31,27 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -60,18 +68,36 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final ReferenceTestBlockHeader genesisBlockHeader;
 
+  private final Map<String, ReferenceTestWorldState.AccountMock> accounts;
   private final Hash lastBlockHash;
-
-  private final WorldStateArchive worldStateArchive;
 
   private final MutableBlockchain blockchain;
   private final String sealEngine;
 
-  private final ProtocolContext protocolContext;
+  public WorldStateArchive buildWorldStateArchive(final long cacheSize) {
 
-  private static WorldStateArchive buildWorldStateArchive(
-      final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
+        new InMemoryKeyValueStorageProvider();
+    final WorldStateArchive worldStateArchive =
+        new BonsaiWorldStateProvider(
+            (BonsaiWorldStateKeyValueStorage)
+                inMemoryKeyValueStorageProvider.createWorldStateStorage(
+                    DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            blockchain,
+            Optional.of(cacheSize),
+            new NoopBonsaiCachedMerkleTrieLoader(),
+            new ServiceManager() {
+              @Override
+              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+
+              @Override
+              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+                return Optional.empty();
+              }
+            },
+            EvmConfiguration.DEFAULT,
+            () -> (__, ___) -> {},
+            new CodeCache());
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
@@ -84,6 +110,7 @@ public class BlockchainReferenceTestCaseSpec {
     updater.commit();
     worldState.persist(null);
 
+    worldStateArchive.resetArchiveStateTo(genesisBlockHeader);
     return worldStateArchive;
   }
 
@@ -104,16 +131,10 @@ public class BlockchainReferenceTestCaseSpec {
     this.network = network;
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
+    this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext =
-        new ProtocolContext(
-            this.blockchain,
-            this.worldStateArchive,
-            new ConsensusContextFixture(),
-            new BadBlockManager());
   }
 
   public String getNetwork() {
@@ -124,10 +145,6 @@ public class BlockchainReferenceTestCaseSpec {
     return candidateBlocks;
   }
 
-  public WorldStateArchive getWorldStateArchive() {
-    return worldStateArchive;
-  }
-
   public BlockHeader getGenesisBlockHeader() {
     return genesisBlockHeader;
   }
@@ -136,8 +153,14 @@ public class BlockchainReferenceTestCaseSpec {
     return blockchain;
   }
 
-  public ProtocolContext getProtocolContext() {
-    return protocolContext;
+  public ProtocolContext buildProtocolContext() {
+    return new ProtocolContext.Builder()
+        .withBlockchain(blockchain)
+        .withWorldStateArchive(
+            buildWorldStateArchive(
+                Stream.of(candidateBlocks).filter(CandidateBlock::isExecutable).count()))
+        .withConsensusContext(new ConsensusContextFixture())
+        .build();
   }
 
   public Hash getLastBlockHash() {
@@ -173,7 +196,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
-        @JsonProperty("hash") final String hash) {
+        @JsonProperty("hash") final String hash,
+        @JsonProperty("blockAccessListHash") final String blockAccessListHash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
@@ -200,6 +224,7 @@ public class BlockchainReferenceTestCaseSpec {
           excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
+          blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -248,7 +273,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositRequests") final Object depositRequests,
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
-        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence) {
+        @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence,
+        @JsonProperty("blockAccessList") final Object blockAccessList) {
       boolean blockValid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -288,13 +314,18 @@ public class BlockchainReferenceTestCaseSpec {
       input.enterList();
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
-      final BlockBody body =
-          new BlockBody(
-              input.readList(Transaction::readFrom),
-              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(Withdrawal::readFrom)));
+      final List<Transaction> transactions = input.readList(Transaction::readFrom);
+      final List<BlockHeader> ommers =
+          input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions));
+      final Optional<List<Withdrawal>> withdrawals =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(input.readList(Withdrawal::readFrom));
+      final Optional<BlockAccessList> blockAccessList =
+          input.isEndOfCurrentList()
+              ? Optional.empty()
+              : Optional.of(BlockAccessListDecoder.decode(input));
+      final BlockBody body = new BlockBody(transactions, ommers, withdrawals, blockAccessList);
       return new Block(header, body);
     }
   }

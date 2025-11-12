@@ -80,17 +80,18 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       }
 
-      final Account account = frame.getWorldUpdater().get(address);
+      final Account account = getAccount(address, frame);
 
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        final Bytes code = account.getCode();
-        if (enableEIP3540
-            && code.size() >= 2
-            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-            && code.get(1) == 0) {
-          frame.pushStackItem(EOF_REPLACEMENT_HASH);
+        if (enableEIP3540) {
+          final Bytes code = account.getCode();
+          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+            frame.pushStackItem(EOF_REPLACEMENT_HASH);
+          } else {
+            frame.pushStackItem(account.getCodeHash());
+          }
         } else {
           frame.pushStackItem(account.getCodeHash());
         }

@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-eth'
+  archiveBaseName = calculateArtifactId(project)
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -30,7 +30,7 @@ jar {
 
 configurations { testArtifacts }
 task testJar(type: Jar) {
-  archiveBaseName = "${project.name}-test"
+  archiveBaseName = calculateArtifactId(project)+ '-test'
   from sourceSets.test.output
 }
 
@@ -56,9 +56,9 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.commons:commons-lang3'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-units'
-  implementation 'io.tmio:tuweni-rlp'
+  implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
+  implementation 'io.consensys.tuweni:tuweni-rlp'
   implementation 'org.rocksdb:rocksdbjni'
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'
@@ -91,7 +91,7 @@ dependencies {
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  jmhImplementation project(':besu')
+  jmhImplementation project(':app')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':plugins:rocksdb')
 }

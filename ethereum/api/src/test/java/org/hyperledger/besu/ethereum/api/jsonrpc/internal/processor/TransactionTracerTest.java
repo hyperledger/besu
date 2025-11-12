@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ImmutableTransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -29,16 +30,16 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -85,7 +86,8 @@ public class TransactionTracerTest {
 
   @Mock private ProtocolSpec protocolSpec;
   @Mock private GasCalculator gasCalculator;
-  @Mock private BlockHashProcessor blockHashProcessor;
+  @Mock private GasLimitCalculator gasLimitCalculator;
+  @Mock private PreExecutionProcessor preExecutionProcessor;
 
   @Mock private Tracer.TraceableState mutableWorldState;
 
@@ -122,7 +124,8 @@ public class TransactionTracerTest {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(preExecutionProcessor);
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
   }
 
@@ -184,7 +187,6 @@ public class TransactionTracerTest {
             eq(transaction),
             eq(null),
             eq(tracer),
-            any(),
             any(),
             any(),
             eq(Wei.ZERO)))
@@ -271,8 +273,7 @@ public class TransactionTracerTest {
             eq(blockHeader),
             eq(transaction),
             eq(null),
-            any(StandardJsonTracer.class),
-            any(),
+            any(StreamingOperationTracer.class),
             any(),
             any(),
             eq(Wei.ZERO)))

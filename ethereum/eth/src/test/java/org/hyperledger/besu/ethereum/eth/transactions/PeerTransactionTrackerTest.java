@@ -18,10 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -31,14 +37,32 @@ import org.junit.jupiter.api.Test;
 
 public class PeerTransactionTrackerTest {
   private final EthPeers ethPeers = mock(EthPeers.class);
-
-  private final EthPeer ethPeer1 = mock(EthPeer.class);
-  private final EthPeer ethPeer2 = mock(EthPeer.class);
+  private final EthPeer ethPeer1 = mockPeer();
+  private final EthPeer ethPeer2 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
-  private final PeerTransactionTracker tracker = new PeerTransactionTracker(ethPeers);
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
+  private final PeerTransactionTracker tracker =
+      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+  private final PeerTransactionTracker forgetfulTracker =
+      new PeerTransactionTracker(
+          ImmutableTransactionPoolConfiguration.builder()
+              .unstable(
+                  ImmutableTransactionPoolConfiguration.Unstable.builder()
+                      .peerTrackerForgetEvictedTxs(true)
+                      .build())
+              .build(),
+          ethPeers);
+  private final PeerTransactionTracker shortMemoryTracker =
+      new PeerTransactionTracker(
+          ImmutableTransactionPoolConfiguration.builder()
+              .unstable(
+                  ImmutableTransactionPoolConfiguration.Unstable.builder()
+                      .maxTrackedSeenTxsPerPeer(2)
+                      .build())
+              .build(),
+          ethPeers);
 
   @Test
   public void shouldTrackTransactionsToSendToPeer() {
@@ -67,13 +91,41 @@ public class PeerTransactionTrackerTest {
 
   @Test
   public void shouldStopTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
+    forgetfulTracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
+
+    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    forgetfulTracker.onTransactionDropped(transaction2, createRemovalReason(true));
+
+    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+  }
+
+  @Test
+  public void shouldKeepTrackingSeenTransactionsWhenNotForgettingEvenIfRemovalReasonSaysSo() {
     tracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction2));
 
     assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
 
     tracker.onTransactionDropped(transaction2, createRemovalReason(true));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+  }
+
+  @Test
+  public void shouldRemoveTheLastRecentSeenTransactionWhenTheCacheIsFull() {
+    shortMemoryTracker.markTransactionsAsSeen(
+        ethPeer1, ImmutableSet.of(transaction1, transaction2));
+
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isTrue();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+
+    // now the cache is full and the last recent entry if the transaction1
+    // so it should be evicted when inserting transaction3
+    shortMemoryTracker.markTransactionsAsSeen(ethPeer1, ImmutableSet.of(transaction3));
+
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isFalse();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(shortMemoryTracker.hasSeenTransaction(transaction3.getHash())).isTrue();
   }
 
   @Test
@@ -107,7 +159,8 @@ public class PeerTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, transaction2);
     tracker.addToPeerSendQueue(ethPeer2, transaction3);
 
-    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer2));
+    when(ethPeers.streamAllPeers())
+        .thenReturn(Stream.of(ethPeer2).map(EthPeerImmutableAttributes::from));
     tracker.onDisconnect(ethPeer1);
 
     assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer2);
@@ -125,7 +178,8 @@ public class PeerTransactionTrackerTest {
     tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction1));
     tracker.markTransactionsAsSeen(ethPeer2, List.of(transaction2));
 
-    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer2));
+    when(ethPeers.streamAllPeers())
+        .thenReturn(Stream.of(ethPeer2).map(EthPeerImmutableAttributes::from));
     tracker.onDisconnect(ethPeer1);
 
     // false because tracker removed for ethPeer1
@@ -161,5 +215,17 @@ public class PeerTransactionTrackerTest {
         return stopTracking;
       }
     };
+  }
+
+  private EthPeer mockPeer() {
+    final EthPeer peer = mock(EthPeer.class);
+    final ChainState chainState = new ChainState();
+    chainState.updateHeightEstimate(0);
+    chainState.statusReceived(Hash.EMPTY, Difficulty.of(0));
+    when(peer.chainState()).thenReturn(chainState);
+    when(peer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    when(peer.getConnection()).thenReturn(connection);
+    return peer;
   }
 }

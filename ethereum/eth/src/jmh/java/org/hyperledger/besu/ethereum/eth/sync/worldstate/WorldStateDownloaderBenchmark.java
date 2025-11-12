@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
@@ -151,7 +152,7 @@ public class WorldStateDownloaderBenchmark {
   @Benchmark
   public Optional<Bytes> downloadWorldState() {
     final CompletableFuture<Void> result =
-        worldStateDownloader.run(null, new FastSyncState(blockHeader));
+        worldStateDownloader.run(null, new FastSyncState(blockHeader, false));
     if (result.isDone()) {
       throw new IllegalStateException("World state download was already complete");
     }
@@ -178,7 +179,11 @@ public class WorldStateDownloaderBenchmark {
                         DEFAULT_MAX_OPEN_FILES,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
-                        DEFAULT_IS_HIGH_SPEC),
+                        DEFAULT_IS_HIGH_SPEC,
+                        DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS,
+                        false,
+                        Optional.empty(),
+                        Optional.empty()),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(besuConfiguration)

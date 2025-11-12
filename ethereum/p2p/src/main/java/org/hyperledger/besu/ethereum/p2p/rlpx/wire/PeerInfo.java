@@ -27,8 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.owasp.encoder.Encode;
 
@@ -38,9 +38,11 @@ import org.owasp.encoder.Encode;
  *
  * <p>The peer info is shared between peers during the <code>HELLO</code> wire protocol handshake.
  */
-public class PeerInfo implements Comparable<PeerInfo> {
+public class PeerInfo
+    implements org.hyperledger.besu.plugin.data.p2p.PeerInfo, Comparable<PeerInfo> {
   private final int version;
   private final String clientId;
+  private final PeerClientName clientName;
   private final List<Capability> capabilities;
   private final int port;
   private final Bytes nodeId;
@@ -57,6 +59,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
     this.capabilities = capabilities;
     this.port = port;
     this.nodeId = nodeId;
+    this.clientName = detectClientName(clientId);
   }
 
   public static PeerInfo readFrom(final RLPInput in) {
@@ -75,6 +78,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
     return version;
   }
 
+  @Override
   public String getClientId() {
     return clientId;
   }
@@ -94,10 +98,12 @@ public class PeerInfo implements Comparable<PeerInfo> {
     return port;
   }
 
+  @Override
   public Bytes getNodeId() {
     return nodeId;
   }
 
+  @Override
   public Address getAddress() {
     if (address == null) {
       final SECPPublicKey remotePublicKey =
@@ -105,6 +111,10 @@ public class PeerInfo implements Comparable<PeerInfo> {
       address = Util.publicKeyToAddress(remotePublicKey);
     }
     return address;
+  }
+
+  public PeerClientName getClientName() {
+    return clientName;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -152,7 +162,13 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   @Override
-  public int compareTo(final @Nonnull PeerInfo peerInfo) {
+  public int compareTo(final @NotNull PeerInfo peerInfo) {
     return this.nodeId.compareTo(peerInfo.nodeId);
+  }
+
+  private static PeerClientName detectClientName(final String clientId) {
+    final var idxSeparator = clientId.indexOf('/');
+    final var agentName = idxSeparator == -1 ? clientId : clientId.substring(0, idxSeparator);
+    return PeerClientName.fromAgentName(agentName);
   }
 }

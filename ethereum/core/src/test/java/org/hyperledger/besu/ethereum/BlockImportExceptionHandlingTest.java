@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -41,12 +42,14 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -76,12 +79,14 @@ class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          protocolSchedule);
+          protocolSchedule,
+          BalConfiguration.DEFAULT);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
+  private final GasLimitCalculator gasLimitCalculator = mock(GasLimitCalculator.class);
   private final FeeMarket feeMarket = mock(FeeMarket.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
@@ -105,29 +110,33 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT,
-              createStatefulConfigWithTrie()));
+              createStatefulConfigWithTrie(),
+              new CodeCache()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
-  private MainnetBlockValidator mainnetBlockValidator;
+  private BlockValidator mainnetBlockValidator;
 
   @BeforeEach
   public void setup() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
+    when(protocolSpec.getPreExecutionProcessor()).thenReturn(new FrontierPreExecutionProcessor());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
+    when(protocolSpec.getStateRootCommitterFactory())
+        .thenReturn(new StateRootCommitterFactoryDefault());
     mainnetBlockValidator =
-        new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+        MainnetBlockValidatorBuilder.frontier(
+            blockHeaderValidator, blockBodyValidator, blockProcessor);
   }
 
   @Test
   void shouldNotBadBlockWhenInternalErrorDuringPersisting() {
 
-    Mockito.doThrow(new StorageException("database problem")).when(persisted).persist(any());
+    Mockito.doThrow(new StorageException("database problem")).when(persisted).persist(any(), any());
     Mockito.doReturn(persisted).when(worldStateArchive).getWorldState();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getWorldState(any());
 
@@ -233,7 +242,7 @@ class BlockImportExceptionHandlingTest {
 
   @Test
   void shouldNotBadBlockWhenInternalErrorDuringValidateBody() {
-    Mockito.doNothing().when(persisted).persist(any());
+    Mockito.doNothing().when(persisted).persist(any(), any());
     Mockito.doReturn(persisted).when(worldStateArchive).getWorldState();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getWorldState(any());
 

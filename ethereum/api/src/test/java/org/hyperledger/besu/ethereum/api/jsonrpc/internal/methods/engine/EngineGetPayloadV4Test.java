@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
-import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -61,8 +62,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(
-    MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
+@ExtendWith({MockitoExtension.class})
 public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV4Test() {
@@ -95,8 +95,26 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsBeforePragueMilestone() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
+    PayloadIdentifier cancunPayload = setupPayload(pragueHardfork.milestone() - 1);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), cancunPayload);
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
 
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOsakaMilestone() {
+    PayloadIdentifier osakaPayload = setupPayload(osakaHardfork.milestone());
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), osakaPayload);
+    assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterOsakaMilestone() {
+    PayloadIdentifier osakaPayload = setupPayload(osakaHardfork.milestone() + 1);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), osakaPayload);
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
@@ -147,7 +165,9 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.DEPOSIT, Bytes.of(1)),
             new Request(RequestType.WITHDRAWAL, Bytes.of(1)),
             new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
-    PayloadWrapper payload = new PayloadWrapper(payloadIdentifier, block, Optional.of(requests));
+    PayloadWrapper payload =
+        new PayloadWrapper(
+            payloadIdentifier, block, Optional.of(requests), BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -206,7 +226,8 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.DEPOSIT, Bytes.of(1)),
             new Request(RequestType.WITHDRAWAL, Bytes.EMPTY));
     PayloadWrapper payload =
-        new PayloadWrapper(payloadIdentifier, block, Optional.of(unorderedRequests));
+        new PayloadWrapper(
+            payloadIdentifier, block, Optional.of(unorderedRequests), BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -232,5 +253,11 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
   @Override
   protected String getMethodName() {
     return RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName();
+  }
+
+  @Override
+  protected long getValidPayloadTimestamp() {
+    // V4 works with Prague (>= 50) but must be before Osaka (< 60)
+    return 55L;
   }
 }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.File;
@@ -88,8 +89,10 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfig genesisConfig, final ProtocolSchedule protocolSchedule) {
-    return GenesisState.fromConfig(genesisConfig, protocolSchedule);
+      final GenesisConfig genesisConfig,
+      final ProtocolSchedule protocolSchedule,
+      final CodeCache codeCache) {
+    return GenesisState.fromConfig(genesisConfig, protocolSchedule, codeCache);
   }
 
   @Singleton
@@ -116,6 +119,9 @@ public class GenesisFileModule {
   static GenesisFileModule createGenesisModule() {
     final JsonObject genesis = new JsonObject();
     final JsonObject config = new JsonObject();
+    config.put("depositContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa");
+    config.put("withdrawalRequestContractAddress", "0x00000961ef480eb55e80d19ad83579a64c007002");
+    config.put("consolidationRequestContractAddress", "0x0000bbddc7ce488642fb579f8b00f3a590007251");
     genesis.put("config", config);
     config.put("chainId", 1337);
     config.put(MainnetHardforkId.mostRecent().toString().toLowerCase(Locale.ROOT) + "Time", 0);
@@ -124,6 +130,7 @@ public class GenesisFileModule {
     genesis.put("difficulty", "0x0");
     genesis.put("mixHash", "0x0000000000000000000000000000000000000000000000000000000000000000");
     genesis.put("coinbase", "0x0000000000000000000000000000000000000000");
+
     return createGenesisModule(genesis.toString());
   }
 

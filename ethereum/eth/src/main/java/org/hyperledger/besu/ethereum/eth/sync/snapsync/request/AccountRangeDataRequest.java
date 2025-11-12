@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -137,8 +137,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         new AtomicReference<>(noop());
 
     // we have a flat DB only with Bonsai
-    worldStateStorageCoordinator.applyOnMatchingFlatMode(
-        FlatDbMode.FULL,
+    worldStateStorageCoordinator.applyOnMatchingFlatModes(
+        List.of(FlatDbMode.FULL, FlatDbMode.ARCHIVE),
         bonsaiWorldStateStorageStrategy -> {
           flatDatabaseUpdater.set(
               (key, value) ->

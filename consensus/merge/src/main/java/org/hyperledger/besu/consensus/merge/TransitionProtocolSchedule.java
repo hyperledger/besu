@@ -23,9 +23,10 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRule;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -34,8 +35,10 @@ import org.slf4j.LoggerFactory;
 
 /** The Transition protocol schedule. */
 public class TransitionProtocolSchedule implements ProtocolSchedule {
-  private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
+  private final TransitionUtils<ProtocolSchedule> transitionUtils;
+  private final ProtocolSchedule preMergeProtocolSchedule;
+  private final ProtocolSchedule postMergeProtocolSchedule;
   private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
 
@@ -50,6 +53,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
       final MergeContext mergeContext) {
+    this.preMergeProtocolSchedule = preMergeProtocolSchedule;
+    this.postMergeProtocolSchedule = postMergeProtocolSchedule;
     this.mergeContext = mergeContext;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
@@ -80,9 +85,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    * @return the ProtocolSpec to be used by the provided block
    */
   @Override
-  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+  public ProtocolSpec getByBlockHeader(
+      final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader) {
     return this.transitionUtils.dispatchFunctionAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader));
+        blockHeader, protocolSchedule -> protocolSchedule.getByBlockHeader(blockHeader));
   }
 
   /**
@@ -148,7 +154,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
     return transitionUtils.dispatchFunctionAccordingToMergeState(
-        schedule -> schedule.isOnMilestoneBoundary(blockHeader));
+        blockHeader, schedule -> schedule.isOnMilestoneBoundary(blockHeader));
   }
 
   /**
@@ -217,23 +223,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public void setPermissionTransactionFilter(
       final PermissionTransactionFilter permissionTransactionFilter) {
-    transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule ->
-            protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
+    preMergeProtocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter);
+    postMergeProtocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter);
   }
 
-  /**
-   * Sets public world state archive for privacy block processor.
-   *
-   * @param publicWorldStateArchive the public world state archive
-   */
   @Override
-  public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
-      final WorldStateArchive publicWorldStateArchive) {
-    transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule ->
-            protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
-                publicWorldStateArchive));
+  public void setAdditionalValidationRules(
+      final List<TransactionValidationRule> additionalValidationRules) {
+    preMergeProtocolSchedule.setAdditionalValidationRules(additionalValidationRules);
+    postMergeProtocolSchedule.setAdditionalValidationRules(additionalValidationRules);
   }
 
   /**
@@ -243,5 +241,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    */
   public void setProtocolContext(final ProtocolContext protocolContext) {
     this.protocolContext = protocolContext;
+  }
+
+  @Override
+  public Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime) {
+    return getPostMergeSchedule().getNextProtocolSpec(currentTime);
+  }
+
+  @Override
+  public Optional<ScheduledProtocolSpec> getLatestProtocolSpec() {
+    return getPostMergeSchedule().getLatestProtocolSpec();
   }
 }

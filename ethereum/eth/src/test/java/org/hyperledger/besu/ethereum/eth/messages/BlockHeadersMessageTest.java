@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -59,7 +60,8 @@ public final class BlockHeadersMessageTest {
       oneBlock.skipNext();
     }
     final MessageData initialMessage = BlockHeadersMessage.create(headers);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_HEADERS, initialMessage.getData());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.BLOCK_HEADERS, initialMessage.getData());
     final BlockHeadersMessage message = BlockHeadersMessage.readFrom(raw);
     final List<BlockHeader> readHeaders =
         message.getHeaders(
@@ -70,6 +72,7 @@ public final class BlockHeadersMessageTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem()));
 
     for (int i = 0; i < 50; ++i) {

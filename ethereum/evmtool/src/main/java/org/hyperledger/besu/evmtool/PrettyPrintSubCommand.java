@@ -97,22 +97,24 @@ public class PrettyPrintSubCommand implements Runnable {
         parentCommand.out.println("Invalid hex string: " + e.getMessage());
         continue;
       }
-      String fork = EvmSpecVersion.OSAKA.getName();
+      String fork = EvmSpecVersion.FUTURE_EIPS.getName();
       if (parentCommand.hasFork()) {
         fork = parentCommand.getFork();
       }
-      ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
+      ProtocolSpec protocolSpec =
+          ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
+              .geSpecByName(fork);
       EVM evm = protocolSpec.getEvm();
       if (evm.getEvmVersion().getMaxEofVersion() < 1
           || container.get(0) != ((byte) 0xef)
           || container.get(1) != 0) {
-        Code code = evm.getCodeUncached(container);
+        Code code = evm.wrapCode(container);
         parentCommand.out.print(code.prettyPrint());
         parentCommand.out.flush();
       } else {
         EOFLayout layout = evm.parseEOF(container);
         if (layout.isValid()) {
-          var validatedCode = evm.getCodeUncached(container);
+          var validatedCode = evm.wrapCode(container);
           if (validatedCode.isValid() || force) {
             layout.prettyPrint(parentCommand.out);
           }

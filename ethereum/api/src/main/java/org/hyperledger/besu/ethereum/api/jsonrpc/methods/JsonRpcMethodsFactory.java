@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -76,7 +76,6 @@ public class JsonRpcMethodsFactory {
       final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
       final Collection<String> rpcApis,
-      final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -87,6 +86,7 @@ public class JsonRpcMethodsFactory {
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
       final ApiConfiguration apiConfiguration,
+      final BalConfiguration balConfiguration,
       final Optional<EnodeDnsConfiguration> enodeDnsConfiguration,
       final TransactionSimulator transactionSimulator,
       final EthScheduler ethScheduler) {
@@ -117,8 +117,6 @@ public class JsonRpcMethodsFactory {
                   dataDir,
                   transactionSimulator,
                   ethScheduler),
-              new EeaJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
                   protocolSchedule,
@@ -136,9 +134,13 @@ public class JsonRpcMethodsFactory {
                   filterManager,
                   transactionPool,
                   miningCoordinator,
+                  miningConfiguration,
                   supportedCapabilities,
                   apiConfiguration,
-                  transactionSimulator),
+                  balConfiguration,
+                  genesisConfigOptions,
+                  transactionSimulator,
+                  metricsSystem),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,
@@ -148,14 +150,6 @@ public class JsonRpcMethodsFactory {
                   graphQLConfiguration),
               new MinerJsonRpcMethods(miningConfiguration, miningCoordinator),
               new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
-              new PrivJsonRpcMethods(
-                  blockchainQueries,
-                  protocolSchedule,
-                  transactionPool,
-                  privacyParameters,
-                  filterManager),
-              new PrivxJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientNodeName),
               new TraceJsonRpcMethods(
                   blockchainQueries,

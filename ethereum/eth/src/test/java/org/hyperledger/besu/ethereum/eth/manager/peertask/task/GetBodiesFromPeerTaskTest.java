@@ -22,19 +22,23 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
@@ -89,7 +93,7 @@ public class GetBodiesFromPeerTaskTest {
     MessageData messageData = task.getRequestMessage();
     GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(messageData);
 
-    Assertions.assertEquals(EthPV62.GET_BLOCK_BODIES, getBlockBodiesMessage.getCode());
+    Assertions.assertEquals(EthProtocolMessages.GET_BLOCK_BODIES, getBlockBodiesMessage.getCode());
     Iterable<Hash> hashesInMessage = getBlockBodiesMessage.hashes();
     List<Hash> expectedHashes =
         List.of(
@@ -150,7 +154,8 @@ public class GetBodiesFromPeerTaskTest {
 
     EthPeer successfulCandidate = mockPeer(5);
 
-    Assertions.assertTrue(task.getPeerRequirementFilter().test(successfulCandidate));
+    Assertions.assertTrue(
+        task.getPeerRequirementFilter().test(EthPeerImmutableAttributes.from(successfulCandidate)));
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber) {
@@ -183,7 +188,10 @@ public class GetBodiesFromPeerTaskTest {
 
     Mockito.when(ethPeer.chainState()).thenReturn(chainState);
     Mockito.when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
-
+    Mockito.when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+    Mockito.when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(ethPeer.getConnection()).thenReturn(connection);
     return ethPeer;
   }
 }
