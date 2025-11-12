@@ -21,11 +21,9 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.InternalProfileName;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
