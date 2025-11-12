@@ -190,20 +190,20 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                       clock,
                       syncDurationMetrics);
           case POS ->
-                  () ->
-                          PosSyncDownloaderFactory.createValidatorDownloader(
-                                  new SnapSyncStatePersistenceManager(storageProvider),
-                                  pivotBlockSelector,
-                                  syncConfig,
-                                  dataDirectory,
-                                  protocolSchedule,
-                                  protocolContext,
-                                  metricsSystem,
-                                  ethContext,
-                                  worldStateStorageCoordinator,
-                                  syncState,
-                                  clock,
-                                  syncDurationMetrics);
+              () ->
+                  PosSyncDownloaderFactory.createValidatorDownloader(
+                      new SnapSyncStatePersistenceManager(storageProvider),
+                      pivotBlockSelector,
+                      syncConfig,
+                      dataDirectory,
+                      protocolSchedule,
+                      protocolContext,
+                      metricsSystem,
+                      ethContext,
+                      worldStateStorageCoordinator,
+                      syncState,
+                      clock,
+                      syncDurationMetrics);
           default -> () -> Optional.empty();
         };
 

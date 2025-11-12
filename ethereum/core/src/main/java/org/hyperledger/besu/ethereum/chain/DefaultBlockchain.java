@@ -486,8 +486,11 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlockWithoutHeader(
-      final Block block, final List<TransactionReceipt> receipts, final boolean txIndexing) {
-    if (numberOfBlocksToCache != 0) cacheBlockData(block, receipts);
+      final Block block,
+      final List<TransactionReceipt> receipts,
+      final Optional<BlockAccessList> blockAccessList,
+      final boolean txIndexing) {
+    cacheBlockData(block, receipts, blockAccessList);
     appendBlockHelper(new BlockWithReceipts(block, receipts), false, txIndexing, true);
   }
 
@@ -497,7 +500,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, true);
   }
 
   @Override
@@ -506,36 +509,35 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, false);
   }
 
+  @Override
+  public void appendSyncBlocksForPoC(final List<SyncBlock> syncBlocks) {
+    syncBlocks.forEach(
+        syncBlock -> {
+          final BlockchainStorage.Updater updater = blockchainStorage.updater();
+          updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
+          updater.commit();
+        });
+  }
 
-    @Override
-    public void appendSyncBlocksForPoC(final List<SyncBlock> syncBlocks) {
-        syncBlocks.forEach(
-                syncBlock -> {
-                    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-                    updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
-                    updater.commit();
-                });
+  @Override
+  public void appendSyncTransactionReceiptsForPoC(
+      final List<BlockHeader> blockHeaders, final List<SyncTransactionReceipts> syncReceiptsList) {
+    if (blockHeaders.size() != syncReceiptsList.size()) {
+      throw new InvalidConfigurationException(
+          "Block headers and sync receipts list must have the same size");
     }
-
-    @Override
-    public void appendSyncTransactionReceiptsForPoC(
-            final List<BlockHeader> blockHeaders, final List<SyncTransactionReceipts> syncReceiptsList) {
-        if (blockHeaders.size() != syncReceiptsList.size()) {
-            throw new InvalidConfigurationException(
-                    "Block headers and sync receipts list must have the same size");
-        }
-        IntStream.range(0, blockHeaders.size())
-                .forEach(
-                        i -> {
-                            final BlockchainStorage.Updater updater = blockchainStorage.updater();
-                            updater.putSyncTransactionReceipts(
-                                    blockHeaders.get(i).getHash(), syncReceiptsList.get(i));
-                            updater.commit();
-                        });
-    }
+    IntStream.range(0, blockHeaders.size())
+        .forEach(
+            i -> {
+              final BlockchainStorage.Updater updater = blockchainStorage.updater();
+              updater.putSyncTransactionReceipts(
+                  blockHeaders.get(i).getHash(), syncReceiptsList.get(i));
+              updater.commit();
+            });
+  }
 
   @Override
   public synchronized void appendSyncBlock(
@@ -557,16 +559,16 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true, fallse);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true, false);
   }
 
-    @Override
-    public void importHeader(final BlockHeader blockHeader) {
-        final BlockchainStorage.Updater updater = blockchainStorage.updater();
-        updater.putBlockHeader(blockHeader.getHash(), blockHeader);
-        updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
-        updater.commit();
-    }
+  @Override
+  public void importHeader(final BlockHeader blockHeader) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.commit();
+  }
 
   @Override
   public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -192,7 +191,6 @@ public class SyncBlockBodyTest {
 
   private static ProtocolSpec getProtocolSpec() {
     return new ProtocolSpec(
-        "root",
         HardforkId.MainnetHardforkId.CANCUN,
         null,
         null,
@@ -207,7 +205,6 @@ public class SyncBlockBodyTest {
         null,
         null,
         null,
-        BlockHeader::getCoinbase,
         null,
         new PrecompileContractRegistry(),
         false,
@@ -219,7 +216,7 @@ public class SyncBlockBodyTest {
         Optional.empty(),
         null,
         Optional.empty(),
-            new FrontierBlockHashProcessor(),
+        null,
         true,
         Duration.ofSeconds(12),
         true,
