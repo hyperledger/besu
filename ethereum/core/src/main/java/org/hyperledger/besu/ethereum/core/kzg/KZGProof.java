@@ -22,9 +22,8 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes48;
 
 /** This class contains the data for a KZG proof for a KZG commitment. */
-public class KZGProof implements org.hyperledger.besu.datatypes.KZGProof {
+public class KZGProof extends KZGBytes<Bytes48> implements org.hyperledger.besu.datatypes.KZGProof {
   static int SIZE = 48;
-  private final Bytes48 data;
 
   /**
    * Constructor for a KZG proof.
@@ -32,7 +31,7 @@ public class KZGProof implements org.hyperledger.besu.datatypes.KZGProof {
    * @param data The data for the KZG proof.
    */
   public KZGProof(final Bytes48 data) {
-    this.data = data;
+    super(data);
   }
 
   /**
@@ -52,17 +51,7 @@ public class KZGProof implements org.hyperledger.besu.datatypes.KZGProof {
    * @param out The RLP output.
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytes(data);
-  }
-
-  /**
-   * Gets the data for the KZG proof.
-   *
-   * @return The data for the KZG proof.
-   */
-  @Override
-  public Bytes48 getData() {
-    return data;
+    out.writeBytes(getData());
   }
 
   @Override
