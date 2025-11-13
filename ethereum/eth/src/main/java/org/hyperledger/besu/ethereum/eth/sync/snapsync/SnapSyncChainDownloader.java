@@ -111,7 +111,9 @@ public class SnapSyncChainDownloader
     // Initialize or load chain sync state
     ChainSyncState chainSyncState =
         chainStateStorage.loadState(
-            rlpInput -> BlockHeader.readFrom(rlpInput, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+            rlpInput ->
+                BlockHeader.readFrom(
+                    rlpInput, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     if (chainSyncState == null) {
       // First time sync - create initial state
       // This downloads headers from the pivot down to the genesis block
