@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,12 +166,12 @@ public class EthProtocolOptionsTest
 
   @Override
   protected EthProtocolConfiguration createDefaultDomainObject() {
-    return EthProtocolConfiguration.builder().build();
+    return ImmutableEthProtocolConfiguration.builder().build();
   }
 
   @Override
   protected EthProtocolConfiguration createCustomizedDomainObject() {
-    return EthProtocolConfiguration.builder()
+    return ImmutableEthProtocolConfiguration.builder()
         .maxMessageSize(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE * 2)
         .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
         .maxGetBlockBodies(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2)
