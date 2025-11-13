@@ -280,7 +280,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     long endBlock = pivotHeader.getNumber();
 
-    final int downloaderParallelism = 12; // syncConfig.getDownloaderParallelism();
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = 256; // syncConfig.getDownloaderHeaderRequestSize();
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
