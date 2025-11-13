@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -424,7 +425,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        true,
+                        ImmutableBalConfiguration.builder().isBalApiEnabled(true).build(),
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .dataStorageFormat(DataStorageFormat.BONSAI)
