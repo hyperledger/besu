@@ -29,11 +29,11 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFl
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy;
-import org.hyperledger.besu.ethereum.worldstate.BonsaiDbTrieWriteSink;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.TrieWriteSink;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.writesink.BonsaiDbWorldStateWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -322,8 +322,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     }
 
     @Override
-    public TrieWriteSink getTrieWriteSink() {
-      return new BonsaiDbTrieWriteSink(this);
+    public WorldStateWriteSink getWorldStateWriteSink() {
+      return new BonsaiDbWorldStateWriteSink(this);
     }
 
     @Override

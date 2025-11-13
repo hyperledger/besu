@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.S
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.worldstate.BufferingTrieWriteSink;
-import org.hyperledger.besu.ethereum.worldstate.TrieWriteSink;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateWriteSet;
+import org.hyperledger.besu.ethereum.worldstate.writesink.BufferingWorldStateWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSet;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
@@ -68,7 +68,7 @@ public class BlockAccessListStateRootHashCalculator {
       final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
 
     final WorldStateWriteSet writeSet = new WorldStateWriteSet();
-    final TrieWriteSink trieWriteSink = new BufferingTrieWriteSink(writeSet);
+    final WorldStateWriteSink worldStateWriteSink = new BufferingWorldStateWriteSink(writeSet);
     final BonsaiWorldStateUpdateAccumulator accumulator =
         (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
 
@@ -123,7 +123,7 @@ public class BlockAccessListStateRootHashCalculator {
 
     accumulator.clearAccountsThatAreEmpty();
     accumulator.commit();
-    final Hash root = worldState.calculateRootHash(accumulator, trieWriteSink);
+    final Hash root = worldState.calculateRootHash(accumulator, worldStateWriteSink);
     writeSet.setComputedRoot(root);
     return new BalRootComputation(root, writeSet, accumulator);
   }

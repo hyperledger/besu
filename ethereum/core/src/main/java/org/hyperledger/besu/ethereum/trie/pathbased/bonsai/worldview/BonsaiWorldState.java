@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateC
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.TrieWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -119,41 +119,41 @@ public class BonsaiWorldState extends PathBasedWorldState {
   protected Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
-    final TrieWriteSink trieWriteSink =
+    final WorldStateWriteSink worldStateWriteSink =
         maybeStateUpdater
-            .map(PathBasedWorldStateKeyValueStorage.Updater::getTrieWriteSink)
-            .orElse(TrieWriteSink.NOOP);
+            .map(PathBasedWorldStateKeyValueStorage.Updater::getWorldStateWriteSink)
+            .orElse(WorldStateWriteSink.NOOP);
     return internalCalculateRootHash(
-        trieWriteSink, (BonsaiWorldStateUpdateAccumulator) worldStateUpdater);
+        worldStateWriteSink, (BonsaiWorldStateUpdateAccumulator) worldStateUpdater);
   }
 
   public Hash calculateRootHash(
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
-      final TrieWriteSink trieWriteSink) {
-    return internalCalculateRootHash(trieWriteSink, worldStateUpdater);
+      final WorldStateWriteSink worldStateWriteSink) {
+    return internalCalculateRootHash(worldStateWriteSink, worldStateUpdater);
   }
 
   private Hash internalCalculateRootHash(
-      final TrieWriteSink trieWriteSink,
+      final WorldStateWriteSink worldStateWriteSink,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
 
-    clearStorage(trieWriteSink, worldStateUpdater);
+    clearStorage(worldStateWriteSink, worldStateUpdater);
 
     // This must be done before updating the accounts so
     // that we can get the storage state hash
     Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>>
         storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
-    if (trieWriteSink == TrieWriteSink.NOOP) {
+    if (worldStateWriteSink == WorldStateWriteSink.NOOP) {
       storageStream =
           storageStream
               .parallel(); // if we are not updating the state updater we can use parallel stream
     }
     storageStream.forEach(
         addressMapEntry ->
-            updateAccountStorageState(trieWriteSink, worldStateUpdater, addressMapEntry));
+            updateAccountStorageState(worldStateWriteSink, worldStateUpdater, addressMapEntry));
 
     // Third update the code.  This has the side effect of ensuring a code hash is calculated.
-    updateCode(trieWriteSink, worldStateUpdater);
+    updateCode(worldStateWriteSink, worldStateUpdater);
 
     // next walk the account trie
     final MerkleTrie<Bytes, Bytes> accountTrie =
@@ -163,19 +163,20 @@ public class BonsaiWorldState extends PathBasedWorldState {
                     getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
-    if (trieWriteSink != TrieWriteSink.NOOP) {
+    if (worldStateWriteSink != WorldStateWriteSink.NOOP) {
       // for manicured tries and composting, collect branches here (not implemented)
-      updateTheAccounts(trieWriteSink, worldStateUpdater, accountTrie);
+      updateTheAccounts(worldStateWriteSink, worldStateUpdater, accountTrie);
 
       accountTrie.commit(
-          (location, hash, value) -> trieWriteSink.putAccountStateTrieNode(location, hash, value));
+          (location, hash, value) ->
+              worldStateWriteSink.putAccountStateTrieNode(location, hash, value));
     }
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
 
   private void updateTheAccounts(
-      final TrieWriteSink trieWriteSink,
+      final WorldStateWriteSink worldStateWriteSink,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final MerkleTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, PathBasedValue<BonsaiAccount>> accountUpdate :
@@ -187,11 +188,11 @@ public class BonsaiWorldState extends PathBasedWorldState {
         if (updatedAccount == null) {
           final Hash addressHash = hashAndSavePreImage(accountKey);
           accountTrie.remove(addressHash);
-          trieWriteSink.removeAccountInfoState(addressHash);
+          worldStateWriteSink.removeAccountInfoState(addressHash);
         } else {
           final Hash addressHash = updatedAccount.getAddressHash();
           final Bytes accountValue = updatedAccount.serializeAccount();
-          trieWriteSink.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue);
+          worldStateWriteSink.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue);
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
@@ -204,7 +205,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   @VisibleForTesting
   protected void updateCode(
-      final TrieWriteSink trieWriteSink,
+      final WorldStateWriteSink worldStateWriteSink,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     for (final Map.Entry<Address, PathBasedValue<Bytes>> codeUpdate :
         worldStateUpdater.getCodeToUpdate().entrySet()) {
@@ -220,10 +221,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
       if (codeIsEmpty(updatedCode)) {
         final Hash priorCodeHash = Hash.hash(priorCode);
-        trieWriteSink.removeCode(accountHash, priorCodeHash);
+        worldStateWriteSink.removeCode(accountHash, priorCodeHash);
       } else {
         final Hash codeHash = Hash.hash(codeUpdate.getValue().getUpdated());
-        trieWriteSink.putCode(accountHash, codeHash, updatedCode);
+        worldStateWriteSink.putCode(accountHash, codeHash, updatedCode);
       }
     }
   }
@@ -233,7 +234,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   private void updateAccountStorageState(
-      final TrieWriteSink trieWriteSink,
+      final WorldStateWriteSink worldStateWriteSink,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
       final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>
           storageAccountUpdate) {
@@ -262,10 +263,11 @@ public class BonsaiWorldState extends PathBasedWorldState {
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         try {
           if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            trieWriteSink.removeStorageValueBySlotHash(updatedAddressHash, slotHash);
+            worldStateWriteSink.removeStorageValueBySlotHash(updatedAddressHash, slotHash);
             storageTrie.remove(slotHash);
           } else {
-            trieWriteSink.putStorageValueBySlotHash(updatedAddressHash, slotHash, updatedStorage);
+            worldStateWriteSink.putStorageValueBySlotHash(
+                updatedAddressHash, slotHash, updatedStorage);
             storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
           }
         } catch (MerkleTrieException e) {
@@ -280,10 +282,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {
-        if (trieWriteSink != TrieWriteSink.NOOP) {
+        if (worldStateWriteSink != WorldStateWriteSink.NOOP) {
           storageTrie.commit(
               (location, key, value) ->
-                  trieWriteSink.putAccountStorageTrieNode(
+                  worldStateWriteSink.putAccountStorageTrieNode(
                       updatedAddressHash, location, key, value));
         }
         // only use storage root of the trie when trie is enabled
@@ -297,7 +299,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   private void clearStorage(
-      final TrieWriteSink trieWriteSink,
+      final WorldStateWriteSink worldStateWriteSink,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     for (final Address address : worldStateUpdater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
@@ -339,7 +341,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
                 new StorageSlotKey(Hash.wrap(slot.getKey()), Optional.empty());
             final UInt256 slotValue =
                 UInt256.fromBytes(Bytes32.leftPad(RLP.decodeValue(slot.getValue())));
-            trieWriteSink.removeStorageValueBySlotHash(
+            worldStateWriteSink.removeStorageValueBySlotHash(
                 address.addressHash(), storageSlotKey.getSlotHash());
             storageToDelete
                 .computeIfAbsent(storageSlotKey, key -> new PathBasedValue<>(slotValue, null, true))

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateWriteSet;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSet;
 
 public record BalRootComputation(
     Hash root, WorldStateWriteSet writeSet, BonsaiWorldStateUpdateAccumulator accumulator) {}

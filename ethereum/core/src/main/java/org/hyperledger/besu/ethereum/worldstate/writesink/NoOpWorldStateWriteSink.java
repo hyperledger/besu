@@ -12,14 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.worldstate.writesink;
 
 import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public final class NoOpTrieWriteSink implements TrieWriteSink {
+public final class NoOpWorldStateWriteSink implements WorldStateWriteSink {
 
   @Override
   public void putAccountInfoState(final Hash addressHash, final Bytes accountValue) {

@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.worldstate.writesink;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
 /** Collects world-state write operations that can be replayed against a storage updater. */
 public class WorldStateWriteSet {
 
-  private final List<Consumer<TrieWriteSink>> operations = new ArrayList<>();
+  private final List<Consumer<WorldStateWriteSink>> operations = new ArrayList<>();
   private Optional<Hash> computedRoot = Optional.empty();
 
   public Hash computedRoot() {
@@ -41,12 +42,12 @@ public class WorldStateWriteSet {
     computedRoot = Optional.of(root);
   }
 
-  public void record(final Consumer<TrieWriteSink> operation) {
+  public void record(final Consumer<WorldStateWriteSink> operation) {
     operations.add(operation);
   }
 
   public void applyTo(final WorldStateKeyValueStorage.Updater updater) {
-    final TrieWriteSink sink = updater.getTrieWriteSink();
+    final WorldStateWriteSink sink = updater.getWorldStateWriteSink();
     operations.forEach(operation -> operation.accept(sink));
   }
 }
