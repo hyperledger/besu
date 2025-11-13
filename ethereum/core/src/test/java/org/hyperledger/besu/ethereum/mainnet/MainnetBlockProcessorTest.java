@@ -68,7 +68,8 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();
@@ -96,7 +97,8 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();

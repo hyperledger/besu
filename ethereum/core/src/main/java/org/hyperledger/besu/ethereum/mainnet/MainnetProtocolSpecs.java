@@ -202,6 +202,7 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
         .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
+        .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
@@ -291,7 +292,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                protocolSchedule) ->
+                protocolSchedule,
+                balConfig) ->
                 new DaoBlockProcessor(
                     isParallelTxProcessingEnabled
                         ? new MainnetParallelBlockProcessor(
@@ -301,6 +303,7 @@ public abstract class MainnetProtocolSpecs {
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
                             protocolSchedule,
+                            balConfig,
                             metricsSystem)
                         : new MainnetBlockProcessor(
                             transactionProcessor,
@@ -308,7 +311,8 @@ public abstract class MainnetProtocolSpecs {
                             blockReward,
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
-                            protocolSchedule)))
+                            protocolSchedule,
+                            balConfig)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 

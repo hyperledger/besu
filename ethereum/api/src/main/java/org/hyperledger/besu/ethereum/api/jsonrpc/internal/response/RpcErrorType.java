@@ -164,7 +164,7 @@ public enum RpcErrorType implements RpcMethodError {
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(
-      -32000,
+      3,
       "Execution reverted",
       data -> JsonRpcErrorResponse.decodeRevertReason(Bytes.fromHexString(data))),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),

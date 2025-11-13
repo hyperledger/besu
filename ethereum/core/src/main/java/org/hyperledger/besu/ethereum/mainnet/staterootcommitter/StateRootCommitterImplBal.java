@@ -55,7 +55,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
 
     final Duration balRootTimeout = balConfiguration.getBalStateRootTimeout();
 
-    if (balConfiguration.isBalLenientOnMismatch()) {
+    if (balConfiguration.isBalLenientOnStateRootMismatch()) {
       final Optional<Hash> maybeBalRoot = waitForBalRootLenient(balRootTimeout);
       if (maybeBalRoot.isEmpty()) {
         LOG.warn(
