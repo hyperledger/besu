@@ -166,7 +166,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
     return new BlobAndProofV2(
         EngineGetBlobsV2.toFastHex(blobProofBundle.getBlob().getData(), true),
-        blobProofBundle.getKzgProof().parallelStream()
+        blobProofBundle.getKzgProof().stream()
             .map(proof -> EngineGetBlobsV2.toFastHex(proof.getData(), true))
             .toList());
   }
