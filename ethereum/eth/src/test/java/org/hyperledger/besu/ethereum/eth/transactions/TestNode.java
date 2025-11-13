@@ -203,7 +203,7 @@ public class TestNode implements Closeable {
             BigInteger.ONE,
             worldStateArchive,
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            EthProtocolConfiguration.DEFAULT,
             ethPeers,
             ethMessages,
             ethContext,
