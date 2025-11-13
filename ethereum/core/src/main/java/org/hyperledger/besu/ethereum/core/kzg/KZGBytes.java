@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.kzg;
 
+import org.hyperledger.besu.util.HexUtils;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class KZGBytes<T extends Bytes> {
@@ -21,7 +23,7 @@ public class KZGBytes<T extends Bytes> {
   private final T bytes;
 
   public KZGBytes(final T bytes) {
-    this.cachedHex = bytes.toHexString();
+    this.cachedHex = HexUtils.toFastHex(bytes, true);
     this.bytes = bytes;
   }
 
