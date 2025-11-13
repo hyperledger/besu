@@ -15,229 +15,59 @@
 package org.hyperledger.besu.ethereum.eth;
 
 import org.hyperledger.besu.util.number.ByteUnits;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
-import java.util.Objects;
+import org.immutables.value.Value;
 
-import com.google.common.base.MoreObjects;
+@Value.Immutable
+public interface EthProtocolConfiguration {
+  int DEFAULT_MAX_MESSAGE_SIZE = 10 * ByteUnits.MEGABYTE;
+  int DEFAULT_MAX_GET_BLOCK_HEADERS = 512;
+  int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
+  int DEFAULT_MAX_GET_RECEIPTS = 256;
+  int DEFAULT_MAX_GET_NODE_DATA = 384;
+  int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
+  int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
+  int DEFAULT_MIN_CAPABILITY = 0;
 
-public class EthProtocolConfiguration {
+  EthProtocolConfiguration DEFAULT = ImmutableEthProtocolConfiguration.builder().build();
 
-  public static final int DEFAULT_MAX_MESSAGE_SIZE = 10 * ByteUnits.MEGABYTE;
-  public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 512;
-  public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
-  public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
-  public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
-  public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
-  public static final int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
-  public static final int DEFAULT_MIN_CAPABILITY = 0;
-  // Limit the size of p2p messages (in bytes)
-  private final int maxMessageSize;
-
-  // These options impose limits on the max number of elements returned when responding to
-  // peers' p2p RPC requests
-  private final int maxGetBlockHeaders;
-  private final int maxGetBlockBodies;
-  private final int maxGetReceipts;
-  private final int maxGetNodeData;
-  private final int maxGetPooledTransactions;
-  private final int maxEthCapability;
-  private final int minEthCapability;
-
-  private EthProtocolConfiguration(
-      final int maxMessageSize,
-      final int maxGetBlockHeaders,
-      final int maxGetBlockBodies,
-      final int maxGetReceipts,
-      final int maxGetNodeData,
-      final int maxGetPooledTransactions,
-      final int maxEthCapability,
-      final int minEthCapability) {
-    this.maxMessageSize = maxMessageSize;
-    this.maxGetBlockHeaders = maxGetBlockHeaders;
-    this.maxGetBlockBodies = maxGetBlockBodies;
-    this.maxGetReceipts = maxGetReceipts;
-    this.maxGetNodeData = maxGetNodeData;
-    this.maxGetPooledTransactions = maxGetPooledTransactions;
-    this.maxEthCapability = maxEthCapability;
-    this.minEthCapability = minEthCapability;
+  @Value.Default
+  default int getMaxMessageSize() {
+    return DEFAULT_MAX_MESSAGE_SIZE;
   }
 
-  public static EthProtocolConfiguration defaultConfig() {
-    return builder().build();
+  @Value.Default
+  default int getMaxGetBlockHeaders() {
+    return DEFAULT_MAX_GET_BLOCK_HEADERS;
   }
 
-  public static Builder builder() {
-    return new Builder();
+  @Value.Default
+  default int getMaxGetBlockBodies() {
+    return DEFAULT_MAX_GET_BLOCK_BODIES;
   }
 
-  public int getMaxMessageSize() {
-    return maxMessageSize;
+  @Value.Default
+  default int getMaxGetReceipts() {
+    return DEFAULT_MAX_GET_RECEIPTS;
   }
 
-  public int getMaxGetBlockHeaders() {
-    return maxGetBlockHeaders;
+  @Value.Default
+  default int getMaxGetNodeData() {
+    return DEFAULT_MAX_GET_NODE_DATA;
   }
 
-  public int getMaxGetBlockBodies() {
-    return maxGetBlockBodies;
+  @Value.Default
+  default int getMaxGetPooledTransactions() {
+    return DEFAULT_MAX_GET_POOLED_TRANSACTIONS;
   }
 
-  public int getMaxGetReceipts() {
-    return maxGetReceipts;
+  @Value.Default
+  default int getMaxEthCapability() {
+    return DEFAULT_MAX_CAPABILITY;
   }
 
-  public int getMaxGetNodeData() {
-    return maxGetNodeData;
-  }
-
-  public int getMaxGetPooledTransactions() {
-    return maxGetPooledTransactions;
-  }
-
-  public int getMaxEthCapability() {
-    return maxEthCapability;
-  }
-
-  public int getMinEthCapability() {
-    return minEthCapability;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final EthProtocolConfiguration that = (EthProtocolConfiguration) o;
-    return maxGetBlockHeaders == that.maxGetBlockHeaders
-        && maxGetBlockBodies == that.maxGetBlockBodies
-        && maxGetReceipts == that.maxGetReceipts
-        && maxGetNodeData == that.maxGetNodeData
-        && maxGetPooledTransactions == that.maxGetPooledTransactions;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(maxGetBlockHeaders, maxGetBlockBodies, maxGetReceipts, maxGetNodeData);
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("maxGetBlockHeaders", maxGetBlockHeaders)
-        .add("maxGetBlockBodies", maxGetBlockBodies)
-        .add("maxGetReceipts", maxGetReceipts)
-        .add("maxGetNodeData", maxGetNodeData)
-        .add("maxGetPooledTransactions", maxGetPooledTransactions)
-        .toString();
-  }
-
-  public static class Builder {
-    private PositiveNumber maxMessageSize =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-
-    private PositiveNumber maxGetBlockHeaders =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS);
-
-    private PositiveNumber maxGetBlockBodies =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES);
-
-    private PositiveNumber maxGetReceipts =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS);
-
-    private PositiveNumber maxGetNodeData =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
-
-    private PositiveNumber maxGetPooledTransactions =
-        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
-
-    private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
-
-    private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
-
-    public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
-      this.maxMessageSize = maxMessageSize;
-      return this;
-    }
-
-    public Builder maxMessageSize(final int maxMessageSize) {
-      this.maxMessageSize = PositiveNumber.fromInt(maxMessageSize);
-      return this;
-    }
-
-    public Builder maxGetBlockHeaders(final PositiveNumber maxGetBlockHeaders) {
-      this.maxGetBlockHeaders = maxGetBlockHeaders;
-      return this;
-    }
-
-    public Builder maxGetBlockHeaders(final int maxGetBlockHeaders) {
-      this.maxGetBlockHeaders = PositiveNumber.fromInt(maxGetBlockHeaders);
-      return this;
-    }
-
-    public Builder maxGetBlockBodies(final PositiveNumber maxGetBlockBodies) {
-      this.maxGetBlockBodies = maxGetBlockBodies;
-      return this;
-    }
-
-    public Builder maxGetBlockBodies(final int maxGetBlockBodies) {
-      this.maxGetBlockBodies = PositiveNumber.fromInt(maxGetBlockBodies);
-      return this;
-    }
-
-    public Builder maxGetReceipts(final PositiveNumber maxGetReceipts) {
-      this.maxGetReceipts = maxGetReceipts;
-      return this;
-    }
-
-    public Builder maxGetReceipts(final int maxGetReceipts) {
-      this.maxGetReceipts = PositiveNumber.fromInt(maxGetReceipts);
-      return this;
-    }
-
-    public Builder maxGetNodeData(final PositiveNumber maxGetNodeData) {
-      this.maxGetNodeData = maxGetNodeData;
-      return this;
-    }
-
-    public Builder maxGetNodeData(final int maxGetNodeData) {
-      this.maxGetNodeData = PositiveNumber.fromInt(maxGetNodeData);
-      return this;
-    }
-
-    public Builder maxGetPooledTransactions(final PositiveNumber maxGetPooledTransactions) {
-      this.maxGetPooledTransactions = maxGetPooledTransactions;
-      return this;
-    }
-
-    public Builder maxGetPooledTransactions(final int maxGetPooledTransactions) {
-      this.maxGetPooledTransactions = PositiveNumber.fromInt(maxGetPooledTransactions);
-      return this;
-    }
-
-    public Builder maxEthCapability(final int maxEthCapability) {
-      this.maxEthCapability = maxEthCapability;
-      return this;
-    }
-
-    public Builder minEthCapability(final int minEthCapability) {
-      this.minEthCapability = minEthCapability;
-      return this;
-    }
-
-    public EthProtocolConfiguration build() {
-      return new EthProtocolConfiguration(
-          maxMessageSize.getValue(),
-          maxGetBlockHeaders.getValue(),
-          maxGetBlockBodies.getValue(),
-          maxGetReceipts.getValue(),
-          maxGetNodeData.getValue(),
-          maxGetPooledTransactions.getValue(),
-          maxEthCapability,
-          minEthCapability);
-    }
+  @Value.Default
+  default int getMinEthCapability() {
+    return DEFAULT_MIN_CAPABILITY;
   }
 }
