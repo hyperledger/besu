@@ -163,10 +163,10 @@ public class BonsaiWorldState extends PathBasedWorldState {
                     getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
-    if (worldStateWriteSink != WorldStateWriteSink.NOOP) {
-      // for manicured tries and composting, collect branches here (not implemented)
-      updateTheAccounts(worldStateWriteSink, worldStateUpdater, accountTrie);
+    // for manicured tries and composting, collect branches here (not implemented)
+    updateTheAccounts(worldStateWriteSink, worldStateUpdater, accountTrie);
 
+    if (worldStateWriteSink != WorldStateWriteSink.NOOP) {
       accountTrie.commit(
           (location, hash, value) ->
               worldStateWriteSink.putAccountStateTrieNode(location, hash, value));
