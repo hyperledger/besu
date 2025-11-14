@@ -70,7 +70,7 @@ public class SimpleTestTransactionBuilder {
     when(transaction.getR()).thenReturn(bigInteger(r));
     when(transaction.getS()).thenReturn(bigInteger(s));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
-    when(transaction.getType()).thenReturn(TransactionType.of(Integer.decode(type)));
+    when(transaction.getType()).thenReturn(TransactionType.of(Byte.decode(type)).get());
     when(transaction.getSender()).thenReturn(address(fromAddress));
     when(transaction.getPayload()).thenReturn(Bytes.fromHexString(input));
     when(transaction.getValue()).thenReturn(wei(value));

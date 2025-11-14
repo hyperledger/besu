@@ -111,7 +111,7 @@ public class TransactionDecoder {
     if (opaqueBytes.isEmpty()) {
       throw new IllegalArgumentException("Empty opaque bytes");
     }
-    var transactionType = getTransactionType(opaqueBytes);
+    final var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
       return decodeTypedTransaction(opaqueBytes, transactionType.get(), context);
     } else {
@@ -130,15 +130,8 @@ public class TransactionDecoder {
    *     to a valid transaction type, or an empty Optional if it does not
    */
   private static Optional<TransactionType> getTransactionType(final Bytes opaqueBytes) {
-    try {
-      if (opaqueBytes.isEmpty()) {
-        return Optional.empty();
-      }
-      byte transactionTypeByte = opaqueBytes.get(0);
-      return Optional.of(TransactionType.of(transactionTypeByte));
-    } catch (IllegalArgumentException ex) {
-      return Optional.empty();
-    }
+    byte transactionTypeByte = opaqueBytes.get(0);
+    return TransactionType.of(transactionTypeByte);
   }
 
   /**
