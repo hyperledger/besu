@@ -158,7 +158,12 @@ public class T8nExecutor {
             BigInteger chainId =
                 Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
                     .toUnsignedBigInteger();
-            TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
+            TransactionType transactionType =
+                TransactionType.of((byte) type)
+                    .orElseThrow(
+                        (() ->
+                            new IllegalArgumentException(
+                                "Unsupported transaction type: %x".formatted(type))));
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
             builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());

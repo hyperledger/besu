@@ -77,7 +77,11 @@ public class TransactionAnnouncementDecoder {
     final List<TransactionType> types = new ArrayList<>();
     final byte[] bytes = input.readBytes().toArray();
     for (final byte b : bytes) {
-      types.add(b == 0 ? TransactionType.FRONTIER : TransactionType.of(b));
+      final var transactionType =
+          TransactionType.of(b)
+              .orElseThrow(
+                  () -> new IllegalStateException("Invalid transaction type %x".formatted(b)));
+      types.add(transactionType);
     }
 
     List<Long> sizes =

@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 /** The enum Transaction type. */
 public enum TransactionType {
   /** The Frontier. */
-  FRONTIER(0xf8 /* this is serialized as 0x0 in TransactionCompleteResult */),
+  FRONTIER(0xf8, 0x00),
   /** Access list transaction type. */
   ACCESS_LIST(0x01),
   /** Eip1559 transaction type. */
@@ -32,15 +32,46 @@ public enum TransactionType {
   DELEGATE_CODE(0x04);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE);
+      EnumSet.of(ACCESS_LIST, EIP1559, BLOB, DELEGATE_CODE);
 
-  private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
-      EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
+  private static final Set<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
+      EnumSet.of(FRONTIER, ACCESS_LIST);
 
-  private final int typeValue;
+  private static final TransactionType[] transactionTypeBySerializedType =
+      new TransactionType[values().length];
+
+  static {
+    EnumSet.allOf(TransactionType.class).stream()
+        .forEach(
+            tt -> {
+              tt.requireChainId = tt != FRONTIER;
+              tt.supportAccessList = ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(tt);
+              tt.supportBaseFeeMarket = !LEGACY_FEE_MARKET_TRANSACTION_TYPES.contains(tt);
+              tt.supportBlob = tt == BLOB;
+              tt.supportDelegatedCode = tt == DELEGATE_CODE;
+              if (tt == FRONTIER) {
+                transactionTypeBySerializedType[0] = FRONTIER;
+              } else {
+                transactionTypeBySerializedType[tt.getSerializedType()] = tt;
+              }
+            });
+  }
+
+  private final byte typeValue;
+  private final byte serializedType;
+  boolean requireChainId;
+  boolean supportAccessList;
+  boolean supportBaseFeeMarket;
+  boolean supportBlob;
+  boolean supportDelegatedCode;
+
+  TransactionType(final int typeValue, final int serializedType) {
+    this.typeValue = (byte) typeValue;
+    this.serializedType = (byte) serializedType;
+  }
 
   TransactionType(final int typeValue) {
-    this.typeValue = typeValue;
+    this(typeValue, typeValue);
   }
 
   /**
@@ -49,7 +80,7 @@ public enum TransactionType {
    * @return the serialized type
    */
   public byte getSerializedType() {
-    return (byte) this.typeValue;
+    return typeValue;
   }
 
   /**
@@ -60,40 +91,21 @@ public enum TransactionType {
    * @return the serialized type
    */
   public byte getEthSerializedType() {
-    return (this == FRONTIER ? 0x00 : this.getSerializedType());
+    return serializedType;
   }
 
   /**
-   * Compare to serialized type.
-   *
-   * @param b the byte value
-   * @return the int result of comparison
-   */
-  public int compareTo(final Byte b) {
-    return Byte.valueOf(getSerializedType()).compareTo(b);
-  }
-
-  /**
-   * Convert TransactionType from int serialized type value.
+   * Convert TransactionType from byte serialized type value.
    *
    * @param serializedTypeValue the serialized type value
    * @return the transaction type
    */
-  public static TransactionType of(final int serializedTypeValue) {
-    return Arrays.stream(
-            new TransactionType[] {
-              TransactionType.FRONTIER,
-              TransactionType.ACCESS_LIST,
-              TransactionType.EIP1559,
-              TransactionType.BLOB,
-              TransactionType.DELEGATE_CODE
-            })
-        .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format("Unsupported transaction type %x", serializedTypeValue)));
+  public static Optional<TransactionType> of(final byte serializedTypeValue) {
+    try {
+      return Optional.ofNullable(transactionTypeBySerializedType[serializedTypeValue]);
+    } catch (final ArrayIndexOutOfBoundsException e) {
+      return Optional.empty();
+    }
   }
 
   /**
@@ -102,7 +114,7 @@ public enum TransactionType {
    * @return the boolean
    */
   public boolean supportsAccessList() {
-    return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(this);
+    return supportAccessList;
   }
 
   /**
@@ -111,7 +123,7 @@ public enum TransactionType {
    * @return the boolean
    */
   public boolean supports1559FeeMarket() {
-    return !LEGACY_FEE_MARKET_TRANSACTION_TYPES.contains(this);
+    return supportBaseFeeMarket;
   }
 
   /**
@@ -120,7 +132,7 @@ public enum TransactionType {
    * @return the boolean
    */
   public boolean requiresChainId() {
-    return !this.equals(FRONTIER);
+    return requireChainId;
   }
 
   /**
@@ -129,7 +141,7 @@ public enum TransactionType {
    * @return the boolean
    */
   public boolean supportsBlob() {
-    return this.equals(BLOB);
+    return supportBlob;
   }
 
   /**
@@ -138,15 +150,6 @@ public enum TransactionType {
    * @return the boolean
    */
   public boolean supportsDelegateCode() {
-    return this.equals(DELEGATE_CODE);
-  }
-
-  /**
-   * Does transaction type require code.
-   *
-   * @return the boolean
-   */
-  public boolean requiresCodeDelegation() {
-    return this.equals(DELEGATE_CODE);
+    return supportDelegatedCode;
   }
 }
