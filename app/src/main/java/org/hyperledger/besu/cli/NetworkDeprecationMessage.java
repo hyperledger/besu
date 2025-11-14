@@ -34,6 +34,17 @@ public class NetworkDeprecationMessage {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");
     }
 
+    // ETC support deprecated in besu
+    if (network.name().equals("CLASSIC") || network.name().equals("MORDOR")) {
+      return FramedLogMessage.generateCentered(
+          List.of(
+              "ETC "
+                  + network.normalize()
+                  + " support in Besu is deprecated as of "
+                  + network.getDeprecationDate().get()));
+    }
+
+    // network is being shutdown
     return FramedLogMessage.generateCentered(
         List.of(
             network.normalize()
@@ -41,6 +52,6 @@ public class NetworkDeprecationMessage {
                 + network.getDeprecationDate().get(),
             "",
             "For more details please go to",
-            "https://blog.ethereum.org/2022/06/21/testnet-deprecation/"));
+            "https://blog.ethereum.org/2025/09/01/holesky-shutdown-announcement"));
   }
 }

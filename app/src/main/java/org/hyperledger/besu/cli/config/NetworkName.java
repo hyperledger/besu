@@ -60,7 +60,7 @@ public enum NetworkName {
   private final Supplier<List<NativeRequirementResult>> nativeRequirements;
 
   static {
-    HOLESKY.deprecationDate = "September 2025";
+    HOLESKY.deprecationDate = "November 2025";
     CLASSIC.deprecationDate = "November 2025";
     MORDOR.deprecationDate = "November 2025";
   }
