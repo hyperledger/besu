@@ -38,9 +38,9 @@ public class NetworkDeprecationMessage {
     if (network.name().equals("CLASSIC") || network.name().equals("MORDOR")) {
       return FramedLogMessage.generateCentered(
           List.of(
-              "ETC "
+              "Besu support for ETC "
                   + network.normalize()
-                  + " support in Besu is deprecated as of "
+                  + " is deprecated as of "
                   + network.getDeprecationDate().get()));
     }
 
