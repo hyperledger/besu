@@ -54,73 +54,70 @@ public class DifficultyCalculatorTests {
     postMergeOverrides.put("shanghaiTime", "999999999999");
     postMergeOverrides.put("cancunTime","999999999999");
     postMergeOverrides.put("pragueTime","999999999999");
-    postMergeOverrides.put("osakaTime","999999999999");
-    postMergeOverrides.put("bpo1Time","999999999999");
-    postMergeOverrides.put("bpo2Time","999999999999");
     return Stream.of(
         Arguments.of(
             "/BasicTests/difficultyMainNetwork.json",
             MainnetProtocolSchedule.fromConfig(
                 GenesisConfig.mainnet()
                     .withOverrides(postMergeOverrides).getConfigOptions(),
-                EvmConfiguration.DEFAULT, MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())),
+                EvmConfiguration.DEFAULT, MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())),
         Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
-              new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+              new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
                 "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff1.json",
                 MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+                        new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
                 "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff2.json",
                 MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+                        new StubGenesisConfigOptions().grayGlacierBlock(15050000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
-              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff1.json",
           MainnetProtocolSchedule.fromConfig(
-              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff2.json",
           MainnetProtocolSchedule.fromConfig(
-              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfByzantium/difficultyByzantium.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().byzantiumBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().byzantiumBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfConstantinople/difficultyConstantinople.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384_random.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384_random_to20M.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfFrontier/difficultyFrontier.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions(), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions(), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ),
         Arguments.of(
           "/DifficultyTests/dfHomestead/difficultyHomestead.json",
-          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, BalConfiguration.DEFAULT, new NoOpMetricsSystem())
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0), MiningConfiguration.MINING_DISABLED, new BadBlockManager(), false, false, new NoOpMetricsSystem())
         ));
   }
 

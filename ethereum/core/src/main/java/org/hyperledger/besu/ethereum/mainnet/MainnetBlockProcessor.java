@@ -36,16 +36,14 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule,
-      final BalConfiguration balConfiguration) {
+      final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        protocolSchedule,
-        balConfiguration);
+        protocolSchedule);
   }
 
   @Override

@@ -32,7 +32,14 @@ public class CheckpointBlocksPeerValidator extends RequiredBlocksPeerValidator {
       final long blockNumber,
       final Hash hash,
       final long chainHeightEstimationBuffer) {
-    super(protocolSchedule, peerTaskExecutor, blockNumber, hash, chainHeightEstimationBuffer);
+    super(
+        protocolSchedule,
+        peerTaskExecutor,
+        synchronizerConfiguration,
+        metricsSystem,
+        blockNumber,
+        hash,
+        chainHeightEstimationBuffer);
   }
 
   public CheckpointBlocksPeerValidator(

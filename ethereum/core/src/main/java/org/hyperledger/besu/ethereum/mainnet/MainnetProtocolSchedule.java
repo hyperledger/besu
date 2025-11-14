@@ -41,7 +41,7 @@ public class MainnetProtocolSchedule {
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
-   * @param balConfiguration configuration related to block access lists
+   * @param isBlockAccessListEnabled indicates whether block access list functionality is enabled
    * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
    * @return A configured mainnet protocol schedule
    */
@@ -52,7 +52,7 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
@@ -62,7 +62,7 @@ public class MainnetProtocolSchedule {
           miningConfiguration,
           badBlockManager,
           isParallelTxProcessingEnabled,
-          balConfiguration,
+          isBlockAccessListEnabled,
           metricsSystem);
     }
     return new ProtocolScheduleBuilder(
@@ -74,7 +74,7 @@ public class MainnetProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            balConfiguration,
+            isBlockAccessListEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -98,7 +98,7 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -107,7 +107,7 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        balConfiguration,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -128,7 +128,7 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -137,7 +137,7 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        balConfiguration,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 
@@ -156,7 +156,7 @@ public class MainnetProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -165,7 +165,7 @@ public class MainnetProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        balConfiguration,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 }

@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -193,16 +194,14 @@ public class EthCreateAccessListTest {
   }
 
   @Test
-  public void shouldReturnAccessListEvenWhenTransactionReverted() {
+  public void shouldReturnErrorWhenTransactionReverted() {
     final JsonRpcRequestContext request =
         ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
-    mockTransactionSimulatorResult(false, true, MIN_TX_GAS_COST, pendingBlockHeader);
+    mockTransactionSimulatorResult(false, true, 1L, pendingBlockHeader);
 
+    final String errorReason = "0x00";
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            null,
-            new CreateAccessListResult(
-                List.of(), MIN_TX_GAS_COST, Optional.of("execution reverted")));
+        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, errorReason));
 
     assertThat(method.response(request)).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionSimulator, times(2))

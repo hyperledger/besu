@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /** Configuration for the default struct/opcode tracer. */
 public final class OpCodeTracerConfigBuilder {
@@ -25,7 +22,6 @@ public final class OpCodeTracerConfigBuilder {
   private boolean traceMemory;
   private boolean traceStack;
   private boolean traceReturnData;
-  private Set<String> traceOpcodes;
   private boolean eip3155Strict;
 
   /**
@@ -55,7 +51,6 @@ public final class OpCodeTracerConfigBuilder {
     this.traceMemory = opCodeTracerConfig.traceMemory();
     this.traceStack = opCodeTracerConfig.traceStack();
     this.traceReturnData = opCodeTracerConfig.traceReturnData();
-    this.traceOpcodes = opCodeTracerConfig.traceOpcodes();
     this.eip3155Strict = opCodeTracerConfig.eip3155Strict();
   }
 
@@ -104,17 +99,6 @@ public final class OpCodeTracerConfigBuilder {
   }
 
   /**
-   * Sets the list of opcodes to trace
-   *
-   * @param traceOpcodes list of opcodes to trace
-   * @return the current builder
-   */
-  public OpCodeTracerConfigBuilder traceOpcodes(final Set<String> traceOpcodes) {
-    this.traceOpcodes = traceOpcodes.stream().map(String::toLowerCase).collect(Collectors.toSet());
-    return this;
-  }
-
-  /**
    * Set eip3155Strict flag.
    *
    * @param enable flag to enable eip3155 mode tracing
@@ -131,8 +115,7 @@ public final class OpCodeTracerConfigBuilder {
    * @return the config
    */
   public OpCodeTracerConfig build() {
-    return new Config(
-        traceStorage, traceMemory, traceStack, traceReturnData, traceOpcodes, eip3155Strict);
+    return new Config(traceStorage, traceMemory, traceStack, traceReturnData, eip3155Strict);
   }
 
   /**
@@ -143,8 +126,7 @@ public final class OpCodeTracerConfigBuilder {
    */
   public sealed interface OpCodeTracerConfig permits Config {
     /** static default OpcodeTracerConfig which can be accessed externally */
-    OpCodeTracerConfig DEFAULT =
-        new Config(true, false, true, false, Collections.emptySet(), false);
+    OpCodeTracerConfig DEFAULT = new Config(true, false, true, false, false);
 
     /**
      * Check if tracing of storage is enabled.
@@ -175,14 +157,6 @@ public final class OpCodeTracerConfigBuilder {
     boolean traceReturnData();
 
     /**
-     * List of opcodes that the tracer should exclusively trace for. If empty, all opcodes are
-     * traced.
-     *
-     * @return list of opcodes to trace.
-     */
-    Set<String> traceOpcodes();
-
-    /**
      * Check if tracing in eip3155 mode is enabled.
      *
      * @return true if enabled, false otherwise
@@ -195,7 +169,6 @@ public final class OpCodeTracerConfigBuilder {
       boolean traceMemory,
       boolean traceStack,
       boolean traceReturnData,
-      Set<String> traceOpcodes,
       boolean eip3155Strict)
       implements OpCodeTracerConfig {}
 }

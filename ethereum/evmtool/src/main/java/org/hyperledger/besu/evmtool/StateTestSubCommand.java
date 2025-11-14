@@ -49,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -221,7 +220,6 @@ public class StateTestSubCommand implements Runnable {
                     .traceStack(!parentCommand.hideStack)
                     .traceReturnData(parentCommand.showReturnData)
                     .traceStorage(parentCommand.showStorage)
-                    .traceOpcodes(Collections.emptySet())
                     .eip3155Strict(parentCommand.eip3155strict)
                     .build())
             : OperationTracer.NO_TRACING;

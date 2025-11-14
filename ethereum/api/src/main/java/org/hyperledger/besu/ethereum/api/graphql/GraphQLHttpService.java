@@ -196,8 +196,7 @@ public class GraphQLHttpService {
     router
         .route()
         .handler(
-            CorsHandler.create()
-                .addOriginWithRegex(buildCorsRegexFromConfig())
+            CorsHandler.create(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router
@@ -497,7 +496,7 @@ public class GraphQLHttpService {
       return "";
     }
     if (config.getCorsAllowedDomains().contains("*")) {
-      return ".*";
+      return "*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);

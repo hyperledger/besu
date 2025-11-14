@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.Map;
@@ -43,7 +45,9 @@ public class PivotBlockRetriever {
   private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;
 
   private final EthContext ethContext;
+  private final MetricsSystem metricsSystem;
   private final ProtocolSchedule protocolSchedule;
+  private final SynchronizerConfiguration synchronizerConfiguration;
 
   // The number of peers we need to query to confirm our pivot block
   private final int peersToQuery;
@@ -63,12 +67,16 @@ public class PivotBlockRetriever {
   PivotBlockRetriever(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final long pivotBlockNumber,
       final int peersToQuery,
       final long pivotBlockNumberResetDelta,
       final int maxPivotBlockResets) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
+    this.synchronizerConfiguration = synchronizerConfiguration;
     this.pivotBlockNumber = new AtomicLong(pivotBlockNumber);
     this.peersToQuery = peersToQuery;
     this.pivotBlockNumberResetDelta = pivotBlockNumberResetDelta;
@@ -78,12 +86,16 @@ public class PivotBlockRetriever {
   public PivotBlockRetriever(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final long pivotBlockNumber,
       final int peersToQuery,
       final long pivotBlockNumberResetDelta) {
     this(
         protocolSchedule,
         ethContext,
+        metricsSystem,
+        synchronizerConfiguration,
         pivotBlockNumber,
         peersToQuery,
         pivotBlockNumberResetDelta,
@@ -101,7 +113,14 @@ public class PivotBlockRetriever {
 
   private void confirmBlock(final long blockNumber) {
     final PivotBlockConfirmer pivotBlockConfirmationTask =
-        new PivotBlockConfirmer(protocolSchedule, ethContext, pivotBlockNumber.get(), peersToQuery);
+        new PivotBlockConfirmer(
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            synchronizerConfiguration,
+            pivotBlockNumber.get(),
+            peersToQuery,
+            MAX_QUERY_RETRIES_PER_PEER);
     final PivotBlockConfirmer preexistingTask =
         confirmationTasks.putIfAbsent(blockNumber, pivotBlockConfirmationTask);
     if (preexistingTask != null) {

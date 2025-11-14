@@ -38,17 +38,31 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class MonitoredExecutors {
 
   public static ExecutorService newFixedThreadPool(
-      final String name, final int maxWorkerCount, final MetricsSystem metricsSystem) {
-    return newFixedThreadPool(name, maxWorkerCount, new LinkedBlockingQueue<>(), metricsSystem);
+      final String name,
+      final int minWorkerCount,
+      final int workerCount,
+      final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(
+        name, minWorkerCount, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
   }
 
   public static ExecutorService newBoundedThreadPool(
       final String name,
+      final int workerCount,
+      final int queueSize,
+      final MetricsSystem metricsSystem) {
+    return newBoundedThreadPool(name, 1, workerCount, queueSize, metricsSystem);
+  }
+
+  public static ExecutorService newBoundedThreadPool(
+      final String name,
+      final int minWorkerCount,
       final int maxWorkerCount,
       final int queueSize,
       final MetricsSystem metricsSystem) {
     return newFixedThreadPool(
         name,
+        minWorkerCount,
         maxWorkerCount,
         new BoundedQueue(queueSize, toMetricName(name), metricsSystem),
         metricsSystem);
@@ -56,25 +70,22 @@ public class MonitoredExecutors {
 
   private static ExecutorService newFixedThreadPool(
       final String name,
+      final int minWorkerCount,
       final int maxWorkerCount,
       final BlockingQueue<Runnable> workingQueue,
       final MetricsSystem metricsSystem) {
     return newMonitoredExecutor(
         name,
         metricsSystem,
-        (rejectedExecutionHandler, threadFactory) -> {
-          final var tpe =
-              new ThreadPoolExecutor(
-                  maxWorkerCount,
-                  maxWorkerCount,
-                  60L,
-                  TimeUnit.SECONDS,
-                  workingQueue,
-                  threadFactory,
-                  rejectedExecutionHandler);
-          tpe.allowCoreThreadTimeOut(true);
-          return tpe;
-        });
+        (rejectedExecutionHandler, threadFactory) ->
+            new ThreadPoolExecutor(
+                minWorkerCount,
+                maxWorkerCount,
+                60L,
+                TimeUnit.SECONDS,
+                workingQueue,
+                threadFactory,
+                rejectedExecutionHandler));
   }
 
   public static ExecutorService newCachedThreadPool(
@@ -105,6 +116,11 @@ public class MonitoredExecutors {
         metricsSystem,
         (rejectedExecutionHandler, threadFactory) ->
             new ScheduledThreadPoolExecutor(corePoolSize, threadFactory, rejectedExecutionHandler));
+  }
+
+  public static ExecutorService newSingleThreadExecutor(
+      final String name, final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(name, 1, 1, metricsSystem);
   }
 
   private static <T extends ThreadPoolExecutor> T newMonitoredExecutor(

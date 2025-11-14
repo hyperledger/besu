@@ -534,7 +534,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .synchronizerConfiguration(synchronizerConfiguration)
           .metricsSystem((ObservableMetricsSystem) metricsSystem)
           .dataStorageConfiguration(dataStorageConfiguration)
-          .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+          .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .clock(Clock.systemUTC())
           .storageProvider(storageProvider)
           .evmConfiguration(EvmConfiguration.DEFAULT)

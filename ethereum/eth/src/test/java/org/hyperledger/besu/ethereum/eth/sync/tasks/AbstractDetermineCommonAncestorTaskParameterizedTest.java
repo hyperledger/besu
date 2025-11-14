@@ -139,7 +139,7 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
             .setBlockchain(localBlockchain)
             .setWorldStateArchive(worldStateArchive)
             .setTransactionPool(mock(TransactionPool.class))
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     final RespondingEthPeer.Responder responder =

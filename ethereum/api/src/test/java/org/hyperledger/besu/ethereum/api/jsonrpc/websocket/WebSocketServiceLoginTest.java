@@ -54,7 +54,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -195,7 +194,7 @@ public class WebSocketServiceLoginTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        BalConfiguration.DEFAULT,
+                        false,
                         new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
@@ -217,7 +216,6 @@ public class WebSocketServiceLoginTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    BalConfiguration.DEFAULT,
                     Optional.empty(),
                     mock(TransactionSimulator.class),
                     new DeterministicEthScheduler()));

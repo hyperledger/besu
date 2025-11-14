@@ -130,8 +130,7 @@ class AbstractBlockProcessorIntegrationTest {
             coinbaseReward,
             BlockHeader::getCoinbase,
             skipRewards,
-            protocolSchedule,
-            BalConfiguration.DEFAULT);
+            protocolSchedule);
 
     final BlockProcessor parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
@@ -141,7 +140,6 @@ class AbstractBlockProcessorIntegrationTest {
             BlockHeader::getCoinbase,
             skipRewards,
             protocolSchedule,
-            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return Stream.of(
@@ -328,8 +326,7 @@ class AbstractBlockProcessorIntegrationTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule,
-            BalConfiguration.DEFAULT);
+            protocolSchedule);
 
     BlockProcessingResult parallelResult =
         blockProcessor.processBlock(
@@ -352,7 +349,6 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertBlockAccessListAddresses(
         sequentialResult,
-        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),
@@ -371,7 +367,6 @@ class AbstractBlockProcessorIntegrationTest {
 
     assertBlockAccessListAddresses(
         parallelResult,
-        coinbase,
         Address.fromHexStringStrict(ACCOUNT_2),
         Address.fromHexStringStrict(ACCOUNT_3),
         Address.fromHexStringStrict(ACCOUNT_GENESIS_1),

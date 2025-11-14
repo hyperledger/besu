@@ -409,7 +409,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         transaction -> {
           mergeCoordinator
               .getEthScheduler()
-              .scheduleComputationTask(
+              .scheduleTxWorkerTask(
                   () -> {
                     final var sender = transaction.getSender();
                     LOG.atTrace()
@@ -417,7 +417,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                         .addArgument(transaction::getHash)
                         .addArgument(sender)
                         .log();
-                    return sender;
                   });
           if (transaction.getType().supportsDelegateCode()) {
             precomputeAuthorities(transaction);
@@ -432,7 +431,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final var constIndex = index++;
       mergeCoordinator
           .getEthScheduler()
-          .scheduleComputationTask(
+          .scheduleTxWorkerTask(
               () -> {
                 final var authority = codeDelegation.authorizer();
                 LOG.atTrace()
@@ -442,7 +441,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     .addArgument(transaction::getHash)
                     .addArgument(authority)
                     .log();
-                return authority;
               });
     }
   }

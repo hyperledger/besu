@@ -70,7 +70,7 @@ public final class RlpBlockImporterTest {
             .fromEthNetworkConfig(
                 EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(MiningConfiguration.newDefault())
@@ -103,7 +103,7 @@ public final class RlpBlockImporterTest {
             .fromEthNetworkConfig(
                 EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(MiningConfiguration.newDefault())
@@ -133,7 +133,7 @@ public final class RlpBlockImporterTest {
             .fromEthNetworkConfig(
                 EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(MiningConfiguration.newDefault())
@@ -174,7 +174,7 @@ public final class RlpBlockImporterTest {
         new BesuController.Builder()
             .fromGenesisFile(GenesisConfig.fromConfig(config), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.valueOf(1337))
             .miningParameters(MiningConfiguration.newDefault())

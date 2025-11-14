@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -166,7 +165,7 @@ public class ExecutionContextTestFixture {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    ImmutableBalConfiguration.builder().isBalApiEnabled(true).build(),
+                    true,
                     new NoOpMetricsSystem())
                 .createProtocolSchedule();
       }

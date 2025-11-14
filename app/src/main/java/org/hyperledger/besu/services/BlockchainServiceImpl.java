@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -135,11 +134,6 @@ public class BlockchainServiceImpl implements BlockchainService {
             maybeParentHeader
                 .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                 .orElse(BlobGas.ZERO));
-  }
-
-  @Override
-  public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
-    return blockchain.getTransactionByHash(transactionHash).map(Transaction.class::cast);
   }
 
   @Override

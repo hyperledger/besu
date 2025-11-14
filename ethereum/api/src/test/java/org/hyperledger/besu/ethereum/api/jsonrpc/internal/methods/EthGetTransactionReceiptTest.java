@@ -51,7 +51,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
@@ -175,8 +174,7 @@ public class EthGetTransactionReceiptTest {
           Duration.ofSeconds(12),
           true,
           Optional.empty(),
-          Optional.empty(),
-          new StateRootCommitterFactoryDefault());
+          Optional.empty());
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           TestHardforkId.STATUS,
@@ -209,8 +207,7 @@ public class EthGetTransactionReceiptTest {
           Duration.ofSeconds(12),
           true,
           Optional.empty(),
-          Optional.empty(),
-          new StateRootCommitterFactoryDefault());
+          Optional.empty());
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

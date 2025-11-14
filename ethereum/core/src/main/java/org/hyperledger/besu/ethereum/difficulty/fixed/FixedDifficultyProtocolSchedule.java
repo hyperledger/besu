@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.difficulty.fixed;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -39,7 +38,7 @@ public class FixedDifficultyProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
             config,
@@ -53,7 +52,7 @@ public class FixedDifficultyProtocolSchedule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            balConfiguration,
+            isBlockAccessListEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -64,7 +63,7 @@ public class FixedDifficultyProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -73,7 +72,7 @@ public class FixedDifficultyProtocolSchedule {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        balConfiguration,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 }

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -126,8 +125,7 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
     final BlockWithReceipts mockBlockWithReceipts =
         new BlockWithReceipts(mockBlock, Collections.emptyList());
     final PayloadWrapper mockPayload =
-        new PayloadWrapper(
-            mockPid, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+        new PayloadWrapper(mockPid, mockBlockWithReceipts, Optional.empty());
 
     when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
 

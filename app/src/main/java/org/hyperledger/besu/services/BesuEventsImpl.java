@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
-import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -89,7 +88,6 @@ public class BesuEventsImpl implements BesuEvents {
         event ->
             listener.onBlockAdded(
                 blockAddedContext(
-                    event.getEventType(),
                     event::getHeader,
                     () -> event.getBlock().getBody(),
                     event::getTransactionReceipts)));
@@ -106,7 +104,6 @@ public class BesuEventsImpl implements BesuEvents {
         (blockWithReceipts, chain) ->
             listener.onBlockReorg(
                 blockAddedContext(
-                    EventType.CHAIN_REORG,
                     blockWithReceipts::getHeader,
                     blockWithReceipts.getBlock()::getBody,
                     blockWithReceipts::getReceipts)));
@@ -213,7 +210,6 @@ public class BesuEventsImpl implements BesuEvents {
   }
 
   private static AddedBlockContext blockAddedContext(
-      final EventType eventType,
       final Supplier<BlockHeader> blockHeaderSupplier,
       final Supplier<BlockBody> blockBodySupplier,
       final Supplier<List<TransactionReceipt>> transactionReceiptsSupplier) {
@@ -231,11 +227,6 @@ public class BesuEventsImpl implements BesuEvents {
       @Override
       public List<TransactionReceipt> getTransactionReceipts() {
         return transactionReceiptsSupplier.get();
-      }
-
-      @Override
-      public EventType getEventType() {
-        return eventType;
       }
     };
   }

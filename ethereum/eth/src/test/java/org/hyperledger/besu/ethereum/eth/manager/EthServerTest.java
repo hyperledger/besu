@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
@@ -336,10 +335,9 @@ public class EthServerTest {
   }
 
   private void setupEthServer(
-      final Function<
-              ImmutableEthProtocolConfiguration.Builder, ImmutableEthProtocolConfiguration.Builder>
+      final Function<EthProtocolConfiguration.Builder, EthProtocolConfiguration.Builder>
           configModifier) {
-    final var configBuilder = ImmutableEthProtocolConfiguration.builder();
+    final EthProtocolConfiguration.Builder configBuilder = EthProtocolConfiguration.builder();
     final EthProtocolConfiguration ethConfig = configModifier.apply(configBuilder).build();
 
     new EthServer(blockchain, worldStateArchive, transactionPool, ethMessages, ethConfig);

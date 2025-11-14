@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import com.google.common.base.Joiner;
@@ -51,10 +50,6 @@ public class StreamingOperationTracer implements OperationTracer {
   private int depth;
   private int functionDepth;
   private String storageString;
-
-  // Flags used for implementing traceOpcodes functionality
-  private boolean traceOpcode;
-  private Operation previousOpcode = null;
 
   /**
    * Instantiates a new StreamingOperationTracer
@@ -105,10 +100,6 @@ public class StreamingOperationTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
-    final Operation currentOp = messageFrame.getCurrentOperation();
-    if (!(traceOpcode = traceOpcode(currentOp))) {
-      return;
-    }
     stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
@@ -154,34 +145,10 @@ public class StreamingOperationTracer implements OperationTracer {
     storageString = sb.toString();
   }
 
-  private boolean traceOpcode(final Operation currentOpcode) {
-    if (opCodeTracerConfig.traceOpcodes().isEmpty()) {
-      return true;
-    }
-    final boolean traceCurrentOpcode =
-        opCodeTracerConfig
-            .traceOpcodes()
-            .contains(currentOpcode.getName().toLowerCase(Locale.ROOT));
-    final boolean tracePreviousOpcode =
-        previousOpcode != null
-            && opCodeTracerConfig
-                .traceOpcodes()
-                .contains(previousOpcode.getName().toLowerCase(Locale.ROOT));
-
-    if (!traceCurrentOpcode && !tracePreviousOpcode) {
-      return false;
-    }
-    previousOpcode = currentOpcode;
-    return true;
-  }
-
   @Override
   public void tracePostExecution(
       final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    if (!traceOpcode) {
-      return;
-    }
     if (currentOp.isVirtualOperation()) {
       return;
     }

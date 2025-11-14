@@ -93,7 +93,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -341,7 +340,7 @@ public class TestContextBuilder {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            BalConfiguration.DEFAULT,
+            false,
             new NoOpMetricsSystem());
 
     /////////////////////////////////////////////////////////////////////////////////////

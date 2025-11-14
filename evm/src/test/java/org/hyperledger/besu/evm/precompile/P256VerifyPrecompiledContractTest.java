@@ -172,9 +172,8 @@ class P256VerifyPrecompiledContractTest {
     secp256R1.maybeEnableNative();
     var defaultMaybeNativeResult = contract.computeDefault(inputBytes);
 
-    // verify boringssl precompile-specific implementation
-    // this should be configured/run statically, adding the call here just for clarity
-    P256VerifyPrecompiledContract.maybeEnableNativeBoringSSL();
+    // maybeNative implementation:
+    secp256R1.maybeEnableNative();
     var maybeNativeResult = contract.computePrecompile(inputBytes, messageFrame);
 
     // This signature should be VALID if modular comparison is implemented correctly

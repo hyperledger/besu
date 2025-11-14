@@ -70,7 +70,7 @@ public class DefaultProtocolScheduleTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            BalConfiguration.DEFAULT,
+            false,
             new NoOpMetricsSystem());
   }
 

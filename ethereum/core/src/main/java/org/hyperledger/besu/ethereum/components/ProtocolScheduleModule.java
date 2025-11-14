@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.components;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -48,7 +47,7 @@ public class ProtocolScheduleModule {
    * @param evmConfiguration the EVM configuration
    * @param badBlockManager the bad block manager
    * @param isParallelTxProcessingEnabled whether parallel tx processing is enabled
-   * @param balConfiguration configuration for block-level access lists
+   * @param isBlockAccessListEnabled whether block level access lists are enabled
    * @param metricsSystem the metrics system
    * @param miningConfiguration the mining parameters
    * @return the protocol schedule builder
@@ -62,7 +61,7 @@ public class ProtocolScheduleModule {
       final EvmConfiguration evmConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
+      final boolean isBlockAccessListEnabled,
       final MetricsSystem metricsSystem,
       final MiningConfiguration miningConfiguration) {
 
@@ -76,7 +75,7 @@ public class ProtocolScheduleModule {
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            balConfiguration,
+            isBlockAccessListEnabled,
             metricsSystem);
 
     return builder;

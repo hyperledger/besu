@@ -278,8 +278,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .processWithdrawals(
                 maybeWithdrawals.get(),
                 disposableWorldState.updater(),
-                postExecutionAccessLocationTracker,
-                blockAccessListBuilder);
+                postExecutionAccessLocationTracker);
       }
 
       // EIP-7685: process EL requests

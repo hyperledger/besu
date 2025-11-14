@@ -229,6 +229,7 @@ bonsai-parallel-tx-processing-enabled=false
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
+Xsnapsync-server-enabled=true
 snapsync-server-enabled=true
 Xbonsai-full-flat-db-enabled=true
 Xpeertask-system-enabled=false

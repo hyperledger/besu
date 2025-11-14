@@ -19,11 +19,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -64,8 +64,10 @@ public class Tracer {
     }
 
     @Override
-    public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
-      mutableWorldState.persist(blockHeader, committer);
+    public void persist(
+        final BlockHeader blockHeader,
+        final Optional<CompletableFuture<Hash>> maybeStateRootFuture) {
+      mutableWorldState.persist(blockHeader, maybeStateRootFuture);
     }
 
     @Override

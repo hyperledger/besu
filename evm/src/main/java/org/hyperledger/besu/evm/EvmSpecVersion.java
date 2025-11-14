@@ -88,11 +88,11 @@ public enum EvmSpecVersion {
   boolean versionWarned = false;
 
   EvmSpecVersion(
-      final HardforkId initialHardfork,
+      final HardforkId initialHarfork,
       final int maxCodeSize,
       final int maxInitcodeSize,
       final int maxEofVersion) {
-    this.initialHardfork = initialHardfork;
+    this.initialHardfork = initialHarfork;
     this.maxEofVersion = maxEofVersion;
     this.maxCodeSize = maxCodeSize;
     this.maxInitcodeSize = maxInitcodeSize;
@@ -181,6 +181,14 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
+    // TODO remove once CancunEOF tests are removed from EEST
+    if ("prague".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.OSAKA;
+    }
+    // TODO remove once CancunEOF tests are removed from EEST
+    if ("cancuneof".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.CANCUN_EOF;
+    }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {
         return version;

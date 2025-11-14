@@ -54,7 +54,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -472,7 +471,6 @@ public class EvmToolCommand implements Runnable {
                         .traceStack(!hideStack)
                         .traceReturnData(showReturnData)
                         .traceStorage(showStorage)
-                        .traceOpcodes(Collections.emptySet())
                         .eip3155Strict(eip3155strict)
                         .build())
                 : OperationTracer.NO_TRACING;

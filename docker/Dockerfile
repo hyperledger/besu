@@ -20,7 +20,8 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   # Starting from version 23.10, Ubuntu comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
   userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu  && \
   # Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
-  useradd --uid 1000 --create-home --home-dir /opt/besu --shell /bin/bash --user-group --skel /etc/skel besu && \
+  useradd --uid 1000 --create-home --home-dir /opt/besu --shell /bin/bash besu && \
+  chown besu:besu /opt/besu  && \
   chmod 0755 /opt/besu
 
 # Copy JRE from the java-base stage
@@ -50,12 +51,13 @@ ENV PYROSCOPE_CONFIGURATION_FILE=/etc/besu/pyroscope.properties
 EXPOSE 8545 8546 8547 8550 8551 30303
 
 # defaults for host interfaces
-ENV BESU_RPC_HTTP_HOST=0.0.0.0
-ENV BESU_RPC_WS_HOST=0.0.0.0
-ENV BESU_GRAPHQL_HTTP_HOST=0.0.0.0
+ENV BESU_RPC_HTTP_HOST="0.0.0.0"
+ENV BESU_RPC_WS_HOST="0.0.0.0"
+ENV BESU_GRAPHQL_HTTP_HOST="0.0.0.0"
 ENV BESU_PID_PATH="/tmp/pid"
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 ENV JAVA_HOME="/opt/java/openjdk"
+
 ENV PATH="/opt/besu/bin:${JAVA_HOME}/bin:${PATH}"
 
 # The entry script just sets permissions as needed based on besu config

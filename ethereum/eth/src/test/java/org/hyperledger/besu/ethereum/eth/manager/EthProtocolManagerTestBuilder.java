@@ -190,7 +190,7 @@ public class EthProtocolManagerTestBuilder {
       transactionPool = mock(TransactionPool.class);
     }
     if (ethereumWireProtocolConfiguration == null) {
-      ethereumWireProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
+      ethereumWireProtocolConfiguration = EthProtocolConfiguration.defaultConfig();
     }
     if (forkIdManager == null) {
       forkIdManager =

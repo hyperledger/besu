@@ -313,7 +313,7 @@ public class JsonRpcHttpService {
         .route()
         .handler(
             CorsHandler.create()
-                .addOriginWithRegex(buildCorsRegexFromConfig())
+                .addRelativeOrigin(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router
@@ -333,9 +333,10 @@ public class JsonRpcHttpService {
         .method(HttpMethod.GET)
         .handler(readinessService::handleRequest);
     Route mainRoute = router.route("/").method(HttpMethod.POST).produces(APPLICATION_JSON);
-    authenticationService.ifPresent(
-        service ->
-            mainRoute.handler(HandlerFactory.authentication(service, config.getNoAuthRpcApis())));
+    if (authenticationService.isPresent()) {
+      mainRoute.handler(
+          HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
+    }
     mainRoute
         .handler(HandlerFactory.jsonRpcParser())
         .handler(

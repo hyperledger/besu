@@ -368,7 +368,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        balConfiguration,
+        isBlockAccessListEnabled,
         metricsSystem);
   }
 

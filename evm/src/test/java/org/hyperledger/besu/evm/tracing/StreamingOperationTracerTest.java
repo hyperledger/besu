@@ -40,8 +40,9 @@ class StreamingOperationTracerTest {
     StreamingOperationTracer tracer =
         new StreamingOperationTracer(
             out,
-            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            OpCodeTracerConfigBuilder.create()
                 .traceMemory(true)
+                .traceStack(true)
                 .traceReturnData(true)
                 .traceStorage(false)
                 .eip3155Strict(true)

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -104,7 +103,7 @@ public class DebugTraceBlockTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        BalConfiguration.DEFAULT,
+                        false,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .build();

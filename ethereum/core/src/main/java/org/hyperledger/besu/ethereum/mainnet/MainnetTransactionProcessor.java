@@ -457,13 +457,13 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
-
-      // EIP-158 & EIP-7928: coinbase is considered "touched" even when fees are zero.
-      // Touching ensures an *empty* coinbase can be deleted during state clearing.
-      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
-      accessLocationTracker.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
-      if (!coinbaseWeiDelta.isZero()) {
+      if (!coinbaseWeiDelta.isZero() || !clearEmptyAccounts) {
+        final var coinbase = worldState.getOrCreate(miningBeneficiary);
+        initialFrame
+            .getEip7928AccessList()
+            .ifPresent(t -> t.addTouchedAccount(coinbase.getAddress()));
         coinbase.incrementBalance(coinbaseWeiDelta);
+        accessLocationTracker.ifPresent(t -> t.addTouchedAccount(miningBeneficiary));
       }
 
       operationTracer.traceEndTransaction(

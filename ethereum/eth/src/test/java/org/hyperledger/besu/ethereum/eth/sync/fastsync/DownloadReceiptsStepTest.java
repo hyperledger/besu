@@ -87,7 +87,7 @@ public class DownloadReceiptsStepTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
   }

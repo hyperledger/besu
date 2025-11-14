@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -106,7 +105,7 @@ class JsonRpcMethodsFactoryTest {
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
             false,
-            BalConfiguration.DEFAULT,
+            false,
             new NoOpMetricsSystem());
 
     when(mergeCoordinator.isCompatibleWithEngineApi()).thenReturn(true);
@@ -146,7 +145,6 @@ class JsonRpcMethodsFactoryTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
-                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

@@ -75,8 +75,13 @@ public class PathBasedExtraStorageOptions
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
   private Integer trieLogPruningWindowSize = DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
+  // TODO --Xbonsai-parallel-tx-processing-enabled is deprecated, remove in a future release
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
-      names = {PARALLEL_TX_PROCESSING_ENABLED},
+      names = {
+        PARALLEL_TX_PROCESSING_ENABLED,
+        "--Xbonsai-parallel-tx-processing-enabled" // deprecated
+      },
       arity = "1",
       description =
           "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")

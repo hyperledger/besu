@@ -166,11 +166,7 @@ public class MainnetBlobsValidator {
 
     // Reject unsupported blob types
     if (!acceptedBlobVersions.contains(blobsWithCommitments.getBlobType())) {
-      String error =
-          String.format(
-              "Unsupported blob type: %s. Supported types: %s.",
-              blobsWithCommitments.getBlobType(), acceptedBlobVersions);
-      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, error);
+      return ValidationResult.invalid(TransactionInvalidReason.INVALID_BLOBS, "invalid blob type");
     }
 
     // Blobs and commitments must be the same size

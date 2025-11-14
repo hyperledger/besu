@@ -77,7 +77,7 @@ public class Era1ImportPrepipelineFactoryTest {
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .build();
     ethContext = ethProtocolManager.ethContext();
     MetricsSystem metricsSystem = new NoOpMetricsSystem();

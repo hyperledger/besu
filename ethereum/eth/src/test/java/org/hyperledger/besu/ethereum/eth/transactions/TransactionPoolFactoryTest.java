@@ -51,7 +51,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -310,7 +309,7 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            EthProtocolConfiguration.DEFAULT,
+            EthProtocolConfiguration.defaultConfig(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,
@@ -380,7 +379,7 @@ public class TransactionPoolFactoryTest {
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                BalConfiguration.DEFAULT,
+                false,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
 

@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_CELL_PROOFS;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_PROOF;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -26,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -51,7 +49,6 @@ import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,14 +73,11 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
   @Mock Counter hitCounter;
   @Mock Counter missCounter;
   @Mock ObservableMetricsSystem metricsSystem;
-  @Mock MergeContext mergeContext;
 
   @BeforeEach
   public void setup() {
     transactionPool = mock(TransactionPool.class);
     ProtocolContext protocolContext = mock(ProtocolContext.class);
-    when(mergeContext.isSyncing()).thenReturn(false);
-    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.ofNullable(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
@@ -214,19 +208,6 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
     when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
     var response = method.syncResponse(buildRequestContext());
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
-  }
-
-  @Test
-  public void shouldReturnNullWhenSyncing() {
-    when(mergeContext.isSyncing()).thenReturn(true);
-    BlobProofBundle bundle = createBundleAndRegisterToPool();
-    JsonRpcSuccessResponse response =
-        getSuccessResponse(buildRequestContext(bundle.getVersionedHash()));
-    assertThat(response.getResult()).isNull();
-    verifyNoInteractions(requestedCounter);
-    verifyNoInteractions(availableCounter);
-    verifyNoInteractions(missCounter);
-    verifyNoInteractions(hitCounter);
   }
 
   private BlobProofBundle createBundleAndRegisterToPool() {

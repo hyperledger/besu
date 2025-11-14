@@ -90,7 +90,7 @@ public final class RlpBlockExporterTest {
     return new BesuController.Builder()
         .fromEthNetworkConfig(EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-        .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(MiningConfiguration.newDefault())

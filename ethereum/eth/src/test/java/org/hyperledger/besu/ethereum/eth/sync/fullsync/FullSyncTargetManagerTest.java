@@ -88,7 +88,7 @@ public class FullSyncTargetManagerTest {
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .build();
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);

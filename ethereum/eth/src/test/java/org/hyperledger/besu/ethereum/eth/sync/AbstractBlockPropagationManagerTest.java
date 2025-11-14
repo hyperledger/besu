@@ -128,7 +128,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             .setBlockchain(blockchain)
             .setWorldStateArchive(blockchainUtil.getWorldArchive())
             .setTransactionPool(blockchainUtil.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();

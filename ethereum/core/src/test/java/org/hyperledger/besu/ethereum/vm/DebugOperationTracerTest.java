@@ -274,7 +274,6 @@ class DebugOperationTracerTest {
                 .traceStack(true)
                 .build(),
             false);
-    tracer.tracePreExecution(frame);
     tracer.tracePostExecution(
         frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 

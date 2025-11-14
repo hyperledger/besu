@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -38,10 +37,8 @@ public class TestBesuEventsPlugin implements BesuPlugin {
 
   private ServiceManager context;
 
-  private Optional<Long> propagationSubscriptionId;
-  private Optional<Long> addedSubscriptionId;
-  private final AtomicInteger propagatedBlockCounter = new AtomicInteger();
-  private final AtomicInteger addedBlockCounter = new AtomicInteger();
+  private Optional<Long> subscriptionId;
+  private final AtomicInteger blockCounter = new AtomicInteger();
   private File callbackDir;
 
   @Override
@@ -53,37 +50,26 @@ public class TestBesuEventsPlugin implements BesuPlugin {
 
   @Override
   public void start() {
-    propagationSubscriptionId =
+    subscriptionId =
         context
             .getService(BesuEvents.class)
             .map(events -> events.addBlockPropagatedListener(this::onBlockAnnounce));
-    LOG.info("Listening with propagation ID#" + propagationSubscriptionId);
-    addedSubscriptionId =
-        context
-            .getService(BesuEvents.class)
-            .map(events -> events.addBlockAddedListener(this::onBlockAdded));
-    LOG.info("Listening with added ID#" + addedSubscriptionId);
+    LOG.info("Listening with ID#" + subscriptionId);
   }
 
   @Override
   public void stop() {
-    propagationSubscriptionId.ifPresent(
+    subscriptionId.ifPresent(
         id ->
             context
                 .getService(BesuEvents.class)
                 .ifPresent(besuEvents -> besuEvents.removeBlockPropagatedListener(id)));
-    LOG.info("No longer listening propagation with ID#" + propagationSubscriptionId);
-    addedSubscriptionId.ifPresent(
-        id ->
-            context
-                .getService(BesuEvents.class)
-                .ifPresent(besuEvents -> besuEvents.removeBlockAddedListener(id)));
-    LOG.info("No longer listening added with ID#" + addedSubscriptionId);
+    LOG.info("No longer listening with ID#" + subscriptionId);
   }
 
   private void onBlockAnnounce(final PropagatedBlockContext propagatedBlockContext) {
     final BlockHeader header = propagatedBlockContext.getBlockHeader();
-    final int blockCount = propagatedBlockCounter.incrementAndGet();
+    final int blockCount = blockCounter.incrementAndGet();
     LOG.info("I got a new block! (I've seen {}) - {}", blockCount, header);
     try {
       final File callbackFile = new File(callbackDir, "newBlock." + blockCount);
@@ -92,29 +78,6 @@ public class TestBesuEventsPlugin implements BesuPlugin {
         callbackFile.getParentFile().deleteOnExit();
       }
       Files.write(callbackFile.toPath(), Collections.singletonList(header.toString()));
-      callbackFile.deleteOnExit();
-    } catch (final IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
-
-  private void onBlockAdded(final AddedBlockContext addedBlockContext) {
-    final BlockHeader header = addedBlockContext.getBlockHeader();
-    final int blockCount = addedBlockCounter.incrementAndGet();
-    LOG.info(
-        "New block added! (I've seen {}) - {}, eventType {}",
-        blockCount,
-        header,
-        addedBlockContext.getEventType());
-    try {
-      final File callbackFile = new File(callbackDir, "addedBlock." + blockCount);
-      if (!callbackFile.getParentFile().exists()) {
-        callbackFile.getParentFile().mkdirs();
-        callbackFile.getParentFile().deleteOnExit();
-      }
-      Files.write(
-          callbackFile.toPath(),
-          Collections.singletonList(addedBlockContext.getEventType().name()));
       callbackFile.deleteOnExit();
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);

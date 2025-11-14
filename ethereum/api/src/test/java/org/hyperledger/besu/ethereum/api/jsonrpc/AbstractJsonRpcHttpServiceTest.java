@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -217,7 +216,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             ImmutableApiConfiguration.builder().build(),
-            BalConfiguration.DEFAULT,
             Optional.empty(),
             transactionSimulator,
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));

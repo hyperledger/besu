@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -64,7 +63,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
-      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     super(
         transactionProcessor,
@@ -72,8 +70,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        protocolSchedule,
-        balConfiguration);
+        protocolSchedule);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -183,8 +180,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final ProtocolSchedule protocolSchedule,
-        final BalConfiguration balConfiguration) {
+        final ProtocolSchedule protocolSchedule) {
       return new MainnetParallelBlockProcessor(
           transactionProcessor,
           transactionReceiptFactory,
@@ -192,7 +188,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
           protocolSchedule,
-          balConfiguration,
           metricsSystem);
     }
   }

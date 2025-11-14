@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Tracer that emits logs for all transfers that occur during the execution of a transaction.
@@ -46,8 +46,8 @@ public class EthTransferLogOperationTracer implements OperationTracer {
       Address.fromHexString("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 
   /** The constant topic for transfer logs */
-  public static final Bytes32 SIMULATION_TRANSFER_TOPIC =
-      Bytes32.fromHexString("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+  public static final Bytes SIMULATION_TRANSFER_TOPIC =
+      Bytes.fromHexString("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
   /** Default constructor. */
   public EthTransferLogOperationTracer() {}

@@ -282,7 +282,6 @@ public class T8nSubCommand implements Runnable {
                           .traceStack(!parentCommand.hideStack)
                           .traceReturnData(parentCommand.showReturnData)
                           .traceStorage(parentCommand.showStorage)
-                          .traceOpcodes(Collections.emptySet())
                           .eip3155Strict(parentCommand.eip3155strict)
                           .build());
               outputStreams.put(jsonTracer, traceDest);

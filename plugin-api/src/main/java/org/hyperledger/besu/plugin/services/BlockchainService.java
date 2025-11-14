@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockBody;
@@ -69,14 +68,6 @@ public interface BlockchainService extends BesuService {
    * @return the block gas price or Wei.ZERO if blobs are not yet supported for that block header
    */
   Wei getBlobGasPrice(BlockHeader blockHeader);
-
-  /**
-   * Get a transaction by its hash
-   *
-   * @param transactionHash the transaction hash
-   * @return the transaction
-   */
-  Optional<Transaction> getTransactionByHash(Hash transactionHash);
 
   /**
    * Get the receipts for a block by block hash
