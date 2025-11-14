@@ -31,9 +31,12 @@ class TransactionsMessageSender {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageSender.class);
 
   private final PeerTransactionTracker transactionTracker;
+  private final int maxTransactionsMessageSize;
 
-  public TransactionsMessageSender(final PeerTransactionTracker transactionTracker) {
+  public TransactionsMessageSender(
+      final PeerTransactionTracker transactionTracker, final int maxTransactionsMessageSize) {
     this.transactionTracker = transactionTracker;
+    this.maxTransactionsMessageSize = maxTransactionsMessageSize;
   }
 
   public void sendTransactionsToPeers() {
@@ -46,7 +49,7 @@ class TransactionsMessageSender {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
-          LimitedTransactionsMessages.createLimited(allTxToSend);
+          LimitedTransactionsMessages.createLimited(allTxToSend, maxTransactionsMessageSize);
       final Set<Transaction> includedTransactions =
           limitedTransactionsMessages.getIncludedTransactions();
       LOG.atTrace()

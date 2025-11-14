@@ -185,6 +185,7 @@ public class TestNode implements Closeable {
             scheduler,
             new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem));
 
+    final EthProtocolConfiguration ethProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -194,6 +195,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
+            ethProtocolConfiguration,
             new BlobCache(),
             MiningConfiguration.newDefault());
 
@@ -203,7 +205,7 @@ public class TestNode implements Closeable {
             BigInteger.ONE,
             worldStateArchive,
             transactionPool,
-            EthProtocolConfiguration.DEFAULT,
+            ethProtocolConfiguration,
             ethPeers,
             ethMessages,
             ethContext,
