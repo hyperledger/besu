@@ -37,9 +37,14 @@ public enum NetworkName {
   HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
-   * the current time. https://ephemery.dev/
+   * the current time. <a href="https://ephemery.dev/">Ephemery developer info</a>
    */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
+  /**
+   * Linea network name <a href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea
+   * Besu developer info</a>
+   */
+  LINEA("/linea.json", BigInteger.valueOf(59144), true, NativeRequirement.MAINNET),
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
