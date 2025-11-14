@@ -88,7 +88,7 @@ class DebugAccountAtTest {
   }
 
   @Test
-  void testBlockNotFoundResponse() {
+  void shouldReturnNullWhenBlockNotFound() {
     Mockito.when(blockchainQueries.getBlockHeaderByHash(any())).thenReturn(Optional.empty());
 
     final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
@@ -96,9 +96,8 @@ class DebugAccountAtTest {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
 
-    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
-        .isEqualByComparingTo(RpcErrorType.BLOCK_NOT_FOUND);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
   }
 
   @Test
