@@ -40,6 +40,12 @@ public class BalConfigurationOptions {
   boolean balLenientOnStateRootMismatch = true;
 
   @CommandLine.Option(
+      names = {"--Xbal-trust-state-root"},
+      hidden = true,
+      description = "Trust the BAL-computed state root without verification.")
+  boolean balTrustStateRoot = false;
+
+  @CommandLine.Option(
       names = {"--Xbal-log-bals-on-mismatch"},
       hidden = true,
       description = "Log the constructed and block's BAL when they differ.")
@@ -70,6 +76,7 @@ public class BalConfigurationOptions {
         .isBalOptimisationEnabled(balOptimizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
+        .isBalStateRootTrusted(balTrustStateRoot)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .build();
   }
