@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -140,7 +141,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // this is a non-request id message, but we'll be processing it with eth66, make sure we
       // disconnect the peer gracefully
@@ -160,7 +161,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
@@ -179,7 +180,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
@@ -199,7 +200,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
@@ -237,7 +238,7 @@ public final class EthProtocolManagerTest {
             .setBlockchain(blockchain)
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .setMergePeerFilter(Optional.of(mergePeerFilter))
             .build()) {
 
@@ -297,7 +298,9 @@ public final class EthProtocolManagerTest {
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
             .setEthereumWireProtocolConfiguration(
-                EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V69).build())
+                ImmutableEthProtocolConfiguration.builder()
+                    .maxEthCapability(EthProtocolVersion.V69)
+                    .build())
             .build()) {
 
       final MockPeerConnection peer =
@@ -330,7 +333,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData = mock(MessageData.class);
       when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
@@ -351,7 +354,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
@@ -388,7 +391,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final MessageData messageData =
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()))
@@ -412,7 +415,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       final long startBlock = 5L;
       final int blockCount = 5;
@@ -447,7 +450,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
     final EthProtocolConfiguration config =
-        EthProtocolConfiguration.builder().maxGetBlockHeaders(limit).build();
+        ImmutableEthProtocolConfiguration.builder().maxGetBlockHeaders(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -495,7 +498,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long endBlock = 10L;
@@ -536,7 +539,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long startBlock = 5L;
@@ -579,7 +582,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long endBlock = 10L;
@@ -672,7 +675,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() - 1L;
@@ -713,7 +716,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;
@@ -751,7 +754,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       // Setup blocks query
@@ -799,7 +802,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
     final EthProtocolConfiguration config =
-        EthProtocolConfiguration.builder().maxGetBlockBodies(limit).build();
+        ImmutableEthProtocolConfiguration.builder().maxGetBlockBodies(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -859,7 +862,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Setup blocks query
       final long expectedBlockNumber = blockchain.getChainHeadBlockNumber() - 1;
@@ -905,7 +908,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Setup blocks query
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
@@ -951,7 +954,7 @@ public final class EthProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
     final EthProtocolConfiguration config =
-        EthProtocolConfiguration.builder().maxGetReceipts(limit).build();
+        ImmutableEthProtocolConfiguration.builder().maxGetReceipts(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -1010,7 +1013,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Setup blocks query
       final long blockNumber = blockchain.getChainHeadBlockNumber() - 5;
@@ -1058,7 +1061,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Setup node data query
 
@@ -1109,7 +1112,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Define handler to validate response
       final PeerSendHandler onSend = mock(PeerSendHandler.class);
@@ -1181,7 +1184,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       final long startBlock = 1L;
@@ -1250,7 +1253,6 @@ public final class EthProtocolManagerTest {
     final MessageData raw =
         new RawMessage(EthProtocolMessages.TRANSACTIONS, initialMessage.getData());
     final TransactionsMessage transactionMessage = TransactionsMessage.readFrom(raw);
-
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -1258,7 +1260,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(ethScheduler)
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
@@ -1301,7 +1303,9 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 65. should respect flag
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V68).build();
+        ImmutableEthProtocolConfiguration.builder()
+            .maxEthCapability(EthProtocolVersion.V68)
+            .build();
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
@@ -1315,7 +1319,9 @@ public final class EthProtocolManagerTest {
 
     // If min cap = v67, should not contain v66
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().minEthCapability(EthProtocolVersion.V69).build();
+        ImmutableEthProtocolConfiguration.builder()
+            .minEthCapability(EthProtocolVersion.V69)
+            .build();
 
     final EthProtocolManager ethManager = createEthManager(SyncMode.SNAP, configuration);
 
@@ -1328,7 +1334,9 @@ public final class EthProtocolManagerTest {
 
     // Test with max capability = 68. should respect protocol
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder().maxEthCapability(EthProtocolVersion.V68).build();
+        ImmutableEthProtocolConfiguration.builder()
+            .maxEthCapability(EthProtocolVersion.V68)
+            .build();
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
@@ -1340,7 +1348,7 @@ public final class EthProtocolManagerTest {
   @Test
   public void shouldThrowExceptionWhenNoCapabilities() {
     final EthProtocolConfiguration configuration =
-        EthProtocolConfiguration.builder()
+        ImmutableEthProtocolConfiguration.builder()
             .minEthCapability(EthProtocolVersion.V69)
             .maxEthCapability(EthProtocolVersion.V68)
             .build();
@@ -1352,7 +1360,7 @@ public final class EthProtocolManagerTest {
   }
 
   private void assertHighestCapability(final SyncMode syncMode, final Capability capability) {
-    assertHighestCapability(syncMode, capability, EthProtocolConfiguration.defaultConfig());
+    assertHighestCapability(syncMode, capability, EthProtocolConfiguration.DEFAULT);
   }
 
   private void assertHighestCapability(
@@ -1404,7 +1412,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       setupPeerWithoutStatusExchange(
@@ -1431,7 +1439,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(new DeterministicEthScheduler(() -> false))
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build()) {
 
       setupPeerWithoutStatusExchange(

@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import javax.annotation.Nonnull;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
@@ -67,7 +67,7 @@ class XmlExtensionConfigurationTest {
     }
   }
 
-  @Nonnull
+  @NotNull
   private static ConfigurationSource getConfigurationSource() {
     final String xmlConfig =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
