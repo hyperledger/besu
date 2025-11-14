@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,40 +165,10 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
     return new BlobAndProofV2(
-        EngineGetBlobsV2.toFastHex(blobProofBundle.getBlob().getData(), true),
+        HexUtils.toFastHex(blobProofBundle.getBlob().getData(), true),
         blobProofBundle.getKzgProof().stream()
-            .map(proof -> EngineGetBlobsV2.toFastHex(proof.getData(), true))
+            .map(proof -> HexUtils.toFastHex(proof.getData(), true))
             .toList());
-  }
-
-  private static final char[] hexChars = "0123456789abcdef".toCharArray();
-
-  /**
-   * Optimized version of org.apache.tuweni.bytes.Bytes.toFastHex that avoids the megamorphic get
-   * and size calls Adapted from #{@link
-   * org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog#toCompactHex } but this
-   * method retains the leading zeros
-   */
-  static String toFastHex(final Bytes abytes, final boolean prefix) {
-    byte[] bytes = abytes.toArrayUnsafe();
-    final int size = bytes.length;
-    final StringBuilder result = new StringBuilder(prefix ? (size * 2) + 2 : size * 2);
-
-    if (prefix) {
-      result.append("0x");
-    }
-
-    for (int i = 0; i < size; i++) {
-      byte b = bytes[i];
-
-      int highNibble = (b >> 4) & 0xF;
-      result.append(hexChars[highNibble]);
-
-      int lowNibble = b & 0xF;
-      result.append(hexChars[lowNibble]);
-    }
-
-    return result.toString();
   }
 
   @Override
