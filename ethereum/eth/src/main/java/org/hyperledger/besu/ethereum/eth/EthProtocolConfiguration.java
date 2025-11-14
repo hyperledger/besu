@@ -21,6 +21,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface EthProtocolConfiguration {
   int DEFAULT_MAX_MESSAGE_SIZE = 10 * ByteUnits.MEGABYTE;
+  int DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE = ByteUnits.MEGABYTE;
   int DEFAULT_MAX_GET_BLOCK_HEADERS = 512;
   int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
   int DEFAULT_MAX_GET_RECEIPTS = 256;
@@ -34,6 +35,11 @@ public interface EthProtocolConfiguration {
   @Value.Default
   default int getMaxMessageSize() {
     return DEFAULT_MAX_MESSAGE_SIZE;
+  }
+
+  @Value.Default
+  default int getMaxTransactionsMessageSize() {
+    return DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE;
   }
 
   @Value.Default

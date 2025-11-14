@@ -1253,6 +1253,7 @@ public final class EthProtocolManagerTest {
     final MessageData raw =
         new RawMessage(EthProtocolMessages.TRANSACTIONS, initialMessage.getData());
     final TransactionsMessage transactionMessage = TransactionsMessage.readFrom(raw);
+    final EthProtocolConfiguration ethProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -1260,7 +1261,7 @@ public final class EthProtocolManagerTest {
             .setEthScheduler(ethScheduler)
             .setWorldStateArchive(protocolContext.getWorldStateArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setEthereumWireProtocolConfiguration(ethProtocolConfiguration)
             .build()) {
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
@@ -1272,6 +1273,7 @@ public final class EthProtocolManagerTest {
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               TransactionPoolConfiguration.DEFAULT,
+              ethProtocolConfiguration,
               new BlobCache(),
               MiningConfiguration.newDefault())
           .setEnabled();
