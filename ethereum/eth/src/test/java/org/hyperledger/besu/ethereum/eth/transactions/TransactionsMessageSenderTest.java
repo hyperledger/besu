@@ -61,7 +61,8 @@ public class TransactionsMessageSenderTest {
     transactionTracker.addToPeerSendQueue(peer1, transaction2);
     transactionTracker.addToPeerSendQueue(peer2, transaction3);
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionsToPeer(peer1);
+    messageSender.sendTransactionsToPeer(peer2);
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
@@ -74,7 +75,8 @@ public class TransactionsMessageSenderTest {
 
     transactions.forEach(transaction -> transactionTracker.addToPeerSendQueue(peer1, transaction));
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionsToPeer(peer1);
+
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
         ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(messageDataArgumentCaptor.capture());
