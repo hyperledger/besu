@@ -859,10 +859,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 protocolContext
                     .getBadBlockManager()
                     .getBadBlock(parentHash)
-                    .map(
+                    .flatMap(
                         badParent ->
-                            findValidAncestor(chain, badParent.getHeader().getParentHash()))
-                    .orElse(Optional.empty()));
+                            findValidAncestor(chain, badParent.getHeader().getParentHash())));
   }
 
   @Override
