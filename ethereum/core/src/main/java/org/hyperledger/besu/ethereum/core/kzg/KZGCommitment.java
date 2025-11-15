@@ -22,8 +22,8 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes48;
 
 /** This class contains the data for a KZG commitment. */
-public class KZGCommitment implements org.hyperledger.besu.datatypes.KZGCommitment {
-  private final Bytes48 data;
+public class KZGCommitment extends KZGBytes<Bytes48>
+    implements org.hyperledger.besu.datatypes.KZGCommitment {
 
   /**
    * Constructor for a KZG commitment.
@@ -31,7 +31,7 @@ public class KZGCommitment implements org.hyperledger.besu.datatypes.KZGCommitme
    * @param data The data for the KZG commitment.
    */
   public KZGCommitment(final Bytes48 data) {
-    this.data = data;
+    super(data);
   }
 
   /**
@@ -51,17 +51,7 @@ public class KZGCommitment implements org.hyperledger.besu.datatypes.KZGCommitme
    * @param out The RLP output.
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytes(data);
-  }
-
-  /**
-   * Gets the data for the KZG commitment.
-   *
-   * @return The data for the KZG commitment.
-   */
-  @Override
-  public Bytes48 getData() {
-    return data;
+    out.writeBytes(getData());
   }
 
   @Override
