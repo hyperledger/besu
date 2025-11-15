@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_CELL_PROOFS;
 import static org.hyperledger.besu.datatypes.BlobType.KZG_PROOF;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -271,5 +273,64 @@ public class EngineGetBlobsV2Test extends AbstractScheduledApiTest {
         bundle.getKzgProof().stream().map(p -> p.getData().toHexString()).toList();
 
     assertThat(blob.getProofs()).containsExactlyElementsOf(expectedProofs);
+  }
+
+  @Test
+  public void testToFastHexEmptyWithPrefix() {
+    Bytes emptyBytes = Bytes.EMPTY;
+    String result = EngineGetBlobsV2.toFastHex(emptyBytes, true);
+    assertEquals("0x", result, "Expected '0x' for an empty byte array with prefix");
+  }
+
+  @Test
+  public void testToFastHexEmptyWithoutPrefix() {
+    Bytes emptyBytes = Bytes.EMPTY;
+    String result = EngineGetBlobsV2.toFastHex(emptyBytes, false);
+    assertEquals("", result, "Expected '' for an empty byte array without prefix");
+  }
+
+  @Test
+  public void testToFastHexSingleByteWithPrefix() {
+    Bytes bytes = Bytes.fromHexString("0x01");
+    String result = EngineGetBlobsV2.toFastHex(bytes, true);
+    assertEquals("0x01", result, "Expected '0x01' for the byte 0x01 with prefix");
+  }
+
+  @Test
+  public void testToFastHexSingleByteWithoutPrefix() {
+    Bytes bytes = Bytes.fromHexString("0x01");
+    String result = EngineGetBlobsV2.toFastHex(bytes, false);
+    assertEquals("01", result, "Expected '01' for the byte 0x01 without prefix");
+  }
+
+  @Test
+  public void testToFastHexMultipleBytesWithPrefix() {
+    Bytes bytes = Bytes.fromHexString("0x010203");
+    String result = EngineGetBlobsV2.toFastHex(bytes, true);
+    assertEquals("0x010203", result, "Expected '0x010203' for the byte array 0x010203 with prefix");
+  }
+
+  @Test
+  public void testToFastHexMultipleBytesWithoutPrefix() {
+    Bytes bytes = Bytes.fromHexString("0x010203");
+    String result = EngineGetBlobsV2.toFastHex(bytes, false);
+    assertEquals("010203", result, "Expected '010203' for the byte array 0x010203 without prefix");
+  }
+
+  @Test
+  public void testToFastHexWithLeadingZeros() {
+    Bytes bytes = Bytes.fromHexString("0x0001");
+    String result = EngineGetBlobsV2.toFastHex(bytes, true);
+    assertEquals(
+        "0x0001",
+        result,
+        "Expected '0x0001' for the byte array 0x0001 with prefix (leading zeros retained)");
+  }
+
+  @Test
+  public void testToFastHexWithLargeData() {
+    Bytes bytes = Bytes.fromHexString("0x0102030405060708090a");
+    String result = EngineGetBlobsV2.toFastHex(bytes, true);
+    assertEquals("0x0102030405060708090a", result, "Expected correct hex output for large data");
   }
 }
