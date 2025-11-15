@@ -444,4 +444,8 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
 
     return summary;
   }
+
+  public void resetState() {
+    state = Lifecycle.UNINITIALIZED;
+  }
 }
