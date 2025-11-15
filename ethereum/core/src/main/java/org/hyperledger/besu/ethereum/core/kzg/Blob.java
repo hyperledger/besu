@@ -22,9 +22,7 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Arbitrary data for use in the KZG scheme. */
-public class Blob implements org.hyperledger.besu.datatypes.Blob {
-
-  private final Bytes data;
+public class Blob extends KZGBytes<Bytes> implements org.hyperledger.besu.datatypes.Blob {
 
   /**
    * Create a new Blob.
@@ -32,7 +30,7 @@ public class Blob implements org.hyperledger.besu.datatypes.Blob {
    * @param data that represents the blob.
    */
   public Blob(final Bytes data) {
-    this.data = data;
+    super(data);
   }
 
   /**
@@ -52,17 +50,7 @@ public class Blob implements org.hyperledger.besu.datatypes.Blob {
    * @param out to write to.
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytes(data);
-  }
-
-  /**
-   * Get the data of the Blob.
-   *
-   * @return the data.
-   */
-  @Override
-  public Bytes getData() {
-    return data;
+    out.writeBytes(getData());
   }
 
   @Override
