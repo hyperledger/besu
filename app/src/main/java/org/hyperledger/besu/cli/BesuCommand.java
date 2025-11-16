@@ -2597,9 +2597,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String generateConfigurationOverview() {
     final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
 
-    final BalConfiguration balConfiguration = balConfigurationOptions.toDomainObject();
-    builder.setBalConfiguration(balConfiguration);
-
     if (environment != null) {
       builder.setEnvironment(environment);
     }

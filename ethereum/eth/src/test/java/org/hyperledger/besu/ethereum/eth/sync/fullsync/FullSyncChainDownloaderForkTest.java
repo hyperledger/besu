@@ -74,7 +74,7 @@ public class FullSyncChainDownloaderForkTest {
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build();
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());

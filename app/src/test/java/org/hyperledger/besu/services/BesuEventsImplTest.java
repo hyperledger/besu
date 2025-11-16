@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -172,6 +173,7 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             txPoolConfig,
+            EthProtocolConfiguration.DEFAULT,
             new BlobCache(),
             MiningConfiguration.newDefault());
 

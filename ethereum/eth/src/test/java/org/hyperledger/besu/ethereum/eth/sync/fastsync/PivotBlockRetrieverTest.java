@@ -84,7 +84,7 @@ public class PivotBlockRetrieverTest {
             .setEthScheduler(new EthScheduler(1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
 

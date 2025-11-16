@@ -310,7 +310,7 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            EthProtocolConfiguration.defaultConfig(),
+            EthProtocolConfiguration.DEFAULT,
             ethPeers,
             mock(EthMessages.class),
             ethContext,

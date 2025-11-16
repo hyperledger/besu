@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.ConsensusContextFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -58,7 +57,6 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
-import java.io.IOException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -298,6 +296,7 @@ public class BlockchainReferenceTestTools {
               metricsSystem,
               syncState,
               TransactionPoolConfiguration.DEFAULT,
+              EthProtocolConfiguration.DEFAULT,
               new BlobCache(),
               MiningConfiguration.newDefault());
 

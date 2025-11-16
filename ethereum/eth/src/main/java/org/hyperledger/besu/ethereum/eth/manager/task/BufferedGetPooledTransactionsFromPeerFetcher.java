@@ -77,10 +77,16 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
-    List<Hash> txHashesAnnounced;
-    while (!(txHashesAnnounced = getTxHashesAnnounced()).isEmpty()) {
+    List<Hash> txHashesToRequest;
+    while (!(txHashesToRequest = getTxHashesToRetrieve()).isEmpty()) {
+      LOG.atTrace()
+          .setMessage("Transaction hashes to request from peer={}, fresh hashes={}")
+          .addArgument(peer)
+          .addArgument(txHashesToRequest)
+          .log();
+
       final GetPooledTransactionsFromPeerTask task =
-          new GetPooledTransactionsFromPeerTask(txHashesAnnounced);
+          new GetPooledTransactionsFromPeerTask(txHashesToRequest);
       ethContext
           .getScheduler()
           .scheduleServiceTask(
@@ -89,6 +95,13 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                     ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
                 if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                     || taskResult.result().isEmpty()) {
+
+                  LOG.atTrace()
+                      .setMessage(
+                          "Failed to retrieve transactions by hash from peer={}, requested hashes={}")
+                      .addArgument(peer)
+                      .addArgument(task::getHashes)
+                      .log();
                   return CompletableFuture.failedFuture(
                       new RuntimeException("Failed to retrieve transactions for hashes"));
                 }
@@ -99,9 +112,11 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
                 transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
 
                 LOG.atTrace()
-                    .setMessage("Got {} transactions requested from peer {}")
-                    .addArgument(retrievedTransactions::size)
-                    .addArgument(peer::getLoggableId)
+                    .setMessage(
+                        "Got transactions requested by hash from peer={}, requested hashes={}, returned hashes={}")
+                    .addArgument(peer)
+                    .addArgument(task::getHashes)
+                    .addArgument(() -> Transaction.toHashList(retrievedTransactions))
                     .log();
 
                 transactionPool.addRemoteTransactions(retrievedTransactions);
@@ -113,7 +128,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     txAnnounces.addAll(hashes);
   }
 
-  private List<Hash> getTxHashesAnnounced() {
+  private List<Hash> getTxHashesToRetrieve() {
     final List<Hash> toRetrieve = new ArrayList<>(MAX_HASHES);
     int discarded = 0;
     while (toRetrieve.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
@@ -127,14 +142,6 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
 
     final int alreadySeenCount = discarded;
     metrics.incrementAlreadySeenTransactions(metricLabel, alreadySeenCount);
-    LOG.atTrace()
-        .setMessage(
-            "Transaction hashes to request from peer {} fresh count {}, already seen count {}")
-        .addArgument(peer::getLoggableId)
-        .addArgument(toRetrieve::size)
-        .addArgument(alreadySeenCount)
-        .log();
-
     return toRetrieve;
   }
 }

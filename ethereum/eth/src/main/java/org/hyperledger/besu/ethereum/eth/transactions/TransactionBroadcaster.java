@@ -82,6 +82,10 @@ public class TransactionBroadcaster
   public void relayTransactionPoolTo(
       final EthPeer peer, final Collection<PendingTransaction> pendingTransactions) {
     if (!pendingTransactions.isEmpty()) {
+      LOG.trace(
+          "Send all txpool hashes, size={}, to newly connected peer={}",
+          pendingTransactions.size(),
+          peer);
       sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
     }
   }
