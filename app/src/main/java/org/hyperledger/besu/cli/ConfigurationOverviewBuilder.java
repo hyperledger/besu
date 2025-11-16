@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -24,7 +23,6 @@ import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -71,10 +69,6 @@ public class ConfigurationOverviewBuilder {
   private boolean isParallelTxProcessingEnabled = false;
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
-  private boolean isBalOptimizationEnabled = true;
-  private boolean isBalLenientOnMismatch = false;
-  private boolean isBalApiEnabled = false;
-  private Duration balStateRootTimeout = Duration.ofSeconds(1);
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -388,20 +382,6 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets the BAL configuration.
-   *
-   * @param balConfiguration the BAL configuration
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setBalConfiguration(final BalConfiguration balConfiguration) {
-    this.isBalOptimizationEnabled = balConfiguration.isBalOptimisationEnabled();
-    this.isBalLenientOnMismatch = balConfiguration.isBalLenientOnMismatch();
-    this.isBalApiEnabled = balConfiguration.isBalApiEnabled();
-    this.balStateRootTimeout = balConfiguration.getBalStateRootTimeout();
-    return this;
-  }
-
-  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -472,11 +452,6 @@ public class ConfigurationOverviewBuilder {
     } else {
       lines.add("Parallel transaction processing disabled");
     }
-
-    lines.add("BAL optimizations " + (isBalOptimizationEnabled ? "enabled" : "disabled"));
-    lines.add("BAL mismatch leniency " + (isBalLenientOnMismatch ? "enabled" : "disabled"));
-    lines.add("BAL API " + (isBalApiEnabled ? "enabled" : "disabled"));
-    lines.add("BAL state root timeout: " + balStateRootTimeout.toMillis() + " ms");
 
     if (isLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();
