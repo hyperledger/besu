@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -48,8 +49,8 @@ public class FastSyncChainDownloader {
       final FastSyncStateStorage fastSyncStateStorage,
       final java.nio.file.Path fastSyncDataDirectory) {
 
-    final FastSyncDownloadPipelineFactory pipelineFactory =
-        new FastSyncDownloadPipelineFactory(
+    final SnapSyncDownloadPipelineFactory pipelineFactory =
+        new SnapSyncDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
 
     final BlockHeader pivotBlockHeader =

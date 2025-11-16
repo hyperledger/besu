@@ -657,6 +657,26 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized void unsafeImportSyncBodyAndReceipts(
+      final SyncBlock block,
+      final List<TransactionReceipt> transactionReceipts,
+      final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final Hash blockHash = block.getHash();
+    updater.putBlockHash(block.getHeader().getNumber(), blockHash);
+    updater.putSyncBlockBody(blockHash, block.getBody());
+    if (indexTransactions) {
+      final List<Hash> listOfTxHashes =
+          block.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
+      indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+    }
+    updater.putTransactionReceipts(blockHash, transactionReceipts);
+    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
+    updater.putTotalDifficulty(blockHash, td);
+    updater.commit();
+  }
+
+  @Override
   public synchronized void unsafeSetChainHead(
       final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
