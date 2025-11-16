@@ -108,6 +108,7 @@ public class QbftRoundFactory {
         protocolSchedule,
         minedBlockObservers,
         finalState.getNodeKey(),
+        finalState.getLocalAddress(),
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),

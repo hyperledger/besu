@@ -24,6 +24,7 @@ import java.util.OptionalInt;
  *
  * @param jumpDestCacheWeightKB the jump destination cache weight in kb
  * @param worldUpdaterMode the world updater mode
+ * @param enableOptimizedOpcodes enable optimized implementation of certain opcodes in the EVM
  * @param evmStackSize the maximum evm stack size
  * @param maxCodeSizeOverride An optional override of the maximum code size set by the EVM fork
  * @param maxInitcodeSizeOverride An optional override of the maximum initcode size set by the EVM
@@ -32,6 +33,7 @@ import java.util.OptionalInt;
 public record EvmConfiguration(
     long jumpDestCacheWeightKB,
     WorldUpdaterMode worldUpdaterMode,
+    boolean enableOptimizedOpcodes,
     Integer evmStackSize,
     Optional<Integer> maxCodeSizeOverride,
     Optional<Integer> maxInitcodeSizeOverride) {
@@ -48,19 +50,23 @@ public record EvmConfiguration(
 
   /** The constant DEFAULT. */
   public static final EvmConfiguration DEFAULT =
-      new EvmConfiguration(32_000L, WorldUpdaterMode.STACKED);
+      new EvmConfiguration(32_000L, WorldUpdaterMode.STACKED, true);
 
   /**
    * Create an EVM Configuration without any overrides
    *
    * @param jumpDestCacheWeightKilobytes the jump dest cache weight (in kibibytes)
-   * @param worldstateUpdateMode the workd update mode
+   * @param worldstateUpdateMode the world update mode
+   * @param enableOptimizedOpcodes enabled opcode optimizations
    */
   public EvmConfiguration(
-      final Long jumpDestCacheWeightKilobytes, final WorldUpdaterMode worldstateUpdateMode) {
+      final Long jumpDestCacheWeightKilobytes,
+      final WorldUpdaterMode worldstateUpdateMode,
+      final boolean enableOptimizedOpcodes) {
     this(
         jumpDestCacheWeightKilobytes,
         worldstateUpdateMode,
+        enableOptimizedOpcodes,
         MessageFrame.DEFAULT_MAX_STACK_SIZE,
         Optional.empty(),
         Optional.empty());
@@ -91,6 +97,7 @@ public record EvmConfiguration(
     return new EvmConfiguration(
         jumpDestCacheWeightKB,
         worldUpdaterMode,
+        enableOptimizedOpcodes,
         newEvmStackSize.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE),
         newMaxCodeSize.isPresent() ? Optional.of(newMaxCodeSize.getAsInt()) : Optional.empty(),
         newMaxInitcodeSize.isPresent()

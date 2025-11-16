@@ -1,0 +1,281 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
+import org.hyperledger.besu.testutil.BlockTestUtil;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.Resources;
+import com.ibm.icu.impl.Assert;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.CleanupMode;
+import org.junit.jupiter.api.io.TempDir;
+
+public class DebugStandardTraceBlockToFileIntegrationTest {
+  private static final String RPC_ENDPOINT = "debug_standardTraceBlockToFile";
+  private static JsonRpcTestMethodsFactory blockchain;
+  private JsonRpcMethod method;
+
+  @TempDir(cleanup = CleanupMode.ON_SUCCESS)
+  private static Path dataDir;
+
+  @BeforeAll
+  public static void setUpOnce() throws Exception {
+    // experimental tracers are meant to be enabled in tests
+    DebugTraceTransactionStepFactory.enableExtraTracers = true;
+
+    final String genesisJson =
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
+
+    blockchain =
+        new JsonRpcTestMethodsFactory(
+            new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson), dataDir);
+  }
+
+  @BeforeEach
+  public void setUp() {
+    final Map<String, JsonRpcMethod> methods = blockchain.methods();
+    method = methods.get(RPC_ENDPOINT);
+  }
+
+  @Test
+  public void defaultFieldsAssertMemoryWithTxHash() throws IOException {
+    final Map<String, String> map =
+        Map.of("txHash", "0x812742182a79a8e67733edc58cfa3767aa2d7ad06439d156ddbbb33e3403b4ed");
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).anyMatch(node -> node.has("memory"));
+  }
+
+  @Test
+  public void defaultFieldsAssertMemory() throws IOException {
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithDefaults(blockHash);
+    assertThat(json).anyMatch(node -> node.has("memory"));
+  }
+
+  @Test
+  public void defaultFieldsAssertStackWithTxHash() throws IOException {
+    final Map<String, String> map =
+        Map.of("txHash", "0x812742182a79a8e67733edc58cfa3767aa2d7ad06439d156ddbbb33e3403b4ed");
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).anyMatch(node -> node.has("stack"));
+  }
+
+  @Test
+  public void defaultFieldsAssertStack() throws IOException {
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithDefaults(blockHash);
+    assertThat(json).anyMatch(node -> node.has("stack"));
+  }
+
+  @Test
+  public void defaultFieldsAssertStorageWithTxHash() throws IOException {
+    final Map<String, String> map =
+        Map.of("txHash", "0xe0c994851389d3a449729eba332cf8b4c5e9457520056733dc4eb0e5a6842ed5");
+    final Hash blockHash =
+        Hash.fromHexString("0x0362d0ee919714b702cb31d2f4fe6b5c834f36cc19558acb81a4832f86738e39");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).noneMatch(node -> node.has("storage"));
+  }
+
+  @Test
+  public void defaultFieldsAssertStorage() throws IOException {
+    final Hash blockHash =
+        Hash.fromHexString("0x0362d0ee919714b702cb31d2f4fe6b5c834f36cc19558acb81a4832f86738e39");
+
+    final List<JsonNode> json = getRpcJsonWithDefaults(blockHash);
+    assertThat(json).noneMatch(node -> node.has("storage"));
+  }
+
+  @Test
+  public void defaultFieldsAssertOpcodesWithTxHash() throws IOException {
+    final Map<String, String> map =
+        Map.of("txHash", "0x812742182a79a8e67733edc58cfa3767aa2d7ad06439d156ddbbb33e3403b4ed");
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json)
+        .allMatch(
+            node ->
+                node.equals(json.getLast())
+                    || "PUSH1".equals(node.get("opName").asText())
+                    || "JUMPDEST".equals(node.get("opName").asText())
+                    || "DUP1".equals(node.get("opName").asText())
+                    || "RETURN".equals(node.get("opName").asText())
+                    || "PUSH2".equals(node.get("opName").asText())
+                    || "CODECOPY".equals(node.get("opName").asText()));
+  }
+
+  @Test
+  public void defaultFieldsAssertOpcodes() throws IOException {
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithDefaults(blockHash);
+    assertThat(json)
+        .allMatch(
+            node ->
+                node.equals(json.getLast())
+                    || "PUSH1".equals(node.get("opName").asText())
+                    || "JUMPDEST".equals(node.get("opName").asText())
+                    || "DUP1".equals(node.get("opName").asText())
+                    || "RETURN".equals(node.get("opName").asText())
+                    || "PUSH2".equals(node.get("opName").asText())
+                    || "CODECOPY".equals(node.get("opName").asText()));
+  }
+
+  @Test
+  public void disableMemory() throws IOException {
+    final Map<String, Boolean> map = Map.of("disableMemory", true);
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).noneMatch(node -> node.has("memory"));
+  }
+
+  @Test
+  public void disableStack() throws IOException {
+    final Map<String, Boolean> map = Map.of("disableStack", true);
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).noneMatch(node -> node.has("stack"));
+  }
+
+  @Test
+  public void enableStorage() throws IOException {
+    final Map<String, Boolean> map = Map.of("disableStorage", false);
+    final Hash blockHash =
+        Hash.fromHexString("0x0362d0ee919714b702cb31d2f4fe6b5c834f36cc19558acb81a4832f86738e39");
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json).anyMatch(node -> node.has("storage"));
+  }
+
+  @Test
+  public void traceOpcodes() throws IOException {
+    final Map<String, List<String>> map = Map.of("opcodes", Arrays.asList("PUSH2", "CODECOPY"));
+    final Hash blockHash =
+        Hash.fromHexString("0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9");
+
+    final List<JsonNode> defaultsJson = getRpcJsonWithDefaults(blockHash);
+    final AtomicReference<String> previousOpName = new AtomicReference<>();
+    final List<JsonNode> expectedJson =
+        defaultsJson.stream()
+            .filter(node -> !node.equals(defaultsJson.getLast()))
+            .filter(
+                node -> {
+                  final String opName = node.get("opName").asText();
+                  final boolean keep =
+                      "PUSH2".equals(opName)
+                          || "PUSH2".equals(previousOpName.get())
+                          || "CODECOPY".equals(opName)
+                          || "CODECOPY".equals(previousOpName.get());
+                  previousOpName.set(opName);
+                  return keep;
+                })
+            .toList();
+
+    final List<JsonNode> json = getRpcJsonWithOptions(blockHash, map);
+    assertThat(json.stream().filter(node -> !node.equals(defaultsJson.getLast())))
+        .containsAll(expectedJson);
+  }
+
+  private List<JsonNode> getRpcJsonWithDefaults(final Hash blockHash) throws IOException {
+    final Object[] params = new Object[] {blockHash};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", RPC_ENDPOINT, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    List<?> files = (List<?>) ((JsonRpcSuccessResponse) response).getResult();
+
+    ObjectMapper jsonMapper = new ObjectMapper();
+    return Files.readAllLines(Path.of((String) files.getFirst())).stream()
+        .map(
+            line -> {
+              try {
+                return jsonMapper.readTree(line);
+              } catch (JsonProcessingException e) {
+                Assert.fail("encountered invalid json from RPC response");
+                throw new RuntimeException(e);
+              }
+            })
+        .toList();
+  }
+
+  private List<JsonNode> getRpcJsonWithOptions(final Hash blockHash, final Map<String, ?> options)
+      throws IOException {
+    final Object[] params = new Object[] {blockHash, options};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", RPC_ENDPOINT, params));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    List<?> files = (List<?>) ((JsonRpcSuccessResponse) response).getResult();
+
+    ObjectMapper jsonMapper = new ObjectMapper();
+    return Files.readAllLines(Path.of((String) files.getFirst())).stream()
+        .map(
+            line -> {
+              try {
+                return jsonMapper.readTree(line);
+              } catch (JsonProcessingException e) {
+                Assert.fail("encountered invalid json from RPC response");
+                throw new RuntimeException(e);
+              }
+            })
+        .toList();
+  }
+}

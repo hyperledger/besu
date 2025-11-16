@@ -281,7 +281,11 @@ public class MainnetBlockValidator implements BlockValidator {
         // Result.errorMessage should not be empty on failure, but add a default to be safe
         String description = result.errorMessage.orElse("Unknown cause");
         final BadBlockCause cause = BadBlockCause.fromValidationFailure(description);
-        context.getBadBlockManager().addBadBlock(failedBlock, cause);
+        final Optional<BlockAccessList> generatedBlockAccessList =
+            result instanceof BlockProcessingResult
+                ? ((BlockProcessingResult) result).getGeneratedBlockAccessList()
+                : Optional.empty();
+        context.getBadBlockManager().addBadBlock(failedBlock, cause, generatedBlockAccessList);
       } else {
         LOG.debug("Invalid block {} not added to badBlockManager ", failedBlock.toLogString());
       }

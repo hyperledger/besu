@@ -34,9 +34,11 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
@@ -114,8 +116,11 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
               new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 1710338135L),
               new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 1746612311L),
-              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 1764798551),
+              new ForkId(Bytes.ofUnsignedInt(0x5167e2a6L), 1765290071),
+              new ForkId(Bytes.ofUnsignedInt(0xcba2a1c0L), 1767747671),
+              new ForkId(Bytes.ofUnsignedInt(0x07c9462eL), 0),
+              new ForkId(Bytes.ofUnsignedInt(0x07c9462eL), 0))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -195,7 +200,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
@@ -206,8 +211,9 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
-                    new NoOpMetricsSystem()));
+                    BalConfiguration.DEFAULT,
+                    new NoOpMetricsSystem(),
+                    EvmConfiguration.DEFAULT));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);

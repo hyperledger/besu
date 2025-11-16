@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -24,12 +23,14 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -58,6 +59,10 @@ public class DebugOperationTracer implements OperationTracer {
   private int pc;
   private int depth;
 
+  // Flags used for implementing traceOpcodes functionality
+  private boolean traceOpcode;
+  private Operation previousOpcode = null;
+
   /**
    * Creates the operation tracer.
    *
@@ -72,6 +77,10 @@ public class DebugOperationTracer implements OperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
+    final Operation currentOperation = frame.getCurrentOperation();
+    if (!(traceOpcode = traceOpcode(currentOperation))) {
+      return;
+    }
     preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
     if (lastFrame != null && frame.getDepth() > lastFrame.getDepth())
@@ -81,10 +90,30 @@ public class DebugOperationTracer implements OperationTracer {
     depth = frame.getDepth();
   }
 
+  private boolean traceOpcode(final Operation currentOpcode) {
+    if (options.traceOpcodes().isEmpty()) {
+      return true;
+    }
+    final boolean traceCurrentOpcode =
+        options.traceOpcodes().contains(currentOpcode.getName().toLowerCase(Locale.ROOT));
+    final boolean tracePreviousOpcode =
+        previousOpcode != null
+            && options.traceOpcodes().contains(previousOpcode.getName().toLowerCase(Locale.ROOT));
+
+    if (!traceCurrentOpcode && !tracePreviousOpcode) {
+      return false;
+    }
+    previousOpcode = currentOpcode;
+    return true;
+  }
+
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
+    if (!traceOpcode) {
+      return;
+    }
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();

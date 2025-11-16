@@ -108,7 +108,7 @@ public class AccessLocationTracker implements Eip7928AccessList {
         if (stackedUpdater.getDeletedAccountAddresses().contains(address)) {
           final Optional<Account> originalAccount = findOriginalAccount(stackedUpdater, address);
           if (originalAccount.isPresent() && !originalAccount.get().getBalance().isZero()) {
-            accountBuilder.withPostBalance(Wei.ZERO.toBytes());
+            accountBuilder.withPostBalance(Wei.ZERO);
           }
         }
         continue;
@@ -124,7 +124,7 @@ public class AccessLocationTracker implements Eip7928AccessList {
           Wei newBalance = account.getBalance();
           Wei originalBalance = wrappedAccount.getBalance();
           if (!newBalance.equals(originalBalance)) {
-            accountBuilder.withPostBalance(newBalance.toBytes());
+            accountBuilder.withPostBalance(newBalance);
           }
 
           long newNonce = account.getNonce();
@@ -135,13 +135,13 @@ public class AccessLocationTracker implements Eip7928AccessList {
 
           Bytes newCode = account.getCode();
           Bytes originalCode = wrappedAccount.getCode();
-          if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
+          if (!newCode.equals(originalCode)) {
             accountBuilder.withNewCode(newCode);
           }
         } else {
           Wei newBalance = account.getBalance();
           if (!newBalance.isZero()) {
-            accountBuilder.withPostBalance(newBalance.toBytes());
+            accountBuilder.withPostBalance(newBalance);
           }
 
           final long newNonce = account.getNonce();

@@ -31,6 +31,7 @@ plugins {
   id 'jacoco'
   id 'jacoco-report-aggregation'
   id 'org.sonarqube' version '6.2.0.5505'
+  id 'de.undercouch.download' version '5.6.0'
 }
 
 sonarqube {
@@ -649,15 +650,17 @@ subprojects {
       excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
+      jvmArgs = [
+        '-XX:+EnableDynamicAgentLoading'
+      ]
       if (asyncProfiler != null) {
         profilers = [
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
+        // Force debug symbols of stack traces to the profiler
+        jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
       }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
-      jvmArgs = [
-        '-XX:+EnableDynamicAgentLoading'
-      ]
     }
 
     dependencies {
@@ -701,7 +704,8 @@ application {
     "--add-exports",
     "java.base/jdk.internal.misc=ALL-UNNAMED",
     "--add-opens",
-    "java.base/java.nio=ALL-UNNAMED"
+    "java.base/java.nio=ALL-UNNAMED",
+    "--enable-native-access=ALL-UNNAMED"
   ]
 }
 
@@ -880,22 +884,68 @@ task distDocker {
   }
 }
 
-task testDocker {
-  dependsOn distDocker
-  def dockerReportsDir = "docker/reports/"
+tasks.register("downloadGossBinaries") {
+  def gossVersion = 'v0.4.9'
+  def baseUrl = "https://github.com/goss-org/goss/releases/download/${gossVersion}"
+  def testDir = "${projectDir}/docker/tests"
 
-  doFirst {
-    new File(dockerReportsDir).mkdir()
-  }
+  // Detect current architecture
+  def osArch = System.getProperty("os.arch").toLowerCase()
+  def currentArch = (osArch.contains("aarch64") || osArch.contains("arm64")) ? "arm64" : "amd64"
 
   doLast {
-    exec {
-      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-      workingDir "${projectDir}/docker"
-      executable shell
-      args "-c", "./test.sh ${image}"
+    // Download goss binary for current architecture
+    def binaryFile = new File(testDir, "goss-linux-${currentArch}")
+
+    // Download binary if it doesn't exist
+    if (!binaryFile.exists()) {
+      println "Downloading goss-linux-${currentArch}..."
+      download.run {
+        src "${baseUrl}/goss-linux-${currentArch}"
+        dest binaryFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      binaryFile.setExecutable(true)
+      println "Successfully downloaded goss-linux-${currentArch}"
+    } else {
+      println "goss-linux-${currentArch} already exists"
+    }
+
+    // Download dgoss if it doesn't exist
+    def dgossFile = new File(testDir, 'dgoss')
+    if (!dgossFile.exists()) {
+      println "Downloading dgoss..."
+      download.run {
+        src "${baseUrl}/dgoss"
+        dest dgossFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      dgossFile.setExecutable(true)
+      println "Successfully downloaded dgoss"
+    } else {
+      println "dgoss already exists"
     }
   }
+}
+
+tasks.register("testDocker", Exec) {
+  dependsOn("distDocker", "downloadGossBinaries")
+
+  doFirst {
+    new File("docker/reports/").mkdir()
+  }
+
+  def image = project.hasProperty('release.releaseVersion')
+    ? "${dockerImageName}:" + project.property('release.releaseVersion')
+    : "${dockerImageName}:${project.version}"
+
+  workingDir "${projectDir}/docker"
+  executable shell
+  args "-c", "./test.sh ${image}"
 }
 
 task dockerUpload {
@@ -1051,22 +1101,34 @@ def calculateArtifactId(configuringProject) {
   return projectNames.reverse().join('-')
 }
 
-def getGitCommitDetails(length = 8) {
+def getGitCommitDetails(takeFromHash = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
-      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
+      // this is a worktree or submodule
+      gitFolder = file(gitFolder).text.replaceAll("^gitdir:", "").trim()
+      if (!gitFolder.endsWith("/")) {
+        gitFolder += "/"
+      }
     }
-    def takeFromHash = length
-    def head = new File(gitFolder + "HEAD").text.split(":")
+
+    def headFile = new File(gitFolder + "HEAD")
+    def head = headFile.text.split(":")
     def isCommit = head.length == 1
 
     def commitHash, refHeadFile
     if (isCommit) {
       commitHash = head[0].trim().take(takeFromHash)
-      refHeadFile = new File(gitFolder + "HEAD")
+      refHeadFile = headFile
     } else {
-      refHeadFile = new File(gitFolder + head[1].trim())
+      def refPath = head[1].trim()
+
+      refHeadFile = new File(gitFolder + refPath)
+      if (!refHeadFile.exists()) {
+        // For worktrees have to check in main .git directory
+        def mainGitDir = gitFolder.replaceFirst("\\.git/worktrees/.*", ".git/")
+        refHeadFile = new File(mainGitDir + refPath)
+      }
       commitHash = refHeadFile.text.trim().take(takeFromHash)
     }
 

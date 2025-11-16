@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -379,11 +380,9 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.isBlockAccessListEnabled(isBlockAccessListEnabled));
-    return super.isBlockAccessListEnabled(isBlockAccessListEnabled);
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    besuControllerBuilderSchedule.values().forEach(b -> b.balConfiguration(balConfiguration));
+    return super.balConfiguration(balConfiguration);
   }
 
   @Override

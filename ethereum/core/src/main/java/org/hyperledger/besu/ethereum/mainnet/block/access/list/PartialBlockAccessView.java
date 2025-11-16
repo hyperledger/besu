@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -95,7 +96,7 @@ public final class PartialBlockAccessView {
 
   public static final class AccountChanges {
     private final Address address;
-    private final Optional<Bytes> postBalance;
+    private Optional<Wei> postBalance;
     private final Optional<Long> nonceChange;
     private final Optional<Bytes> newCode;
     private final List<StorageSlotKey> storageReads;
@@ -103,7 +104,7 @@ public final class PartialBlockAccessView {
 
     public AccountChanges(
         final Address address,
-        final Optional<Bytes> postBalance,
+        final Optional<Wei> postBalance,
         final Optional<Long> nonceChange,
         final Optional<Bytes> newCode,
         final List<StorageSlotKey> storageReads,
@@ -120,8 +121,12 @@ public final class PartialBlockAccessView {
       return address;
     }
 
-    public Optional<Bytes> getPostBalance() {
+    public Optional<Wei> getPostBalance() {
       return postBalance;
+    }
+
+    public void setPostBalance(final Wei postBalance) {
+      this.postBalance = Optional.ofNullable(postBalance);
     }
 
     public Optional<Long> getNonceChange() {
@@ -167,7 +172,7 @@ public final class PartialBlockAccessView {
 
   public static class AccountChangesBuilder {
     private final Address address;
-    private Optional<Bytes> postBalance = Optional.empty();
+    private Optional<Wei> postBalance = Optional.empty();
     private Optional<Long> nonceChange = Optional.empty();
     private Optional<Bytes> newCode = Optional.empty();
     private final List<StorageSlotKey> storageReads = new ArrayList<>();
@@ -177,7 +182,7 @@ public final class PartialBlockAccessView {
       this.address = address;
     }
 
-    public AccountChangesBuilder withPostBalance(final Bytes postBalance) {
+    public AccountChangesBuilder withPostBalance(final Wei postBalance) {
       this.postBalance = Optional.ofNullable(postBalance);
       return this;
     }
