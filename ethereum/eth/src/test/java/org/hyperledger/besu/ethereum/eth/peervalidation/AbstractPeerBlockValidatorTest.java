@@ -164,7 +164,7 @@ public abstract class AbstractPeerBlockValidatorTest {
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.targetedResponder(
-            (cap, msg) -> {
+            (cap, p, msg) -> {
               if (msg.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
                 return false;
               }
@@ -177,7 +177,7 @@ public abstract class AbstractPeerBlockValidatorTest {
               }
               return isTargetedBlockRequest;
             },
-            (cap, msg) -> BlockHeadersMessage.create(block.getHeader()));
+            (cap, p, msg) -> BlockHeadersMessage.create(block.getHeader()));
 
     // Respond
     peer.respond(responder);
