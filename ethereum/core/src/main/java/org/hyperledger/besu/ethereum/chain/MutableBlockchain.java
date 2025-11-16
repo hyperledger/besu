@@ -118,6 +118,9 @@ public interface MutableBlockchain extends Blockchain {
       final List<TransactionReceipt> receipts,
       final Optional<Difficulty> maybeTotalDifficulty);
 
+  void unsafeImportSyncBodyAndReceipts(
+      SyncBlock block, List<TransactionReceipt> transactionReceipts, boolean indexTransactions);
+
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
   /**

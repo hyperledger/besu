@@ -169,9 +169,7 @@ public class SyncState {
   }
 
   /**
-   * Sets sync progress directly without requiring a sync target peer. This is useful for syncing
-   * scenarios where progress is known but not tied to a specific peer (e.g., stage 2 of two-stage
-   * fast sync).
+   * Sets sync progress directly without requiring a sync target peer.
    *
    * @param startingBlock the starting block number of the sync
    * @param currentBlock the current block number being synced
@@ -181,11 +179,7 @@ public class SyncState {
       final long startingBlock, final long currentBlock, final long highestBlock) {
     final SyncStatus status =
         new DefaultSyncStatus(
-            startingBlock,
-            currentBlock,
-            highestBlock,
-            worldStateDownloadStatus.flatMap(WorldStateDownloadStatus::getPulledStates),
-            worldStateDownloadStatus.flatMap(WorldStateDownloadStatus::getKnownStates));
+            startingBlock, currentBlock, highestBlock, Optional.empty(), Optional.empty());
     syncStatusListeners.forEach(c -> c.onSyncStatusChanged(Optional.of(status)));
   }
 

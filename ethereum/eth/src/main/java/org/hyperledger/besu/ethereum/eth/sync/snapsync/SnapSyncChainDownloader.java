@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
@@ -64,7 +63,7 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
 
-  private final FastSyncDownloadPipelineFactory pipelineFactory;
+  private final SnapSyncDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
@@ -92,7 +91,7 @@ public class SnapSyncChainDownloader
    * @param chainStateStorage the storage for chain sync state
    */
   public SnapSyncChainDownloader(
-      final FastSyncDownloadPipelineFactory pipelineFactory,
+      final SnapSyncDownloadPipelineFactory pipelineFactory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
