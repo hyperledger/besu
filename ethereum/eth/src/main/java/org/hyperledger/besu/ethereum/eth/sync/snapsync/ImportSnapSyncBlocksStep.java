@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.OptionalLong;
@@ -38,7 +37,6 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   private static final Logger LOG = LoggerFactory.getLogger(ImportSnapSyncBlocksStep.class);
   private static final int PRINT_DELAY_SECONDS = 30;
 
-  private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
@@ -51,14 +49,12 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   private final MutableBlockchain blockchain;
 
   public ImportSnapSyncBlocksStep(
-      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final long startBlock,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
-    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;

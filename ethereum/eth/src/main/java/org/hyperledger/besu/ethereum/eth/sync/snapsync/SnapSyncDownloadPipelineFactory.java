@@ -201,7 +201,6 @@ public class SnapSyncDownloadPipelineFactory {
 
     final ImportSnapSyncBlocksStep importBlocksStep =
         new ImportSnapSyncBlocksStep(
-            protocolSchedule,
             protocolContext,
             ethContext,
             syncState,
