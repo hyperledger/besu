@@ -81,6 +81,11 @@ public class GetAccountRangeFromPeerTask
                 .addArgument(peer)
                 .log();
             if (!peer.isServingSnap()) {
+              LOG.atDebug()
+                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+                  .addArgument(GetAccountRangeFromPeerTask.class)
+                  .addArgument(peer)
+                  .log();
               throw new RuntimeException(
                   "EthPeer that is not serving snap called in "
                       + GetAccountRangeFromPeerTask.class);

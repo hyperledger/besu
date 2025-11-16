@@ -30,35 +30,18 @@ public class FastSyncState {
   private Optional<BlockHeader> pivotBlockHeader;
   private boolean sourceIsTrusted = false;
 
-  // Backward header download progress tracking
-  private Optional<BlockHeader> lowestBlockHeaderDownloaded;
-  private boolean backwardHeaderDownloadComplete = false;
-
   public FastSyncState() {
     pivotBlockNumber = OptionalLong.empty();
     pivotBlockHash = Optional.empty();
     pivotBlockHeader = Optional.empty();
-    lowestBlockHeaderDownloaded = Optional.empty();
   }
 
   public FastSyncState(final long pivotBlockNumber, final boolean sourceIsTrusted) {
-    this(
-        OptionalLong.of(pivotBlockNumber),
-        Optional.empty(),
-        Optional.empty(),
-        sourceIsTrusted,
-        Optional.empty(),
-        false);
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty(), sourceIsTrusted);
   }
 
   public FastSyncState(final Hash pivotBlockHash, final boolean sourceIsTrusted) {
-    this(
-        OptionalLong.empty(),
-        Optional.of(pivotBlockHash),
-        Optional.empty(),
-        sourceIsTrusted,
-        Optional.empty(),
-        false);
+    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty(), sourceIsTrusted);
   }
 
   public FastSyncState(final BlockHeader pivotBlockHeader, final boolean sourceIsTrusted) {
@@ -66,24 +49,18 @@ public class FastSyncState {
         OptionalLong.of(pivotBlockHeader.getNumber()),
         Optional.of(pivotBlockHeader.getHash()),
         Optional.of(pivotBlockHeader),
-        sourceIsTrusted,
-        Optional.empty(),
-        false);
+        sourceIsTrusted);
   }
 
   protected FastSyncState(
       final OptionalLong pivotBlockNumber,
       final Optional<Hash> pivotBlockHash,
       final Optional<BlockHeader> pivotBlockHeader,
-      final boolean sourceIsTrusted,
-      final Optional<BlockHeader> lowestBlockHeaderDownloaded,
-      final boolean backwardHeaderDownloadComplete) {
+      final boolean sourceIsTrusted) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.pivotBlockHash = pivotBlockHash;
     this.pivotBlockHeader = pivotBlockHeader;
     this.sourceIsTrusted = sourceIsTrusted;
-    this.lowestBlockHeaderDownloaded = lowestBlockHeaderDownloaded;
-    this.backwardHeaderDownloadComplete = backwardHeaderDownloadComplete;
   }
 
   public OptionalLong getPivotBlockNumber() {
@@ -123,60 +100,20 @@ public class FastSyncState {
     pivotBlockHeader = Optional.of(header);
   }
 
-  /**
-   * Gets the lowest block header number downloaded during backward header sync.
-   *
-   * @return the lowest block header downloaded, or empty if not started
-   */
-  public Optional<BlockHeader> getLowestBlockHeaderDownloaded() {
-    return lowestBlockHeaderDownloaded;
-  }
-
-  /**
-   * Sets the lowest block header downloaded during backward header sync.
-   *
-   * @param blockHeader the lowest contiguous block number
-   */
-  public void setLowestBlockHeaderDownloaded(final BlockHeader blockHeader) {
-    this.lowestBlockHeaderDownloaded = Optional.of(blockHeader);
-  }
-
-  /**
-   * Returns true if the backward header download has completed (reached block 0).
-   *
-   * @return true if backward header download is complete
-   */
-  public boolean isBackwardHeaderDownloadComplete() {
-    return backwardHeaderDownloadComplete;
-  }
-
-  /** Marks the backward header download as complete. */
-  public void setBackwardHeaderDownloadComplete(final boolean complete) {
-    this.backwardHeaderDownloadComplete = complete;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FastSyncState that = (FastSyncState) o;
     return sourceIsTrusted == that.sourceIsTrusted
-        && backwardHeaderDownloadComplete == that.backwardHeaderDownloadComplete
         && Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHash, that.pivotBlockHash)
-        && Objects.equals(pivotBlockHeader, that.pivotBlockHeader)
-        && Objects.equals(lowestBlockHeaderDownloaded, that.lowestBlockHeaderDownloaded);
+        && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        pivotBlockNumber,
-        pivotBlockHash,
-        pivotBlockHeader,
-        sourceIsTrusted,
-        lowestBlockHeaderDownloaded,
-        backwardHeaderDownloadComplete);
+    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader, sourceIsTrusted);
   }
 
   @Override
@@ -190,10 +127,6 @@ public class FastSyncState {
         + pivotBlockHeader
         + ", sourceIsTrusted="
         + sourceIsTrusted
-        + ", lowestContiguousBlockDownloaded="
-        + lowestBlockHeaderDownloaded
-        + ", backwardHeaderDownloadComplete="
-        + backwardHeaderDownloadComplete
         + '}';
   }
 }

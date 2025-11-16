@@ -326,10 +326,13 @@ public class SnapSyncChainDownloader
    */
   private CompletableFuture<Void> checkAndHandlePivotUpdate() {
 
+    // set new unfinished future before we read the potentially updated pivot.
+    pivotUpdateFuture = new CompletableFuture<>();
     final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
     final BlockHeader previousPivot = chainState.get().pivotBlockHeader();
 
     if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
+
       LOG.info(
           "Pivot block has been updated from {} to {}. Continuing sync to new pivot.",
           previousPivot.getNumber(),
@@ -349,7 +352,6 @@ public class SnapSyncChainDownloader
         .thenCompose(
             ignore -> {
               if (pivotUpdateFuture.isDone()) {
-                pivotUpdateFuture = new CompletableFuture<>();
                 return checkAndHandlePivotUpdate();
               } else {
                 LOG.info(
