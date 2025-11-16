@@ -25,11 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class PendingPeerRequest {
-  private static final Logger LOG = LoggerFactory.getLogger(PendingPeerRequest.class);
   private final EthPeers ethPeers;
   private final PeerRequest request;
   private final CompletableFuture<ResponseStream> result = new CompletableFuture<>();
@@ -65,13 +61,6 @@ public class PendingPeerRequest {
       // At least one peer has the required height, but we are not able to use it if it's busy
       final Optional<EthPeer> maybePeerWithCapacity =
           maybePeer.filter(EthPeer::hasAvailableRequestCapacity);
-
-      if (maybePeerWithCapacity.isEmpty()) {
-        LOG.debug(
-            "AAAAA PEER_REQUEST: Found suitable peer {} but it has no request capacity for {}",
-            maybePeer.get().getLoggableId(),
-            request.getClass().getSimpleName());
-      }
 
       maybePeerWithCapacity.ifPresent(this::sendRequest);
       return maybePeerWithCapacity.isPresent();
