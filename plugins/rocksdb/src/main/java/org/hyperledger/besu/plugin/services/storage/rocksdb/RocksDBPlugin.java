@@ -98,6 +98,7 @@ public class RocksDBPlugin implements BesuPlugin {
     }
   }
 
+  /** Resets the factory for Ephemery automatic restart. */
   public void reset() {
     if (factory != null) {
       factory.reset();

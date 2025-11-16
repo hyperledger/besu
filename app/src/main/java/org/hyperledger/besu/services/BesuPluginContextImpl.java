@@ -445,6 +445,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     return summary;
   }
 
+  /** Resets the lifecycle state to uninitialized for Ephemery restart. */
   public void resetState() {
     state = Lifecycle.UNINITIALIZED;
   }

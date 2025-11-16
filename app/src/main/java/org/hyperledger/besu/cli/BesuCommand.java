@@ -936,6 +936,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  /**
+   * contains the initial setup and configurations required for Ephemery restart cycles.
+   *
+   * @throws Exception if startup fails
+   */
   public void initialProcess() throws Exception {
     if (network.equals(EPHEMERY)) {
       genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
@@ -2719,26 +2724,48 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return metricsOptions;
   }
 
+  /**
+   * returns current runner for Ephemery restart.
+   *
+   * @return current runner
+   */
   public Runner getRunner() {
     return this.runner;
   }
 
+  /**
+   * returns rocksDBPlugin for Ephemery restart.
+   *
+   * @return rocksDBPlugin
+   */
   public RocksDBPlugin getRocksDBPlugin() {
     return this.rocksDBPlugin;
   }
 
+  /**
+   * returns keyPair for Ephemery restart.
+   *
+   * @return KeyPair
+   */
   public KeyPair getKeyPair() {
     return keyPair;
   }
 
+  /**
+   * returns commandLine for Ephemery restart.
+   *
+   * @return KeyPair
+   */
   public CommandLine getCommandLine() {
     return this.commandLine;
   }
 
+  /** Clears all allocated ports for Ephemery restart. */
   public void clearAllocatedPorts() {
     allocatedPorts.clear();
   }
 
+  /** Sets data path to parent for Ephemery restart. */
   public void setDataPathToParent() {
     this.dataPath = dataPath.getParent();
   }

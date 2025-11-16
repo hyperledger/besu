@@ -196,6 +196,12 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  /**
+   * Schedules automatic Ephemery restarts based on the cycle period.
+   *
+   * @param besuCommand the Besu command instance to restart
+   * @param lastGenesisTimestamp the timestamp of the last genesis block in seconds
+   */
   public void scheduleEphemeryRestart(
       final BesuCommand besuCommand, final long lastGenesisTimestamp) {
     long currentTimestamp = Instant.now().getEpochSecond();
@@ -243,6 +249,13 @@ public class Runner implements AutoCloseable {
         TimeUnit.SECONDS);
   }
 
+  /**
+   * Stops the services, clears data, and resets data path for the next cycle.
+   *
+   * @param besuCommand the Besu command instance to invoke its methods
+   * @throws IOException if file operations fail
+   * @throws InterruptedException if the sleep operation is interrupted
+   */
   public void stopEphemery(final BesuCommand besuCommand) throws IOException, InterruptedException {
     if (besuController != null) {
       stopServices();
@@ -253,6 +266,13 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  /**
+   * Restarts the Ephemery testnet by preparing the environment and initializing services. Stores
+   * the key in the new Ephemery directory.
+   *
+   * @param besuCommand the Besu command instance to prepare and start Ephemery cycle
+   * @throws Exception if startup fails
+   */
   public void startEphemery(final BesuCommand besuCommand) throws Exception {
     ephemeryRestartPrepare(besuCommand);
     besuCommand.initialProcess();
