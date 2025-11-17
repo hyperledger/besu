@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace;
 
 import java.math.BigInteger;
 
@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.MutableBytes;
  * Utility class for call tracer operations. Provides methods for converting bytes and extracting
  * data from EVM memory.
  */
-final class CallTracerHelper {
+public final class CallTracerHelper {
   // Memory constants
   private static final int BYTES_PER_WORD = 32;
   private static final int WORD_SIZE_SHIFT = 5; // For division by 32 (2^5)
@@ -45,7 +45,7 @@ final class CallTracerHelper {
    * @param bytes The bytes to convert
    * @return The integer value, or 0 if bytes is null or conversion fails
    */
-  static int bytesToInt(final Bytes bytes) {
+  public static int bytesToInt(final Bytes bytes) {
     if (bytes == null || bytes.isEmpty()) {
       return 0;
     }
@@ -71,7 +71,8 @@ final class CallTracerHelper {
    * @param length The number of bytes to extract
    * @return The extracted bytes, or Bytes.EMPTY if invalid parameters
    */
-  static Bytes extractCallDataFromMemory(final Bytes[] memory, final int offset, final int length) {
+  public static Bytes extractCallDataFromMemory(
+      final Bytes[] memory, final int offset, final int length) {
     // Validate basic parameters
     if (!isValidMemoryRange(offset, length)) {
       return Bytes.EMPTY;

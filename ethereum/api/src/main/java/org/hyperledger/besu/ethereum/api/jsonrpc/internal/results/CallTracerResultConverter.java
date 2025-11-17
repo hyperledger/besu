@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.bytesToInt;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerHelper.extractCallDataFromMemory;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.CallTracerHelper.bytesToInt;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.CallTracerHelper.extractCallDataFromMemory;
 import static org.hyperledger.besu.evm.internal.Words.toAddress;
 
 import org.hyperledger.besu.datatypes.Address;

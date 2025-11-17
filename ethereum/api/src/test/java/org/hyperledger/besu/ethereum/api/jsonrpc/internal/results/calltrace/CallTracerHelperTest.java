@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
