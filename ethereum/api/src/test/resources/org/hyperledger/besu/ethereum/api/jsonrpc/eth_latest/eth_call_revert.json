@@ -15,7 +15,7 @@
     "jsonrpc": "2.0",
     "id": 3,
     "error": {
-      "code": -32000,
+      "code": 3,
       "message": "Execution reverted",
       "data": "0x7d88c1856cc95352"
     }
