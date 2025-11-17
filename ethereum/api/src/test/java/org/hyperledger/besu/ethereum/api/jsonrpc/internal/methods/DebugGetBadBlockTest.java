@@ -21,6 +21,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -30,15 +32,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +68,7 @@ public class DebugGetBadBlockTest {
   }
 
   @Test
-  public void nameShouldBeDebugTraceBlock() {
+  public void nameShouldBeDebugGetBadBlocks() {
     assertThat(debugGetBadBlocks.getName()).isEqualTo("debug_getBadBlocks");
   }
 
@@ -101,7 +109,7 @@ public class DebugGetBadBlockTest {
         badBlockWoTransaction, BadBlockCause.fromValidationFailure("failed"));
 
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", new Object[] {}));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugGetBadBlocks.response(request);
@@ -119,13 +127,138 @@ public class DebugGetBadBlockTest {
       assertThat(badBlockResult.getRlp()).isNotEmpty();
       assertThat(badBlockResult.getHash()).isNotEmpty();
       assertThat(badBlockResult.getBlockResult().getNonce()).isNotEmpty();
+      assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
     }
+  }
+
+  @Test
+  public void shouldIncludeBlockAccessListInResponse() {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block baseBlock =
+        blockDataGenerator.block(
+            BlockDataGenerator.BlockOptions.create()
+                .setBlockNumber(1)
+                .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    final BlockAccessList blockAccessList =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000001"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.ONE))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    final BlockBody bodyWithBal =
+        new BlockBody(
+            baseBlock.getBody().getTransactions(),
+            baseBlock.getBody().getOmmers(),
+            baseBlock.getBody().getWithdrawals(),
+            Optional.of(blockAccessList));
+
+    final Block blockWithBal =
+        new Block(
+            BlockHeaderBuilder.fromHeader(baseBlock.getHeader())
+                .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                .balHash(BodyValidation.balHash(blockAccessList))
+                .buildBlockHeader(),
+            bodyWithBal);
+
+    badBlockManager.addBadBlock(blockWithBal, BadBlockCause.fromValidationFailure("failed"));
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
+
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) debugGetBadBlocks.response(request);
+
+    final Collection<BadBlockResult> result = (Collection<BadBlockResult>) response.getResult();
+    assertThat(result).hasSize(1);
+
+    final BadBlockResult badBlockResult = result.iterator().next();
+    assertThat(badBlockResult.getBlockResult().getBalHash())
+        .isEqualTo(BodyValidation.balHash(blockAccessList).toString());
+    assertThat(badBlockResult.getBlockResult().getBlockAccessList()).isPresent();
+    assertThat(
+            badBlockResult.getBlockResult().getBlockAccessList().orElseThrow().getAccountChanges())
+        .isNotEmpty();
+    assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
+  }
+
+  @Test
+  public void shouldIncludeGeneratedBlockAccessListInResponse() {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block baseBlock =
+        blockDataGenerator.block(
+            BlockDataGenerator.BlockOptions.create()
+                .setBlockNumber(1)
+                .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    final BlockAccessList providedBlockAccessList =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000002"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.valueOf(2)))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    final BlockBody bodyWithBal =
+        new BlockBody(
+            baseBlock.getBody().getTransactions(),
+            baseBlock.getBody().getOmmers(),
+            baseBlock.getBody().getWithdrawals(),
+            Optional.of(providedBlockAccessList));
+
+    final Block blockWithBal =
+        new Block(
+            BlockHeaderBuilder.fromHeader(baseBlock.getHeader())
+                .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                .balHash(BodyValidation.balHash(providedBlockAccessList))
+                .buildBlockHeader(),
+            bodyWithBal);
+
+    final BlockAccessList generatedBlockAccessList =
+        new BlockAccessList(
+            List.of(
+                new BlockAccessList.AccountChanges(
+                    Address.fromHexString("0x0000000000000000000000000000000000000003"),
+                    List.of(),
+                    List.of(new BlockAccessList.SlotRead(new StorageSlotKey(UInt256.valueOf(3)))),
+                    List.of(),
+                    List.of(),
+                    List.of())));
+
+    badBlockManager.addBadBlock(
+        blockWithBal,
+        BadBlockCause.fromValidationFailure("failed"),
+        Optional.of(generatedBlockAccessList));
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
+
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) debugGetBadBlocks.response(request);
+
+    final Collection<BadBlockResult> result = (Collection<BadBlockResult>) response.getResult();
+    assertThat(result).hasSize(1);
+
+    final BadBlockResult badBlockResult = result.iterator().next();
+    assertThat(badBlockResult.getGeneratedBlockAccessList()).isPresent();
+    assertThat(
+            badBlockResult.getGeneratedBlockAccessList().orElseThrow().getAccountChanges().stream()
+                .map(accountChangesResult -> Address.fromHexString(accountChangesResult.address)))
+        .containsExactly(Address.fromHexString("0x0000000000000000000000000000000000000003"));
   }
 
   @Test
   public void shouldReturnCorrectResponseWhenNoInvalidBlockFound() {
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", new Object[] {}));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugGetBadBlocks.response(request);

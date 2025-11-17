@@ -34,9 +34,11 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
@@ -66,15 +68,21 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 1677557088L),
               new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 1706655072L),
               new ForkId(Bytes.ofUnsignedInt(0x88cf81d9L), 1741159776L),
-              new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xed88b5fdL), 1760427360L),
+              new ForkId(Bytes.ofUnsignedInt(0xe2ae4999L), 1761017184L),
+              new ForkId(Bytes.ofUnsignedInt(0x56078a1eL), 1761607008L),
+              new ForkId(Bytes.ofUnsignedInt(0x268956b6L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x268956b6L), 0L))
         },
         new Object[] {
           NetworkName.HOODI,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xbef71d30L), 1742999832L),
-              new ForkId(Bytes.ofUnsignedInt(0x0929e24eL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x0929e24eL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x0929e24eL), 1761677592L),
+              new ForkId(Bytes.ofUnsignedInt(0xe7e0e7ffL), 1762365720L),
+              new ForkId(Bytes.ofUnsignedInt(0x3893353eL), 1762955544L),
+              new ForkId(Bytes.ofUnsignedInt(0x23aa1351L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x23aa1351L), 0L))
         },
         new Object[] {
           NetworkName.HOLESKY,
@@ -82,8 +90,11 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xc61a6098L), 1696000704L),
               new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 1707305664L),
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 1740434112L),
-              new ForkId(Bytes.ofUnsignedInt(0xdfbd9bedL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xdfbd9bedL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xdfbd9bedL), 1759308480L),
+              new ForkId(Bytes.ofUnsignedInt(0x783def52L), 1759800000L),
+              new ForkId(Bytes.ofUnsignedInt(0xa280a45cL), 1760389824L),
+              new ForkId(Bytes.ofUnsignedInt(0x9bc6cb31L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x9bc6cb31L), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,
@@ -105,8 +116,11 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
               new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 1710338135L),
               new ForkId(Bytes.ofUnsignedInt(0x9f3d2254L), 1746612311L),
-              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xc376cf8bL), 1764798551),
+              new ForkId(Bytes.ofUnsignedInt(0x5167e2a6L), 1765290071),
+              new ForkId(Bytes.ofUnsignedInt(0xcba2a1c0L), 1767747671),
+              new ForkId(Bytes.ofUnsignedInt(0x07c9462eL), 0),
+              new ForkId(Bytes.ofUnsignedInt(0x07c9462eL), 0))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -186,7 +200,7 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
+                    BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
@@ -197,8 +211,9 @@ public class ForkIdsNetworkConfigTest {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    false,
-                    new NoOpMetricsSystem()));
+                    BalConfiguration.DEFAULT,
+                    new NoOpMetricsSystem(),
+                    EvmConfiguration.DEFAULT));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);

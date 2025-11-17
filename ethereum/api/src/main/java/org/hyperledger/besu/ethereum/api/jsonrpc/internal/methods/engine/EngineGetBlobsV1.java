@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,9 +32,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
@@ -62,14 +69,19 @@ import jakarta.validation.constraints.NotNull;
 public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   private final TransactionPool transactionPool;
+  private final Optional<Long> cancunMilestone;
+  private final Optional<Long> osakaMilestone;
 
   public EngineGetBlobsV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
       final TransactionPool transactionPool) {
     super(vertx, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
+    this.cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
+    this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
   }
 
   @Override
@@ -94,6 +106,15 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
+    if (mergeContext.get().isSyncing()) {
+      final List<BlobAndProofV1> emptyResults = Collections.nCopies(versionedHashes.length, null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), emptyResults);
+    }
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
+    }
 
     final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);
 
@@ -116,5 +137,11 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
     }
     return new BlobAndProofV1(
         bq.getBlob().getData().toHexString(), bq.getKzgProof().getFirst().getData().toHexString());
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long currentTimestamp) {
+    return ForkSupportHelper.validateForkSupported(
+        CANCUN, cancunMilestone, OSAKA, osakaMilestone, currentTimestamp);
   }
 }

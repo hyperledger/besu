@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -55,20 +55,16 @@ import org.slf4j.LoggerFactory;
 public class GeneralStateReferenceTestTools {
   private static final Logger LOG = LoggerFactory.getLogger(GeneralStateReferenceTestTools.class);
 
-  private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
-      Arrays.asList("Frontier", "Homestead", "EIP150");
-
   private static MainnetTransactionProcessor transactionProcessor(final String name) {
     return protocolSpec(name).getTransactionProcessor();
   }
 
   private static ProtocolSpec protocolSpec(final String name) {
-    return ReferenceTestProtocolSchedules.getInstance()
-        .getByName(name)
-        .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
+    return PROTOCOL_SCHEDULES.getByName(name).getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }
 
   private static final List<String> EIPS_TO_RUN;
+  private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
 
   static {
     final String eips =
@@ -77,6 +73,7 @@ public class GeneralStateReferenceTestTools {
             "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
                 + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
+    PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
   }
 
   private static final JsonTestParameters<?, ?> params =
@@ -106,7 +103,7 @@ public class GeneralStateReferenceTestTools {
     }
 
     // Consumes a huge amount of memory
-    params.ignore("static_Call1MB1024Calldepth-\\w");
+    params.ignore("static_Call1MB1024Calldepth");
     params.ignore("ShanghaiLove_.*");
 
     // Don't do time-consuming tests
@@ -184,7 +181,7 @@ public class GeneralStateReferenceTestTools {
         .isNull();
 
     final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-    if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
+    if (coinbase != null && coinbase.isEmpty() && ReferenceTestProtocolSchedules.shouldClearEmptyAccounts(spec.getFork())) {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
@@ -220,10 +217,6 @@ public class GeneralStateReferenceTestTools {
                   .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
                   .isEqualTo(expected);
             });
-  }
-
-  private static boolean shouldClearEmptyAccounts(final String eip) {
-    return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(eip);
   }
 
   private static void logWorldState(final ReferenceTestWorldState worldState) {

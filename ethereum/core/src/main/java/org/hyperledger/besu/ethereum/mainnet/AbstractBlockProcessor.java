@@ -31,12 +31,14 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.TransactionAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -83,6 +85,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
+  private final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -93,13 +96,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.balConfiguration = balConfiguration;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -172,242 +177,309 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
-    final BlockProcessingContext blockProcessingContext =
-        new BlockProcessingContext(
-            blockHeader, worldState, protocolSpec, blockHashLookup, blockTracer);
-    protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+    final Optional<BlockAccessListFactory> maybeBalFactory =
+        protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
-    Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(blockHeader.getParentHash());
+    final Optional<BlockAccessList> maybeBlockBal = blockBody.getBlockAccessList();
+    if (maybeBalFactory.isPresent() && maybeBlockBal.isEmpty()) {
+      final String errorMessage = "BALs enabled but BAL not found in block body";
+      LOG.error(errorMessage);
+      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    }
 
-    Wei blobGasPrice =
-        maybeParentHeader
-            .map(
-                parentHeader ->
-                    protocolSpec
-                        .getFeeMarket()
-                        .blobGasPricePerGas(
-                            calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
-            .orElse(Wei.ZERO);
-
-    final Optional<PreprocessingContext> preProcessingContext =
-        preprocessingBlockFunction.run(
-            protocolContext,
-            blockHeader,
-            transactions,
-            miningBeneficiary,
-            blockHashLookup,
-            blobGasPrice);
-
-    boolean parallelizedTxFound = false;
-    int nbParallelTx = 0;
+    final StateRootCommitter stateRootCommitter =
+        protocolSpec
+            .getStateRootCommitterFactory()
+            .forBlock(protocolContext, blockHeader, maybeBlockBal);
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        protocolSpec
-            .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
-            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+        maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
 
-    for (int i = 0; i < transactions.size(); i++) {
-      final WorldUpdater blockUpdater = worldState.updater();
-      final Transaction transaction = transactions.get(i);
-      WorldUpdater transactionUpdater = blockUpdater.updater();
-      if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
-        transactionUpdater = blockUpdater;
-      }
-      if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
-        return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
-      }
-
-      final Optional<TransactionAccessList> transactionAccessList =
-          createAccessList(blockAccessListBuilder, i);
-      TransactionProcessingResult transactionProcessingResult =
-          getTransactionProcessingResult(
-              preProcessingContext,
-              blockProcessingContext,
-              transactionUpdater,
-              blobGasPrice,
-              miningBeneficiary,
-              transaction,
-              i,
+    try {
+      final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
+          blockAccessListBuilder.map(
+              b -> BlockAccessListBuilder.createPreExecutionAccessLocationTracker());
+      final BlockProcessingContext blockProcessingContext =
+          new BlockProcessingContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
               blockHashLookup,
-              transactionAccessList);
+              blockTracer,
+              blockAccessListBuilder);
+      protocolSpec
+          .getPreExecutionProcessor()
+          .process(blockProcessingContext, preExecutionAccessLocationTracker);
 
-      if (transactionUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
-        transactionProcessingResult
-            .getTransactionAccessList()
-            .ifPresent(
-                t ->
-                    blockAccessListBuilder.ifPresent(
-                        b -> b.addTransactionLevelAccessList(t, stackedUpdater)));
-      }
+      Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(blockHeader.getParentHash());
 
-      if (transactionProcessingResult.isInvalid()) {
-        String errorMessage =
-            MessageFormat.format(
-                "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
-                transactionProcessingResult.getValidationResult().getErrorMessage(),
-                blockHeader.getHash().toHexString(),
-                transaction.getHash().toHexString());
-        LOG.info(errorMessage);
-        if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
+      Wei blobGasPrice =
+          maybeParentHeader
+              .map(
+                  parentHeader ->
+                      protocolSpec
+                          .getFeeMarket()
+                          .blobGasPricePerGas(
+                              calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
+              .orElse(Wei.ZERO);
+
+      final Optional<PreprocessingContext> preProcessingContext =
+          preprocessingBlockFunction.run(
+              protocolContext,
+              blockHeader,
+              transactions,
+              miningBeneficiary,
+              blockHashLookup,
+              blobGasPrice,
+              blockAccessListBuilder);
+
+      boolean parallelizedTxFound = false;
+      int nbParallelTx = 0;
+
+      for (int i = 0; i < transactions.size(); i++) {
+        final WorldUpdater blockUpdater = worldState.updater();
+        final Transaction transaction = transactions.get(i);
+        WorldUpdater transactionUpdater = blockUpdater.updater();
+        if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
+          transactionUpdater = blockUpdater;
         }
-        return new BlockProcessingResult(Optional.empty(), errorMessage);
-      }
-
-      if (transactionUpdater instanceof StackedUpdater<?, ?>) {
-        transactionUpdater.commit();
-      }
-      blockUpdater.commit();
-      blockUpdater.markTransactionBoundary();
-
-      currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
-      final var optionalVersionedHashes = transaction.getVersionedHashes();
-      if (optionalVersionedHashes.isPresent()) {
-        final var versionedHashes = optionalVersionedHashes.get();
-        currentBlobGasUsed +=
-            (versionedHashes.size() * protocolSpec.getGasCalculator().getBlobGasPerBlob());
-      }
-
-      final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(
-              transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
-      receipts.add(transactionReceipt);
-      if (!parallelizedTxFound
-          && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
-        parallelizedTxFound = true;
-        nbParallelTx = 1;
-      } else if (transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
-        nbParallelTx++;
-      }
-    }
-    final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
-    if (optionalHeaderBlobGasUsed.isPresent()) {
-      final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
-      if (currentBlobGasUsed != headerBlobGasUsed) {
-        String errorMessage =
-            String.format(
-                "block did not consume expected blob gas: header %d, transactions %d",
-                headerBlobGasUsed, currentBlobGasUsed);
-        LOG.error(errorMessage);
-        if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
+          return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
-        return new BlockProcessingResult(Optional.empty(), errorMessage);
+
+        final Optional<AccessLocationTracker> transactionLocationTracker =
+            createTransactionAccessLocationTracker(blockAccessListBuilder, i);
+        TransactionProcessingResult transactionProcessingResult =
+            getTransactionProcessingResult(
+                preProcessingContext,
+                blockProcessingContext,
+                transactionUpdater,
+                blobGasPrice,
+                miningBeneficiary,
+                transaction,
+                i,
+                blockHashLookup,
+                transactionLocationTracker);
+
+        applyPartialBlockAccessView(
+            transactionProcessingResult.getPartialBlockAccessView(), blockAccessListBuilder);
+
+        if (transactionProcessingResult.isInvalid()) {
+          String errorMessage =
+              MessageFormat.format(
+                  "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
+                  transactionProcessingResult.getValidationResult().getErrorMessage(),
+                  blockHeader.getHash().toHexString(),
+                  transaction.getHash().toHexString());
+          LOG.info(errorMessage);
+          if (worldState instanceof BonsaiWorldState) {
+            ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
+          }
+          return new BlockProcessingResult(Optional.empty(), errorMessage);
+        }
+
+        if (transactionUpdater instanceof StackedUpdater<?, ?>) {
+          transactionUpdater.commit();
+        }
+        blockUpdater.commit();
+        blockUpdater.markTransactionBoundary();
+
+        currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
+        final var optionalVersionedHashes = transaction.getVersionedHashes();
+        if (optionalVersionedHashes.isPresent()) {
+          final var versionedHashes = optionalVersionedHashes.get();
+          currentBlobGasUsed +=
+              (versionedHashes.size() * protocolSpec.getGasCalculator().getBlobGasPerBlob());
+        }
+
+        final TransactionReceipt transactionReceipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
+        receipts.add(transactionReceipt);
+        if (!parallelizedTxFound
+            && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
+          parallelizedTxFound = true;
+          nbParallelTx = 1;
+        } else if (transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
+          nbParallelTx++;
+        }
       }
-    }
-    final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
-        protocolSpec.getWithdrawalsProcessor();
-    if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+      final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
+      if (optionalHeaderBlobGasUsed.isPresent()) {
+        final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
+        if (currentBlobGasUsed != headerBlobGasUsed) {
+          String errorMessage =
+              String.format(
+                  "block did not consume expected blob gas: header %d, transactions %d",
+                  headerBlobGasUsed, currentBlobGasUsed);
+          LOG.error(errorMessage);
+          if (worldState instanceof BonsaiWorldState) {
+            ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+          }
+          return new BlockProcessingResult(Optional.empty(), errorMessage);
+        }
+      }
+
+      final Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
+          blockAccessListBuilder.map(
+              b ->
+                  BlockAccessListBuilder.createPostExecutionAccessLocationTracker(
+                      transactions.size()));
+
+      final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
+          protocolSpec.getWithdrawalsProcessor();
+      if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
+        try {
+          maybeWithdrawalsProcessor
+              .get()
+              .processWithdrawals(
+                  maybeWithdrawals.get(),
+                  worldState.updater(),
+                  postExecutionAccessLocationTracker,
+                  blockAccessListBuilder);
+        } catch (final Exception e) {
+          LOG.error("failed processing withdrawals", e);
+          if (worldState instanceof BonsaiWorldState) {
+            ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+          }
+          return new BlockProcessingResult(Optional.empty(), e);
+        }
+      }
+
+      Optional<List<Request>> maybeRequests = Optional.empty();
       try {
-        maybeWithdrawalsProcessor
-            .get()
-            .processWithdrawals(maybeWithdrawals.get(), worldState.updater());
+        // EIP-7685: process EL requests
+        final Optional<RequestProcessorCoordinator> requestProcessor =
+            protocolSpec.getRequestProcessorCoordinator();
+        if (requestProcessor.isPresent()) {
+          RequestProcessingContext requestProcessingContext =
+              new RequestProcessingContext(blockProcessingContext, receipts);
+          maybeRequests =
+              Optional.of(
+                  requestProcessor
+                      .get()
+                      .process(requestProcessingContext, postExecutionAccessLocationTracker));
+        }
       } catch (final Exception e) {
-        LOG.error("failed processing withdrawals", e);
+        LOG.error("failed processing requests", e);
         if (worldState instanceof BonsaiWorldState) {
           ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
         }
         return new BlockProcessingResult(Optional.empty(), e);
       }
-    }
 
-    Optional<List<Request>> maybeRequests = Optional.empty();
-    try {
-      // EIP-7685: process EL requests
-      final Optional<RequestProcessorCoordinator> requestProcessor =
-          protocolSpec.getRequestProcessorCoordinator();
-      if (requestProcessor.isPresent()) {
-        RequestProcessingContext requestProcessingContext =
-            new RequestProcessingContext(blockProcessingContext, receipts);
-        maybeRequests = Optional.of(requestProcessor.get().process(requestProcessingContext));
-      }
-    } catch (final Exception e) {
-      LOG.error("failed processing requests", e);
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-      }
-      return new BlockProcessingResult(Optional.empty(), e);
-    }
+      applyAccessLocationTracker(
+          postExecutionAccessLocationTracker,
+          blockAccessListBuilder,
+          worldState.updater().updater());
 
-    final var optionalRequestsHash = blockHeader.getRequestsHash();
-    if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
-      final List<Request> requests = maybeRequests.get();
-      final Hash headerRequestsHash = optionalRequestsHash.get();
-      Hash calculatedRequestHash = BodyValidation.requestsHash(requests);
-      if (!calculatedRequestHash.equals(headerRequestsHash)) {
-        String errorMessage =
-            String.format(
-                "Requests hash mismatch, calculated: %s header: %s",
-                calculatedRequestHash.toHexString(), headerRequestsHash.toHexString());
-        LOG.error(errorMessage);
+      final var optionalRequestsHash = blockHeader.getRequestsHash();
+      if (maybeRequests.isPresent() && optionalRequestsHash.isPresent()) {
+        final List<Request> requests = maybeRequests.get();
+        final Hash headerRequestsHash = optionalRequestsHash.get();
+        Hash calculatedRequestHash = BodyValidation.requestsHash(requests);
+        if (!calculatedRequestHash.equals(headerRequestsHash)) {
+          String errorMessage =
+              String.format(
+                  "Requests hash mismatch, calculated: %s header: %s",
+                  calculatedRequestHash.toHexString(), headerRequestsHash.toHexString());
+          LOG.error(errorMessage);
+          if (worldState instanceof BonsaiWorldState) {
+            ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+          }
+          return new BlockProcessingResult(Optional.empty(), errorMessage);
+        }
+      }
+
+      if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
+        // no need to log, rewardCoinbase logs the error.
         if (worldState instanceof BonsaiWorldState) {
           ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
         }
-        return new BlockProcessingResult(Optional.empty(), errorMessage);
+        return new BlockProcessingResult(Optional.empty(), "ommer too old");
       }
-    }
 
-    if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-      // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-      }
-      return new BlockProcessingResult(Optional.empty(), "ommer too old");
-    }
-
-    LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-    blockTracer.traceEndBlock(blockHeader, blockBody);
-
-    try {
-      worldState.persist(blockHeader);
-    } catch (MerkleTrieException e) {
-      LOG.trace("Merkle trie exception during Transaction processing ", e);
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-      }
-      @SuppressWarnings(
-          "java:S2139") // Exception is logged and rethrown to preserve original behavior
-      RuntimeException rethrown = e;
-      throw rethrown;
-    } catch (StateRootMismatchException ex) {
-      LOG.error(
-          "failed persisting block due to stateroot mismatch; expected {}, actual {}",
-          ex.getExpectedRoot().toHexString(),
-          ex.getActualRoot().toHexString());
-      return new BlockProcessingResult(Optional.empty(), ex.getMessage());
-    } catch (Exception e) {
-      LOG.error("failed persisting block", e);
-      return new BlockProcessingResult(Optional.empty(), e);
-    }
-
-    final Optional<BlockAccessList> maybeBlockAccessList;
-    if (blockAccessListBuilder.isPresent()) {
-      final BlockAccessList bal = blockAccessListBuilder.get().build();
-      maybeBlockAccessList = Optional.of(bal);
+      final Optional<BlockAccessList> maybeBlockAccessList;
       try {
-        final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
-        if (headerBalHash.isPresent()) {
-          final Hash expectedHash = BodyValidation.balHash(bal);
-          if (!headerBalHash.get().equals(expectedHash)) {
-            LOG.warn(
-                "{} (header BAL hash)\n!=\n{} (expected BAL hash)",
-                headerBalHash.get(),
-                expectedHash);
+        if (blockAccessListBuilder.isPresent()) {
+          final BlockAccessList bal = blockAccessListBuilder.get().build();
+          final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
+          if (headerBalHash.isPresent()) {
+            final Hash expectedHash = BodyValidation.balHash(bal);
+            if (!headerBalHash.get().equals(expectedHash)) {
+              final String errorMessage =
+                  String.format(
+                      "Block access list hash mismatch, calculated: %s header: %s",
+                      expectedHash.toHexString(), headerBalHash.get().toHexString());
+              LOG.error(errorMessage);
+
+              if (balConfiguration.shouldLogBalsOnMismatch()) {
+                final String constructedBalStr = bal.toString();
+                final String blockBalStr =
+                    blockBody
+                        .getBlockAccessList()
+                        .map(Object::toString)
+                        .orElse("<no BAL present in block body>");
+                LOG.error(
+                    "--- BAL constructed during execution ---\n{}\n"
+                        + "--- BAL from block body ---\n{}",
+                    constructedBalStr,
+                    blockBalStr);
+              }
+
+              if (worldState instanceof BonsaiWorldState) {
+                ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+              }
+              return new BlockProcessingResult(
+                  Optional.empty(), errorMessage, false, Optional.of(bal));
+            }
           }
+          maybeBlockAccessList = Optional.of(bal);
+        } else {
+          maybeBlockAccessList = Optional.empty();
         }
       } catch (Exception e) {
         LOG.error("Error validating BAL hash", e);
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
+        return new BlockProcessingResult(Optional.empty(), e);
       }
-    } else {
-      maybeBlockAccessList = Optional.empty();
-    }
 
-    return new BlockProcessingResult(
-        Optional.of(
-            new BlockProcessingOutputs(worldState, receipts, maybeRequests, maybeBlockAccessList)),
-        parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
+      LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
+      blockTracer.traceEndBlock(blockHeader, blockBody);
+
+      try {
+        worldState.persist(blockHeader, stateRootCommitter);
+      } catch (MerkleTrieException e) {
+        LOG.trace("Merkle trie exception during Transaction processing ", e);
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
+        @SuppressWarnings(
+            "java:S2139") // Exception is logged and rethrown to preserve original behavior
+        RuntimeException rethrown = e;
+        throw rethrown;
+      } catch (StateRootMismatchException ex) {
+        LOG.error(
+            "failed persisting block due to stateroot mismatch; expected {}, actual {}",
+            ex.getExpectedRoot().toHexString(),
+            ex.getActualRoot().toHexString());
+        return new BlockProcessingResult(Optional.empty(), ex.getMessage());
+      } catch (Exception e) {
+        LOG.error("failed persisting block", e);
+        return new BlockProcessingResult(Optional.empty(), e);
+      }
+
+      return new BlockProcessingResult(
+          Optional.of(
+              new BlockProcessingOutputs(
+                  worldState, receipts, maybeRequests, maybeBlockAccessList)),
+          parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
+    } finally {
+      stateRootCommitter.cancel();
+    }
   }
 
   @SuppressWarnings("unused") // preProcessingContext and location are used by subclasses
@@ -420,7 +492,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<TransactionAccessList> transactionAccessList) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     return transactionProcessor.processTransaction(
         transactionUpdater,
         blockProcessingContext.getBlockHeader(),
@@ -430,7 +502,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockHashLookup,
         TransactionValidationParams.processingBlock(),
         blobGasPrice,
-        transactionAccessList);
+        accessLocationTracker);
   }
 
   @SuppressWarnings(
@@ -452,9 +524,28 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return true;
   }
 
-  private Optional<TransactionAccessList> createAccessList(
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder, final int i) {
-    return blockAccessListBuilder.map(b -> new TransactionAccessList(i));
+  private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final int transactionLocation) {
+    return blockAccessListBuilder.map(
+        b -> BlockAccessListBuilder.createTransactionAccessLocationTracker(transactionLocation));
+  }
+
+  private void applyAccessLocationTracker(
+      final Optional<AccessLocationTracker> accessLocationTracker,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final WorldUpdater updater) {
+    accessLocationTracker.ifPresent(
+        tracker ->
+            blockAccessListBuilder.ifPresent(
+                builder -> builder.apply(tracker.createPartialBlockAccessView(updater))));
+  }
+
+  private void applyPartialBlockAccessView(
+      final Optional<PartialBlockAccessView> partialBlockAccessView,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+    partialBlockAccessView.ifPresent(
+        view -> blockAccessListBuilder.ifPresent(builder -> builder.apply(view)));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
@@ -476,7 +567,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final List<Transaction> transactions,
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
-        final Wei blobGasPrice);
+        final Wei blobGasPrice,
+        final Optional<BlockAccessListBuilder> blockAccessListBuilder);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -487,7 +579,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final List<Transaction> transactions,
           final Address miningBeneficiary,
           final BlockHashLookup blockHashLookup,
-          final Wei blobGasPrice) {
+          final Wei blobGasPrice,
+          final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
         return Optional.empty();
       }
     }

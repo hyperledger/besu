@@ -108,6 +108,9 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     parseCommand("--config-file", toml.toString());
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
@@ -138,9 +141,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfigurationCaptor.getValue().getSyncMinimumPeerCount()).isEqualTo(13);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   /**
@@ -153,6 +153,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
@@ -182,9 +186,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   /**
@@ -198,6 +199,9 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
     setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
     parseCommand("--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
@@ -218,6 +222,9 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
     parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
@@ -235,6 +242,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -253,6 +264,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev", "--network", "MAINNET");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -272,6 +287,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     parseCommand("--profile", "dev", "--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -290,6 +309,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     setEnvironmentVariable("BESU_NETWORK", "MAINNET");
     parseCommand("--profile", "dev");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 

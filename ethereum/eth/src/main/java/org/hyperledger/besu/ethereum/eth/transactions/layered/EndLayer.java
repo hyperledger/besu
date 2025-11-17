@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logRemoved;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.DROPPED;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
@@ -61,7 +63,7 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public Optional<Transaction> getByHash(final Hash transactionHash) {
+  public Optional<PendingTransaction> getByHash(final Hash transactionHash) {
     return Optional.empty();
   }
 
@@ -78,6 +80,7 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public TransactionAddedResult add(
       final PendingTransaction pendingTransaction, final int gap, final AddReason reason) {
+    logRemoved(pendingTransaction, DROPPED, name());
     notifyTransactionDropped(pendingTransaction, DROPPED);
     metrics.incrementRemoved(pendingTransaction, DROPPED.label(), name());
     ++droppedCount;
@@ -88,7 +91,8 @@ public class EndLayer implements TransactionsLayer {
   public void remove(final PendingTransaction pendingTransaction, final PoolRemovalReason reason) {}
 
   @Override
-  public void penalize(final PendingTransaction penalizedTx) {}
+  public void penalize(
+      final PendingTransaction penalizedTx, final TransactionSelectionResult selectionResult) {}
 
   @Override
   public void blockAdded(

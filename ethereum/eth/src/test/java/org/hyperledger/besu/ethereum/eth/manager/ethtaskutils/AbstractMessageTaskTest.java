@@ -136,6 +136,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
     peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethContext = new EthContext(ethPeers, ethMessages, ethScheduler, peerTaskExecutor);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
+    final EthProtocolConfiguration ethProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -145,9 +146,9 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
+            ethProtocolConfiguration,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
     transactionPool.setEnabled();
 
     ethProtocolManager =
@@ -156,7 +157,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             .setBlockchain(blockchain)
             .setEthScheduler(ethScheduler)
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(ethProtocolConfiguration)
             .setEthPeers(ethPeers)
             .setEthMessages(ethMessages)
             .setEthContext(ethContext)

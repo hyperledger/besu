@@ -30,7 +30,7 @@ jar {
 }
 
 compileJava {
-  options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
+  options.generatedSourceOutputDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
   options.compilerArgs += [
     '-Alog4j.graalvm.groupId=' + project.group,
     '-Alog4j.graalvm.artifactId=' + project.name
@@ -47,6 +47,7 @@ dependencies {
   implementation 'com.google.dagger:dagger'
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'io.consensys.tuweni:tuweni-bytes'
+  implementation 'io.consensys.tuweni:tuweni-units'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'

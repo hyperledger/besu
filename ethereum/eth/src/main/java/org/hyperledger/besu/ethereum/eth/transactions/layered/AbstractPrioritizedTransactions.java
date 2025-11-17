@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logMinGasPrice;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logMinPriorityFeePerGas;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -42,7 +46,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
   protected final TreeSet<PendingTransaction> orderByFee;
-  protected final MiningConfiguration miningConfiguration;
+  private final MiningConfiguration miningConfiguration;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -62,6 +66,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
         blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningConfiguration = miningConfiguration;
+    getAndLogMinPriorityFeePerGas();
+    getAndLogMinTransactionGasPrice();
   }
 
   @Override
@@ -275,5 +281,17 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     }
 
     assert itCurrent.hasNext() == false : "orderByFee has more elements that pendingTransactions";
+  }
+
+  protected Wei getAndLogMinTransactionGasPrice() {
+    final var currMinTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
+    logMinGasPrice(currMinTransactionGasPrice);
+    return currMinTransactionGasPrice;
+  }
+
+  protected Wei getAndLogMinPriorityFeePerGas() {
+    final var currMinPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
+    logMinPriorityFeePerGas(currMinPriorityFeePerGas);
+    return currMinPriorityFeePerGas;
   }
 }

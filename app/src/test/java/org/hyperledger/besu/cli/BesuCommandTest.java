@@ -157,7 +157,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final JsonObject GENESIS_WITH_DATA_BLOBS_ENABLED =
       new JsonObject().put("config", new JsonObject().put("cancunTime", 1L));
 
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
   private static final long CUSTOM_TARGET_GAS_LIMIT = 50_000_000L;
   private static final String NETWORK_MAINNET_CONFIG_LOG =
@@ -168,11 +168,9 @@ public class BesuCommandTest extends CommandTestAbstract {
       String.format(
           "%s%s",
           HOODI.name().charAt(0), HOODI.name().substring(1).toLowerCase(Locale.getDefault()));
-  ;
   private static final String NETWORK_DEV_CONFIG_LOG =
       String.format(
           "%s%s", DEV.name().charAt(0), DEV.name().substring(1).toLowerCase(Locale.getDefault()));
-  ;
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -2393,6 +2391,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void nativeLibrariesAreEnabledByDefault() {
     parseCommand();
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
     verify(mockLogger).info("Using the native implementation of the signature algorithm");
 
@@ -2675,6 +2676,31 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void cacheLastBlockHeadersOptionShouldWork() {
+    int numberOfBlockHeaderToCache = 5000;
+    parseCommand("--cache-last-block-headers", String.valueOf(numberOfBlockHeaderToCache));
+    verify(mockControllerBuilder).cacheLastBlockHeaders(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(numberOfBlockHeaderToCache);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void isPreloadBlockHeadersCacheEnabledOptionShouldWork() {
+    boolean isPreloadBlockHeadersCacheEnabled = true;
+    parseCommand("--cache-last-block-headers-preload-enabled=true");
+    verify(mockControllerBuilder)
+        .isCacheLastBlockHeadersPreloadEnabled(booleanArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(booleanArgumentCaptor.getValue()).isEqualTo(isPreloadBlockHeadersCacheEnabled);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void genesisStateHashCacheEnabledShouldWork() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -2804,7 +2830,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2829,7 +2855,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2852,7 +2878,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
     assertThat(startupConfigLog)
@@ -2878,7 +2904,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2901,7 +2927,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(DEFAULT_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
@@ -2926,13 +2952,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getTargetGasLimit().getAsLong())
         .isEqualTo(CUSTOM_TARGET_GAS_LIMIT);
 
-    final String startupConfigLog = stringArgumentCaptor.getAllValues().get(2);
+    final String startupConfigLog = getStartupConfigLog();
     final String targetGasLimitOutput =
         ConfigurationOverviewBuilder.normalizeGas(CUSTOM_TARGET_GAS_LIMIT);
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Network", NETWORK_DEV_CONFIG_LOG));
     assertThat(startupConfigLog)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitOutput));
+  }
+
+  private String getStartupConfigLog() {
+    // find the startup log config summary
+    final Stream<String> stringStream =
+        stringArgumentCaptor.getAllValues().stream().filter(p -> p.contains("####"));
+    return stringStream.findFirst().orElseThrow();
   }
 
   @Test

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -172,9 +173,9 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             txPoolConfig,
+            EthProtocolConfiguration.DEFAULT,
             new BlobCache(),
-            MiningConfiguration.newDefault(),
-            false);
+            MiningConfiguration.newDefault());
 
     serviceImpl =
         new BesuEventsImpl(
@@ -285,6 +286,7 @@ public class BesuEventsImplTest {
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
     assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
+    assertThat(result.get().getEventType()).isEqualTo(AddedBlockContext.EventType.HEAD_ADVANCED);
   }
 
   @Test
@@ -442,7 +444,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventFiresAfterSubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    serviceImpl.addTransactionDroppedListener(result::set);
+    serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     // sending a replacement with higher gas should drop the previous one
@@ -456,7 +458,7 @@ public class BesuEventsImplTest {
   @Test
   public void transactionDroppedEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    final long id = serviceImpl.addTransactionDroppedListener(result::set);
+    final long id = serviceImpl.addTransactionDroppedListener((tx, reason) -> result.set(tx));
 
     assertThat(result.get()).isNull();
     transactionPool.addTransactionViaApi(TX1);

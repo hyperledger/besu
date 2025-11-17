@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +30,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStateProof {
 
-  private final PmtStateTrieAccountValue stateTrieAccountValue;
+  private final Optional<PmtStateTrieAccountValue> stateTrieAccountValue;
 
   private final Proof<Bytes> accountProof;
 
@@ -39,12 +40,18 @@ public class WorldStateProof {
       final PmtStateTrieAccountValue stateTrieAccountValue,
       final Proof<Bytes> accountProof,
       final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
-    this.stateTrieAccountValue = stateTrieAccountValue;
+    this.stateTrieAccountValue = Optional.ofNullable(stateTrieAccountValue);
     this.accountProof = accountProof;
     this.storageProofs = storageProofs;
   }
 
-  public PmtStateTrieAccountValue getStateTrieAccountValue() {
+  public WorldStateProof(final Proof<Bytes> accountProof) {
+    this.stateTrieAccountValue = Optional.empty();
+    this.accountProof = accountProof;
+    this.storageProofs = new HashMap<>();
+  }
+
+  public Optional<PmtStateTrieAccountValue> getStateTrieAccountValue() {
     return stateTrieAccountValue;
   }
 

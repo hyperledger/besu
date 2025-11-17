@@ -160,6 +160,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean hasPos() {
+    return getTerminalTotalDifficulty().isPresent();
+  }
+
+  @Override
   public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
         .map(IbftLegacyConfigOptions::new)
@@ -354,6 +359,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getAmsterdamTime() {
+    return getOptionalLong("amsterdamtime");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
@@ -533,6 +543,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBpo3Time().ifPresent(l -> builder.put("bpo3Time", l));
     getBpo4Time().ifPresent(l -> builder.put("bpo4Time", l));
     getBpo5Time().ifPresent(l -> builder.put("bpo5Time", l));
+    getAmsterdamTime().ifPresent(l -> builder.put("amsterdamTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -699,6 +710,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBpo3Time(),
             getBpo4Time(),
             getBpo5Time(),
+            getAmsterdamTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json

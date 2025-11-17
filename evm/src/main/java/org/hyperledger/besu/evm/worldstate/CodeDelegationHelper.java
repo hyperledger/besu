@@ -112,7 +112,7 @@ public class CodeDelegationHelper {
     }
 
     final Account targetAccount = worldUpdater.get(targetAddress);
-    eip7928AccessList.ifPresent(t -> t.addAccount(targetAddress));
+    eip7928AccessList.ifPresent(t -> t.addTouchedAccount(targetAddress));
 
     if (targetAccount == null || isPrecompile.test(targetAddress)) {
       return EMPTY_CODE;

@@ -181,8 +181,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
-        metricsSystem);
+        balConfiguration,
+        metricsSystem,
+        evmConfiguration);
   }
 
   @Override
@@ -248,8 +249,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),
               0));

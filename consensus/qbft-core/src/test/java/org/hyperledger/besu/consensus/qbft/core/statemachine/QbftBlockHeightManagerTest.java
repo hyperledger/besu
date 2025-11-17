@@ -88,6 +88,7 @@ import org.mockito.quality.Strictness;
 public class QbftBlockHeightManagerTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
   private final QbftBlockHeaderTestFixture headerTestFixture = new QbftBlockHeaderTestFixture();
   private MessageFactory messageFactory;
 
@@ -157,6 +158,7 @@ public class QbftBlockHeightManagerTest {
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
+                  localAddress,
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
@@ -174,6 +176,7 @@ public class QbftBlockHeightManagerTest {
                   protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
+                  localAddress,
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
@@ -217,7 +220,8 @@ public class QbftBlockHeightManagerTest {
   public void onBlockTimerExpiryRoundTimerIsStartedAndProposalMessageIsTransmitted() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(0)))
+        .thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -275,7 +279,8 @@ public class QbftBlockHeightManagerTest {
             messageFactory,
             validatorProvider);
 
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(2)))
+        .thenReturn(createdBlock);
 
     // Force a new round to be started at new round number.
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
@@ -353,7 +358,8 @@ public class QbftBlockHeightManagerTest {
     when(roundChangeManager.appendRoundChangeMessage(any()))
         .thenReturn(Optional.of(singletonList(roundChange)));
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(2)))
+        .thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
@@ -380,7 +386,8 @@ public class QbftBlockHeightManagerTest {
   @Test
   public void messagesForFutureRoundsAreBufferedAndUsedToPreloadNewRoundWhenItIsStarted() {
     when(finalState.getQuorum()).thenReturn(1);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(2))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(2)))
+        .thenReturn(createdBlock);
     when(blockCreator.createSealedBlock(any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
@@ -429,7 +436,8 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(1);
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(0)))
+        .thenReturn(createdBlock);
     when(blockCreator.createSealedBlock(any(), anyInt(), any())).thenReturn(createdBlock);
     when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
@@ -471,7 +479,8 @@ public class QbftBlockHeightManagerTest {
   public void preparedCertificateIncludedInRoundChangeMessageOnRoundTimeoutExpired() {
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
     when(blockTimer.checkEmptyBlockExpired(any(), eq(0L))).thenReturn(true);
-    when(blockInterface.replaceRoundInBlock(eq(createdBlock), eq(0))).thenReturn(createdBlock);
+    when(blockInterface.replaceRoundForCommitBlock(eq(createdBlock), eq(0)))
+        .thenReturn(createdBlock);
     when(blockEncoder.readFrom(any())).thenReturn(createdBlock);
 
     final QbftBlockHeightManager manager =

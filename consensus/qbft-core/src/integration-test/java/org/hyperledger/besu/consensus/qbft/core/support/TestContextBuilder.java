@@ -43,7 +43,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftRoundExpiryTimeCalculator;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -74,7 +73,6 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.qbft.core.network.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftController;
@@ -83,9 +81,12 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftEventHandler;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftGossiper;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftMessage;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftMinedBlockObserver;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.network.QbftGossiperImpl;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
@@ -118,6 +119,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -178,6 +180,8 @@ public class TestContextBuilder {
   public static final Address VALIDATOR_CONTRACT_ADDRESS =
       Address.fromHexString("0x0000000000000000000000000000000000008888");
   private static final QbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
+  private static final BftBlockInterface BFT_BLOCK_INTERFACE =
+      new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);
@@ -187,6 +191,8 @@ public class TestContextBuilder {
   private Optional<String> genesisFile = Optional.empty();
   private List<NodeParams> nodeParams = Collections.emptyList();
   private List<QbftFork> qbftForks = Collections.emptyList();
+  private QbftBlockInterface qbftBlockInterface =
+      new QbftBlockInterfaceAdaptor(BFT_BLOCK_INTERFACE);
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -254,6 +260,11 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder qbftBlockInterface(final QbftBlockInterface qbftBlockInterface) {
+    this.qbftBlockInterface = qbftBlockInterface;
+    return this;
+  }
+
   public TestContext build() {
     final NetworkLayout networkNodes;
     if (nodeParams.isEmpty()) {
@@ -296,8 +307,10 @@ public class TestContextBuilder {
     final UniqueMessageMulticaster uniqueMulticaster =
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
-    final Gossiper gossiper =
-        useGossip ? new QbftGossip(uniqueMulticaster, blockEncoder) : mock(Gossiper.class);
+    final QbftGossiper gossiper =
+        useGossip
+            ? new QbftGossiperImpl(uniqueMulticaster, blockEncoder)
+            : mock(QbftGossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 
@@ -317,7 +330,8 @@ public class TestContextBuilder {
             useZeroBaseFee,
             useFixedBaseFee,
             qbftForks,
-            blockEncoder);
+            blockEncoder,
+            qbftBlockInterface);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -396,7 +410,7 @@ public class TestContextBuilder {
       final NodeKey nodeKey,
       final Clock clock,
       final BftEventQueue bftEventQueue,
-      final Gossiper gossiper,
+      final QbftGossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
       final boolean useValidatorContract,
       final boolean useLondonMilestone,
@@ -404,7 +418,8 @@ public class TestContextBuilder {
       final boolean useZeroBaseFee,
       final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks,
-      final QbftBlockCodec blockEncoder) {
+      final QbftBlockCodec blockEncoder,
+      final QbftBlockInterface qbftBlockInterface) {
 
     final MiningConfiguration miningConfiguration =
         ImmutableMiningConfiguration.builder()
@@ -446,9 +461,6 @@ public class TestContextBuilder {
 
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BftBlockInterface bftBlockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
-    final QbftBlockInterface qbftBlockInterface = new QbftBlockInterfaceAdaptor(bftBlockInterface);
-
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
 
@@ -461,7 +473,7 @@ public class TestContextBuilder {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
@@ -471,7 +483,7 @@ public class TestContextBuilder {
 
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
-            blockChain, epochManager, bftBlockInterface, validatorOverrides);
+            blockChain, epochManager, BFT_BLOCK_INTERFACE, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
@@ -486,7 +498,7 @@ public class TestContextBuilder {
             .withBlockchain(blockChain)
             .withWorldStateArchive(worldStateArchive)
             .withConsensusContext(
-                new BftContext(validatorProvider, epochManager, bftBlockInterface))
+                new BftContext(validatorProvider, epochManager, BFT_BLOCK_INTERFACE))
             .build();
 
     final TransactionPoolConfiguration poolConf =
@@ -527,7 +539,7 @@ public class TestContextBuilder {
             ethScheduler);
 
     final ProposerSelector proposerSelector =
-        new BftProposerSelector(blockChain, bftBlockInterface, true, validatorProvider);
+        new BftProposerSelector(blockChain, BFT_BLOCK_INTERFACE, true, validatorProvider);
 
     final BftExecutors bftExecutors =
         BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);
@@ -557,8 +569,8 @@ public class TestContextBuilder {
     final Subscribers<QbftMinedBlockObserver> minedBlockObservers = Subscribers.create();
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<QbftMessage> futureMessageBuffer =
+        new FutureMessageBuffer<>(
             FUTURE_MESSAGES_MAX_DISTANCE,
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber(),

@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 public class Era1HttpFileSource implements Iterator<URI> {
   private static final Pattern ERA1_LINK_PATTERN =
       Pattern.compile(
-          "<a href=\"(?<fileName>(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-f]{8}.era1)\">");
+          "<a href=\"(?<fileName>(?:mainnet|sepolia)-(?<fileNumber>\\d{5})-[0-9a-fA-F]{8}.era1)\">");
   private static final String ERA1_PATTERN_FILE_NAME_GROUP = "fileName";
   private static final String ERA1_PATTERN_FILE_NUMBER_GROUP = "fileNumber";
   private static final int ERA1_BLOCK_COUNT = 8192;
