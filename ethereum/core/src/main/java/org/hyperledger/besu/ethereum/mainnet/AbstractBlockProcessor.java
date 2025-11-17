@@ -85,6 +85,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
+  private final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -95,13 +96,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.balConfiguration = balConfiguration;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -331,7 +334,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           maybeWithdrawalsProcessor
               .get()
               .processWithdrawals(
-                  maybeWithdrawals.get(), worldState.updater(), postExecutionAccessLocationTracker);
+                  maybeWithdrawals.get(),
+                  worldState.updater(),
+                  postExecutionAccessLocationTracker,
+                  blockAccessListBuilder);
         } catch (final Exception e) {
           LOG.error("failed processing withdrawals", e);
           if (worldState instanceof BonsaiWorldState) {
@@ -407,6 +413,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                       "Block access list hash mismatch, calculated: %s header: %s",
                       expectedHash.toHexString(), headerBalHash.get().toHexString());
               LOG.error(errorMessage);
+
+              if (balConfiguration.shouldLogBalsOnMismatch()) {
+                final String constructedBalStr = bal.toString();
+                final String blockBalStr =
+                    blockBody
+                        .getBlockAccessList()
+                        .map(Object::toString)
+                        .orElse("<no BAL present in block body>");
+                LOG.error(
+                    "--- BAL constructed during execution ---\n{}\n"
+                        + "--- BAL from block body ---\n{}",
+                    constructedBalStr,
+                    blockBalStr);
+              }
+
               if (worldState instanceof BonsaiWorldState) {
                 ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
               }
