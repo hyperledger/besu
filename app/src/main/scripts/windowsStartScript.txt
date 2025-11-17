@@ -50,7 +50,7 @@ goto fail
 
 :findJavaFromJavaHome
 set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JAVA_EXE=%JAVA_HOME%\\bin\\java.exe
 
 if exist "%JAVA_EXE%" goto detectJavaVersion
 
@@ -63,10 +63,14 @@ echo location of your Java installation.
 goto fail
 
 :detectJavaVersion
-@rem Detect Java version
-for /f "tokens=3" %%g in ('"%JAVA_EXE%" -version 2^>^&1 ^| findstr /i "version"') do (
+@rem Detect Java version - parse first line of java -version output
+for /f "tokens=3" %%g in ('"%JAVA_EXE%" -version 2^>^&1') do (
     set JAVA_VERSION_STRING=%%g
+    goto extractVersion
 )
+
+:extractVersion
+@rem Remove quotes
 set JAVA_VERSION_STRING=%JAVA_VERSION_STRING:"=%
 
 @rem Extract major version (handle both 1.8 and 11+ format)
@@ -85,14 +89,18 @@ if not defined JAVA_VERSION (
 )
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
-if %JAVA_VERSION% GEQ 25 (
-    set DEFAULT_JVM_OPTS=@DEFAULT_JVM_OPTS_25@
-) else if %JAVA_VERSION% GEQ 21 (
-    set DEFAULT_JVM_OPTS=${defaultJvmOpts}
-) else (
-    echo Java version must be at least 21 (detected: %JAVA_VERSION%)
-    goto fail
-)
+if %JAVA_VERSION% GEQ 25 goto setJvmOpts25
+if %JAVA_VERSION% GEQ 21 goto setJvmOpts21
+echo Java version must be at least 21 (detected: %JAVA_VERSION%)
+goto fail
+
+:setJvmOpts25
+set DEFAULT_JVM_OPTS=@DEFAULT_JVM_OPTS_25@
+goto execute
+
+:setJvmOpts21
+set DEFAULT_JVM_OPTS=${defaultJvmOpts}
+goto execute
 
 :execute
 @rem Setup the command line
