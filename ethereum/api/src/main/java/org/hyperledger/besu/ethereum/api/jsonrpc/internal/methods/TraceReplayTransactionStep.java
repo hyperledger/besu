@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceReplayResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
@@ -59,7 +58,7 @@ public class TraceReplayTransactionStep
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       new StateTraceGenerator()
           .generateStateDiff(transactionTrace)
-          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+          .forEachOrdered(builder::stateDiff);
     }
 
     if (traceTypes.contains(TraceType.TRACE)) {
