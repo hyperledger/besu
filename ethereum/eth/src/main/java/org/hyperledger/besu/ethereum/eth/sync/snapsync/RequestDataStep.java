@@ -106,7 +106,7 @@ public class RequestDataStep {
                     worldStateProofProvider, response.accounts(), response.proofs());
               }
               if (error != null) {
-                LOG.atDebug()
+                LOG.atInfo()
                     .setMessage("Error handling account download accounts ({} - {}) task: {}")
                     .addArgument(accountDataRequest.getStartKeyHash())
                     .addArgument(accountDataRequest.getEndKeyHash())
