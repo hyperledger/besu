@@ -66,13 +66,13 @@ public enum NetworkName {
       final String genesisFile,
       final BigInteger networkId,
       final boolean canSnapSync,
-      final boolean nativeRequirements) {
+      final boolean requiresNative) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
-    this.requiresNative = nativeRequirements;
+    this.requiresNative = requiresNative;
   }
 
   /**
