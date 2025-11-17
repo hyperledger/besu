@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -658,21 +660,26 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void unsafeImportSyncBodyAndReceipts(
-      final SyncBlock block,
-      final List<TransactionReceipt> transactionReceipts,
-      final boolean indexTransactions) {
+      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    final Hash blockHash = block.getHash();
-    updater.putBlockHash(block.getHeader().getNumber(), blockHash);
-    updater.putSyncBlockBody(blockHash, block.getBody());
-    if (indexTransactions) {
-      final List<Hash> listOfTxHashes =
-          block.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
-      indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+    for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
+      final SyncBlock block = blockAndReceipts.getBlock();
+      final Hash blockHash = block.getHash();
+      final BlockHeader header = block.getHeader();
+      final SyncBlockBody body = block.getBody();
+      updater.putBlockHash(header.getNumber(), blockHash);
+      updater.putSyncBlockBody(blockHash, body);
+      updater.putTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+      this.totalDifficulty = calculateTotalDifficulty(header);
+      updater.putTotalDifficulty(blockHash, totalDifficulty);
+      this.chainHeader = header;
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+      }
     }
-    updater.putTransactionReceipts(blockHash, transactionReceipts);
-    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
-    updater.putTotalDifficulty(blockHash, td);
+    updater.setChainHead(chainHeader.getBlockHash());
     updater.commit();
   }
 
