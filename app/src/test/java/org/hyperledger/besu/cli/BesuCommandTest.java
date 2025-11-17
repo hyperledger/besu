@@ -2614,9 +2614,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     BesuCommand mockCmd = parseCommand("--genesis-file=" + fakeGenesisFile.toString());
     NetworkName mainnet = NetworkName.MAINNET;
     try (var mockStatic = mockStatic(NativeRequirement.class)) {
-      mockStatic
-          .when(() -> NativeRequirement.getNativeRequirements(mainnet))
-          .thenReturn(Collections.emptyList());
       // assert no error output
       assertThat(commandOutput.toString(UTF_8)).isEmpty();
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
