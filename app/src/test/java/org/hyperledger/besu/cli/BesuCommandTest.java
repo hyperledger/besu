@@ -45,15 +45,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
+import org.hyperledger.besu.cli.config.NativeRequirement;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.MergeConfiguration;
@@ -92,6 +91,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +111,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
@@ -2589,31 +2590,38 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertNativeRequirements_UnMet() throws IOException {
     BesuCommand mockCmd = parseCommand("--network=mainnet");
-    NetworkName spyMainnet = spy(NetworkName.MAINNET);
-    when(spyMainnet.getNativeRequirements())
-        .thenReturn(
-            List.of(new NativeRequirementResult(false, "MOCKLIB", Optional.of("Mock error"))));
-    assertThatExceptionOfType(UnsupportedOperationException.class)
-        .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(spyMainnet))
-        .withMessageContaining("MOCKLIB")
-        .withMessageContaining("Mock error")
-        .withMessageContaining(System.getProperty("os.arch"))
-        .withMessageContaining(System.getProperty("os.name"));
+    NetworkName mainnet = NetworkName.MAINNET;
+    List<NativeRequirement.NativeRequirementResult> mockNativeRequirements =
+        List.of(
+            new NativeRequirement.NativeRequirementResult(
+                false, "MOCKLIB", Optional.of("Mock error")));
+    try (MockedStatic<NativeRequirement> mockStatic = mockStatic(NativeRequirement.class)) {
+      mockStatic
+          .when(() -> NativeRequirement.getNativeRequirements(mainnet))
+          .thenReturn(mockNativeRequirements);
+      assertThatExceptionOfType(UnsupportedOperationException.class)
+          .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(mainnet))
+          .withMessageContaining("MOCKLIB")
+          .withMessageContaining("Mock error")
+          .withMessageContaining(System.getProperty("os.arch"))
+          .withMessageContaining(System.getProperty("os.name"));
+    }
   }
 
   @Test
   public void assertNativeRequirements_UnMetForUnnamedNetwork() throws IOException {
     final Path fakeGenesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     BesuCommand mockCmd = parseCommand("--genesis-file=" + fakeGenesisFile.toString());
-    NetworkName spyMainnet = spy(NetworkName.MAINNET);
-    // assert no error output
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    // assert no exception
-    assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(spyMainnet)));
-    // assert we didn't check for native requirements for a custom-genesis
-    verify(spyMainnet, times(0)).getNativeRequirements();
+    NetworkName mainnet = NetworkName.MAINNET;
+    try (var mockStatic = mockStatic(NativeRequirement.class)) {
+      mockStatic
+          .when(() -> NativeRequirement.getNativeRequirements(mainnet))
+          .thenReturn(Collections.emptyList());
+      assertThat(commandOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+      assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(mainnet)));
+      mockStatic.verify(() -> NativeRequirement.getNativeRequirements(mainnet), times(0));
+    }
   }
 
   @Test

@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -76,4 +77,14 @@ public interface NativeRequirement {
 
         return requirements;
       };
+
+  /**
+   * Gets native requirements based on the given network name.
+   *
+   * @param networkName The name of the network.
+   * @return List of native library requirements for the network.
+   */
+  static List<NativeRequirementResult> getNativeRequirements(final NetworkName networkName) {
+    return networkName.requiresNative() ? MAINNET.get() : Collections.emptyList();
+  }
 }
