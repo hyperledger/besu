@@ -67,20 +67,17 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
-    for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      blockchain.unsafeImportSyncBodyAndReceipts(
-          blockWithReceipts.getBlock(),
-          blockWithReceipts.getReceipts(),
-          transactionIndexingEnabled);
-      LOG.atTrace()
-          .setMessage("Imported block {}")
-          .addArgument(blockWithReceipts.getBlock()::toLogString)
-          .log();
-    }
+    blockchain.unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
+    final SyncBlockWithReceipts lastBlock = blocksWithReceipts.getLast();
+    LOG.atTrace()
+        .setMessage("Imported blocks up to {}")
+        .addArgument(lastBlock.getBlock()::toLogString)
+        .log();
+
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
-    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    final long lastBlockNumber = lastBlock.getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
@@ -88,22 +85,22 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
     final long endTime = System.nanoTime();
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
 
-    syncState.setSyncProgress(startBlock, lastBlock, pivotHeaderNumber);
+    syncState.setSyncProgress(startBlock, lastBlockNumber, pivotHeaderNumber);
 
     if (shouldLog.get()) {
-      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeaderNumber);
+      final long blocksPercent = getBlocksPercent(lastBlockNumber, pivotHeaderNumber);
       throttledLog(
           LOG::info,
           String.format(
               "Block import progress: %s of %s (%s%%), Peer count: %s",
-              lastBlock, pivotHeaderNumber, blocksPercent, peerCount),
+              lastBlockNumber, pivotHeaderNumber, blocksPercent, peerCount),
           shouldLog,
           PRINT_DELAY_SECONDS);
       LOG.debug(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peer count: {}",
           logStartBlock.getAsLong(),
-          lastBlock,
-          lastBlock - logStartBlock.getAsLong() + 1,
+          lastBlockNumber,
+          lastBlockNumber - logStartBlock.getAsLong() + 1,
           accumulatedTime,
           peerCount);
       accumulatedTime = 0L;
