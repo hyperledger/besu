@@ -719,19 +719,15 @@ run {
 }
 
 def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
-  "-XX:G1ConcRefinementThreads=2",
-  "-XX:G1HeapWastePercent=15",
+  "-XX:MaxHeapFreeRatio=30",
+  "-XX:MinHeapFreeRatio=10",
   "-XX:MaxGCPauseMillis=100",
   "-XX:StartFlightRecording,settings=default.jfc",
   "-Xlog:jfr*=off"
 ]
 
 def defaultJvmOpts25 = defaultJvmOpts21 + [
-  "-XX:+UseCompactObjectHeaders",
-  "-XX:MaxHeapFreeRatio=30",
-  "-XX:MinHeapFreeRatio=10",
-  "-XX:GCTimeRatio=50",
-  "-XX:-ShrinkHeapInSteps"
+  "-XX:+UseCompactObjectHeaders"
 ]
 
 def untunedJvmOpts = application.applicationDefaultJvmArgs
