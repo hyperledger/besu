@@ -77,54 +77,68 @@ final class CallTracerHelper {
       return Bytes.EMPTY;
     }
 
-    // Calculate word boundaries
-    final int startWord = offset >>> WORD_SIZE_SHIFT; // offset / 32
-    final int endWord =
-        (offset + length + WORD_MASK) >>> WORD_SIZE_SHIFT; // ceil((offset + length) / 32)
-    final int wordCount = endWord - startWord;
-
-    if (wordCount <= 0) {
-      return Bytes.EMPTY;
+    // Early return for null or empty memory
+    if (memory == null || memory.length == 0) {
+      // Return zeros for the requested length
+      return MutableBytes.create(Math.min(length, MAX_REASONABLE_LENGTH));
     }
 
-    // Build the memory slice
-    final MutableBytes buffer = buildMemoryBuffer(memory, startWord, wordCount);
+    // Calculate word boundaries
+    final int startWord = offset >>> WORD_SIZE_SHIFT; // offset / 32
+    final int startByteInWord = offset & WORD_MASK; // offset % 32
 
-    // Extract the requested slice
-    return extractSlice(buffer, offset & WORD_MASK, length);
+    // Optimize for single word access
+    if (length <= BYTES_PER_WORD - startByteInWord && startWord < memory.length) {
+      final Bytes word = getMemoryWord(memory, startWord);
+      return word.slice(startByteInWord, length);
+    }
+
+    // Multi-word access
+    final int endByte = offset + length;
+    final int endWord = (endByte + WORD_MASK) >>> WORD_SIZE_SHIFT; // ceil(endByte / 32)
+
+    // Build result directly without intermediate buffer
+    final MutableBytes result = MutableBytes.create(length);
+    int resultOffset = 0;
+
+    for (int wordIndex = startWord; wordIndex < endWord && resultOffset < length; wordIndex++) {
+      final Bytes word = getMemoryWord(memory, wordIndex);
+
+      // Calculate slice boundaries within this word
+      final int wordStartByte = (wordIndex == startWord) ? startByteInWord : 0;
+      final int wordEndByte = Math.min(BYTES_PER_WORD, wordStartByte + (length - resultOffset));
+      final int sliceLength = wordEndByte - wordStartByte;
+
+      if (sliceLength > 0) {
+        word.slice(wordStartByte, sliceLength).copyTo(result, resultOffset);
+        resultOffset += sliceLength;
+      }
+    }
+
+    // The remaining bytes (if any) are already zero-initialized in MutableBytes
+    return result;
   }
 
   /** Validates memory access parameters. */
   private static boolean isValidMemoryRange(final int offset, final int length) {
+    // Check for negative values
     if (offset < 0 || length <= 0) {
       return false;
     }
 
-    // Protect against unreasonably large allocations (common in failed calls)
+    // Protect against unreasonably large allocations
     if (length > MAX_REASONABLE_LENGTH) {
       return false;
     }
 
     // Check for integer overflow
-    if (offset > Integer.MAX_VALUE - length) {
+    try {
+      Math.addExact(offset, length);
+    } catch (ArithmeticException e) {
       return false;
     }
 
     return true;
-  }
-
-  /** Builds a buffer containing the memory words needed for extraction. */
-  private static MutableBytes buildMemoryBuffer(
-      final Bytes[] memory, final int startWord, final int wordCount) {
-    final MutableBytes buffer = MutableBytes.create(wordCount * BYTES_PER_WORD);
-
-    for (int i = 0; i < wordCount; i++) {
-      final int wordIndex = startWord + i;
-      final Bytes word = getMemoryWord(memory, wordIndex);
-      word.copyTo(buffer, i * BYTES_PER_WORD);
-    }
-
-    return buffer;
   }
 
   /** Gets a word from memory or returns zero bytes if out of bounds. */
@@ -132,34 +146,7 @@ final class CallTracerHelper {
     if (memory == null || wordIndex < 0 || wordIndex >= memory.length) {
       return Bytes32.ZERO;
     }
-
     final Bytes word = memory[wordIndex];
     return word != null ? word : Bytes32.ZERO;
-  }
-
-  /** Extracts the final slice from the buffer with proper bounds checking. */
-  private static Bytes extractSlice(
-      final MutableBytes buffer, final int startByteInWord, final int length) {
-    // Simple case: entire slice fits within buffer
-    if (startByteInWord + length <= buffer.size()) {
-      return buffer.slice(startByteInWord, length);
-    }
-
-    // Complex case: need to handle partial slice and zero-padding
-    final int availableBytes = buffer.size() - startByteInWord;
-    if (availableBytes <= 0) {
-      // Start is beyond buffer, return zeros
-      return MutableBytes.create(length);
-    }
-
-    // Extract what we can and pad the rest with zeros
-    final Bytes availableSlice = buffer.slice(startByteInWord, availableBytes);
-    final int paddingNeeded = length - availableBytes;
-
-    if (paddingNeeded <= 0) {
-      return availableSlice;
-    }
-
-    return Bytes.concatenate(availableSlice, MutableBytes.create(paddingNeeded));
   }
 }
