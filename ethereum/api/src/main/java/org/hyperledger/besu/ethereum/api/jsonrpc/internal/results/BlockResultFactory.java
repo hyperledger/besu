@@ -104,31 +104,29 @@ public class BlockResultFactory {
   }
 
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
-    final List<String> txs =
-        block.getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
+    final List<String> txs = txsAsHex(block);
 
     return new EngineGetPayloadResultV1(block.getHeader(), txs);
   }
 
+  private static List<String> txsAsHex(final Block block) {
+    return block.getBody().getTransactions().stream()
+        .map(
+            transaction ->
+                TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+        .map(Bytes::toHexString)
+        .collect(Collectors.toList());
+  }
+
   public EngineGetPayloadResultV2 payloadTransactionCompleteV2(final PayloadWrapper payload) {
     final var blockWithReceipts = payload.blockWithReceipts();
-    final List<String> txs =
-        blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
+    final Block block = blockWithReceipts.getBlock();
+    final List<String> txs = txsAsHex(block);
 
     return new EngineGetPayloadResultV2(
         blockWithReceipts.getHeader(),
         txs,
-        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        block.getBody().getWithdrawals(),
         Quantity.create(payload.blockValue()));
   }
 
@@ -143,13 +141,7 @@ public class BlockResultFactory {
 
   public EngineGetPayloadResultV3 payloadTransactionCompleteV3(final PayloadWrapper payload) {
     final var blockWithReceipts = payload.blockWithReceipts();
-    final List<String> txs =
-        blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
+    final List<String> txs = txsAsHex(blockWithReceipts.getBlock());
 
     final BlobsBundleV1 blobsBundleV1 =
         new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
@@ -163,24 +155,8 @@ public class BlockResultFactory {
 
   public EngineGetPayloadResultV4 payloadTransactionCompleteV4(final PayloadWrapper payload) {
     final var blockWithReceipts = payload.blockWithReceipts();
-    final List<String> txs =
-        blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
-    final Optional<List<String>> requestsWithoutRequestId =
-        payload
-            .requests()
-            .map(
-                rqs ->
-                    rqs.stream()
-                        .sorted(Comparator.comparing(Request::getType))
-                        .filter(r -> !r.getData().isEmpty())
-                        .map(Request::getEncodedRequest)
-                        .map(Bytes::toHexString)
-                        .toList());
+    final List<String> txs = txsAsHex(blockWithReceipts.getBlock());
+    final Optional<List<String>> requestsWithoutRequestId = requestsAsHex(payload);
 
     final BlobsBundleV1 blobsBundleV1 =
         new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
@@ -193,26 +169,23 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
+  private static Optional<List<String>> requestsAsHex(final PayloadWrapper payload) {
+    return payload
+        .requests()
+        .map(
+            rqs ->
+                rqs.stream()
+                    .sorted(Comparator.comparing(Request::getType))
+                    .filter(r -> !r.getData().isEmpty())
+                    .map(Request::getEncodedRequest)
+                    .map(Bytes::toHexString)
+                    .toList());
+  }
+
   public EngineGetPayloadResultV5 payloadTransactionCompleteV5(final PayloadWrapper payload) {
     final var blockWithReceipts = payload.blockWithReceipts();
-    final List<String> txs =
-        blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
-    final Optional<List<String>> requestsWithoutRequestId =
-        payload
-            .requests()
-            .map(
-                rqs ->
-                    rqs.stream()
-                        .sorted(Comparator.comparing(Request::getType))
-                        .filter(r -> !r.getData().isEmpty())
-                        .map(Request::getEncodedRequest)
-                        .map(Bytes::toHexString)
-                        .toList());
+    final List<String> txs = txsAsHex(blockWithReceipts.getBlock());
+    final Optional<List<String>> requestsWithoutRequestId = requestsAsHex(payload);
 
     final BlobsBundleV2 blobsBundleV2 =
         new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
@@ -227,24 +200,8 @@ public class BlockResultFactory {
 
   public EngineGetPayloadResultV6 payloadTransactionCompleteV6(final PayloadWrapper payload) {
     final var blockWithReceipts = payload.blockWithReceipts();
-    final List<String> txs =
-        blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
-    final Optional<List<String>> requestsWithoutRequestId =
-        payload
-            .requests()
-            .map(
-                rqs ->
-                    rqs.stream()
-                        .sorted(Comparator.comparing(Request::getType))
-                        .filter(r -> !r.getData().isEmpty())
-                        .map(Request::getEncodedRequest)
-                        .map(Bytes::toHexString)
-                        .toList());
+    final List<String> txs = txsAsHex(blockWithReceipts.getBlock());
+    final Optional<List<String>> requestsWithoutRequestId = requestsAsHex(payload);
 
     final BlobsBundleV2 blobsBundleV2 =
         new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
