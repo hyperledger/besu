@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@DisplayName("CallTracerHelper Tests")
 class CallTracerHelperTest {
 
   // ==================== BytesToInt Tests ====================
