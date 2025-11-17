@@ -22,10 +22,12 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -115,21 +117,26 @@ public class StateTraceGenerator {
     return traceFrames.getFirst().getWorldUpdater().parentUpdater().get().parentUpdater().get();
   }
 
-  /** Use block access list if present to get touched accounts. */
+  /**
+   * Retrieves the accounts that were touched during the execution of a transaction.
+   *
+   * @param transactionUpdater the {@link WorldUpdater} used to update the world state during the
+   *     transaction.
+   * @param transactionTrace the {@link TransactionTrace} containing the access list and execution
+   *     details.
+   * @return a collection of touched {@link Account} instances.
+   */
   private Collection<? extends Account> getTouchedAccounts(
       final WorldUpdater transactionUpdater, final TransactionTrace transactionTrace) {
-    if (transactionTrace.getAccessListTracker().isPresent()) {
-      List<Account> touchedAccounts = new java.util.ArrayList<>();
-      for (Address address : transactionTrace.getAccessListTracker().get().getTouchedAccounts()) {
-        var account = transactionUpdater.get(address);
-        if (account != null) {
-          touchedAccounts.add(transactionUpdater.get(address));
-        }
-      }
-      return touchedAccounts;
-    } else {
-      return transactionUpdater.getTouchedAccounts();
-    }
+    return transactionTrace
+        .getAccessListTracker()
+        .map(
+            accessListTracker ->
+                accessListTracker.getTouchedAccounts().stream()
+                    .map(transactionUpdater::get)
+                    .filter(Objects::nonNull)
+                    .toList())
+        .orElseGet(() -> new ArrayList<>(transactionUpdater.getTouchedAccounts()));
   }
 
   /**

@@ -55,8 +55,4 @@ public class AccessListTraceTracker implements AccessListLocationTracker {
   public List<Address> getTouchedAccounts() {
     return touchedAccounts;
   }
-
-  public Map<Address, List<UInt256>> getAccessedSlots() {
-    return accessedSlots;
-  }
 }
