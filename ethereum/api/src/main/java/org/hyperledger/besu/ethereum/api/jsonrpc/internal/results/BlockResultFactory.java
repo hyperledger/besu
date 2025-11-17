@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,7 +36,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.tuweni.bytes.Bytes;
 
 public class BlockResultFactory {
 
@@ -114,7 +114,7 @@ public class BlockResultFactory {
         .map(
             transaction ->
                 TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-        .map(Bytes::toHexString)
+        .map(b -> HexUtils.toFastHex(b, true))
         .collect(Collectors.toList());
   }
 
@@ -178,7 +178,7 @@ public class BlockResultFactory {
                     .sorted(Comparator.comparing(Request::getType))
                     .filter(r -> !r.getData().isEmpty())
                     .map(Request::getEncodedRequest)
-                    .map(Bytes::toHexString)
+                    .map(b -> HexUtils.toFastHex(b, true))
                     .toList());
   }
 
