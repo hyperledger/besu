@@ -39,6 +39,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 public class BlockResultFactory {
 
+  // region BlockResult
+
   public BlockResult transactionComplete(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata) {
     return transactionComplete(blockWithMetadata, false);
@@ -103,19 +105,42 @@ public class BlockResultFactory {
         block.getBody().getBlockAccessList());
   }
 
+  public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
+    return transactionHash(blockWithMetadata, false);
+  }
+
+  public BlockResult transactionHash(
+      final BlockWithMetadata<Hash, Hash> blockWithMetadata, final boolean includeCoinbase) {
+    final List<TransactionResult> txs =
+        blockWithMetadata.getTransactions().stream()
+            .map(Hash::toString)
+            .map(TransactionHashResult::new)
+            .collect(Collectors.toList());
+    final List<JsonNode> ommers =
+        blockWithMetadata.getOmmers().stream()
+            .map(Hash::toString)
+            .map(TextNode::new)
+            .collect(Collectors.toList());
+    // TODO: Pass BAL once part of the block interface
+    return new BlockResult(
+        blockWithMetadata.getHeader(),
+        txs,
+        ommers,
+        blockWithMetadata.getTotalDifficulty(),
+        blockWithMetadata.getSize(),
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals(),
+        Optional.empty());
+  }
+
+  // endregion BlockResult
+
+  // region EngineGetPayloadResult
+
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs = txsAsHex(block);
 
     return new EngineGetPayloadResultV1(block.getHeader(), txs);
-  }
-
-  private static List<String> txsAsHex(final Block block) {
-    return block.getBody().getTransactions().stream()
-        .map(
-            transaction ->
-                TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-        .map(b -> HexUtils.toFastHex(b, true))
-        .collect(Collectors.toList());
   }
 
   public EngineGetPayloadResultV2 payloadTransactionCompleteV2(final PayloadWrapper payload) {
@@ -128,15 +153,6 @@ public class BlockResultFactory {
         txs,
         block.getBody().getWithdrawals(),
         Quantity.create(payload.blockValue()));
-  }
-
-  public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
-      final List<Optional<BlockBody>> blockBodies) {
-    final List<PayloadBody> payloadBodies =
-        blockBodies.stream()
-            .map(maybeBody -> maybeBody.map(PayloadBody::new).orElse(null))
-            .collect(Collectors.toList());
-    return new EngineGetPayloadBodiesResultV1(payloadBodies);
   }
 
   public EngineGetPayloadResultV3 payloadTransactionCompleteV3(final PayloadWrapper payload) {
@@ -167,19 +183,6 @@ public class BlockResultFactory {
         requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV1);
-  }
-
-  private static Optional<List<String>> requestsAsHex(final PayloadWrapper payload) {
-    return payload
-        .requests()
-        .map(
-            rqs ->
-                rqs.stream()
-                    .sorted(Comparator.comparing(Request::getType))
-                    .filter(r -> !r.getData().isEmpty())
-                    .map(Request::getEncodedRequest)
-                    .map(b -> HexUtils.toFastHex(b, true))
-                    .toList());
   }
 
   public EngineGetPayloadResultV5 payloadTransactionCompleteV5(final PayloadWrapper payload) {
@@ -229,31 +232,40 @@ public class BlockResultFactory {
         blockAccessList);
   }
 
-  public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
-    return transactionHash(blockWithMetadata, false);
+  private static List<String> txsAsHex(final Block block) {
+    return block.getBody().getTransactions().stream()
+        .map(
+            transaction ->
+                TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+        .map(b -> HexUtils.toFastHex(b, true))
+        .collect(Collectors.toList());
   }
 
-  public BlockResult transactionHash(
-      final BlockWithMetadata<Hash, Hash> blockWithMetadata, final boolean includeCoinbase) {
-    final List<TransactionResult> txs =
-        blockWithMetadata.getTransactions().stream()
-            .map(Hash::toString)
-            .map(TransactionHashResult::new)
-            .collect(Collectors.toList());
-    final List<JsonNode> ommers =
-        blockWithMetadata.getOmmers().stream()
-            .map(Hash::toString)
-            .map(TextNode::new)
-            .collect(Collectors.toList());
-    // TODO: Pass BAL once part of the block interface
-    return new BlockResult(
-        blockWithMetadata.getHeader(),
-        txs,
-        ommers,
-        blockWithMetadata.getTotalDifficulty(),
-        blockWithMetadata.getSize(),
-        includeCoinbase,
-        blockWithMetadata.getWithdrawals(),
-        Optional.empty());
+  private static Optional<List<String>> requestsAsHex(final PayloadWrapper payload) {
+    return payload
+        .requests()
+        .map(
+            rqs ->
+                rqs.stream()
+                    .sorted(Comparator.comparing(Request::getType))
+                    .filter(r -> !r.getData().isEmpty())
+                    .map(Request::getEncodedRequest)
+                    .map(b -> HexUtils.toFastHex(b, true))
+                    .toList());
   }
+
+  // endregion EngineGetPayloadResult
+
+  // region EngineGetPayloadBodiesResult
+
+  public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
+      final List<Optional<BlockBody>> blockBodies) {
+    final List<PayloadBody> payloadBodies =
+        blockBodies.stream()
+            .map(maybeBody -> maybeBody.map(PayloadBody::new).orElse(null))
+            .collect(Collectors.toList());
+    return new EngineGetPayloadBodiesResultV1(payloadBodies);
+  }
+
+  // endregion EngineGetPayloadBodiesResult
 }
