@@ -351,7 +351,7 @@ public class CallTracerResultConverter {
 
     final String fromAddress =
         (parentCallInfo != null && parentCallInfo.builder != null)
-            ? parentCallInfo.builder.build().getTo()
+            ? parentCallInfo.builder.getTo()
             : null;
 
     final String toAddress = resolveToAddress(frame, opcode);
