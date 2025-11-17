@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessListLocationTracker;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -370,7 +370,7 @@ public class TransactionSimulator {
       final ProcessableBlockHeader processableHeader,
       final WorldUpdater updater,
       final Address miningBeneficiary,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final Optional<AccessListLocationTracker> accessLocationTracker) {
 
     final long simulationGasCap =
         calculateSimulationGasCap(
@@ -428,7 +428,7 @@ public class TransactionSimulator {
       final BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasCalculator,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final Optional<AccessListLocationTracker> accessLocationTracker) {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(processableHeader);
     final Address senderAddress = callParams.getSender().orElse(DEFAULT_FROM);

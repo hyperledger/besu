@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -93,8 +94,7 @@ public class StateTraceGenerator {
     final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
     // Compare modified accounts (existing or new accounts touched by the tx)
-    transactionUpdater
-        .getTouchedAccounts()
+    getTouchedAccounts(transactionUpdater, transactionTrace)
         .forEach(
             updatedAccount -> {
               final Account rootAccount = previousUpdater.get(updatedAccount.getAddress());
@@ -103,11 +103,7 @@ public class StateTraceGenerator {
 
     processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
 
-    // Add sender, receiver, and coinbase accounts for pre-state view
-    if (isPreState) {
-      addTransactionContextAccounts(
-          stateDiffResult, transactionTrace, transactionUpdater, previousUpdater);
-    }
+
 
     return Stream.of(stateDiffResult);
   }
@@ -120,6 +116,23 @@ public class StateTraceGenerator {
   private WorldUpdater getTransactionUpdater(final List<TraceFrame> traceFrames) {
     // Transaction updater sits two levels above the frame's updater
     return traceFrames.getFirst().getWorldUpdater().parentUpdater().get().parentUpdater().get();
+  }
+
+  /** Use block access list if present to get touched accounts. */
+  private Collection<? extends Account> getTouchedAccounts(
+      final WorldUpdater transactionUpdater, final TransactionTrace transactionTrace) {
+    if (transactionTrace.getAccessListTracker().isPresent()) {
+      List<Account> touchedAccounts = new java.util.ArrayList<>();
+      for (Address address : transactionTrace.getAccessListTracker().get().getTouchedAccounts()) {
+        var account = transactionUpdater.get(address);
+        if (account != null) {
+          touchedAccounts.add(transactionUpdater.get(address));
+        }
+      }
+      return touchedAccounts;
+    } else {
+      return transactionUpdater.getTouchedAccounts();
+    }
   }
 
   /**
@@ -241,60 +254,6 @@ public class StateTraceGenerator {
                 stateDiff.put(accountAddress.toHexString(), accountDiff);
               }
             });
-  }
-
-  /** For pre-state mode, include sender, recipient, and coinbase accounts in the result. */
-  private void addTransactionContextAccounts(
-      final StateDiffTrace stateDiffResult,
-      final TransactionTrace transactionTrace,
-      final WorldUpdater transactionUpdater,
-      final WorldUpdater previousUpdater) {
-
-    // Sender
-    addAccount(
-        stateDiffResult,
-        transactionTrace.getTransaction().getSender(),
-        previousUpdater,
-        transactionUpdater);
-
-    // Recipient, if present
-    transactionTrace
-        .getTransaction()
-        .getTo()
-        .ifPresent(
-            toAccount ->
-                addAccount(stateDiffResult, toAccount, previousUpdater, transactionUpdater));
-
-    // Coinbase (block miner)
-    transactionTrace
-        .getBlock()
-        .ifPresent(
-            block -> {
-              final Address coinbase = block.getHeader().getCoinbase();
-              addAccount(stateDiffResult, coinbase, previousUpdater, transactionUpdater);
-            });
-  }
-
-  /** Add an account to the state diff if it wasn't already included. */
-  private void addAccount(
-      final StateDiffTrace stateDiffResult,
-      final Address accountAddress,
-      final WorldUpdater previousUpdater,
-      final WorldUpdater transactionUpdater) {
-
-    if (!stateDiffResult.containsKey(accountAddress.toHexString())) {
-      final Account fromAccountState = previousUpdater.get(accountAddress);
-      final Account toAccountState = transactionUpdater.get(accountAddress);
-
-      stateDiffResult.put(
-          accountAddress.toHexString(),
-          new AccountDiff(
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::balanceAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::codeAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::codeHashAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::nonceAsHex),
-              Collections.emptyMap()));
-    }
   }
 
   /** Create a {@link DiffNode} by extracting a field from two account states. */

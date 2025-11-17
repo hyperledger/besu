@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessListLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
@@ -248,7 +249,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
-        final Optional<AccessLocationTracker> transactionLocationTracker =
+        final Optional<AccessListLocationTracker> transactionLocationTracker =
             createTransactionAccessLocationTracker(blockAccessListBuilder, i);
         TransactionProcessingResult transactionProcessingResult =
             getTransactionProcessingResult(
@@ -492,7 +493,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Transaction transaction,
       final int location,
       final BlockHashLookup blockHashLookup,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final Optional<AccessListLocationTracker> accessLocationTracker) {
     return transactionProcessor.processTransaction(
         transactionUpdater,
         blockProcessingContext.getBlockHeader(),
@@ -524,7 +525,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return true;
   }
 
-  private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
+  private Optional<AccessListLocationTracker> createTransactionAccessLocationTracker(
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final int transactionLocation) {
     return blockAccessListBuilder.map(

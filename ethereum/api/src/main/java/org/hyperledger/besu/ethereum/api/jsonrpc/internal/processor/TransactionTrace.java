@@ -28,12 +28,14 @@ public class TransactionTrace {
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
+  private final Optional<AccessListTraceTracker> accessListTracker;
 
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
     this.result = null;
     this.traceFrames = null;
     this.block = block;
+    this.accessListTracker = Optional.empty();
   }
 
   public TransactionTrace(
@@ -44,6 +46,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = Optional.empty();
+    this.accessListTracker = Optional.empty();
   }
 
   public TransactionTrace(
@@ -55,6 +58,20 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
+    this.accessListTracker = Optional.empty();
+  }
+
+  public TransactionTrace(
+      final Transaction transaction,
+      final TransactionProcessingResult result,
+      final List<TraceFrame> traceFrames,
+      final Optional<Block> block,
+      final AccessListTraceTracker accessListTracker) {
+    this.transaction = transaction;
+    this.result = result;
+    this.traceFrames = traceFrames;
+    this.block = block;
+    this.accessListTracker = Optional.of(accessListTracker);
   }
 
   public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
@@ -62,6 +79,7 @@ public class TransactionTrace {
     this.result = null;
     this.traceFrames = null;
     this.block = block;
+    this.accessListTracker = Optional.empty();
   }
 
   public Transaction getTransaction() {
@@ -86,5 +104,9 @@ public class TransactionTrace {
 
   public Optional<Block> getBlock() {
     return block;
+  }
+
+  public Optional<AccessListTraceTracker> getAccessListTracker() {
+    return accessListTracker;
   }
 }
