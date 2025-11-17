@@ -395,17 +395,9 @@ public class SnapSyncChainDownloader
                   LOG.warn("Chain sync encountered error, will retry from saved state", error);
                   return downloadAccordingToChainState();
                 } else {
-                  // Stop metrics on failure
-                  syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
                   return CompletableFuture.<Void>failedFuture(error);
                 }
               } else {
-                final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
-                LOG.info(
-                    "Two-stage fast sync chain download complete in {} seconds",
-                    totalDuration.getSeconds());
-                // Stop metrics on success
-                syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
                 return CompletableFuture.<Void>completedFuture(null);
               }
             })
