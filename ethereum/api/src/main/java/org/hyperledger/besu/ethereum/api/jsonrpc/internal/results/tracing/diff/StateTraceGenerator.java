@@ -102,13 +102,6 @@ public class StateTraceGenerator {
             });
 
     processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
-
-    // Add sender, receiver, and coinbase accounts for pre-state view
-    if (isPreState) {
-      addTransactionContextAccounts(
-          stateDiffResult, transactionTrace, transactionUpdater, previousUpdater);
-    }
-
     return Stream.of(stateDiffResult);
   }
 
@@ -241,60 +234,6 @@ public class StateTraceGenerator {
                 stateDiff.put(accountAddress.toHexString(), accountDiff);
               }
             });
-  }
-
-  /** For pre-state mode, include sender, recipient, and coinbase accounts in the result. */
-  private void addTransactionContextAccounts(
-      final StateDiffTrace stateDiffResult,
-      final TransactionTrace transactionTrace,
-      final WorldUpdater transactionUpdater,
-      final WorldUpdater previousUpdater) {
-
-    // Sender
-    addAccount(
-        stateDiffResult,
-        transactionTrace.getTransaction().getSender(),
-        previousUpdater,
-        transactionUpdater);
-
-    // Recipient, if present
-    transactionTrace
-        .getTransaction()
-        .getTo()
-        .ifPresent(
-            toAccount ->
-                addAccount(stateDiffResult, toAccount, previousUpdater, transactionUpdater));
-
-    // Coinbase (block miner)
-    transactionTrace
-        .getBlock()
-        .ifPresent(
-            block -> {
-              final Address coinbase = block.getHeader().getCoinbase();
-              addAccount(stateDiffResult, coinbase, previousUpdater, transactionUpdater);
-            });
-  }
-
-  /** Add an account to the state diff if it wasn't already included. */
-  private void addAccount(
-      final StateDiffTrace stateDiffResult,
-      final Address accountAddress,
-      final WorldUpdater previousUpdater,
-      final WorldUpdater transactionUpdater) {
-
-    if (!stateDiffResult.containsKey(accountAddress.toHexString())) {
-      final Account fromAccountState = previousUpdater.get(accountAddress);
-      final Account toAccountState = transactionUpdater.get(accountAddress);
-
-      stateDiffResult.put(
-          accountAddress.toHexString(),
-          new AccountDiff(
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::balanceAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::codeAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::codeHashAsHex),
-              createDiffNode(fromAccountState, toAccountState, StateTraceGenerator::nonceAsHex),
-              Collections.emptyMap()));
-    }
   }
 
   /** Create a {@link DiffNode} by extracting a field from two account states. */
