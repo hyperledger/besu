@@ -670,7 +670,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.putBlockHash(header.getNumber(), blockHash);
       updater.putSyncBlockBody(blockHash, body);
       updater.putTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
-      this.totalDifficulty = calculateTotalDifficulty(header);
+      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
       updater.putTotalDifficulty(blockHash, totalDifficulty);
       this.chainHeader = header;
       if (indexTransactions) {
