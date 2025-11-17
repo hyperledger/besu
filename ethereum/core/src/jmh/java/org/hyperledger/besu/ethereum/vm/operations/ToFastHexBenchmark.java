@@ -51,8 +51,22 @@ public class ToFastHexBenchmark {
   // MB)
   // 128 blobs = 128 * 131072 = 16,777,216 bytes + (128 * 128 proofs * 48 bytes) = 17,563,648 bytes
   // (~16.7 MB)
-  @Param({"137216", "1234944", "2881536", "9879552", "17563648"})
-  private String inputSize;
+  public enum Case {
+    SIZE_1_BLOB(137_216),
+    SIZE_9_BLOBS(1_234_944),
+    SIZE_21_BLOBS(2_881_536),
+    SIZE_72_BLOBS(9_879_552),
+    SIZE_128_BLOBS(17_563_648);
+
+    final int inputSize;
+
+    Case(final int inputSize) {
+      this.inputSize = inputSize;
+    }
+  }
+
+  @Param({"SIZE_1_BLOB", "SIZE_9_BLOBS", "SIZE_21_BLOBS", "SIZE_72_BLOBS", "SIZE_128_BLOBS"})
+  private Case caseName;
 
   private static final int N = 3;
   private static final int FACTOR = 1;
@@ -64,9 +78,9 @@ public class ToFastHexBenchmark {
     // force megamorphic tuweni behavior by mixing different Bytes implementations
     bytes = new Bytes[N * FACTOR];
     for (int i = 0; i < N * FACTOR; i += N) {
-      bytes[i] = Bytes.wrap(getBytes(Integer.parseInt(inputSize)));
-      bytes[i + 1] = Bytes.wrapByteBuffer(ByteBuffer.wrap(getBytes(Integer.parseInt(inputSize))));
-      bytes[i + 2] = Bytes.repeat((byte) 0x09, Integer.parseInt(inputSize));
+      bytes[i] = Bytes.wrap(getBytes(caseName.inputSize));
+      bytes[i + 1] = Bytes.wrapByteBuffer(ByteBuffer.wrap(getBytes(caseName.inputSize)));
+      bytes[i + 2] = Bytes.repeat((byte) 0x09, caseName.inputSize);
     }
   }
 
