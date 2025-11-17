@@ -2617,9 +2617,13 @@ public class BesuCommandTest extends CommandTestAbstract {
       mockStatic
           .when(() -> NativeRequirement.getNativeRequirements(mainnet))
           .thenReturn(Collections.emptyList());
+      // assert no error output
       assertThat(commandOutput.toString(UTF_8)).isEmpty();
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+      // assert no exception
       assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(mainnet)));
+      // assert we didn't check for native requirements for a custom-genesis
       mockStatic.verify(() -> NativeRequirement.getNativeRequirements(mainnet), times(0));
     }
   }
