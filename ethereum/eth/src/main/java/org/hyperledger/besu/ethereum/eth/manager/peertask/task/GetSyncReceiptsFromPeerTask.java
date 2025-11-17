@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
@@ -30,16 +31,18 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
 public class GetSyncReceiptsFromPeerTask
-    implements PeerTask<Map<BlockHeader, SyncTransactionReceipts>> {
+    implements PeerTask<Map<BlockHeader, List<SyncTransactionReceipt>>> {
 
   private final Collection<BlockHeader> blockHeaders;
-  private final Map<BlockHeader, SyncTransactionReceipts> receiptsByBlockHeader = new HashMap<>();
+  private final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByBlockHeader =
+      new HashMap<>();
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
   private final long requiredBlockchainHeight;
   private final boolean isPoS;
@@ -55,7 +58,7 @@ public class GetSyncReceiptsFromPeerTask
     // pre-fill any headers with an empty receipts root into the result map
     this.blockHeaders.stream()
         .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-        .forEach(header -> receiptsByBlockHeader.put(header, SyncTransactionReceipts.EMPTY));
+        .forEach(header -> receiptsByBlockHeader.put(header, Collections.emptyList()));
     this.blockHeaders.removeAll(receiptsByBlockHeader.keySet());
 
     // group headers by their receipts root hash to reduce total number of receipts hashes requested
@@ -99,25 +102,27 @@ public class GetSyncReceiptsFromPeerTask
   }
 
   @Override
-  public Map<BlockHeader, SyncTransactionReceipts> processResponse(final MessageData messageData)
-      throws InvalidPeerTaskResponseException {
+  public Map<BlockHeader, List<SyncTransactionReceipt>> processResponse(
+      final MessageData messageData) throws InvalidPeerTaskResponseException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException();
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
-    final List<SyncTransactionReceipts> receiptsByBlock = receiptsMessage.syncReceipts();
+    final List<List<SyncTransactionReceipt>> receiptsByBlock = receiptsMessage.syncReceipts();
     // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
     // calls to processResponse
-    final Map<BlockHeader, SyncTransactionReceipts> receiptsByHeader =
+    final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByHeader =
         new HashMap<>(receiptsByBlockHeader);
     if (!blockHeaders.isEmpty()) {
       if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
         throw new InvalidPeerTaskResponseException();
       }
 
-      for (final SyncTransactionReceipts receiptsInBlock : receiptsByBlock) {
+      for (final List<SyncTransactionReceipt> receiptsInBlock : receiptsByBlock) {
         final List<BlockHeader> blockHeaders =
-            headersByReceiptsRoot.get(receiptsInBlock.getReceiptsRoot());
+            headersByReceiptsRoot.get(
+                Util.getRootFromListOfBytes(
+                    receiptsInBlock.stream().map(SyncTransactionReceipt::getRlp).toList()));
         if (blockHeaders == null) {
           // Contains receipts that we didn't request, so mustn't be the response we're looking for.
           throw new InvalidPeerTaskResponseException();
@@ -135,7 +140,7 @@ public class GetSyncReceiptsFromPeerTask
 
   @Override
   public PeerTaskValidationResponse validateResult(
-      final Map<BlockHeader, SyncTransactionReceipts> result) {
+      final Map<BlockHeader, List<SyncTransactionReceipt>> result) {
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 }

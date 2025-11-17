@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
@@ -70,15 +70,16 @@ public class PosDownloadAndStoreSyncReceiptsStep
         .log();
 
     final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
-    Map<BlockHeader, SyncTransactionReceipts> getReceipts = new HashMap<>();
+    Map<BlockHeader, List<SyncTransactionReceipt>> getReceipts = new HashMap<>();
     do {
       GetSyncReceiptsFromPeerTask task =
           new GetSyncReceiptsFromPeerTask(headers, protocolSchedule, 10);
-      PeerTaskExecutorResult<Map<BlockHeader, SyncTransactionReceipts>> getReceiptsResult =
+      PeerTaskExecutorResult<Map<BlockHeader, List<SyncTransactionReceipt>>> getReceiptsResult =
           peerTaskExecutor.execute(task);
       if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
           && getReceiptsResult.result().isPresent()) {
-        Map<BlockHeader, SyncTransactionReceipts> taskResult = getReceiptsResult.result().get();
+        Map<BlockHeader, List<SyncTransactionReceipt>> taskResult =
+            getReceiptsResult.result().get();
         taskResult
             .keySet()
             .forEach(
@@ -95,7 +96,7 @@ public class PosDownloadAndStoreSyncReceiptsStep
       }
       // repeat until all headers have receipts
     } while (!headers.isEmpty());
-    final List<SyncTransactionReceipts> receiptsList =
+    final List<List<SyncTransactionReceipt>> receiptsList =
         getReceipts.values().stream().toList(); // one per block
     blockchain.appendSyncTransactionReceiptsForPoC(
         blockHeaders, receiptsList); // store all receipts for these headers

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
@@ -99,19 +98,18 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return receipts;
   }
 
-  public List<SyncTransactionReceipts> syncReceipts() {
+  public List<List<SyncTransactionReceipt>> syncReceipts() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    final List<SyncTransactionReceipts> receiptsForBodies = new ArrayList<>();
+    final List<List<SyncTransactionReceipt>> receiptsForBodies = new ArrayList<>();
     while (input.nextIsList()) {
-      final Bytes rlpOfBodyTransactionReceipts = input.currentListAsBytesNoCopy(false);
       final int setSize = input.enterList();
       final List<SyncTransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
         receiptSet.add(SyncTransactionReceipt.readFrom(input));
       }
       input.leaveList();
-      receiptsForBodies.add(new SyncTransactionReceipts(rlpOfBodyTransactionReceipts, receiptSet));
+      receiptsForBodies.add(receiptSet);
     }
     input.leaveList();
     return receiptsForBodies;

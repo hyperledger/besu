@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -134,7 +134,7 @@ public interface MutableBlockchain extends Blockchain {
    * @param syncReceiptsList The sync receipts to store.
    */
   void appendSyncTransactionReceiptsForPoC(
-      List<BlockHeader> blockHeaders, List<SyncTransactionReceipts> syncReceiptsList);
+      List<BlockHeader> blockHeaders, List<List<SyncTransactionReceipt>> syncReceiptsList);
 
   /**
    * Adds a block to the blockchain, without updating the chain state.

@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -524,7 +524,8 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public void appendSyncTransactionReceiptsForPoC(
-      final List<BlockHeader> blockHeaders, final List<SyncTransactionReceipts> syncReceiptsList) {
+      final List<BlockHeader> blockHeaders,
+      final List<List<SyncTransactionReceipt>> syncReceiptsList) {
     if (blockHeaders.size() != syncReceiptsList.size()) {
       throw new InvalidConfigurationException(
           "Block headers and sync receipts list must have the same size");
