@@ -27,33 +27,32 @@ public class HexUtils {
    * Optimized version of org.apache.tuweni.bytes.Bytes.toFastHex that avoids the megamorphic get
    * and size calls
    *
-   * <p>Adapted from
-   * org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog#toCompactHex but this
-   * method retains the leading zeros
-   *
    * @param abytes The bytes to convert
    * @param prefix whether to include the "0x" prefix
    * @return The hex string representation
    */
   public static String toFastHex(final Bytes abytes, final boolean prefix) {
-    byte[] bytes = abytes.toArrayUnsafe();
+    final byte[] bytes = abytes.toArrayUnsafe();
     final int size = bytes.length;
-    final StringBuilder result = new StringBuilder(prefix ? (size * 2) + 2 : size * 2);
+
+    final int offset = prefix ? 2 : 0;
+
+    final int resultSize = (size * 2) + offset;
+
+    final char[] result = new char[resultSize];
 
     if (prefix) {
-      result.append("0x");
+      result[0] = '0';
+      result[1] = 'x';
     }
 
     for (int i = 0; i < size; i++) {
       byte b = bytes[i];
-
-      int highNibble = (b >> 4) & 0xF;
-      result.append(HEX[highNibble]);
-
-      int lowNibble = b & 0xF;
-      result.append(HEX[lowNibble]);
+      int pos = i * 2;
+      result[pos + offset] = HEX[b >> 4 & 15];
+      result[pos + offset + 1] = HEX[b & 15];
     }
 
-    return result.toString();
+    return new String(result);
   }
 }
