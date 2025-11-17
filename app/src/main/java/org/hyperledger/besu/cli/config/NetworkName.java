@@ -41,10 +41,13 @@ public enum NetworkName {
    */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
   /**
-   * Linea network name <a href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea
-   * Besu developer info</a>
+   * Linea mainnet network name <a
+   * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
+   * info</a>
    */
-  LINEA("/linea.json", BigInteger.valueOf(59144), true, NativeRequirement.MAINNET),
+  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, NativeRequirement.MAINNET),
+  /** Linea sepolia network name */
+  LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, NativeRequirement.MAINNET),
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
