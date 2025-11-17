@@ -102,9 +102,6 @@ public class StateTraceGenerator {
             });
 
     processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
-
-
-
     return Stream.of(stateDiffResult);
   }
 
