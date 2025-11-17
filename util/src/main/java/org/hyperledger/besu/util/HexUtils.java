@@ -16,15 +16,24 @@ package org.hyperledger.besu.util;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** Utility class for Hexadecimal operations. */
 public class HexUtils {
 
-  private static final char[] hexChars = "0123456789abcdef".toCharArray();
+  private HexUtils() {}
+
+  private static final char[] HEX = "0123456789abcdef".toCharArray();
 
   /**
    * Optimized version of org.apache.tuweni.bytes.Bytes.toFastHex that avoids the megamorphic get
-   * and size calls Adapted from #{@link
-   * org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog#toCompactHex } but this
+   * and size calls
+   *
+   * <p>Adapted from
+   * org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog#toCompactHex but this
    * method retains the leading zeros
+   *
+   * @param abytes The bytes to convert
+   * @param prefix whether to include the "0x" prefix
+   * @return The hex string representation
    */
   public static String toFastHex(final Bytes abytes, final boolean prefix) {
     byte[] bytes = abytes.toArrayUnsafe();
@@ -39,10 +48,10 @@ public class HexUtils {
       byte b = bytes[i];
 
       int highNibble = (b >> 4) & 0xF;
-      result.append(hexChars[highNibble]);
+      result.append(HEX[highNibble]);
 
       int lowNibble = b & 0xF;
-      result.append(hexChars[lowNibble]);
+      result.append(HEX[lowNibble]);
     }
 
     return result.toString();
