@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage: Use Eclipse Temurin JRE
-FROM eclipse-temurin:21-jre AS java-base
+FROM eclipse-temurin:25-jre AS java-base
 
 # Stage: Final Besu image
 FROM ubuntu:24.04
@@ -29,7 +29,6 @@ COPY --from=java-base /opt/java/openjdk /opt/java/openjdk
 ARG BESU_USER=besu
 USER ${BESU_USER}
 WORKDIR /opt/besu
-
 
 COPY --chown=besu:besu besu /opt/besu/
 # support for pyroscope

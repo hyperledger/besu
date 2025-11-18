@@ -33,15 +33,12 @@ set APP_HOME=%DIRNAME%${appHomeRelativePath}
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
-@rem Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
-set DEFAULT_JVM_OPTS=${defaultJvmOpts}
-
 @rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
 
 set JAVA_EXE=java.exe
 %JAVA_EXE% -version >NUL 2>&1
-if "%ERRORLEVEL%" == "0" goto execute
+if "%ERRORLEVEL%" == "0" goto detectJavaVersion
 
 echo.
 echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
@@ -53,9 +50,9 @@ goto fail
 
 :findJavaFromJavaHome
 set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JAVA_EXE=%JAVA_HOME%\\bin\\java.exe
 
-if exist "%JAVA_EXE%" goto execute
+if exist "%JAVA_EXE%" goto detectJavaVersion
 
 echo.
 echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
@@ -65,9 +62,48 @@ echo location of your Java installation.
 
 goto fail
 
+:detectJavaVersion
+@rem Detect Java version - parse first line of java -version output
+for /f "tokens=3" %%g in ('"%JAVA_EXE%" -version 2^>^&1') do (
+    set JAVA_VERSION_STRING=%%g
+    goto extractVersion
+)
+
+:extractVersion
+@rem Remove quotes
+set JAVA_VERSION_STRING=%JAVA_VERSION_STRING:"=%
+
+@rem Extract major version (handle both 1.8 and 11+ format)
+for /f "delims=. tokens=1-2" %%v in ("%JAVA_VERSION_STRING%") do (
+    if "%%v"=="1" (
+        set JAVA_VERSION=%%w
+    ) else (
+        set JAVA_VERSION=%%v
+    )
+)
+
+@rem Validate Java version
+if not defined JAVA_VERSION (
+    echo Unable to determine Java version
+    goto fail
+)
+
+@rem Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
+if %JAVA_VERSION% GEQ 25 goto setJvmOpts25
+if %JAVA_VERSION% GEQ 21 goto setJvmOpts21
+echo Java version must be at least 21 (detected: %JAVA_VERSION%)
+goto fail
+
+:setJvmOpts25
+set DEFAULT_JVM_OPTS=@DEFAULT_JVM_OPTS_25@
+goto execute
+
+:setJvmOpts21
+set DEFAULT_JVM_OPTS=${defaultJvmOpts}
+goto execute
+
 :execute
 @rem Setup the command line
-
 set CLASSPATH=$classpath
 <% if ( mainClassName.startsWith('--module ') ) { %>set MODULE_PATH=$modulePath<% } %>
 
