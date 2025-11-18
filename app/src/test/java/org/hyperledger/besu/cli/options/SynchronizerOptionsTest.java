@@ -64,6 +64,13 @@ public class SynchronizerOptionsTest
         .downloaderChainSegmentSize(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE + 2)
         .downloaderParallelism(SynchronizerConfiguration.DEFAULT_DOWNLOADER_PARALLELISM + 2)
+        .downloaderHeaderParallelism(
+            SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_PARALLELISM + 2)
+        .downloaderBodyParallelism(
+            SynchronizerConfiguration.DEFAULT_DOWNLOADER_BODY_PARALLELISM + 2)
+        .downloaderReceiptsParallelism(
+            SynchronizerConfiguration.DEFAULT_DOWNLOADER_RECEIPTS_PARALLELISM + 2)
+        .downloaderHeaderTarget(SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_TARGET + 2)
         .transactionsParallelism(SynchronizerConfiguration.DEFAULT_TRANSACTIONS_PARALLELISM + 2)
         .computationParallelism(SynchronizerConfiguration.DEFAULT_COMPUTATION_PARALLELISM + 2)
         .snapSyncConfiguration(

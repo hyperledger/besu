@@ -460,7 +460,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderHeaderParallelism = config.getDownloaderHeaderParallelism();
     options.downloaderBodyParallelism = config.getDownloaderBodyParallelism();
     options.downloaderReceiptsParallelism = config.getDownloaderReceiptsParallelism();
-    options.downloaderHeaderTarget = config.getDownloaderHeaderParallelism();
+    options.downloaderHeaderTarget = Math.toIntExact(config.getDownloaderHeaderTarget());
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
     options.fastSyncPivotDistance = config.getSyncPivotDistance();
@@ -561,6 +561,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(downloaderParallelism),
             DOWNLOADER_HEADER_PARALLELISM_FLAG,
             OptionParser.format(downloaderHeaderParallelism),
+            DOWNLOADER_BODY_PARALLELISM_FLAG,
+            OptionParser.format(downloaderBodyParallelism),
+            DOWNLOADER_RECEIPTS_PARALLELISM_FLAG,
+            OptionParser.format(downloaderReceiptsParallelism),
             DOWNLOADER_HEADER_TARGET_FLAG,
             OptionParser.format(downloaderHeaderTarget),
             TRANSACTIONS_PARALLELISM_FLAG,
