@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.messages.LimitedTransactionsMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
 import java.util.Set;
-import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,40 +30,43 @@ class TransactionsMessageSender {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageSender.class);
 
   private final PeerTransactionTracker transactionTracker;
+  private final int maxTransactionsMessageSize;
 
-  public TransactionsMessageSender(final PeerTransactionTracker transactionTracker) {
+  public TransactionsMessageSender(
+      final PeerTransactionTracker transactionTracker, final int maxTransactionsMessageSize) {
     this.transactionTracker = transactionTracker;
-  }
-
-  public void sendTransactionsToPeers() {
-    StreamSupport.stream(transactionTracker.getEthPeersWithUnsentTransactions().spliterator(), true)
-        .parallel()
-        .forEach(this::sendTransactionsToPeer);
+    this.maxTransactionsMessageSize = maxTransactionsMessageSize;
   }
 
   void sendTransactionsToPeer(final EthPeer peer) {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
-          LimitedTransactionsMessages.createLimited(allTxToSend);
+          LimitedTransactionsMessages.createLimited(allTxToSend, maxTransactionsMessageSize);
       final Set<Transaction> includedTransactions =
           limitedTransactionsMessages.getIncludedTransactions();
-      LOG.atTrace()
-          .setMessage(
-              "Sending transactions to peer {} all transactions count {}, "
-                  + "single message transactions {}, single message list {}, transactions {}, AgreedCapabilities {}")
-          .addArgument(peer)
-          .addArgument(allTxToSend::size)
-          .addArgument(includedTransactions::size)
-          .addArgument(() -> toHashList(includedTransactions))
-          .addArgument(() -> includedTransactions)
-          .addArgument(peer::getAgreedCapabilities)
-          .log();
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());
+        LOG.atTrace()
+            .setMessage(
+                "Sent transactions to peer={}, all txs count={}, "
+                    + "this message txs count={},  this message hashes={}")
+            .addArgument(peer)
+            .addArgument(allTxToSend::size)
+            .addArgument(includedTransactions::size)
+            .addArgument(() -> toHashList(includedTransactions))
+            .log();
       } catch (final PeerNotConnected e) {
+        LOG.atTrace()
+            .setMessage(
+                "Peer no more connected while sending transactions: peer={}, message hashes={}")
+            .addArgument(peer)
+            .addArgument(() -> toHashList(includedTransactions))
+            .log();
         return;
+      } catch (final Exception e) {
+        LOG.debug("Failed to send transactions to peer {}", peer, e);
       }
     }
   }
