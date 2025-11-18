@@ -500,7 +500,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true, true);
   }
 
   @Override
