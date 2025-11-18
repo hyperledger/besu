@@ -218,7 +218,9 @@ public class FastSyncDownloader<REQUEST> {
       }
 
       final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
+          chainDownloader
+              .readyForStateDownload()
+              .thenAccept(v -> worldStateDownloader.run(fastSyncActions, currentState));
 
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
