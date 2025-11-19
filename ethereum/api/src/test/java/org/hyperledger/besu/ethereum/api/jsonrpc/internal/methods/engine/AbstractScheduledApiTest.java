@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
@@ -49,8 +50,10 @@ public class AbstractScheduledApiTest extends TrustedSetupClassLoaderExtension {
       new ScheduledProtocolSpec.Hardfork("Prague", 50);
   protected final ScheduledProtocolSpec.Hardfork osakaHardfork =
       new ScheduledProtocolSpec.Hardfork("Osaka", 60);
+  protected final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
+      new ScheduledProtocolSpec.Hardfork("Amsterdam", 70);
   protected final ScheduledProtocolSpec.Hardfork experimentalHardfork =
-      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 70);
+      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 80);
 
   @Mock protected DefaultProtocolSchedule protocolSchedule;
 
@@ -93,6 +96,9 @@ public class AbstractScheduledApiTest extends TrustedSetupClassLoaderExtension {
     lenient()
         .when(protocolSchedule.milestoneFor(OSAKA))
         .thenReturn(Optional.of(osakaHardfork.milestone()));
+    lenient()
+        .when(protocolSchedule.milestoneFor(AMSTERDAM))
+        .thenReturn(Optional.of(amsterdamHardfork.milestone()));
     lenient()
         .when(protocolSchedule.milestoneFor(EXPERIMENTAL_EIPS))
         .thenReturn(Optional.of(experimentalHardfork.milestone()));
