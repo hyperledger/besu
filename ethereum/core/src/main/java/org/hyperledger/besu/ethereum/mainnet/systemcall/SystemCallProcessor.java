@@ -163,10 +163,11 @@ public class SystemCallProcessor {
             .blockHashLookup(blockHashLookup)
             .code(getCode(worldUpdater.get(callAddress), processor));
 
-    maybeAccessLocationTracker.ifPresent(tracker -> {
-      builder.eip7928AccessList(tracker);
-      tracker.addTouchedAccount(callAddress);
-    });
+    maybeAccessLocationTracker.ifPresent(
+        tracker -> {
+          builder.eip7928AccessList(tracker);
+          tracker.addTouchedAccount(callAddress);
+        });
 
     return builder.build();
   }
