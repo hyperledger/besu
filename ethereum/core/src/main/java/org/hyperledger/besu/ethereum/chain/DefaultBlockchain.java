@@ -619,8 +619,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final boolean transactionIndexing,
       final boolean blocksOnly) {
 
-    if (!blocksOnly
-        && !blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
+    if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
     }
 
