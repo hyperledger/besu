@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -57,7 +56,6 @@ public class SnapSyncDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private final TaskCollection<SnapDataRequest> taskCollection = mock(TaskCollection.class);
-
 
   private final Path snapSyncDataDirectory = null;
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
@@ -103,7 +101,7 @@ public class SnapSyncDownloaderTest {
   @ArgumentsSource(SnapSyncDownloaderTestArguments.class)
   public void shouldStartSnapSyncSuccessfully(final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
-    
+
     // Simple test to verify start method works
     when(fastSyncActions.selectPivotBlock(any(FastSyncState.class)))
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Test complete")));
@@ -130,9 +128,10 @@ public class SnapSyncDownloaderTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapSyncDownloaderTestArguments.class)
-  public void shouldCreateSnapSyncDownloaderSuccessfully(final DataStorageFormat dataStorageFormat) {
+  public void shouldCreateSnapSyncDownloaderSuccessfully(
+      final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
-    
+
     assertThat(snapSyncDownloader).isNotNull();
     assertThat(snapSyncDownloader).isInstanceOf(SnapSyncDownloader.class);
   }
