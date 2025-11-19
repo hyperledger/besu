@@ -146,7 +146,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     }
 
     final List<BlobAndProofV2> results =
-        validBundles.stream().map(this::createBlobAndProofV2).toList();
+        validBundles.parallelStream().map(this::createBlobAndProofV2).toList();
 
     hitCounter.inc();
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
