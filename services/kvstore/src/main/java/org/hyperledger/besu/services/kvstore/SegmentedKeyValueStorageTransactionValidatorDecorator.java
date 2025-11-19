@@ -61,7 +61,7 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
     checkState(active, "Cannot commit a completed transaction.");
     checkState(!isClosed.get(), "Cannot invoke commit() on a closed storage.");
     active = false;
-    transaction.commit();
+    transaction.close();
   }
 
   @Override
@@ -70,5 +70,13 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
     checkState(!isClosed.get(), "Cannot invoke rollback() on a closed storage.");
     active = false;
     transaction.rollback();
+  }
+
+  @Override
+  public void close() {
+    checkState(active, "Cannot close a completed transaction.");
+    checkState(!isClosed.get(), "Cannot invoke close() on a closed storage.");
+    active = false;
+    transaction.close();
   }
 }
