@@ -49,9 +49,9 @@ public record TraceOptions(
    *     null.
    */
   public TraceOptions(
-    final TracerType tracerType,
-    final OpCodeTracerConfig opCodeTracerConfig,
-    final Map<String, Object> tracerConfig) {
+      final TracerType tracerType,
+      final OpCodeTracerConfig opCodeTracerConfig,
+      final Map<String, Object> tracerConfig) {
     this(tracerType, opCodeTracerConfig, tracerConfig, null);
   }
 

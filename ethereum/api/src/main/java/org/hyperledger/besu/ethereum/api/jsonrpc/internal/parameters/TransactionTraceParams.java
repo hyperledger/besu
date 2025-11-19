@@ -111,6 +111,6 @@ public interface TransactionTraceParams {
             ? TracerType.fromString(tracer())
             : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
 
-    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(),  stateOverrides());
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(), stateOverrides());
   }
 }
