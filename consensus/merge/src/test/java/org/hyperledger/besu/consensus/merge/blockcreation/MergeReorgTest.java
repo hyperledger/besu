@@ -49,7 +49,6 @@ import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,8 +102,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             ImmutableMiningConfiguration.builder()
                 .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
                 .build(),
-            mock(BackwardSyncContext.class),
-            Optional.empty());
+            mock(BackwardSyncContext.class));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->

@@ -131,7 +131,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param transactionPool the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
-   * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -139,38 +138,24 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final EthScheduler ethScheduler,
       final TransactionPool transactionPool,
       final MiningConfiguration miningParams,
-      final BackwardSyncContext backwardSyncContext,
-      final Optional<Address> depositContractAddress) {
-    this.protocolContext = protocolContext;
-    this.protocolSchedule = protocolSchedule;
-    this.ethScheduler = ethScheduler;
-    this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-    this.backwardSyncContext = backwardSyncContext;
-
-    if (miningParams.getCoinbase().isEmpty()) {
-      miningParams.setCoinbase(Address.ZERO);
-    }
-    if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
-    }
-    miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
-
-    this.miningConfiguration = miningParams;
-
-    this.mergeBlockCreatorFactory =
+      final BackwardSyncContext backwardSyncContext) {
+    this(
+        protocolContext,
+        protocolSchedule,
+        ethScheduler,
+        miningParams,
+        backwardSyncContext,
         (parentHeader, address) -> {
           address.ifPresent(miningParams::setCoinbase);
           return new MergeBlockCreator(
-              miningConfiguration,
-              parent -> miningConfiguration.getExtraData(),
+              miningParams,
+              parent -> miningParams.getExtraData(),
               transactionPool,
               protocolContext,
               protocolSchedule,
               parentHeader,
               ethScheduler);
-        };
-
-    this.backwardSyncContext.subscribeBadChainListener(this);
+        });
   }
 
   /**
@@ -183,6 +168,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param backwardSyncContext the backward sync context
    * @param mergeBlockCreatorFactory the merge block creator factory
    */
+  @VisibleForTesting
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -190,12 +176,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MiningConfiguration miningParams,
       final BackwardSyncContext backwardSyncContext,
       final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
-
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethScheduler = ethScheduler;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.backwardSyncContext = backwardSyncContext;
+
+    if (miningParams.getCoinbase().isEmpty()) {
+      miningParams.setCoinbase(Address.ZERO);
+    }
     if (miningParams.getTargetGasLimit().isEmpty()) {
       miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
     }
