@@ -137,7 +137,7 @@ public class SystemCallProcessor {
       final ProcessableBlockHeader blockHeader,
       final BlockHashLookup blockHashLookup,
       final Bytes inputData,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final Optional<AccessLocationTracker> maybeAccessLocationTracker) {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
@@ -163,9 +163,10 @@ public class SystemCallProcessor {
             .blockHashLookup(blockHashLookup)
             .code(getCode(worldUpdater.get(callAddress), processor));
 
-    if (accessLocationTracker.isPresent()) {
-      builder.eip7928AccessList(accessLocationTracker.get());
-    }
+    maybeAccessLocationTracker.ifPresent(tracker -> {
+      builder.eip7928AccessList(tracker);
+      tracker.addTouchedAccount(callAddress);
+    });
 
     return builder.build();
   }
