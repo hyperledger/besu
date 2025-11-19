@@ -51,21 +51,21 @@ public class BlobsBundleV2 {
             .toList();
 
     this.commitments =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getKzgCommitments().stream())
             .map(KZGCommitment::getData)
             .map(b -> HexUtils.toFastHex(b, true))
             .collect(Collectors.toList());
 
     this.cellProfs =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getKzgProofs().stream())
             .map(KZGProof::getData)
             .map(b -> HexUtils.toFastHex(b, true))
             .collect(Collectors.toList());
 
     this.blobs =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getBlobs().stream())
             .map(Blob::getData)
             .map(b -> HexUtils.toFastHex(b, true))
