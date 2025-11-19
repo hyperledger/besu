@@ -27,7 +27,6 @@ import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.api.trace.Tracer;
@@ -36,7 +35,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
-  private final ObjectWriter jsonObjectWriter = createObjectWriter();
 
   public JsonRpcObjectExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
@@ -77,7 +75,8 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
           new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
         // underlying output stream lifecycle is managed by the json object writer
         lazyTraceLogger(() -> getJsonObjectMapper().writeValueAsString(jsonRpcResponse));
-        jsonObjectWriter.writeValue(streamer, jsonRpcResponse);
+        final ObjectWriter writer = getJsonObjectWriter(jsonRpcConfiguration.isPrettyJsonEnabled());
+        writer.writeValue(streamer, jsonRpcResponse);
       }
     }
   }
@@ -88,16 +87,6 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
       case ERROR -> statusCodeFromError(((JsonRpcErrorResponse) response).getErrorType());
       default -> HttpResponseStatus.OK;
     };
-  }
-
-  private ObjectWriter createObjectWriter() {
-    ObjectWriter writer =
-        jsonRpcConfiguration.isPrettyJsonEnabled()
-            ? getJsonObjectMapper().writerWithDefaultPrettyPrinter()
-            : getJsonObjectMapper().writer();
-    return writer
-        .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
-        .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }
 
   private static HttpResponseStatus statusCodeFromError(final RpcErrorType error) {
