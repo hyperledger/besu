@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
@@ -40,15 +40,11 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -64,8 +60,9 @@ import org.mockito.quality.Strictness;
 @SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class FastDownloaderFactoryTest {
+public class SnapDownloaderFactoryTest {
 
+  @Mock private SnapSyncStatePersistenceManager snapContext;
   @Mock private SynchronizerConfiguration syncConfig;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
@@ -78,7 +75,7 @@ public class FastDownloaderFactoryTest {
   private WorldStateKeyValueStorage worldStateKeyValueStorage;
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  static class FastDownloaderFactoryTestArguments implements ArgumentsProvider {
+  static class SnapDownloaderFactoryTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
@@ -97,8 +94,8 @@ public class FastDownloaderFactoryTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete(
+  @ArgumentsSource(SnapDownloaderFactoryTestArguments.class)
+  public void shouldThrowIfSyncModeChangedWhileSnapSyncIncomplete(
       final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
     initDataDirectory(true);
@@ -106,7 +103,8 @@ public class FastDownloaderFactoryTest {
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     assertThatThrownBy(
             () ->
-                FastDownloaderFactory.create(
+                SnapDownloaderFactory.createSnapDownloader(
+                    snapContext,
                     pivotBlockSelector,
                     syncConfig,
                     dataDirectory,
@@ -118,20 +116,22 @@ public class FastDownloaderFactoryTest {
                     syncState,
                     clock,
                     SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Unable to change the sync mode when snap sync is incomplete");
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @ParameterizedTest
-  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldNotThrowIfSyncModeChangedWhileFastSyncComplete(
+  @ArgumentsSource(SnapDownloaderFactoryTestArguments.class)
+  public void shouldNotThrowIfSyncModeChangedWhileSnapSyncComplete(
       final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
     initDataDirectory(false);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
-    final Optional result =
-        FastDownloaderFactory.create(
+    final Optional<?> result =
+        SnapDownloaderFactory.createSnapDownloader(
+            snapContext,
             pivotBlockSelector,
             syncConfig,
             dataDirectory,
@@ -148,8 +148,8 @@ public class FastDownloaderFactoryTest {
 
   @SuppressWarnings("unchecked")
   @ParameterizedTest
-  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldNotThrowWhenFastSyncModeRequested(final DataStorageFormat dataStorageFormat)
+  @ArgumentsSource(SnapDownloaderFactoryTestArguments.class)
+  public void shouldNotThrowWhenSnapSyncModeRequested(final DataStorageFormat dataStorageFormat)
       throws NoSuchFieldException {
     setup(dataStorageFormat);
     initDataDirectory(false);
@@ -158,8 +158,9 @@ public class FastDownloaderFactoryTest {
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
     when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
 
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
-    FastDownloaderFactory.create(
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
+    SnapDownloaderFactory.createSnapDownloader(
+        snapContext,
         pivotBlockSelector,
         syncConfig,
         dataDirectory,
@@ -176,25 +177,50 @@ public class FastDownloaderFactoryTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldClearWorldStateDuringFastSyncWhenStateQueDirectoryExists(
-      final DataStorageFormat dataStorageFormat) throws IOException {
-    Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
+  @ArgumentsSource(SnapDownloaderFactoryTestArguments.class)
+  public void shouldReturnEmptyWhenLocalBlockchainIsNotEmpty(
+      final DataStorageFormat dataStorageFormat) {
     setup(dataStorageFormat);
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    initDataDirectory(false);
+
+    final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
+    when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(100L); // Non-genesis block
+    when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
+
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
+    final Optional<?> result =
+        SnapDownloaderFactory.createSnapDownloader(
+            snapContext,
+            pivotBlockSelector,
+            syncConfig,
+            dataDirectory,
+            protocolSchedule,
+            protocolContext,
+            metricsSystem,
+            ethContext,
+            worldStateStorageCoordinator,
+            syncState,
+            clock,
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+
+    assertThat(result).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(SnapDownloaderFactoryTestArguments.class)
+  public void shouldClearSnapContextWhenResyncNeeded(final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
+    initDataDirectory(false);
+
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
     when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
 
-    final Path dataDirectory = Files.createTempDirectory("fast-sync");
-    final Path stateQueueDir = dataDirectory.resolve("fastsync").resolve("statequeue");
-    final boolean mkdirs = stateQueueDir.toFile().mkdirs();
-    Files.createFile(stateQueueDir.resolve("taskToDelete"));
-    assertThat(mkdirs).isTrue();
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
+    when(syncState.isResyncNeeded()).thenReturn(true);
 
-    assertThat(Files.exists(stateQueueDir)).isTrue();
-
-    FastDownloaderFactory.create(
+    SnapDownloaderFactory.createSnapDownloader(
+        snapContext,
         pivotBlockSelector,
         syncConfig,
         dataDirectory,
@@ -207,43 +233,7 @@ public class FastDownloaderFactoryTest {
         clock,
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
 
-    verify(worldStateKeyValueStorage).clear();
-    assertThat(Files.exists(stateQueueDir)).isFalse();
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
-  public void shouldCrashWhenStateQueueIsNotDirectory(final DataStorageFormat dataStorageFormat)
-      throws IOException {
-    Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
-    setup(dataStorageFormat);
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
-    final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
-    when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
-    when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
-
-    final Path dataDirectory = Files.createTempDirectory("fast-sync");
-    final Path stateQueueDir = dataDirectory.resolve("fastsync").resolve("statequeue");
-    final boolean mkdirs = dataDirectory.resolve("fastsync").toFile().mkdirs();
-    Files.createFile(stateQueueDir);
-    assertThat(mkdirs).isTrue();
-
-    assertThat(Files.exists(stateQueueDir)).isTrue();
-    Assertions.assertThatThrownBy(
-            () ->
-                FastDownloaderFactory.create(
-                    pivotBlockSelector,
-                    syncConfig,
-                    dataDirectory,
-                    protocolSchedule,
-                    protocolContext,
-                    metricsSystem,
-                    ethContext,
-                    worldStateStorageCoordinator,
-                    syncState,
-                    clock,
-                    SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
-        .isInstanceOf(IllegalStateException.class);
+    verify(snapContext).clear();
   }
 
   private void initDataDirectory(final boolean isPivotBlockHeaderFileExist) {
