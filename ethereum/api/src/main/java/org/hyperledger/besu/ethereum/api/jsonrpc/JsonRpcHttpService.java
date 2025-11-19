@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
+import org.hyperledger.besu.ethereum.api.handlers.InterruptibleCompletableFuture;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
@@ -48,8 +49,10 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -128,6 +131,13 @@ public class JsonRpcHttpService {
   private Tracer tracer;
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
+
+  /**
+   * Tracks active RPC requests by HTTP connection. When a connection closes, all its active
+   * requests are automatically cancelled and their worker threads interrupted.
+   */
+  private final Map<HttpConnection, Set<InterruptibleCompletableFuture<Void>>>
+      activeRequestsByConnection = new ConcurrentHashMap<>();
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -291,13 +301,29 @@ public class JsonRpcHttpService {
             activeConnectionsCount.incrementAndGet(),
             maxActiveConnections);
       }
+
+      // Initialize request tracking for this connection
+      activeRequestsByConnection.put(connection, ConcurrentHashMap.newKeySet());
+
       connection.closeHandler(
-          c ->
+          c -> {
+            LOG.debug(
+                "Connection closed from {}. Total of active connections: {}/{}",
+                connection.remoteAddress(),
+                activeConnectionsCount.decrementAndGet(),
+                maxActiveConnections);
+
+            // Cancel all active requests for this connection and interrupt their worker threads
+            Set<InterruptibleCompletableFuture<Void>> activeFutures =
+                activeRequestsByConnection.remove(connection);
+            if (activeFutures != null && !activeFutures.isEmpty()) {
               LOG.debug(
-                  "Connection closed from {}. Total of active connections: {}/{}",
-                  connection.remoteAddress(),
-                  activeConnectionsCount.decrementAndGet(),
-                  maxActiveConnections));
+                  "Cancelling {} active request(s) for closed connection from {}",
+                  activeFutures.size(),
+                  connection.remoteAddress());
+              activeFutures.forEach(future -> future.cancel(true));
+            }
+          });
     };
   }
 
@@ -352,7 +378,8 @@ public class JsonRpcHttpService {
                       config.getNoAuthRpcApis()),
                   rpcMethods),
               tracer,
-              config),
+              config,
+              activeRequestsByConnection),
           false);
     } else {
       mainRoute.blockingHandler(
@@ -363,7 +390,8 @@ public class JsonRpcHttpService {
                       requestTimer),
                   rpcMethods),
               tracer,
-              config),
+              config,
+              activeRequestsByConnection),
           false);
     }
 
@@ -583,5 +611,16 @@ public class JsonRpcHttpService {
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
       return stringJoiner.toString();
     }
+  }
+
+  /**
+   * Get the map tracking active requests by connection. Used by the executor handler to register
+   * and unregister requests for connection close handling.
+   *
+   * @return the active requests tracking map
+   */
+  public Map<HttpConnection, Set<InterruptibleCompletableFuture<Void>>>
+      getActiveRequestsByConnection() {
+    return activeRequestsByConnection;
   }
 }
