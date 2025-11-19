@@ -199,10 +199,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         if (!snapSyncState.isHealFlatDatabaseInProgress()
             && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
                 || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.ARCHIVE))) {
+          LOG.info("Starting the flat database healing process ", new Exception("Stack trace"));
           startFlatDatabaseHeal(header);
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
         else {
+          LOG.info("Flat database healing process has finished?????", new Exception("Stack trace"));
           final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
           applyForStrategy(
               updater,
@@ -443,8 +445,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   /**
-   * Notifies the registered listener that world state heal has finished and will not select any new
-   * pivot blocks. This notification is sent only once.
+   * Notifies the registered listener that world state heal has finished.
+   * Once the state heal has finished no new pivot blocks are selected.
+   * This notification is sent only once.
    */
   private void notifyWorldStateHealFinished() {
     if (worldStateHealFinishedNotified.compareAndSet(false, true)) {
