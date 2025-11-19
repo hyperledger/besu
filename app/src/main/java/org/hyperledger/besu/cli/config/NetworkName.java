@@ -56,8 +56,14 @@ public enum NetworkName {
   private final String genesisFile;
   private final BigInteger networkId;
   private final boolean canSnapSync;
-  private final String deprecationDate;
+  private String deprecationDate;
   private final Supplier<List<NativeRequirementResult>> nativeRequirements;
+
+  static {
+    HOLESKY.deprecationDate = "November 2025";
+    CLASSIC.deprecationDate = "November 2025";
+    MORDOR.deprecationDate = "November 2025";
+  }
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
