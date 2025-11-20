@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -332,11 +333,12 @@ public class T8nExecutor {
       final ReferenceTestWorldState initialWorldState,
       final List<Transaction> transactions,
       final List<RejectedTransaction> rejections,
-      final TracerManager tracerManager) {
+      final TracerManager tracerManager,
+      final EvmConfiguration evmConfiguration) {
 
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
-            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
+            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)), evmConfiguration);
 
     final BonsaiReferenceTestWorldState worldState =
         (BonsaiReferenceTestWorldState) initialWorldState.copy();
@@ -365,10 +367,11 @@ public class T8nExecutor {
             protocolSpec
                 .getPreExecutionProcessor()
                 .createBlockHashLookup(blockchain, referenceTestEnv),
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     if (!referenceTestEnv.isStateTest()) {
-      protocolSpec.getPreExecutionProcessor().process(blockProcessingContext);
+      protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
     }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
@@ -532,7 +535,10 @@ public class T8nExecutor {
               .ifPresent(
                   p ->
                       p.processWithdrawals(
-                          referenceTestEnv.getWithdrawals(), worldState.updater()));
+                          referenceTestEnv.getWithdrawals(),
+                          worldState.updater(),
+                          Optional.empty(),
+                          Optional.empty()));
         } catch (RuntimeException re) {
           resultObject.put("exception", re.getMessage());
         }
@@ -545,7 +551,8 @@ public class T8nExecutor {
 
       RequestProcessingContext requestContext =
           new RequestProcessingContext(blockProcessingContext, receipts);
-      Optional<List<Request>> maybeRequests = Optional.of(rpc.process(requestContext));
+      Optional<List<Request>> maybeRequests =
+          Optional.of(rpc.process(requestContext, Optional.empty()));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsHash", requestsHash.toHexString());

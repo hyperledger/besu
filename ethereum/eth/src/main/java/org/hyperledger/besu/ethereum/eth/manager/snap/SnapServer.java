@@ -196,16 +196,16 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private void registerResponseConstructors() {
     snapMessages.registerResponseConstructor(
         SnapV1.GET_ACCOUNT_RANGE,
-        (messageData, capability) -> constructGetAccountRangeResponse(messageData));
+        (peer, messageData, capability) -> constructGetAccountRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_STORAGE_RANGE,
-        (messageData, capability) -> constructGetStorageRangeResponse(messageData));
+        (peer, messageData, capability) -> constructGetStorageRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_BYTECODES,
-        (messageData, capability) -> constructGetBytecodesResponse(messageData));
+        (peer, messageData, capability) -> constructGetBytecodesResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_TRIE_NODES,
-        (messageData, capability) -> constructGetTrieNodesResponse(messageData));
+        (peer, messageData, capability) -> constructGetTrieNodesResponse(messageData));
   }
 
   MessageData constructGetAccountRangeResponse(final MessageData message) {

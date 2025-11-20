@@ -19,7 +19,7 @@ VERSION=${VERSION}
 TAG=${TAG}
 CHECK_LATEST=${CHECK_LATEST}
 RETRY=${RETRY:-10}
-SLEEP=${SLEEP:-5}
+SLEEP=${SLEEP:-8}
 
 # Helper function to throw error
 log_error() {
@@ -38,12 +38,12 @@ fi
 _SUCCESS=false
 while [[ ${_SUCCESS} != "true" && $RETRY -gt 0 ]]
 do
-  docker logs ${CONTAINER_NAME} | grep -q "Ethereum main loop is up" && {
+  docker logs ${CONTAINER_NAME} 2>&1 | grep -q "Ethereum main loop is up" && {
     _SUCCESS=true
     continue
   }
-  echo "Waiting for the besu to start. Remaining retries $RETRY ..."
   RETRY=$(expr $RETRY - 1)
+  echo "Waiting for the besu to start. Remaining retries $RETRY ..."
   sleep $SLEEP
 done
 

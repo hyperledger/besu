@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -38,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV1;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
@@ -83,29 +86,25 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
   @Mock private EngineCallListener engineCallListener;
   @Mock private MutableBlockchain blockchain;
   @Mock private TransactionPool transactionPool;
+  @Mock private BlockHeader blockHeader;
+  @Mock private MergeContext mergeContext;
 
   private EngineGetBlobsV1 method;
 
   private static final Vertx vertx = Vertx.vertx();
 
-  private Long timestamp = cancunHardfork.milestone();
-
-  private Long timestampProvider() {
-    return timestamp;
-  }
-
   @BeforeEach
   public void beforeEach() {
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.ofNullable(mergeContext));
+
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     this.method =
         spy(
             new EngineGetBlobsV1(
-                vertx,
-                protocolContext,
-                protocolSchedule,
-                engineCallListener,
-                transactionPool,
-                this::timestampProvider));
+                vertx, protocolContext, protocolSchedule, engineCallListener, transactionPool));
   }
 
   @Test
@@ -234,7 +233,7 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   @Test
   void shouldFailWhenCancunNotActive() {
-    timestamp = cancunHardfork.milestone() - 1;
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone() - 1);
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(fromErrorResp(response).getCode())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
@@ -242,24 +241,34 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   @Test
   void shouldSucceedWhenCancunActive() {
-    timestamp = cancunHardfork.milestone();
+    when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
   }
 
   @Test
   void shouldSucceedWhenOsakaNotActive() {
-    timestamp = osakaHardfork.milestone() - 1;
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone() - 1);
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
   }
 
   @Test
   void shouldFailWhenOsakaActive() {
-    timestamp = osakaHardfork.milestone();
+    when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone());
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(fromErrorResp(response).getCode())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  public void shouldReturnNullWhenSyncing() {
+    when(mergeContext.isSyncing()).thenReturn(true);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(response);
+    assertThat(blobAndProofV1s).hasSize(1);
+    assertThat(blobAndProofV1s.getFirst()).isNull();
   }
 
   Transaction createBlobTransaction() {

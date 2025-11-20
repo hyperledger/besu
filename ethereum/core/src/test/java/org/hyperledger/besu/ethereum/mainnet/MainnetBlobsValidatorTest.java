@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -116,6 +118,27 @@ public class MainnetBlobsValidatorTest {
   }
 
   @Test
+  void shouldRejectWhenVersionedHashesAndCommitmentsCountsDiffer() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo()).thenReturn(Optional.of(mock(Address.class)));
+    Blob blob = mock(Blob.class);
+    KZGCommitment commitment = mock(KZGCommitment.class);
+    when(commitment.getData()).thenReturn(Bytes48.random());
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(blob));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(commitment));
+    VersionedHash hash1 = MainnetBlobsValidator.hashCommitment(commitment);
+    // Add the same hash twice to create a size mismatch
+    when(transaction.getVersionedHashes()).thenReturn(Optional.of(List.of(hash1, hash1)));
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    var result = blobsValidator.validate(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "transaction versioned hashes and commitments are not the same size");
+  }
+
+  @Test
   void shouldRejectWhenBlobCountExceedsTransactionLimit() {
     when(transaction.getType()).thenReturn(TransactionType.BLOB);
     when(transaction.getTo())
@@ -141,6 +164,30 @@ public class MainnetBlobsValidatorTest {
         result,
         TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
         "Blob transaction has too many blobs: 1");
+  }
+
+  @Test
+  void shouldRejectUnsupportedBlobType() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo())
+        .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(mock(KZGCommitment.class)));
+    when(transaction.getVersionedHashes())
+        .thenReturn(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
+
+    blobsValidator =
+        new MainnetBlobsValidator(
+            Set.of(BlobType.KZG_PROOF), // Only accept KZG_PROOF
+            mock(GasLimitCalculator.class),
+            mock(GasCalculator.class));
+    var result = blobsValidator.validate(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "Unsupported blob type: KZG_CELL_PROOFS. Supported types: [KZG_PROOF].");
   }
 
   private void assertInvalidResult(

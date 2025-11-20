@@ -36,9 +36,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import io.vertx.core.Vertx;
@@ -71,20 +71,17 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
   private final TransactionPool transactionPool;
   private final Optional<Long> cancunMilestone;
   private final Optional<Long> osakaMilestone;
-  private final Supplier<Long> timestampProvider;
 
   public EngineGetBlobsV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
-      final TransactionPool transactionPool,
-      final Supplier<Long> timestampProvider) {
+      final TransactionPool transactionPool) {
     super(vertx, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
     this.cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
     this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
-    this.timestampProvider = timestampProvider;
   }
 
   @Override
@@ -94,12 +91,6 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(timestampProvider.get());
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
-    }
-
     final VersionedHash[] versionedHashes;
     try {
       versionedHashes = requestContext.getRequiredParameter(0, VersionedHash[].class);
@@ -114,6 +105,15 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
+    }
+    if (mergeContext.get().isSyncing()) {
+      final List<BlobAndProofV1> emptyResults = Collections.nCopies(versionedHashes.length, null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), emptyResults);
+    }
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
     }
 
     final List<BlobAndProofV1> result = getBlobV1Result(versionedHashes);

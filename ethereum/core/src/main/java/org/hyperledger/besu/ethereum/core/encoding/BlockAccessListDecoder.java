@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
@@ -50,13 +51,13 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               scIn -> {
                 scIn.enterList();
-                StorageSlotKey slot = new StorageSlotKey(scIn.readUInt256Scalar());
+                StorageSlotKey slot = new StorageSlotKey(UInt256.fromBytes(scIn.readBytes()));
                 List<StorageChange> changes =
                     scIn.readList(
                         changeIn -> {
                           changeIn.enterList();
-                          int txIndex = changeIn.readInt();
-                          UInt256 newVal = changeIn.readUInt256Scalar();
+                          int txIndex = changeIn.readIntScalar();
+                          UInt256 newVal = UInt256.fromBytes(changeIn.readBytes());
                           changeIn.leaveList();
                           return new StorageChange(txIndex, newVal);
                         });
@@ -65,14 +66,14 @@ public final class BlockAccessListDecoder {
               });
 
       List<SlotRead> reads =
-          acctIn.readList(r -> new SlotRead(new StorageSlotKey(r.readUInt256Scalar())));
+          acctIn.readList(r -> new SlotRead(new StorageSlotKey(UInt256.fromBytes(r.readBytes()))));
 
       List<BalanceChange> balances =
           acctIn.readList(
               bcIn -> {
                 bcIn.enterList();
-                int txIndex = bcIn.readInt();
-                Bytes postBalance = bcIn.readBytes();
+                int txIndex = bcIn.readIntScalar();
+                Wei postBalance = Wei.of(UInt256.fromBytes(bcIn.readBytes()));
                 bcIn.leaveList();
                 return new BalanceChange(txIndex, postBalance);
               });
@@ -81,7 +82,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ncIn -> {
                 ncIn.enterList();
-                int txIndex = ncIn.readInt();
+                int txIndex = ncIn.readIntScalar();
                 long newNonce = ncIn.readLongScalar();
                 ncIn.leaveList();
                 return new NonceChange(txIndex, newNonce);
@@ -91,7 +92,7 @@ public final class BlockAccessListDecoder {
           acctIn.readList(
               ccIn -> {
                 ccIn.enterList();
-                int txIndex = ccIn.readInt();
+                int txIndex = ccIn.readIntScalar();
                 Bytes newCode = ccIn.readBytes();
                 ccIn.leaveList();
                 return new CodeChange(txIndex, newCode);

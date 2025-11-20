@@ -142,10 +142,12 @@ public class MainnetBlockContextProcessorTest {
             worldState,
             mock(ProtocolSpec.class),
             mockBlockHashLookup,
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
-    return systemCallProcessor.process(CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY);
+    return systemCallProcessor.process(
+        CALL_ADDRESS, blockProcessingContext, Bytes.EMPTY, Optional.empty());
   }
 
   private MutableWorldState createWorldState(final Address address) {

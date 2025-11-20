@@ -799,7 +799,12 @@ public class DefaultBlockchain implements MutableBlockchain {
         newBlock.getHeader(),
         () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
         LogWithMetadata.generate(
-            newBlock.getHeader().getNumber(), newBlock.getHash(), listOfTxHashes, receipts, false),
+            newBlock.getHeader().getNumber(),
+            newBlock.getHash(),
+            newBlock.getHeader().getTimestamp(),
+            listOfTxHashes,
+            receipts,
+            false),
         receipts);
   }
 
@@ -1131,6 +1136,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   public long observeBlockAdded(final BlockAddedObserver observer) {
     checkNotNull(observer);
     return blockAddedObservers.subscribe(observer);
+  }
+
+  @Override
+  public void removeAllBlockAddedObservers() {
+    blockAddedObservers.unsubscribeAll();
   }
 
   @Override
