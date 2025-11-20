@@ -212,6 +212,98 @@ public class UInt256Prop {
     assertThat(x.mulMod(x, zero).toBytesBE()).containsExactly(Bytes32.ZERO.toArrayUnsafe());
   }
 
+  // Simple ADD tests
+  // --------------------------------------------------------------------------
+  @Property
+  void property_add_matchesBigInteger(
+          @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act
+    final byte[] got = ua.add(ub).toBytesBE();
+
+    // Assert
+    BigInteger A = toBigUnsigned(a);
+    BigInteger B = toBigUnsigned(b);
+    // Addition wraps around at 2^256
+    byte[] expected = bigUnsignedToBytes32(A.add(B));
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_add_commutative(
+          @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act & Assert
+    assertThat(ua.add(ub)).isEqualTo(ub.add(ua));
+  }
+
+  @Property
+  void property_add_associative(
+          @ForAll("unsigned1to32") final byte[] a,
+          @ForAll("unsigned1to32") final byte[] b,
+          @ForAll("unsigned1to32") final byte[] c) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    final UInt256 uc = UInt256.fromBytesBE(c);
+
+    // Act & Assert
+    assertThat(ua.add(ub).add(uc)).isEqualTo(ua.add(ub.add(uc)));
+  }
+
+  @Property
+  void property_add_identity(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 zero = UInt256.ZERO;
+
+    // Act & Assert
+    assertThat(ua.add(zero)).isEqualTo(ua);
+    assertThat(zero.add(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_add_singleLimb_matchesBigInteger(
+          @ForAll("singleLimbUnsigned1to4") final byte[] a,
+          @ForAll("singleLimbUnsigned1to4") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act
+    final byte[] got = ua.add(ub).toBytesBE();
+
+    // Assert
+    BigInteger A = toBigUnsigned(a);
+    BigInteger B = toBigUnsigned(b);
+    byte[] expected = bigUnsignedToBytes32(A.add(B));
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_add_one_increment(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
+
+    // Act
+    final byte[] got = ua.add(one).toBytesBE();
+
+    // Assert
+    BigInteger A = toBigUnsigned(a);
+    byte[] expected = bigUnsignedToBytes32(A.add(BigInteger.ONE));
+    assertThat(got).containsExactly(expected);
+  }
+
+  // --------------------------------------------------------------------------
+  // endregion
+
   private static byte[] clampUnsigned32(final byte[] any) {
     if (any.length == 0) {
       return new byte[] {0};
