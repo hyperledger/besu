@@ -476,7 +476,7 @@ public final class RunnerTest {
     return new MainnetBesuControllerBuilder()
         .genesisConfig(genesisConfig)
         .synchronizerConfiguration(syncConfig)
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
         .miningParameters(miningConfiguration)

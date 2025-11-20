@@ -313,7 +313,8 @@ public class SynchronizerConfiguration {
     private int downloaderChainSegmentSize = DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE;
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
-    private int computationParallelism = DEFAULT_COMPUTATION_PARALLELISM;
+    private int computationParallelism =
+        Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
     private int syncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
     private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;

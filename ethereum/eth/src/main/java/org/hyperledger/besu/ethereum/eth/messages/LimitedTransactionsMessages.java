@@ -16,54 +16,62 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class LimitedTransactionsMessages {
-
-  static final int LIMIT = 1048576;
+  private static final Logger LOG = LoggerFactory.getLogger(LimitedTransactionsMessages.class);
 
   private final TransactionsMessage transactionsMessage;
   private final Set<Transaction> includedTransactions;
 
-  public LimitedTransactionsMessages(
+  LimitedTransactionsMessages(
       final TransactionsMessage transactionsMessage, final Set<Transaction> includedTransactions) {
     this.transactionsMessage = transactionsMessage;
     this.includedTransactions = includedTransactions;
   }
 
   public static LimitedTransactionsMessages createLimited(
-      final Iterable<Transaction> transactions) {
-    final Set<Transaction> includedTransactions = new HashSet<>();
+      final Set<Transaction> transactions, final int maxTransactionsMessageSize) {
+    final Set<Transaction> includedTransactions = HashSet.newHashSet(transactions.size());
     final BytesValueRLPOutput message = new BytesValueRLPOutput();
-    int messageSize = 0;
+    int estimatedMsgSize = RLP.MAX_PREFIX_SIZE;
     message.startList();
     for (final Transaction transaction : transactions) {
       final BytesValueRLPOutput encodedTransaction = new BytesValueRLPOutput();
       transaction.writeTo(encodedTransaction);
       final Bytes encodedBytes = encodedTransaction.encoded();
-      if (messageSize != 0 // always at least one message
-          && messageSize + encodedBytes.size() > LIMIT) {
+      if (estimatedMsgSize + encodedBytes.size() > maxTransactionsMessageSize) {
         break;
       }
       message.writeRaw(encodedBytes);
       includedTransactions.add(transaction);
       // Check if last transaction to add to the message
-      messageSize += encodedBytes.size();
+      estimatedMsgSize += encodedBytes.size();
     }
     message.endList();
+    LOG.atTrace()
+        .setMessage(
+            "Transactions message created with {} txs included out of {} txs available, message size {}")
+        .addArgument(includedTransactions::size)
+        .addArgument(transactions::size)
+        .addArgument(message::encodedSize)
+        .log();
     return new LimitedTransactionsMessages(
         new TransactionsMessage(message.encoded()), includedTransactions);
   }
 
-  public final TransactionsMessage getTransactionsMessage() {
+  public TransactionsMessage getTransactionsMessage() {
     return transactionsMessage;
   }
 
-  public final Set<Transaction> getIncludedTransactions() {
+  public Set<Transaction> getIncludedTransactions() {
     return includedTransactions;
   }
 }

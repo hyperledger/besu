@@ -112,13 +112,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
@@ -310,6 +310,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.balConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlockHeaders(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isCacheLastBlockHeadersPreloadEnabled(any()))
@@ -358,6 +359,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.permissioningService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.transactionValidatorService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.balConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
@@ -484,7 +486,7 @@ public abstract class CommandTestAbstract {
     return besuCommand;
   }
 
-  @Nonnull
+  @NotNull
   private static Path determineDataDir(final List<String> argsList) {
     // Look for --data-path in the arguments
     for (int i = 0; i < argsList.size() - 1; i++) {
@@ -496,7 +498,7 @@ public abstract class CommandTestAbstract {
     return DefaultCommandValues.getDefaultBesuDataPath(null);
   }
 
-  @Nonnull
+  @NotNull
   private static List<String> constructArgsWithTmpDataPathIfNotSpecified(final String[] args) {
     final List<String> argsList = new ArrayList<>(Arrays.asList(args));
 

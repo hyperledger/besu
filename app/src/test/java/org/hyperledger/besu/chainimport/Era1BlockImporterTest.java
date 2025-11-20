@@ -70,7 +70,7 @@ public class Era1BlockImporterTest {
             .fromEthNetworkConfig(
                 EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(MiningConfiguration.newDefault())

@@ -64,16 +64,6 @@ public enum TransactionType {
   }
 
   /**
-   * Compare to serialized type.
-   *
-   * @param b the byte value
-   * @return the int result of comparison
-   */
-  public int compareTo(final Byte b) {
-    return Byte.valueOf(getSerializedType()).compareTo(b);
-  }
-
-  /**
    * Convert TransactionType from int serialized type value.
    *
    * @param serializedTypeValue the serialized type value

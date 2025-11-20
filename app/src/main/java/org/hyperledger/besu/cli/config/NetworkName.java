@@ -37,9 +37,17 @@ public enum NetworkName {
   HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
-   * the current time. https://ephemery.dev/
+   * the current time. <a href="https://ephemery.dev/">Ephemery developer info</a>
    */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
+  /**
+   * Linea mainnet network name <a
+   * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
+   * info</a>
+   */
+  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, NativeRequirement.MAINNET),
+  /** Linea sepolia network name */
+  LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, NativeRequirement.MAINNET),
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
@@ -56,8 +64,14 @@ public enum NetworkName {
   private final String genesisFile;
   private final BigInteger networkId;
   private final boolean canSnapSync;
-  private final String deprecationDate;
+  private String deprecationDate;
   private final Supplier<List<NativeRequirementResult>> nativeRequirements;
+
+  static {
+    HOLESKY.deprecationDate = "November 2025";
+    CLASSIC.deprecationDate = "November 2025";
+    MORDOR.deprecationDate = "November 2025";
+  }
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
