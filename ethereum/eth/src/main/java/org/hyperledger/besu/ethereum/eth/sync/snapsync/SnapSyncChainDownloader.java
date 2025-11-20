@@ -74,7 +74,6 @@ public class SnapSyncChainDownloader
   private final AtomicReference<BlockHeader> pendingPivotUpdate = new AtomicReference<>(null);
   private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
-  private final CompletableFuture<Void> firstBackwardHeadersFinished = new CompletableFuture<>();
 
   private volatile Pipeline<?> currentPipeline;
   private Instant overallStartTime;
@@ -212,11 +211,6 @@ public class SnapSyncChainDownloader
         .thenCompose(f -> f);
   }
 
-  @Override
-  public CompletableFuture<Void> readyForStateDownload() {
-    return firstBackwardHeadersFinished;
-  }
-
   private boolean shouldRetry(final Throwable error) {
     final Throwable cause = error instanceof CompletionException ? error.getCause() : error;
     return !(cause instanceof CancellationException);
@@ -265,11 +259,9 @@ public class SnapSyncChainDownloader
                   stage1Duration.getSeconds());
 
               // Mark headers download as complete and persist
-              chainState.updateAndGet(ChainSyncState::withHeadersDownloadComplete);
+              chainState.updateAndGet(s -> s.withHeadersDownloadComplete());
               chainStateStorage.storeState(chainState.get());
               LOG.info("Persisted backward header download completion state");
-
-              firstBackwardHeadersFinished.complete(null);
 
               return null;
             });

@@ -20,10 +20,5 @@ public interface ChainDownloader {
 
   CompletableFuture<Void> start();
 
-  default CompletableFuture<Void> readyForStateDownload() {
-    return CompletableFuture.completedFuture(null);
-  }
-  ;
-
   void cancel();
 }
