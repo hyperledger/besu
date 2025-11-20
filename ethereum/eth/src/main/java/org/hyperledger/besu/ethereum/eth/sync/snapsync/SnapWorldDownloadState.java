@@ -445,9 +445,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   /**
-   * Notifies the registered listener that world state heal has finished.
-   * Once the state heal has finished no new pivot blocks are selected.
-   * This notification is sent only once.
+   * Notifies the registered listener that world state heal has finished. Once the state heal has
+   * finished no new pivot blocks are selected. This notification is sent only once.
    */
   private void notifyWorldStateHealFinished() {
     if (worldStateHealFinishedNotified.compareAndSet(false, true)) {
