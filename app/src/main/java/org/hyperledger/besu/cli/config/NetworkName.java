@@ -52,7 +52,7 @@ public enum NetworkName {
   private final BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
-  private final boolean requiresNative;
+  private final boolean nativeRequired;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
@@ -66,13 +66,13 @@ public enum NetworkName {
       final String genesisFile,
       final BigInteger networkId,
       final boolean canSnapSync,
-      final boolean requiresNative) {
+      final boolean nativeRequired) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
-    this.requiresNative = requiresNative;
+    this.nativeRequired = nativeRequired;
   }
 
   /**
@@ -130,11 +130,16 @@ public enum NetworkName {
   }
 
   /**
-   * Requires native boolean.
+   * Determines whether the network requires the use of native libraries or native support.
    *
-   * @return the boolean
+   * <p>Certain networks may require specific platform-level optimizations or library dependencies,
+   * referred to as "native requirements." This method indicates whether such requirements are
+   * necessary for the current network.
+   *
+   * @return {@code true} if the network requires native support or libraries; {@code false}
+   *     otherwise.
    */
-  public boolean requiresNative() {
-    return requiresNative;
+  public boolean hasNativeRequirements() {
+    return nativeRequired;
   }
 }

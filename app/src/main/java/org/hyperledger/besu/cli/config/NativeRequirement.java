@@ -79,12 +79,20 @@ public interface NativeRequirement {
       };
 
   /**
-   * Gets native requirements based on the given network name.
+   * Retrieves the native library requirements for a specified network.
    *
-   * @param networkName The name of the network.
-   * @return List of native library requirements for the network.
+   * <p>This method checks whether the given network requires native libraries, and returns the
+   * corresponding list of requirements if applicable. If the network does not require native
+   * libraries, an empty list is returned.
+   *
+   * @param networkName the name of the network for which native requirements are being retrieved.
+   * @return a list of {@link NativeRequirementResult} representing the native library requirements
+   *     for the specified network, or an empty list if no requirements exist.
    */
   static List<NativeRequirementResult> getNativeRequirements(final NetworkName networkName) {
-    return networkName.requiresNative() ? MAINNET.get() : Collections.emptyList();
+    // Check if the network requires native support.
+    // Return Mainnet-like requirements or an empty list for networks without native support.
+    // Can be extended to handle unique requirements for specific networks in the future.
+    return networkName.hasNativeRequirements() ? MAINNET.get() : Collections.emptyList();
   }
 }
