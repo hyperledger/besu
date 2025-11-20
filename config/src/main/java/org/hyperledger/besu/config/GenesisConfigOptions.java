@@ -73,6 +73,15 @@ public interface GenesisConfigOptions {
   boolean isPoa();
 
   /**
+   * If the network has support for transitioning to Proof of Stake. It is not important when the
+   * transition has happened or will happen, but only that there is support for it in the genesis
+   * file.
+   *
+   * @return the boolean
+   */
+  boolean hasPos();
+
+  /**
    * Is consensus migration boolean.
    *
    * @return the boolean
@@ -304,6 +313,13 @@ public interface GenesisConfigOptions {
    * @return the bpo5 time
    */
   OptionalLong getBpo5Time();
+
+  /**
+   * Gets Amsterdam time.
+   *
+   * @return the Amsterdam time
+   */
+  OptionalLong getAmsterdamTime();
 
   /**
    * Gets future eips time.

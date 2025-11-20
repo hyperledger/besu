@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
@@ -199,8 +200,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     minedBlockObservers.subscribe(ethProtocolManager);
     minedBlockObservers.subscribe(blockLogger(transactionPool, localAddress));
 
-    final FutureMessageBuffer futureMessageBuffer =
-        new FutureMessageBuffer(
+    final FutureMessageBuffer<Message> futureMessageBuffer =
+        new FutureMessageBuffer<>(
             bftConfig.getFutureMessagesMaxDistance(),
             bftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber());
@@ -305,7 +306,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
+        balConfiguration,
         metricsSystem);
   }
 

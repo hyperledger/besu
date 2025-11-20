@@ -30,7 +30,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.ArrayList;
@@ -56,7 +59,8 @@ public class TrailingPeerLimiterTest {
 
   @BeforeEach
   public void setUp() {
-    when(ethPeers.streamAvailablePeers()).then(invocation -> peers.stream());
+    when(ethPeers.streamAvailablePeers())
+        .then(invocation -> peers.stream().map(EthPeerImmutableAttributes::from));
   }
 
   @Test
@@ -158,6 +162,9 @@ public class TrailingPeerLimiterTest {
     chainState.statusReceived(Hash.EMPTY, Difficulty.ONE);
     chainState.update(Hash.EMPTY, height);
     when(peer.chainState()).thenReturn(chainState);
+    when(peer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    when(peer.getConnection()).thenReturn(connection);
     peers.add(peer);
     return peer;
   }

@@ -1,4 +1,9 @@
+# syntax=docker/dockerfile:1
 
+# Stage: Use Eclipse Temurin JRE
+FROM eclipse-temurin:25-jre AS java-base
+
+# Stage: Final Besu EVMTool image
 FROM ubuntu:24.04
 ARG VERSION="dev"
 ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0"
@@ -7,21 +12,27 @@ ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true
 RUN apt-get update $NO_PROXY_CACHE  && \
   # $NO_PROXY_CACHE must not be used here or otherwise will trigger a hadolint error
   apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
-    --no-install-recommends -q --assume-yes install openjdk-21-jre-headless=21* adduser=3* && \
+    --no-install-recommends -q --assume-yes install libjemalloc-dev=5.* && \
   # Clean apt cache  \
   apt-get clean  && \
   rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
   rm -rf /var/lib/apt/lists/*  && \
-  # Creating a user for besu
-  adduser --disabled-password --gecos "" --home /opt/besu besu  && \
-  chown besu:besu /opt/besu
+  # Starting from version 23.10, Ubuntu comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
+  userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu  && \
+  # Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
+  useradd --uid 1000 --create-home --home-dir /opt/besu-evmtool --shell /bin/bash --user-group --skel /etc/skel besu && \
+  chmod 0755 /opt/besu-evmtool
+
+# Copy JRE from the jre-base stage
+COPY --from=java-base /opt/java/openjdk /opt/java/openjdk
 
 USER besu
 WORKDIR /opt/besu-evmtool
 
 COPY --chown=besu:besu besu-evmtool /opt/besu-evmtool/
 
-ENV PATH="/opt/besu-evmtool/bin:${PATH}"
+ENV JAVA_HOME="/opt/java/openjdk"
+ENV PATH="/opt/besu-evmtool/bin:${JAVA_HOME}/bin:${PATH}"
 ENTRYPOINT ["evmtool"]
 
 # Build-time metadata as defined at http://label-schema.org

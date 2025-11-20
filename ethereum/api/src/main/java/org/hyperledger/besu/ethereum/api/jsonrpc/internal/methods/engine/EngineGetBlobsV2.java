@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,12 +31,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobAndProofV2;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -49,14 +55,16 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
   private final Counter availableCounter;
   private final Counter hitCounter;
   private final Counter missCounter;
+  private final Optional<Long> osakaMilestone;
 
   public EngineGetBlobsV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
       final EngineCallListener engineCallListener,
       final TransactionPool transactionPool,
       final MetricsSystem metricsSystem) {
-    super(vertx, protocolContext, engineCallListener);
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.transactionPool = transactionPool;
     // create counters
     this.requestedCounter =
@@ -79,6 +87,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
             BesuMetricCategory.RPC,
             "execution_engine_getblobs_miss_total",
             "Number of calls to engine_getBlobsV2 that returned zero blobs");
+    this.osakaMilestone = protocolSchedule.milestoneFor(OSAKA);
   }
 
   @Override
@@ -94,29 +103,53 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
           requestContext.getRequest().getId(),
           RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
     }
-    requestedCounter.inc(versionedHashes.length);
-    List<BlobAndProofV2> result = new ArrayList<>(versionedHashes.length);
-    for (VersionedHash versionedHash : versionedHashes) {
-      BlobProofBundle blobProofBundle = transactionPool.getBlobProofBundle(versionedHash);
-      if (blobProofBundle == null) {
-        // no partial responses. this is a miss
-        missCounter.inc();
-        LOG.trace("No BlobProofBundle found for versioned hash: {}", versionedHash);
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
-      }
-      if (blobProofBundle.getBlobType() == BlobType.KZG_PROOF) {
-        // wrong blob type. this is a miss
-        missCounter.inc();
-        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", versionedHash);
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            null); // KZG_PROOF type is not supported in this method
-      }
-      result.add(createBlobAndProofV2(blobProofBundle));
+    if (mergeContext.get().isSyncing()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
-    availableCounter.inc(versionedHashes.length);
+    long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(timestamp);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), forkValidationResult);
+    }
+    requestedCounter.inc(versionedHashes.length);
+    List<BlobProofBundle> validBundles = new ArrayList<>(versionedHashes.length);
+    int missingBlobs = 0;
+    int unsupportedBlobs = 0;
+    for (VersionedHash hash : versionedHashes) {
+      final BlobProofBundle bundle = transactionPool.getBlobProofBundle(hash);
+      if (bundle == null) {
+        LOG.trace("No BlobProofBundle found for versioned hash: {}", hash);
+        missingBlobs++;
+        continue;
+      }
+      if (bundle.getBlobType() == BlobType.KZG_PROOF) {
+        LOG.trace("Unsupported blob type KZG_PROOF for versioned hash: {}", hash);
+        unsupportedBlobs++;
+        continue;
+      }
+      validBundles.add(bundle);
+    }
+    // count how many of the requested blobs are actually available
+    availableCounter.inc(validBundles.size());
+
+    LOG.debug(
+        "Requested {} bundles, found {} valid bundles, {} missing, {} unsupported",
+        versionedHashes.length,
+        validBundles.size(),
+        missingBlobs,
+        unsupportedBlobs);
+
+    // V2 returns null if any requested blobs are missing or unsupported
+    if (missingBlobs > 0 || unsupportedBlobs > 0) {
+      missCounter.inc();
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+
+    final List<BlobAndProofV2> results =
+        validBundles.stream().map(this::createBlobAndProofV2).toList();
+
     hitCounter.inc();
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 
   private VersionedHash[] extractVersionedHashes(final JsonRpcRequestContext requestContext) {
@@ -132,9 +165,14 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
     return new BlobAndProofV2(
-        blobProofBundle.getBlob().getData().toHexString(),
+        HexUtils.toFastHex(blobProofBundle.getBlob().getData(), true),
         blobProofBundle.getKzgProof().stream()
-            .map(proof -> proof.getData().toHexString())
+            .map(proof -> HexUtils.toFastHex(proof.getData(), true))
             .toList());
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long currentTimestamp) {
+    return ForkSupportHelper.validateForkSupported(OSAKA, osakaMilestone, currentTimestamp);
   }
 }

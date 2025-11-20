@@ -380,6 +380,14 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals) {
+    return mockEnginePayload(header, txs, withdrawals, null);
+  }
+
+  protected EnginePayloadParameter mockEnginePayload(
+      final BlockHeader header,
+      final List<String> txs,
+      final List<WithdrawalParameter> withdrawals,
+      final String blockAccessList) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -397,7 +405,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         txs,
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null));
+        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
+        blockAccessList);
   }
 
   protected BlockHeader setupValidPayload(

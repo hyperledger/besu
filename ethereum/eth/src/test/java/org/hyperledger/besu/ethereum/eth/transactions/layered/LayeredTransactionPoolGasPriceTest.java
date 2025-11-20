@@ -46,7 +46,8 @@ public class LayeredTransactionPoolGasPriceTest extends AbstractLayeredTransacti
         txPoolMetrics,
         transactionReplacementTester,
         new BlobCache(),
-        MiningConfiguration.newDefault());
+        MiningConfiguration.newDefault(),
+        senderBalanceChecker);
   }
 
   @Override

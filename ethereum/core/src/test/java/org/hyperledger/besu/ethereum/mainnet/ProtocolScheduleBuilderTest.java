@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO2;
@@ -81,7 +82,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
   }
 
@@ -100,6 +101,7 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 13));
     when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 15));
     when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 17));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 19));
     when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
     when(configOptions.getConsolidationRequestContractAddress())
         .thenReturn(Optional.of(Address.ZERO));
@@ -178,11 +180,17 @@ class ProtocolScheduleBuilderTest {
                 .getByBlockHeader(blockHeader(61, PRE_SHANGHAI_TIMESTAMP + 17))
                 .getHardforkId())
         .isEqualTo(BPO5);
+    assertThat(
+            protocolSchedule
+                .getByBlockHeader(blockHeader(62, PRE_SHANGHAI_TIMESTAMP + 19))
+                .getHardforkId())
+        .isEqualTo(AMSTERDAM);
   }
 
   @Test
   void milestoneForShouldQueryAllAvailableHardforks() {
     final long BPO5_TIME = 1722333828L;
+    final long AMSTERDAM_TIME = BPO5_TIME + 1L;
 
     when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0));
     when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0));
@@ -200,6 +208,7 @@ class ProtocolScheduleBuilderTest {
     when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(0));
     when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(0));
     when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(BPO5_TIME));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(AMSTERDAM_TIME));
     when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
     when(configOptions.getConsolidationRequestContractAddress())
         .thenReturn(Optional.of(Address.ZERO));
@@ -249,6 +258,10 @@ class ProtocolScheduleBuilderTest {
     final Optional<Long> maybeBpo5MileStone = protocolSchedule.milestoneFor(BPO5);
     assertThat(maybeBpo5MileStone).isPresent();
     assertThat(maybeBpo5MileStone.get()).isEqualTo(BPO5_TIME);
+
+    final Optional<Long> maybeAmsterdamMileStone = protocolSchedule.milestoneFor(AMSTERDAM);
+    assertThat(maybeAmsterdamMileStone).isPresent();
+    assertThat(maybeAmsterdamMileStone.get()).isEqualTo(AMSTERDAM_TIME);
   }
 
   @Test
@@ -349,7 +362,7 @@ class ProtocolScheduleBuilderTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(

@@ -46,7 +46,7 @@ class JournaledUpdaterTest {
       extends AbstractWorldUpdater<SimpleWorldView, ToyAccount> {
 
     SimpleWorldUpdater(final SimpleWorldView world) {
-      super(world, new EvmConfiguration(0L, WorldUpdaterMode.JOURNALED));
+      super(world, new EvmConfiguration(0L, WorldUpdaterMode.JOURNALED, true));
     }
 
     @Override

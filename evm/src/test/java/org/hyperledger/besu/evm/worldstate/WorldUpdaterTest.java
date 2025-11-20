@@ -50,7 +50,7 @@ class WorldUpdaterTest {
       extends AbstractWorldUpdater<SimpleWorldView, ToyAccount> {
 
     SimpleWorldUpdater(final SimpleWorldView world, final WorldUpdaterMode mode) {
-      super(world, new EvmConfiguration(0L, mode));
+      super(world, new EvmConfiguration(0L, mode, true));
     }
 
     @Override

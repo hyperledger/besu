@@ -25,8 +25,10 @@ import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.PrintStream;
@@ -167,8 +169,14 @@ public class EvmToyCommand implements Runnable {
 
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
-              ? new StandardJsonTracer(
-                  System.out, showMemory, showStack, showReturnData, showStorage)
+              ? new StreamingOperationTracer(
+                  System.out,
+                  OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                      .traceMemory(showMemory)
+                      .traceStack(showStack)
+                      .traceReturnData(showReturnData)
+                      .traceStorage(showStorage)
+                      .build())
               : OperationTracer.NO_TRACING;
 
       MessageFrame initialMessageFrame =
