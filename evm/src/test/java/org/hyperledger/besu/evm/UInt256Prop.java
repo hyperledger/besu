@@ -216,7 +216,7 @@ public class UInt256Prop {
   // --------------------------------------------------------------------------
   @Property
   void property_add_matchesBigInteger(
-          @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     final UInt256 ub = UInt256.fromBytesBE(b);
@@ -234,7 +234,7 @@ public class UInt256Prop {
 
   @Property
   void property_add_commutative(
-          @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     final UInt256 ub = UInt256.fromBytesBE(b);
@@ -245,9 +245,9 @@ public class UInt256Prop {
 
   @Property
   void property_add_associative(
-          @ForAll("unsigned1to32") final byte[] a,
-          @ForAll("unsigned1to32") final byte[] b,
-          @ForAll("unsigned1to32") final byte[] c) {
+      @ForAll("unsigned1to32") final byte[] a,
+      @ForAll("unsigned1to32") final byte[] b,
+      @ForAll("unsigned1to32") final byte[] c) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     final UInt256 ub = UInt256.fromBytesBE(b);
@@ -270,8 +270,8 @@ public class UInt256Prop {
 
   @Property
   void property_add_singleLimb_matchesBigInteger(
-          @ForAll("singleLimbUnsigned1to4") final byte[] a,
-          @ForAll("singleLimbUnsigned1to4") final byte[] b) {
+      @ForAll("singleLimbUnsigned1to4") final byte[] a,
+      @ForAll("singleLimbUnsigned1to4") final byte[] b) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     final UInt256 ub = UInt256.fromBytesBE(b);
@@ -290,7 +290,7 @@ public class UInt256Prop {
   void property_add_one_increment(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
+    final UInt256 one = UInt256.fromBytesBE(new byte[] {1});
 
     // Act
     final byte[] got = ua.add(one).toBytesBE();
