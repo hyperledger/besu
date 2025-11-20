@@ -98,6 +98,7 @@ public class ProtocolSpecBuilder {
   private BlockAccessListFactory blockAccessListFactory;
   private StateRootCommitterFactory stateRootCommitterFactory =
       new StateRootCommitterFactoryDefault();
+  private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -317,6 +318,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -343,6 +349,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
     checkNotNull(slotDuration, "Missing slot duration");
+    checkNotNull(balConfiguration, "Missing BAL configuration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
@@ -445,7 +452,8 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        protocolSchedule);
+        protocolSchedule,
+        balConfiguration);
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
@@ -477,7 +485,8 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        ProtocolSchedule protocolSchedule);
+        ProtocolSchedule protocolSchedule,
+        BalConfiguration balConfiguration);
   }
 
   @FunctionalInterface
