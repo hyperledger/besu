@@ -238,7 +238,10 @@ public class EVM {
         result =
             switch (opcode) {
               case 0x00 -> StopOperation.staticOperation(frame);
-              case 0x01 -> AddOperation.staticOperation(frame);
+              case 0x01 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddModOperationOptimized.staticOperation(frame)
+                      : AddOperation.staticOperation(frame);
               case 0x02 -> MulOperation.staticOperation(frame);
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);

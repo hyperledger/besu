@@ -301,6 +301,20 @@ public class UInt256Prop {
     assertThat(got).containsExactly(expected);
   }
 
+  @Property
+  void property_add_self_doubles(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+
+    // Act
+    final byte[] got = ua.add(ua).toBytesBE();
+
+    // Assert - verify A + A = 2 * A using BigInteger
+    BigInteger A = toBigUnsigned(a);
+    byte[] expected = bigUnsignedToBytes32(A.multiply(BigInteger.TWO));
+    assertThat(got).containsExactly(expected);
+  }
+
   // --------------------------------------------------------------------------
   // endregion
 
