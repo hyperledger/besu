@@ -1174,7 +1174,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT, POS] (case-insensitive) but was 'bogus'");
   }
 
   @Test
