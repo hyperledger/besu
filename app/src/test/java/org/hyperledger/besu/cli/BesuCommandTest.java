@@ -1884,7 +1884,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
-    verify(mockLogger, never()).warn(contains("Holesky is deprecated and will be shutdown"));
+    verify(mockLogger).warn(contains("Holesky is deprecated and will be shutdown"));
   }
 
   @Test
@@ -2136,7 +2136,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void requiredBlocksMulpleBlocksOneArg() {
+  public void requiredBlocksMultipleBlocksOneArg() {
     final long block1 = 8675309L;
     final long block2 = 5551212L;
     final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
