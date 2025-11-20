@@ -148,7 +148,7 @@ public abstract class AbstractMiningCoordinator<
 
   private void startAsyncMiningOperation() {
     final BlockHeader parentHeader = blockchain.getChainHeadHeader();
-    currentRunningMiner = executor.startAsyncMining(minedBlockObservers, parentHeader);
+    currentRunningMiner = executor.startAsyncMining(minedBlockObservers, null, parentHeader);
   }
 
   private synchronized boolean haltCurrentMiningOperation() {
