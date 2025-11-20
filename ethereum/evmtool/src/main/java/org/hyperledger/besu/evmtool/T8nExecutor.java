@@ -372,7 +372,8 @@ public class T8nExecutor {
             protocolSpec
                 .getPreExecutionProcessor()
                 .createBlockHashLookup(blockchain, referenceTestEnv),
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     if (!referenceTestEnv.isStateTest()) {
       protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());
