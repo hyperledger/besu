@@ -259,7 +259,7 @@ public class SnapSyncChainDownloader
                   stage1Duration.getSeconds());
 
               // Mark headers download as complete and persist
-              chainState.updateAndGet(s -> s.withHeadersDownloadComplete());
+              chainState.updateAndGet(ChainSyncState::withHeadersDownloadComplete);
               chainStateStorage.storeState(chainState.get());
               LOG.info("Persisted backward header download completion state");
 
