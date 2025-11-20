@@ -64,7 +64,7 @@ public final class BlockAccessListEncoder {
               (nc, ncOut) -> {
                 ncOut.startList();
                 ncOut.writeUInt64Scalar(UInt64.valueOf(nc.txIndex()));
-                ncOut.writeUInt64Scalar(UInt64.valueOf(nc.newNonce()));
+                ncOut.writeLongScalar(nc.newNonce());
                 ncOut.endList();
               });
 

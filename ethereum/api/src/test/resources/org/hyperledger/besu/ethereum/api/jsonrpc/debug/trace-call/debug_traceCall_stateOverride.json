@@ -1,0 +1,70 @@
+{
+  "comment": "A traceCall request with state overrides that set the code of the to-address to a simple contract that always returns 1, and sets the balance of the from-address.",
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceCall",
+    "params": [
+      {
+        "from": "0xcccccccccccccccccccccccccccccccccccccccc",
+        "to": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "latest",
+      {
+        "stateOverrides": {
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+            "comment": "Always returns one",
+            "code": "0x60016000f3"
+          },
+          "0xcccccccccccccccccccccccccccccccccccccccc": {
+            "balance": "0x90000000000009900"
+          }
+        }
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "gas": 21009,
+      "failed": false,
+      "returnValue": "00",
+      "structLogs": [
+        {
+          "pc": 0,
+          "op": "PUSH1",
+          "gas": 17592186023416,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": []
+        },
+        {
+          "pc": 2,
+          "op": "PUSH1",
+          "gas": 17592186023413,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x1"
+          ]
+        },
+        {
+          "pc": 4,
+          "op": "RETURN",
+          "gas": 17592186023410,
+          "gasCost": 3,
+          "depth": 1,
+          "stack": [
+            "0x1",
+            "0x0"
+          ],
+          "memory": [
+            "0x0"
+          ]
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}

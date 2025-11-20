@@ -170,6 +170,7 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     when(transactionSimulator.process(
             eq(modifiedEip1559TransactionCallParameter()),
+            eq(Optional.empty()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
             eq(latestBlockHeader)))
