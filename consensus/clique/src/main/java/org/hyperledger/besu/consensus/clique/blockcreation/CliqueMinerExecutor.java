@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -91,9 +90,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
   @Override
   public CliqueBlockMiner createMiner(
-      final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     final Function<BlockHeader, CliqueBlockCreator> blockCreator =
         (header) ->
             new CliqueBlockCreator(

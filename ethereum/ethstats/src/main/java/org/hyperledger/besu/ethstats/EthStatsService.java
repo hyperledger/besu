@@ -423,7 +423,7 @@ public class EthStatsService {
     }
     final boolean isSyncing = syncState.isInSync();
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
-    final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
+    final long hashrate = 0L; // Hash rate is not applicable for non-PoW networks
     // safe to cast to int since it isn't realistic to have more than max int peers
     final int peersNumber =
         (int) protocolManager.ethContext().getEthPeers().streamAvailablePeers().count();

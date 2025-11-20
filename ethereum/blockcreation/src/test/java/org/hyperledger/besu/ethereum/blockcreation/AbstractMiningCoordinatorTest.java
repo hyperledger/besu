@@ -44,9 +44,16 @@ public class AbstractMiningCoordinatorTest {
           new BlockHeaderTestFixture().buildHeader(),
           new BlockBody(Collections.emptyList(), Collections.emptyList()));
   private final Blockchain blockchain = mock(Blockchain.class);
-  private final PoWMinerExecutor minerExecutor = mock(PoWMinerExecutor.class);
+
+  @SuppressWarnings("unchecked")
+  private final AbstractMinerExecutor<BlockMiner<AbstractBlockCreator>> minerExecutor =
+      mock(AbstractMinerExecutor.class);
+
   private final SyncState syncState = mock(SyncState.class);
-  private final PoWBlockMiner blockMiner = mock(PoWBlockMiner.class);
+
+  @SuppressWarnings("unchecked")
+  private final BlockMiner<AbstractBlockCreator> blockMiner = mock(BlockMiner.class);
+
   private final TestMiningCoordinator miningCoordinator =
       new TestMiningCoordinator(blockchain, minerExecutor, syncState);
 
@@ -222,11 +229,12 @@ public class AbstractMiningCoordinatorTest {
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 
-  public static class TestMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMiner> {
+  public static class TestMiningCoordinator
+      extends AbstractMiningCoordinator<BlockMiner<AbstractBlockCreator>> {
 
     public TestMiningCoordinator(
         final Blockchain blockchain,
-        final AbstractMinerExecutor<PoWBlockMiner> executor,
+        final AbstractMinerExecutor<BlockMiner<AbstractBlockCreator>> executor,
         final SyncState syncState) {
       super(blockchain, executor, syncState);
     }

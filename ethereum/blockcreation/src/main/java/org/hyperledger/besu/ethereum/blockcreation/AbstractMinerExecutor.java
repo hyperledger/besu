@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -67,11 +66,9 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   }
 
   public Optional<M> startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     try {
-      final M currentRunningMiner = createMiner(observers, ethHashObservers, parentHeader);
+      final M currentRunningMiner = createMiner(observers, parentHeader);
       executorService.execute(currentRunningMiner);
       return Optional.of(currentRunningMiner);
     } catch (RejectedExecutionException e) {
@@ -93,9 +90,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   }
 
   public abstract M createMiner(
-      final Subscribers<MinedBlockObserver> subscribers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader);
+      final Subscribers<MinedBlockObserver> subscribers, final BlockHeader parentHeader);
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     miningConfiguration.setMinTransactionGasPrice(minTransactionGasPrice);

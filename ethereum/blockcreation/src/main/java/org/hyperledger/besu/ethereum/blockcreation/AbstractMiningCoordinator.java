@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -43,7 +42,6 @@ public abstract class AbstractMiningCoordinator<
   }
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
-  private final Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
   private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
   private final AtomicReference<Optional<Long>> remineOnNewHeadListenerId =
@@ -69,13 +67,13 @@ public abstract class AbstractMiningCoordinator<
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
+    final M miner = executor.createMiner(minedBlockObservers, parentHeader);
     return Optional.of(miner.createBlock(parentHeader, transactions, ommers).getBlock());
   }
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
-    final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
+    final M miner = executor.createMiner(minedBlockObservers, parentHeader);
     return Optional.of(miner.createBlock(parentHeader, timestamp).getBlock());
   }
 
@@ -150,8 +148,7 @@ public abstract class AbstractMiningCoordinator<
 
   private void startAsyncMiningOperation() {
     final BlockHeader parentHeader = blockchain.getChainHeadHeader();
-    currentRunningMiner =
-        executor.startAsyncMining(minedBlockObservers, ethHashObservers, parentHeader);
+    currentRunningMiner = executor.startAsyncMining(minedBlockObservers, parentHeader);
   }
 
   private synchronized boolean haltCurrentMiningOperation() {
@@ -192,11 +189,6 @@ public abstract class AbstractMiningCoordinator<
 
   public void addMinedBlockObserver(final MinedBlockObserver obs) {
     minedBlockObservers.subscribe(obs);
-  }
-
-  @Override
-  public void addEthHashObserver(final PoWObserver obs) {
-    ethHashObservers.subscribe(obs);
   }
 
   @Override
