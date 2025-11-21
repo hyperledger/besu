@@ -32,6 +32,7 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AddOperationOptimized;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
@@ -240,7 +241,7 @@ public class EVM {
               case 0x00 -> StopOperation.staticOperation(frame);
               case 0x01 ->
                   evmConfiguration.enableOptimizedOpcodes()
-                      ? AddModOperationOptimized.staticOperation(frame)
+                      ? AddOperationOptimized.staticOperation(frame)
                       : AddOperation.staticOperation(frame);
               case 0x02 -> MulOperation.staticOperation(frame);
               case 0x03 -> SubOperation.staticOperation(frame);

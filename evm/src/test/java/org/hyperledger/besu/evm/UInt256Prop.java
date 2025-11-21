@@ -315,6 +315,120 @@ public class UInt256Prop {
     assertThat(got).containsExactly(expected);
   }
 
+  @Property
+  void property_add_max_values() {
+    // Arrange - MAX_UINT256 = 2^256 - 1 (all bits set to 1)
+    final UInt256 max = UInt256.fromBytesBE(new byte[]{
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+    });
+    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
+    final UInt256 zero = UInt256.ZERO;
+
+    // Act & Assert - MAX + 1 should wrap to 0
+    assertThat(max.add(one)).isEqualTo(zero);
+
+    // MAX + MAX should wrap to MAX - 1 (i.e., 2^256 - 2)
+    BigInteger maxBig = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE);
+    byte[] expMaxPlusMax = bigUnsignedToBytes32(maxBig.add(maxBig));
+    assertThat(max.add(max).toBytesBE()).containsExactly(expMaxPlusMax);
+
+    // Verify MAX + MAX = 2^256 - 2 (wraps around)
+    final UInt256 expectedMaxPlusMax = UInt256.fromBytesBE(new byte[]{
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE  // Last byte is 0xFE
+    });
+    assertThat(max.add(max)).isEqualTo(expectedMaxPlusMax);
+  }
+
+  @Property
+  void property_add_max_with_random(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange - MAX_UINT256
+    final UInt256 max = UInt256.fromBytesBE(new byte[]{
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+    });
+    final UInt256 ua = UInt256.fromBytesBE(a);
+
+    // Act
+    final byte[] got = max.add(ua).toBytesBE();
+
+    // Assert - verify MAX + A wraps correctly
+    BigInteger maxBig = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE);
+    BigInteger A = toBigUnsigned(a);
+    byte[] exp = bigUnsignedToBytes32(maxBig.add(A));
+    assertThat(got).containsExactly(exp);
+
+    // Also verify: MAX + A = A - 1 (due to wrapping)
+    BigInteger expectedWrapped = A.subtract(BigInteger.ONE);
+    if (expectedWrapped.signum() < 0) {
+      // If A is 0, then MAX + 0 = MAX
+      expectedWrapped = maxBig;
+    }
+    byte[] expWrapped = bigUnsignedToBytes32(expectedWrapped);
+    assertThat(got).containsExactly(expWrapped);
+  }
+
+  @Property
+  void property_add_near_max_boundary() {
+    // Arrange - test values near the max boundary
+    final UInt256 max = UInt256.fromBytesBE(new byte[]{
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+    });
+
+    // MAX - 1
+    final UInt256 maxMinusOne = UInt256.fromBytesBE(new byte[]{
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE
+    });
+
+    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
+    final UInt256 two = UInt256.fromBytesBE(new byte[]{2});
+
+    // Act & Assert
+    // (MAX - 1) + 1 = MAX
+    assertThat(maxMinusOne.add(one)).isEqualTo(max);
+
+    // (MAX - 1) + 2 = 0 (wraps)
+    assertThat(maxMinusOne.add(two)).isEqualTo(UInt256.ZERO);
+
+    // (MAX - 1) + (MAX - 1) should wrap correctly
+    BigInteger maxMinusOneBig = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.TWO);
+    byte[] exp = bigUnsignedToBytes32(maxMinusOneBig.add(maxMinusOneBig));
+    assertThat(maxMinusOne.add(maxMinusOne).toBytesBE()).containsExactly(exp);
+  }
+
   // --------------------------------------------------------------------------
   // endregion
 
