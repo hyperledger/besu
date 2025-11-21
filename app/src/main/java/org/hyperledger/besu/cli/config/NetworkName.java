@@ -14,32 +14,35 @@
  */
 package org.hyperledger.besu.cli.config;
 
-import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
-
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
 /** The enum Network name. */
 public enum NetworkName {
   /** Mainnet network name. */
-  MAINNET("/mainnet.json", BigInteger.valueOf(1), true, NativeRequirement.MAINNET),
+  MAINNET("/mainnet.json", BigInteger.valueOf(1), true, true),
   /** Sepolia network name. */
-  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), true, NativeRequirement.MAINNET),
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), true, true),
   /** Holešky network name. */
-  HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, NativeRequirement.MAINNET),
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, true),
   /** Hoodi network name. */
-  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, NativeRequirement.MAINNET),
+  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, true),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
-   * the current time. https://ephemery.dev/
+   * the current time. <a href="https://ephemery.dev/">Ephemery developer info</a>
    */
-  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, NativeRequirement.MAINNET),
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, true),
+  /**
+   * Linea mainnet network name <a
+   * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
+   * info</a>
+   */
+  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
+  /** Linea sepolia network name */
+  LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, true),
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
   /** Dev network name. */
@@ -57,7 +60,7 @@ public enum NetworkName {
   private final BigInteger networkId;
   private final boolean canSnapSync;
   private String deprecationDate;
-  private final Supplier<List<NativeRequirementResult>> nativeRequirements;
+  private final boolean nativeRequired;
 
   static {
     HOLESKY.deprecationDate = "November 2025";
@@ -70,20 +73,20 @@ public enum NetworkName {
   }
 
   NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
-    this(genesisFile, networkId, canSnapSync, Collections::emptyList);
+    this(genesisFile, networkId, canSnapSync, false);
   }
 
   NetworkName(
       final String genesisFile,
       final BigInteger networkId,
       final boolean canSnapSync,
-      final Supplier<List<NativeRequirementResult>> nativeRequirements) {
+      final boolean nativeRequired) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
     // no deprecations planned
     this.deprecationDate = null;
-    this.nativeRequirements = nativeRequirements;
+    this.nativeRequired = nativeRequired;
   }
 
   /**
@@ -141,11 +144,16 @@ public enum NetworkName {
   }
 
   /**
-   * Gets native requirements for this network.
+   * Determines whether the network requires the use of native libraries or native support.
    *
-   * @return result of native library requirements defined for this network, as a list.
+   * <p>Certain networks may require specific platform-level optimizations or library dependencies,
+   * referred to as "native requirements." This method indicates whether such requirements are
+   * necessary for the current network.
+   *
+   * @return {@code true} if the network requires native support or libraries; {@code false}
+   *     otherwise.
    */
-  public List<NativeRequirementResult> getNativeRequirements() {
-    return this.nativeRequirements.get();
+  public boolean hasNativeRequirements() {
+    return nativeRequired;
   }
 }
