@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the result format for Ethereum's callTracer as specified in the Geth documentation.
@@ -417,8 +420,9 @@ public class CallTracerResult {
      * @param revertReason the revert reason
      * @return this builder instance for method chaining
      */
-    public Builder revertReason(final String revertReason) {
-      this.revertReason = revertReason;
+    public Builder revertReason(final Bytes revertReason) {
+      this.revertReason =
+          JsonRpcErrorResponse.decodeRevertReason(revertReason).orElse(revertReason.toHexString());
       return this;
     }
 
@@ -500,6 +504,23 @@ public class CallTracerResult {
      */
     public BigInteger getGasUsed() {
       return this.gasUsed;
+    }
+
+    /**
+     * To address
+     *
+     * @return the To address
+     */
+    public String getTo() {
+      return this.to;
+    }
+
+    public String getFrom() {
+      return this.from;
+    }
+
+    public String getValue() {
+      return this.value;
     }
   }
 }
