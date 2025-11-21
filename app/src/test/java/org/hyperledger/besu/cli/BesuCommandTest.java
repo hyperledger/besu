@@ -2611,16 +2611,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertNativeRequirements_UnMetForUnnamedNetwork() throws IOException {
     final Path fakeGenesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     BesuCommand mockCmd = parseCommand("--genesis-file=" + fakeGenesisFile.toString());
-    NetworkName mainnet = NetworkName.MAINNET;
     try (var mockStatic = mockStatic(NativeRequirement.class)) {
       // assert no error output
       assertThat(commandOutput.toString(UTF_8)).isEmpty();
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
       // assert no exception
-      assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(mainnet)));
+      assertThatNoException()
+          .isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(NetworkName.MAINNET)));
       // assert we didn't check for native requirements for a custom-genesis
-      mockStatic.verify(() -> NativeRequirement.getNativeRequirements(mainnet), times(0));
+      mockStatic.verify(() -> NativeRequirement.getNativeRequirements(any()), times(0));
     }
   }
 
