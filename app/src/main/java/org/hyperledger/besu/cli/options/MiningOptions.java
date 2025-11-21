@@ -231,14 +231,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
               "--min-priority-fee",
               "--min-block-occupancy-ratio",
               "--miner-extra-data"));
-
-      // Check that mining options are able to work
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList("--Xminer-remote-sealers-limit", "--Xminer-remote-sealers-hashrate-ttl"));
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
