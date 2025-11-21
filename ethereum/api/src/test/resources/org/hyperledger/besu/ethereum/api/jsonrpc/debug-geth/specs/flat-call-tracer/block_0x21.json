@@ -1,0 +1,42 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x21",
+      {
+        "tracer": "flatCallTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0xf0378e1bf579b23aff89255d93ade14fe9136a7cedd9c4985e9bec2d18ce65e9",
+        "result": [
+          {
+            "action": {
+              "creationMethod": "create",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0x47b760",
+              "init": "0x602af300",
+              "value": "0x0"
+            },
+            "blockHash": "0xb69b6dc70a5928cd4240e45b202e34135389e871489d8c7a9fd334c314b0df86",
+            "blockNumber": 33,
+            "error": "stack underflow (1 <=> 2)",
+            "subtraces": 0,
+            "traceAddress": [],
+            "transactionHash": "0xf0378e1bf579b23aff89255d93ade14fe9136a7cedd9c4985e9bec2d18ce65e9",
+            "transactionPosition": 0,
+            "type": "create"
+          }
+        ]
+      }
+    ]
+  },
+  "statusCode": 200
+}

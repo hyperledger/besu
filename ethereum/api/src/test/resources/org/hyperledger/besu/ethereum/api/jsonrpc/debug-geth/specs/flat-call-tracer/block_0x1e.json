@@ -1,0 +1,86 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x1e",
+      {
+        "tracer": "flatCallTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+        "result": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0x989680",
+              "input": "0x00000000000000000000000000000000000000000000000000000000000001f4",
+              "to": "0x0160000000000000000000000000000000000000",
+              "value": "0xa"
+            },
+            "blockHash": "0xb64ab30973dd10559b0e7b3acb1bd35804e71c97c73c126dfc4e864d8079b498",
+            "blockNumber": 30,
+            "result": {
+              "gasUsed": "0x69df",
+              "output": "0x"
+            },
+            "subtraces": 2,
+            "traceAddress": [],
+            "transactionHash": "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+            "transactionPosition": 0,
+            "type": "call"
+          },
+          {
+            "action": {
+              "callType": "call",
+              "from": "0x0160000000000000000000000000000000000000",
+              "gas": "0x1f4",
+              "input": "0x",
+              "to": "0x0170000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "blockHash": "0xb64ab30973dd10559b0e7b3acb1bd35804e71c97c73c126dfc4e864d8079b498",
+            "blockNumber": 30,
+            "error": "out of gas",
+            "subtraces": 0,
+            "traceAddress": [
+              0
+            ],
+            "transactionHash": "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+            "transactionPosition": 0,
+            "type": "call"
+          },
+          {
+            "action": {
+              "callType": "call",
+              "from": "0x0160000000000000000000000000000000000000",
+              "gas": "0x1f4",
+              "input": "0x",
+              "to": "0x0170000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "blockHash": "0xb64ab30973dd10559b0e7b3acb1bd35804e71c97c73c126dfc4e864d8079b498",
+            "blockNumber": 30,
+            "error": "out of gas",
+            "subtraces": 0,
+            "traceAddress": [
+              1
+            ],
+            "transactionHash": "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+            "transactionPosition": 0,
+            "type": "call"
+          }
+        ]
+      }
+    ]
+  },
+  "statusCode": 200
+}
