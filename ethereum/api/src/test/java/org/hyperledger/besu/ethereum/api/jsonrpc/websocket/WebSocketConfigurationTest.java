@@ -60,7 +60,6 @@ public class WebSocketConfigurationTest {
         .containsExactly(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name());
 
     configuration.setRpcApisNoAuth(Lists.newArrayList(RpcMethod.ETH_CALL.name()));
-    assertThat(configuration.getRpcApisNoAuth())
-        .containsExactly(RpcMethod.ETH_CALL.name());
+    assertThat(configuration.getRpcApisNoAuth()).containsExactly(RpcMethod.ETH_CALL.name());
   }
 }
