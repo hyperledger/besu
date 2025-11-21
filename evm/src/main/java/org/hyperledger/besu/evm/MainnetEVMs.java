@@ -142,6 +142,7 @@ import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 
 import java.math.BigInteger;
 
@@ -221,13 +222,14 @@ public class MainnetEVMs {
       registry.put(new AddModOperationOptimized(gasCalculator));
       registry.put(new MulModOperationOptimized(gasCalculator));
       registry.put(new AndOperationOptimized(gasCalculator));
-
+      registry.put(new XorOperationOptimized(gasCalculator));
     } else {
       registry.put(new ModOperation(gasCalculator));
       registry.put(new SModOperation(gasCalculator));
       registry.put(new AddModOperation(gasCalculator));
       registry.put(new MulModOperation(gasCalculator));
       registry.put(new AndOperation(gasCalculator));
+      registry.put(new XorOperation(gasCalculator));
     }
     registry.put(new ExpOperation(gasCalculator));
     registry.put(new SignExtendOperation(gasCalculator));
@@ -238,7 +240,6 @@ public class MainnetEVMs {
     registry.put(new EqOperation(gasCalculator));
     registry.put(new IsZeroOperation(gasCalculator));
     registry.put(new OrOperation(gasCalculator));
-    registry.put(new XorOperation(gasCalculator));
     registry.put(new NotOperation(gasCalculator));
     registry.put(new ByteOperation(gasCalculator));
     registry.put(new Keccak256Operation(gasCalculator));

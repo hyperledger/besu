@@ -71,6 +71,7 @@ import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
@@ -273,7 +274,10 @@ public class EVM {
                       ? AndOperationOptimized.staticOperation(frame)
                       : AndOperation.staticOperation(frame);
               case 0x17 -> OrOperation.staticOperation(frame);
-              case 0x18 -> XorOperation.staticOperation(frame);
+              case 0x18 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? XorOperationOptimized.staticOperation(frame)
+                      : XorOperation.staticOperation(frame);
               case 0x19 -> NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1e ->
