@@ -61,7 +61,7 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
     checkState(active, "Cannot commit a completed transaction.");
     checkState(!isClosed.get(), "Cannot invoke commit() on a closed storage.");
     active = false;
-    transaction.close();
+    transaction.commit();
   }
 
   @Override
