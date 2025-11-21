@@ -59,8 +59,8 @@ public class WebSocketConfigurationTest {
     assertThat(configuration.getRpcApisNoAuth())
         .containsExactly(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name());
 
-    configuration.setRpcApisNoAuth(Lists.newArrayList(RpcMethod.MINER_SET_COINBASE.name()));
+    configuration.setRpcApisNoAuth(Lists.newArrayList(RpcMethod.ETH_CALL.name()));
     assertThat(configuration.getRpcApisNoAuth())
-        .containsExactly(RpcMethod.MINER_SET_COINBASE.name());
+        .containsExactly(RpcMethod.ETH_CALL.name());
   }
 }
