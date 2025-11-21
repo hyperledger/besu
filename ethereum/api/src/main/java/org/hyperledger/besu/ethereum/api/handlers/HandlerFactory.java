@@ -52,7 +52,12 @@ public class HandlerFactory {
   public static Handler<RoutingContext> jsonRpcExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,
-      final JsonRpcConfiguration jsonRpcConfiguration) {
-    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
+      final JsonRpcConfiguration jsonRpcConfiguration,
+      final Map<
+              io.vertx.core.http.HttpConnection,
+              java.util.Set<InterruptibleCompletableFuture<Void>>>
+          activeRequestsByConnection) {
+    return JsonRpcExecutorHandler.handler(
+        jsonRpcExecutor, tracer, jsonRpcConfiguration, activeRequestsByConnection);
   }
 }

@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import java.io.IOException;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.api.trace.Tracer;
@@ -52,6 +54,19 @@ public abstract class AbstractJsonRpcExecutor {
   private static final ObjectMapper jsonObjectMapper =
       new ObjectMapper()
           .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
+
+  // Thread-safe, immutable ObjectWriters created once and reused across all requests
+  private static final ObjectWriter jsonObjectWriter =
+      jsonObjectMapper
+          .writer()
+          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+          .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+
+  private static final ObjectWriter jsonObjectWriterPretty =
+      jsonObjectMapper
+          .writerWithDefaultPrettyPrinter()
+          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+          .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
   /**
    * Creates a new AbstractJsonRpcExecutor.
@@ -119,6 +134,16 @@ public abstract class AbstractJsonRpcExecutor {
 
   protected static ObjectMapper getJsonObjectMapper() {
     return jsonObjectMapper;
+  }
+
+  /**
+   * Returns the appropriate ObjectWriter based on configuration.
+   *
+   * @param prettyPrint whether to use pretty printing
+   * @return the ObjectWriter instance
+   */
+  protected static ObjectWriter getJsonObjectWriter(final boolean prettyPrint) {
+    return prettyPrint ? jsonObjectWriterPretty : jsonObjectWriter;
   }
 
   @FunctionalInterface
