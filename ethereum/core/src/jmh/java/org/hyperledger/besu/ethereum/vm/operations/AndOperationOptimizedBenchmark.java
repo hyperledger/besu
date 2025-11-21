@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.AndOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 
-public class AndOperationBenchmark extends BinaryOperationBenchmark {
+public class AndOperationOptimizedBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return AndOperation.staticOperation(frame);
+    return AndOperationOptimized.staticOperation(frame);
   }
 }
