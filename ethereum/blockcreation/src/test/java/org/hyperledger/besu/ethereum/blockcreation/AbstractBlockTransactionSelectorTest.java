@@ -1265,7 +1265,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     transactionPool.addRemoteTransactions(List.of(tx));
 
     selector.get().buildTransactionListForBlock();
-    assertThat(tecIsCancelled).isTrue();
+    await().atMost(Duration.ofMillis(500)).until(tecIsCancelled::get);
   }
 
   private void internalBlockSelectionTimeoutSimulation(
