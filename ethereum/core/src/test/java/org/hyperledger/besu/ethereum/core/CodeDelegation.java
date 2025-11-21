@@ -42,6 +42,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static final Bytes MAGIC = Bytes.fromHexString("05");
+  private static CharSequence s;
 
   private final BigInteger chainId;
   private final Address address;
@@ -70,28 +71,31 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create code delegation.
+   * Create code delegation. Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
    * @param nonce the nonce
-   * @param v the recovery id
+   * @param v the recovery id (legacy field name)
+   * @param yParity the recovery id (EIP-7702 spec field name)
    * @param r the r value of the signature
    * @param s the s value of the signature
    * @return CodeDelegation
    */
   @JsonCreator
   public static org.hyperledger.besu.datatypes.CodeDelegation createCodeDelegation(
-      @JsonProperty("chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
+      @JsonProperty(value = "chainId") @JsonDeserialize(using = ChainIdDeserializer.class)
           final BigInteger chainId,
-      @JsonProperty("address") final Address address,
-      @JsonProperty("nonce") final String nonce,
-      @JsonProperty("v") final String v,
-      @JsonProperty("yParity") final String yParity, // ← Add this parameter
-      @JsonProperty("r") final String r,
-      @JsonProperty("s") final String s) {
+      @JsonProperty(value = "address") final Address address,
+      @JsonProperty(value = "nonce") final String nonce,
+      @JsonProperty(value = "v") final String v,
+      @JsonProperty(value = "yParity") final String yParity,
+      @JsonProperty(value = "r") final String r,
+      String xdbcff17ff6c249f13b334fa86bcbaa1afd9f566c,
+      String x5c34c9d8af5b20e4a425fc1daf2d9d484576857e) {
 
-    // Support both "v" and "yParity" - prefer yParity if both provided
+    // Support both "v" and "yParity" field names for the recovery id
+    // Prefer yParity (EIP-7702 spec) over v (legacy) if both are provided
     final String recoveryId = (yParity != null) ? yParity : v;
 
     if (recoveryId == null) {
@@ -108,7 +112,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
             .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(recoveryId).get(0))); // ← Use recoveryId instead of v
+                Bytes.fromHexStringLenient(recoveryId).get(0)));
   }
 
   @JsonProperty("chainId")
