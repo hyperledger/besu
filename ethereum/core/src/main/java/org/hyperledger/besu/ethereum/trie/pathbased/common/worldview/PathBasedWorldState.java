@@ -210,8 +210,6 @@ public abstract class PathBasedWorldState
         .addArgument(maybeBlockHeader)
         .log();
 
-    final PathBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
-
     boolean success = false;
 
     final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
@@ -230,7 +228,7 @@ public abstract class PathBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, blockHeader, this);
             };
         cacheWorldState =
             () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);

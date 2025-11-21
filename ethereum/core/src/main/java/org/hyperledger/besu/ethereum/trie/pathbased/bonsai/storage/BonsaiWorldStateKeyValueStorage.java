@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbSt
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.writesink.BonsaiDbWorldStateWriteSink;
+import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -317,6 +319,11 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       // write the log ahead, then the worldstate
       trieLogStorageTransaction.commit();
       composedWorldStateTransaction.commit();
+    }
+
+    @Override
+    public WorldStateWriteSink getWorldStateWriteSink() {
+      return new BonsaiDbWorldStateWriteSink(this);
     }
 
     @Override

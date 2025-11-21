@@ -1260,9 +1260,10 @@ class AbstractBlockProcessorIntegrationTest {
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
     final Hash computedRoot =
-        BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+        BlockAccessListStateRootHashCalculator.computeAsync(
                 protocolContext, block.getHeader(), blockAccessList)
-            .join();
+            .join()
+            .root();
 
     assertThat(computedRoot).isEqualTo(expectedRoot);
   }
