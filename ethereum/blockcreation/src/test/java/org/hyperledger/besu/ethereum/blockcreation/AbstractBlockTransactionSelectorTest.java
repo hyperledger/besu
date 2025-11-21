@@ -897,7 +897,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     selector.buildTransactionListForBlock();
 
-    @SuppressWarnings("unchecked")
     ArgumentCaptor<TransactionEvaluationContext> argumentCaptor =
         ArgumentCaptor.forClass(TransactionEvaluationContext.class);
 
@@ -1539,7 +1538,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsExactlyInAnyOrderEntriesOf(expectedEntries);
 
     assertThat(transactionPool.getTransactionByHash(lateTx.getHash()).isEmpty())
-        .isEqualTo(isLongProcessingTxDropped ? true : false);
+        .isEqualTo(isLongProcessingTxDropped);
   }
 
   private static Stream<Arguments>
