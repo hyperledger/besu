@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
@@ -73,8 +74,10 @@ class DebugTraceTransactionStepFactoryTest {
   @DisplayName("should create function for OPCODE_TRACER that returns OpCodeLoggerTracerResult")
   void shouldCreateFunctionForOpcodeTracer() {
     // Given
+    TracerType tracerType = TracerType.OPCODE_TRACER;
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(TracerType.OPCODE_TRACER);
+        DebugTraceTransactionStepFactory.create(traceOptions);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -88,12 +91,13 @@ class DebugTraceTransactionStepFactoryTest {
   @ParameterizedTest
   @EnumSource(
       value = TracerType.class,
-      names = {"CALL_TRACER", "FLAT_CALL_TRACER", "PRESTATE_TRACER"})
+      names = {"CALL_TRACER", "FLAT_CALL_TRACER"})
   @DisplayName("should create function for unimplemented tracers")
   void shouldCreateFunctionForNotYetImplementedTracers(final TracerType tracerType) {
     // Given
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(tracerType);
+        DebugTraceTransactionStepFactory.create(traceOptions);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -110,8 +114,9 @@ class DebugTraceTransactionStepFactoryTest {
   @DisplayName("should create non-null function for all tracer types")
   void shouldCreateNonNullFunctionForAllTracerTypes(final TracerType tracerType) {
     // When
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(tracerType);
+        DebugTraceTransactionStepFactory.create(traceOptions);
 
     // Then
     assertThat(function).isNotNull();
@@ -123,8 +128,9 @@ class DebugTraceTransactionStepFactoryTest {
   void shouldReturnNonNullResultWithCorrectTransactionHashForAllTracerTypes(
       final TracerType tracerType) {
     // Given
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(tracerType);
+        DebugTraceTransactionStepFactory.create(traceOptions);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -140,7 +146,8 @@ class DebugTraceTransactionStepFactoryTest {
   void shouldCreateAsyncFunctionForOpcodeTracer() throws Exception {
     // Given
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(TracerType.OPCODE_TRACER);
+        DebugTraceTransactionStepFactory.createAsync(
+            new TraceOptions(TracerType.OPCODE_TRACER, null, null));
 
     // When
     CompletableFuture<DebugTraceTransactionResult> future =
@@ -160,8 +167,9 @@ class DebugTraceTransactionStepFactoryTest {
   @DisplayName("should create non-null async function for all tracer types")
   void shouldCreateNonNullAsyncFunctionForAllTracerTypes(final TracerType tracerType) {
     // When
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(tracerType);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions);
 
     // Then
     assertThat(asyncFunction).isNotNull();
@@ -173,8 +181,9 @@ class DebugTraceTransactionStepFactoryTest {
   void shouldReturnCompletedFutureWithNonNullResultForAllTracerTypes(final TracerType tracerType)
       throws Exception {
     // Given
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(tracerType);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions);
 
     // When
     CompletableFuture<DebugTraceTransactionResult> future =
@@ -194,10 +203,11 @@ class DebugTraceTransactionStepFactoryTest {
   void shouldProduceSameResultTypeAsSynchronousVersion() throws Exception {
     // Given
     TracerType tracerType = TracerType.OPCODE_TRACER;
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> syncFunction =
-        DebugTraceTransactionStepFactory.create(tracerType);
+        DebugTraceTransactionStepFactory.create(traceOptions);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(tracerType);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions);
 
     // When
     DebugTraceTransactionResult syncResult = syncFunction.apply(mockTransactionTrace);
