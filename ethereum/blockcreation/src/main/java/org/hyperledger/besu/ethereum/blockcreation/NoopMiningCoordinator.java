@@ -67,6 +67,11 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
+  public void setCoinbase(final Address coinbase) {
+    miningConfiguration.setCoinbase(coinbase);
+  }
+
+  @Override
   public Optional<Address> getCoinbase() {
     return miningConfiguration.getCoinbase();
   }

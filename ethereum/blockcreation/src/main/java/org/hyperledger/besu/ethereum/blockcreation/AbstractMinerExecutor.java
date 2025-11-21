@@ -71,7 +71,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
     try {
-      final M currentRunningMiner = createMiner(observers, ethHashObservers, parentHeader);
+      final M currentRunningMiner = createMiner(observers, parentHeader);
       executorService.execute(currentRunningMiner);
       return Optional.of(currentRunningMiner);
     } catch (RejectedExecutionException e) {
@@ -93,9 +93,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   }
 
   public abstract M createMiner(
-      final Subscribers<MinedBlockObserver> subscribers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader);
+      final Subscribers<MinedBlockObserver> subscribers, final BlockHeader parentHeader);
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     miningConfiguration.setMinTransactionGasPrice(minTransactionGasPrice);
