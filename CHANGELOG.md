@@ -10,6 +10,7 @@
   - Remove `--Xhistory-expiry-prune` deprecated since 25.7.0. Use `--history-expiry-prune` instead.
 - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
 - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481)
 
 ### Upcoming Breaking Changes
 - ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
@@ -27,6 +28,7 @@
 - Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 - Performance: 5-6x faster toFastHex calculation for engine_getBlobsV2 [#9426](https://github.com/hyperledger/besu/pull/9426)
 - Add Linea named networks for mainnet and sepolia on Linea network [#9436](https://github.com/hyperledger/besu/pull/9436)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481)
 
 ### Bug fixes
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
