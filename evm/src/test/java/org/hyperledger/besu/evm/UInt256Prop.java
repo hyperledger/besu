@@ -212,6 +212,187 @@ public class UInt256Prop {
     assertThat(x.mulMod(x, zero).toBytesBE()).containsExactly(Bytes32.ZERO.toArrayUnsafe());
   }
 
+  @Property
+  void property_and_matchesBytesAnd(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act
+    final byte[] got = ua.and(ub).toBytesBE();
+
+    // Assert - compare with Bytes.and() (existing implementation)
+    final Bytes bytesA = Bytes32.leftPad(Bytes.wrap(a));
+    final Bytes bytesB = Bytes32.leftPad(Bytes.wrap(b));
+    final byte[] expected = bytesA.and(bytesB).toArrayUnsafe();
+
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_and_matchesBigInteger(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act
+    final byte[] got = ua.and(ub).toBytesBE();
+
+    // Assert - compare with BigInteger.and()
+    BigInteger A = toBigUnsigned(a);
+    BigInteger B = toBigUnsigned(b);
+    byte[] exp = bigUnsignedToBytes32(A.and(B));
+    assertThat(got).containsExactly(exp);
+  }
+
+  @Property
+  void property_and_commutative(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act & Assert - A & B = B & A
+    assertThat(ua.and(ub)).isEqualTo(ub.and(ua));
+  }
+
+  @Property
+  void property_and_associative(
+      @ForAll("unsigned1to32") final byte[] a,
+      @ForAll("unsigned1to32") final byte[] b,
+      @ForAll("unsigned1to32") final byte[] c) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    final UInt256 uc = UInt256.fromBytesBE(c);
+
+    // Act & Assert - (A & B) & C = A & (B & C)
+    assertThat(ua.and(ub).and(uc)).isEqualTo(ua.and(ub.and(uc)));
+  }
+
+  @Property
+  void property_and_identity(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 allOnes =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+            });
+
+    // Act & Assert - A & 0xFF...FF = A (identity)
+    assertThat(ua.and(allOnes)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_and_zero(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 zero = UInt256.ZERO;
+
+    // Act & Assert - A & 0 = 0
+    assertThat(ua.and(zero)).isEqualTo(zero);
+    assertThat(zero.and(ua)).isEqualTo(zero);
+  }
+
+  @Property
+  void property_and_self(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+
+    // Act & Assert - A & A = A (idempotent)
+    assertThat(ua.and(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_and_idempotent(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+
+    // Act & Assert - (A & A) & A = A
+    assertThat(ua.and(ua).and(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_and_result_bounded(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act
+    final UInt256 result = ua.and(ub);
+
+    // Assert - A & B <= min(A, B)
+    assertThat(UInt256.compare(result, ua)).isLessThanOrEqualTo(0);
+    assertThat(UInt256.compare(result, ub)).isLessThanOrEqualTo(0);
+  }
+
+  @Property
+  void property_and_with_complement_is_zero(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+
+    // Create bitwise complement
+    byte[] complementBytes = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      complementBytes[i] = (byte) ~aBytes32[i];
+    }
+    final UInt256 complement = UInt256.fromBytesBE(complementBytes);
+
+    // Act & Assert - A & ~A = 0
+    assertThat(ua.and(complement)).isEqualTo(UInt256.ZERO);
+  }
+
+  @Property
+  void property_and_specific_patterns() {
+    // Test specific bit patterns
+    final UInt256 pattern1 =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA
+            }); // 10101010...
+
+    final UInt256 pattern2 =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
+            }); // 01010101...
+
+    // Act & Assert - alternating patterns should give 0
+    assertThat(pattern1.and(pattern2)).isEqualTo(UInt256.ZERO);
+
+    // Verify with Bytes implementation
+    final Bytes bytes1 = Bytes.wrap(pattern1.toBytesBE());
+    final Bytes bytes2 = Bytes.wrap(pattern2.toBytesBE());
+    assertThat(pattern1.and(pattern2).toBytesBE())
+        .containsExactly(bytes1.and(bytes2).toArrayUnsafe());
+  }
+
   private static byte[] clampUnsigned32(final byte[] any) {
     if (any.length == 0) {
       return new byte[] {0};

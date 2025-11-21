@@ -318,6 +318,26 @@ public final class UInt256 {
     return new UInt256(result, modulus.length);
   }
 
+  /**
+   * Bitwise AND operation
+   *
+   * @param other The UInt256 to AND with this.
+   * @return The UInt256 result from the bitwise AND operation
+   */
+  public UInt256 and(final UInt256 other) {
+    int[] result = new int[N_LIMBS];
+    result[0] = this.limbs[0] & other.limbs[0];
+    result[1] = this.limbs[1] & other.limbs[1];
+    result[2] = this.limbs[2] & other.limbs[2];
+    result[3] = this.limbs[3] & other.limbs[3];
+    result[4] = this.limbs[4] & other.limbs[4];
+    result[5] = this.limbs[5] & other.limbs[5];
+    result[6] = this.limbs[6] & other.limbs[6];
+    result[7] = this.limbs[7] & other.limbs[7];
+    int resultLength = nSetLimbs(result);
+    return new UInt256(result, resultLength);
+  }
+
   // --------------------------------------------------------------------------
   // endregion
 

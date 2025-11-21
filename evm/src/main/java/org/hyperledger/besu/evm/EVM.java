@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.AndOperationOptimized;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
@@ -267,7 +268,10 @@ public class EVM {
               case 0x12 -> SLtOperation.staticOperation(frame);
               case 0x13 -> SGtOperation.staticOperation(frame);
               case 0x15 -> IsZeroOperation.staticOperation(frame);
-              case 0x16 -> AndOperation.staticOperation(frame);
+              case 0x16 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AndOperationOptimized.staticOperation(frame)
+                      : AndOperation.staticOperation(frame);
               case 0x17 -> OrOperation.staticOperation(frame);
               case 0x18 -> XorOperation.staticOperation(frame);
               case 0x19 -> NotOperation.staticOperation(frame);
