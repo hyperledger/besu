@@ -318,17 +318,19 @@ public class UInt256Prop {
   @Property
   void property_add_max_values() {
     // Arrange - MAX_UINT256 = 2^256 - 1 (all bits set to 1)
-    final UInt256 max = UInt256.fromBytesBE(new byte[]{
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
-    });
-    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
+    final UInt256 max =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+            });
+    final UInt256 one = UInt256.fromBytesBE(new byte[] {1});
     final UInt256 zero = UInt256.ZERO;
 
     // Act & Assert - MAX + 1 should wrap to 0
@@ -340,32 +342,36 @@ public class UInt256Prop {
     assertThat(max.add(max).toBytesBE()).containsExactly(expMaxPlusMax);
 
     // Verify MAX + MAX = 2^256 - 2 (wraps around)
-    final UInt256 expectedMaxPlusMax = UInt256.fromBytesBE(new byte[]{
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE  // Last byte is 0xFE
-    });
+    final UInt256 expectedMaxPlusMax =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE // Last byte is 0xFE
+            });
     assertThat(max.add(max)).isEqualTo(expectedMaxPlusMax);
   }
 
   @Property
   void property_add_max_with_random(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange - MAX_UINT256
-    final UInt256 max = UInt256.fromBytesBE(new byte[]{
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
-    });
+    final UInt256 max =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+            });
     final UInt256 ua = UInt256.fromBytesBE(a);
 
     // Act
@@ -390,31 +396,35 @@ public class UInt256Prop {
   @Property
   void property_add_near_max_boundary() {
     // Arrange - test values near the max boundary
-    final UInt256 max = UInt256.fromBytesBE(new byte[]{
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
-    });
+    final UInt256 max =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+            });
 
     // MAX - 1
-    final UInt256 maxMinusOne = UInt256.fromBytesBE(new byte[]{
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE
-    });
+    final UInt256 maxMinusOne =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFE
+            });
 
-    final UInt256 one = UInt256.fromBytesBE(new byte[]{1});
-    final UInt256 two = UInt256.fromBytesBE(new byte[]{2});
+    final UInt256 one = UInt256.fromBytesBE(new byte[] {1});
+    final UInt256 two = UInt256.fromBytesBE(new byte[] {2});
 
     // Act & Assert
     // (MAX - 1) + 1 = MAX
