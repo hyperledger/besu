@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 
 import java.util.Optional;
@@ -25,6 +26,7 @@ public class EthContext {
   private final Optional<EthMessages> snapMessages;
   private final EthScheduler scheduler;
   private final PeerTaskExecutor peerTaskExecutor;
+  private MutableBlockchain blockchain;
 
   public EthContext(
       final EthPeers ethPeers,
@@ -51,6 +53,22 @@ public class EthContext {
     this.peerTaskExecutor = peerTaskExecutor;
   }
 
+  public EthContext(
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthMessages snapMessages,
+      final EthScheduler scheduler,
+      final PeerTaskExecutor peerTaskExecutor,
+      final MutableBlockchain blockchain) {
+    // added this as a shortcut for the sync PoC
+    this.ethPeers = ethPeers;
+    this.ethMessages = ethMessages;
+    this.snapMessages = Optional.ofNullable(snapMessages);
+    this.scheduler = scheduler;
+    this.peerTaskExecutor = peerTaskExecutor;
+    this.blockchain = blockchain;
+  }
+
   public EthPeers getEthPeers() {
     return ethPeers;
   }
@@ -69,5 +87,9 @@ public class EthContext {
 
   public PeerTaskExecutor getPeerTaskExecutor() {
     return peerTaskExecutor;
+  }
+
+  public MutableBlockchain getBlockchain() { // TODO: shortcut for the sync PoC
+    return blockchain;
   }
 }
