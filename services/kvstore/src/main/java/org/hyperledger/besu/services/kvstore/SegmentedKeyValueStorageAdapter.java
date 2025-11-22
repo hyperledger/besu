@@ -173,5 +173,10 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     public void rollback() {
       segmentedTransaction.rollback();
     }
+
+    @Override
+    public void close() {
+      segmentedTransaction.close();
+    }
   }
 }
