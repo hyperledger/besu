@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -76,4 +77,22 @@ public interface NativeRequirement {
 
         return requirements;
       };
+
+  /**
+   * Retrieves the native library requirements for a specified network.
+   *
+   * <p>This method checks whether the given network requires native libraries, and returns the
+   * corresponding list of requirements if applicable. If the network does not require native
+   * libraries, an empty list is returned.
+   *
+   * @param networkName the name of the network for which native requirements are being retrieved.
+   * @return a list of {@link NativeRequirementResult} representing the native library requirements
+   *     for the specified network, or an empty list if no requirements exist.
+   */
+  static List<NativeRequirementResult> getNativeRequirements(final NetworkName networkName) {
+    // Check if the network requires native support.
+    // Return Mainnet-like requirements or an empty list for networks without native support.
+    // Can be extended to handle unique requirements for specific networks in the future.
+    return networkName.hasNativeRequirements() ? MAINNET.get() : Collections.emptyList();
+  }
 }
