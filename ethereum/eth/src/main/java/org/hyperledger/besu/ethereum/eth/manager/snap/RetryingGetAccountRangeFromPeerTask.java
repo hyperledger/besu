@@ -26,9 +26,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetryingGetAccountRangeFromPeerTask
     extends AbstractRetryingSwitchingPeerTask<AccountRangeMessage.AccountRangeData> {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(RetryingGetAccountRangeFromPeerTask.class);
 
   public static final int MAX_RETRIES = 4;
 
@@ -49,6 +54,8 @@ public class RetryingGetAccountRangeFromPeerTask
         metricsSystem,
         data -> data.accounts().isEmpty() && data.proofs().isEmpty(),
         MAX_RETRIES);
+    LOG.info(
+        "WSD: created RetryingGetAccountRangeFromPeerTask for {} to {}", startKeyHash, endKeyHash);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -73,6 +80,7 @@ public class RetryingGetAccountRangeFromPeerTask
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
     task.assignPeer(peer);
+    LOG.info("WSD: starting task for {} to {}", startKeyHash, endKeyHash);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

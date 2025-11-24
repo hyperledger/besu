@@ -68,8 +68,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             .or(this::selectNextPeer); // otherwise select a new one from the pool
 
     if (maybePeer.isEmpty()) {
-      LOG.atTrace()
-          .setMessage("No peer found to try to execute task at attempt {}, tried peers {}")
+      LOG.atInfo()
+          .setMessage("WSD: No peer found to try to execute task at attempt {}, tried peers {}")
           .addArgument(this::getRetryCount)
           .addArgument(triedPeers)
           .log();
