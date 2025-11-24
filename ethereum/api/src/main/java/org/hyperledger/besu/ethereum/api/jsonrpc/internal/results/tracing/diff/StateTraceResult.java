@@ -135,51 +135,31 @@ public class StateTraceResult {
         // Skip if all pre-state fields are empty
         return;
       }
-
       gen.writeObjectFieldStart(addr);
 
       // Balance
-      accountDiff
-          .getBalance()
-          .getFrom()
-          .ifPresent(
-              b -> {
-                try {
-                  gen.writeStringField("balance", b);
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-              });
+      var fromBalance = accountDiff.getBalance().getFrom();
+      if (fromBalance.isPresent()) {
+        gen.writeStringField("balance", fromBalance.get());
+      }
 
       // Code (skip if empty bytecode)
-      accountDiff
-          .getCode()
-          .getFrom()
-          .ifPresent(
-              code -> {
-                if (!Bytes.fromHexString(code).isEmpty()) {
-                  try {
-                    gen.writeStringField("code", code);
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              });
+      var fromCode = accountDiff.getCode().getFrom();
+      if (fromCode.isPresent()) {
+        Bytes codeBytes = Bytes.fromHexString(fromCode.get());
+        if (!codeBytes.isEmpty()) {
+          gen.writeStringField("code", fromCode.get());
+        }
+      }
 
       // Code hash (skip if empty hash)
-      accountDiff
-          .getCodeHash()
-          .getFrom()
-          .ifPresent(
-              codeHash -> {
-                if (!Hash.EMPTY.equals(Hash.fromHexString(codeHash))) {
-                  try {
-                    gen.writeStringField("codeHash", codeHash);
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              });
+      var fromCodeHash = accountDiff.getCodeHash().getFrom();
+      if (fromCodeHash.isPresent()) {
+        Hash hash = Hash.fromHexString(fromCodeHash.get());
+        if (!Hash.EMPTY.equals(hash)) {
+          gen.writeStringField("codeHash", fromCodeHash.get());
+        }
+      }
 
       // Nonce (skip if zero)
       if (accountDiff.getNonce().getFrom().isPresent()) {
@@ -219,45 +199,24 @@ public class StateTraceResult {
       gen.writeObjectFieldStart(addr);
 
       // Balance, Code, CodeHash, Nonce (same logic as writeNode)
-      accountDiff
-          .getBalance()
-          .getFrom()
-          .ifPresent(
-              b -> {
-                try {
-                  gen.writeStringField("balance", b);
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-              });
+      var fromBalance = accountDiff.getBalance().getFrom();
+      if (fromBalance.isPresent()) {
+        gen.writeStringField("balance", fromBalance.get());
+      }
 
-      accountDiff
-          .getCode()
-          .getFrom()
-          .ifPresent(
-              code -> {
-                if (!Bytes.fromHexString(code).isEmpty()) {
-                  try {
-                    gen.writeStringField("code", code);
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              });
+      var fromCode = accountDiff.getCode().getFrom();
+      if (fromCode.isPresent()) {
+        if (!Bytes.fromHexString(fromCode.get()).isEmpty()) {
+          gen.writeStringField("code", fromCode.get());
+        }
+      }
 
-      accountDiff
-          .getCodeHash()
-          .getFrom()
-          .ifPresent(
-              codeHash -> {
-                if (!Hash.EMPTY.toHexString().equals(codeHash)) {
-                  try {
-                    gen.writeStringField("codeHash", codeHash);
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-              });
+      var fromCodeHash = accountDiff.getCodeHash().getFrom();
+      if (fromCodeHash.isPresent()) {
+        if (!Hash.EMPTY.toHexString().equals(fromCodeHash.get())) {
+          gen.writeStringField("codeHash", fromCodeHash.get());
+        }
+      }
 
       if (accountDiff.getNonce().getFrom().isPresent()) {
         String nonceStr = accountDiff.getNonce().getFrom().get();

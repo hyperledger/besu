@@ -191,21 +191,19 @@ public class StateTraceGenerator {
         .getUpdatedStorage()
         .forEach(
             (key, newValue) -> {
-              final String keyHex = key.toHexString();
-              final String newValueHex = newValue.toHexString();
-
               if (rootAccount == null) {
                 // Case 1: Account did not exist before this transaction
                 // Record non-zero slots in diff mode, or all slots in pre-state mode
                 if (!UInt256.ZERO.equals(newValue) || isPreState) {
-                  storageDiff.put(keyHex, new DiffNode(null, newValueHex));
+                  storageDiff.put(key.toHexString(), new DiffNode(null, newValue.toHexString()));
                 }
               } else {
                 // Case 2: Account existed pre-transaction
-                final String originalValueHex = rootAccount.getStorageValue(key).toHexString();
                 // Record differences, or everything if pre-state mode is enabled
-                if (!originalValueHex.equals(newValueHex) || isPreState) {
-                  storageDiff.put(keyHex, new DiffNode(originalValueHex, newValueHex));
+                if (!rootAccount.getStorageValue(key).equals(newValue) || isPreState) {
+                  final String originalValueHex = rootAccount.getStorageValue(key).toHexString();
+                  storageDiff.put(
+                      key.toHexString(), new DiffNode(originalValueHex, newValue.toHexString()));
                 }
               }
             });
