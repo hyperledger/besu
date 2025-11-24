@@ -334,6 +334,16 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     return new LayeredKeyValueStorage(hashValueStore, parent);
   }
 
+  /**
+   * Retrieves the parent SegmentedKeyValueStorage of the current SegmentedLayeredKeyValueStorage.
+   * This allows access to the underlying parent storage that this layer builds upon.
+   *
+   * @return the parent SegmentedKeyValueStorage instance.
+   */
+  public SegmentedKeyValueStorage getParent() {
+    return parent;
+  }
+
   private void throwIfClosed() {
     if (parent.isClosed()) {
       LOG.error("Attempting to use a closed RocksDBKeyValueStorage");

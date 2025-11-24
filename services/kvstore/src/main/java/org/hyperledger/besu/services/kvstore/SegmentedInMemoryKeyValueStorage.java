@@ -419,4 +419,20 @@ public class SegmentedInMemoryKeyValueStorage
       lock.unlock();
     }
   }
+
+  /**
+   * Provides access to the hash value store used in the SegmentedInMemoryKeyValueStorage.
+   *
+   * <p>The hash value store is represented as a concurrent map that maps a segment identifier (used
+   * to isolate distinct segments of the storage) to a navigable map. This navigable map further
+   * organizes data by mapping hash keys (of type `Bytes`) to their corresponding values (as
+   * optional byte arrays).
+   *
+   * @return a ConcurrentMap that associates segment identifiers with their respective navigable
+   *     maps of hash keys to optional values.
+   */
+  public ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+      getHashValueStore() {
+    return hashValueStore;
+  }
 }

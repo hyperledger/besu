@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.S
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.worldstate.writesink.BufferingWorldStateWriteSink;
-import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSet;
-import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
@@ -39,6 +39,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+@SuppressWarnings("rawtypes")
 public class BlockAccessListStateRootHashCalculator {
 
   private BlockAccessListStateRootHashCalculator() {}
@@ -65,12 +66,11 @@ public class BlockAccessListStateRootHashCalculator {
   }
 
   private static BalRootComputation accumulateAccessListAndComputeRoot(
-      final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
+      final PathBasedWorldState worldState, final BlockAccessList blockAccessList) {
 
-    final WorldStateWriteSet writeSet = new WorldStateWriteSet();
-    final WorldStateWriteSink worldStateWriteSink = new BufferingWorldStateWriteSink(writeSet);
-    final BonsaiWorldStateUpdateAccumulator accumulator =
-        (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
+    final PathBasedWorldStateUpdateAccumulator accumulator = worldState.getAccumulator();
+    PathBasedWorldStateKeyValueStorage.Updater worldStateKeyValueStorageUpdater =
+        worldState.getWorldStateStorage().updater();
 
     for (AccountChanges accountChanges : blockAccessList.accountChanges()) {
       final Address address = accountChanges.address();
@@ -123,9 +123,10 @@ public class BlockAccessListStateRootHashCalculator {
 
     accumulator.clearAccountsThatAreEmpty();
     accumulator.commit();
-    final Hash root = worldState.calculateRootHash(accumulator, worldStateWriteSink);
-    writeSet.setComputedRoot(root);
-    return new BalRootComputation(root, writeSet, accumulator);
+    final Hash root =
+        worldState.calculateRootHash(Optional.of(worldStateKeyValueStorageUpdater), accumulator);
+    worldStateKeyValueStorageUpdater.commit();
+    return new BalRootComputation(root, accumulator);
   }
 
   public static CompletableFuture<BalRootComputation> computeAsync(

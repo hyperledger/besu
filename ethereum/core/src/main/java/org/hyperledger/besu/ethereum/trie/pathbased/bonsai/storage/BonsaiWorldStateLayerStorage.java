@@ -18,8 +18,16 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
+
+import java.util.NavigableMap;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
     implements PathBasedLayeredWorldStateKeyValueStorage, StorageSubscriber {
@@ -49,5 +57,34 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ((LayeredKeyValueStorage) composedWorldStateStorage).clone(),
         trieLogStorage,
         parentWorldStateStorage);
+  }
+
+  @Override
+  public ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+      streamUpdatedEntries() {
+    final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> map;
+    if (parentWorldStateStorage
+        instanceof PathBasedLayeredWorldStateKeyValueStorage layeredWorldStateKeyValueStorage) {
+      map = layeredWorldStateKeyValueStorage.streamUpdatedEntries();
+    } else {
+      map = new ConcurrentHashMap<>();
+    }
+    getComposedWorldStateStorage()
+        .getHashValueStore()
+        .forEach(
+            (segmentIdentifier, entries) -> {
+              NavigableMap<Bytes, Optional<byte[]>> subMap = map.get(segmentIdentifier);
+              if (subMap == null) {
+                map.put(segmentIdentifier, entries);
+              } else {
+                subMap.putAll(entries);
+              }
+            });
+    return map;
+  }
+
+  @Override
+  public LayeredKeyValueStorage getComposedWorldStateStorage() {
+    return (LayeredKeyValueStorage) super.getComposedWorldStateStorage();
   }
 }

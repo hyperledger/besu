@@ -18,8 +18,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 
 import java.time.Duration;
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 final class StateRootCommitterImplBal implements StateRootCommitter {
   private static final Logger LOG = LoggerFactory.getLogger(StateRootCommitterImplBal.class);
 
@@ -56,14 +59,44 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     final Duration balRootTimeout = balConfiguration.getBalStateRootTimeout();
 
     if (balConfiguration.isBalStateRootTrusted()) {
+      // Compute state root using BAL and verify it matches the block header
       final BalRootComputation balComputation = waitForBalRootStrict(balRootTimeout);
-      if (!blockHeader.getStateRoot().equals(balComputation.root())) {
+      final Hash balStateRoot = balComputation.root();
+
+      if (!blockHeader.getStateRoot().equals(balStateRoot)) {
         throw new IllegalStateException("BAL-computed root does not match block header state root");
       }
-      balComputation.writeSet().applyTo(stateUpdater);
-      ((BonsaiWorldStateUpdateAccumulator) worldState.updater())
-          .importStateChangesFromSource(balComputation.accumulator());
-      return balComputation.root();
+
+      var bonsaiUpdater = (BonsaiWorldStateKeyValueStorage.Updater) stateUpdater;
+
+      // Extract BAL state root computation result
+      final var balAccumulator = balComputation.accumulator();
+
+      // Import state changes from BAL accumulator to block processing accumulator
+      final var blockAccumulator = (PathBasedWorldStateUpdateAccumulator) worldState.updater();
+      blockAccumulator.importStateChangesFromSource(balAccumulator);
+
+      final var balWorldStateStorage =
+          (PathBasedLayeredWorldStateKeyValueStorage) balAccumulator.getWorldStateStorage();
+      balWorldStateStorage
+          .streamUpdatedEntries()
+          .forEach(
+              (segmentIdentifier, entries) -> {
+                entries.forEach(
+                    (key, value) -> {
+                      if (value.isPresent()) {
+                        bonsaiUpdater
+                            .getWorldStateTransaction()
+                            .put(segmentIdentifier, key.toArrayUnsafe(), value.get());
+                      } else {
+                        bonsaiUpdater
+                            .getWorldStateTransaction()
+                            .remove(segmentIdentifier, key.toArrayUnsafe());
+                      }
+                    });
+              });
+
+      return balStateRoot;
     }
 
     final Hash computed =

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.forest.storage;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.writesink.WorldStateWriteSink;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -201,11 +200,6 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
       } finally {
         lock.unlock();
       }
-    }
-
-    @Override
-    public WorldStateWriteSink getWorldStateWriteSink() {
-      throw new IllegalStateException("WorldStateWriteSink not implemented for Forest");
     }
 
     public void rollback() {
