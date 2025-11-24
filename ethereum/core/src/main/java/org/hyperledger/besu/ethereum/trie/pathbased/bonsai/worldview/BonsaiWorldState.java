@@ -170,6 +170,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
                         bonsaiUpdater.getWorldStateTransaction(),
                         location,
                         value)));
+
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
