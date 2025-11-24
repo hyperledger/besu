@@ -42,8 +42,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
   public void setup() {
     storage = new SegmentedInMemoryKeyValueStorage();
     archiveFlatDbStrategy =
-        new BonsaiArchiveFlatDbStrategy(
-            new NoOpMetricsSystem(), new CodeHashCodeStorageStrategy());
+        new BonsaiArchiveFlatDbStrategy(new NoOpMetricsSystem(), new CodeHashCodeStorageStrategy());
   }
 
   @Test
@@ -178,9 +177,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
       final byte[] key =
           Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(blockNum)).toArrayUnsafe();
       final Optional<byte[]> value = storage.get(ACCOUNT_INFO_STATE, key);
-      assertThat(value)
-          .as("Block " + blockNum + " should have stored value")
-          .isPresent();
+      assertThat(value).as("Block " + blockNum + " should have stored value").isPresent();
       assertThat(Bytes.wrap(value.get())).isEqualTo(expectedValues[(int) blockNum]);
     }
   }
@@ -188,7 +185,9 @@ public class BonsaiArchiveFlatDbStrategyTest {
   private void setWorldBlockNumber(final long blockNumber) {
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     tx.put(
-        TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
+        TRIE_BRANCH_STORAGE,
+        WORLD_BLOCK_NUMBER_KEY,
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
   }
 }
