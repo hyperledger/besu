@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
+import org.hyperledger.besu.consensus.clique.CliqueMinersConfiguration;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -51,6 +52,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   private final NodeKey nodeKey;
   private final EpochManager epochManager;
   private final ForksSchedule<CliqueConfigOptions> forksSchedule;
+  private final CliqueMinersConfiguration cliqueMinersConfiguration;
 
   /**
    * Instantiates a new Clique miner executor.
@@ -63,6 +65,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
    * @param blockScheduler the block scheduler
    * @param epochManager the epoch manager
    * @param forksSchedule the clique transitions
+   * @param cliqueMinersConfiguration the clique-specific mining configuration
    * @param ethScheduler the scheduler for asynchronous block creation tasks
    */
   public CliqueMinerExecutor(
@@ -74,6 +77,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final DefaultBlockScheduler blockScheduler,
       final EpochManager epochManager,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
+      final CliqueMinersConfiguration cliqueMinersConfiguration,
       final EthScheduler ethScheduler) {
     super(
         protocolContext,
@@ -86,7 +90,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
     this.forksSchedule = forksSchedule;
-    miningParams.setCoinbase(localAddress);
+    this.cliqueMinersConfiguration = cliqueMinersConfiguration;
   }
 
   @Override
@@ -119,7 +123,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
   @Override
   public Optional<Address> getCoinbase() {
-    return miningConfiguration.getCoinbase();
+    return Optional.of(cliqueMinersConfiguration.getLocalValidatorAddress());
   }
 
   /**
