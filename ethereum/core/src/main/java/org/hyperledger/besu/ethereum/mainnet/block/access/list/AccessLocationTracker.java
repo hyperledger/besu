@@ -129,7 +129,7 @@ public class AccessLocationTracker implements AccessListLocationTracker {
 
           long newNonce = account.getNonce();
           long originalNonce = wrappedAccount.getNonce();
-          if (newNonce > 0 && newNonce > originalNonce) {
+          if (Long.compareUnsigned(newNonce, originalNonce) > 0) {
             accountBuilder.withNonceChange(newNonce);
           }
 
@@ -145,7 +145,7 @@ public class AccessLocationTracker implements AccessListLocationTracker {
           }
 
           final long newNonce = account.getNonce();
-          if (newNonce > 0) {
+          if (newNonce != 0L) {
             accountBuilder.withNonceChange(newNonce);
           }
 
