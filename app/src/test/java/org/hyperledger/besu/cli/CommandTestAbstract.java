@@ -30,11 +30,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
+import org.hyperledger.besu.chainexport.Era1BlockExporter;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
@@ -97,7 +99,9 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +109,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -113,6 +118,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
@@ -223,6 +229,7 @@ public abstract class CommandTestAbstract {
   protected BesuComponent mockBesuComponent;
 
   @Mock protected RlpBlockExporter rlpBlockExporter;
+  @Mock protected Era1BlockExporter era1BlockExporter;
   @Mock protected JsonBlockImporter jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected Era1BlockImporter era1BlockImporter;
@@ -303,6 +310,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.balConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlockHeaders(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isCacheLastBlockHeadersPreloadEnabled(any()))
@@ -351,6 +359,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.permissioningService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.transactionValidatorService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.balConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
@@ -451,24 +460,63 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand = getTestBesuCommand(testType);
     besuCommands.add(besuCommand);
 
-    final File defaultKeyFile =
-        KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
+    besuCommand.setBesuConfiguration(commonPluginConfiguration);
+
+    final List<String> argsList = constructArgsWithTmpDataPathIfNotSpecified(args);
+
+    // Determine the data directory that will be used and write the key file there
+    final Path dataDir = determineDataDir(argsList);
+    final File defaultKeyFile = KeyPairUtil.getDefaultKeyFile(dataDir);
     try {
+      // Ensure parent directory exists
+      defaultKeyFile.getParentFile().mkdirs();
       Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
-    besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
-    // parse using Ansi.OFF to be able to assert on non formatted output results
+    // parse using Ansi.OFF to be able to assert on non-formatted output results
     besuCommand.parse(
         new RunLast(),
         besuCommand.parameterExceptionHandler(),
         besuCommand.executionExceptionHandler(),
         in,
         mockBesuComponent,
-        args);
+        argsList.toArray(new String[0]));
     return besuCommand;
+  }
+
+  @NotNull
+  private static Path determineDataDir(final List<String> argsList) {
+    // Look for --data-path in the arguments
+    for (int i = 0; i < argsList.size() - 1; i++) {
+      if ("--data-path".equals(argsList.get(i))) {
+        return Paths.get(argsList.get(i + 1));
+      }
+    }
+    // If no explicit data-path, use default
+    return DefaultCommandValues.getDefaultBesuDataPath(null);
+  }
+
+  @NotNull
+  private static List<String> constructArgsWithTmpDataPathIfNotSpecified(final String[] args) {
+    final List<String> argsList = new ArrayList<>(Arrays.asList(args));
+
+    boolean hasDataPath = argsList.stream().anyMatch(arg -> arg.contains("data-path"));
+    boolean hasConfigFile = argsList.stream().anyMatch(arg -> arg.contains("config-file"));
+
+    // if data-path is not set, set to a tmp dir
+    if (!hasDataPath && !hasConfigFile) {
+      try {
+        final Path tmpDir = Files.createTempDirectory("besu-test-");
+        tmpDir.toFile().deleteOnExit();
+        argsList.add(0, "--data-path");
+        argsList.add(1, tmpDir.toString());
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create temporary directory", e);
+      }
+    }
+    return argsList;
   }
 
   private TestBesuCommand getTestBesuCommand(final TestType testType) {
@@ -479,6 +527,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -492,6 +541,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -505,6 +555,7 @@ public abstract class CommandTestAbstract {
             this::jsonBlockImporterFactory,
             () -> era1BlockImporter,
             (blockchain) -> rlpBlockExporter,
+            (blockchain, networkName) -> era1BlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             getBesuPluginContext(),
@@ -549,6 +600,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -561,6 +613,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,
@@ -647,6 +700,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -659,6 +713,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,
@@ -681,6 +736,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
+        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -693,6 +749,7 @@ public abstract class CommandTestAbstract {
           jsonBlockImporterFactory,
           era1BlockImporter,
           rlpBlockExporterFactory,
+          era1BlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           besuPluginContext,

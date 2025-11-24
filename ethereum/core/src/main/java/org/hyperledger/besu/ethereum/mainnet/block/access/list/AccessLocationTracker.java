@@ -129,13 +129,13 @@ public class AccessLocationTracker implements Eip7928AccessList {
 
           long newNonce = account.getNonce();
           long originalNonce = wrappedAccount.getNonce();
-          if (newNonce > 0 && newNonce > originalNonce) {
+          if (Long.compareUnsigned(newNonce, originalNonce) > 0) {
             accountBuilder.withNonceChange(newNonce);
           }
 
           Bytes newCode = account.getCode();
           Bytes originalCode = wrappedAccount.getCode();
-          if (!newCode.isEmpty() && !newCode.equals(originalCode)) {
+          if (!newCode.equals(originalCode)) {
             accountBuilder.withNewCode(newCode);
           }
         } else {
@@ -145,7 +145,7 @@ public class AccessLocationTracker implements Eip7928AccessList {
           }
 
           final long newNonce = account.getNonce();
-          if (newNonce > 0) {
+          if (newNonce != 0L) {
             accountBuilder.withNonceChange(newNonce);
           }
 

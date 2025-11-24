@@ -108,7 +108,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder()
             .setName("Console")
-            .setTarget(ConsoleAppender.Target.SYSTEM_ERR)
+            .setTarget(ConsoleAppender.Target.SYSTEM_OUT)
             .setLayout(patternLayout)
             .build();
     consoleAppender.start();

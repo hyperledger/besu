@@ -203,8 +203,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   }
 
   private static Optional<Vote> toVote(final Optional<ValidatorVote> input) {
-    return input
-        .map(v -> Optional.of(new Vote(v.getRecipient(), v.getVotePolarity())))
-        .orElse(Optional.empty());
+    return input.map(v -> new Vote(v.getRecipient(), v.getVotePolarity()));
   }
 }

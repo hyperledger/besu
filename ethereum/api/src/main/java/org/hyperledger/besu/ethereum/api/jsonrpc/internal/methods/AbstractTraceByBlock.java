@@ -24,21 +24,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.debug.OpCodeTracerConfig;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.util.Map;
 import java.util.Optional;
@@ -98,9 +98,9 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
             () -> builder.output(simulatorResult.getOutput().toString()));
 
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
-      new StateDiffGenerator()
+      new StateTraceGenerator()
           .generateStateDiff(transactionTrace)
-          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+          .forEachOrdered(builder::stateDiff);
     }
 
     if (traceTypes.contains(TraceType.TRACE)) {
@@ -125,10 +125,12 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
   protected TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
         TracerType.OPCODE_TRACER,
-        new OpCodeTracerConfig(
-            traceTypes.contains(TraceType.STATE_DIFF),
-            false,
-            traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE)),
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceStorage(traceTypes.contains(TraceType.STATE_DIFF))
+            .traceMemory(false)
+            .traceStack(
+                traceTypes.contains(TraceType.TRACE) || traceTypes.contains(TraceType.VM_TRACE))
+            .build(),
         Map.of());
   }
 }

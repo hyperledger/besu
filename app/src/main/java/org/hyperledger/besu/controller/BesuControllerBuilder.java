@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -105,7 +106,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -215,8 +215,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
-  /** whether block access list functionality was enabled via CLI feature flag */
-  protected boolean isBlockAccessListEnabled;
+  /** Configuration flags related to block access lists. */
+  protected BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
@@ -567,15 +567,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Sets whether functionality related to testing block-level access list implementation should be
-   * enabled. This includes caching of block-level access lists produced during block processing and
-   * enabling an RPC endpoint serving those cached BALs.
+   * Sets configuration for functionality related to block-level access lists.
    *
-   * @param isBlockAccessListEnabled true to enable block-level access list testing functionality
+   * @param balConfiguration configuration related to block access lists
    * @return the besu controller
    */
-  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
     return this;
   }
 
@@ -781,6 +779,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
+            ethereumWireProtocolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningConfiguration);
 
@@ -802,8 +801,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+        createPivotSelector(protocolSchedule, protocolContext, ethContext, syncState, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -1033,7 +1031,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
@@ -1066,9 +1063,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           protocolContext,
           protocolSchedule,
           ethContext,
-          metricsSystem,
           genesisConfigOptions,
-          syncConfig,
           unverifiedForkchoiceSupplier,
           unsubscribeForkchoiceListener);
     } else {
@@ -1329,7 +1324,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
-            1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
   }
@@ -1349,8 +1343,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
@@ -1358,11 +1351,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (classicBlock.isPresent()) {
       validators.add(
           new ClassicForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              classicBlock.getAsLong()));
+              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
@@ -1370,8 +1359,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
     }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO1;
@@ -75,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryBal;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -155,7 +157,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
@@ -199,7 +201,8 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isBlockAccessListEnabled(isBlockAccessListEnabled)
+        .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
+        .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
@@ -246,13 +249,13 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return frontierDefinition(
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
@@ -272,13 +275,13 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
@@ -289,7 +292,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                protocolSchedule) ->
+                protocolSchedule,
+                balConfig) ->
                 new DaoBlockProcessor(
                     isParallelTxProcessingEnabled
                         ? new MainnetParallelBlockProcessor(
@@ -299,6 +303,7 @@ public abstract class MainnetProtocolSpecs {
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
                             protocolSchedule,
+                            balConfig,
                             metricsSystem)
                         : new MainnetBlockProcessor(
                             transactionProcessor,
@@ -306,7 +311,8 @@ public abstract class MainnetProtocolSpecs {
                             blockReward,
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
-                            protocolSchedule)))
+                            protocolSchedule,
+                            balConfig)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 
@@ -314,13 +320,13 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return daoRecoveryInitDefinition(
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
@@ -333,13 +339,13 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return homesteadDefinition(
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .hardforkId(TANGERINE_WHISTLE);
@@ -350,13 +356,13 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return tangerineWhistleDefinition(
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
@@ -405,14 +411,14 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return spuriousDragonDefinition(
             chainId,
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
@@ -429,7 +435,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return byzantiumDefinition(
             chainId,
@@ -437,7 +443,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
@@ -452,7 +458,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return constantinopleDefinition(
             chainId,
@@ -460,7 +466,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(PetersburgGasCalculator::new)
         .hardforkId(PETERSBURG);
@@ -472,7 +478,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return petersburgDefinition(
             chainId,
@@ -480,7 +486,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
@@ -505,7 +511,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return istanbulDefinition(
             chainId,
@@ -513,7 +519,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .hardforkId(MUIR_GLACIER);
@@ -525,7 +531,7 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return muirGlacierDefinition(
             chainId,
@@ -533,7 +539,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -555,7 +561,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
@@ -565,13 +571,14 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                false,
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.london(
@@ -642,7 +649,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return londonDefinition(
             chainId,
@@ -651,7 +658,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
         .hardforkId(ARROW_GLACIER);
@@ -664,7 +671,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return arrowGlacierDefinition(
             chainId,
@@ -673,7 +680,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
         .hardforkId(GRAY_GLACIER);
@@ -686,7 +693,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
 
     return grayGlacierDefinition(
@@ -696,7 +703,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -717,7 +724,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return parisDefinition(
             chainId,
@@ -726,7 +733,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
         .gasCalculator(ShanghaiGasCalculator::new)
@@ -780,7 +787,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
 
@@ -791,13 +798,14 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .feeMarketBuilder(
             createFeeMarket(
                 londonForkBlockNumber,
                 genesisConfigOptions.isZeroBaseFee(),
                 genesisConfigOptions.isFixedBaseFee(),
+                true,
                 miningConfiguration.getMinTransactionGasPrice(),
                 (blobSchedule) ->
                     FeeMarket.cancun(
@@ -872,7 +880,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
 
     ProtocolSpecBuilder protocolSpecBuilder =
@@ -883,7 +891,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder).hardforkId(CANCUN_EOF);
   }
@@ -895,7 +903,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder pragueSpecBuilder =
         cancunDefinition(
@@ -905,7 +913,7 @@ public abstract class MainnetProtocolSpecs {
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .blobSchedule(
                 genesisConfigOptions
@@ -988,7 +996,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
 
@@ -999,7 +1007,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .gasCalculator(OsakaGasCalculator::new)
         // tx gas limit cap EIP-7825
@@ -1043,7 +1051,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder builder =
         osakaDefinition(
@@ -1053,7 +1061,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo1, BPO1);
   }
@@ -1065,7 +1073,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder builder =
         bpo1Definition(
@@ -1075,7 +1083,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo2, BPO2);
   }
@@ -1087,7 +1095,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder builder =
         bpo2Definition(
@@ -1097,7 +1105,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo3, BPO3);
   }
@@ -1109,7 +1117,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder builder =
         bpo3Definition(
@@ -1119,7 +1127,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo4, BPO4);
   }
@@ -1131,7 +1139,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder builder =
         bpo4Definition(
@@ -1141,9 +1149,33 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem);
     return applyBlobSchedule(builder, genesisConfigOptions, BlobScheduleOptions::getBpo5, BPO5);
+  }
+
+  static ProtocolSpecBuilder amsterdamDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
+    return bpo5Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem)
+        .blockAccessListFactory(
+            new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
+        .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+        .hardforkId(AMSTERDAM);
   }
 
   private static ProtocolSpecBuilder applyBlobSchedule(
@@ -1188,20 +1220,19 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     ProtocolSpecBuilder protocolSpecBuilder =
-        bpo5Definition(
+        amsterdamDefinition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,
                 evmConfiguration,
                 miningConfiguration,
                 isParallelTxProcessingEnabled,
-                isBlockAccessListEnabled,
+                balConfiguration,
                 metricsSystem)
             .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .blockAccessListFactory(new BlockAccessListFactory(isBlockAccessListEnabled, true))
             .hardforkId(FUTURE_EIPS);
 
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
@@ -1214,7 +1245,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
 
     return futureEipsDefinition(
@@ -1224,7 +1255,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration,
             miningConfiguration,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -1377,10 +1408,15 @@ public abstract class MainnetProtocolSpecs {
       final long londonForkBlockNumber,
       final boolean isZeroBaseFee,
       final boolean isFixedBaseFee,
+      final boolean supportsBlobs,
       final Wei minTransactionGasPrice,
       final ProtocolSpecBuilder.FeeMarketBuilder feeMarketBuilder) {
     if (isZeroBaseFee) {
-      return blobSchedule -> FeeMarket.zeroBaseFee(londonForkBlockNumber);
+      var baseFeeMarket =
+          supportsBlobs
+              ? FeeMarket.zeroBlobFee(londonForkBlockNumber)
+              : FeeMarket.zeroBaseFee(londonForkBlockNumber);
+      return blobSchedule -> baseFeeMarket;
     }
     if (isFixedBaseFee) {
       return blobSchedule -> FeeMarket.fixedBaseFee(londonForkBlockNumber, minTransactionGasPrice);

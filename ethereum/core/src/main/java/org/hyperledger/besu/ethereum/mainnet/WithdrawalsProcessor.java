@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -26,14 +27,21 @@ public class WithdrawalsProcessor {
 
   public void processWithdrawals(
       final List<Withdrawal> withdrawals,
-      final WorldUpdater withdrawalsUpdater,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final WorldUpdater blockUpdater,
+      final Optional<AccessLocationTracker> accessLocationTracker,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+    final WorldUpdater withdrawalsUpdater = blockUpdater.updater();
     for (final Withdrawal withdrawal : withdrawals) {
       final MutableAccount account = withdrawalsUpdater.getOrCreate(withdrawal.getAddress());
       account.incrementBalance(withdrawal.getAmount().getAsWei());
       accessLocationTracker.ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     }
     withdrawalsUpdater.clearAccountsThatAreEmpty();
+    accessLocationTracker.ifPresent(
+        tracker ->
+            blockAccessListBuilder.ifPresent(
+                builder -> builder.apply(tracker, withdrawalsUpdater)));
     withdrawalsUpdater.commit();
+    blockUpdater.commit();
   }
 }

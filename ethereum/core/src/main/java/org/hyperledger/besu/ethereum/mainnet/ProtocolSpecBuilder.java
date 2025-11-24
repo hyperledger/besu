@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -45,7 +47,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProtocolSpecBuilder {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolSpecBuilder.class);
+
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
   private Wei blockReward;
@@ -89,6 +96,9 @@ public class ProtocolSpecBuilder {
   private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
   private BlockAccessListFactory blockAccessListFactory;
+  private StateRootCommitterFactory stateRootCommitterFactory =
+      new StateRootCommitterFactoryDefault();
+  private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -302,6 +312,17 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder stateRootCommitterFactory(
+      final StateRootCommitterFactory stateRootCommitterFactory) {
+    this.stateRootCommitterFactory = stateRootCommitterFactory;
+    return this;
+  }
+
+  public ProtocolSpecBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -328,12 +349,17 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
     checkNotNull(blobSchedule, "Missing blob schedule");
     checkNotNull(slotDuration, "Missing slot duration");
+    checkNotNull(balConfiguration, "Missing BAL configuration");
 
     final FeeMarket feeMarket = feeMarketBuilder.apply(blobSchedule);
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final GasLimitCalculator gasLimitCalculator =
         gasLimitCalculatorBuilder.apply(feeMarket, gasCalculator, blobSchedule);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
+    LOGGER.debug(
+        "Opcode optimizations {} for milestone {}",
+        evm.getEvmConfiguration().enableOptimizedOpcodes() ? "enabled" : "disabled",
+        hardforkId);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator);
     final TransactionValidatorFactory transactionValidatorFactory =
@@ -413,7 +439,8 @@ public class ProtocolSpecBuilder {
         slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(finalBalFactory));
+        Optional.ofNullable(finalBalFactory),
+        stateRootCommitterFactory);
   }
 
   private BlockProcessor createBlockProcessor(
@@ -425,7 +452,8 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        protocolSchedule);
+        protocolSchedule,
+        balConfiguration);
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
@@ -457,7 +485,8 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        ProtocolSchedule protocolSchedule);
+        ProtocolSchedule protocolSchedule,
+        BalConfiguration balConfiguration);
   }
 
   @FunctionalInterface

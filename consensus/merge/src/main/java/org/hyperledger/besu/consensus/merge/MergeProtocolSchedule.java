@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -55,6 +56,7 @@ public class MergeProtocolSchedule {
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -63,8 +65,9 @@ public class MergeProtocolSchedule {
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final boolean isBlockAccessListEnabled,
-      final MetricsSystem metricsSystem) {
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final EvmConfiguration evmConfiguration) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -72,7 +75,7 @@ public class MergeProtocolSchedule {
         0L,
         (specBuilder) ->
             MergeProtocolSchedule.applyParisSpecificModifications(
-                specBuilder, config.getChainId(), miningConfiguration));
+                specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
@@ -80,11 +83,11 @@ public class MergeProtocolSchedule {
             Optional.of(DEFAULT_CHAIN_ID),
             new ProtocolSpecAdapters(postMergeModifications),
             isRevertReasonEnabled,
-            EvmConfiguration.DEFAULT,
+            evmConfiguration,
             miningConfiguration,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            isBlockAccessListEnabled,
+            balConfiguration,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -98,13 +101,13 @@ public class MergeProtocolSchedule {
   private static ProtocolSpecBuilder applyParisSpecificModifications(
       final ProtocolSpecBuilder specBuilder,
       final Optional<BigInteger> chainId,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final EvmConfiguration evmConfiguration) {
 
     return specBuilder
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.paris(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
+                MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b) -> BigInteger.ZERO)

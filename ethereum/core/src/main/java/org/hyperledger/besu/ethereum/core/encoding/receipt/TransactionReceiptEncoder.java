@@ -19,7 +19,23 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+
 public class TransactionReceiptEncoder {
+  public Bytes encode(
+      final List<TransactionReceipt> transactionReceipts,
+      final TransactionReceiptEncodingConfiguration options) {
+    return RLP.encode(
+        (rlpOutput) -> {
+          if (transactionReceipts.isEmpty()) {
+            rlpOutput.writeEmptyList();
+          } else {
+            transactionReceipts.forEach((tr) -> writeTo(tr, rlpOutput, options));
+          }
+        });
+  }
 
   public static void writeTo(
       final TransactionReceipt receipt,
@@ -59,7 +75,7 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingConfiguration options) {
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-      rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
+      rlpOutput.writeByte(receipt.getTransactionType().getSerializedType());
     }
     rlpOutput.startList();
     writeStatusOrStateRoot(receipt, rlpOutput);
@@ -119,7 +135,7 @@ public class TransactionReceiptEncoder {
       final RLPOutput output,
       final TransactionReceiptEncodingConfiguration options) {
     output.startList();
-    output.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
+    output.writeByte(receipt.getTransactionType().getEthSerializedType());
     writeStatusOrStateRoot(receipt, output);
     output.writeLongScalar(receipt.getCumulativeGasUsed());
     writeLogs(receipt, output, options);
