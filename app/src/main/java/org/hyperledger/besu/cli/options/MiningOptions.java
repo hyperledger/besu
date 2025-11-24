@@ -54,20 +54,20 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   private static final String DEPRECATION_PREFIX =
       "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
 
-  // TODO only used for clique, which overrides this to true, so we do not need to be able to set this via CLI
+  // TODO only used for clique, which overrides this to true, so we do not need to be able to set
+  // this via CLI
   @Option(
       names = {"--miner-enabled"},
       hidden = true,
-      description =
-              DEPRECATION_PREFIX + " This has no effect")
+      description = DEPRECATION_PREFIX + " This has no effect")
   private Boolean isMiningEnabled = false;
 
-  // TODO only used for clique, which overrides to local node address, so we do not need to be able to set this via CLI
+  // TODO only used for clique, which overrides to local node address, so we do not need to be able
+  // to set this via CLI
   @Option(
       names = {"--miner-coinbase"},
       hidden = true,
-      description =
-          DEPRECATION_PREFIX + " This has no effect",
+      description = DEPRECATION_PREFIX + " This has no effect",
       arity = "1")
   private Address coinbase = null;
 
