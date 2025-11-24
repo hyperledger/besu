@@ -35,6 +35,7 @@ import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NativeRequirement;
 import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
@@ -1438,7 +1439,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // assert native library requirements for named networks:
     List<NativeRequirementResult> failedNativeReqs =
-        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present()).toList();
+        NativeRequirement.getNativeRequirements(configuredNetwork).stream()
+            .filter(r -> !r.present())
+            .toList();
 
     if (!failedNativeReqs.isEmpty()) {
       String failures =
@@ -2596,9 +2599,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private String generateConfigurationOverview() {
     final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
-
-    final BalConfiguration balConfiguration = balConfigurationOptions.toDomainObject();
-    builder.setBalConfiguration(balConfiguration);
 
     if (environment != null) {
       builder.setEnvironment(environment);
