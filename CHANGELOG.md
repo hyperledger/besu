@@ -11,6 +11,7 @@
 - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
 - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 - Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481)
+- Remove PoW CLI options: `--miner-enabled`, `--miner-coinbase`
 
 ### Upcoming Breaking Changes
 - ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
