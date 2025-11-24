@@ -41,8 +41,6 @@ public final class UInt256 {
 
   // Fixed number of limbs or digits
   private static final int N_LIMBS = 8;
-  // Fixed number of bytes per limb.
-  // private static final int N_BYTES_PER_LIMB = 4;
   // Fixed number of bits per limb.
   private static final int N_BITS_PER_LIMB = 32;
   // Mask for long values
