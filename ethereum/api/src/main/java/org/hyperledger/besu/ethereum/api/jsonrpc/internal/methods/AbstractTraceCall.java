@@ -78,6 +78,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
     return transactionSimulator
         .process(
             callParams,
+            Optional.ofNullable(traceOptions.stateOverrides()),
             buildTransactionValidationParams(),
             tracer,
             getSimulatorResultHandler(requestContext, tracer),

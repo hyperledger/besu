@@ -30,14 +30,14 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class AllowlistPersistorTest {
 
   private AllowlistPersistor allowlistPersistor;
-  private File tempFile;
+  @TempDir private File tempFile;
   private final String accountsAllowlist =
       String.format("%s=[%s]", ALLOWLIST_TYPE.ACCOUNTS.getTomlKey(), "\"account1\",\"account2\"");
   private final String nodesAllowlist =
@@ -134,11 +134,6 @@ public class AllowlistPersistorTest {
                 verifyConfigFileMatchesState(
                     key, Lists.newArrayList("not-the-same"), tempFile.toPath()))
         .isInstanceOf(AllowlistFileSyncException.class);
-  }
-
-  @AfterEach
-  public void tearDown() {
-    tempFile.delete();
   }
 
   private long countLines() throws IOException {
