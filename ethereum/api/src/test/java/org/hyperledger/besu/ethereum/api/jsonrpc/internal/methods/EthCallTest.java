@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.REVERT_ERROR;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +63,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -486,13 +486,14 @@ public class EthCallTest {
   }
 
   @Test
-  public void shouldReturnBlockNotFoundWhenInvalidBlockNumberSpecified() {
+  public void shouldReturnNullWhenInvalidBlockNumberSpecified() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(33L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
 
     verify(blockchainQueries).headBlockNumber();
   }

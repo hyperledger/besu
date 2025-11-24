@@ -40,8 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetCode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetLogs;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetProof;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetStorageAt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransactionByBlockHashAndIndex;
@@ -178,8 +176,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new EthProtocolVersion(supportedCapabilities),
             new EthGasPrice(blockchainQueries, apiConfiguration),
             new EthChainId(protocolSchedule.getChainId()),
-            new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
-            new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
             new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
             new EthMaxPriorityFeePerGas(blockchainQueries),
             new EthSimulateV1(

@@ -195,6 +195,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
     @Override
     public void rollback() {
+      close();
+    }
+
+    @Override
+    public void close() {
       updatedValues.clear();
       removedKeys.clear();
     }
