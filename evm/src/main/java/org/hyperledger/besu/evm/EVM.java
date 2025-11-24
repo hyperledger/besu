@@ -53,10 +53,12 @@ import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
+import org.hyperledger.besu.evm.operation.NotOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
+import org.hyperledger.besu.evm.operation.OrOperationOptimized;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -273,12 +275,18 @@ public class EVM {
                   evmConfiguration.enableOptimizedOpcodes()
                       ? AndOperationOptimized.staticOperation(frame)
                       : AndOperation.staticOperation(frame);
-              case 0x17 -> OrOperation.staticOperation(frame);
+              case 0x17 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? OrOperationOptimized.staticOperation(frame)
+                      : OrOperation.staticOperation(frame);
               case 0x18 ->
                   evmConfiguration.enableOptimizedOpcodes()
                       ? XorOperationOptimized.staticOperation(frame)
                       : XorOperation.staticOperation(frame);
-              case 0x19 -> NotOperation.staticOperation(frame);
+              case 0x19 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? NotOperationOptimized.staticOperation(frame)
+                      : NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1e ->
                   enableOsaka
