@@ -367,7 +367,9 @@ public class EthFeeHistory implements JsonRpcMethod {
   private List<BlockHeader> getBlockHeaders(final long oldestBlock, final long lastBlock) {
     return LongStream.range(oldestBlock, lastBlock)
         .parallel()
-        .mapToObj(blockchain::getBlockHeader)
+        .mapToObj(
+            (block) ->
+                blockchain.getBlockHeader(block).or(() -> blockchain.getBlockHeaderSafe(block)))
         .flatMap(Optional::stream)
         .toList();
   }
