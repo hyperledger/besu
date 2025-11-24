@@ -27,14 +27,17 @@ import net.jqwik.api.Provide;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class UInt256Prop {
+public class UInt256PropertyBasedTest {
+
+  // region Test Data Providers
+
   @Provide
   Arbitrary<byte[]> unsigned1to32() {
     return Arbitraries.bytes()
         .array(byte[].class)
         .ofMinSize(1)
         .ofMaxSize(32)
-        .map(UInt256Prop::clampUnsigned32);
+        .map(UInt256PropertyBasedTest::clampUnsigned32);
   }
 
   @Provide
@@ -43,7 +46,7 @@ public class UInt256Prop {
         .array(byte[].class)
         .ofMinSize(0)
         .ofMaxSize(64)
-        .map(UInt256Prop::clampUnsigned32);
+        .map(UInt256PropertyBasedTest::clampUnsigned32);
   }
 
   @Provide
@@ -52,13 +55,17 @@ public class UInt256Prop {
         .array(byte[].class)
         .ofMinSize(1)
         .ofMaxSize(4)
-        .map(UInt256Prop::clampUnsigned32);
+        .map(UInt256PropertyBasedTest::clampUnsigned32);
   }
 
   @Provide
   Arbitrary<Integer> shifts() {
     return Arbitraries.integers().between(-512, 512);
   }
+
+  // endregion
+
+  // region Serialization Tests
 
   @Property
   void property_roundTripUnsigned_toFromBytesBE(@ForAll("unsigned0to64") final byte[] any) {
@@ -74,6 +81,10 @@ public class UInt256Prop {
     byte[] expected = bigUnsignedToBytes32(toBigUnsigned(be));
     assertThat(back).containsExactly(expected);
   }
+
+  // endregion
+
+  // region Comparison Tests
 
   @Property
   void property_equals_compare_consistent(
@@ -95,6 +106,9 @@ public class UInt256Prop {
     assertThat(Integer.signum(cmp)).isEqualTo(Integer.signum(bc));
   }
 
+  // endregion
+
+  // region Modulo Tests (MOD/SMOD/ADDMOD/MULMOD)
   @Property
   void property_mod_matchesBigInteger(
       @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] m) {
@@ -211,6 +225,10 @@ public class UInt256Prop {
     assertThat(x.addMod(x, zero).toBytesBE()).containsExactly(Bytes32.ZERO.toArrayUnsafe());
     assertThat(x.mulMod(x, zero).toBytesBE()).containsExactly(Bytes32.ZERO.toArrayUnsafe());
   }
+
+  // endregion
+
+  // region AND Operation Tests
 
   @Property
   void property_and_matchesBytesAnd(
@@ -393,6 +411,10 @@ public class UInt256Prop {
         .containsExactly(bytes1.and(bytes2).toArrayUnsafe());
   }
 
+  // endregion
+
+  // region XOR Operation Tests
+
   @Property
   void property_xor_matchesBytesXor(
       @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
@@ -450,7 +472,7 @@ public class UInt256Prop {
     final UInt256 uc = UInt256.fromBytesBE(c);
 
     // Act & Assert - (A ^ B) ^ C = A ^ (B ^ C)
-    assertThat(ua.xor(ub).xor(uc)).isEqualTo(ua.xor(ub.xor(uc)));
+    assertThat((ua.xor(ub)).xor(uc)).isEqualTo(ua.xor(ub.xor(uc)));
   }
 
   @Property
@@ -489,18 +511,7 @@ public class UInt256Prop {
   void property_xor_with_allOnes_is_complement(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes =
-        UInt256.fromBytesBE(
-            new byte[] {
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
-            });
+    final UInt256 allOnes = UInt256.ALL_ONES;
 
     // Act
     final UInt256 result = ua.xor(allOnes);
@@ -563,19 +574,7 @@ public class UInt256Prop {
               (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
             }); // 01010101...
 
-    final UInt256 allOnes =
-        UInt256.fromBytesBE(
-            new byte[] {
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-              (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
-            });
-
+    final UInt256 allOnes = UInt256.ALL_ONES;
     // Act & Assert - 0xAA XOR 0x55 = 0xFF
     assertThat(pattern1.xor(pattern2)).isEqualTo(allOnes);
 
@@ -600,6 +599,510 @@ public class UInt256Prop {
     // Assert - XOR is its own inverse (encryption/decryption property)
     assertThat(decrypted).isEqualTo(ua);
   }
+
+  // endregion
+
+  // region OR Operation Tests
+
+  @Property
+  void property_or_matchesBytesOr(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    // Act
+    final byte[] got = ua.or(ub).toBytesBE();
+    // Assert - compare with Bytes.or() (existing implementation)
+    final Bytes bytesA = Bytes32.leftPad(Bytes.wrap(a));
+    final Bytes bytesB = Bytes32.leftPad(Bytes.wrap(b));
+    final byte[] expected = bytesA.or(bytesB).toArrayUnsafe();
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_or_matchesBigInteger(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    // Act
+    final byte[] got = ua.or(ub).toBytesBE();
+    // Assert - compare with BigInteger.or()
+    BigInteger A = toBigUnsigned(a);
+    BigInteger B = toBigUnsigned(b);
+    byte[] exp = bigUnsignedToBytes32(A.or(B));
+    assertThat(got).containsExactly(exp);
+  }
+
+  @Property
+  void property_or_commutative(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    // Act & Assert - A | B = B | A
+    assertThat(ua.or(ub)).isEqualTo(ub.or(ua));
+  }
+
+  @Property
+  void property_or_associative(
+      @ForAll("unsigned1to32") final byte[] a,
+      @ForAll("unsigned1to32") final byte[] b,
+      @ForAll("unsigned1to32") final byte[] c) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    final UInt256 uc = UInt256.fromBytesBE(c);
+    // Act & Assert - (A | B) | C = A | (B | C)
+    assertThat((ua.or(ub)).or(uc)).isEqualTo(ua.or(ub.or(uc)));
+  }
+
+  @Property
+  void property_or_identity(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 zero = UInt256.ZERO;
+    // Act & Assert - A | 0 = A (identity)
+    assertThat(ua.or(zero)).isEqualTo(ua);
+    assertThat(zero.or(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_or_self(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - A | A = A (idempotent)
+    assertThat(ua.or(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_or_idempotent(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - (A | A) | A = A
+    assertThat(ua.or(ua).or(ua)).isEqualTo(ua);
+  }
+
+  @Property
+  void property_or_with_allOnes(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 allOnes = UInt256.ALL_ONES;
+    // Act & Assert - A | 0xFF...FF = 0xFF...FF (domination)
+    assertThat(ua.or(allOnes)).isEqualTo(allOnes);
+    assertThat(allOnes.or(ua)).isEqualTo(allOnes);
+  }
+
+  @Property
+  void property_or_result_bounded(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    // Act
+    final UInt256 result = ua.or(ub);
+    // Assert - A | B >= max(A, B)
+    assertThat(UInt256.compare(result, ua)).isGreaterThanOrEqualTo(0);
+    assertThat(UInt256.compare(result, ub)).isGreaterThanOrEqualTo(0);
+  }
+
+  @Property
+  void property_or_absorbs_and(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    // Act & Assert - A | (A & B) = A (absorption law)
+    assertThat(ua.or(ua.and(ub))).isEqualTo(ua);
+  }
+
+  @Property
+  void property_or_distributes_over_and(
+      @ForAll("unsigned1to32") final byte[] a,
+      @ForAll("unsigned1to32") final byte[] b,
+      @ForAll("unsigned1to32") final byte[] c) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    final UInt256 uc = UInt256.fromBytesBE(c);
+    // Act & Assert - A | (B & C) = (A | B) & (A | C) (distributive law)
+    UInt256 left = ua.or(ub.and(uc));
+    UInt256 right = ua.or(ub).and(ua.or(uc));
+    assertThat(left).isEqualTo(right);
+  }
+
+  @Property
+  void property_or_with_complement_is_allOnes(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+    // Create bitwise complement
+    byte[] complementBytes = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      complementBytes[i] = (byte) ~aBytes32[i];
+    }
+    final UInt256 complement = UInt256.fromBytesBE(complementBytes);
+    final UInt256 allOnes = UInt256.ALL_ONES;
+    // Act & Assert - A | ~A = 0xFF...FF
+    assertThat(ua.or(complement)).isEqualTo(allOnes);
+  }
+
+  @Property
+  void property_or_specific_patterns() {
+    // Test specific bit patterns
+    final UInt256 pattern1 =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA
+            }); // 10101010...
+    final UInt256 pattern2 =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
+            }); // 01010101...
+    final UInt256 allOnes = UInt256.ALL_ONES;
+    // Act & Assert - 0xAA OR 0x55 = 0xFF
+    assertThat(pattern1.or(pattern2)).isEqualTo(allOnes);
+    // Verify with Bytes implementation
+    final Bytes bytes1 = Bytes.wrap(pattern1.toBytesBE());
+    final Bytes bytes2 = Bytes.wrap(pattern2.toBytesBE());
+    assertThat(pattern1.or(pattern2).toBytesBE())
+        .containsExactly(bytes1.or(bytes2).toArrayUnsafe());
+  }
+
+  @Property
+  void property_or_de_morgans_law(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+    final byte[] bBytes32 = Bytes32.leftPad(Bytes.wrap(b)).toArrayUnsafe();
+
+    // Create complements
+    byte[] notABytes = new byte[32];
+    byte[] notBBytes = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      notABytes[i] = (byte) ~aBytes32[i];
+      notBBytes[i] = (byte) ~bBytes32[i];
+    }
+    final UInt256 notA = UInt256.fromBytesBE(notABytes);
+    final UInt256 notB = UInt256.fromBytesBE(notBBytes);
+
+    // Act
+    // De Morgan's Law: ~(A | B) = ~A & ~B
+    UInt256 left = ua.or(ub);
+    byte[] leftBytes = left.toBytesBE();
+    byte[] notLeft = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      notLeft[i] = (byte) ~leftBytes[i];
+    }
+    UInt256 notAorB = UInt256.fromBytesBE(notLeft);
+
+    UInt256 right = notA.and(notB);
+
+    // Assert - ~(A | B) = ~A & ~B
+    assertThat(notAorB).isEqualTo(right);
+  }
+
+  @Property
+  void property_or_relationship_with_and_xor(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act & Assert - A | B = (A & B) | (A ^ B)
+    // This is because OR sets a bit if it's in either operand,
+    // which is the same as bits in both (AND) OR bits in exactly one (XOR)
+    UInt256 left = ua.or(ub);
+    UInt256 right = ua.and(ub).or(ua.xor(ub));
+    assertThat(left).isEqualTo(right);
+  }
+
+  // endregion
+
+  // region NOT Operation Tests
+
+  @Property
+  void property_not_matchesBytesNot(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act
+    final byte[] got = ua.not().toBytesBE();
+    // Assert - compare with Bytes.not() (existing implementation)
+    final Bytes bytesA = Bytes32.leftPad(Bytes.wrap(a));
+    final byte[] expected = bytesA.not().toArrayUnsafe();
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_not_matchesBigInteger(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act
+    final byte[] got = ua.not().toBytesBE();
+    // Assert - compare with BigInteger.not()
+    BigInteger A = toBigUnsigned(a);
+    // BigInteger.not() does two's complement, we need bitwise NOT for 256 bits
+    // So we XOR with all ones: ~A = A XOR 0xFF...FF
+    BigInteger allOnes = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE);
+    byte[] exp = bigUnsignedToBytes32(A.xor(allOnes));
+    assertThat(got).containsExactly(exp);
+  }
+
+  @Property
+  void property_not_manualComplement(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+
+    // Create expected result manually
+    byte[] expected = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      expected[i] = (byte) ~aBytes32[i];
+    }
+
+    // Act
+    final byte[] got = ua.not().toBytesBE();
+
+    // Assert
+    assertThat(got).containsExactly(expected);
+  }
+
+  @Property
+  void property_not_involutive(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - ~~A = A (double negation returns original)
+    assertThat(ua.not().not()).isEqualTo(ua);
+  }
+
+  @Property
+  void property_not_different_from_original(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 allOnes = UInt256.ALL_ONES;
+
+    // Act
+    final UInt256 notA = ua.not();
+
+    // Assert - ~A != A (except for special patterns)
+    // Only exception: if all bits are alternating or special case
+    // For most random values, A != ~A
+    if (!ua.equals(allOnes) && !ua.equals(UInt256.ZERO)) {
+      assertThat(notA).isNotEqualTo(ua);
+    }
+  }
+
+  @Property
+  void property_not_with_and_is_zero(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - A & ~A = 0
+    assertThat(ua.and(ua.not())).isEqualTo(UInt256.ZERO);
+  }
+
+  @Property
+  void property_not_with_or_is_allOnes(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - A | ~A = 0xFF...FF
+    assertThat(ua.or(ua.not())).isEqualTo(UInt256.ALL_ONES);
+  }
+
+  @Property
+  void property_not_with_xor_is_allOnes(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    // Act & Assert - A ^ ~A = 0xFF...FF
+    assertThat(ua.xor(ua.not())).isEqualTo(UInt256.ALL_ONES);
+  }
+
+  @Property
+  void property_not_de_morgans_and(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act & Assert - ~(A & B) = ~A | ~B (De Morgan's Law)
+    UInt256 left = ua.and(ub).not();
+    UInt256 right = ua.not().or(ub.not());
+    assertThat(left).isEqualTo(right);
+  }
+
+  @Property
+  void property_not_de_morgans_or(
+      @ForAll("unsigned1to32") final byte[] a, @ForAll("unsigned1to32") final byte[] b) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 ub = UInt256.fromBytesBE(b);
+
+    // Act & Assert - ~(A | B) = ~A & ~B (De Morgan's Law)
+    UInt256 left = ua.or(ub).not();
+    UInt256 right = ua.not().and(ub.not());
+    assertThat(left).isEqualTo(right);
+  }
+
+  @Property
+  void property_not_zero_is_allOnes() {
+    // Arrange
+    final UInt256 zero = UInt256.ZERO;
+    final UInt256 allOnes = UInt256.ALL_ONES;
+
+    // Act & Assert - ~0 = 0xFF...FF
+    assertThat(zero.not()).isEqualTo(allOnes);
+  }
+
+  @Property
+  void property_not_allOnes_is_zero() {
+    // Arrange
+    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 zero = UInt256.ZERO;
+
+    // Act & Assert - ~0xFF...FF = 0
+    assertThat(allOnes.not()).isEqualTo(zero);
+  }
+
+  @Property
+  void property_not_specific_patterns() {
+    // Test specific bit patterns
+    final UInt256 pattern1 =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA,
+              (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA
+            }); // 10101010...
+
+    final UInt256 expected =
+        UInt256.fromBytesBE(
+            new byte[] {
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
+              (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
+            }); // 01010101...
+
+    // Act & Assert - ~0xAA = 0x55
+    assertThat(pattern1.not()).isEqualTo(expected);
+
+    // Verify with Bytes implementation
+    final Bytes bytes1 = Bytes.wrap(pattern1.toBytesBE());
+    assertThat(pattern1.not().toBytesBE()).containsExactly(bytes1.not().toArrayUnsafe());
+  }
+
+  @Property
+  void property_not_each_bit_flipped(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+
+    // Act
+    final byte[] got = ua.not().toBytesBE();
+
+    // Assert - verify each bit is flipped
+    for (int i = 0; i < 32; i++) {
+      // Each byte should be bitwise complement
+      assertThat(got[i]).isEqualTo((byte) ~aBytes32[i]);
+    }
+  }
+
+  @Property
+  void property_not_xor_equivalence(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 allOnes = UInt256.ALL_ONES;
+
+    // Act & Assert - ~A = A ^ 0xFF...FF
+    assertThat(ua.not()).isEqualTo(ua.xor(allOnes));
+  }
+
+  @Property
+  void property_not_sum_with_original(@ForAll("unsigned1to32") final byte[] a) {
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final UInt256 allOnes = UInt256.ALL_ONES;
+
+    // Act
+    // When we add A + ~A (bitwise), we should get all 1s in each bit position
+    // But with carry, A + ~A + 1 = 0 (two's complement)
+    // For our purposes: A XOR ~A = 0xFF...FF
+
+    // Assert - A XOR ~A = 0xFF...FF
+    assertThat(ua.xor(ua.not())).isEqualTo(allOnes);
+  }
+
+  @Property(tries = 10)
+  void property_not_display_transformation(@ForAll("unsigned1to32") final byte[] a) {
+    System.out.println("\n========================================");
+    System.out.println("Testing: NOT(A) transformation");
+    System.out.println("========================================");
+
+    // Arrange
+    final UInt256 ua = UInt256.fromBytesBE(a);
+    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
+
+    System.out.println("Input A:     " + Bytes.wrap(aBytes32).toHexString());
+
+    // Act
+    UInt256 result = ua.not();
+    byte[] resultBytes = result.toBytesBE();
+
+    System.out.println("NOT(A):      " + Bytes.wrap(resultBytes).toHexString());
+
+    // Show first 4 bytes in binary
+    System.out.println("\nFirst 4 bytes in binary:");
+    for (int i = 0; i < 4; i++) {
+      System.out.printf(
+          "  A[%d]:    %s (0x%02X)%n",
+          i,
+          String.format("%8s", Integer.toBinaryString(aBytes32[i] & 0xFF)).replace(' ', '0'),
+          aBytes32[i] & 0xFF);
+      System.out.printf(
+          "  ~A[%d]:   %s (0x%02X)%n%n",
+          i,
+          String.format("%8s", Integer.toBinaryString(resultBytes[i] & 0xFF)).replace(' ', '0'),
+          resultBytes[i] & 0xFF);
+    }
+
+    // Assert
+    final Bytes bytesA = Bytes32.leftPad(Bytes.wrap(a));
+    final byte[] expected = bytesA.not().toArrayUnsafe();
+    assertThat(resultBytes).containsExactly(expected);
+
+    System.out.println("✓ Test PASSED - matches Bytes.not()");
+  }
+
+  // endregion
+
+  // endregion
+
+  // region Utility Methods
 
   private static byte[] clampUnsigned32(final byte[] any) {
     if (any.length == 0) {
@@ -659,4 +1162,5 @@ public class UInt256Prop {
     System.arraycopy(rb, 0, padded, 32 - rb.length, rb.length);
     return padded;
   }
+  // endregion
 }

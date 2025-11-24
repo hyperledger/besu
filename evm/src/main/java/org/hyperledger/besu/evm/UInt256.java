@@ -62,6 +62,21 @@ public final class UInt256 {
   /** The constant 0. */
   public static final UInt256 ZERO = new UInt256(new int[] {0, 0, 0, 0, 0, 0, 0, 0}, 0);
 
+  /** The constant All ones */
+  public static final UInt256 ALL_ONES =
+      new UInt256(
+          new int[] {
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF
+          },
+          N_LIMBS);
+
   // region Constructors
   // --------------------------------------------------------------------------
 
