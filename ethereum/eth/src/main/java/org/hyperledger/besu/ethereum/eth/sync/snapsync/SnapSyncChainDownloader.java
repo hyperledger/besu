@@ -75,6 +75,8 @@ public class SnapSyncChainDownloader
   private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
 
+  private final AtomicBoolean downloadInProgress = new AtomicBoolean(false);
+
   private volatile Pipeline<?> currentPipeline;
   private Instant overallStartTime;
 
@@ -317,58 +319,65 @@ public class SnapSyncChainDownloader
   }
 
   /**
-   * Checks if the pivot block has been updated during sync and handles continuation if necessary.
-   * Waits for world state heal to be finished before declaring completion to ensure no pivot
-   * updates are missed.
+   * Starts the chain download process. Only one download can be in progress at a time.
    *
-   * @return CompletableFuture that completes when all continuation is done
+   * @return CompletableFuture that completes when all download cycles are done
    */
-  private CompletableFuture<Void> checkAndHandlePivotUpdate() {
-
-    // set new unfinished future before we read the potentially updated pivot.
-    pivotUpdateFuture = new CompletableFuture<>();
-    final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
-    final BlockHeader previousPivot = chainState.get().pivotBlockHeader();
-
-    if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
-
-      LOG.info(
-          "Pivot block has been updated from {} to {}. Continuing sync to new pivot.",
-          previousPivot.getNumber(),
-          updatedPivot.getNumber());
-
-      // Update chain state to new pivot
-      chainState.updateAndGet(state -> state.continueToNewPivot(updatedPivot, previousPivot));
-      chainStateStorage.storeState(chainState.get());
-
-      return downloadAccordingToChainState();
+  private CompletableFuture<Void> downloadAccordingToChainState() {
+    // Guard against concurrent executions
+    if (!downloadInProgress.compareAndSet(false, true)) {
+      LOG.warn("Download already in progress, ignoring concurrent call");
+      return CompletableFuture.failedFuture(
+          new IllegalStateException("Download already in progress"));
     }
 
-    LOG.info(
-        "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
+    final CompletableFuture<Void> result = new CompletableFuture<>();
 
-    return CompletableFuture.anyOf(pivotUpdateFuture, worldStateHealFinishedFuture)
-        .thenCompose(
-            ignore -> {
-              if (pivotUpdateFuture.isDone()) {
-                return checkAndHandlePivotUpdate();
+    // Ensure we always reset the guard when complete
+    result.whenComplete((r, error) -> downloadInProgress.set(false));
+
+    // Start the download attempt loop
+    attemptDownload(result);
+
+    return result;
+  }
+
+  /**
+   * Attempts a single download cycle, with retry logic. Non-recursive - schedules next attempt via
+   * executor.
+   *
+   * @param overallResult the future to complete when all attempts are done
+   */
+  private void attemptDownload(final CompletableFuture<Void> overallResult) {
+    if (cancelled.get()) {
+      overallResult.completeExceptionally(new CancellationException());
+      return;
+    }
+
+    // Already completed from another path
+    if (overallResult.isDone()) {
+      return;
+    }
+
+    performSingleDownloadCycle()
+        .whenComplete(
+            (downloadResult, error) -> {
+              if (error != null) {
+                handleDownloadError(error, overallResult);
               } else {
-                LOG.info(
-                    "World state heal finished (current pivot number: {}). Chain download complete.",
-                    previousPivot.getNumber());
-                return CompletableFuture.completedFuture(null);
+                handlePivotUpdateLoop(overallResult);
               }
             });
   }
 
   /**
-   * Uses the stage 1 and stage 2 methods to download the chain according to chainState.
+   * Performs a single download cycle: Stage 1 (headers) → Stage 2 (bodies/receipts). Returns when
+   * both stages complete (successfully or with error).
    *
-   * @return CompletableFuture that completes when continuation is done
+   * @return CompletableFuture that completes when the cycle is done
    */
-  private CompletableFuture<Void> downloadAccordingToChainState() {
+  private CompletableFuture<Void> performSingleDownloadCycle() {
     // Snapshot state once - both stages use the same snapshot
-    // (only the headers complete flag changes, which is needed for the restart logic)
     final ChainSyncState currentState = chainState.get();
 
     return determineStage1Execution(currentState)
@@ -379,29 +388,112 @@ public class SnapSyncChainDownloader
               }
               // Use the same state snapshot for stage 2
               return runStage2ForwardBodiesAndReceipts(currentState);
-            })
-        .thenCompose(
-            ignore -> {
-              // Recursively check for further pivot updates
-              return checkAndHandlePivotUpdate();
-            })
-        .handle(
-            (result, error) -> {
+            });
+  }
+
+  /**
+   * Handles error from a download cycle. Updates state and decides whether to retry.
+   *
+   * @param error the error that occurred
+   * @param overallResult the future to complete/continue
+   */
+  private void handleDownloadError(
+      final Throwable error, final CompletableFuture<Void> overallResult) {
+
+    // Update chain state to current blockchain head
+    chainState.updateAndGet(
+        state -> state.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
+    chainStateStorage.storeState(chainState.get());
+
+    if (shouldRetry(error)) {
+      LOG.warn("Chain sync encountered error, will retry from saved state", error);
+
+      // Schedule next attempt without recursion
+      // Use a small delay to avoid tight retry loops
+      ethContext
+          .getScheduler()
+          .scheduleFutureTask(() -> attemptDownload(overallResult), Duration.ofMillis(100));
+    } else {
+      // Non-retryable error - fail (metrics will be stopped by outer handler)
+      overallResult.completeExceptionally(error);
+    }
+  }
+
+  /**
+   * Handles the pivot update check loop without recursion. Uses explicit iteration via
+   * CompletableFuture chaining.
+   *
+   * @param overallResult the future to complete when done
+   */
+  private void handlePivotUpdateLoop(final CompletableFuture<Void> overallResult) {
+    if (overallResult.isDone()) {
+      return;
+    }
+
+    checkForPivotUpdate()
+        .whenComplete(
+            (needsContinue, error) -> {
               if (error != null) {
-                chainState.updateAndGet(
-                    state -> state.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
-                chainStateStorage.storeState(chainState.get());
-                if (shouldRetry(error)) {
-                  LOG.warn("Chain sync encountered error, will retry from saved state", error);
-                  return downloadAccordingToChainState();
-                } else {
-                  return CompletableFuture.<Void>failedFuture(error);
-                }
+                overallResult.completeExceptionally(error);
+              } else if (needsContinue) {
+                // Pivot updated, need another download cycle
+                LOG.debug("Pivot updated, scheduling next download cycle");
+                attemptDownload(overallResult);
               } else {
-                return CompletableFuture.<Void>completedFuture(null);
+                // All done - world state heal finished, no more pivot updates
+                // Metrics will be stopped by outer handler
+                overallResult.complete(null);
               }
-            })
-        .thenCompose(f -> f);
+            });
+  }
+
+  /**
+   * Checks for pivot updates and updates state if needed. Returns a future that completes with true
+   * if a pivot update occurred (requiring another download cycle), or false if done.
+   *
+   * @return CompletableFuture<Boolean> - true if should continue, false if complete
+   */
+  private CompletableFuture<Boolean> checkForPivotUpdate() {
+    final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
+    final BlockHeader previousPivot = chainState.get().pivotBlockHeader();
+
+    // Check if there's an immediate pivot update available
+    if (pivotUpdateFuture.isDone()) {
+      pivotUpdateFuture = new CompletableFuture<>();
+
+      if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
+        LOG.info(
+            "Pivot block has been updated from {} to {}. Continuing sync to new pivot.",
+            previousPivot.getNumber(),
+            updatedPivot.getNumber());
+
+        // Update chain state to new pivot
+        chainState.updateAndGet(state -> state.continueToNewPivot(updatedPivot, previousPivot));
+        chainStateStorage.storeState(chainState.get());
+
+        return CompletableFuture.completedFuture(true); // Need to continue
+      }
+    }
+
+    LOG.info(
+        "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
+
+    // Wait for either a pivot update or world state heal to complete
+    return CompletableFuture.anyOf(pivotUpdateFuture, worldStateHealFinishedFuture)
+        .thenApply(
+            ignore -> {
+              if (pivotUpdateFuture.isDone()) {
+                // Recursive check - a pivot update arrived while waiting
+                // We need to check it on the next iteration
+                return true; // Need to continue with another cycle
+              } else {
+                // World state heal finished
+                LOG.info(
+                    "World state heal finished (current pivot number: {}). Chain download complete.",
+                    previousPivot.getNumber());
+                return false; // All done
+              }
+            });
   }
 
   @Override
