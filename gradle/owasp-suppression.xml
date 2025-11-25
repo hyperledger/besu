@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
+    <suppress>
+        <notes><![CDATA[
+            file name: dataflow-errorprone-3.42.0-eisop4.jar (shaded: com.google.guava:guava:30.1.1-jre)
+
+            This file is part of errorprone which is used at build time. This is not part of the runtime dependencies.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>
+        <cve>CVE-2023-2976</cve>
+    </suppress>
+</suppressions>

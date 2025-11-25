@@ -32,6 +32,7 @@ plugins {
   id 'jacoco-report-aggregation'
   id 'org.sonarqube' version '6.2.0.5505'
   id 'de.undercouch.download' version '5.6.0'
+  id 'org.owasp.dependencycheck' version "12.1.9"
 }
 
 sonarqube {
@@ -272,6 +273,22 @@ configure(allprojects - project(':platform')) {
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
     }
+  }
+
+  apply plugin: 'org.owasp.dependencycheck'
+  dependencyCheck {
+    nvd.apiKey = System.getenv('NVD_API_KEY')
+    failBuildOnCVSS = 7 // Fail on high CVSS severity
+    suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
+    //    skipConfigurations = [
+    //            'integrationTestCompileClasspath',
+    //            'integrationTestRuntimeClasspath'
+    //    ]
+    //    skipProjects = [
+    //            ':acceptance-tests'
+    //    ]
+    analyzers.retirejs.enabled = false
+    analyzers.assemblyEnabled = false
   }
 
   tasks.withType(JavaCompile).configureEach {
