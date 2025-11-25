@@ -23,71 +23,153 @@ import org.apache.commons.lang3.StringUtils;
 /** The enum Network name. */
 public enum NetworkDefinition {
   /** Mainnet network name. */
-  MAINNET("/mainnet.json", BigInteger.valueOf(1), true, true),
+  MAINNET(
+      "/mainnet.json",
+      1, // chain id
+      1, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /** Sepolia network name. */
-  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), true, true),
+  SEPOLIA(
+      "/sepolia.json",
+      11155111, // chain id
+      11155111, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /** Holešky network name. */
-  HOLESKY("/holesky.json", BigInteger.valueOf(17000), true, true),
+  HOLESKY(
+      "/holesky.json",
+      17000, // chain id
+      17000, // network id
+      true,
+      true,
+      60_000_000L,
+      "November 2025"),
   /** Hoodi network name. */
-  HOODI("/hoodi.json", BigInteger.valueOf(560048), true, true),
+  HOODI(
+      "/hoodi.json",
+      560048, // chain id
+      560048, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. <a href="https://ephemery.dev/">Ephemery developer info</a>
    */
-  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135), true, true),
+  EPHEMERY(
+      "/ephemery.json",
+      39438135, // chain id
+      39438135, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /**
    * Linea mainnet network name <a
    * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
    * info</a>
    */
-  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
+  LINEA(
+      "/linea-mainnet.json",
+      59144, // chain id
+      59144, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /** Linea sepolia network name */
-  LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, true),
+  LINEA_SEPOLIA(
+      "/linea-sepolia.json",
+      59141, // chain id
+      59141, // network id
+      true,
+      true,
+      60_000_000L,
+      null),
   /** LUKSO mainnet network name. */
-  LUKSO("/lukso.json", BigInteger.valueOf(42)),
+  LUKSO(
+      "/lukso.json",
+      42, // chain id
+      42, // network id
+      true,
+      false,
+      60_000_000L,
+      null),
   /** Dev network name. */
-  DEV("/dev.json", BigInteger.valueOf(2018), false),
+  DEV(
+      "/dev.json",
+      2018, // chain id
+      2018, // network id
+      false,
+      false,
+      60_000_000L,
+      null),
   /** Future EIPs network name. */
-  FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
+  FUTURE_EIPS(
+      "/future.json",
+      2022, // chain id
+      2022, // network id
+      false,
+      false,
+      60_000_000L,
+      null),
   /** Experimental EIPs network name. */
-  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
+  EXPERIMENTAL_EIPS(
+      "/experimental.json",
+      2023, // chain id
+      2023, // network id
+      false,
+      false,
+      60_000_000L,
+      null),
   /** Classic network name. */
-  CLASSIC("/classic.json", BigInteger.valueOf(1)),
+  CLASSIC(
+      "/classic.json",
+      61, // chain id
+      1, // network id
+      true,
+      false,
+      60_000_000L,
+      "November 2025"),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7));
+  MORDOR(
+      "/mordor.json",
+      63, // chain id
+      7, // network id
+      true,
+      false,
+      60_000_000L,
+      "November 2025");
 
   private final String genesisFile;
-  private final BigInteger networkId;
+  private final long chainId;
+  private final long networkId;
   private final boolean canSnapSync;
-  private String deprecationDate;
+  private final String deprecationDate;
   private final boolean nativeRequired;
-
-  static {
-    HOLESKY.deprecationDate = "November 2025";
-    CLASSIC.deprecationDate = "November 2025";
-    MORDOR.deprecationDate = "November 2025";
-  }
-
-  NetworkDefinition(final String genesisFile, final BigInteger networkId) {
-    this(genesisFile, networkId, true);
-  }
-
-  NetworkDefinition(
-      final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
-    this(genesisFile, networkId, canSnapSync, false);
-  }
+  private final long targetGasLimit;
 
   NetworkDefinition(
       final String genesisFile,
-      final BigInteger networkId,
+      final long chainId,
+      final long networkId,
       final boolean canSnapSync,
-      final boolean nativeRequired) {
+      final boolean nativeRequired,
+      final long targetGasLimit,
+      final String deprecationDate) {
     this.genesisFile = genesisFile;
+    this.chainId = chainId;
     this.networkId = networkId;
     this.canSnapSync = canSnapSync;
-    // no deprecations planned
-    this.deprecationDate = null;
     this.nativeRequired = nativeRequired;
+    this.targetGasLimit = targetGasLimit;
+    this.deprecationDate = deprecationDate;
   }
 
   /**
@@ -100,12 +182,21 @@ public enum NetworkDefinition {
   }
 
   /**
+   * Gets chain id.
+   *
+   * @return the chain id
+   */
+  public BigInteger getChainId() {
+    return BigInteger.valueOf(chainId);
+  }
+
+  /**
    * Gets network id.
    *
    * @return the network id
    */
   public BigInteger getNetworkId() {
-    return networkId;
+    return BigInteger.valueOf(networkId);
   }
 
   /**
@@ -156,5 +247,29 @@ public enum NetworkDefinition {
    */
   public boolean hasNativeRequirements() {
     return nativeRequired;
+  }
+
+  /**
+   * Gets target gas limit.
+   *
+   * @return the target gas limit
+   */
+  public long getTargetGasLimit() {
+    return targetGasLimit;
+  }
+
+  /**
+   * From chain id.
+   *
+   * @param chainId the chain id
+   * @return the optional
+   */
+  public static Optional<NetworkDefinition> fromChainId(final BigInteger chainId) {
+    for (final NetworkDefinition network : NetworkDefinition.values()) {
+      if (network.getChainId().equals(chainId)) {
+        return Optional.of(network);
+      }
+    }
+    return Optional.empty();
   }
 }
