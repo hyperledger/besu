@@ -12,7 +12,8 @@
   - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
   - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
   - Return null result if block not found for `debug_accountAt`, `debug_setHead`, `eth_call`, `eth_getBlockReceipts`, `eth_getProof`, `eth_simulateV1`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount` [#9303](https://github.com/hyperledger/besu/pull/9303)
-- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481), `eth_coinbase` [#9487](https://github.com/hyperledger/besu/pull/9487)
+- Remove PoW CLI options: `--miner-enabled`, `--miner-coinbase` [#9486](https://github.com/hyperledger/besu/pull/9486)
 
 ### Upcoming Breaking Changes
 - ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
@@ -27,6 +28,7 @@
 - Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
 - Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 - Performance: 5-6x faster toFastHex calculation for engine_getBlobsV2 [#9426](https://github.com/hyperledger/besu/pull/9426)
+- Performance: Optimise `engine_getPayload*` methods and `engine_getBlobsV2` [#9445](https://github.com/hyperledger/besu/pull/9445)
 - Add Linea named networks for mainnet and sepolia on Linea network [#9436](https://github.com/hyperledger/besu/pull/9436)
 
 ### Bug fixes

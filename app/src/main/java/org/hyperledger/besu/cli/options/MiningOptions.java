@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
@@ -55,17 +54,20 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   private static final String DEPRECATION_PREFIX =
       "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
 
+  // TODO only used for clique, which overrides this to true, so we do not need to be able to set
+  // this via CLI
   @Option(
       names = {"--miner-enabled"},
-      description =
-          DEPRECATION_PREFIX + "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+      hidden = true,
+      description = DEPRECATION_PREFIX + " This has no effect")
   private Boolean isMiningEnabled = false;
 
+  // TODO only used for clique, which overrides to local node address, so we do not need to be able
+  // to set this via CLI
   @Option(
       names = {"--miner-coinbase"},
-      description =
-          "Account to which mining rewards are paid. You must specify a valid coinbase if "
-              + "mining is enabled using --miner-enabled option",
+      hidden = true,
+      description = DEPRECATION_PREFIX + " This has no effect",
       arity = "1")
   private Address coinbase = null;
 
@@ -199,7 +201,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
    * options are valid for the selected implementation.
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param genesisConfigOptions is EthHash?
+   * @param genesisConfigOptions genesis config determines whether we are running PoA or PoS
    * @param isMergeEnabled is the Merge enabled?
    * @param logger the logger
    */
@@ -210,27 +212,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       final Logger logger) {
     if (Boolean.TRUE.equals(isMiningEnabled)) {
       logger.warn("PoW consensus is deprecated. See CHANGELOG for alternative options.");
-    }
-    if (Boolean.TRUE.equals(isMiningEnabled) && coinbase == null) {
-      throw new ParameterException(
-          commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
-              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-
-    // Check that block producer options work
-    if (!isMergeEnabled && genesisConfigOptions.isEthHash()) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList(
-              "--miner-coinbase",
-              "--min-gas-price",
-              "--min-priority-fee",
-              "--min-block-occupancy-ratio",
-              "--miner-extra-data"));
     }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
