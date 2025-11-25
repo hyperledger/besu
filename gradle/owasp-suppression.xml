@@ -7,7 +7,16 @@
 
             This file is part of errorprone which is used at build time. This is not part of the runtime dependencies.
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>
+        <filePath regex="true">.*dataflow-errorprone-.*\.jar.*</filePath>
         <cve>CVE-2023-2976</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: dataflow-errorprone-3.42.0-eisop4.jar (shaded: com.google.guava:guava:30.1.1-jre)
+
+            This file is part of errorprone which is used at build time. This is not part of the runtime dependencies.
+        ]]></notes>
+        <filePath regex="true">.*dataflow-errorprone-.*\.jar.*</filePath>
+        <cve>CVE-2020-8908</cve>
     </suppress>
 </suppressions>
