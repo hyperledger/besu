@@ -32,7 +32,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         parent);
   }
 
-  public BonsaiWorldStateLayerStorage(
+  private BonsaiWorldStateLayerStorage(
       final SnappedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent) {
@@ -53,6 +53,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
   }
 
   /** Merge this layer to a storage transaction. */
+  @Override
   public void mergeTo(final SegmentedKeyValueStorageTransaction transaction) {
     getComposedWorldStateStorage().mergeTo(transaction);
   }
