@@ -27,37 +27,34 @@ public enum NetworkDefinition {
       "/mainnet.json",
       1, // chain id
       1, // network id
-      true,
-      true,
-      60_000_000L,
-      null),
+      true, // can snap sync
+      true, // native required
+      60_000_000L), // target gas limit
   /** Sepolia network name. */
   SEPOLIA(
       "/sepolia.json",
       11155111, // chain id
       11155111, // network id
-      true,
-      true,
-      60_000_000L,
-      null),
+      true, // can snap sync
+      true, // native required
+      60_000_000L), // target gas limit
   /** Holešky network name. */
   HOLESKY(
       "/holesky.json",
       17000, // chain id
       17000, // network id
-      true,
-      true,
-      60_000_000L,
+      true, // can snap sync
+      true, // native required
+      60_000_000L, // target gas limit
       "November 2025"),
   /** Hoodi network name. */
   HOODI(
       "/hoodi.json",
       560048, // chain id
       560048, // network id
-      true,
-      true,
-      60_000_000L,
-      null),
+      true, // can snap sync
+      true, // native required
+      60_000_000L), // target gas limit
   /**
    * EPHEMERY network name. The actual networkId used is calculated based on this default value and
    * the current time. <a href="https://ephemery.dev/">Ephemery developer info</a>
@@ -66,10 +63,9 @@ public enum NetworkDefinition {
       "/ephemery.json",
       39438135, // chain id
       39438135, // network id
-      true,
-      true,
-      60_000_000L,
-      null),
+      true, // can snap sync
+      true, // native required
+      60_000_000L), // target gas limit
   /**
    * Linea mainnet network name <a
    * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
@@ -79,72 +75,68 @@ public enum NetworkDefinition {
       "/linea-mainnet.json",
       59144, // chain id
       59144, // network id
-      true,
-      true,
-      60_000_000L,
+      true, // can snap sync
+      true, // native required
+      60_000_000L, // target gas limit
       null),
   /** Linea sepolia network name */
   LINEA_SEPOLIA(
       "/linea-sepolia.json",
       59141, // chain id
       59141, // network id
-      true,
-      true,
-      60_000_000L,
+      true, // can snap sync
+      true, // native required
+      60_000_000L, // target gas limit
       null),
   /** LUKSO mainnet network name. */
   LUKSO(
       "/lukso.json",
       42, // chain id
       42, // network id
-      true,
-      false,
-      60_000_000L,
-      null),
+      true, // can snap sync
+      false, // native required
+      60_000_000L), // target gas limit
   /** Dev network name. */
   DEV(
       "/dev.json",
       2018, // chain id
       2018, // network id
-      false,
-      false,
-      60_000_000L,
-      null),
+      false, // can snap sync
+      false, // native required
+      60_000_000L), // target gas limit
   /** Future EIPs network name. */
   FUTURE_EIPS(
       "/future.json",
       2022, // chain id
       2022, // network id
-      false,
-      false,
-      60_000_000L,
-      null),
+      false, // can snap sync
+      false, // native required
+      60_000_000L), // target gas limit
   /** Experimental EIPs network name. */
   EXPERIMENTAL_EIPS(
       "/experimental.json",
       2023, // chain id
       2023, // network id
-      false,
-      false,
-      60_000_000L,
-      null),
+      false, // can snap sync
+      false, // native required
+      60_000_000L), // target gas limit
   /** Classic network name. */
   CLASSIC(
       "/classic.json",
       61, // chain id
       1, // network id
-      true,
-      false,
-      60_000_000L,
+      true, // can snap sync
+      false, // native required
+      60_000_000L, // target gas limit
       "November 2025"),
   /** Mordor network name. */
   MORDOR(
       "/mordor.json",
       63, // chain id
       7, // network id
-      true,
-      false,
-      60_000_000L,
+      true, // can snap sync
+      false, // native required
+      60_000_000L, // target gas limit
       "November 2025");
 
   private final String genesisFile;
@@ -154,6 +146,16 @@ public enum NetworkDefinition {
   private final String deprecationDate;
   private final boolean nativeRequired;
   private final long targetGasLimit;
+
+  NetworkDefinition(
+      final String genesisFile,
+      final long chainId,
+      final long networkId,
+      final boolean canSnapSync,
+      final boolean nativeRequired,
+      final long targetGasLimit) {
+    this(genesisFile, chainId, networkId, canSnapSync, nativeRequired, targetGasLimit, null);
+  }
 
   NetworkDefinition(
       final String genesisFile,
