@@ -75,7 +75,7 @@ public interface MutableBlockchain extends Blockchain {
    * @param syncBlock The syncBlock to append.
    * @param receipts The list of receipts associated with this syncBlock's transactions.
    */
-  void appendSyncBlock(SyncBlock syncBlock, List<TransactionReceipt> receipts);
+  void appendSyncBlock(SyncBlock syncBlock, List<SyncTransactionReceipt> receipts);
 
   /**
    * Adds a syncBlock to the blockchain without indexing transactions.
@@ -88,7 +88,7 @@ public interface MutableBlockchain extends Blockchain {
    * @param receipts The list of receipts associated with this block's transactions.
    */
   void appendSyncBlockWithoutIndexingTransactions(
-      SyncBlock syncBlock, List<TransactionReceipt> receipts);
+      SyncBlock syncBlock, List<SyncTransactionReceipt> receipts);
 
   /**
    * Adds a block to the blockchain without a header.

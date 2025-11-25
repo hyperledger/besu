@@ -38,10 +38,8 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -95,11 +93,7 @@ public class DownloadReceiptsStepTest {
   @Test
   public void shouldDownloadReceiptsForBlocks() {
     DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(
-            protocolSchedule,
-            ethProtocolManager.ethContext(),
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            new NoOpMetricsSystem());
+        new DownloadReceiptsStep(protocolSchedule, ethProtocolManager.ethContext());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     final List<Block> blocks = asList(block(1), block(2), block(3), block(4));
@@ -120,11 +114,7 @@ public class DownloadReceiptsStepTest {
   public void shouldDownloadReceiptsForBlocksUsingPeerTaskSystem()
       throws ExecutionException, InterruptedException {
     DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(
-            protocolSchedule,
-            ethProtocolManager.ethContext(),
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            new NoOpMetricsSystem());
+        new DownloadReceiptsStep(protocolSchedule, ethProtocolManager.ethContext());
 
     final List<Block> blocks = asList(mockBlock(), mockBlock(), mockBlock(), mockBlock());
     Map<BlockHeader, List<TransactionReceipt>> receiptsMap = new HashMap<>();

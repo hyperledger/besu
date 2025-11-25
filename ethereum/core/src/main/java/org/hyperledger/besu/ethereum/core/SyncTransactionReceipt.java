@@ -14,8 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
@@ -25,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SyncTransactionReceipt {
 
   private final Bytes rlpBytes;
+  private final List<Log> logs;
 
   /**
    * Creates an instance of a receipt that just contains the rlp bytes.
@@ -33,6 +39,75 @@ public class SyncTransactionReceipt {
    */
   private SyncTransactionReceipt(final Bytes rlpBytes) {
     this.rlpBytes = rlpBytes;
+    this.logs = parseForLogs(rlpBytes);
+  }
+
+  private List<Log> parseForLogs(final Bytes bytes) {
+    RLPInput in = RLP.input(bytes);
+    if (!in.nextIsList()) {
+      return decodeTypedReceipt(in);
+    } else {
+      return decodeFlatReceipt(in);
+    }
+  }
+
+  private static List<Log> decodeTypedReceipt(final RLPInput rlpInput) {
+    RLPInput input = rlpInput;
+    final Bytes typedTransactionReceiptBytes = input.readBytes();
+    input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+    input.enterList();
+    // statusOrStateRoot
+    input.readAsRlp();
+    // cumulativeGas
+    input.readLongScalar();
+    final boolean isCompacted = isNextNotBloomFilter(input);
+    if (!isCompacted) {
+      //    bloomFilter
+      Bytes rawBloomFilter = input.readBytes();
+      assert rawBloomFilter.size() == LogsBloomFilter.BYTE_SIZE;
+    }
+    return input.readList(logInput -> Log.readFrom(logInput, isCompacted));
+  }
+
+  private static List<Log> decodeFlatReceipt(final RLPInput rlpInput) {
+    rlpInput.enterList();
+    // Flat receipts can be either legacy or eth/69 receipts.
+    // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
+    // used. This is because compacted legacy receipts also lack a bloom filter.
+    // The first element can be either the transaction type (eth/69 or stateRootOrStatus (eth/68
+    rlpInput.readAsRlp();
+    // The second element can be either the state root or status (eth/68) or cumulative gas (eth/69)
+    rlpInput.readAsRlp();
+    final boolean isCompacted = isNextNotBloomFilter(rlpInput);
+    Bytes rawBloomFilter = null;
+    if (!isCompacted) {
+      //    bloomFilter
+      rawBloomFilter = rlpInput.readBytes();
+      assert rawBloomFilter.size() == LogsBloomFilter.BYTE_SIZE;
+    }
+    boolean isEth69Receipt = isCompacted && !rlpInput.nextIsList();
+    List<Log> logs;
+    if (isEth69Receipt) {
+      logs = decodeEth69Receipt(rlpInput);
+    } else {
+      logs = decodeLegacyReceipt(rlpInput, rawBloomFilter == null);
+    }
+    rlpInput.leaveList();
+    return logs;
+  }
+
+  private static List<Log> decodeEth69Receipt(final RLPInput input) {
+    // cumulativeGas
+    input.readLongScalar();
+    return input.readList(logInput -> Log.readFrom(logInput, false));
+  }
+
+  private static List<Log> decodeLegacyReceipt(final RLPInput input, final boolean isCompacted) {
+    return input.readList(logInput -> Log.readFrom(logInput, isCompacted));
+  }
+
+  private static boolean isNextNotBloomFilter(final RLPInput input) {
+    return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 
   /**
@@ -58,6 +133,10 @@ public class SyncTransactionReceipt {
    */
   public Bytes getRlp() {
     return rlpBytes;
+  }
+
+  public List<Log> getLogsList() {
+    return logs;
   }
 
   @Override

@@ -99,6 +99,6 @@ public interface BlockImporter {
   BlockImportResult importSyncBlockForSyncing(
       final ProtocolContext context,
       final SyncBlock syncBlock,
-      final List<TransactionReceipt> receipts,
+      final List<SyncTransactionReceipt> receipts,
       boolean importWithTxIndexing);
 }

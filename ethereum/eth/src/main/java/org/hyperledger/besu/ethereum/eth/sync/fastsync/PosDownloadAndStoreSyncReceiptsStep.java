@@ -72,8 +72,7 @@ public class PosDownloadAndStoreSyncReceiptsStep
     final List<BlockHeader> headers = new ArrayList<>(blockHeaders);
     Map<BlockHeader, List<SyncTransactionReceipt>> getReceipts = new HashMap<>();
     do {
-      GetSyncReceiptsFromPeerTask task =
-          new GetSyncReceiptsFromPeerTask(headers, protocolSchedule, 10);
+      GetSyncReceiptsFromPeerTask task = new GetSyncReceiptsFromPeerTask(headers, protocolSchedule);
       PeerTaskExecutorResult<Map<BlockHeader, List<SyncTransactionReceipt>>> getReceiptsResult =
           peerTaskExecutor.execute(task);
       if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS

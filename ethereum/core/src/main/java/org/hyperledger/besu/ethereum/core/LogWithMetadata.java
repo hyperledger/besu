@@ -78,6 +78,26 @@ public class LogWithMetadata extends Log
         removed);
   }
 
+  public static List<LogWithMetadata> generateSync(
+      final int logIndexOffset,
+      final SyncTransactionReceipt receipt,
+      final long number,
+      final Hash blockHash,
+      final long blockTimestamp,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+    return generate(
+        logIndexOffset,
+        receipt.getLogsList(),
+        number,
+        blockHash,
+        blockTimestamp,
+        transactionHash,
+        transactionIndex,
+        removed);
+  }
+
   public static List<LogWithMetadata> generate(
       final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
     return generate(
@@ -102,6 +122,33 @@ public class LogWithMetadata extends Log
     for (int txi = 0; txi < size; ++txi) {
       final List<LogWithMetadata> logs =
           generate(
+              logIndexOffset,
+              receipts.get(txi),
+              blockNumber,
+              blockHash,
+              blockTimestamp,
+              txHashes.get(txi),
+              txi,
+              removed);
+      logIndexOffset += logs.size();
+      logsWithMetadata.addAll(logs);
+    }
+    return logsWithMetadata;
+  }
+
+  public static List<LogWithMetadata> generateSync(
+      final long blockNumber,
+      final Hash blockHash,
+      final long blockTimestamp,
+      final List<Hash> txHashes,
+      final List<SyncTransactionReceipt> receipts,
+      final boolean removed) {
+    final int size = receipts.size();
+    final List<LogWithMetadata> logsWithMetadata = new ArrayList<>(size);
+    int logIndexOffset = 0;
+    for (int txi = 0; txi < size; ++txi) {
+      final List<LogWithMetadata> logs =
+          generateSync(
               logIndexOffset,
               receipts.get(txi),
               blockNumber,
