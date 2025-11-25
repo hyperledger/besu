@@ -54,7 +54,13 @@ jobs:
         with:
           cache-disabled: true
       - name: run spotless
-        run: ./gradlew spotlessCheck
+        run: ./gradlew --info spotlessCheck
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build/reports/
+          if-no-files-found: ignore
+          retention-days: 1
   compile:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
