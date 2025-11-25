@@ -7,7 +7,7 @@ plugins {
 configurations.configureEach {
   resolutionStrategy {
     eachDependency { DependencyResolveDetails details ->
-      if (details.requested.group == 'org.web3j' && details.requested.version == '7.3.2') {
+      if (details.requested.group == 'org.web3j') {
         details.useVersion '4.14.0'
       }
     }
