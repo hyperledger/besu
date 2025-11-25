@@ -280,13 +280,6 @@ configure(allprojects - project(':platform')) {
     nvd.apiKey = System.getenv('NVD_API_KEY')
     failBuildOnCVSS = 7 // Fail on high CVSS severity
     suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
-    //    skipConfigurations = [
-    //            'integrationTestCompileClasspath',
-    //            'integrationTestRuntimeClasspath'
-    //    ]
-    //    skipProjects = [
-    //            ':acceptance-tests'
-    //    ]
     analyzers.retirejs.enabled = false
     analyzers.assemblyEnabled = false
   }
