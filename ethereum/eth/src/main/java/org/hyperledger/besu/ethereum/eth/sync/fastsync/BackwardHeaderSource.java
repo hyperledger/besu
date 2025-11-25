@@ -54,7 +54,7 @@ public class BackwardHeaderSource implements Iterator<Long> {
 
   @Override
   public boolean hasNext() {
-    return currentBlock.get() > stopBlock;
+    return currentBlock.get() >= stopBlock;
   }
 
   @Override
