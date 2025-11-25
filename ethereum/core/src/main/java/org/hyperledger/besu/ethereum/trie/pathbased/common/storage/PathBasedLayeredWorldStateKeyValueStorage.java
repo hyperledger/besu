@@ -14,18 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.storage;
 
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentMap;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 public interface PathBasedLayeredWorldStateKeyValueStorage
     extends PathBasedSnapshotWorldStateKeyValueStorage {
 
   PathBasedWorldStateKeyValueStorage clone();
 
-  ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> streamUpdatedEntries();
+  void mergeTo(final SegmentedKeyValueStorageTransaction transaction);
 }
