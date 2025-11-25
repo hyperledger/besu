@@ -18,13 +18,13 @@ plugins {
 
 // Force all web3j dependencies to use version 4.14.0 as it incorrectly pulls in 7.3.2
 configurations.configureEach {
-    resolutionStrategy {
-        eachDependency { DependencyResolveDetails details ->
-            if (details.requested.group == 'org.web3j' && details.requested.version == '7.3.2') {
-                details.useVersion '4.14.0'
-            }
-        }
+  resolutionStrategy {
+    eachDependency { DependencyResolveDetails details ->
+      if (details.requested.group == 'org.web3j' && details.requested.version == '7.3.2') {
+        details.useVersion '4.14.0'
+      }
     }
+  }
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
