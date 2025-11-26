@@ -179,7 +179,7 @@ public class SnapSyncDownloadPipelineFactory {
     long endBlock = pivotHeader.getNumber();
 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
-    final int headerRequestSize = 256; // syncConfig.getDownloaderHeaderRequestSize();
+    final int headerRequestSize = 128; // syncConfig.getDownloaderHeaderRequestSize();
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 

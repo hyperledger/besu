@@ -120,9 +120,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
+    LOG.info("WSD: non-retryable error while processing peer task", error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
-      LOG.info("WSD: error while processing peer task: {}", cause.getMessage());
+      LOG.info("WSD: non-retryable error while processing peer task", error);
       result.completeExceptionally(cause);
       return;
     }
