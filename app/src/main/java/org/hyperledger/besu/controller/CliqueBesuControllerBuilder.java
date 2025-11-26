@@ -121,8 +121,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
-    // Enable mining coordinator for clique (always enabled - actual mining depends on validator
-    // status)
+    // Clique mining is implicitly enabled.
     miningCoordinator.enable();
     return miningCoordinator;
   }

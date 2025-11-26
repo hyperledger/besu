@@ -374,7 +374,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Override
   protected MiningConfiguration createCustomizedDomainObject() {
-    // Note: isMiningEnabled and coinbase are no longer CLI options - removed with PoW deprecation
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()

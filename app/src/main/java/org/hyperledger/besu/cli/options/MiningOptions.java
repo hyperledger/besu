@@ -192,7 +192,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
-    // Validation logic for remaining mining options
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
         || unstableOptions.posBlockCreationMaxTime > DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {

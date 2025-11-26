@@ -21,7 +21,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
@@ -148,7 +147,7 @@ public class CliqueMinerExecutorTest {
             miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            new ForksSchedule<CliqueConfigOptions>(List.of()),
+            null,
             ethScheduler);
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
@@ -184,7 +183,7 @@ public class CliqueMinerExecutorTest {
             miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            new ForksSchedule<CliqueConfigOptions>(List.of()),
+            null,
             ethScheduler);
 
     // Parent block was epoch, so the next block should contain no validators.
@@ -220,7 +219,7 @@ public class CliqueMinerExecutorTest {
             miningConfiguration,
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
-            new ForksSchedule<CliqueConfigOptions>(List.of()),
+            null,
             ethScheduler);
 
     miningConfiguration.setExtraData(modifiedVanityData);
