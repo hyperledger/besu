@@ -37,7 +37,7 @@ public class SyncTransactionReceipt {
    *
    * @param rlpBytes bytes of the RLP-encoded transaction receipt
    */
-  private SyncTransactionReceipt(final Bytes rlpBytes) {
+  public SyncTransactionReceipt(final Bytes rlpBytes) {
     this.rlpBytes = rlpBytes;
     this.logs = parseForLogs(rlpBytes);
   }

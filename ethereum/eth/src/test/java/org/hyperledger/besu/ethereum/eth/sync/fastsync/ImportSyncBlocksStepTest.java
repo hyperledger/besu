@@ -27,12 +27,16 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -77,7 +81,19 @@ public class ImportSyncBlocksStepTest {
             .map(
                 block ->
                     new SyncBlockWithReceipts(
-                        block, gen.receipts(realBlocks.get(i.getAndIncrement()))))
+                        block,
+                        gen.receipts(realBlocks.get(i.getAndIncrement())).stream()
+                            .map(
+                                (tr) ->
+                                    new SyncTransactionReceipt(
+                                        RLP.encode(
+                                            (out) ->
+                                                TransactionReceiptEncoder.writeTo(
+                                                    tr,
+                                                    out,
+                                                    TransactionReceiptEncodingConfiguration
+                                                        .DEFAULT))))
+                            .toList()))
             .collect(toList());
 
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
