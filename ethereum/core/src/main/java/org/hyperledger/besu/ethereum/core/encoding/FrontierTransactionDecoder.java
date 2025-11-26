@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
@@ -35,14 +36,18 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 public class FrontierTransactionDecoder {
   // Supplier for the signature algorithm
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  public static Transaction decode(final RLPInput input) {
-    RLPInput transactionRlp = input.readAsRlp();
+  public static Transaction decode(final Bytes input) {
+    return decode(RLP.input(input));
+  }
+
+  public static Transaction decode(final RLPInput transactionRlp) {
     int size = transactionRlp.currentSize();
     transactionRlp.enterList();
     final Transaction.Builder builder =
@@ -51,7 +56,7 @@ public class FrontierTransactionDecoder {
             .nonce(transactionRlp.readLongScalar())
             .gasPrice(Wei.of(transactionRlp.readUInt256Scalar()))
             .gasLimit(transactionRlp.readLongScalar())
-            .to(transactionRlp.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .to(transactionRlp.readBytes(v -> v.isEmpty() ? null : Address.wrap(v)))
             .value(Wei.of(transactionRlp.readUInt256Scalar()))
             .payload(transactionRlp.readBytes())
             .rawRlp(transactionRlp.raw())

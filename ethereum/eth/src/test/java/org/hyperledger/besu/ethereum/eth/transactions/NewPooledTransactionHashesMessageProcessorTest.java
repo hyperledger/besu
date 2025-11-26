@@ -471,7 +471,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Unsupported transaction type");
+        .hasMessageContaining("Invalid transaction type 7");
   }
 
   @Test
