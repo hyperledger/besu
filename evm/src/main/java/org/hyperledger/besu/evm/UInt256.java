@@ -379,8 +379,7 @@ public final class UInt256 {
     result[5] = this.limbs[5] & other.limbs[5];
     result[6] = this.limbs[6] & other.limbs[6];
     result[7] = this.limbs[7] & other.limbs[7];
-    int resultLength = nSetLimbs(result);
-    return new UInt256(result, resultLength);
+    return new UInt256(result, N_LIMBS);
   }
 
   /**
@@ -399,8 +398,7 @@ public final class UInt256 {
     result[5] = this.limbs[5] ^ other.limbs[5];
     result[6] = this.limbs[6] ^ other.limbs[6];
     result[7] = this.limbs[7] ^ other.limbs[7];
-    int resultLength = nSetLimbs(result);
-    return new UInt256(result, resultLength);
+    return new UInt256(result, N_LIMBS);
   }
 
   /**
@@ -419,8 +417,7 @@ public final class UInt256 {
     result[5] = this.limbs[5] | other.limbs[5];
     result[6] = this.limbs[6] | other.limbs[6];
     result[7] = this.limbs[7] | other.limbs[7];
-    int resultLength = nSetLimbs(result);
-    return new UInt256(result, resultLength);
+    return new UInt256(result, N_LIMBS);
   }
 
   /**
@@ -438,7 +435,6 @@ public final class UInt256 {
     result[5] = ~this.limbs[5];
     result[6] = ~this.limbs[6];
     result[7] = ~this.limbs[7];
-    // NOT operation always produces N_LIMBS set limbs (all bits flipped)
     return new UInt256(result, N_LIMBS);
   }
 
