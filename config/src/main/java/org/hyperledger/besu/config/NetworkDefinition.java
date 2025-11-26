@@ -77,8 +77,7 @@ public enum NetworkDefinition {
       59144, // network id
       true, // can snap sync
       true, // native required
-      60_000_000L, // target gas limit
-      null),
+      60_000_000L), // target gas limit
   /** Linea sepolia network name */
   LINEA_SEPOLIA(
       "/linea-sepolia.json",
@@ -86,8 +85,7 @@ public enum NetworkDefinition {
       59141, // network id
       true, // can snap sync
       true, // native required
-      60_000_000L, // target gas limit
-      null),
+      60_000_000L), // target gas limit
   /** LUKSO mainnet network name. */
   LUKSO(
       "/lukso.json",
