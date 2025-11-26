@@ -134,4 +134,8 @@ public class GetSyncReceiptsFromPeerTask
       final Map<BlockHeader, List<SyncTransactionReceipt>> result) {
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
+
+  public Collection<BlockHeader> getBlockHeaders() {
+    return blockHeaders;
+  }
 }
