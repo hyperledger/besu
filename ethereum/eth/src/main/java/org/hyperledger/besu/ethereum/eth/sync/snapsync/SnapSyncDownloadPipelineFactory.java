@@ -159,7 +159,8 @@ public class SnapSyncDownloadPipelineFactory {
                 "action"),
             true,
             "backwardHeaderSync")
-        .thenProcessAsyncOrdered("downloadBackwardHeaders", downloadStep, downloaderParallelism)
+        .thenProcessAsyncOrdered(
+            "downloadBackwardHeaders", downloadStep, downloaderParallelism * 20)
         .andFinishWith("importHeadersStep", importHeadersStep);
   }
 
