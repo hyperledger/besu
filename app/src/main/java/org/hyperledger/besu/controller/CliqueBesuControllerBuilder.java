@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueForksSchedulesFactory;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
-import org.hyperledger.besu.consensus.clique.CliqueMinersConfiguration;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -56,7 +56,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private EpochManager epochManager;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
-  private CliqueMinersConfiguration cliqueMinersConfiguration;
 
   /** Default constructor. */
   public CliqueBesuControllerBuilder() {}
@@ -69,7 +68,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
     epochManager = new EpochManager(blocksPerEpoch);
     forksSchedule = CliqueForksSchedulesFactory.create(genesisConfigOptions);
-    cliqueMinersConfiguration = CliqueMinersConfiguration.create(nodeKey);
   }
 
   @Override
@@ -88,9 +86,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final CliqueMinersConfiguration minersConfiguration = 
-        cliqueMinersConfiguration != null ? cliqueMinersConfiguration : CliqueMinersConfiguration.create(nodeKey);
-    
     final CliqueMinerExecutor miningExecutor =
         new CliqueMinerExecutor(
             protocolContext,
@@ -105,7 +100,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 forksSchedule),
             epochManager,
             forksSchedule,
-            minersConfiguration,
             ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
@@ -127,7 +121,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
-    // Enable mining coordinator for clique (always enabled - actual mining depends on validator status)
+    // Enable mining coordinator for clique (always enabled - actual mining depends on validator
+    // status)
     miningCoordinator.enable();
     return miningCoordinator;
   }
@@ -180,22 +175,40 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   public MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
-    // Clique mining is always enabled and uses the local validator address as coinbase
-    if (cliqueMinersConfiguration == null) {
-      // If not yet initialized, create temporary configuration for the override
-      // Only create if nodeKey is available, otherwise just enable mining
-      if (nodeKey != null) {
-        final CliqueMinersConfiguration tempConfig = CliqueMinersConfiguration.create(nodeKey);
-        return fromCli
-            .setMiningEnabled(true)
-            .setCoinbase(tempConfig.getLocalValidatorAddress());
-      } else {
-        // Fallback: just enable mining without setting coinbase
-        return fromCli.setMiningEnabled(true);
-      }
+    // Clique ignores CLI mining options and enforces its own requirements:
+    // - Mining is always enabled (actual block production depends on validator status)
+    // - Coinbase is always the local validator address (not user-configurable)
+    // All other CLI configuration values are preserved
+
+    final Address localValidatorAddress =
+        nodeKey != null ? Util.publicKeyToAddress(nodeKey.getPublicKey()) : null;
+
+    // Build new configuration preserving CLI values but overriding mining-specific fields
+    final var mutableInitValuesBuilder =
+        ImmutableMiningConfiguration.MutableInitValues.builder()
+            .isMiningEnabled(true) // Override: always enabled for Clique
+            .extraData(fromCli.getExtraData()) // Preserve CLI configuration
+            .minTransactionGasPrice(fromCli.getMinTransactionGasPrice())
+            .minPriorityFeePerGas(fromCli.getMinPriorityFeePerGas())
+            .minBlockOccupancyRatio(fromCli.getMinBlockOccupancyRatio());
+
+    // Override coinbase with validator address if available
+    if (localValidatorAddress != null) {
+      mutableInitValuesBuilder.coinbase(localValidatorAddress);
     }
-    return fromCli
-        .setMiningEnabled(true)
-        .setCoinbase(cliqueMinersConfiguration.getLocalValidatorAddress());
+
+    // Preserve optional CLI values
+    fromCli.getTargetGasLimit().ifPresent(mutableInitValuesBuilder::targetGasLimit);
+    fromCli.getBlockPeriodSeconds().ifPresent(mutableInitValuesBuilder::blockPeriodSeconds);
+    fromCli.getNonceGenerator().ifPresent(mutableInitValuesBuilder::nonceGenerator);
+
+    return ImmutableMiningConfiguration.builder()
+        .mutableInitValues(mutableInitValuesBuilder.build())
+        .transactionSelectionService(fromCli.getTransactionSelectionService())
+        .nonPoaBlockTxsSelectionMaxTime(fromCli.getNonPoaBlockTxsSelectionMaxTime())
+        .poaBlockTxsSelectionMaxTime(fromCli.getPoaBlockTxsSelectionMaxTime())
+        .pluginBlockTxsSelectionMaxTime(fromCli.getPluginBlockTxsSelectionMaxTime())
+        .unstable(fromCli.getUnstable())
+        .build();
   }
 }

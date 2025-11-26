@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DE
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
@@ -375,13 +374,12 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Override
   protected MiningConfiguration createCustomizedDomainObject() {
+    // Note: isMiningEnabled and coinbase are no longer CLI options - removed with PoW deprecation
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
-                .isMiningEnabled(true)
                 .extraData(Bytes.fromHexString("0xabc321"))
                 .minBlockOccupancyRatio(0.5)
-                .coinbase(Address.ZERO)
                 .build())
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();
