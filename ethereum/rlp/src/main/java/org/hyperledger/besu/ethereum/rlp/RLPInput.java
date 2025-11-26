@@ -406,8 +406,4 @@ public interface RLPInput {
   default Bytes currentListAsBytesNoCopy(final boolean moveToNextItem) {
     throw new UnsupportedOperationException("Not supported by this input");
   }
-
-  default Bytes currentBytesNoCopy() {
-    throw new UnsupportedOperationException("Not supported by this input");
-  }
 }
