@@ -27,12 +27,12 @@
     "blobSchedule": {
       "cancun": {
         "target": 0,
-        "max": 0,
+        "max": 6,
         "baseFeeUpdateFraction": 3338477
       },
       "prague": {
         "target": 0,
-        "max": 0,
+        "max": 6,
         "baseFeeUpdateFraction": 3338477
       },
       "osaka": {
