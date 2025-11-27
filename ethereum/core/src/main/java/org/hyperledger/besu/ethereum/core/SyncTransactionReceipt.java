@@ -25,9 +25,12 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A transaction receipt representation used for syncing. */
 public class SyncTransactionReceipt {
+    private static final Logger LOG = LoggerFactory.getLogger(SyncTransactionReceipt.class);
 
   private final Bytes rlpBytes;
   private final List<Log> logs;
@@ -51,9 +54,10 @@ public class SyncTransactionReceipt {
     }
   }
 
-  private static List<Log> decodeTypedReceipt(final RLPInput rlpInput) {
+  private List<Log> decodeTypedReceipt(final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     final Bytes typedTransactionReceiptBytes = input.readBytes();
+    LOG.info("Attempting to decodeTypedReceipt, read {} from full input {}", typedTransactionReceiptBytes.toHexString(), rlpBytes.toHexString());
     input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     input.enterList();
     // statusOrStateRoot
@@ -69,7 +73,7 @@ public class SyncTransactionReceipt {
     return input.readList(logInput -> Log.readFrom(logInput, isCompacted));
   }
 
-  private static List<Log> decodeFlatReceipt(final RLPInput rlpInput) {
+  private List<Log> decodeFlatReceipt(final RLPInput rlpInput) {
     rlpInput.enterList();
     // Flat receipts can be either legacy or eth/69 receipts.
     // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
@@ -96,17 +100,17 @@ public class SyncTransactionReceipt {
     return logs;
   }
 
-  private static List<Log> decodeEth69Receipt(final RLPInput input) {
+  private List<Log> decodeEth69Receipt(final RLPInput input) {
     // cumulativeGas
     input.readLongScalar();
     return input.readList(logInput -> Log.readFrom(logInput, false));
   }
 
-  private static List<Log> decodeLegacyReceipt(final RLPInput input, final boolean isCompacted) {
+  private List<Log> decodeLegacyReceipt(final RLPInput input, final boolean isCompacted) {
     return input.readList(logInput -> Log.readFrom(logInput, isCompacted));
   }
 
-  private static boolean isNextNotBloomFilter(final RLPInput input) {
+  private boolean isNextNotBloomFilter(final RLPInput input) {
     return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 
