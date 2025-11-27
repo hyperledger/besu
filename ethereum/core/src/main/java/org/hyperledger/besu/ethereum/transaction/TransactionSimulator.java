@@ -129,20 +129,6 @@ public class TransactionSimulator {
 
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final BlockHeader blockHeader) {
-    return process(
-        callParams,
-        Optional.empty(),
-        transactionValidationParams,
-        operationTracer,
-        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        blockHeader);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,

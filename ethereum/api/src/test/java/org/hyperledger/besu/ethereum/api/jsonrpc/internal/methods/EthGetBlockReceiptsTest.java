@@ -25,10 +25,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockReceiptsResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -65,8 +63,7 @@ public class EthGetBlockReceiptsTest {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private EthGetBlockReceipts method;
   private ProtocolSchedule protocolSchedule;
-  final JsonRpcResponse blockNotFoundResponse =
-      new JsonRpcErrorResponse(null, RpcErrorType.BLOCK_NOT_FOUND);
+  final JsonRpcResponse blockNotFoundResponse = new JsonRpcSuccessResponse(null, null);
 
   @BeforeEach
   public void setUp() {

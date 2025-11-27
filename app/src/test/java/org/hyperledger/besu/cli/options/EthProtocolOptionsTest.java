@@ -21,34 +21,52 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 
+import java.util.List;
+import java.util.function.ToIntFunction;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.FieldSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EthProtocolOptionsTest
     extends AbstractCLIOptionsTest<EthProtocolConfiguration, EthProtocolOptions> {
 
-  @Test
-  public void parsesValidMaxMessageSizeOptions() {
+  record MaxSizeTestInput(
+      String optionName, ToIntFunction<EthProtocolConfiguration> configGetter) {}
 
-    final TestBesuCommand cmd = parseCommand("--Xeth-max-message-size", "4");
+  static List<MaxSizeTestInput> parsesValidMaxSizeOptions =
+      List.of(
+          new MaxSizeTestInput(
+              "--Xeth-max-message-size", EthProtocolConfiguration::getMaxMessageSize),
+          new MaxSizeTestInput(
+              "--Xeth-max-transactions-message-size",
+              EthProtocolConfiguration::getMaxTransactionsMessageSize));
+
+  @ParameterizedTest
+  @FieldSource("parsesValidMaxSizeOptions")
+  public void parsesValidMaxSizeOptions(final MaxSizeTestInput input) {
+    final TestBesuCommand cmd = parseCommand(input.optionName, "4");
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
-    assertThat(config.getMaxMessageSize()).isEqualTo(4);
+    assertThat(input.configGetter.applyAsInt(config)).isEqualTo(4);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Test
-  public void parsesInvalidMaxMessageSizeOptionsShouldFail() {
-    parseCommand("--Xeth-max-message-size", "-4");
+  @ParameterizedTest
+  @FieldSource("parsesValidMaxSizeOptions")
+  public void parsesInvalidMaxMessageSizeOptionsShouldFail(final MaxSizeTestInput input) {
+    parseCommand(input.optionName, "-4");
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--Xeth-max-message-size': cannot convert '-4' to PositiveNumber");
+            "Invalid value for option '%s': cannot convert '-4' to PositiveNumber"
+                .formatted(input.optionName));
   }
 
   @Test
@@ -173,6 +191,8 @@ public class EthProtocolOptionsTest
   protected EthProtocolConfiguration createCustomizedDomainObject() {
     return ImmutableEthProtocolConfiguration.builder()
         .maxMessageSize(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE * 2)
+        .maxTransactionsMessageSize(
+            EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE * 2)
         .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
         .maxGetBlockBodies(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2)
         .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
