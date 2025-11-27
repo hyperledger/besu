@@ -64,8 +64,8 @@ public class CommandLineUtils {
    * @param isMainOptionCondition the condition to test the options dependencies, if true will test
    *     if not won't
    * @param dependentOptionsNames a list of option names that can't be used if condition is met.
-   *     Example: if --miner-coinbase is in the list and condition is that --miner-enabled should
-   *     not be false, we log a warning.
+   *     Example: if --rpc-http-max-active-connections is in the list and condition is that
+   *     --rpc-http-enabled should not be false, we log a warning.
    */
   public static void checkOptionDependencies(
       final Logger logger,
@@ -78,38 +78,6 @@ public class CommandLineUtils {
 
       if (!affectedOptions.isEmpty()) {
         logger.warn(DEPENDENCY_WARNING_MSG, affectedOptions, mainOptionName);
-      }
-    }
-  }
-
-  /**
-   * Check if options are passed that require an option to be true to have any effect and log a
-   * warning with the list of affected options. Multiple main options may be passed to check
-   * dependencies against.
-   *
-   * <p>Note that in future version of PicoCLI some options dependency mechanism may be implemented
-   * that could replace this. See https://github.com/remkop/picocli/issues/295
-   *
-   * @param logger the logger instance used to log the warning
-   * @param commandLine the command line containing the options we want to check display.
-   * @param stringToLog the string that is going to be logged.
-   * @param isMainOptionCondition the conditions to test dependent options against. If all
-   *     conditions are true, dependent options will be checked.
-   * @param dependentOptionsNames a list of option names that can't be used if condition is met.
-   *     Example: if --min-gas-price is in the list and condition is that --miner-enabled should not
-   *     be false, we log a warning.
-   */
-  public static void checkMultiOptionDependencies(
-      final Logger logger,
-      final CommandLine commandLine,
-      final String stringToLog,
-      final List<Boolean> isMainOptionCondition,
-      final List<String> dependentOptionsNames) {
-    if (isMainOptionCondition.stream().allMatch(isTrue -> isTrue)) {
-      final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
-
-      if (!affectedOptions.isEmpty()) {
-        logger.warn(stringToLog);
       }
     }
   }
