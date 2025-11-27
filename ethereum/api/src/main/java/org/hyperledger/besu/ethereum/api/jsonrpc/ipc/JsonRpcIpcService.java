@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.ipc;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_REQUEST;
 
+import org.hyperledger.besu.ethereum.api.handlers.JsonRpcParserHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -39,7 +40,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -55,7 +55,7 @@ public class JsonRpcIpcService {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcIpcService.class);
   private static final ObjectWriter JSON_OBJECT_WRITER =
       new ObjectMapper()
-          .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
+          .registerModule(new Jdk8Module())
           .writer()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
@@ -73,113 +73,126 @@ public class JsonRpcIpcService {
 
   public Future<NetServer> start() {
     netServer = vertx.createNetServer(buildNetServerOptions());
-    netServer.connectHandler(
-        socket -> {
-          AtomicBoolean closedSocket = new AtomicBoolean(false);
-          socket
-              .closeHandler(unused -> closedSocket.set(true))
-              .handler(
-                  buffer -> {
-                    if (buffer.length() == 0) {
-                      errorReturn(socket, null, RpcErrorType.INVALID_REQUEST);
-                    } else {
-                      try {
-                        final JsonObject jsonRpcRequest = buffer.toJsonObject();
-                        vertx
-                            .<JsonRpcResponse>executeBlocking(
-                                promise -> {
-                                  final JsonRpcResponse jsonRpcResponse =
-                                      jsonRpcExecutor.execute(
-                                          Optional.empty(),
-                                          null,
-                                          null,
-                                          closedSocket::get,
-                                          jsonRpcRequest,
-                                          req -> req.mapTo(JsonRpcRequest.class));
-                                  promise.complete(jsonRpcResponse);
-                                })
-                            .onSuccess(
-                                jsonRpcResponse -> {
-                                  try {
-                                    socket.write(
-                                        JSON_OBJECT_WRITER.writeValueAsString(jsonRpcResponse)
-                                            + '\n');
-                                  } catch (JsonProcessingException e) {
-                                    LOG.error("Error streaming JSON-RPC response", e);
-                                  }
-                                })
-                            .onFailure(
-                                throwable -> {
-                                  try {
-                                    final Integer id = jsonRpcRequest.getInteger("id", null);
-                                    errorReturn(socket, id, RpcErrorType.INTERNAL_ERROR);
-                                  } catch (ClassCastException idNotIntegerException) {
-                                    errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR);
-                                  }
-                                });
-                      } catch (DecodeException jsonObjectDecodeException) {
-                        try {
-                          final JsonArray batchJsonRpcRequest = buffer.toJsonArray();
-                          if (batchJsonRpcRequest.isEmpty()) {
-                            errorReturn(socket, null, RpcErrorType.INVALID_REQUEST);
-                          } else {
-                            vertx
-                                .<List<JsonRpcResponse>>executeBlocking(
-                                    promise -> {
-                                      List<JsonRpcResponse> responses = new ArrayList<>();
-                                      for (int i = 0; i < batchJsonRpcRequest.size(); i++) {
-                                        final JsonObject jsonRequest;
-                                        try {
-                                          jsonRequest = batchJsonRpcRequest.getJsonObject(i);
-                                        } catch (ClassCastException e) {
-                                          responses.add(
-                                              new JsonRpcErrorResponse(null, INVALID_REQUEST));
-                                          continue;
-                                        }
-                                        responses.add(
-                                            jsonRpcExecutor.execute(
-                                                Optional.empty(),
-                                                null,
-                                                null,
-                                                closedSocket::get,
-                                                jsonRequest,
-                                                req -> req.mapTo(JsonRpcRequest.class)));
-                                      }
-                                      promise.complete(responses);
-                                    })
-                                .onSuccess(
-                                    jsonRpcBatchResponse -> {
-                                      try {
-                                        final JsonRpcResponse[] completed =
-                                            jsonRpcBatchResponse.stream()
-                                                .filter(
-                                                    jsonRpcResponse ->
-                                                        jsonRpcResponse.getType()
-                                                            != RpcResponseType.NONE)
-                                                .toArray(JsonRpcResponse[]::new);
-
-                                        socket.write(
-                                            JSON_OBJECT_WRITER.writeValueAsString(completed)
-                                                + '\n');
-                                      } catch (JsonProcessingException e) {
-                                        LOG.error("Error streaming JSON-RPC response", e);
-                                      }
-                                    })
-                                .onFailure(
-                                    throwable ->
-                                        errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR));
-                          }
-                        } catch (DecodeException jsonArrayDecodeException) {
-                          errorReturn(socket, null, RpcErrorType.PARSE_ERROR);
-                        }
-                      }
-                    }
-                  });
-        });
+    netServer.connectHandler(socket -> handleNewConnection(socket));
     return netServer
         .listen(SocketAddress.domainSocketAddress(path.toString()))
         .onSuccess(successServer -> LOG.info("IPC endpoint opened: {}", path))
         .onFailure(throwable -> LOG.error("Unable to open IPC endpoint", throwable));
+  }
+
+  private void handleNewConnection(final NetSocket socket) {
+    final AtomicBoolean closedSocket = new AtomicBoolean(false);
+
+    socket
+        .closeHandler(unused -> closedSocket.set(true))
+        .handler(
+            JsonRpcParserHandler.ipcHandler(
+                (jsonObj, jsonArr) -> {
+                  if (jsonObj != null) {
+                    handleSingleRequest(socket, jsonObj, closedSocket);
+                  } else if (jsonArr != null) {
+                    handleBatchRequest(socket, jsonArr, closedSocket);
+                  }
+                },
+                () -> errorReturn(socket, null, RpcErrorType.PARSE_ERROR)));
+  }
+
+  private void handleSingleRequest(
+      final NetSocket socket, final JsonObject jsonRpcRequest, final AtomicBoolean closedSocket) {
+    vertx
+        .<JsonRpcResponse>executeBlocking(
+            promise -> {
+              final JsonRpcResponse jsonRpcResponse =
+                  jsonRpcExecutor.execute(
+                      Optional.empty(),
+                      null,
+                      null,
+                      closedSocket::get,
+                      jsonRpcRequest,
+                      req -> req.mapTo(JsonRpcRequest.class));
+              promise.complete(jsonRpcResponse);
+            })
+        .onSuccess(
+            jsonRpcResponse -> {
+              if (!closedSocket.get()) {
+                writeResponse(socket, jsonRpcResponse);
+              }
+            })
+        .onFailure(
+            throwable -> {
+              if (!closedSocket.get()) {
+                try {
+                  final Integer id = jsonRpcRequest.getInteger("id", null);
+                  errorReturn(socket, id, RpcErrorType.INTERNAL_ERROR);
+                } catch (ClassCastException idNotIntegerException) {
+                  errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR);
+                }
+              }
+            });
+  }
+
+  private void handleBatchRequest(
+      final NetSocket socket,
+      final JsonArray batchJsonRpcRequest,
+      final AtomicBoolean closedSocket) {
+    if (batchJsonRpcRequest.isEmpty()) {
+      errorReturn(socket, null, RpcErrorType.INVALID_REQUEST);
+    } else {
+      vertx
+          .<List<JsonRpcResponse>>executeBlocking(
+              promise -> {
+                List<JsonRpcResponse> responses = new ArrayList<>();
+                for (int i = 0; i < batchJsonRpcRequest.size(); i++) {
+                  final JsonObject jsonRequest;
+                  try {
+                    jsonRequest = batchJsonRpcRequest.getJsonObject(i);
+                  } catch (ClassCastException e) {
+                    responses.add(new JsonRpcErrorResponse(null, INVALID_REQUEST));
+                    continue;
+                  }
+                  responses.add(
+                      jsonRpcExecutor.execute(
+                          Optional.empty(),
+                          null,
+                          null,
+                          closedSocket::get,
+                          jsonRequest,
+                          req -> req.mapTo(JsonRpcRequest.class)));
+                }
+                promise.complete(responses);
+              })
+          .onSuccess(
+              jsonRpcBatchResponse -> {
+                if (!closedSocket.get()) {
+                  try {
+                    final JsonRpcResponse[] completed =
+                        jsonRpcBatchResponse.stream()
+                            .filter(
+                                jsonRpcResponse ->
+                                    jsonRpcResponse.getType() != RpcResponseType.NONE)
+                            .toArray(JsonRpcResponse[]::new);
+
+                    socket.write(JSON_OBJECT_WRITER.writeValueAsString(completed) + '\n');
+                  } catch (JsonProcessingException e) {
+                    LOG.error("Error streaming JSON-RPC response", e);
+                  }
+                }
+              })
+          .onFailure(
+              throwable -> {
+                if (!closedSocket.get()) {
+                  errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR);
+                }
+              });
+    }
+  }
+
+  private void writeResponse(final NetSocket socket, final JsonRpcResponse response) {
+    try {
+      socket.write(JSON_OBJECT_WRITER.writeValueAsString(response) + '\n');
+    } catch (JsonProcessingException e) {
+      LOG.error("Error streaming JSON-RPC response", e);
+    }
   }
 
   public Future<Void> stop() {
