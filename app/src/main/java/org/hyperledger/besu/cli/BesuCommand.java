@@ -20,10 +20,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
-import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
+import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
+import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 
@@ -35,8 +35,8 @@ import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NativeRequirement;
 import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
@@ -92,6 +92,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -300,7 +301,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
-  private final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory;
+  private final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter>
+      era1BlockExporterFactory;
 
   // Unstable CLI options
   final NetworkingOptions unstableNetworkingOptions = NetworkingOptions.create();
@@ -458,7 +460,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  private final NetworkName network = null;
+  private final NetworkDefinition network = null;
 
   @Option(
       names = {PROFILE_OPTION_NAME},
@@ -675,7 +677,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+      final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
@@ -732,7 +734,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+      final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final BesuController.Builder controllerBuilder,
       final BesuPluginContextImpl besuPluginContext,
@@ -1358,7 +1360,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @VisibleForTesting
-  void configureNativeLibs(final Optional<NetworkName> configuredNetwork) {
+  void configureNativeLibs(final Optional<NetworkDefinition> configuredNetwork) {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
         && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
@@ -1431,14 +1433,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @VisibleForTesting
-  void checkRequiredNativeLibraries(final NetworkName configuredNetwork) {
+  void checkRequiredNativeLibraries(final NetworkDefinition configuredNetwork) {
     if (configuredNetwork == null) {
       return;
     }
 
     // assert native library requirements for named networks:
     List<NativeRequirementResult> failedNativeReqs =
-        configuredNetwork.getNativeRequirements().stream().filter(r -> !r.present()).toList();
+        NativeRequirement.getNativeRequirements(configuredNetwork).stream()
+            .filter(r -> !r.present())
+            .toList();
 
     if (!failedNativeReqs.isEmpty()) {
       String failures =
@@ -2079,7 +2083,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    *
    * @return the network for this BesuCommand
    */
-  public NetworkName getNetwork() {
+  public NetworkDefinition getNetwork() {
     return network;
   }
 
@@ -2210,7 +2214,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 "BesuCommand-Shutdown-Hook"));
   }
 
-  private EthNetworkConfig updateNetworkConfig(final NetworkName network) {
+  private EthNetworkConfig updateNetworkConfig(final NetworkDefinition network) {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
@@ -2582,7 +2586,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(syncMode)
         .orElse(
             genesisFile == null
-                    && Optional.ofNullable(network).map(NetworkName::canSnapSync).orElse(false)
+                    && Optional.ofNullable(network)
+                        .map(NetworkDefinition::canSnapSync)
+                        .orElse(false)
                 ? SyncMode.SNAP
                 : SyncMode.FULL);
   }

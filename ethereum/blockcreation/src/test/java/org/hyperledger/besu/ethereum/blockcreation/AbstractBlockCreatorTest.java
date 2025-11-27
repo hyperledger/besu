@@ -159,7 +159,8 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
         new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
             .process(
                 new RequestProcessingContext(
-                    new BlockProcessingContext(null, null, null, null, null), receipts),
+                    new BlockProcessingContext(null, null, null, null, null, Optional.empty()),
+                    receipts),
                 Optional.empty());
     assertThat(depositRequestsFromReceipts).isEqualTo(expectedDepositRequest);
   }

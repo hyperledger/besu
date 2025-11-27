@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
@@ -36,6 +36,7 @@ import io.vertx.core.Vertx;
 public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
 
   private final Optional<Long> osakaMilestone;
+  private final Optional<Long> amsterdamMilestone;
 
   public EngineGetPayloadV5(
       final Vertx vertx,
@@ -52,6 +53,7 @@ public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
         blockResultFactory,
         engineCallListener);
     osakaMilestone = schedule.milestoneFor(OSAKA);
+    amsterdamMilestone = schedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -70,10 +72,6 @@ public class EngineGetPayloadV5 extends AbstractEngineGetPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     return ForkSupportHelper.validateForkSupported(
-        OSAKA,
-        osakaMilestone,
-        FUTURE_EIPS,
-        protocolSchedule.flatMap(s -> s.milestoneFor(FUTURE_EIPS)),
-        blockTimestamp);
+        OSAKA, osakaMilestone, AMSTERDAM, amsterdamMilestone, blockTimestamp);
   }
 }
