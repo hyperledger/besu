@@ -106,8 +106,12 @@ public class GetReceiptsFromPeerTask
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
     final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
     if (receiptsByBlock.isEmpty()) {
+      LOG.info("Peer {} sent us an empty response", peer.getLoggableId());
       return Optional.empty();
     } else if (receiptsByBlock.size() > blockHeaders.size()) {
+      LOG.info(
+          "Peer {} sent us a response with more receipts by block than requested",
+          peer.getLoggableId());
       return Optional.empty();
     }
 
@@ -117,6 +121,9 @@ public class GetReceiptsFromPeerTask
           headersByReceiptsRoot.get(receiptsRoot(receiptsInBlock));
       if (blockHeaders == null) {
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
+        LOG.info(
+            "Peer {} sent us a response with an entry that did not match our request",
+            peer.getLoggableId());
         return Optional.empty();
       }
       blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));

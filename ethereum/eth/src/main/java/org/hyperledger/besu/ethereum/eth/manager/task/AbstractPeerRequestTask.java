@@ -65,7 +65,9 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     responseStream.then(
         stream -> {
           // Start the timeout now that the request has actually been sent
-          ethContext.getScheduler().failAfterTimeout(promise, timeout);
+          ethContext
+              .getScheduler()
+              .failAfterTimeout(promise, timeout); // TODO: should move out of this method call!
 
           stream.then(
               (streamClosed, message, peer1) ->
@@ -117,7 +119,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
           peer.getLoggableId(),
           e);
-      LOG.trace("Peer {} Malformed message data: {}", peer, message.getData());
+      LOG.info("Peer {} Malformed message data: {}", peer, message.getData());
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }
