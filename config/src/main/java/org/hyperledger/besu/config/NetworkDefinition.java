@@ -18,8 +18,6 @@ import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-
 /** The enum Network name. */
 public enum NetworkDefinition {
   /** Mainnet network name. */
@@ -123,7 +121,8 @@ public enum NetworkDefinition {
    * @return the string
    */
   public String normalize() {
-    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
+    String n = name().toLowerCase(Locale.ROOT);
+    return n.substring(0, 1).toUpperCase(Locale.ROOT) + n.substring(1);
   }
 
   /**

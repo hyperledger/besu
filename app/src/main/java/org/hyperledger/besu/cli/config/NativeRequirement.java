@@ -86,8 +86,7 @@ public interface NativeRequirement {
    * corresponding list of requirements if applicable. If the network does not require native
    * libraries, an empty list is returned.
    *
-   * @param networkDefinition the name of the network for which native requirements are being
-   *     retrieved.
+   * @param networkDefinition the network for which native requirements are being retrieved.
    * @return a list of {@link NativeRequirementResult} representing the native library requirements
    *     for the specified network, or an empty list if no requirements exist.
    */
