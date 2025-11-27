@@ -77,8 +77,8 @@ public class JsonUtil {
       final ObjectNode objectNode, final Predicate<Map.Entry<String, JsonNode>> fieldPredicate) {
     final ObjectNode normalized = JsonUtil.createEmptyObjectNode();
     objectNode
-        .fields()
-        .forEachRemaining(
+        .propertyStream()
+        .forEach(
             entry -> {
               if (!fieldPredicate.test(entry)) {
                 return;
