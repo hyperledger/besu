@@ -95,7 +95,7 @@ public enum NetworkDefinition {
   /** Dev network name. */
   DEV(
       "/dev.json",
-      2018, // chain id
+      1337, // chain id
       2018, // network id
       false, // can snap sync
       false, // native required
