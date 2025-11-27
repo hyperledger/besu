@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /** A transaction receipt representation used for syncing. */
 public class SyncTransactionReceipt {
-    private static final Logger LOG = LoggerFactory.getLogger(SyncTransactionReceipt.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SyncTransactionReceipt.class);
 
   private final Bytes rlpBytes;
   private final List<Log> logs;
@@ -57,7 +57,10 @@ public class SyncTransactionReceipt {
   private List<Log> decodeTypedReceipt(final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     final Bytes typedTransactionReceiptBytes = input.readBytes();
-    LOG.info("Attempting to decodeTypedReceipt, read {} from full input {}", typedTransactionReceiptBytes.toHexString(), rlpBytes.toHexString());
+    LOG.info(
+        "Attempting to decodeTypedReceipt, read {} from full input {}",
+        typedTransactionReceiptBytes.toHexString(),
+        rlpBytes.toHexString());
     input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     input.enterList();
     // statusOrStateRoot
