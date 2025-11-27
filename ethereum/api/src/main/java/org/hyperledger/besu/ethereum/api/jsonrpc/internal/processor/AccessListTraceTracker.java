@@ -21,11 +21,12 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class AccessListTraceTracker implements AccessListLocationTracker {
-  final List<Address> touchedAccounts = new java.util.ArrayList<>();
+  final Set<Address> touchedAccounts = new java.util.HashSet<>();
   final Map<Address, List<UInt256>> accessedSlots = new java.util.HashMap<>();
 
   @Override
@@ -35,9 +36,7 @@ public class AccessListTraceTracker implements AccessListLocationTracker {
 
   @Override
   public void addTouchedAccount(final Address address) {
-    if (!touchedAccounts.contains(address)) {
-      touchedAccounts.add(address);
-    }
+    touchedAccounts.add(address);
   }
 
   @Override
@@ -52,7 +51,7 @@ public class AccessListTraceTracker implements AccessListLocationTracker {
     accessedSlots.clear();
   }
 
-  public List<Address> getTouchedAccounts() {
+  public Set<Address> getTouchedAccounts() {
     return touchedAccounts;
   }
 }
