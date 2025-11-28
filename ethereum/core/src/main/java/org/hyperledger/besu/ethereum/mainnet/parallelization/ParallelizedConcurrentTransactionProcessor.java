@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.processing.InterruptibleOperationTracer;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -31,17 +32,17 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.FutureTask;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -61,7 +62,7 @@ public class ParallelizedConcurrentTransactionProcessor {
   private final Map<Integer, ParallelizedTransactionContext>
       parallelizedTransactionContextByLocation = new ConcurrentHashMap<>();
 
-  private CompletableFuture<Void>[] completableFuturesForBackgroundTransactions;
+  private FutureTask<Void>[] futureTasksForBackgroundTransactions;
 
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
@@ -109,25 +110,29 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Executor executor,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
-    completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
+    futureTasksForBackgroundTransactions = new FutureTask[transactions.size()];
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       final int transactionLocation = i;
       /*
        * All transactions are executed in the background by copying the world state of the block on which the transactions need to be executed, ensuring that each one has its own accumulator.
        */
-      CompletableFuture.runAsync(
-          () ->
-              runTransaction(
-                  protocolContext,
-                  blockHeader,
-                  transactionLocation,
-                  transaction,
-                  miningBeneficiary,
-                  blockHashLookup,
-                  blobGasPrice,
-                  blockAccessListBuilder),
-          executor);
+      final FutureTask futureTask =
+          new FutureTask<Void>(
+              () -> {
+                runTransaction(
+                    protocolContext,
+                    blockHeader,
+                    transactionLocation,
+                    transaction,
+                    miningBeneficiary,
+                    blockHashLookup,
+                    blobGasPrice,
+                    blockAccessListBuilder);
+                return null;
+              });
+      futureTasksForBackgroundTransactions[i] = futureTask;
+      executor.execute(futureTask);
     }
   }
 
@@ -168,27 +173,28 @@ public class ParallelizedConcurrentTransactionProcessor {
                   blockHeader,
                   transaction.detachedCopy(),
                   miningBeneficiary,
-                  new OperationTracer() {
-                    @Override
-                    public void traceBeforeRewardTransaction(
-                        final WorldView worldView,
-                        final org.hyperledger.besu.datatypes.Transaction tx,
-                        final Wei miningReward) {
-                      /*
-                       * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
-                       * Indeed, if the transaction has interacted with the address to read or modify it,
-                       * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
-                       * If this is not the case, we can ignore this address during conflict detection.
-                       */
-                      if (transactionCollisionDetector
-                          .getAddressesTouchedByTransaction(
-                              transaction, Optional.of(roundWorldStateUpdater))
-                          .contains(miningBeneficiary)) {
-                        contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
-                      }
-                      contextBuilder.miningBeneficiaryReward(miningReward);
-                    }
-                  },
+                  new InterruptibleOperationTracer(
+                      new BlockAwareOperationTracer() {
+                        @Override
+                        public void traceBeforeRewardTransaction(
+                            final WorldView worldView,
+                            final org.hyperledger.besu.datatypes.Transaction tx,
+                            final Wei miningReward) {
+                          /*
+                           * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
+                           * Indeed, if the transaction has interacted with the address to read or modify it,
+                           * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
+                           * If this is not the case, we can ignore this address during conflict detection.
+                           */
+                          if (transactionCollisionDetector
+                              .getAddressesTouchedByTransaction(
+                                  transaction, Optional.of(roundWorldStateUpdater))
+                              .contains(miningBeneficiary)) {
+                            contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
+                          }
+                          contextBuilder.miningBeneficiaryReward(miningReward);
+                        }
+                      }),
                   blockHashLookup,
                   TransactionValidationParams.processingBlock(),
                   blobGasPrice,
@@ -306,10 +312,10 @@ public class ParallelizedConcurrentTransactionProcessor {
       }
     } else {
       // stop background processing for this transaction as useless
-      final CompletableFuture<Void> completableFuturesForBackgroundTransaction =
-          completableFuturesForBackgroundTransactions[transactionLocation];
-      if (completableFuturesForBackgroundTransaction != null) {
-        completableFuturesForBackgroundTransaction.cancel(true);
+      final FutureTask<Void> FutureTasksForBackgroundTransaction =
+          futureTasksForBackgroundTransactions[transactionLocation];
+      if (FutureTasksForBackgroundTransaction != null) {
+        FutureTasksForBackgroundTransaction.cancel(true);
       }
     }
     return Optional.empty();
