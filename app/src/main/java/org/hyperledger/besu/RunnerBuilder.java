@@ -21,8 +21,8 @@ import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -625,7 +625,7 @@ public class RunnerBuilder {
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).bootNodes();
       } else {
         bootstrap = ethNetworkConfig.bootNodes();
       }
