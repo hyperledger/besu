@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -28,8 +29,9 @@ import com.google.common.annotations.VisibleForTesting;
 public final class UInt256 {
   // region Internals
   // --------------------------------------------------------------------------
-  // UInt256 is a big-endian up to 256-bits integer.
-  // Internally, it is represented with fixed-size int/long limbs in little-endian order.
+  // UInt256 represents a big-endian 256-bits integer.
+  // As opposed to Java int, operations are by default unsigned,
+  // and signed version are interpreted in two-complements as usual.
   // Length is used to optimise algorithms, skipping leading zeroes.
   // Nonetheless, 256bits are always allocated and initialised to zeroes.
 
@@ -46,8 +48,14 @@ public final class UInt256 {
   // Mask for long values
   private static final long MASK_L = 0xFFFFFFFFL;
 
+  // Fixed arrays
+  private static final byte[] ZERO_BYTES = new byte[32];
+  // We accomodate up to a result of a multiplication
+  private static final int[] ZERO_INTS = new int[17];
+
+
   private final int[] limbs;
-  private final int length;
+  private final int offset;
 
   @VisibleForTesting
   int[] limbs() {
@@ -78,10 +86,10 @@ public final class UInt256 {
   // region Constructors
   // --------------------------------------------------------------------------
 
-  UInt256(final int[] limbs, final int length) {
+  UInt256(final int[] limbs, final int offset) {
     // Unchecked length: assumes limbs have length == N_LIMBS
     this.limbs = limbs;
-    this.length = length;
+    this.offset = offset;
   }
 
   UInt256(final int[] limbs) {
@@ -95,40 +103,54 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    int byteLen = bytes.length;
-    if (byteLen == 0) return ZERO;
-
     int[] limbs = new int[N_LIMBS];
+    int offset = Arrays.mismatch(bytes, ZERO_BYTES);
+    int len = (bytes.length - offset);
+    int nFullInts = len >> N_BYTES_PER_LIMB_LOG;
+    int nRemaining = len & (N_BYTES_PER_LIMB - 1);
 
-    // Fast path for exactly 32 bytes
-    if (byteLen == 32) {
-      limbs[7] = getIntBE(bytes, 0);
-      limbs[6] = getIntBE(bytes, 4);
-      limbs[5] = getIntBE(bytes, 8);
-      limbs[4] = getIntBE(bytes, 12);
-      limbs[3] = getIntBE(bytes, 16);
-      limbs[2] = getIntBE(bytes, 20);
-      limbs[1] = getIntBE(bytes, 24);
-      limbs[0] = getIntBE(bytes, 28);
-      return new UInt256(limbs, N_LIMBS);
+    offset = N_LIMBS - ((bytes.length - offset) >> N_BYTES_PER_LIMB_LOG);
+    int i = 7;
+    int j = bytes.length - 4;
+    switch(nFullInts) {
+      // Fall through
+      case 8:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 7:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 6:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 5:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 4:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 3:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 2:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
+      // Fall through
+      case 1:
+        limbs[i--] = getIntBE(bytes, j);
+        j -= 4;
     }
-
-    // General path for variable length
-    int limbIndex = 0;
-    int byteIndex = byteLen - 1;
-
-    while (byteIndex >= 0 && limbIndex < N_LIMBS) {
-      int limb = 0;
-      int shift = 0;
-
-      for (int j = 0; j < 4 && byteIndex >= 0; j++, byteIndex--, shift += 8) {
-        limb |= (bytes[byteIndex] & 0xFF) << shift;
-      }
-
-      limbs[limbIndex++] = limb;
+    if (nRemaining != 0) {
+      limbs[i] = getIntBEPartial(bytes, j, nRemaining);
+      offset--;
     }
-
-    return new UInt256(limbs, limbIndex);
+    return new UInt256(limbs, offset);
   }
 
   // Helper method to read 4 bytes as big-endian int
@@ -148,8 +170,8 @@ public final class UInt256 {
   public static UInt256 fromInt(final int value) {
     if (value == 0) return ZERO;
     int[] limbs = new int[N_LIMBS];
-    limbs[0] = value;
-    return new UInt256(limbs, 1);
+    limbs[N_LIMBS - 1] = value;
+    return new UInt256(limbs, 7);
   }
 
   /**
@@ -161,9 +183,9 @@ public final class UInt256 {
   public static UInt256 fromLong(final long value) {
     if (value == 0) return ZERO;
     int[] limbs = new int[N_LIMBS];
-    limbs[0] = (int) value;
-    limbs[1] = (int) (value >>> 32);
-    return new UInt256(limbs, 2);
+    limbs[N_LIMBS - 1] = (int) value;
+    limbs[N_LIMBS - 2] = (int) (value >>> 32);
+    return new UInt256(limbs, 6);
   }
 
   /**
@@ -178,8 +200,9 @@ public final class UInt256 {
   public static UInt256 fromArray(final int[] arr) {
     int[] limbs = new int[N_LIMBS];
     int len = Math.min(N_LIMBS, arr.length);
-    System.arraycopy(arr, 0, limbs, 0, len);
-    return new UInt256(limbs, len);
+    int offset = N_LIMBS - len;
+    System.arraycopy(arr, 0, limbs, offset, len);
+    return new UInt256(limbs, offset);
   }
 
   // --------------------------------------------------------------------------
@@ -193,7 +216,7 @@ public final class UInt256 {
    * @return Value truncated to an int, possibly lossy.
    */
   public int intValue() {
-    return limbs[0];
+    return limbs[N_LIMBS - 1];
   }
 
   /**
@@ -202,7 +225,20 @@ public final class UInt256 {
    * @return Value truncated to a long, possibly lossy.
    */
   public long longValue() {
-    return (limbs[0] & MASK_L) | ((limbs[1] & MASK_L) << 32);
+    return (limbs[N_LIMBS - 1] & MASK_L) | ((limbs[N_LIMBS - 2] & MASK_L) << 32);
+  }
+
+  /**
+   * Convert to BigEndian byte array.
+   *
+   * @return Big-endian ordered bytes for this UInt256 value.
+   */
+  public byte[] toBytesBEOld() {
+    ByteBuffer buf = ByteBuffer.allocate(BYTESIZE).order(ByteOrder.BIG_ENDIAN);
+    for (int i = 0; i < N_LIMBS; i++) {
+      buf.putInt(limbs[i]);
+    }
+    return buf.array();
   }
 
   /**
@@ -211,13 +247,26 @@ public final class UInt256 {
    * @return Big-endian ordered bytes for this UInt256 value.
    */
   public byte[] toBytesBE() {
-    ByteBuffer buf = ByteBuffer.allocate(BYTESIZE).order(ByteOrder.BIG_ENDIAN);
-    for (int i = N_LIMBS - 1; i >= 0; i--) {
-      buf.putInt(limbs[i]);
-    }
-    return buf.array();
+    byte[] result = new byte[BYTESIZE];
+    putIntBE(result, 0, limbs[0]);
+    putIntBE(result, 4, limbs[1]);
+    putIntBE(result, 8, limbs[2]);
+    putIntBE(result, 12, limbs[3]);
+    putIntBE(result, 16, limbs[4]);
+    putIntBE(result, 20, limbs[5]);
+    putIntBE(result, 24, limbs[6]);
+    putIntBE(result, 28, limbs[7]);
+    return result;
   }
 
+  // Helper method to write 4 bytes from big-endian int
+  private static void putIntBE(final byte[] bytes, final int offset, final int value) {
+    bytes[offset] = (byte) (value >>> 24);
+    bytes[offset + 1] = (byte) (value >>> 16);
+    bytes[offset + 2] = (byte) (value >>> 8);
+    bytes[offset + 3] = (byte) value;
+  }
+  
   /**
    * Convert to BigInteger.
    *
@@ -248,8 +297,7 @@ public final class UInt256 {
    * @return true if this UInt256 value is 0.
    */
   public boolean isZero() {
-    return (limbs[0] | limbs[1] | limbs[2] | limbs[3] | limbs[4] | limbs[5] | limbs[6] | limbs[7])
-        == 0;
+    return Arrays.mismatch(limbs, ZERO.limbs) == -1;
   }
 
   /**
@@ -260,12 +308,8 @@ public final class UInt256 {
    * @return 0 if a == b, negative if a &lt; b and positive if a &gt; b.
    */
   public static int compare(final UInt256 a, final UInt256 b) {
-    int comp;
-    for (int i = N_LIMBS - 1; i >= 0; i--) {
-      comp = Integer.compareUnsigned(a.limbs[i], b.limbs[i]);
-      if (comp != 0) return comp;
-    }
-    return 0;
+    int i = Arrays.mismatch(a.limbs, b.limbs);
+    return (i == -1) ? 0 : Integer.compareUnsigned(a.limbs[i], b.limbs[i]);
   }
 
   @Override
@@ -273,17 +317,7 @@ public final class UInt256 {
     if (this == obj) return true;
     if (!(obj instanceof UInt256)) return false;
     UInt256 other = (UInt256) obj;
-
-    int xor =
-        (this.limbs[0] ^ other.limbs[0])
-            | (this.limbs[1] ^ other.limbs[1])
-            | (this.limbs[2] ^ other.limbs[2])
-            | (this.limbs[3] ^ other.limbs[3])
-            | (this.limbs[4] ^ other.limbs[4])
-            | (this.limbs[5] ^ other.limbs[5])
-            | (this.limbs[6] ^ other.limbs[6])
-            | (this.limbs[7] ^ other.limbs[7]);
-    return xor == 0;
+    return Arrays.mismatch(this.limbs, other.limbs) == -1;
   }
 
   @Override
@@ -309,7 +343,7 @@ public final class UInt256 {
    */
   public UInt256 mod(final UInt256 modulus) {
     if (this.isZero() || modulus.isZero()) return ZERO;
-    return new UInt256(knuthRemainder(this.limbs, modulus.limbs), modulus.length);
+    return new UInt256(knuthRemainder(this.limbs, modulus.limbs));
   }
 
   /**
@@ -325,14 +359,16 @@ public final class UInt256 {
     if (this.isZero() || modulus.isZero()) return ZERO;
     int[] x = new int[N_LIMBS];
     int[] y = new int[N_LIMBS];
-    absInto(x, this.limbs, N_LIMBS);
-    absInto(y, modulus.limbs, N_LIMBS);
+    System.arraycopy(this.limbs, 0, x, 0, N_LIMBS);
+    System.arraycopy(modulus.limbs, 0, y, 0, N_LIMBS);
+    absInplace(x);
+    absInplace(y);
     int[] r = knuthRemainder(x, y);
-    if (isNeg(this.limbs, N_LIMBS)) {
-      negate(r, N_LIMBS);
+    if (isNeg(this.limbs)) {
+      negate(r);
       return new UInt256(r);
     }
-    return new UInt256(r, modulus.length);
+    return new UInt256(r, modulus.offset);
   }
 
   /**
@@ -344,9 +380,9 @@ public final class UInt256 {
    */
   public UInt256 addMod(final UInt256 other, final UInt256 modulus) {
     if (modulus.isZero()) return ZERO;
-    int[] sum = addWithCarry(this.limbs, this.length, other.limbs, other.length);
+    int[] sum = addImpl(this.limbs, other.limbs);
     int[] rem = knuthRemainder(sum, modulus.limbs);
-    return new UInt256(rem, modulus.length);
+    return new UInt256(rem, modulus.offset);
   }
 
   /**
@@ -358,9 +394,15 @@ public final class UInt256 {
    */
   public UInt256 mulMod(final UInt256 other, final UInt256 modulus) {
     if (this.isZero() || other.isZero() || modulus.isZero()) return ZERO;
-    int[] result = addMul(this.limbs, this.length, other.limbs, other.length);
+    System.out.println("MulMod");
+    System.out.println(String.format("this Offset: %s, Data: %s", this.offset, Arrays.toString(this.limbs)));
+    System.out.println(String.format("other Offset: %s, Data: %s", other.offset, Arrays.toString(other.limbs)));
+    System.out.println(String.format("modulus Offset: %s, Data: %s", modulus.offset, Arrays.toString(modulus.limbs)));
+    int[] result = addMul(this.limbs, this.offset, other.limbs, other.offset);
+    System.out.println(String.format("to_int(%s) * to_int(%s) == to_int(%s)", Arrays.toString(this.limbs), Arrays.toString(other.limbs), Arrays.toString(result)));
     result = knuthRemainder(result, modulus.limbs);
-    return new UInt256(result, modulus.length);
+    System.out.println(String.format("to_int(%s) == to_int(%s)", Arrays.toString(modulus.limbs), Arrays.toString(result)));
+    return new UInt256(result, modulus.offset);
   }
 
   /**
@@ -443,266 +485,273 @@ public final class UInt256 {
 
   // region Support (private) Algorithms
   // --------------------------------------------------------------------------
-  private static int nSetLimbs(final int[] x) {
-    int offset = x.length - 1;
-    while ((offset >= 0) && (x[offset] == 0)) offset--;
-    return offset + 1;
+
+  // Effective length of a big-endian int array: leading zeroes are ignored 
+  private static int effectiveLength(final int[] x) {
+    // Unchecked : x.length <= N_LIMBS
+    int offset = Arrays.mismatch(x, ZERO_INTS);
+    return (offset != -1 || offset != x.length) ? x.length - offset : 0;
   }
 
-  private static int compareLimbs(final int[] a, final int aLen, final int[] b, final int bLen) {
-    int cmp;
-    if (aLen > bLen) {
-      for (int i = aLen - 1; i >= bLen; i--) {
-        cmp = Integer.compareUnsigned(a[i], 0);
-        if (cmp != 0) return cmp;
-      }
-    } else if (aLen < bLen) {
-      for (int i = bLen - 1; i >= aLen; i--) {
-        cmp = Integer.compareUnsigned(0, b[i]);
-        if (cmp != 0) return cmp;
-      }
+  // private static int numberOfLeadingZeroLimbs(final int[] x) {
+  //   // Unchecked : x.length <= N_LIMBS
+  //   int offset = Arrays.mismatch(x, ZERO.limbs);
+  //   return (offset == -1) ? x.length : offset;
+  // }
+
+  // private static int numberOfLeadingZeroBits(final int[] x, final int offset, final int length) {
+  //   // Unchecked : xLen <= x.length, xLen <= N_LIMBS
+  //   int i = Arrays.mismatch(x, offset, length, ZERO.limbs, 0, N_LIMBS);
+  //   return N_BITS_PER_LIMB * i + Integer.numberOfLeadingZeros(x[offset + i]);
+  // }
+
+  // Comparing two int subarrays as big-endian multi-precision integers.
+  private static int compareLimbs(final int[] a, final int[] b) {
+    if (a.length >= b.length) {
+      int diffLen = a.length - b.length;
+      int cmp = Arrays.mismatch(a, 0, diffLen, ZERO_INTS, 0, diffLen);
+      if (cmp != -1) return 1;
+      int i = Arrays.mismatch(a, diffLen, a.length, b, 0, b.length);
+      return (i == -1) ? 0 : Integer.compareUnsigned(a[i + diffLen], b[i]);
+    } else {
+      int diffLen = b.length - a.length;
+      int cmp = Arrays.mismatch(b, 0, diffLen, ZERO_INTS, 0, diffLen);
+      if (cmp != -1) return -1;
+      int i = Arrays.mismatch(a, 0, a.length, b, diffLen, b.length);
+      return (i == -1) ? 0 : Integer.compareUnsigned(a[i], b[i + diffLen]);
     }
-    for (int i = Math.min(aLen, bLen) - 1; i >= 0; i--) {
-      cmp = Integer.compareUnsigned(a[i], b[i]);
-      if (cmp != 0) return cmp;
-    }
-    return 0;
   }
 
-  private static boolean isNeg(final int[] x, final int xLen) {
-    return x[xLen - 1] < 0;
+  // Does two-complements represent a negative number: i.e. is leading bit set ?
+  private static boolean isNeg(final int[] x) {
+    return x[0] < 0;
   }
 
-  private static void negate(final int[] x, final int xLen) {
+  // Negate in two-complements representation: bitwise NOT + 1
+  // Inplace: modifies input x.
+  private static void negate(final int[] x) {
     int carry = 1;
-    for (int i = 0; i < xLen; i++) {
+    for (int i = x.length - 1; i >= 0; i--) {
       x[i] = ~x[i] + carry;
       carry = (x[i] == 0 && carry == 1) ? 1 : 0;
     }
   }
 
-  private static void absInplace(final int[] x, final int xLen) {
-    if (isNeg(x, xLen)) negate(x, xLen);
+  // Replaces x with its absolute value in two-complements representation
+  private static void absInplace(final int[] x) {
+    if (isNeg(x)) negate(x);
   }
 
-  private static void absInto(final int[] dst, final int[] src, final int srcLen) {
-    System.arraycopy(src, 0, dst, 0, srcLen);
-    absInplace(dst, dst.length);
-  }
-
-  private static int numberOfLeadingZeros(final int[] x, final int xLen) {
-    int leadingIndex = xLen - 1;
-    while ((leadingIndex >= 0) && (x[leadingIndex] == 0)) leadingIndex--;
-    return 32 * (xLen - leadingIndex - 1) + Integer.numberOfLeadingZeros(x[leadingIndex]);
-  }
-
-  private static void shiftLeftInto(
-      final int[] result, final int[] x, final int xLen, final int shift) {
+  private static int shiftLeftInto(
+      final int[] result, final int[] x, final int xOffset, final int shift) {
     // Unchecked: result should be initialised with zeroes
-    // Unchecked: result length should be at least x.length + limbShift
-    int limbShift = shift / N_BITS_PER_LIMB;
-    int bitShift = shift % N_BITS_PER_LIMB;
-    if (bitShift == 0) {
-      System.arraycopy(x, 0, result, limbShift, xLen);
-      return;
+    // Unchecked: result length should be at least x.length + 1
+    // Unchecked: 0 <= shift < N_BITS_PER_LIMB
+    if (shift == 0) {
+      int xLen =  x.length - xOffset;
+      int resultOffset = result.length - xLen;
+      System.arraycopy(x, xOffset, result, resultOffset, xLen);
+      return 0;
     }
-
-    int j = limbShift;
     int carry = 0;
-    for (int i = 0; i < xLen; ++i, ++j) {
-      result[j] = (x[i] << bitShift) | carry;
-      carry = x[i] >>> (32 - bitShift);
+    int j = result.length - 1;
+    for (int i = x.length - 1; i >= xOffset; i--, j--) {
+      result[j] = (x[i] << shift) | carry;
+      carry = x[i] >>> (N_BITS_PER_LIMB - shift);
     }
-    if (carry != 0) result[j] = carry; // last carry
+    return carry;
   }
 
-  private static void shiftRightInto(
-      final int[] result, final int[] x, final int xLen, final int shift) {
-    // Unchecked: result length should be at least x.length - limbShift
-    int limbShift = shift / 32;
-    int bitShift = shift % 32;
-    int nLimbs = xLen - limbShift;
-    if (nLimbs <= 0) return;
-
-    if (bitShift == 0) {
-      System.arraycopy(x, limbShift, result, 0, nLimbs);
-      return;
+  private static int shiftRightInto(
+      final int[] result, final int[] x, final int xOffset, final int shift) {
+    // Unchecked: result length should be at least x.length
+    // Unchecked: 0 <= shift < N_BITS_PER_LIMB
+    if (shift == 0) {
+      int xLen =  x.length - xOffset;
+      int resultOffset = result.length - xLen;
+      System.arraycopy(x, xOffset, result, resultOffset, xLen);
+      return 0;
     }
-
     int carry = 0;
-    for (int i = nLimbs - 1 + limbShift, j = nLimbs - 1; j >= 0; i--, j--) {
-      int r = (x[i] >>> bitShift) | carry;
-      result[j] = r;
-      carry = x[i] << (32 - bitShift);
+    int j = result.length - x.length + xOffset;
+    for (int i = xOffset; i < x.length; i++, j++) {
+      result[j] = (x[i] >>> shift) | carry;
+      carry = x[i] << (N_BITS_PER_LIMB - shift);
     }
+    return carry;
   }
 
-  private static int[] addWithCarry(final int[] x, final int xLen, final int[] y, final int yLen) {
-    // Step 1: Add with carry
-    int[] a;
-    int[] b;
-    int aLen;
-    int bLen;
-    if (xLen < yLen) {
-      a = y;
-      aLen = yLen;
-      b = x;
-      bLen = xLen;
-    } else {
-      a = x;
-      aLen = xLen;
-      b = y;
-      bLen = yLen;
-    }
-    int[] sum = new int[aLen + 1];
+  private static int[] addImpl(final int[] x, final int[] y) {
+    // Unchecked: result.length > N_LIMBS
+    // Unchecked: x.length == y.length == N_LIMBS
+    // Unchecked: N_LIMBS == 8
+    int[] sum = new int[9];
     long carry = 0;
-    for (int i = 0; i < bLen; i++) {
-      long ai = a[i] & MASK_L;
-      long bi = b[i] & MASK_L;
-      long s = ai + bi + carry;
-      sum[i] = (int) s;
-      carry = s >>> 32;
-    }
-    int icarry = (int) carry;
-    for (int i = bLen; i < aLen; i++) {
-      sum[i] = a[i] + icarry;
-      icarry = (a[i] != 0 && sum[i] == 0) ? 1 : 0;
-    }
-    sum[aLen] = icarry;
+    carry = adc(sum, x[7], y[7], carry, 8);
+    carry = adc(sum, x[6], y[6], carry, 7);
+    carry = adc(sum, x[5], y[5], carry, 6);
+    carry = adc(sum, x[4], y[4], carry, 5);
+    carry = adc(sum, x[3], y[3], carry, 4);
+    carry = adc(sum, x[2], y[2], carry, 3);
+    carry = adc(sum, x[1], y[1], carry, 2);
+    carry = adc(sum, x[0], y[0], carry, 1);
+    sum[0] = (int) carry;
     return sum;
   }
 
-  private static int[] addMul(final int[] a, final int aLen, final int[] b, final int bLen) {
+  private static long adc(final int[] sum, final int a, final int b, final long carry, final int index) {
+    long aL = a & MASK_L;
+    long bL = b & MASK_L;
+    long s = aL + bL + carry;
+    sum[index] = (int) s;
+    return s >>> N_BITS_PER_LIMB;
+  }
+
+  private static int[] addMul(final int[] a, final int aOffset, final int[] b, final int bOffset) {
     // Shortest in outer loop, swap if needed
     int[] x;
-    int xLen;
     int[] y;
-    int yLen;
-    if (a.length < b.length) {
+    int xOffset;
+    int yOffset;
+    if (a.length - aOffset < b.length - bOffset) {
       x = b;
-      xLen = bLen;
+      xOffset = bOffset;
       y = a;
-      yLen = aLen;
+      yOffset = aOffset;
     } else {
       x = a;
-      xLen = aLen;
+      xOffset = aOffset;
       y = b;
-      yLen = bLen;
+      yOffset = bOffset;
     }
-    int[] lhs = new int[xLen + yLen + 1];
+    int[] lhs = new int[a.length + b.length - xOffset - yOffset + 1];
 
     // Main algo
-    for (int i = 0; i < yLen; i++) {
+    int xLen = x.length - xOffset;
+    for (int i = y.length - 1; i >= yOffset; i--) {
       long carry = 0;
       long yi = y[i] & MASK_L;
 
-      int k = i;
-      for (int j = 0; j < xLen; j++, k++) {
+      int k = i + xLen - yOffset + 1;
+      for (int j = x.length - 1; j >= xOffset; j--, k--) {
         long prod = yi * (x[j] & MASK_L);
         long sum = (lhs[k] & MASK_L) + prod + carry;
         lhs[k] = (int) sum;
-        carry = sum >>> 32;
+        carry = sum >>> N_BITS_PER_LIMB;
       }
 
       // propagate leftover carry
-      while (carry != 0 && k < lhs.length) {
+      while (carry != 0 && k >= 0) {
         long sum = (lhs[k] & MASK_L) + carry;
         lhs[k] = (int) sum;
         carry = sum >>> 32;
-        k++;
+        k--;
       }
     }
     return lhs;
   }
 
   private static int[] knuthRemainder(final int[] dividend, final int[] modulus) {
+    // Unchecked: modulus is non Zero and non One.
     int[] result = new int[N_LIMBS];
-    int divLen = nSetLimbs(dividend);
-    int modLen = nSetLimbs(modulus);
-    int cmp = compareLimbs(dividend, divLen, modulus, modLen);
+    int modLen = effectiveLength(modulus);
+    int divLen = effectiveLength(dividend);
+
+    // Shortcut: if dividend < modulus or dividend == modulus
+    System.out.println(String.format("dividend: %s", Arrays.toString(dividend)));
+    System.out.println(String.format("modulus: %s", Arrays.toString(modulus)));
+    int cmp = compareLimbs(dividend, modulus);
     if (cmp < 0) {
-      System.arraycopy(dividend, 0, result, 0, divLen);
+      System.arraycopy(dividend, N_LIMBS - divLen, result, 0, divLen);
       return result;
     } else if (cmp == 0) {
       return result;
     }
 
-    int shift = numberOfLeadingZeros(modulus, modLen);
-    int limbShift = shift / 32;
-    int n = modLen - limbShift;
-    if (n == 0) return result;
-    if (n == 1) {
+    // Shortcut: if modulus has a single limb
+    if (modLen == 1) {
       if (divLen == 1) {
-        result[0] = Integer.remainderUnsigned(dividend[0], modulus[0]);
+        result[N_LIMBS - 1] = Integer.remainderUnsigned(dividend[dividend.length - 1], modulus[modulus.length - 1]);
         return result;
       }
-      long d = modulus[0] & MASK_L;
+      long d = modulus[modulus.length - 1] & MASK_L;
       long rem = 0;
       // Process from most significant limb downwards
-      for (int i = divLen - 1; i >= 0; i--) {
+      for (int i = dividend.length - divLen; i < dividend.length; i++) {
         long cur = (rem << 32) | (dividend[i] & MASK_L);
         rem = Long.remainderUnsigned(cur, d);
       }
-      result[0] = (int) rem;
-      result[1] = (int) (rem >>> 32);
+      result[N_LIMBS - 1] = (int) rem;
+      result[N_LIMBS - 2] = (int) (rem >>> 32);
       return result;
     }
-    // Normalize
-    int m = divLen - n;
-    int bitShift = shift % 32;
-    int[] vLimbs = new int[n];
-    shiftLeftInto(vLimbs, modulus, modLen, shift);
-    int[] uLimbs = new int[divLen + 1];
-    shiftLeftInto(uLimbs, dividend, divLen, bitShift);
 
-    long[] vLimbsAsLong = new long[n];
-    for (int i = 0; i < n; i++) {
+    int shift = Integer.numberOfLeadingZeros(modulus[modulus.length - modLen]);
+    // Normalize
+    System.out.println(String.format("dividend: %s", Arrays.toString(dividend)));
+    System.out.println(String.format("modulus: %s", Arrays.toString(modulus)));
+    int[] vLimbs = new int[modLen];
+    shiftLeftInto(vLimbs, modulus, modulus.length - modLen, shift);
+    int[] uLimbs = new int[divLen + 1];
+    uLimbs[0] = shiftLeftInto(uLimbs, dividend, dividend.length - divLen, shift);
+    int diffLen = divLen - modLen + 1;
+    System.out.println(String.format("uLimbs << %s: %s", shift, Arrays.toString(uLimbs)));
+    System.out.println(String.format("vLimbs << %s: %s", shift, Arrays.toString(vLimbs)));
+    System.out.println(String.format("DiffLen: %s", diffLen));
+
+    long[] vLimbsAsLong = new long[modLen];
+    for (int i = 0; i < modLen; i++) {
       vLimbsAsLong[i] = vLimbs[i] & MASK_L;
     }
 
     // Main division loop
-    long vn1 = vLimbsAsLong[n - 1];
-    long vn2 = vLimbsAsLong[n - 2];
-    for (int j = m; j >= 0; j--) {
-      long ujn = (uLimbs[j + n] & MASK_L);
-      long ujn1 = (uLimbs[j + n - 1] & MASK_L);
-      long ujn2 = (uLimbs[j + n - 2] & MASK_L);
+    long vn1 = vLimbsAsLong[0];
+    long vn2 = vLimbsAsLong[1];
+    for (int j = 1; j < diffLen + 1; j++) {
+      long ujn = (uLimbs[j - 1] & MASK_L);
+      long ujn1 = (uLimbs[j] & MASK_L);
+      long ujn2 = (uLimbs[j + 1] & MASK_L);
 
-      long dividendPart = (ujn << 32) | ujn1;
+      long dividendPart = (ujn << N_BITS_PER_LIMB) | ujn1;
       // Check that no need for Unsigned version of divrem.
       long qhat = Long.divideUnsigned(dividendPart, vn1);
       long rhat = Long.remainderUnsigned(dividendPart, vn1);
 
-      while (qhat == 0x1_0000_0000L || Long.compareUnsigned(qhat * vn2, (rhat << 32) | ujn2) > 0) {
+      System.out.println(String.format("Qhat: %s", qhat));
+      while (qhat == 0x1_0000_0000L || Long.compareUnsigned(qhat * vn2, (rhat << N_BITS_PER_LIMB) | ujn2) > 0) {
         qhat--;
         rhat += vn1;
         if (rhat >= 0x1_0000_0000L) break;
       }
+      System.out.println(String.format("Adj-Qhat: %s", qhat));
 
       // Multiply-subtract qhat*v from u slice
       long borrow = 0;
-      for (int i = 0; i < n; i++) {
+      for (int i = modLen - 1; i >= 0; i--) {
         long prod = vLimbsAsLong[i] * qhat;
         long sub = (uLimbs[i + j] & MASK_L) - (prod & MASK_L) - borrow;
         uLimbs[i + j] = (int) sub;
-        borrow = (prod >>> 32) - (sub >> 32);
+        borrow = (prod >>> N_BITS_PER_LIMB) - (sub >> N_BITS_PER_LIMB);
       }
-      long sub = (uLimbs[j + n] & MASK_L) - borrow;
-      uLimbs[j + n] = (int) sub;
+      long sub = (uLimbs[j - 1] & MASK_L) - borrow;
+      uLimbs[j - 1] = (int) sub;
 
+      System.out.println(String.format("MulSub uLimbs: %s", Arrays.toString(uLimbs)));
       if (sub < 0) {
         // Add back
         long carry = 0;
-        for (int i = 0; i < n; i++) {
+        for (int i = modLen - 1; i >= 0; i--) {
           long sum = (uLimbs[i + j] & MASK_L) + vLimbsAsLong[i] + carry;
           uLimbs[i + j] = (int) sum;
-          carry = sum >>> 32;
+          carry = sum >>> N_BITS_PER_LIMB;
         }
-        uLimbs[j + n] = (int) (uLimbs[j + n] + carry);
+        uLimbs[j - 1] = (int) (uLimbs[j - 1] + carry);
+        System.out.println(String.format("Adding back uLimbs: %s", Arrays.toString(uLimbs)));
       }
     }
     // Unnormalize remainder
-    shiftRightInto(result, uLimbs, n, bitShift);
+    shiftRightInto(result, uLimbs, diffLen, shift);
+    System.out.println(String.format("Results: %s", Arrays.toString(result)));
     return result;
   }
   // --------------------------------------------------------------------------

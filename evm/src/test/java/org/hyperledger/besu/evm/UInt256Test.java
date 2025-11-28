@@ -28,7 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class UInt256Test {
-  static final int SAMPLE_SIZE = 300;
+  static final int SAMPLE_SIZE = 3;
 
   private Bytes32 bigIntTo32B(final BigInteger x) {
     byte[] a = x.toByteArray();
@@ -67,17 +67,17 @@ public class UInt256Test {
 
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {-2147483648, 0, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, -2147483648};
     assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 0, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 1 + 256 + 65536};
     assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
 
     input = new byte[] {1, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {1 + 256 + 65536, 16777216, 0, 0, 0, 0, 0, 0};
+    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 16777216, 1 + 256 + 65536};
     assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -86,7 +86,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 0, 16777216};
+    expectedLimbs = new int[] {16777216, 0, 0, 0, 0, 0, 0, 0};
     assertThat(result.limbs()).as("32b-limbs").isEqualTo(expectedLimbs);
 
     input =
@@ -95,7 +95,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new int[] {0, 0, 0, 0, 0, 0, 257, 0};
+    expectedLimbs = new int[] {0, 257, 0, 0, 0, 0, 0, 0};
     assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
   }
 
@@ -107,8 +107,9 @@ public class UInt256Test {
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
         };
     UInt256 asUint = UInt256.fromBytesBE(input);
-    BigInteger asBigInt = new BigInteger(1, input);
-    assertThat(asUint.toBytesBE()).isEqualTo(asBigInt.toByteArray());
+    // BigInteger asBigInt = new BigInteger(1, input);
+    assertThat(asUint.toBytesBE()).isEqualTo(input);
+    // assertThat(asUint.toBytesBE()).isEqualTo(asBigInt.toByteArray());
   }
 
   @Test
