@@ -17,16 +17,14 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader
-    implements BlockValues, org.hyperledger.besu.plugin.data.ProcessableBlockHeader {
+    implements org.hyperledger.besu.plugin.data.ProcessableBlockHeader {
 
   protected final Hash parentHash;
 
@@ -99,16 +97,6 @@ public class ProcessableBlockHeader
   }
 
   /**
-   * Returns the block difficulty.
-   *
-   * @return the block difficulty
-   */
-  @Override
-  public Bytes getDifficultyBytes() {
-    return difficulty.getAsBytes32();
-  }
-
-  /**
    * Returns the block number.
    *
    * @return the block number
@@ -146,16 +134,6 @@ public class ProcessableBlockHeader
   @Override
   public Optional<Wei> getBaseFee() {
     return Optional.ofNullable(baseFee);
-  }
-
-  /**
-   * Returns the mixHash before merge, and the prevRandao value after
-   *
-   * @return the mixHash before merge, and the prevRandao value after
-   */
-  @Override
-  public Bytes32 getMixHashOrPrevRandao() {
-    return mixHashOrPrevRandao;
   }
 
   /**

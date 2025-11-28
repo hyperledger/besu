@@ -594,8 +594,8 @@ public class T8nExecutor {
 
     resultObject.put(
         "currentDifficulty",
-        !blockHeader.getDifficultyBytes().trimLeadingZeros().isEmpty()
-            ? blockHeader.getDifficultyBytes().toShortHexString()
+        !blockHeader.getDifficulty().getAsBytes32().trimLeadingZeros().isEmpty()
+            ? blockHeader.getDifficulty().getAsBytes32().toShortHexString()
             : null);
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
     blockHeader

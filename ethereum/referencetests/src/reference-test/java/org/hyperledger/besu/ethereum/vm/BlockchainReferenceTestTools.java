@@ -228,7 +228,7 @@ public class BlockchainReferenceTestTools {
         ethScheduler,
         Optional.of(transactions),
         Optional.of(ommers),
-        blockFromReference.getHeader().getMixHashOrPrevRandao(),
+        blockFromReference.getHeader().getPrevRandao().orElseThrow(),
         blockFromReference.getHeader().getTimestamp(),
         withdrawals,
         blockFromReference.getHeader().getParentBeaconBlockRoot());
