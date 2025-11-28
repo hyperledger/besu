@@ -173,13 +173,13 @@ dependencies {
 
     api 'org.springframework.security:spring-security-crypto:6.4.9'
 
-    // when updating web3j versions, also update plugin and config resolution in:
+    // when updating web3j versions, also update config resolution in:
     // - acceptance-tests/tests/shanghai/build.gradle
     // - acceptance-tests/tests/build.gradle
-    api 'org.web3j:abi:4.14.0'
-    api 'org.web3j:besu:4.14.0'
-    api 'org.web3j:core:4.14.0'
-    api 'org.web3j:crypto:4.14.0'
+    api 'org.web3j:abi:4.12.3'
+    api 'org.web3j:besu:4.12.3'
+    api 'org.web3j:core:4.12.3'
+    api 'org.web3j:crypto:4.12.3'
 
     api 'org.xerial.snappy:snappy-java:1.1.10.7'
 
