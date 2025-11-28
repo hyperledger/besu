@@ -5,13 +5,13 @@ plugins {
 
 // Force all web3j dependencies to use same version as declared in version catalog
 configurations.configureEach {
-    resolutionStrategy {
-        eachDependency { DependencyResolveDetails details ->
-            if (details.requested.group == 'org.web3j') {
-                details.useVersion libs.versions.web3j.get()
-            }
-        }
+  resolutionStrategy {
+    eachDependency { DependencyResolveDetails details ->
+      if (details.requested.group == 'org.web3j') {
+        details.useVersion libs.versions.web3j.get()
+      }
     }
+  }
 }
 
 jar { enabled = true }
