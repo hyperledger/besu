@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -67,6 +68,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
@@ -292,7 +294,15 @@ public class BackwardSyncContextTest {
     final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isCompleted();
+            });
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
@@ -318,9 +328,17 @@ public class BackwardSyncContextTest {
     final CompletableFuture<Void> future =
         context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isCompleted();
+            });
 
-    future.get();
+    future.get(); // Should succeed since we waited for completion
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
@@ -335,7 +353,15 @@ public class BackwardSyncContextTest {
 
     assertThat(future).isSameAs(secondFuture);
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isCompleted();
+            });
 
     secondFuture.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
