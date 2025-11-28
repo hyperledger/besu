@@ -16,15 +16,15 @@ plugins {
   id 'org.web3j.solidity' version '0.6.0'
 }
 
-// Force all web3j dependencies to use version 4.14.0 as it incorrectly pulls in 7.3.2
+// Force all web3j dependencies to use same version as declared in version catalog
 configurations.configureEach {
-  resolutionStrategy {
-    eachDependency { DependencyResolveDetails details ->
-      if (details.requested.group == 'org.web3j') {
-        details.useVersion '4.14.0'
-      }
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.web3j') {
+                details.useVersion libs.versions.web3j.get()
+            }
+        }
     }
-  }
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
