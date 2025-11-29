@@ -700,7 +700,6 @@ public final class UInt256 {
         rhat += vn1;
         if (rhat >= 0x1_0000_0000L) break;
       }
-      System.out.println(String.format("Adj-Qhat: %s", qhat));
 
       // Multiply-subtract qhat*v from u slice
       long borrow = 0;
@@ -713,7 +712,6 @@ public final class UInt256 {
       long sub = (uLimbs[j - 1] & MASK_L) - borrow;
       uLimbs[j - 1] = (int) sub;
 
-      System.out.println(String.format("MulSub uLimbs: %s", Arrays.toString(uLimbs)));
       if (sub < 0) {
         // Add back
         long carry = 0;
