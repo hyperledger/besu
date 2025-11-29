@@ -103,13 +103,14 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
+    int msb = Arrays.mismatch(bytes, ZERO_BYTES);  // Most significant byte index
+    if (msb == -1) return ZERO;
     int[] limbs = new int[N_LIMBS];
-    int offset = Arrays.mismatch(bytes, ZERO_BYTES);
-    int len = (bytes.length - offset);
+    int len = (bytes.length - msb);
     int nFullInts = len >> N_BYTES_PER_LIMB_LOG;
     int nRemaining = len & (N_BYTES_PER_LIMB - 1);
 
-    offset = N_LIMBS - ((bytes.length - offset) >> N_BYTES_PER_LIMB_LOG);
+    int offset = N_LIMBS - nFullInts;
     int i = 7;
     int j = bytes.length - 4;
     switch(nFullInts) {
@@ -394,14 +395,8 @@ public final class UInt256 {
    */
   public UInt256 mulMod(final UInt256 other, final UInt256 modulus) {
     if (this.isZero() || other.isZero() || modulus.isZero()) return ZERO;
-    System.out.println("MulMod");
-    System.out.println(String.format("this Offset: %s, Data: %s", this.offset, Arrays.toString(this.limbs)));
-    System.out.println(String.format("other Offset: %s, Data: %s", other.offset, Arrays.toString(other.limbs)));
-    System.out.println(String.format("modulus Offset: %s, Data: %s", modulus.offset, Arrays.toString(modulus.limbs)));
     int[] result = addMul(this.limbs, this.offset, other.limbs, other.offset);
-    System.out.println(String.format("to_int(%s) * to_int(%s) == to_int(%s)", Arrays.toString(this.limbs), Arrays.toString(other.limbs), Arrays.toString(result)));
     result = knuthRemainder(result, modulus.limbs);
-    System.out.println(String.format("to_int(%s) == to_int(%s)", Arrays.toString(modulus.limbs), Arrays.toString(result)));
     return new UInt256(result, modulus.offset);
   }
 
@@ -658,11 +653,9 @@ public final class UInt256 {
     int divLen = effectiveLength(dividend);
 
     // Shortcut: if dividend < modulus or dividend == modulus
-    System.out.println(String.format("dividend: %s", Arrays.toString(dividend)));
-    System.out.println(String.format("modulus: %s", Arrays.toString(modulus)));
     int cmp = compareLimbs(dividend, modulus);
     if (cmp < 0) {
-      System.arraycopy(dividend, N_LIMBS - divLen, result, 0, divLen);
+      System.arraycopy(dividend, dividend.length - divLen, result, N_LIMBS - divLen, divLen);
       return result;
     } else if (cmp == 0) {
       return result;
@@ -688,16 +681,11 @@ public final class UInt256 {
 
     int shift = Integer.numberOfLeadingZeros(modulus[modulus.length - modLen]);
     // Normalize
-    System.out.println(String.format("dividend: %s", Arrays.toString(dividend)));
-    System.out.println(String.format("modulus: %s", Arrays.toString(modulus)));
     int[] vLimbs = new int[modLen];
     shiftLeftInto(vLimbs, modulus, modulus.length - modLen, shift);
     int[] uLimbs = new int[divLen + 1];
     uLimbs[0] = shiftLeftInto(uLimbs, dividend, dividend.length - divLen, shift);
     int diffLen = divLen - modLen + 1;
-    System.out.println(String.format("uLimbs << %s: %s", shift, Arrays.toString(uLimbs)));
-    System.out.println(String.format("vLimbs << %s: %s", shift, Arrays.toString(vLimbs)));
-    System.out.println(String.format("DiffLen: %s", diffLen));
 
     long[] vLimbsAsLong = new long[modLen];
     for (int i = 0; i < modLen; i++) {
@@ -717,13 +705,11 @@ public final class UInt256 {
       long qhat = Long.divideUnsigned(dividendPart, vn1);
       long rhat = Long.remainderUnsigned(dividendPart, vn1);
 
-      System.out.println(String.format("Qhat: %s", qhat));
       while (qhat == 0x1_0000_0000L || Long.compareUnsigned(qhat * vn2, (rhat << N_BITS_PER_LIMB) | ujn2) > 0) {
         qhat--;
         rhat += vn1;
         if (rhat >= 0x1_0000_0000L) break;
       }
-      System.out.println(String.format("Adj-Qhat: %s", qhat));
 
       // Multiply-subtract qhat*v from u slice
       long borrow = 0;
@@ -736,7 +722,6 @@ public final class UInt256 {
       long sub = (uLimbs[j - 1] & MASK_L) - borrow;
       uLimbs[j - 1] = (int) sub;
 
-      System.out.println(String.format("MulSub uLimbs: %s", Arrays.toString(uLimbs)));
       if (sub < 0) {
         // Add back
         long carry = 0;
@@ -746,12 +731,10 @@ public final class UInt256 {
           carry = sum >>> N_BITS_PER_LIMB;
         }
         uLimbs[j - 1] = (int) (uLimbs[j - 1] + carry);
-        System.out.println(String.format("Adding back uLimbs: %s", Arrays.toString(uLimbs)));
       }
     }
     // Unnormalize remainder
     shiftRightInto(result, uLimbs, diffLen, shift);
-    System.out.println(String.format("Results: %s", Arrays.toString(result)));
     return result;
   }
   // --------------------------------------------------------------------------

@@ -210,6 +210,25 @@ public class UInt256Test {
   }
 
   @Test
+  public void modSingleLimb() {
+    BigInteger big_number = new BigInteger("1", 16);
+    BigInteger big_modulus = new BigInteger("ff", 16);
+    UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+    UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
+    Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+    assertThat(remainder).as("1 mod -1").isEqualTo(expected);
+
+    big_number = new BigInteger("1", 16);
+    big_modulus = new BigInteger("1", 16);
+    number = UInt256.fromBytesBE(big_number.toByteArray());
+    modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+    remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
+    expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+    assertThat(remainder).as("1 mod 1").isEqualTo(expected);
+  }
+
+  @Test
   public void modGeneralState() {
     BigInteger big_number = new BigInteger("cea0c5cc171fa61277e5604a3bc8aef4de3d3882", 16);
     BigInteger big_modulus = new BigInteger("7dae7454bb193b1c28e64a6a935bc3", 16);
