@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -100,7 +101,7 @@ public class MainnetBlockImporter implements BlockImporter {
   public BlockImportResult importSyncBlockForSyncing(
       final ProtocolContext context,
       final SyncBlock syncBlock,
-      final List<TransactionReceipt> receipts,
+      final List<SyncTransactionReceipt> receipts,
       final boolean importWithTxIndexing) {
 
     if (importWithTxIndexing) {

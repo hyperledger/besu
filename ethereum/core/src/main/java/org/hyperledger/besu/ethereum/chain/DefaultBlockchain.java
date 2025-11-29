@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -51,6 +52,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -483,12 +485,22 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized void appendBlockWithoutHeader(
+      final Block block,
+      final List<TransactionReceipt> receipts,
+      final Optional<BlockAccessList> blockAccessList,
+      final boolean txIndexing) {
+    cacheBlockData(block, receipts, blockAccessList);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, txIndexing, true);
+  }
+
+  @Override
   public synchronized void appendBlock(
       final Block block,
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true, true);
   }
 
   @Override
@@ -497,19 +509,47 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false, false);
+  }
+
+  @Override
+  public void appendSyncBlocksForPoC(final List<SyncBlock> syncBlocks) {
+    syncBlocks.forEach(
+        syncBlock -> {
+          final BlockchainStorage.Updater updater = blockchainStorage.updater();
+          updater.putSyncBlockBody(syncBlock.getHash(), syncBlock.getBody());
+          updater.commit();
+        });
+  }
+
+  @Override
+  public void appendSyncTransactionReceiptsForPoC(
+      final List<BlockHeader> blockHeaders,
+      final List<List<SyncTransactionReceipt>> syncReceiptsList) {
+    if (blockHeaders.size() != syncReceiptsList.size()) {
+      throw new InvalidConfigurationException(
+          "Block headers and sync receipts list must have the same size");
+    }
+    IntStream.range(0, blockHeaders.size())
+        .forEach(
+            i -> {
+              final BlockchainStorage.Updater updater = blockchainStorage.updater();
+              updater.putSyncTransactionReceipts(
+                  blockHeaders.get(i).getHash(), syncReceiptsList.get(i));
+              updater.commit();
+            });
   }
 
   @Override
   public synchronized void appendSyncBlock(
-      final SyncBlock block, final List<TransactionReceipt> receipts) {
+      final SyncBlock block, final List<SyncTransactionReceipt> receipts) {
     cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, true);
   }
 
   @Override
   public synchronized void appendSyncBlockWithoutIndexingTransactions(
-      final SyncBlock block, final List<TransactionReceipt> receipts) {
+      final SyncBlock block, final List<SyncTransactionReceipt> receipts) {
     cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, false);
   }
@@ -520,7 +560,15 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true, false);
+  }
+
+  @Override
+  public void importHeader(final BlockHeader blockHeader) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.commit();
   }
 
   @Override
@@ -568,7 +616,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts,
       final boolean storeOnly,
-      final boolean transactionIndexing) {
+      final boolean transactionIndexing,
+      final boolean blocksOnly) {
 
     if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
@@ -580,6 +629,10 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Difficulty td = calculateTotalDifficulty(block.getHeader());
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    if (!blocksOnly) {
+      updater.putBlockHeader(hash, block.getHeader());
+    }
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
@@ -602,7 +655,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void appendSyncBlockHelper(
       final SyncBlock block,
-      final List<TransactionReceipt> receipts,
+      final List<SyncTransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
     if (blockIsAlreadyTracked(block.getHeader())) {
@@ -616,7 +669,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putSyncBlockBody(hash, block.getBody());
-    updater.putTransactionReceipts(hash, receipts);
+    updater.putSyncTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
     final BlockAddedEvent blockAddedEvent;
@@ -723,7 +776,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent updateCanonicalChainData(
       final BlockchainStorage.Updater updater,
       final SyncBlock newBlock,
-      final List<TransactionReceipt> receipts,
+      final List<SyncTransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
@@ -780,7 +833,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent handleNewHead(
       final Updater updater,
       final SyncBlock newBlock,
-      final List<TransactionReceipt> receipts,
+      final List<SyncTransactionReceipt> receipts,
       final boolean transactionIndexing) {
     // This block advances the chain, update the chain head
     final Hash newBlockHash = newBlock.getHash();
@@ -798,7 +851,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),
         () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
-        LogWithMetadata.generate(
+        LogWithMetadata.generateSync(
             newBlock.getHeader().getNumber(),
             newBlock.getHash(),
             newBlock.getHeader().getTimestamp(),
