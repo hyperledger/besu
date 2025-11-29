@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -215,7 +215,7 @@ public class GraphQLHttpServiceCorsTest {
     when(blockchainQueries.gasPriorityFee()).thenReturn(Wei.ONE);
     final Synchronizer synchronizer = mock(Synchronizer.class);
 
-    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
+    final MiningCoordinator miningCoordinatorMock = mock(MiningCoordinator.class);
 
     // mock graphql context
     final Map<GraphQLContextType, Object> graphQLContextMap =
