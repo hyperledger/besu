@@ -833,6 +833,16 @@ public class RunnerBuilder {
     final SubscriptionManager subscriptionManager =
         createSubscriptionManager(vertx, transactionPool, blockchainQueries);
 
+    if (webSocketConfiguration.isEnabled()
+        || (jsonRpcIpcConfiguration != null && jsonRpcIpcConfiguration.isEnabled())) {
+      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
+
+      createNewBlockHeadersSubscriptionService(
+          context.getBlockchain(), blockchainQueries, subscriptionManager);
+
+      createSyncingSubscriptionService(synchronizer, subscriptionManager);
+    }
+
     Optional<EngineJsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
       final Map<String, JsonRpcMethod> engineMethods =
@@ -959,13 +969,6 @@ public class RunnerBuilder {
               transactionSimulator,
               besuController.getProtocolManager().ethContext().getScheduler());
 
-      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
-
-      createNewBlockHeadersSubscriptionService(
-          context.getBlockchain(), blockchainQueries, subscriptionManager);
-
-      createSyncingSubscriptionService(synchronizer, subscriptionManager);
-
       webSocketService =
           Optional.of(
               createWebsocketService(
@@ -1034,12 +1037,16 @@ public class RunnerBuilder {
               transactionSimulator,
               besuController.getProtocolManager().ethContext().getScheduler());
 
+      final WebSocketMethodsFactory ipcMethodsFactory =
+          new WebSocketMethodsFactory(subscriptionManager, ipcMethods);
+
       jsonRpcIpcService =
           Optional.of(
               new JsonRpcIpcService(
                   vertx,
                   jsonRpcIpcConfiguration.getPath(),
-                  new JsonRpcExecutor(new BaseJsonRpcProcessor(), ipcMethods)));
+                  new JsonRpcExecutor(new BaseJsonRpcProcessor(), ipcMethodsFactory.methods()),
+                  Optional.of(subscriptionManager)));
     } else {
       jsonRpcIpcService = Optional.empty();
     }
