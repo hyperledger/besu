@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -118,7 +119,17 @@ public interface MutableBlockchain extends Blockchain {
       final List<TransactionReceipt> receipts,
       final Optional<Difficulty> maybeTotalDifficulty);
 
+  void unsafeImportSyncBodyAndReceipts(
+      List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
+
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
+
+  /**
+   * Adds a block header to the blockchain, without updating the chain state.
+   *
+   * @param blockHeader The block to append.
+   */
+  void importHeader(BlockHeader blockHeader);
 
   Difficulty calculateTotalDifficulty(final BlockHeader blockHeader);
 

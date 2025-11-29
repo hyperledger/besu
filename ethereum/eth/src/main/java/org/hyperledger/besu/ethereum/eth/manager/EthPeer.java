@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
 public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
-  private static final int MAX_OUTSTANDING_REQUESTS = 5;
+  private static final int MAX_OUTSTANDING_REQUESTS = 3;
 
   private PeerConnection connection;
 
@@ -634,7 +634,7 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSnap %s, has height %s, connected for %s ms",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSnap %s, has height %s, connected for %s ms, capabilities: %s",
         getLoggableId(),
         reputation,
         isFullyValidated(),
@@ -644,7 +644,10 @@ public class EthPeer implements Comparable<EthPeer> {
         connection.getPeer().getEnodeURLString(),
         isServingSnap,
         chainHeadState.getEstimatedHeight(),
-        System.currentTimeMillis() - connection.getInitiatedAt());
+        System.currentTimeMillis() - connection.getInitiatedAt(),
+        getAgreedCapabilities().stream()
+            .map(Capability::toString)
+            .collect(java.util.stream.Collectors.joining(", ", "[", "]")));
   }
 
   @NotNull

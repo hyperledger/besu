@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -88,6 +90,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
+
   // difficultyForSyncing is thread safe, as it is only used in the one thread of the import step
   private Difficulty difficultyForSyncing = Difficulty.ZERO;
 
@@ -524,6 +527,14 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void importHeader(final BlockHeader blockHeader) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
+    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    updater.commit();
+  }
+
+  @Override
   public void unsafeStoreHeader(final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     // as this is used only to store premerge block headers, we don't cache the header in this case
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
@@ -605,16 +616,13 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
-    if (blockIsAlreadyTracked(block.getHeader())) {
-      return;
-    }
-
     final Hash hash = block.getHash();
-    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
+    final BlockHeader header = block.getHeader();
+    final Difficulty td = calculateTotalDifficultyForSyncing(header);
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
-    updater.putBlockHeader(hash, block.getHeader());
+    updater.putBlockHeader(hash, header);
     updater.putSyncBlockBody(hash, block.getBody());
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
@@ -651,6 +659,31 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized void unsafeImportSyncBodyAndReceipts(
+      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
+      final SyncBlock block = blockAndReceipts.getBlock();
+      final Hash blockHash = block.getHash();
+      final BlockHeader header = block.getHeader();
+      final SyncBlockBody body = block.getBody();
+      updater.putBlockHash(header.getNumber(), blockHash);
+      updater.putSyncBlockBody(blockHash, body);
+      updater.putTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
+      updater.putTotalDifficulty(blockHash, totalDifficulty);
+      this.chainHeader = header;
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+      }
+    }
+    updater.setChainHead(chainHeader.getBlockHash());
+    updater.commit();
+  }
+
+  @Override
   public synchronized void unsafeSetChainHead(
       final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
@@ -682,7 +715,13 @@ public class DefaultBlockchain implements MutableBlockchain {
           blockchainStorage
               .getTotalDifficulty(blockHeader.getParentHash())
               .orElseThrow(
-                  () -> new IllegalStateException("Blockchain is missing total difficulty data."));
+                  () ->
+                      new IllegalStateException(
+                          "Blockchain is missing total difficulty data for block "
+                              + (blockHeader.getNumber() - 1)
+                              + ", block hash "
+                              + blockHeader.getParentHash()
+                              + "."));
       difficultyForSyncing = parentTotalDifficulty.add(blockHeader.getDifficulty());
     } else {
       difficultyForSyncing = difficultyForSyncing.add(blockHeader.getDifficulty());
@@ -736,6 +775,13 @@ public class DefaultBlockchain implements MutableBlockchain {
       if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
         return handleNewHead(updater, newBlock, receipts, transactionIndexing);
       } else {
+        LOG.error(
+            "New block {} parent hash {} does not match current head block {} hash {} (chainHead= {}).",
+            newBlock.getHeader().getNumber(),
+            newBlock.getHeader().getParentHash(),
+            chainHeader.getNumber(),
+            chainHeader.getHash(),
+            chainHead);
         throw new RuntimeException("Blocks during sync should always be in order");
       }
     } catch (final NoSuchElementException e) {

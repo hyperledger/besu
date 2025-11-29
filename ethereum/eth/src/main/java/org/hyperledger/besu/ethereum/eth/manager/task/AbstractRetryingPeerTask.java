@@ -120,15 +120,17 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
+    LOG.info("WSD: non-retryable error while processing peer task", error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
+      LOG.info("WSD: non-retryable error while processing peer task", error);
       result.completeExceptionally(cause);
       return;
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      LOG.debug(
-          "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
+      LOG.info(
+          "WSD: No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
 
       executeSubTask(
@@ -142,8 +144,8 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    LOG.atDebug()
-        .setMessage("Retrying after recoverable failure from peer task {}: {}")
+    LOG.atInfo()
+        .setMessage("WSD: Retrying after recoverable failure from peer task {}: {}")
         .addArgument(this.getClass().getSimpleName())
         .addArgument(cause.getMessage())
         .log();

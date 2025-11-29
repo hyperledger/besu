@@ -168,6 +168,21 @@ public class SyncState {
     replaceSyncTarget(Optional.of(syncTarget));
   }
 
+  /**
+   * Sets sync progress directly without requiring a sync target peer.
+   *
+   * @param startingBlock the starting block number of the sync
+   * @param currentBlock the current block number being synced
+   * @param highestBlock the highest block number to sync to
+   */
+  public void setSyncProgress(
+      final long startingBlock, final long currentBlock, final long highestBlock) {
+    final SyncStatus status =
+        new DefaultSyncStatus(
+            startingBlock, currentBlock, highestBlock, Optional.empty(), Optional.empty());
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(Optional.of(status)));
+  }
+
   public void setWorldStateDownloadStatus(final WorldStateDownloadStatus worldStateDownloadStatus) {
     this.worldStateDownloadStatus = Optional.ofNullable(worldStateDownloadStatus);
   }

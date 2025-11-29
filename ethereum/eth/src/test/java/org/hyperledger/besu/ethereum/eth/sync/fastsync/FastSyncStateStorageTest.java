@@ -141,7 +141,7 @@ public class FastSyncStateStorageTest {
     // Create a file with an unsupported version
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     output.startList();
-    output.writeByte((byte) 2); // Use version 2 which is not supported
+    output.writeByte((byte) 99); // Use version 99 which is not supported
     pivotBlockHeader.writeTo(output);
     output.writeByte((byte) 0); // sourceIsTrusted = false
     output.endList();
@@ -150,6 +150,6 @@ public class FastSyncStateStorageTest {
     // Attempt to load the state should throw IllegalStateException
     assertThatThrownBy(() -> storage.loadState(new MainnetBlockHeaderFunctions()))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Unsupported fast sync state format version: 2");
+        .hasMessageContaining("Unsupported fast sync state format version: 99");
   }
 }

@@ -47,6 +47,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -446,15 +447,22 @@ public class FastSyncActionsTest {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    return new FastSyncActions(
-        syncConfig,
-        worldStateStorageCoordinator,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
-        pivotBlockSelector,
-        new NoOpMetricsSystem());
+    final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
+    try {
+      return new FastSyncActions(
+          syncConfig,
+          worldStateStorageCoordinator,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
+          pivotBlockSelector,
+          new NoOpMetricsSystem(),
+          fastSyncStateStorage,
+          java.nio.file.Files.createTempDirectory("checkpoint-sync-test"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Test
