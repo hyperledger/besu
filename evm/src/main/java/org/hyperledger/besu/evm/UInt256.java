@@ -318,6 +318,17 @@ public final class UInt256 {
     return new UInt256(result, modulus.length);
   }
 
+  /**
+   * Simple addition
+   *
+   * @param other The UInt256 to add to this.
+   * @return The UInt256 result from the addition
+   */
+  public UInt256 add(final UInt256 other) {
+    return new UInt256(
+        addWithCarry(this.limbs, this.limbs.length, other.limbs, other.limbs.length));
+  }
+
   // --------------------------------------------------------------------------
   // endregion
 
