@@ -1057,47 +1057,6 @@ public class UInt256PropertyBasedTest {
     assertThat(ua.xor(ua.not())).isEqualTo(allOnes);
   }
 
-  @Property(tries = 10)
-  void property_not_display_transformation(@ForAll("unsigned1to32") final byte[] a) {
-    System.out.println("\n========================================");
-    System.out.println("Testing: NOT(A) transformation");
-    System.out.println("========================================");
-
-    // Arrange
-    final UInt256 ua = UInt256.fromBytesBE(a);
-    final byte[] aBytes32 = Bytes32.leftPad(Bytes.wrap(a)).toArrayUnsafe();
-
-    System.out.println("Input A:     " + Bytes.wrap(aBytes32).toHexString());
-
-    // Act
-    UInt256 result = ua.not();
-    byte[] resultBytes = result.toBytesBE();
-
-    System.out.println("NOT(A):      " + Bytes.wrap(resultBytes).toHexString());
-
-    // Show first 4 bytes in binary
-    System.out.println("\nFirst 4 bytes in binary:");
-    for (int i = 0; i < 4; i++) {
-      System.out.printf(
-          "  A[%d]:    %s (0x%02X)%n",
-          i,
-          String.format("%8s", Integer.toBinaryString(aBytes32[i] & 0xFF)).replace(' ', '0'),
-          aBytes32[i] & 0xFF);
-      System.out.printf(
-          "  ~A[%d]:   %s (0x%02X)%n%n",
-          i,
-          String.format("%8s", Integer.toBinaryString(resultBytes[i] & 0xFF)).replace(' ', '0'),
-          resultBytes[i] & 0xFF);
-    }
-
-    // Assert
-    final Bytes bytesA = Bytes32.leftPad(Bytes.wrap(a));
-    final byte[] expected = bytesA.not().toArrayUnsafe();
-    assertThat(resultBytes).containsExactly(expected);
-
-    System.out.println("✓ Test PASSED - matches Bytes.not()");
-  }
-
   // endregion
 
   // endregion
