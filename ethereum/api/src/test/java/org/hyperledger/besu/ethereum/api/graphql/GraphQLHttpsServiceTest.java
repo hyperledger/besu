@@ -17,11 +17,10 @@ package org.hyperledger.besu.ethereum.api.graphql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -83,10 +82,11 @@ public class GraphQLHttpsServiceTest {
   private static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
+  private static final String EXPECTED_CHAIN_ID = "0x1";
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
   private static Map<GraphQLContextType, Object> graphQlContextMap;
-  private static MiningCoordinator miningCoordinatorMock;
+  private static MiningCoordinator miningCoordinator;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
   // Generate a self-signed certificate
@@ -101,7 +101,7 @@ public class GraphQLHttpsServiceTest {
     ssc = new SelfSignedCertificate();
     clientSsc = new SelfSignedCertificate();
 
-    miningCoordinatorMock = Mockito.mock(MiningCoordinator.class);
+    miningCoordinator = new NoopMiningCoordinator();
     graphQlContextMap =
         Map.of(
             GraphQLContextType.BLOCKCHAIN_QUERIES,
@@ -109,7 +109,7 @@ public class GraphQLHttpsServiceTest {
             GraphQLContextType.TRANSACTION_POOL,
             Mockito.mock(TransactionPool.class),
             GraphQLContextType.MINING_COORDINATOR,
-            miningCoordinatorMock,
+            miningCoordinator,
             GraphQLContextType.SYNCHRONIZER,
             synchronizer);
 
@@ -339,7 +339,7 @@ public class GraphQLHttpsServiceTest {
 
   @Test
   public void handleInvalidQuerySchema() throws Exception {
-    final RequestBody body = RequestBody.create("{gasPrice1}", GRAPHQL);
+    final RequestBody body = RequestBody.create("{chainID1}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       final JsonObject json = new JsonObject(resp.body().string());
@@ -350,61 +350,52 @@ public class GraphQLHttpsServiceTest {
 
   @Test
   public void query_get() throws Exception {
-    final Wei price = Wei.of(16);
-    Mockito.when(blockchainQueries.gasPrice()).thenReturn(price);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
-    try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {
+    try (final Response resp = client.newCall(buildGetRequest("?query={chainID}")).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_jsonPost() throws Exception {
-    final RequestBody body = RequestBody.create("{\"query\":\"{gasPrice}\"}", JSON);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{\"query\":\"{chainID}\"}", JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_graphqlPost() throws Exception {
-    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{chainID}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_untypedPost() throws Exception {
-    final RequestBody body = RequestBody.create("{gasPrice}", null);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{chainID}", null);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
@@ -445,7 +436,7 @@ public class GraphQLHttpsServiceTest {
   @Test
   public void responseContainsJsonContentTypeHeader() throws Exception {
 
-    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
+    final RequestBody body = RequestBody.create("{chainID}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.header("Content-Type")).isEqualTo(JSON.toString());

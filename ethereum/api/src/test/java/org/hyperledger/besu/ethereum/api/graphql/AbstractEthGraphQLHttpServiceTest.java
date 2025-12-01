@@ -22,7 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
@@ -87,7 +87,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final MiningCoordinator miningCoordinatorMock = mock(MiningCoordinator.class);
+    final MiningCoordinator miningCoordinator = new NoopMiningCoordinator();
 
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
 
@@ -155,7 +155,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.TRANSACTION_POOL,
                 transactionPoolMock,
                 GraphQLContextType.MINING_COORDINATOR,
-                miningCoordinatorMock,
+                miningCoordinator,
                 GraphQLContextType.SYNCHRONIZER,
                 synchronizerMock,
                 GraphQLContextType.TRANSACTION_SIMULATOR,
