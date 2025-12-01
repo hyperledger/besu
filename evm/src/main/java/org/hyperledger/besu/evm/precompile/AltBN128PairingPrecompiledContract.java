@@ -71,7 +71,9 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
         PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_PAIR_OPERATION_RAW_VALUE,
-        Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
+        (Integer.MAX_VALUE / PARAMETER_LENGTH)
+            * PARAMETER_LENGTH, // round down to nearest multiple of 192
+        LibGnarkEIP196.EIP196_PAIR_PREALLOCATE_FOR_RESULT_BYTES);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
   }
