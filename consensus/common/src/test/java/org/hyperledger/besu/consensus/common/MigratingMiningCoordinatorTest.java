@@ -29,7 +29,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -121,13 +121,13 @@ public class MigratingMiningCoordinatorTest {
 
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
-    MiningCoordinator noopCoordinator = new NoopMiningCoordinator();
-    coordinatorSchedule = createCoordinatorSchedule(noopCoordinator, coordinator2);
+    MiningCoordinator mockMiningCoordinator = mock(MiningCoordinator.class);
+    coordinatorSchedule = createCoordinatorSchedule(mockMiningCoordinator, coordinator2);
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
     new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
-    verifyNoInteractions(noopCoordinator);
+    verifyNoInteractions(mockMiningCoordinator);
   }
 
   @Test

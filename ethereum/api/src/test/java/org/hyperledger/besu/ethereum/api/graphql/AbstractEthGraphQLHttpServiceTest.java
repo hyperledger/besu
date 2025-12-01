@@ -87,8 +87,6 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final MiningCoordinator miningCoordinator = new NoopMiningCoordinator();
-
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
 
     when(transactionPoolMock.addTransactionViaApi(ArgumentMatchers.any(Transaction.class)))
@@ -155,7 +153,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.TRANSACTION_POOL,
                 transactionPoolMock,
                 GraphQLContextType.MINING_COORDINATOR,
-                miningCoordinator,
+                new NoopMiningCoordinator(),
                 GraphQLContextType.SYNCHRONIZER,
                 synchronizerMock,
                 GraphQLContextType.TRANSACTION_SIMULATOR,

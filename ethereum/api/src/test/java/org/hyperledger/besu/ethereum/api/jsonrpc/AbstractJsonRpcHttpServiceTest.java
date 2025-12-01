@@ -146,7 +146,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
-    final MiningCoordinator miningCoordinator = new NoopMiningCoordinator();
     final ApiConfiguration apiConfiguration = createApiConfiguration();
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -201,7 +200,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             filterManager,
             transactionPoolMock,
             miningConfiguration,
-            miningCoordinator,
+            new NoopMiningCoordinator(),
             new NoOpMetricsSystem(),
             supportedCapabilities,
             Optional.empty(),
