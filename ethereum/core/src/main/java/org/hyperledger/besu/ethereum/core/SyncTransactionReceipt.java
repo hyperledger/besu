@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.log.Log;
@@ -25,12 +24,9 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A transaction receipt representation used for syncing. */
 public class SyncTransactionReceipt {
-  private static final Logger LOG = LoggerFactory.getLogger(SyncTransactionReceipt.class);
 
   private final Bytes rlpBytes;
   private final List<Log> logs;
@@ -54,14 +50,10 @@ public class SyncTransactionReceipt {
     }
   }
 
-  private List<Log> decodeTypedReceipt(final RLPInput rlpInput) {
-    RLPInput input = rlpInput;
-    final Bytes typedTransactionReceiptBytes = input.readBytes();
-    LOG.info(
-        "Attempting to decodeTypedReceipt, read {} from full input {}",
-        typedTransactionReceiptBytes.toHexString(),
-        rlpBytes.toHexString());
-    input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+  private List<Log> decodeTypedReceipt(final RLPInput input) {
+    // transaction type
+    input.readBytes();
+
     input.enterList();
     // statusOrStateRoot
     input.readAsRlp();
