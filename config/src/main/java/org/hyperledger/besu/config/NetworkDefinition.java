@@ -38,7 +38,7 @@ public enum NetworkDefinition {
    * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
    * info</a>
    */
-  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
+  LINEA_MAINNET("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
   /** Linea sepolia network name */
   LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, true),
   /** LUKSO mainnet network name. */
