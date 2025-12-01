@@ -233,6 +233,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -453,6 +454,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
   private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
+  private NetworkDefinition network = null;
+
   @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
@@ -460,7 +463,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  private final NetworkDefinition network = null;
+  void setNetwork(final String inputNetwork) {
+    // case-insensitive and (_,-)-insensitive
+    final var normalizedInputNetwork = inputNetwork.toLowerCase(Locale.ROOT).replace('-', '_');
+    this.network =
+        Arrays.stream(NetworkDefinition.values())
+            .filter(nd -> nd.name().toLowerCase(Locale.ROOT).equals(normalizedInputNetwork))
+            .findAny()
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Network %s does not exist".formatted(inputNetwork)));
+  }
 
   @Option(
       names = {PROFILE_OPTION_NAME},
