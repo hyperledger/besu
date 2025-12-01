@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -111,8 +110,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     // PoA consensus mines by default, get consensus-specific mining parameters for
     // TransitionCoordinator:
-    MiningConfiguration transitionMiningConfiguration =
-        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningConfiguration);
+    preMergeBesuControllerBuilder.overrideMiningConfiguration(miningConfiguration);
 
     // construct a transition backward sync context
     BackwardSyncContext transitionBackwardsSyncContext =
@@ -131,20 +129,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                ImmutableMiningConfiguration.builder()
-                    .from(miningConfiguration)
-                    .mutableInitValues(
-                        ImmutableMiningConfiguration.MutableInitValues.builder()
-                            .isMiningEnabled(false)
-                            .build())
-                    .build(),
+                miningConfiguration.setMiningEnabled(false),
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
                 transitionProtocolSchedule,
                 protocolContext,
                 transactionPool,
-                transitionMiningConfiguration,
+                miningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()),
