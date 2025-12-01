@@ -134,17 +134,15 @@ public class DifficultyCalculatorTests {
                 DifficultyCalculatorTests.class.getResource(testFile), StandardCharsets.UTF_8));
 
     if (testObject.size() == 1) {
-      final var topObjectIterator = testObject.fields();
-      while (topObjectIterator.hasNext()) {
-        final Map.Entry<String, JsonNode> testNameIterator = topObjectIterator.next();
-        final var testHolderIter = testNameIterator.getValue().fields();
-        while (testHolderIter.hasNext()) {
-          final var testList = testHolderIter.next();
-          if (!testList.getKey().equals("_info")) {
-            testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, (ObjectNode) testList.getValue());
-          }
-        }
-      }
+      testObject.propertyStream()
+          .forEach(testNameIterator -> {
+            ((ObjectNode) testNameIterator.getValue()).propertyStream()
+                .forEach(testList -> {
+                  if (!testList.getKey().equals("_info")) {
+                    testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, (ObjectNode) testList.getValue());
+                  }
+                });
+          });
     } else {
       testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, testObject);
     }
@@ -152,9 +150,8 @@ public class DifficultyCalculatorTests {
 
   private void testDifficulty(
       final String testFile, final ProtocolSchedule protocolSchedule, final MainnetBlockHeaderFunctions blockHeaderFunctions, final ObjectNode testObject) {
-    final var fields = testObject.fields();
-    while (fields.hasNext()) {
-      final var entry = fields.next();
+    testObject.propertyStream()
+        .forEach(entry -> {
       final JsonNode value = entry.getValue();
       final long currentBlockNumber = extractLong(value, "currentBlockNumber");
       String parentUncles = value.get("parentUncles").asText();
@@ -188,7 +185,7 @@ public class DifficultyCalculatorTests {
       assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader)))
           .describedAs("File %s Test %s", testFile, entry.getKey())
           .isEqualTo(currentDifficulty);
-    }
+        });
   }
 
   private long extractLong(final JsonNode node, final String name) {

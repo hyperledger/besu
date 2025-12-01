@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.chainexport;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -56,7 +56,7 @@ public class Era1BlockExporter {
    * Instantiates a new ERA1 block exporter.
    *
    * @param blockchain the blockchain
-   * @param networkName the network
+   * @param networkDefinition the network
    * @param era1FileWriterFactory an Era1FileWriterFactory
    * @param era1AccumulatorFactory an Era1AccumulatorFactory
    * @param era1BlockIndexConverter an Era1BlockIndexConverter
@@ -66,7 +66,7 @@ public class Era1BlockExporter {
    */
   public Era1BlockExporter(
       final Blockchain blockchain,
-      final NetworkName networkName,
+      final NetworkDefinition networkDefinition,
       final Era1FileWriterFactory era1FileWriterFactory,
       final Era1AccumulatorFactory era1AccumulatorFactory,
       final Era1BlockIndexConverter era1BlockIndexConverter,
@@ -75,11 +75,11 @@ public class Era1BlockExporter {
       final TransactionReceiptEncoder transactionReceiptEncoder) {
     this.blockchain = blockchain;
     this.network =
-        switch (networkName) {
-          case MAINNET, SEPOLIA -> networkName.name().toLowerCase(Locale.getDefault());
+        switch (networkDefinition) {
+          case MAINNET, SEPOLIA -> networkDefinition.name().toLowerCase(Locale.getDefault());
           default ->
               throw new RuntimeException(
-                  "Unable to export ERA1 files for " + networkName + " network");
+                  "Unable to export ERA1 files for " + networkDefinition + " network");
         };
     this.era1FileWriterFactory = era1FileWriterFactory;
     this.era1AccumulatorFactory = era1AccumulatorFactory;
