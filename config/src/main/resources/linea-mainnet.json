@@ -15,6 +15,7 @@
     "shanghaiTime": 1761213600,
     "cancunTime": 1761645600,
     "pragueTime": 1761646200,
+    "osakaTime": 1764798551,
     "depositContractAddress": "0x94d4a7449B968b839dcbc64A61F195CA300986ae",
     "withdrawalRequestContractAddress": "0x66355689a9f067eeb9dc9d899E4192676988279C",
     "consolidationRequestContractAddress": "0xF0e003F0dE2d583Ae28FA8cBF66aa096CdAce3ff",
@@ -26,18 +27,18 @@
     "blobSchedule": {
       "cancun": {
         "target": 0,
-        "max": 0,
+        "max": 6,
         "baseFeeUpdateFraction": 3338477
       },
       "prague": {
         "target": 0,
-        "max": 0,
-        "baseFeeUpdateFraction": 5007716
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
       },
       "osaka": {
         "target": 0,
-        "max": 0,
-        "baseFeeUpdateFraction": 5007716
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
       }
     }
   },

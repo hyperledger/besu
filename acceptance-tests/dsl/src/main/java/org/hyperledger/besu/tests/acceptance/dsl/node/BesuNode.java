@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static java.util.Collections.unmodifiableList;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
@@ -115,7 +115,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final ApiConfiguration apiConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
-  private final NetworkName network;
+  private final NetworkDefinition network;
   private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
@@ -153,7 +153,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final DataStorageConfiguration dataStorageConfiguration,
       final Optional<String> keyfilePath,
       final boolean devMode,
-      final NetworkName network,
+      final NetworkDefinition network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
@@ -700,7 +700,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return devMode;
   }
 
-  public NetworkName getNetwork() {
+  public NetworkDefinition getNetwork() {
     return network;
   }
 

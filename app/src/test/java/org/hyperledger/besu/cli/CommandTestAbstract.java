@@ -36,7 +36,6 @@ import org.hyperledger.besu.chainimport.Era1BlockImporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
@@ -47,6 +46,7 @@ import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -600,7 +600,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+        final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -700,7 +700,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+        final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
@@ -736,7 +736,7 @@ public abstract class CommandTestAbstract {
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Supplier<Era1BlockImporter> era1BlockImporter,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-        final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+        final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final BesuController.Builder controllerBuilderFactory,
         final BesuPluginContextImpl besuPluginContext,
