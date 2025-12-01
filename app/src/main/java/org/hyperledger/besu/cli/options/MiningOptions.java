@@ -31,7 +31,6 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DE
 import org.hyperledger.besu.cli.converter.PositiveNumberConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
@@ -53,23 +52,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
   private static final String DEPRECATION_PREFIX =
       "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
-
-  // TODO only used for clique, which overrides this to true, so we do not need to be able to set
-  // this via CLI
-  @Option(
-      names = {"--miner-enabled"},
-      hidden = true,
-      description = DEPRECATION_PREFIX + " This has no effect")
-  private Boolean isMiningEnabled = false;
-
-  // TODO only used for clique, which overrides to local node address, so we do not need to be able
-  // to set this via CLI
-  @Option(
-      names = {"--miner-coinbase"},
-      hidden = true,
-      description = DEPRECATION_PREFIX + " This has no effect",
-      arity = "1")
-  private Address coinbase = null;
 
   @Option(
       names = {"--miner-extra-data"},
@@ -210,9 +192,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
-    if (Boolean.TRUE.equals(isMiningEnabled)) {
-      logger.warn("PoW consensus is deprecated. See CHANGELOG for alternative options.");
-    }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
         || unstableOptions.posBlockCreationMaxTime > DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
@@ -253,7 +232,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     final MiningOptions miningOptions = MiningOptions.create();
     miningOptions.setTransactionSelectionService(
         miningConfiguration.getTransactionSelectionService());
-    miningOptions.isMiningEnabled = miningConfiguration.isMiningEnabled();
     miningOptions.extraData = miningConfiguration.getExtraData();
     miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
@@ -274,7 +252,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningOptions.unstableOptions.posBlockFinalizationTimeoutMs =
         miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs();
 
-    miningConfiguration.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningConfiguration.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     return miningOptions;
   }
@@ -287,7 +264,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
-            .isMiningEnabled(isMiningEnabled)
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
             .minPriorityFeePerGas(minPriorityFeePerGas)
@@ -295,9 +271,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     if (targetGasLimit != null) {
       updatableInitValuesBuilder.targetGasLimit(targetGasLimit);
-    }
-    if (coinbase != null) {
-      updatableInitValuesBuilder.coinbase(coinbase);
     }
 
     return ImmutableMiningConfiguration.builder()
