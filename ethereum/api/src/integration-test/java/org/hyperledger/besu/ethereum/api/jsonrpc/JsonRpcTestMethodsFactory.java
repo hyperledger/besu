@@ -172,7 +172,6 @@ public class JsonRpcTestMethodsFactory {
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
-    final NoopMiningCoordinator miningCoordinator = new NoopMiningCoordinator();
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
         Optional.of(mock(AccountLocalConfigPermissioningController.class));
@@ -213,7 +212,7 @@ public class JsonRpcTestMethodsFactory {
             filterManager,
             transactionPool,
             miningConfiguration,
-            miningCoordinator,
+            new NoopMiningCoordinator(),
             metricsSystem,
             new HashSet<>(),
             accountWhitelistController,
