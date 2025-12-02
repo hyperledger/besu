@@ -32,6 +32,10 @@ public class NoopMiningCoordinator implements MiningCoordinator {
     this.miningConfiguration = miningConfiguration;
   }
 
+  public NoopMiningCoordinator() {
+    this.miningConfiguration = MiningConfiguration.newDefault();
+  }
+
   @Override
   public void start() {}
 
