@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -129,7 +130,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                miningConfiguration.setMiningEnabled(false),
+                // special case: we need to disable mining during transition
+                ImmutableMiningConfiguration.builder()
+                    .from(miningConfiguration)
+                    .mutableInitValues(
+                        ImmutableMiningConfiguration.MutableInitValues.builder()
+                            .isMiningEnabled(false)
+                            .build())
+                    .build(),
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
