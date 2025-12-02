@@ -23,12 +23,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -258,5 +264,157 @@ class JsonRpcIpcServiceTest {
                                                               testContext.succeedingThenComplete());
                                                     }))
                                         .write(request)))));
+  }
+
+  @Test
+  void subscriptionRequestSuccessful() {
+    final Path socketPath = tempDir.resolve("besu-test.ipc");
+    final SubscriptionManager subscriptionManager =
+        new SubscriptionManager(new NoOpMetricsSystem());
+    vertx.deployVerticle(subscriptionManager);
+
+    final Map<String, JsonRpcMethod> methods =
+        new WebSocketMethodsFactory(subscriptionManager, new HashMap<>()).methods();
+
+    final JsonRpcIpcService service =
+        new JsonRpcIpcService(
+            vertx,
+            socketPath,
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
+            Optional.of(subscriptionManager));
+
+    final String request = "{\"id\":1,\"method\":\"eth_subscribe\",\"params\":[\"newHeads\"]}\n";
+    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
+
+    service
+        .start()
+        .onComplete(
+            testContext.succeeding(
+                server ->
+                    vertx
+                        .createNetClient()
+                        .connect(SocketAddress.domainSocketAddress(socketPath.toString()))
+                        .onComplete(
+                            testContext.succeeding(
+                                socket ->
+                                    socket
+                                        .handler(
+                                            buffer ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      assertThat(buffer.toString().trim())
+                                                          .isEqualTo(expectedResponse);
+                                                      service
+                                                          .stop()
+                                                          .onComplete(
+                                                              testContext.succeedingThenComplete());
+                                                    }))
+                                        .write(Buffer.buffer(request))))));
+  }
+
+  @Test
+  void unsubscribeRequestSuccessful() {
+    final Path socketPath = tempDir.resolve("besu-test.ipc");
+    final SubscriptionManager subscriptionManager =
+        new SubscriptionManager(new NoOpMetricsSystem());
+    vertx.deployVerticle(subscriptionManager);
+
+    final Map<String, JsonRpcMethod> methods =
+        new WebSocketMethodsFactory(subscriptionManager, new HashMap<>()).methods();
+
+    final JsonRpcIpcService service =
+        new JsonRpcIpcService(
+            vertx,
+            socketPath,
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
+            Optional.of(subscriptionManager));
+
+    final String subscribeRequest =
+        "{\"id\":1,\"method\":\"eth_subscribe\",\"params\":[\"newHeads\"]}\n";
+    final String unsubscribeRequest =
+        "{\"id\":2,\"method\":\"eth_unsubscribe\",\"params\":[\"0x1\"]}\n";
+    final AtomicInteger messageCount = new AtomicInteger(0);
+
+    service
+        .start()
+        .onComplete(
+            testContext.succeeding(
+                server ->
+                    vertx
+                        .createNetClient()
+                        .connect(SocketAddress.domainSocketAddress(socketPath.toString()))
+                        .onComplete(
+                            testContext.succeeding(
+                                socket -> {
+                                  socket.handler(
+                                      buffer -> {
+                                        final int count = messageCount.incrementAndGet();
+                                        if (count == 1) {
+                                          // First response is subscribe
+                                          socket.write(Buffer.buffer(unsubscribeRequest));
+                                        } else if (count == 2) {
+                                          // Second response is unsubscribe
+                                          testContext.verify(
+                                              () -> {
+                                                assertThat(buffer.toString().trim())
+                                                    .contains("\"result\":true");
+                                                service
+                                                    .stop()
+                                                    .onComplete(
+                                                        testContext.succeedingThenComplete());
+                                              });
+                                        }
+                                      });
+                                  socket.write(Buffer.buffer(subscribeRequest));
+                                }))));
+  }
+
+  @Test
+  void batchRequestDoesNotSupportSubscriptions() {
+    final Path socketPath = tempDir.resolve("besu-test.ipc");
+    final SubscriptionManager subscriptionManager =
+        new SubscriptionManager(new NoOpMetricsSystem());
+    vertx.deployVerticle(subscriptionManager);
+
+    final Map<String, JsonRpcMethod> methods =
+        new WebSocketMethodsFactory(subscriptionManager, new HashMap<>()).methods();
+
+    final JsonRpcIpcService service =
+        new JsonRpcIpcService(
+            vertx,
+            socketPath,
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
+            Optional.of(subscriptionManager));
+
+    final String batchRequest =
+        "[{\"id\":1,\"method\":\"eth_subscribe\",\"params\":[\"newHeads\"]},"
+            + "{\"id\":2,\"method\":\"eth_subscribe\",\"params\":[\"logs\"]}]";
+
+    service
+        .start()
+        .onComplete(
+            testContext.succeeding(
+                server ->
+                    vertx
+                        .createNetClient()
+                        .connect(SocketAddress.domainSocketAddress(socketPath.toString()))
+                        .onComplete(
+                            testContext.succeeding(
+                                socket ->
+                                    socket
+                                        .handler(
+                                            buffer ->
+                                                testContext.verify(
+                                                    () -> {
+                                                      // Batch requests with subscriptions should
+                                                      // fail
+                                                      assertThat(buffer.toString())
+                                                          .contains("\"error\"");
+                                                      service
+                                                          .stop()
+                                                          .onComplete(
+                                                              testContext.succeedingThenComplete());
+                                                    }))
+                                        .write(Buffer.buffer(batchRequest))))));
   }
 }
