@@ -27,6 +27,6 @@ public interface MiningConfigurationOverrides {
    * @param fromCli The mining configuration that contains original values.
    */
   default void overrideMiningConfiguration(final MiningConfiguration fromCli) {
-    // np-op
+    // no-op
   }
 }
