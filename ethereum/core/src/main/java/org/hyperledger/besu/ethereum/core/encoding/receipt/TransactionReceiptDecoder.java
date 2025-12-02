@@ -124,8 +124,7 @@ public class TransactionReceiptDecoder {
 
   private static TransactionReceipt decodeEth69Receipt(
       final RLPInput input, final RLPInput transactionByteRlp, final RLPInput statusOrStateRoot) {
-    final TransactionType transactionType;
-    transactionType = getTransactionType(transactionByteRlp);
+    final TransactionType transactionType = getTransactionType(transactionByteRlp);
     final long cumulativeGas = input.readLongScalar();
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, false));
     final LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
