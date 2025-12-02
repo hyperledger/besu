@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
@@ -26,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +65,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
 
     Object responseObject = new Object();
 
@@ -93,7 +96,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
 
     Object responseObject = new Object();
 
@@ -119,12 +123,41 @@ public class PeerTaskExecutorTest {
   }
 
   @Test
+  public void testExecuteAgainstPeerWithNoRetriesAndPeerSuppliedMalformedRlp()
+      throws PeerConnection.PeerNotConnected,
+          ExecutionException,
+          InterruptedException,
+          TimeoutException,
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
+
+    Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
+    Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
+    Mockito.when(peerTask.getSubProtocol()).thenReturn(subprotocol);
+    Mockito.when(subprotocol.getName()).thenReturn("subprotocol");
+    Mockito.when(requestSender.sendRequest(subprotocol, requestMessageData, ethPeer))
+        .thenReturn(responseMessageData);
+    Mockito.when(peerTask.processResponse(responseMessageData))
+        .thenThrow(new MalformedRlpFromPeerException(new Exception(), Bytes.EMPTY));
+
+    PeerTaskExecutorResult<Object> result = peerTaskExecutor.executeAgainstPeer(peerTask, ethPeer);
+
+    Mockito.verify(ethPeer)
+        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+
+    Assertions.assertNotNull(result);
+    Assertions.assertFalse(result.result().isPresent());
+    Assertions.assertEquals(PeerTaskExecutorResponseCode.INVALID_RESPONSE, result.responseCode());
+  }
+
+  @Test
   public void testExecuteAgainstPeerWithNoRetriesAndPartialSuccessfulFlow()
       throws PeerConnection.PeerNotConnected,
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
 
     Object responseObject = new Object();
 
@@ -151,7 +184,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
     Object responseObject = new Object();
     int requestMessageDataCode = 123;
     String protocolName = "snap";
@@ -233,7 +267,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
 
     Mockito.when(peerTask.getRequestMessage()).thenReturn(requestMessageData);
     Mockito.when(peerTask.getRetriesWithSamePeer()).thenReturn(0);
@@ -260,7 +295,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
     Object responseObject = new Object();
 
     Mockito.when(peerSelector.getPeer(Mockito.any(Predicate.class)))
@@ -294,7 +330,8 @@ public class PeerTaskExecutorTest {
           ExecutionException,
           InterruptedException,
           TimeoutException,
-          InvalidPeerTaskResponseException {
+          InvalidPeerTaskResponseException,
+          MalformedRlpFromPeerException {
     Object responseObject = new Object();
     int requestMessageDataCode = 123;
     String protocolName = "snap";
