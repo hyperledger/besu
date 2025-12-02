@@ -122,8 +122,10 @@ public class GetReceiptsFromPeerTask
       if (blockHeaders == null) {
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
         LOG.info(
-            "Peer {} sent us a response with an entry that did not match our request",
-            peer.getLoggableId());
+            "Peer {} sent us a response with an entry that did not match our request\n Certificate: {}\n Message data: {}",
+            peer,
+            receiptsByBlock,
+            message.getData().toHexString());
         return Optional.empty();
       }
       blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));

@@ -139,17 +139,16 @@ public class TransactionReceiptDecoder {
     if (transactionBytes.isEmpty()) {
       transactionType = TransactionType.FRONTIER;
     } else if (transactionBytes.size() != 1) {
-      throw new IllegalStateException(
-          "Invalid transaction type" + transactionBytes.toHexString());
+      throw new IllegalStateException("Invalid transaction type" + transactionBytes.toHexString());
     } else {
       final byte typeByte = transactionBytes.get(0);
       transactionType =
-        TransactionType.fromEthSerializedType(typeByte)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Invalid transaction typeByte %x".formatted(typeByte)));
-  }
+          TransactionType.fromEthSerializedType(typeByte)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Invalid transaction typeByte %x".formatted(typeByte)));
+    }
     return transactionType;
   }
 
