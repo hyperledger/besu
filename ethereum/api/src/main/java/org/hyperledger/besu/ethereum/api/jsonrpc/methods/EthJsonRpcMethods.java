@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlobBaseFee
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthChainId;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthConfig;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCreateAccessList;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas;
@@ -40,8 +39,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetCode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetLogs;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetMinerDataByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetProof;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetStorageAt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransactionByBlockHashAndIndex;
@@ -71,6 +68,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -93,6 +91,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
+  private final BalConfiguration balConfiguration;
   private final GenesisConfigOptions genesisConfigOptions;
   private final TransactionSimulator transactionSimulator;
   private final MetricsSystem metricsSystem;
@@ -107,6 +106,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningConfiguration miningConfiguration,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
+      final BalConfiguration balConfiguration,
       final GenesisConfigOptions genesisConfigOptions,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
@@ -119,6 +119,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningConfiguration = miningConfiguration;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
+    this.balConfiguration = balConfiguration;
     this.genesisConfigOptions = genesisConfigOptions;
     this.transactionSimulator = transactionSimulator;
     this.metricsSystem = metricsSystem;
@@ -169,13 +170,10 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new EthEstimateGas(blockchainQueries, transactionSimulator, apiConfiguration),
             new EthCreateAccessList(blockchainQueries, transactionSimulator),
             new EthMining(miningCoordinator),
-            new EthCoinbase(miningCoordinator),
             new EthConfig(blockchainQueries, protocolSchedule, genesisConfigOptions),
             new EthProtocolVersion(supportedCapabilities),
             new EthGasPrice(blockchainQueries, apiConfiguration),
             new EthChainId(protocolSchedule.getChainId()),
-            new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
-            new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
             new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
             new EthMaxPriorityFeePerGas(blockchainQueries),
             new EthSimulateV1(
@@ -184,7 +182,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 transactionSimulator,
                 miningConfiguration,
                 apiConfiguration));
-    if (apiConfiguration.isBlockAccessListEnabled()) {
+    if (balConfiguration.isBalApiEnabled()) {
       final EthGetBlockAccessListByNumber method =
           new EthGetBlockAccessListByNumber(blockchainQueries);
       map.put(method.getName(), method);

@@ -48,7 +48,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -80,6 +79,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -137,7 +137,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private static final BigInteger CHAIN_ID_MAINNET = BigInteger.ONE;
   private static final BigInteger CHAIN_ID_HOODI = BigInteger.valueOf(560048);
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 45_000_000L;
+  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
   private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
 
   @Mock MergeContext mergeContext;
@@ -248,8 +248,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             miningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
   }
 
   @Test
@@ -770,8 +769,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             miningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
 
     final PayloadIdentifier payloadId =
         this.coordinator.preparePayload(
@@ -1011,8 +1009,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             mockMiningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
 
     assertThat(testTargetGasLimitCoordinator).isNotNull();
     verify(mockMiningConfiguration).setTargetGasLimit(expectedTargetGasLimit);
@@ -1034,7 +1031,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   public static Stream<Arguments> getGasLimits() {
     return Stream.of(
-        Arguments.of("mainnet", 1L, 45_000_000L),
+        Arguments.of("mainnet", 1L, 60_000_000L),
         Arguments.of("holesky", 17_000L, 60_000_000L),
         Arguments.of("sepolia", 11_155_111L, 60_000_000L),
         Arguments.of("hoodi", 560_048L, 60_000_000L),

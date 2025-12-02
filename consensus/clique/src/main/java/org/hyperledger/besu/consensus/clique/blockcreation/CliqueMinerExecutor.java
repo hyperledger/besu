@@ -86,7 +86,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
     this.forksSchedule = forksSchedule;
-    miningParams.setCoinbase(localAddress);
   }
 
   @Override
@@ -119,7 +118,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
   @Override
   public Optional<Address> getCoinbase() {
-    return miningConfiguration.getCoinbase();
+    return Optional.of(localAddress);
   }
 
   /**

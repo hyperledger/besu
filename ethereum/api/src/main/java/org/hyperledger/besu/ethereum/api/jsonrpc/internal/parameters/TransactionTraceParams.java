@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -77,6 +80,17 @@ public interface TransactionTraceParams {
   @SuppressWarnings("NonApiType")
   LinkedHashMap<String, Object> tracerConfig();
 
+  @JsonProperty("opcodes")
+  @Value.Default
+  default Set<String> opcodes() {
+    return Collections.emptySet();
+  }
+
+  @JsonProperty("stateOverrides")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  StateOverrideMap stateOverrides();
+
   /**
    * Convert JSON-RPC parameters to a {@link TraceOptions} object.
    *
@@ -88,6 +102,7 @@ public interface TransactionTraceParams {
             .traceStorage(!disableStorage())
             .traceMemory(!disableMemory())
             .traceStack(!disableStack())
+            .traceOpcodes(opcodes())
             .build();
 
     // Convert string tracer to TracerType enum, handling null case
@@ -96,6 +111,6 @@ public interface TransactionTraceParams {
             ? TracerType.fromString(tracer())
             : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
 
-    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig());
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(), stateOverrides());
   }
 }

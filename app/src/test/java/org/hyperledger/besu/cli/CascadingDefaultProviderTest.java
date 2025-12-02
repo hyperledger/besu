@@ -17,8 +17,8 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.config.NetworkDefinition.DEV;
+import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -108,6 +108,9 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     parseCommand("--config-file", toml.toString());
 
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockRunnerBuilder).discoveryEnabled(eq(false));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
@@ -138,9 +141,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfigurationCaptor.getValue().getSyncMinimumPeerCount()).isEqualTo(13);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   /**
@@ -153,6 +153,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
 
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
@@ -182,9 +186,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   /**
@@ -195,34 +196,41 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
   @Test
   public void envVariableOverridesValueFromConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
+    final int expectedMinTxGasPrice = 1337;
+    setEnvironmentVariable("BESU_MIN_GAS_PRICE", String.valueOf(expectedMinTxGasPrice));
     parseCommand("--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
-    assertThat(captMiningParameters.getValue().getCoinbase())
-        .contains(Address.fromHexString(expectedCoinbase));
+    assertThat(captMiningParameters.getValue().getMinTransactionGasPrice())
+        .isEqualTo(Wei.of(expectedMinTxGasPrice));
   }
 
   /**
    * Test if the command line option overrides the environment variable and configuration. The test
-   * checks if the value of the miner's coinbase address set through a command line option correctly
-   * overrides the value specified in the environment variable and the configuration file.
+   * checks if the value of the data path set through a command line option correctly overrides the
+   * value specified in the environment variable and the configuration file.
    */
   @Test
   public void cliOptionOverridesEnvVariableAndConfig() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
-    parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
+    final int expectedMinTxGasPrice = 1337;
+    setEnvironmentVariable("BESU_MIN_TRANSACTION_GAS_PRICE", "9774");
+    parseCommand(
+        "--config-file", configFile, "--min-gas-price", String.valueOf(expectedMinTxGasPrice));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
-    assertThat(captMiningParameters.getValue().getCoinbase())
-        .contains(Address.fromHexString(expectedCoinbase));
+    assertThat(captMiningParameters.getValue().getMinTransactionGasPrice())
+        .isEqualTo(Wei.of(expectedMinTxGasPrice));
   }
 
   /**
@@ -235,6 +243,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -253,6 +265,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev", "--network", "MAINNET");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -272,6 +288,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     parseCommand("--profile", "dev", "--config-file", configFile);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
@@ -290,6 +310,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     setEnvironmentVariable("BESU_NETWORK", "MAINNET");
     parseCommand("--profile", "dev");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 

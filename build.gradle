@@ -31,6 +31,7 @@ plugins {
   id 'jacoco'
   id 'jacoco-report-aggregation'
   id 'org.sonarqube' version '6.2.0.5505'
+  id 'de.undercouch.download' version '5.6.0'
 }
 
 sonarqube {
@@ -649,15 +650,17 @@ subprojects {
       excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
+      jvmArgs = [
+        '-XX:+EnableDynamicAgentLoading'
+      ]
       if (asyncProfiler != null) {
         profilers = [
           'async:libPath=' + asyncProfiler + ';' + asyncProfilerOptions
         ]
+        // Force debug symbols of stack traces to the profiler
+        jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
       }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
-      jvmArgs = [
-        '-XX:+EnableDynamicAgentLoading'
-      ]
     }
 
     dependencies {
@@ -701,7 +704,8 @@ application {
     "--add-exports",
     "java.base/jdk.internal.misc=ALL-UNNAMED",
     "--add-opens",
-    "java.base/java.nio=ALL-UNNAMED"
+    "java.base/java.nio=ALL-UNNAMED",
+    "--enable-native-access=ALL-UNNAMED"
   ]
 }
 
@@ -714,10 +718,41 @@ run {
   }
 }
 
-def tweakStartScript(createScriptTask) {
+def defaultJvmOpts21 = application.applicationDefaultJvmArgs + [
+  "-XX:MaxHeapFreeRatio=30",
+  "-XX:MinHeapFreeRatio=10",
+  "-XX:MaxGCPauseMillis=100",
+  "-XX:StartFlightRecording,settings=default.jfc",
+  "-Xlog:jfr*=off"
+]
+
+def defaultJvmOpts25 = defaultJvmOpts21 + [
+  "-XX:+UseCompactObjectHeaders"
+]
+
+def untunedJvmOpts = application.applicationDefaultJvmArgs
+
+def evmToolJvmOpts = [
+  "-Dsecp256k1.randomize=false"
+]
+
+def serializeDefaultJvmOpts(opts) {
+  return "'" + opts.collect{ '"' + it.replaceAll(/"/, '\\"').replaceAll(/\$/, '\\$') + '"' }.join(' ') + "'"
+}
+
+def tweakStartScript(createScriptTask, jvmOptsForJava25) {
   def shortenWindowsClasspath = { line ->
     line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
   }
+
+  // Replace Java 25 opts placeholder - must be before BESU_HOME replacement
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text
+    .replace('@DEFAULT_JVM_OPTS_25@', jvmOptsForJava25)
+
+  // For Windows, remove the outer single quotes
+  def windowsJvmOpts = jvmOptsForJava25.replaceAll(/^'|'$/, '')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text
+    .replace('@DEFAULT_JVM_OPTS_25@', windowsJvmOpts)
 
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
@@ -731,16 +766,10 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
-  defaultJvmOpts = application.applicationDefaultJvmArgs + [
-    "-XX:G1ConcRefinementThreads=2",
-    "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100",
-    "-XX:StartFlightRecording,settings=default.jfc",
-    "-Xlog:jfr*=off"
-  ]
+  defaultJvmOpts = defaultJvmOpts21
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+  doLast { tweakStartScript(startScripts, serializeDefaultJvmOpts(defaultJvmOpts25)) }
 }
 
 task untunedStartScripts(type: CreateStartScripts) {
@@ -748,10 +777,10 @@ task untunedStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'besu-untuned'
-  defaultJvmOpts = application.applicationDefaultJvmArgs
+  defaultJvmOpts = untunedJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(untunedStartScripts) }
+  doLast { tweakStartScript(untunedStartScripts, serializeDefaultJvmOpts(untunedJvmOpts)) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -759,12 +788,10 @@ task evmToolStartScripts(type: CreateStartScripts) {
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evmtool'
-  defaultJvmOpts = [
-    "-Dsecp256k1.randomize=false"
-  ]
+  defaultJvmOpts = evmToolJvmOpts
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/app/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(evmToolStartScripts) }
+  doLast { tweakStartScript(evmToolStartScripts, serializeDefaultJvmOpts(evmToolJvmOpts)) }
 }
 
 task autocomplete(type: JavaExec) {
@@ -880,22 +907,68 @@ task distDocker {
   }
 }
 
-task testDocker {
-  dependsOn distDocker
-  def dockerReportsDir = "docker/reports/"
+tasks.register("downloadGossBinaries") {
+  def gossVersion = 'v0.4.9'
+  def baseUrl = "https://github.com/goss-org/goss/releases/download/${gossVersion}"
+  def testDir = "${projectDir}/docker/tests"
 
-  doFirst {
-    new File(dockerReportsDir).mkdir()
-  }
+  // Detect current architecture
+  def osArch = System.getProperty("os.arch").toLowerCase()
+  def currentArch = (osArch.contains("aarch64") || osArch.contains("arm64")) ? "arm64" : "amd64"
 
   doLast {
-    exec {
-      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-      workingDir "${projectDir}/docker"
-      executable shell
-      args "-c", "./test.sh ${image}"
+    // Download goss binary for current architecture
+    def binaryFile = new File(testDir, "goss-linux-${currentArch}")
+
+    // Download binary if it doesn't exist
+    if (!binaryFile.exists()) {
+      println "Downloading goss-linux-${currentArch}..."
+      download.run {
+        src "${baseUrl}/goss-linux-${currentArch}"
+        dest binaryFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      binaryFile.setExecutable(true)
+      println "Successfully downloaded goss-linux-${currentArch}"
+    } else {
+      println "goss-linux-${currentArch} already exists"
+    }
+
+    // Download dgoss if it doesn't exist
+    def dgossFile = new File(testDir, 'dgoss')
+    if (!dgossFile.exists()) {
+      println "Downloading dgoss..."
+      download.run {
+        src "${baseUrl}/dgoss"
+        dest dgossFile
+        overwrite false
+        onlyIfModified true
+      }
+
+      dgossFile.setExecutable(true)
+      println "Successfully downloaded dgoss"
+    } else {
+      println "dgoss already exists"
     }
   }
+}
+
+tasks.register("testDocker", Exec) {
+  dependsOn("distDocker", "downloadGossBinaries")
+
+  doFirst {
+    new File("docker/reports/").mkdir()
+  }
+
+  def image = project.hasProperty('release.releaseVersion')
+    ? "${dockerImageName}:" + project.property('release.releaseVersion')
+    : "${dockerImageName}:${project.version}"
+
+  workingDir "${projectDir}/docker"
+  executable shell
+  args "-c", "./test.sh ${image}"
 }
 
 task dockerUpload {

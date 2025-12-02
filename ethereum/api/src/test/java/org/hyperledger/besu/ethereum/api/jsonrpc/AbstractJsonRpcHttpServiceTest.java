@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -145,7 +146,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
-    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
     final ApiConfiguration apiConfiguration = createApiConfiguration();
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -200,7 +200,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             filterManager,
             transactionPoolMock,
             miningConfiguration,
-            miningCoordinatorMock,
+            new NoopMiningCoordinator(),
             new NoOpMetricsSystem(),
             supportedCapabilities,
             Optional.empty(),
@@ -216,6 +216,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             ImmutableApiConfiguration.builder().build(),
+            BalConfiguration.DEFAULT,
             Optional.empty(),
             transactionSimulator,
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));

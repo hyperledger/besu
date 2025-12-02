@@ -417,10 +417,12 @@ public class EngineJsonRpcService {
     // Verify Host header to avoid rebind attack.
     router.route().handler(denyRouteToBlockedHost());
     router.errorHandler(403, new Logging403ErrorHandler());
+
     router
         .route()
         .handler(
-            CorsHandler.create(buildCorsRegexFromConfig())
+            CorsHandler.create()
+                .addOriginWithRegex(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router

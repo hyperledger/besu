@@ -70,6 +70,7 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -142,7 +143,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected ProtocolSchedule protocolSchedule;
   protected TransactionSelectionService transactionSelectionService;
   protected MiningConfiguration defaultTestMiningConfiguration;
-  protected AtomicBoolean cancelled = new AtomicBoolean(false);
 
   @Mock protected EthScheduler ethScheduler;
 
@@ -156,7 +156,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @BeforeEach
   public void setup() {
-    cancelled.set(false);
     genesisConfig = getGenesisConfig();
     protocolSchedule = createProtocolSchedule();
     transactionSelectionService = new TransactionSelectionServiceImpl();
@@ -211,10 +210,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   protected abstract TransactionPool createTransactionPool();
 
-  private Boolean isCancelled() {
-    return cancelled.get();
-  }
-
   protected ProcessableBlockHeader createBlock(final long gasLimit) {
     return createBlock(gasLimit, Wei.ONE);
   }
@@ -240,7 +235,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
@@ -311,7 +306,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     ensureTransactionIsValid(transaction, 0, 5);
 
-    cancelled.set(true);
+    selector.cancel();
     final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).isEmpty();
@@ -902,7 +897,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     selector.buildTransactionListForBlock();
 
-    @SuppressWarnings("unchecked")
     ArgumentCaptor<TransactionEvaluationContext> argumentCaptor =
         ArgumentCaptor.forClass(TransactionEvaluationContext.class);
 
@@ -1225,7 +1219,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   @Test
   public void txEvaluationContextIsCancelledReturnsTrueOnCancellation() {
     final AtomicBoolean tecIsCancelled = new AtomicBoolean(false);
-
+    final AtomicReference<BlockTransactionSelector> selector = new AtomicReference<>();
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
     when(transactionSelectorFactory.create(any()))
@@ -1235,7 +1229,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
               public TransactionSelectionResult evaluateTransactionPreProcessing(
                   final TransactionEvaluationContext evaluationContext) {
                 // cancel selection during the evaluation of the tx
-                cancelled.set(true);
+                selector.get().cancel();
                 return SELECTED;
               }
 
@@ -1252,7 +1246,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
 
-    final BlockTransactionSelector selector =
+    selector.set(
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
                 transactionSelectionService,
@@ -1263,14 +1257,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
             createBlock(301_000),
             AddressHelpers.ofValue(1),
             Wei.ZERO,
-            transactionSelectionService);
+            transactionSelectionService));
 
     final var tx = createTransaction(0, Wei.of(7), 100_000);
     ensureTransactionIsValid(tx);
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    selector.buildTransactionListForBlock();
-    assertThat(tecIsCancelled).isTrue();
+    selector.get().buildTransactionListForBlock();
+    await().atMost(Duration.ofMillis(500)).until(tecIsCancelled::get);
   }
 
   private void internalBlockSelectionTimeoutSimulation(
@@ -1544,7 +1538,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsExactlyInAnyOrderEntriesOf(expectedEntries);
 
     assertThat(transactionPool.getTransactionByHash(lateTx.getHash()).isEmpty())
-        .isEqualTo(isLongProcessingTxDropped ? true : false);
+        .isEqualTo(isLongProcessingTxDropped);
   }
 
   private static Stream<Arguments>
@@ -1596,7 +1590,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionPool,
             blockHeader,
             protocolSchedule.getByBlockHeader(blockHeader).getTransactionReceiptFactory(),
-            this::isCancelled,
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,

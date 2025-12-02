@@ -33,11 +33,17 @@ import org.apache.logging.log4j.message.Message;
     elementType = "filter",
     printObject = true)
 public class StackTraceMatchFilter extends AbstractFilter {
-  private final String text;
+  private final String stackContains;
+  private final String messageEquals;
 
-  private StackTraceMatchFilter(final String text, final Result onMatch, final Result onMismatch) {
+  private StackTraceMatchFilter(
+      final String stackContains,
+      final String messageEquals,
+      final Result onMatch,
+      final Result onMismatch) {
     super(onMatch, onMismatch);
-    this.text = text;
+    this.stackContains = stackContains;
+    this.messageEquals = messageEquals;
   }
 
   @Override
@@ -67,9 +73,10 @@ public class StackTraceMatchFilter extends AbstractFilter {
 
   private Result filter(final Throwable t) {
     if (t != null) {
-      return Arrays.stream(t.getStackTrace())
-              .map(StackTraceElement::getClassName)
-              .anyMatch(cn -> cn.contains(text))
+      return (messageEquals == null || t.getMessage().equals(messageEquals))
+              && Arrays.stream(t.getStackTrace())
+                  .map(StackTraceElement::getClassName)
+                  .anyMatch(cn -> cn.contains(stackContains))
           ? onMatch
           : onMismatch;
     }
@@ -78,7 +85,7 @@ public class StackTraceMatchFilter extends AbstractFilter {
 
   @Override
   public String toString() {
-    return text;
+    return stackContains;
   }
 
   /**
@@ -95,7 +102,8 @@ public class StackTraceMatchFilter extends AbstractFilter {
   public static class Builder extends AbstractFilterBuilder<StackTraceMatchFilter.Builder>
       implements org.apache.logging.log4j.core.util.Builder<StackTraceMatchFilter> {
 
-    @PluginBuilderAttribute private String matchString = "";
+    @PluginBuilderAttribute private String stackContains = null;
+    @PluginBuilderAttribute private String messageEquals = null;
 
     /** Default constructor */
     public Builder() {
@@ -103,19 +111,31 @@ public class StackTraceMatchFilter extends AbstractFilter {
     }
 
     /**
-     * Set the string to match in the stack trace
+     * Set the string to search in the stack trace
      *
      * @param text the match string
      * @return this builder
      */
-    public StackTraceMatchFilter.Builder setMatchString(final String text) {
-      this.matchString = text;
+    public StackTraceMatchFilter.Builder setStackContains(final String text) {
+      this.stackContains = text;
+      return this;
+    }
+
+    /**
+     * Set the string to match in the message
+     *
+     * @param text the match string
+     * @return this builder
+     */
+    public StackTraceMatchFilter.Builder setMessageEquals(final String text) {
+      this.messageEquals = text;
       return this;
     }
 
     @Override
     public StackTraceMatchFilter build() {
-      return new StackTraceMatchFilter(this.matchString, this.getOnMatch(), this.getOnMismatch());
+      return new StackTraceMatchFilter(
+          this.stackContains, this.messageEquals, this.getOnMatch(), this.getOnMismatch());
     }
   }
 }
