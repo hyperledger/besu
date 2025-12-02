@@ -41,8 +41,6 @@ public final class UInt256 {
 
   // Fixed number of limbs or digits
   private static final int N_LIMBS = 8;
-  // Fixed number of bytes per limb.
-  private static final int N_BYTES_PER_LIMB = 4;
   // Fixed number of bits per limb.
   private static final int N_BITS_PER_LIMB = 32;
   // Mask for long values
@@ -61,6 +59,21 @@ public final class UInt256 {
 
   /** The constant 0. */
   public static final UInt256 ZERO = new UInt256(new int[] {0, 0, 0, 0, 0, 0, 0, 0}, 0);
+
+  /** The constant All ones */
+  public static final UInt256 ALL_ONES =
+      new UInt256(
+          new int[] {
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF
+          },
+          N_LIMBS);
 
   // region Constructors
   // --------------------------------------------------------------------------
@@ -82,16 +95,48 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    int nLimbs = (bytes.length + N_BYTES_PER_LIMB - 1) / N_BYTES_PER_LIMB;
-    int nBytes = nLimbs * N_BYTES_PER_LIMB;
-    byte[] padded = new byte[nBytes];
-    System.arraycopy(bytes, 0, padded, nBytes - bytes.length, bytes.length);
-    ByteBuffer buf = ByteBuffer.wrap(padded).order(ByteOrder.BIG_ENDIAN);
+    int byteLen = bytes.length;
+    if (byteLen == 0) return ZERO;
+
     int[] limbs = new int[N_LIMBS];
-    for (int i = nLimbs - 1; i >= 0; i--) {
-      limbs[i] = buf.getInt(); // reverse order for little-endian limbs
+
+    // Fast path for exactly 32 bytes
+    if (byteLen == 32) {
+      limbs[7] = getIntBE(bytes, 0);
+      limbs[6] = getIntBE(bytes, 4);
+      limbs[5] = getIntBE(bytes, 8);
+      limbs[4] = getIntBE(bytes, 12);
+      limbs[3] = getIntBE(bytes, 16);
+      limbs[2] = getIntBE(bytes, 20);
+      limbs[1] = getIntBE(bytes, 24);
+      limbs[0] = getIntBE(bytes, 28);
+      return new UInt256(limbs, N_LIMBS);
     }
-    return new UInt256(limbs, nLimbs);
+
+    // General path for variable length
+    int limbIndex = 0;
+    int byteIndex = byteLen - 1;
+
+    while (byteIndex >= 0 && limbIndex < N_LIMBS) {
+      int limb = 0;
+      int shift = 0;
+
+      for (int j = 0; j < 4 && byteIndex >= 0; j++, byteIndex--, shift += 8) {
+        limb |= (bytes[byteIndex] & 0xFF) << shift;
+      }
+
+      limbs[limbIndex++] = limb;
+    }
+
+    return new UInt256(limbs, limbIndex);
+  }
+
+  // Helper method to read 4 bytes as big-endian int
+  private static int getIntBE(final byte[] bytes, final int offset) {
+    return ((bytes[offset] & 0xFF) << 24)
+        | ((bytes[offset + 1] & 0xFF) << 16)
+        | ((bytes[offset + 2] & 0xFF) << 8)
+        | (bytes[offset + 3] & 0xFF);
   }
 
   /**
@@ -316,6 +361,81 @@ public final class UInt256 {
     int[] result = addMul(this.limbs, this.length, other.limbs, other.length);
     result = knuthRemainder(result, modulus.limbs);
     return new UInt256(result, modulus.length);
+  }
+
+  /**
+   * Bitwise AND operation
+   *
+   * @param other The UInt256 to AND with this.
+   * @return The UInt256 result from the bitwise AND operation
+   */
+  public UInt256 and(final UInt256 other) {
+    int[] result = new int[N_LIMBS];
+    result[0] = this.limbs[0] & other.limbs[0];
+    result[1] = this.limbs[1] & other.limbs[1];
+    result[2] = this.limbs[2] & other.limbs[2];
+    result[3] = this.limbs[3] & other.limbs[3];
+    result[4] = this.limbs[4] & other.limbs[4];
+    result[5] = this.limbs[5] & other.limbs[5];
+    result[6] = this.limbs[6] & other.limbs[6];
+    result[7] = this.limbs[7] & other.limbs[7];
+    return new UInt256(result, N_LIMBS);
+  }
+
+  /**
+   * Bitwise XOR operation
+   *
+   * @param other The UInt256 to XOR with this.
+   * @return The UInt256 result from the bitwise XOR operation
+   */
+  public UInt256 xor(final UInt256 other) {
+    int[] result = new int[N_LIMBS];
+    result[0] = this.limbs[0] ^ other.limbs[0];
+    result[1] = this.limbs[1] ^ other.limbs[1];
+    result[2] = this.limbs[2] ^ other.limbs[2];
+    result[3] = this.limbs[3] ^ other.limbs[3];
+    result[4] = this.limbs[4] ^ other.limbs[4];
+    result[5] = this.limbs[5] ^ other.limbs[5];
+    result[6] = this.limbs[6] ^ other.limbs[6];
+    result[7] = this.limbs[7] ^ other.limbs[7];
+    return new UInt256(result, N_LIMBS);
+  }
+
+  /**
+   * Bitwise OR operation
+   *
+   * @param other The UInt256 to OR with this.
+   * @return The UInt256 result from the bitwise OR operation
+   */
+  public UInt256 or(final UInt256 other) {
+    int[] result = new int[N_LIMBS];
+    result[0] = this.limbs[0] | other.limbs[0];
+    result[1] = this.limbs[1] | other.limbs[1];
+    result[2] = this.limbs[2] | other.limbs[2];
+    result[3] = this.limbs[3] | other.limbs[3];
+    result[4] = this.limbs[4] | other.limbs[4];
+    result[5] = this.limbs[5] | other.limbs[5];
+    result[6] = this.limbs[6] | other.limbs[6];
+    result[7] = this.limbs[7] | other.limbs[7];
+    return new UInt256(result, N_LIMBS);
+  }
+
+  /**
+   * Bitwise NOT operation
+   *
+   * @return The UInt256 result from the bitwise NOT operation
+   */
+  public UInt256 not() {
+    int[] result = new int[N_LIMBS];
+    result[0] = ~this.limbs[0];
+    result[1] = ~this.limbs[1];
+    result[2] = ~this.limbs[2];
+    result[3] = ~this.limbs[3];
+    result[4] = ~this.limbs[4];
+    result[5] = ~this.limbs[5];
+    result[6] = ~this.limbs[6];
+    result[7] = ~this.limbs[7];
+    return new UInt256(result, N_LIMBS);
   }
 
   // --------------------------------------------------------------------------

@@ -67,7 +67,13 @@ public class TransactionReceiptDecoder {
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
     RLPInput input = rlpInput;
     final Bytes typedTransactionReceiptBytes = input.readBytes();
-    TransactionType transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
+    TransactionType transactionType =
+        TransactionType.fromOpaque(typedTransactionReceiptBytes.get(0))
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Invalid transaction type %x"
+                            .formatted(typedTransactionReceiptBytes.get(0))));
     input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     input.enterList();
     final RLPInput statusOrStateRoot = input.readAsRlp();
@@ -118,14 +124,31 @@ public class TransactionReceiptDecoder {
 
   private static TransactionReceipt decodeEth69Receipt(
       final RLPInput input, final RLPInput transactionByteRlp, final RLPInput statusOrStateRoot) {
-    int transactionByte = transactionByteRlp.readIntScalar();
-    final TransactionType transactionType =
-        transactionByte == 0x00 ? TransactionType.FRONTIER : TransactionType.of(transactionByte);
+    final TransactionType transactionType = getTransactionType(transactionByteRlp);
     final long cumulativeGas = input.readLongScalar();
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, false));
     final LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     return createReceipt(
         transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, Optional.empty());
+  }
+
+  private static TransactionType getTransactionType(final RLPInput transactionByteRlp) {
+    final TransactionType transactionType;
+    Bytes transactionBytes = transactionByteRlp.readBytes();
+    if (transactionBytes.isEmpty()) {
+      transactionType = TransactionType.FRONTIER;
+    } else if (transactionBytes.size() != 1) {
+      throw new IllegalStateException("Invalid transaction type" + transactionBytes.toHexString());
+    } else {
+      final byte typeByte = transactionBytes.get(0);
+      transactionType =
+          TransactionType.fromEthSerializedType(typeByte)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Invalid transaction typeByte %x".formatted(typeByte)));
+    }
+    return transactionType;
   }
 
   private static TransactionReceipt decodeLegacyReceipt(

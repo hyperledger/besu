@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.AndOperationOptimized;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
@@ -52,10 +53,12 @@ import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
+import org.hyperledger.besu.evm.operation.NotOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
+import org.hyperledger.besu.evm.operation.OrOperationOptimized;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -70,6 +73,7 @@ import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
@@ -267,10 +271,22 @@ public class EVM {
               case 0x12 -> SLtOperation.staticOperation(frame);
               case 0x13 -> SGtOperation.staticOperation(frame);
               case 0x15 -> IsZeroOperation.staticOperation(frame);
-              case 0x16 -> AndOperation.staticOperation(frame);
-              case 0x17 -> OrOperation.staticOperation(frame);
-              case 0x18 -> XorOperation.staticOperation(frame);
-              case 0x19 -> NotOperation.staticOperation(frame);
+              case 0x16 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AndOperationOptimized.staticOperation(frame)
+                      : AndOperation.staticOperation(frame);
+              case 0x17 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? OrOperationOptimized.staticOperation(frame)
+                      : OrOperation.staticOperation(frame);
+              case 0x18 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? XorOperationOptimized.staticOperation(frame)
+                      : XorOperation.staticOperation(frame);
+              case 0x19 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? NotOperationOptimized.staticOperation(frame)
+                      : NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1e ->
                   enableOsaka

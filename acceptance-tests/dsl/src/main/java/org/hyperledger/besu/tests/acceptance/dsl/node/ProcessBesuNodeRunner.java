@@ -189,16 +189,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.addAll(
         DataStorageOptions.fromConfig(node.getDataStorageConfiguration()).getCLIOptions());
 
-    if (node.getMiningParameters().isMiningEnabled()) {
-      params.add("--miner-extra-data");
-      params.add(node.getMiningParameters().getExtraData().toHexString());
-      params.add("--miner-coinbase");
-      params.add(node.getMiningParameters().getCoinbase().get().toString());
-      params.add("--min-gas-price");
-      params.add(
-          Integer.toString(node.getMiningParameters().getMinTransactionGasPrice().intValue()));
-    }
-
     if (!node.getBootnodes().isEmpty()) {
       params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
@@ -326,6 +316,14 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
               final Path genesisFile = createGenesisFile(node, genesis);
               params.add("--genesis-file");
               params.add(genesisFile.toAbsolutePath().toString());
+
+              // these fields are only relevant to clique which requires a genesis
+              params.add("--miner-extra-data");
+              params.add(node.getMiningParameters().getExtraData().toHexString());
+              params.add("--min-gas-price");
+              params.add(
+                  Integer.toString(
+                      node.getMiningParameters().getMinTransactionGasPrice().intValue()));
             });
 
     if (!node.isP2pEnabled()) {
@@ -419,7 +417,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     try {
       final Path genesisFile = Files.createTempFile(node.homeDirectory(), "genesis", "");
       genesisFile.toFile().deleteOnExit();
-      Files.write(genesisFile, genesisConfig.getBytes(UTF_8));
+      Files.writeString(genesisFile, genesisConfig);
       return genesisFile;
     } catch (final IOException e) {
       throw new IllegalStateException(e);
