@@ -91,6 +91,14 @@ public interface P2PService extends BesuService {
   void send(String protocol, Bytes peerId, MessageData messageData)
       throws PeerConnection.PeerNotConnected;
 
+  /**
+   * Disconnect from a specific peer.
+   *
+   * @param peerId the peer id to disconnect from
+   */
+  @Unstable
+  void disconnect(Bytes peerId);
+
   /** Consumer of network connection events. */
   @FunctionalInterface
   interface ConnectionListener {

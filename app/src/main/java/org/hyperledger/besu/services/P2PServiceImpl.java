@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.data.p2p.Peer;
 import org.hyperledger.besu.plugin.data.p2p.PeerConnection;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
@@ -145,5 +146,17 @@ public class P2PServiceImpl implements P2PService {
         .getPeerByPeerId(new DefaultPeerId(peerId))
         .orElseThrow(() -> new PeerConnection.PeerNotConnected("Peer not connected"))
         .send(new RawMessage(messageData.getCode(), messageData.getData()), protocol);
+  }
+
+  /**
+   * Disconnect from a specific peer.
+   *
+   * @param peerId the peer id to disconnect from
+   */
+  @Override
+  public void disconnect(final Bytes peerId) {
+    ethPeers
+        .getPeerByPeerId(new DefaultPeerId(peerId))
+        .ifPresent(peer -> peer.disconnect(DisconnectMessage.DisconnectReason.REQUESTED));
   }
 }
