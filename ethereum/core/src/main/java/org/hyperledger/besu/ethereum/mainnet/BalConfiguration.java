@@ -42,6 +42,12 @@ public interface BalConfiguration {
     return false;
   }
 
+  /** Returns whether BAL perfect parallelization is enabled. */
+  @Value.Default
+  default boolean isPerfectParallelizationEnabled() {
+    return true;
+  }
+
   /**
    * Returns whether mismatches between BAL and synchronously computed state roots should only log
    * an error instead of throwing an exception.
