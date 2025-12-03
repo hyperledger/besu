@@ -93,9 +93,11 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   protected void executeTask() {
     if (result.isDone()) {
       // Return if task is done
+      LOG.info("WSD: Task already completed, not executing again");
       return;
     }
     if (retryCount >= maxRetries) {
+      LOG.info("WSD: Max retries reached, completing exceptionally");
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }

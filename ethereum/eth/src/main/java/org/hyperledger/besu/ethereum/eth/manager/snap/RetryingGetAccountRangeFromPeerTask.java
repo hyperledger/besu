@@ -80,7 +80,7 @@ public class RetryingGetAccountRangeFromPeerTask
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
     task.assignPeer(peer);
-    LOG.info("WSD: starting task for {} to {}", startKeyHash, endKeyHash);
+    LOG.info("WSD: starting task for {} to {} on peer {}", startKeyHash, endKeyHash, peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
