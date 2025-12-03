@@ -35,6 +35,7 @@
 
 ### Bug fixes
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
+- Fix an issue where Besu does not support `0x80` as transaction type when decoding eth/69 receipts [#9520](https://github.com/hyperledger/besu/issues/9520)
 
 ## 25.11.0
 
