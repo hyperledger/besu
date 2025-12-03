@@ -82,8 +82,8 @@ public class GetAccountRangeFromPeerTask
                 .addArgument(peer.getLoggableId())
                 .log();
             if (!peer.isServingSnap()) {
-              LOG.atDebug()
-                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+              LOG.atInfo()
+                  .setMessage("WSD: EthPeer that is not serving snap called in {}, peer: {}")
                   .addArgument(GetAccountRangeFromPeerTask.class)
                   .addArgument(peer)
                   .log();

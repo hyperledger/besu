@@ -80,8 +80,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final EthPeer peerToUse = maybePeer.get();
     assignPeer(peerToUse);
 
-    LOG.atTrace()
-        .setMessage("Trying to execute task on peer {}, attempt {}")
+    LOG.atInfo()
+        .setMessage("WSD: Trying to execute task on peer {}, attempt {}")
         .addArgument(this::getAssignedPeer)
         .addArgument(this::getRetryCount)
         .log();
@@ -89,8 +89,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return executeTaskOnCurrentPeer(peerToUse)
         .thenApply(
             peerResult -> {
-              LOG.atTrace()
-                  .setMessage("Got result {} from peer {}, attempt {}")
+              LOG.atInfo()
+                  .setMessage("WSD: Got result {} from peer {}, attempt {}")
                   .addArgument(peerResult)
                   .addArgument(peerToUse)
                   .addArgument(this::getRetryCount)
