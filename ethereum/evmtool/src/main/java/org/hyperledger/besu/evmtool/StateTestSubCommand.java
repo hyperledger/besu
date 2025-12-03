@@ -292,19 +292,24 @@ public class StateTestSubCommand implements Runnable {
                 TransactionValidationParams.processingBlock(),
                 blobGasPrice);
         timer.stop();
-        if (shouldClearEmptyAccounts(spec.getFork())) {
-          final Account coinbase =
-              worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-          if (coinbase != null && coinbase.isEmpty()) {
-            worldStateUpdater.deleteAccount(coinbase.getAddress());
+        // Only touch coinbase and commit state changes if the transaction was valid.
+        // When transaction fails validation (e.g., insufficient balance), we should not
+        // modify state at all - matching geth's behavior for consensus compatibility.
+        if (!result.isInvalid()) {
+          if (shouldClearEmptyAccounts(spec.getFork())) {
+            final Account coinbase =
+                worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+            if (coinbase != null && coinbase.isEmpty()) {
+              worldStateUpdater.deleteAccount(coinbase.getAddress());
+            }
+            final Account sender = worldStateUpdater.getAccount(transaction.getSender());
+            if (sender != null && sender.isEmpty()) {
+              worldStateUpdater.deleteAccount(sender.getAddress());
+            }
           }
-          final Account sender = worldStateUpdater.getAccount(transaction.getSender());
-          if (sender != null && sender.isEmpty()) {
-            worldStateUpdater.deleteAccount(sender.getAddress());
-          }
+          worldStateUpdater.commit();
+          worldState.persist(blockHeader);
         }
-        worldStateUpdater.commit();
-        worldState.persist(blockHeader);
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
         final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
