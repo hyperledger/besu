@@ -124,7 +124,7 @@ public class GetReceiptsFromPeerTask
         LOG.info(
             "Peer {} sent us a response with an entry that did not match our request\n Certificate: {}\n Message data: {}",
             peer,
-            receiptsByBlock,
+            receiptsInBlock,
             message.getData().toHexString());
         return Optional.empty();
       }
