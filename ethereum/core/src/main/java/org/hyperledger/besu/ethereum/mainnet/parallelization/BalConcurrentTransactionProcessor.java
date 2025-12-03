@@ -1,0 +1,247 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.mainnet.parallelization;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+import org.apache.tuweni.units.bigints.UInt256;
+
+@SuppressWarnings({"unchecked", "rawtypes"})
+public class BalConcurrentTransactionProcessor {
+
+  private final MainnetTransactionProcessor transactionProcessor;
+  private final BlockAccessList blockAccessList;
+
+  private CompletableFuture<ParallelizedTransactionContext>[] futures;
+
+  public BalConcurrentTransactionProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final BlockAccessList blockAccessList) {
+    this.transactionProcessor = transactionProcessor;
+    this.blockAccessList = blockAccessList;
+  }
+
+  public void runAsyncBlock(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Executor executor,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+
+    futures = new CompletableFuture[transactions.size()];
+    for (int i = 0; i < transactions.size(); i++) {
+      final Transaction transaction = transactions.get(i);
+      final int transactionLocation = i;
+      futures[i] =
+          CompletableFuture.supplyAsync(
+              () ->
+                  runTransaction(
+                      protocolContext,
+                      blockHeader,
+                      transactionLocation,
+                      transaction,
+                      miningBeneficiary,
+                      blockHashLookup,
+                      blobGasPrice,
+                      blockAccessListBuilder),
+              executor);
+    }
+  }
+
+  public ParallelizedTransactionContext runTransaction(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final int transactionLocation,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+
+    final BlockHeader parentHeader =
+        protocolContext
+            .getBlockchain()
+            .getBlockHeader(blockHeader.getParentHash())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Parent header not found for block " + blockHeader.getHash()));
+
+    try (BonsaiWorldState ws =
+        (BonsaiWorldState)
+            protocolContext
+                .getWorldStateArchive()
+                .getWorldState(
+                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(parentHeader))
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            "World state not found for parent block " + parentHeader.getHash()))) {
+
+      ws.disableCacheMerkleTrieLoader();
+      final ParallelizedTransactionContext.Builder ctxBuilder =
+          new ParallelizedTransactionContext.Builder();
+
+      final PathBasedWorldStateUpdateAccumulator<?> blockUpdater =
+          (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+
+      applyWritesFromPriorTransactions(blockAccessList, transactionLocation + 1, blockUpdater);
+
+      final WorldUpdater txUpdater = blockUpdater.updater();
+      final Optional<AccessLocationTracker> txTracker =
+          blockAccessListBuilder.map(
+              b ->
+                  BlockAccessListBuilder.createTransactionAccessLocationTracker(
+                      transactionLocation));
+
+      final TransactionProcessingResult result =
+          transactionProcessor.processTransaction(
+              txUpdater,
+              blockHeader,
+              transaction.detachedCopy(),
+              miningBeneficiary,
+              OperationTracer.NO_TRACING,
+              blockHashLookup,
+              TransactionValidationParams.processingBlock(),
+              blobGasPrice,
+              txTracker);
+
+      txUpdater.commit();
+      blockUpdater.commit();
+
+      // TODO: We should pass transaction accumulator
+      ctxBuilder.transactionAccumulator(ws.getAccumulator()).transactionProcessingResult(result);
+
+      return ctxBuilder.build();
+    }
+  }
+
+  public Optional<TransactionProcessingResult> getResultFor(
+      final MutableWorldState worldState,
+      final Address miningBeneficiary,
+      final Transaction transaction,
+      final int txIndex,
+      final Optional<Counter> confirmedParallelizedTransactionCounter) {
+
+    final CompletableFuture<ParallelizedTransactionContext> future = futures[txIndex];
+    if (future != null) {
+      try {
+        final ParallelizedTransactionContext ctx = future.join();
+
+        if (ctx == null) {
+          return Optional.empty();
+        }
+
+        final PathBasedWorldState pathWs = (PathBasedWorldState) worldState;
+        final PathBasedWorldStateUpdateAccumulator blockAccumulator =
+            (PathBasedWorldStateUpdateAccumulator) pathWs.updater();
+
+        final PathBasedWorldStateUpdateAccumulator<?> txAccumulator = ctx.transactionAccumulator();
+        final TransactionProcessingResult result = ctx.transactionProcessingResult();
+
+        blockAccumulator.importStateChangesFromSource(txAccumulator);
+
+        confirmedParallelizedTransactionCounter.ifPresent(Counter::inc);
+        result.setIsProcessedInParallel(Optional.of(Boolean.TRUE));
+        result.accumulator = txAccumulator;
+
+        return Optional.of(result);
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  private void applyWritesFromPriorTransactions(
+      final BlockAccessList blockAccessList,
+      final int balIndex,
+      final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
+    blockAccessList
+        .accountChanges()
+        .forEach(
+            accountChanges -> {
+              final MutableAccount account =
+                  worldStateUpdater.getOrCreate(accountChanges.address());
+
+              accountChanges.balanceChanges().stream()
+                  .filter(change -> change.txIndex() < balIndex)
+                  .sorted(Comparator.comparingInt(BlockAccessList.BalanceChange::txIndex))
+                  .forEach(change -> account.setBalance(change.postBalance()));
+
+              accountChanges.nonceChanges().stream()
+                  .filter(change -> change.txIndex() < balIndex)
+                  .sorted(Comparator.comparingInt(BlockAccessList.NonceChange::txIndex))
+                  .forEach(change -> account.setNonce(change.newNonce()));
+
+              accountChanges.codeChanges().stream()
+                  .filter(change -> change.txIndex() < balIndex)
+                  .sorted(Comparator.comparingInt(BlockAccessList.CodeChange::txIndex))
+                  .forEach(change -> account.setCode(change.newCode()));
+
+              accountChanges
+                  .storageChanges()
+                  .forEach(
+                      slotChanges -> {
+                        final UInt256 slotKey = slotChanges.slot().getSlotKey().orElseThrow();
+                        slotChanges.changes().stream()
+                            .filter(change -> change.txIndex() < balIndex)
+                            .sorted(Comparator.comparingInt(BlockAccessList.StorageChange::txIndex))
+                            .forEach(
+                                change ->
+                                    account.setStorageValue(
+                                        slotKey,
+                                        Optional.ofNullable(change.newValue())
+                                            .orElse(UInt256.ZERO)));
+                      });
+
+              // TODO: Instead do not create the account in the first place
+              // This solution assumes no pre-existing empty accounts in parent
+              if (account.isEmpty()) {
+                worldStateUpdater.deleteAccount(account.getAddress());
+              }
+            });
+  }
+}

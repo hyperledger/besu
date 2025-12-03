@@ -104,19 +104,33 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     TransactionProcessingResult transactionProcessingResult = null;
 
     if (preProcessingContext.isPresent()) {
-      final ParallelizedPreProcessingContext parallelizedPreProcessingContext =
-          (ParallelizedPreProcessingContext) preProcessingContext.get();
-      transactionProcessingResult =
-          parallelizedPreProcessingContext
-              .parallelizedConcurrentTransactionProcessor()
-              .applyParallelizedTransactionResult(
-                  blockProcessingContext.getWorldState(),
-                  miningBeneficiary,
-                  transaction,
-                  location,
-                  confirmedParallelizedTransactionCounter,
-                  conflictingButCachedTransactionCounter)
-              .orElse(null);
+      final PreprocessingContext ctx = preProcessingContext.get();
+
+      if (ctx instanceof BalParallelPreprocessingContext balContext) {
+        transactionProcessingResult =
+            balContext
+                .parallelProcessor()
+                .getResultFor(
+                    blockProcessingContext.getWorldState(),
+                    miningBeneficiary,
+                    transaction,
+                    location,
+                    confirmedParallelizedTransactionCounter)
+                .orElse(null);
+
+      } else if (ctx instanceof ParallelizedPreProcessingContext parallelizedPreProcessingContext) {
+        transactionProcessingResult =
+            parallelizedPreProcessingContext
+                .parallelizedConcurrentTransactionProcessor()
+                .applyParallelizedTransactionResult(
+                    blockProcessingContext.getWorldState(),
+                    miningBeneficiary,
+                    transaction,
+                    location,
+                    confirmedParallelizedTransactionCounter,
+                    conflictingButCachedTransactionCounter)
+                .orElse(null);
+      }
     }
 
     if (transactionProcessingResult == null) {
@@ -147,7 +161,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             blockchain,
             worldState,
             block,
-            new ParallelTransactionPreprocessing(transactionProcessor, executor));
+            new ParallelTransactionPreprocessing(transactionProcessor, executor, balConfiguration));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
@@ -162,6 +176,9 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     }
     return blockProcessingResult;
   }
+
+  record BalParallelPreprocessingContext(
+      BalConcurrentTransactionProcessor parallelProcessor) implements PreprocessingContext {}
 
   record ParallelizedPreProcessingContext(
       ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor)

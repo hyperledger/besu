@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BalPartialViewValidator;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
@@ -85,7 +86,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
-  private final BalConfiguration balConfiguration;
+  protected final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -232,7 +233,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               blobGasPrice,
-              blockAccessListBuilder);
+              blockAccessListBuilder,
+              maybeBlockBal);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -261,6 +263,26 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 i,
                 blockHashLookup,
                 transactionLocationTracker);
+
+        if (maybeBlockBal.isPresent()) {
+          final BlockAccessList blockBal = maybeBlockBal.get();
+          final Optional<PartialBlockAccessView> partialBlockAccessView =
+              transactionProcessingResult.getPartialBlockAccessView();
+
+          if (partialBlockAccessView.isPresent()
+              && !BalPartialViewValidator.validateTxAccesses(
+                  partialBlockAccessView.get(), blockBal)) {
+            final String errorMessage =
+                String.format(
+                    "BAL runtime access mismatch at tx index %d for block %s",
+                    i, blockHeader.getHash().toHexString());
+            LOG.error(errorMessage);
+            if (worldState instanceof BonsaiWorldState) {
+              ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+            }
+            return new BlockProcessingResult(Optional.empty(), errorMessage);
+          }
+        }
 
         applyPartialBlockAccessView(
             transactionProcessingResult.getPartialBlockAccessView(), blockAccessListBuilder);
@@ -568,7 +590,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
-        final Optional<BlockAccessListBuilder> blockAccessListBuilder);
+        final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+        final Optional<BlockAccessList> maybeBlockBal);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -580,7 +603,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final Address miningBeneficiary,
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
-          final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+          final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+          final Optional<BlockAccessList> maybeBlockBal) {
         return Optional.empty();
       }
     }
