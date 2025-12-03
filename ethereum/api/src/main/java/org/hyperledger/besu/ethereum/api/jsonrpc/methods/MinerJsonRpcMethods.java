@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerCha
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerGetExtraData;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerGetMinGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerGetMinPriorityFee;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetCoinbase;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetExtraData;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetMinGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetMinPriorityFee;
@@ -50,12 +48,9 @@ public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    final MinerSetCoinbase minerSetCoinbase = new MinerSetCoinbase(miningCoordinator);
     return mapOf(
         new MinerStart(miningCoordinator),
         new MinerStop(miningCoordinator),
-        minerSetCoinbase,
-        new MinerSetEtherbase(minerSetCoinbase),
         new MinerChangeTargetGasLimit(miningCoordinator),
         new MinerGetMinPriorityFee(miningConfiguration),
         new MinerSetMinPriorityFee(miningConfiguration),
