@@ -141,6 +141,10 @@ public abstract class PathBasedWorldState
     return !(worldStateKeyValueStorage instanceof PathBasedSnapshotWorldStateKeyValueStorage);
   }
 
+  public boolean isStorageFrozen() {
+    return isStorageFrozen;
+  }
+
   /**
    * Reset the worldState to this block header
    *

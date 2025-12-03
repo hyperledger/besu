@@ -152,7 +152,9 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
 
     final PathBasedLayeredWorldStateKeyValueStorage balStateUpdater =
         (PathBasedLayeredWorldStateKeyValueStorage) balAccumulator.getWorldStateStorage();
-    balStateUpdater.mergeTo(stateUpdater.getWorldStateTransaction());
+    if (!worldState.isStorageFrozen()) {
+      balStateUpdater.mergeTo(stateUpdater.getWorldStateTransaction());
+    }
   }
 
   private BalRootComputation waitForBalRootStrict(final Duration balRootTimeout) {
