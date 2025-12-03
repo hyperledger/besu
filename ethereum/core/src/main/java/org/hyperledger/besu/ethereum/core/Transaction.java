@@ -246,7 +246,7 @@ public class Transaction
             maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
 
-      if (transactionType.requiresCodeDelegation()) {
+      if (transactionType.supportsDelegateCode()) {
         checkArgument(
             maybeCodeDelegationList.isPresent(),
             "Must specify code delegation authorizations for code delegation transaction");

@@ -33,4 +33,3 @@ sync-mode="fast"# should be FAST or FULL (or fast or full)
 fast-sync-min-peers=13
 
 #mining
-miner-coinbase="0x0000000000000000000000000000000000000002"

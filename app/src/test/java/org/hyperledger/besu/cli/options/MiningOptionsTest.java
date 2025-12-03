@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DE
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
@@ -34,7 +33,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -45,67 +43,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguration, MiningOptions> {
 
   @Test
-  public void besuDoesNotStartInMiningModeIfCoinbaseNotSet() {
-    internalTestFailure(
-        "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) or specify the beneficiary of mining (via --miner-coinbase <Address>)",
-        "--miner-enabled");
-  }
-
-  @Test
-  public void miningIsEnabledWhenSpecified() {
-    final String coinbaseStr = String.format("%040x", 1);
-    internalTestSuccess(
-        miningOpts -> {
-          assertThat(miningOpts.isMiningEnabled()).isTrue();
-          assertThat(miningOpts.getCoinbase())
-              .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
-        },
-        "--miner-enabled",
-        "--miner-coinbase=" + coinbaseStr);
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    internalTestSuccess(
-        miningOpts ->
-            verifyOptionsConstraintLoggerCall(
-                "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data"),
-        "--network",
-        "dev",
-        "--miner-coinbase",
-        requestedCoinbase.toString(),
-        "--min-gas-price",
-        "42",
-        "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
-  }
-
-  @Test
-  public void blockProducingOptionsWarnsMinerShouldBeEnabledToml() throws IOException {
-
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-
-    final Path toml =
-        createTempFile(
-            "toml",
-            "network=\"dev\"\n"
-                + "miner-coinbase=\""
-                + requestedCoinbase
-                + "\"\n"
-                + "min-gas-price=42\n"
-                + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
-
-    internalTestSuccess(
-        miningOpts ->
-            verifyOptionsConstraintLoggerCall(
-                "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data"),
-        "--config-file",
-        toml.toString());
-  }
-
-  @Test
-  public void blockProducingOptionsDoNotWarnWhenPoAQBFT() throws IOException {
+  public void blockProducingOptionsSucceedWhenPoAQBFT() throws IOException {
 
     final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
     internalTestSuccess(
@@ -124,7 +62,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void blockProducingOptionsDoNotWarnWhenPoAIBFT2() throws IOException {
+  public void blockProducingOptionsSucceedWhenPoAIBFT2() throws IOException {
 
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestSuccess(
@@ -143,9 +81,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
+  public void blockProducingOptionsSucceedWhenMergeEnabled() {
 
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     internalTestSuccess(
         miningOpt ->
             verify(mockLogger, atMost(0))
@@ -153,8 +90,6 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
                     stringArgumentCaptor.capture(),
                     stringArgumentCaptor.capture(),
                     stringArgumentCaptor.capture()),
-        "--miner-coinbase",
-        requestedCoinbase.toString(),
         "--min-gas-price",
         "42",
         "--miner-extra-data",
@@ -162,26 +97,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void minGasPriceRequiresMainOption() {
-    internalTestSuccess(
-        miningOpt -> verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price"),
-        "--min-gas-price",
-        "0",
-        "--network",
-        "dev");
-  }
-
-  @Test
-  public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
-    internalTestSuccess(
-        miningOpt -> verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price"),
-        "--config-file",
-        toml.toString());
-  }
-
-  @Test
-  public void minGasPriceDoesNotRequireMainOptionWhenPoAQBFT() throws IOException {
+  public void minGasPriceSucceedsWhenPoAQBFT() throws IOException {
     final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
     internalTestSuccess(
         miningOpt ->
@@ -197,7 +113,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   }
 
   @Test
-  public void minGasPriceDoesNotRequireMainOptionWhenPoAIBFT2() throws IOException {
+  public void minGasPriceSucceedsWhenPoAIBFT2() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
 
     internalTestSuccess(
@@ -215,17 +131,13 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Test
   public void miningParametersAreCaptured() {
-    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     final String extraDataString =
         "0x1122334455667788990011223344556677889900112233445566778899001122";
     internalTestSuccess(
         miningParams -> {
-          assertThat(miningParams.getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
           assertThat(miningParams.getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
           assertThat(miningParams.getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
         },
-        "--miner-enabled",
-        "--miner-coinbase=" + requestedCoinbase.toString(),
         "--min-gas-price=15",
         "--miner-extra-data=" + extraDataString);
   }
@@ -467,10 +379,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
-                .isMiningEnabled(true)
                 .extraData(Bytes.fromHexString("0xabc321"))
                 .minBlockOccupancyRatio(0.5)
-                .coinbase(Address.ZERO)
                 .build())
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();
