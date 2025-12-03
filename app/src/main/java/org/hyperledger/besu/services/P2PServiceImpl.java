@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.p2p.MessageData;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerId;
@@ -40,6 +41,7 @@ public class P2PServiceImpl implements P2PService {
    * Creates a new P2PServiceImpl.
    *
    * @param p2PNetwork the P2P network
+   * @param ethPeers the Ethereum peers manager
    */
   public P2PServiceImpl(final P2PNetwork p2PNetwork, final EthPeers ethPeers) {
     this.p2PNetwork = p2PNetwork;
@@ -137,10 +139,7 @@ public class P2PServiceImpl implements P2PService {
    * @throws PeerConnection.PeerNotConnected if the peer is not connected
    */
   @Override
-  public void send(
-      final String protocol,
-      final Bytes peerId,
-      final org.hyperledger.besu.datatypes.p2p.MessageData messageData)
+  public void send(final String protocol, final Bytes peerId, final MessageData messageData)
       throws PeerConnection.PeerNotConnected {
     ethPeers
         .getPeerByPeerId(new DefaultPeerId(peerId))
