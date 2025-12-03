@@ -73,12 +73,13 @@ public class GetAccountRangeFromPeerTask
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            LOG.atTrace()
-                .setMessage("Requesting account range [{} ,{}] for state root {} from peer {} .")
+            LOG.atInfo()
+                .setMessage(
+                    "WSD: Requesting account range [{} ,{}] for state root {} from peer {} .")
                 .addArgument(startKeyHash)
                 .addArgument(endKeyHash)
-                .addArgument(blockHeader)
-                .addArgument(peer)
+                .addArgument(blockHeader.getStateRoot())
+                .addArgument(peer.getLoggableId())
                 .log();
             if (!peer.isServingSnap()) {
               LOG.atDebug()
@@ -108,11 +109,16 @@ public class GetAccountRangeFromPeerTask
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
+      LOG.info("WSD: Peer {} closed stream before receiving account range data", peer);
       return Optional.empty();
     }
     final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
     final AccountRangeMessage.AccountRangeData accountRangeData =
         accountRangeMessage.accountData(true);
+    LOG.info(
+        "WSD: Received account range data from peer {}, data size {}",
+        peer,
+        accountRangeData.accounts().size());
     return Optional.of(accountRangeData);
   }
 }

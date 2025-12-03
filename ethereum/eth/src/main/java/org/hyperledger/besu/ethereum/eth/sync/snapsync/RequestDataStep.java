@@ -104,10 +104,11 @@ public class RequestDataStep {
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
                 accountDataRequest.addResponse(
                     worldStateProofProvider, response.accounts(), response.proofs());
+                LOG.info("WSD: received {} accounts from a peer", response.accounts().size());
               }
               if (error != null) {
                 LOG.atInfo()
-                    .setMessage("Error handling account download accounts ({} - {}) task: {}")
+                    .setMessage("WSD: Error handling account download accounts ({} - {}) task: {}")
                     .addArgument(accountDataRequest.getStartKeyHash())
                     .addArgument(accountDataRequest.getEndKeyHash())
                     .addArgument(error)
