@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
@@ -30,6 +32,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -63,12 +66,22 @@ public class JsonRpcIpcService {
   private final Vertx vertx;
   private final Path path;
   private final JsonRpcExecutor jsonRpcExecutor;
+  private final Optional<SubscriptionManager> subscriptionManager;
   private NetServer netServer;
 
   public JsonRpcIpcService(final Vertx vertx, final Path path, final JsonRpcExecutor rpcExecutor) {
+    this(vertx, path, rpcExecutor, Optional.empty());
+  }
+
+  public JsonRpcIpcService(
+      final Vertx vertx,
+      final Path path,
+      final JsonRpcExecutor rpcExecutor,
+      final Optional<SubscriptionManager> subscriptionManager) {
     this.vertx = vertx;
     this.path = path;
     this.jsonRpcExecutor = rpcExecutor;
+    this.subscriptionManager = subscriptionManager;
   }
 
   public Future<NetServer> start() {
@@ -82,14 +95,37 @@ public class JsonRpcIpcService {
 
   private void handleNewConnection(final NetSocket socket) {
     final AtomicBoolean closedSocket = new AtomicBoolean(false);
+    final String connectionId = UUID.randomUUID().toString();
+
+    subscriptionManager.ifPresent(
+        manager ->
+            vertx
+                .eventBus()
+                .consumer(connectionId)
+                .handler(
+                    msg -> {
+                      if (!closedSocket.get()) {
+                        socket.write(Buffer.buffer(msg.body().toString() + '\n'));
+                      }
+                    }));
 
     socket
-        .closeHandler(unused -> closedSocket.set(true))
+        .closeHandler(
+            unused -> {
+              closedSocket.set(true);
+              subscriptionManager.ifPresent(
+                  manager ->
+                      vertx
+                          .eventBus()
+                          .send(
+                              SubscriptionManager.EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS,
+                              connectionId));
+            })
         .handler(
             JsonRpcParserHandler.ipcHandler(
                 (jsonObj, jsonArr) -> {
                   if (jsonObj != null) {
-                    handleSingleRequest(socket, jsonObj, closedSocket);
+                    handleSingleRequest(socket, jsonObj, closedSocket, connectionId);
                   } else if (jsonArr != null) {
                     handleBatchRequest(socket, jsonArr, closedSocket);
                   }
@@ -98,7 +134,10 @@ public class JsonRpcIpcService {
   }
 
   private void handleSingleRequest(
-      final NetSocket socket, final JsonObject jsonRpcRequest, final AtomicBoolean closedSocket) {
+      final NetSocket socket,
+      final JsonObject jsonRpcRequest,
+      final AtomicBoolean closedSocket,
+      final String connectionId) {
     vertx
         .<JsonRpcResponse>executeBlocking(
             promise -> {
@@ -109,7 +148,16 @@ public class JsonRpcIpcService {
                       null,
                       closedSocket::get,
                       jsonRpcRequest,
-                      req -> req.mapTo(JsonRpcRequest.class));
+                      req -> {
+                        if (subscriptionManager.isPresent()) {
+                          final WebSocketRpcRequest websocketRequest =
+                              req.mapTo(WebSocketRpcRequest.class);
+                          websocketRequest.setConnectionId(connectionId);
+                          return websocketRequest;
+                        } else {
+                          return req.mapTo(JsonRpcRequest.class);
+                        }
+                      });
               promise.complete(jsonRpcResponse);
             })
         .onSuccess(

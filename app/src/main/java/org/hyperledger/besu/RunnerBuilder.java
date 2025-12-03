@@ -729,7 +729,8 @@ public class RunnerBuilder {
     ethPeers.setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
-    // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
+    // ForkId in Ethereum Node Record needs updating when we transition to a new
+    // protocol spec
     context
         .getBlockchain()
         .observeBlockAdded(
@@ -832,6 +833,16 @@ public class RunnerBuilder {
 
     final SubscriptionManager subscriptionManager =
         createSubscriptionManager(vertx, transactionPool, blockchainQueries);
+
+    if (webSocketConfiguration.isEnabled()
+        || (jsonRpcIpcConfiguration != null && jsonRpcIpcConfiguration.isEnabled())) {
+      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
+
+      createNewBlockHeadersSubscriptionService(
+          context.getBlockchain(), blockchainQueries, subscriptionManager);
+
+      createSyncingSubscriptionService(synchronizer, subscriptionManager);
+    }
 
     Optional<EngineJsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
@@ -959,13 +970,6 @@ public class RunnerBuilder {
               transactionSimulator,
               besuController.getProtocolManager().ethContext().getScheduler());
 
-      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
-
-      createNewBlockHeadersSubscriptionService(
-          context.getBlockchain(), blockchainQueries, subscriptionManager);
-
-      createSyncingSubscriptionService(synchronizer, subscriptionManager);
-
       webSocketService =
           Optional.of(
               createWebsocketService(
@@ -1034,12 +1038,16 @@ public class RunnerBuilder {
               transactionSimulator,
               besuController.getProtocolManager().ethContext().getScheduler());
 
+      final WebSocketMethodsFactory ipcMethodsFactory =
+          new WebSocketMethodsFactory(subscriptionManager, ipcMethods);
+
       jsonRpcIpcService =
           Optional.of(
               new JsonRpcIpcService(
                   vertx,
                   jsonRpcIpcConfiguration.getPath(),
-                  new JsonRpcExecutor(new BaseJsonRpcProcessor(), ipcMethods)));
+                  new JsonRpcExecutor(new BaseJsonRpcProcessor(), ipcMethodsFactory.methods()),
+                  Optional.of(subscriptionManager)));
     } else {
       jsonRpcIpcService = Optional.empty();
     }
