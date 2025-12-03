@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -155,5 +156,35 @@ public enum NetworkDefinition {
    */
   public boolean hasNativeRequirements() {
     return nativeRequired;
+  }
+
+  /**
+   * Returns true if this is an Ethereum L1 network (mainnet or L1 testnets). L2 networks like Linea
+   * return false.
+   *
+   * @return true if this network is an L1 network, false otherwise
+   */
+  public boolean isL1Network() {
+    return switch (this) {
+      case MAINNET, SEPOLIA, HOLESKY, HOODI, EPHEMERY -> true;
+      case LINEA, LINEA_SEPOLIA -> false;
+      // Development/experimental networks are L1-like
+      case DEV, FUTURE_EIPS, EXPERIMENTAL_EIPS -> true;
+      // Not Ethereum but still L1
+      case CLASSIC, MORDOR, LUKSO -> true;
+    };
+  }
+
+  /**
+   * Checks if a chain ID belongs to a known L1 network. Use this for custom genesis files where
+   * NetworkDefinition enum is not directly available.
+   *
+   * @param chainId the chain ID to check
+   * @return true if the chain ID belongs to a known L1 network, false otherwise
+   */
+  public static boolean isL1NetworkByChainId(final BigInteger chainId) {
+    return Arrays.stream(values())
+        .filter(NetworkDefinition::isL1Network)
+        .anyMatch(network -> network.getNetworkId().equals(chainId));
   }
 }
