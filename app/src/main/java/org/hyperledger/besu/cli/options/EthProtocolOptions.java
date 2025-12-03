@@ -26,6 +26,8 @@ import picocli.CommandLine;
 /** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
+  private static final String MAX_TRANSACTIONS_MESSAGE_SIZE_FLAG =
+      "--Xeth-max-transactions-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
@@ -42,6 +44,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
           "Maximum message size (in bytes) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxMessageSize =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_TRANSACTIONS_MESSAGE_SIZE_FLAG},
+      paramLabel = "<INTEGER>",
+      description =
+          "Maximum message size (in bytes) for P2P Transactions message. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber maxTransactionsMessageSize =
+      PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE);
 
   @CommandLine.Option(
       hidden = true,
@@ -122,6 +133,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
     options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());
+    options.maxTransactionsMessageSize =
+        PositiveNumber.fromInt(config.getMaxTransactionsMessageSize());
     options.maxGetBlockHeaders = PositiveNumber.fromInt(config.getMaxGetBlockHeaders());
     options.maxGetBlockBodies = PositiveNumber.fromInt(config.getMaxGetBlockBodies());
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
@@ -136,6 +149,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   public EthProtocolConfiguration toDomainObject() {
     return ImmutableEthProtocolConfiguration.builder()
         .maxMessageSize(maxMessageSize.getValue())
+        .maxTransactionsMessageSize(maxTransactionsMessageSize.getValue())
         .maxGetBlockHeaders(maxGetBlockHeaders.getValue())
         .maxGetBlockBodies(maxGetBlockBodies.getValue())
         .maxGetReceipts(maxGetReceipts.getValue())

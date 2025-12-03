@@ -388,6 +388,11 @@ public class SegmentedInMemoryKeyValueStorage
 
     @Override
     public void rollback() {
+      close();
+    }
+
+    @Override
+    public void close() {
       updatedValues.clear();
       removedKeys.clear();
     }

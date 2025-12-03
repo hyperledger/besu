@@ -141,6 +141,73 @@ class JsonRpcIpcServiceTest {
   }
 
   @Test
+  void concatenatedJsonRequestsShouldBeHandledIndependently() {
+    final Path socketPath = tempDir.resolve("besu-test.ipc");
+    final JsonRpcMethod fooMethod = mock(JsonRpcMethod.class);
+    when(fooMethod.response(any())).thenReturn(new JsonRpcSuccessResponse(1, "FOO OK"));
+    final JsonRpcMethod barMethod = mock(JsonRpcMethod.class);
+    when(barMethod.response(any())).thenReturn(new JsonRpcSuccessResponse(2, "BAR OK"));
+    final JsonRpcMethod bazMethod = mock(JsonRpcMethod.class);
+    when(bazMethod.response(any())).thenReturn(new JsonRpcSuccessResponse(3, "BAZ OK"));
+    final JsonRpcIpcService service =
+        new JsonRpcIpcService(
+            vertx,
+            socketPath,
+            new JsonRpcExecutor(
+                new BaseJsonRpcProcessor(),
+                Map.of("foo_method", fooMethod, "bar_method", barMethod, "baz_method", bazMethod)));
+
+    // Simulate concurrent requests concatenated in a single buffer
+    // This mimics what happens when multiple requests arrive at the same time
+    final String concatenatedJson =
+        "{\"id\":1,\"method\":\"foo_method\"}"
+            + "{\"id\":2,\"method\":\"bar_method\"}"
+            + "{\"id\":3,\"method\":\"baz_method\"}";
+
+    service
+        .start()
+        .onComplete(
+            testContext.succeeding(
+                server ->
+                    vertx
+                        .createNetClient()
+                        .connect(SocketAddress.domainSocketAddress(socketPath.toString()))
+                        .onComplete(
+                            testContext.succeeding(
+                                socket -> {
+                                  final StringBuilder receivedResponses = new StringBuilder();
+                                  socket
+                                      .handler(
+                                          buffer -> {
+                                            receivedResponses.append(buffer.toString());
+                                            // Wait for all 3 responses (each ends with \n)
+                                            if (receivedResponses.toString().split("\n").length
+                                                == 3) {
+                                              testContext.verify(
+                                                  () -> {
+                                                    String responses = receivedResponses.toString();
+                                                    // Verify all three responses are present
+                                                    assertThat(responses)
+                                                        .contains(
+                                                            "\"id\":1", "\"result\":\"FOO OK\"");
+                                                    assertThat(responses)
+                                                        .contains(
+                                                            "\"id\":2", "\"result\":\"BAR OK\"");
+                                                    assertThat(responses)
+                                                        .contains(
+                                                            "\"id\":3", "\"result\":\"BAZ OK\"");
+                                                    service
+                                                        .stop()
+                                                        .onComplete(
+                                                            testContext.succeedingThenComplete());
+                                                  });
+                                            }
+                                          })
+                                      .write(Buffer.buffer(concatenatedJson));
+                                }))));
+  }
+
+  @Test
   void shouldDeleteSocketFileOnStop() {
     final Path socketPath = tempDir.resolve("besu-test.ipc");
     final JsonRpcIpcService service =
