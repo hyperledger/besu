@@ -33,6 +33,7 @@
 - Add Linea named networks for mainnet and sepolia on Linea network [#9436](https://github.com/hyperledger/besu/pull/9436)
 
 ### Bug fixes
+- Fix non-deterministic sub-protocol registration during IBFT2 to QBFT consensus migration [#9516](https://github.com/hyperledger/besu/pull/9516)
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 
 ## 25.11.0
