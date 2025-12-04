@@ -46,7 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class BalConcurrentTransactionProcessor {
+public class BalConcurrentTransactionProcessor implements ParallelBlockTransactionProcessor {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(BalConcurrentTransactionProcessor.class);
@@ -63,6 +63,7 @@ public class BalConcurrentTransactionProcessor {
     this.blockAccessList = blockAccessList;
   }
 
+  @Override
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
@@ -162,16 +163,20 @@ public class BalConcurrentTransactionProcessor {
     }
   }
 
-  public Optional<TransactionProcessingResult> getResultFor(
+  @Override
+  // TODO: Throw instead of returning Optional.empty()?
+  public Optional<TransactionProcessingResult> getProcessingResult(
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
       final int txIndex,
-      final Optional<Counter> confirmedParallelizedTransactionCounter) {
+      final Optional<Counter> confirmedParallelizedTransactionCounter,
+      final Optional<Counter> conflictingButCachedTransactionCounter) {
 
     final CompletableFuture<ParallelizedTransactionContext> future = futures[txIndex];
     if (future != null) {
       try {
+        // TODO: Add timeout
         final ParallelizedTransactionContext ctx = future.join();
 
         if (ctx == null) {

@@ -100,53 +100,29 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final int location,
       final BlockHashLookup blockHashLookup,
       final Optional<AccessLocationTracker> accessLocationTracker) {
-
-    TransactionProcessingResult transactionProcessingResult = null;
-
-    if (preProcessingContext.isPresent()) {
-      final PreprocessingContext ctx = preProcessingContext.get();
-
-      if (ctx instanceof BalParallelPreprocessingContext balContext) {
-        transactionProcessingResult =
-            balContext
-                .parallelProcessor()
-                .getResultFor(
-                    blockProcessingContext.getWorldState(),
+    return preProcessingContext
+        .flatMap(
+            ctx ->
+                ctx.processor()
+                    .getProcessingResult(
+                        blockProcessingContext.getWorldState(),
+                        miningBeneficiary,
+                        transaction,
+                        location,
+                        confirmedParallelizedTransactionCounter,
+                        conflictingButCachedTransactionCounter))
+        .orElseGet(
+            () ->
+                super.getTransactionProcessingResult(
+                    preProcessingContext,
+                    blockProcessingContext,
+                    transactionUpdater,
+                    blobGasPrice,
                     miningBeneficiary,
                     transaction,
                     location,
-                    confirmedParallelizedTransactionCounter)
-                .orElse(null);
-
-      } else if (ctx instanceof ParallelizedPreProcessingContext parallelizedPreProcessingContext) {
-        transactionProcessingResult =
-            parallelizedPreProcessingContext
-                .parallelizedConcurrentTransactionProcessor()
-                .applyParallelizedTransactionResult(
-                    blockProcessingContext.getWorldState(),
-                    miningBeneficiary,
-                    transaction,
-                    location,
-                    confirmedParallelizedTransactionCounter,
-                    conflictingButCachedTransactionCounter)
-                .orElse(null);
-      }
-    }
-
-    if (transactionProcessingResult == null) {
-      return super.getTransactionProcessingResult(
-          preProcessingContext,
-          blockProcessingContext,
-          transactionUpdater,
-          blobGasPrice,
-          miningBeneficiary,
-          transaction,
-          location,
-          blockHashLookup,
-          accessLocationTracker);
-    } else {
-      return transactionProcessingResult;
-    }
+                    blockHashLookup,
+                    accessLocationTracker));
   }
 
   @Override
@@ -176,13 +152,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     }
     return blockProcessingResult;
   }
-
-  record BalParallelPreprocessingContext(BalConcurrentTransactionProcessor parallelProcessor)
-      implements PreprocessingContext {}
-
-  record ParallelizedPreProcessingContext(
-      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor)
-      implements PreprocessingContext {}
 
   public static class ParallelBlockProcessorBuilder
       implements ProtocolSpecBuilder.BlockProcessorBuilder {
