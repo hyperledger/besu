@@ -544,14 +544,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendSyncBlock(
-      final SyncBlock block, final List<SyncTransactionReceipt> receipts) {
+      final SyncBlock block, final List<TransactionReceipt> receipts) {
     cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, true);
   }
 
   @Override
   public synchronized void appendSyncBlockWithoutIndexingTransactions(
-      final SyncBlock block, final List<SyncTransactionReceipt> receipts) {
+      final SyncBlock block, final List<TransactionReceipt> receipts) {
     cacheBlockHeader(block.getHeader());
     appendSyncBlockHelper(block, receipts, false);
   }
@@ -657,7 +657,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void appendSyncBlockHelper(
       final SyncBlock block,
-      final List<SyncTransactionReceipt> receipts,
+      final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
     if (blockIsAlreadyTracked(block.getHeader())) {
@@ -671,7 +671,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putSyncBlockBody(hash, block.getBody());
-    updater.putSyncTransactionReceipts(hash, receipts);
+    updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
     final BlockAddedEvent blockAddedEvent;
@@ -778,7 +778,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent updateCanonicalChainData(
       final BlockchainStorage.Updater updater,
       final SyncBlock newBlock,
-      final List<SyncTransactionReceipt> receipts,
+      final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
@@ -835,7 +835,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private BlockAddedEvent handleNewHead(
       final Updater updater,
       final SyncBlock newBlock,
-      final List<SyncTransactionReceipt> receipts,
+      final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
     // This block advances the chain, update the chain head
     final Hash newBlockHash = newBlock.getHash();
@@ -853,7 +853,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return BlockAddedEvent.createForSyncHeadAdvancement(
         newBlock.getHeader(),
         () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
-        LogWithMetadata.generateSync(
+        LogWithMetadata.generate(
             newBlock.getHeader().getNumber(),
             newBlock.getHash(),
             newBlock.getHeader().getTimestamp(),

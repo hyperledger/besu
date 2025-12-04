@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
@@ -33,7 +32,6 @@ public class BlockAddedEvent {
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
   private final List<TransactionReceipt> transactionReceipts;
-  private final List<SyncTransactionReceipt> syncTransactionReceipts;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
   private final Hash commonAncestorHash;
@@ -46,7 +44,6 @@ public class BlockAddedEvent {
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
       final List<TransactionReceipt> transactionReceipts,
-      final List<SyncTransactionReceipt> syncTransactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
     this.eventType = eventType;
@@ -55,7 +52,6 @@ public class BlockAddedEvent {
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
     this.transactionReceipts = transactionReceipts;
-    this.syncTransactionReceipts = syncTransactionReceipts;
     this.logsWithMetadata = logsWithMetadata;
     this.commonAncestorHash = commonAncestorHash;
   }
@@ -64,12 +60,11 @@ public class BlockAddedEvent {
       final BlockHeader blockHeader,
       final Supplier<Block> blockSupplier,
       final List<LogWithMetadata> logsWithMetadata,
-      final List<SyncTransactionReceipt> transactionReceipts) {
+      final List<TransactionReceipt> transactionReceipts) {
     return new BlockAddedEvent(
         EventType.HEAD_ADVANCED,
         blockSupplier,
         blockHeader,
-        Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
         transactionReceipts,
@@ -88,7 +83,6 @@ public class BlockAddedEvent {
         block.getBody().getTransactions(),
         Collections.emptyList(),
         transactionReceipts,
-        Collections.emptyList(),
         logsWithMetadata,
         block.getHeader().getParentHash());
   }
@@ -107,7 +101,6 @@ public class BlockAddedEvent {
         addedTransactions,
         removedTransactions,
         transactionReceipts,
-        Collections.emptyList(),
         logsWithMetadata,
         commonAncestorHash);
   }
@@ -121,7 +114,6 @@ public class BlockAddedEvent {
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
-        Collections.emptyList(),
         block.getHeader().getParentHash());
   }
 
@@ -130,7 +122,6 @@ public class BlockAddedEvent {
         EventType.STORED_ONLY,
         () -> block,
         block.getHeader(),
-        Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -166,12 +157,6 @@ public class BlockAddedEvent {
     return transactionReceipts;
   }
 
-  // it seems getTransactionReceipts is only used in test code, so this is as far as I'm going to
-  // modify for now.
-  public List<SyncTransactionReceipt> getSyncTransactionReceipts() {
-    return syncTransactionReceipts;
-  }
-
   public List<LogWithMetadata> getLogsWithMetadata() {
     return logsWithMetadata;
   }
@@ -197,8 +182,6 @@ public class BlockAddedEvent {
                 + transactionReceipts
             != null
         ? "" + transactionReceipts.size()
-        : 0 + ", syncTransactionReceipts count =" + syncTransactionReceipts != null
-            ? "" + syncTransactionReceipts.size()
-            : 0 + ", logsWithMetadata count=" + logsWithMetadata.size() + '}';
+        : 0 + ", logsWithMetadata count=" + logsWithMetadata.size() + '}';
   }
 }
