@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
@@ -52,8 +51,8 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
       return new StateRootCommitterImplSync();
     }
 
-    final CompletableFuture<Hash> balRootFuture =
-        BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+    final CompletableFuture<BalRootComputation> balRootFuture =
+        BlockAccessListStateRootHashCalculator.computeAsync(
             protocolContext, blockHeader, maybeBal.get());
     return new StateRootCommitterImplBal(balRootFuture, balConfiguration);
   }

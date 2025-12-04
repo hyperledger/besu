@@ -131,4 +131,27 @@ class StateTestSubCommandTest {
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("File content error: ");
   }
+
+  @Test
+  void invalidTransactionShouldNotModifyState() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
+    final CommandLine cmd = new CommandLine(stateTestSubCommand);
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("HighGasPrice.json").getPath());
+    stateTestSubCommand.run();
+
+    final String output = baos.toString(UTF_8);
+    // Invalid transaction should have validation error
+    assertThat(output).contains("validationError");
+    // Should have the upfront gas cost error message
+    assertThat(output).contains("Upfront gas cost cannot exceed 2^256 Wei");
+    // State root should match expected (no state modification occurred)
+    assertThat(output)
+        .contains(
+            "\"stateRoot\":\"0x1751725d1aad5298768fbcf64069b2c1b85aeaffcc561146067d6beedd08052a\"");
+    // Both error and validationError fields should be present for invalid transactions
+    assertThat(output).contains("\"error\":\"Upfront gas cost cannot exceed 2^256 Wei\"");
+  }
 }
