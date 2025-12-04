@@ -60,6 +60,11 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     protocolContext
         .getBlockchain()
         .unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
+    protocolContext
+        .getBlockchain()
+        .unsafeSetChainHead(
+            blocksWithReceipts.getLast().getHeader(),
+            blocksWithReceipts.getLast().getHeader().getDifficulty());
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }

@@ -190,7 +190,7 @@ public class PeerTaskExecutor {
 
       } catch (MalformedRlpFromPeerException e) {
         // Peer sent us malformed data - disconnect
-        LOG.debug(
+        LOG.info(
             "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
             peer.getLoggableId(),
             e);
