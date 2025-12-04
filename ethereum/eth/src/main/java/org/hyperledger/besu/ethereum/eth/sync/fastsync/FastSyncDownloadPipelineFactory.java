@@ -144,7 +144,6 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncReceiptsStep(protocolSchedule, ethContext);
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
-            protocolSchedule,
             protocolContext,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),
