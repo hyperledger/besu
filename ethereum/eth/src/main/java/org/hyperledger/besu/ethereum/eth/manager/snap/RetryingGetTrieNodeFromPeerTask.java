@@ -62,7 +62,7 @@ public class RetryingGetTrieNodeFromPeerTask
   protected CompletableFuture<Map<Bytes, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetTrieNodeFromPeerTask task =
         GetTrieNodeFromPeerTask.forTrieNodes(ethContext, paths, blockHeader, metricsSystem);
-    task.assignPeer(peer);
+    //    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
