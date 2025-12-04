@@ -193,6 +193,28 @@ public class BranchNode<V> implements Node<V> {
     return nodeFactory.createBranch(newChildren, value);
   }
 
+  @SuppressWarnings("unchecked")
+  public Node<V> replaceAllChildren(
+      final List<Node<V>> updatedChildren, final boolean allowFlatten) {
+    final ArrayList<Node<V>> newChildren = new ArrayList<>(updatedChildren);
+    if (value.isPresent() && !hasChildren()) {
+      return nodeFactory.createLeaf(getPath(), value.get());
+    } else if (value.isEmpty() && allowFlatten) {
+      final Optional<Node<V>> flattened = maybeFlatten(newChildren);
+      if (flattened.isPresent()) {
+        return flattened.get();
+      } else {
+        final BranchNode<V> branch = (BranchNode<V>) nodeFactory.createBranch(newChildren, value);
+        if (!branch.hasChildren()) {
+          return NULL_NODE;
+        } else {
+          return branch;
+        }
+      }
+    }
+    return nodeFactory.createBranch(newChildren, value);
+  }
+
   public Node<V> replaceValue(final V value) {
     return nodeFactory.createBranch(children, Optional.of(value));
   }
