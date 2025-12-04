@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.p2p;
 
+import org.hyperledger.besu.datatypes.p2p.MessageData;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.p2p.Capability;
 import org.hyperledger.besu.plugin.data.p2p.Message;
@@ -77,6 +78,26 @@ public interface P2PService extends BesuService {
    * @param networkSubscriber the subscriber to receive messages for the specified capability
    */
   void subscribeMessage(final Capability capability, final MessageListener networkSubscriber);
+
+  /**
+   * Send a message to a specific peer.
+   *
+   * @param protocol the protocol to use
+   * @param peerId the peer id to send the message to
+   * @param messageData the message data to send
+   * @throws PeerConnection.PeerNotConnected if the peer is not connected
+   */
+  @Unstable
+  void send(String protocol, Bytes peerId, MessageData messageData)
+      throws PeerConnection.PeerNotConnected;
+
+  /**
+   * Disconnect from a specific peer.
+   *
+   * @param peerId the peer id to disconnect from
+   */
+  @Unstable
+  void disconnect(Bytes peerId);
 
   /** Consumer of network connection events. */
   @FunctionalInterface

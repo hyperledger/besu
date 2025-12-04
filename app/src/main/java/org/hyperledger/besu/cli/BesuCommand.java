@@ -1302,7 +1302,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getSyncState(),
             besuController.getProtocolContext().getWorldStateArchive()));
 
-    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
+    besuPluginContext.addService(
+        P2PService.class, new P2PServiceImpl(runner.getP2PNetwork(), besuController.getEthPeers()));
 
     besuPluginContext.addService(
         TransactionPoolService.class,

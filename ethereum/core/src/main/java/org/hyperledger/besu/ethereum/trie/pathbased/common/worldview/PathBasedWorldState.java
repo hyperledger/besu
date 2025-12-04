@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -142,6 +141,10 @@ public abstract class PathBasedWorldState
     return !(worldStateKeyValueStorage instanceof PathBasedSnapshotWorldStateKeyValueStorage);
   }
 
+  public boolean isStorageFrozen() {
+    return isStorageFrozen;
+  }
+
   /**
    * Reset the worldState to this block header
    *
@@ -210,8 +213,6 @@ public abstract class PathBasedWorldState
         .addArgument(maybeBlockHeader)
         .log();
 
-    final PathBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
-
     boolean success = false;
 
     final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
@@ -230,7 +231,7 @@ public abstract class PathBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, blockHeader, this);
             };
         cacheWorldState =
             () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
@@ -283,7 +284,7 @@ public abstract class PathBasedWorldState
   }
 
   @Override
-  public WorldUpdater updater() {
+  public PathBasedWorldStateUpdateAccumulator<?> updater() {
     return accumulator;
   }
 
@@ -427,7 +428,7 @@ public abstract class PathBasedWorldState
   @Override
   public abstract Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash);
 
-  protected abstract Hash calculateRootHash(
+  public abstract Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater);
 

@@ -12,14 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.common.storage;
+package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 
-public interface PathBasedLayeredWorldStateKeyValueStorage
-    extends PathBasedSnapshotWorldStateKeyValueStorage {
-
-  PathBasedWorldStateKeyValueStorage clone();
-
-  void mergeTo(final SegmentedKeyValueStorageTransaction transaction);
-}
+@SuppressWarnings("rawtypes")
+public record BalRootComputation(Hash root, PathBasedWorldStateUpdateAccumulator accumulator) {}

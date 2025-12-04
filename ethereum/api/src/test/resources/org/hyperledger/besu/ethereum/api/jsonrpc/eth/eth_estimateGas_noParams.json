@@ -10,9 +10,6 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 3,
-    "error" : {
-      "code" : -32004,
-      "message" : "Upfront cost exceeds account balance (transaction up-front cost 0x1120ed6c5d23b0 exceeds transaction sender account balance 0x2c8763688000)"
-    }
+    "result": "0xd221"
   },  "statusCode": 200
 }
