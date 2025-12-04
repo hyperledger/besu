@@ -52,7 +52,8 @@ import com.google.common.annotations.VisibleForTesting;
  * results to the world state.
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class ParallelizedConcurrentTransactionProcessor {
+public class ParallelizedConcurrentTransactionProcessor
+    implements ParallelBlockTransactionProcessor {
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -99,6 +100,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param executor The executor to use for asynchronous execution.
    * @param blockAccessListBuilder BAL builder.
    */
+  @Override
   public void runAsyncBlock(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
@@ -244,7 +246,8 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @return Optional containing the transaction processing result if applied, or empty if the
    *     transaction needs to be replayed due to a conflict.
    */
-  public Optional<TransactionProcessingResult> applyParallelizedTransactionResult(
+  @Override
+  public Optional<TransactionProcessingResult> getProcessingResult(
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,

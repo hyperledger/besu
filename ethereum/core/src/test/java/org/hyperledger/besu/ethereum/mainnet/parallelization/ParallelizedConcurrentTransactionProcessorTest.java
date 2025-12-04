@@ -155,7 +155,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     assertTrue(
         processor
-            .applyParallelizedTransactionResult(
+            .getProcessingResult(
                 worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty())
             .isPresent(),
         "Expected the transaction context to be stored");
@@ -189,7 +189,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
         Optional.empty());
 
     Optional<TransactionProcessingResult> result =
-        processor.applyParallelizedTransactionResult(
+        processor.getProcessingResult(
             worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
     assertTrue(result.isEmpty(), "Expected the transaction result to indicate a failure");
   }
@@ -238,7 +238,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(true);
 
     Optional<TransactionProcessingResult> result =
-        processor.applyParallelizedTransactionResult(
+        processor.getProcessingResult(
             worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
     assertTrue(result.isEmpty(), "Expected no transaction result to be applied due to conflict");
   }
@@ -292,7 +292,7 @@ class ParallelizedConcurrentTransactionProcessorTest {
     when(transactionCollisionDetector.hasCollision(any(), any(), any(), any())).thenReturn(false);
 
     Optional<TransactionProcessingResult> maybeResult =
-        processor.applyParallelizedTransactionResult(
+        processor.getProcessingResult(
             worldState, miningBeneficiary, transaction, 0, Optional.empty(), Optional.empty());
 
     assertTrue(
