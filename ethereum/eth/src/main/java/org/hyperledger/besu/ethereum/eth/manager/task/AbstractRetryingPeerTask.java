@@ -31,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
  * exceptionally with a new {@link MaxRetriesReachedException}. If the future returned from {@link
@@ -40,7 +43,7 @@ import java.util.function.Predicate;
  */
 public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
-  //  private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryingPeerTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryingPeerTask.class);
   private final EthContext ethContext;
   private final int maxRetries;
   private final Predicate<T> isEmptyResponse;
@@ -90,11 +93,11 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   protected void executeTask() {
     if (result.isDone()) {
       // Return if task is done
-      //      LOG.info("WSD: Task already completed, not executing again");
+      LOG.info("WSD: Task already completed, not executing again");
       return;
     }
     if (retryCount >= maxRetries) {
-      //      LOG.info("WSD: Max retries reached, completing exceptionally");
+      LOG.info("WSD: Max retries reached, completing exceptionally");
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
@@ -119,19 +122,18 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
-    //    LOG.info("WSD: non-retryable error while processing peer task", error);
+    LOG.info("WSD: non-retryable error while processing peer task", error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
-      //      LOG.info("WSD: non-retryable error while processing peer task", error);
+      LOG.info("WSD: non-retryable error while processing peer task", error);
       result.completeExceptionally(cause);
       return;
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      //      LOG.info(
-      //          "WSD: No useful peer found, wait max 5 seconds for new peer to connect: current
-      // peers {}",
-      //          ethContext.getEthPeers().peerCount());
+      LOG.info(
+          "WSD: No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
+          ethContext.getEthPeers().peerCount());
 
       executeSubTask(
           () ->
@@ -144,11 +146,11 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    //    LOG.atInfo()
-    //        .setMessage("WSD: Retrying after recoverable failure from peer task {}: {}")
-    //        .addArgument(this.getClass().getSimpleName())
-    //        .addArgument(cause.getMessage())
-    //        .log();
+    LOG.atInfo()
+        .setMessage("WSD: Retrying after recoverable failure from peer task {}: {}")
+        .addArgument(this.getClass().getSimpleName())
+        .addArgument(cause.getMessage())
+        .log();
     // Wait before retrying on failure
     executeSubTask(
         () ->
