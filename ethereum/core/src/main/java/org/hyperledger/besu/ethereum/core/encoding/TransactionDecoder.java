@@ -21,9 +21,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
@@ -33,15 +34,17 @@ public class TransactionDecoder {
     Transaction decode(Bytes input);
   }
 
-  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
-      ImmutableMap.of(
-          TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
-          TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
-          TransactionType.BLOB, BlobTransactionDecoder::decode,
-          TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode);
+  private static final EnumMap<TransactionType, Decoder> TRANSACTION_DECODERS =
+      new EnumMap<>(
+          Map.of(
+              TransactionType.FRONTIER, FrontierTransactionDecoder::decode,
+              TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode,
+              TransactionType.EIP1559, EIP1559TransactionDecoder::decode,
+              TransactionType.BLOB, BlobTransactionDecoder::decode,
+              TransactionType.DELEGATE_CODE, CodeDelegationTransactionDecoder::decode));
 
-  private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
-      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
+  private static final EnumMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
+      new EnumMap<>(Map.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode));
 
   /**
    * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
@@ -53,9 +56,9 @@ public class TransactionDecoder {
   public static Transaction decodeRLP(
       final RLPInput rlpInput, final EncodingContext encodingContext) {
     if (isTypedTransaction(rlpInput)) {
-      return decodeTypedTransaction(rlpInput, encodingContext);
+      return decodeTransaction(rlpInput, encodingContext);
     } else {
-      return FrontierTransactionDecoder.decode(rlpInput);
+      return FrontierTransactionDecoder.decode(rlpInput.readAsRlp());
     }
   }
 
@@ -66,7 +69,7 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  private static Transaction decodeTypedTransaction(
+  private static Transaction decodeTransaction(
       final RLPInput rlpInput, final EncodingContext context) {
     // Read the typed transaction bytes from the RLP input
     final Bytes typedTransactionBytes = rlpInput.readBytes();
@@ -75,7 +78,7 @@ public class TransactionDecoder {
     TransactionType transactionType =
         getTransactionType(typedTransactionBytes)
             .orElseThrow((() -> new IllegalArgumentException("Unsupported transaction type")));
-    return decodeTypedTransaction(typedTransactionBytes, transactionType, context);
+    return decodeTransaction(typedTransactionBytes, transactionType, context);
   }
 
   /**
@@ -88,7 +91,7 @@ public class TransactionDecoder {
    * @param context the encoding context
    * @return the decoded transaction
    */
-  private static Transaction decodeTypedTransaction(
+  private static Transaction decodeTransaction(
       final Bytes transactionBytes,
       final TransactionType transactionType,
       final EncodingContext context) {
@@ -113,7 +116,7 @@ public class TransactionDecoder {
     }
     var transactionType = getTransactionType(opaqueBytes);
     if (transactionType.isPresent()) {
-      return decodeTypedTransaction(opaqueBytes, transactionType.get(), context);
+      return decodeTransaction(opaqueBytes, transactionType.get(), context);
     } else {
       // If the transaction type is not present, decode the opaque bytes as RLP
       return decodeRLP(RLP.input(opaqueBytes), context);
@@ -130,15 +133,8 @@ public class TransactionDecoder {
    *     to a valid transaction type, or an empty Optional if it does not
    */
   private static Optional<TransactionType> getTransactionType(final Bytes opaqueBytes) {
-    try {
-      if (opaqueBytes.isEmpty()) {
-        return Optional.empty();
-      }
-      byte transactionTypeByte = opaqueBytes.get(0);
-      return Optional.of(TransactionType.of(transactionTypeByte));
-    } catch (IllegalArgumentException ex) {
-      return Optional.empty();
-    }
+    byte transactionTypeByte = opaqueBytes.get(0);
+    return TransactionType.fromOpaque(transactionTypeByte);
   }
 
   /**
@@ -174,7 +170,7 @@ public class TransactionDecoder {
       }
     }
     return checkNotNull(
-        TYPED_TRANSACTION_DECODERS.get(transactionType),
+        TRANSACTION_DECODERS.get(transactionType),
         "Developer Error. A supported transaction type %s has no associated decoding logic",
         transactionType);
   }

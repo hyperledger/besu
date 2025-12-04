@@ -142,7 +142,8 @@ public class MainnetBlockContextProcessorTest {
             worldState,
             mock(ProtocolSpec.class),
             mockBlockHashLookup,
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     when(mockBlockHashLookup.apply(any(), any())).thenReturn(Hash.EMPTY);
     return systemCallProcessor.process(
