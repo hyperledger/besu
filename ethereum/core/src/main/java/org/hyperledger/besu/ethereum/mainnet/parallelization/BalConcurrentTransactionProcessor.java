@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -43,9 +42,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class BalConcurrentTransactionProcessor {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BalConcurrentTransactionProcessor.class);
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final BlockAccessList blockAccessList;
@@ -127,6 +131,7 @@ public class BalConcurrentTransactionProcessor {
           (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
 
       applyWritesFromPriorTransactions(blockAccessList, transactionLocation + 1, blockUpdater);
+      blockUpdater.commit();
 
       final WorldUpdater txUpdater = blockUpdater.updater();
       final Optional<AccessLocationTracker> txTracker =
@@ -151,7 +156,7 @@ public class BalConcurrentTransactionProcessor {
       blockUpdater.commit();
 
       // TODO: We should pass transaction accumulator
-      ctxBuilder.transactionAccumulator(ws.getAccumulator()).transactionProcessingResult(result);
+      ctxBuilder.transactionAccumulator(blockUpdater).transactionProcessingResult(result);
 
       return ctxBuilder.build();
     }
@@ -170,6 +175,7 @@ public class BalConcurrentTransactionProcessor {
         final ParallelizedTransactionContext ctx = future.join();
 
         if (ctx == null) {
+          LOG.error("Transaction context for transaction {} is empty.", txIndex);
           return Optional.empty();
         }
 
@@ -188,10 +194,13 @@ public class BalConcurrentTransactionProcessor {
 
         return Optional.of(result);
       } catch (final Exception e) {
+        LOG.error(
+            "Error integrating transaction processing result for transaction {}.", txIndex, e);
         return Optional.empty();
       }
     }
 
+    LOG.error("No future found for transaction {}.", txIndex);
     return Optional.empty();
   }
 
@@ -199,27 +208,31 @@ public class BalConcurrentTransactionProcessor {
       final BlockAccessList blockAccessList,
       final int balIndex,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
+
     blockAccessList
         .accountChanges()
         .forEach(
             accountChanges -> {
-              final MutableAccount account =
-                  worldStateUpdater.getOrCreate(accountChanges.address());
+              final Address address = accountChanges.address();
 
               accountChanges.balanceChanges().stream()
                   .filter(change -> change.txIndex() < balIndex)
-                  .sorted(Comparator.comparingInt(BlockAccessList.BalanceChange::txIndex))
-                  .forEach(change -> account.setBalance(change.postBalance()));
+                  .max(Comparator.comparingInt(BlockAccessList.BalanceChange::txIndex))
+                  .ifPresent(
+                      change ->
+                          worldStateUpdater.getOrCreate(address).setBalance(change.postBalance()));
 
               accountChanges.nonceChanges().stream()
                   .filter(change -> change.txIndex() < balIndex)
-                  .sorted(Comparator.comparingInt(BlockAccessList.NonceChange::txIndex))
-                  .forEach(change -> account.setNonce(change.newNonce()));
+                  .max(Comparator.comparingInt(BlockAccessList.NonceChange::txIndex))
+                  .ifPresent(
+                      change -> worldStateUpdater.getOrCreate(address).setNonce(change.newNonce()));
 
               accountChanges.codeChanges().stream()
                   .filter(change -> change.txIndex() < balIndex)
-                  .sorted(Comparator.comparingInt(BlockAccessList.CodeChange::txIndex))
-                  .forEach(change -> account.setCode(change.newCode()));
+                  .max(Comparator.comparingInt(BlockAccessList.CodeChange::txIndex))
+                  .ifPresent(
+                      change -> worldStateUpdater.getOrCreate(address).setCode(change.newCode()));
 
               accountChanges
                   .storageChanges()
@@ -228,20 +241,16 @@ public class BalConcurrentTransactionProcessor {
                         final UInt256 slotKey = slotChanges.slot().getSlotKey().orElseThrow();
                         slotChanges.changes().stream()
                             .filter(change -> change.txIndex() < balIndex)
-                            .sorted(Comparator.comparingInt(BlockAccessList.StorageChange::txIndex))
-                            .forEach(
+                            .max(Comparator.comparingInt(BlockAccessList.StorageChange::txIndex))
+                            .ifPresent(
                                 change ->
-                                    account.setStorageValue(
-                                        slotKey,
-                                        Optional.ofNullable(change.newValue())
-                                            .orElse(UInt256.ZERO)));
+                                    worldStateUpdater
+                                        .getOrCreate(address)
+                                        .setStorageValue(
+                                            slotKey,
+                                            Optional.ofNullable(change.newValue())
+                                                .orElse(UInt256.ZERO)));
                       });
-
-              // TODO: Instead do not create the account in the first place
-              // This solution assumes no pre-existing empty accounts in parent
-              if (account.isEmpty()) {
-                worldStateUpdater.deleteAccount(account.getAddress());
-              }
             });
   }
 }

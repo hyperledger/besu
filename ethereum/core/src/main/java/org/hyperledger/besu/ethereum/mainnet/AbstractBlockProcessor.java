@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BalPartialViewValidator;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
@@ -263,26 +262,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 i,
                 blockHashLookup,
                 transactionLocationTracker);
-
-        if (maybeBlockBal.isPresent()) {
-          final BlockAccessList blockBal = maybeBlockBal.get();
-          final Optional<PartialBlockAccessView> partialBlockAccessView =
-              transactionProcessingResult.getPartialBlockAccessView();
-
-          if (partialBlockAccessView.isPresent()
-              && !BalPartialViewValidator.validateTxAccesses(
-                  partialBlockAccessView.get(), blockBal)) {
-            final String errorMessage =
-                String.format(
-                    "BAL runtime access mismatch at tx index %d for block %s",
-                    i, blockHeader.getHash().toHexString());
-            LOG.error(errorMessage);
-            if (worldState instanceof BonsaiWorldState) {
-              ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-            }
-            return new BlockProcessingResult(Optional.empty(), errorMessage);
-          }
-        }
 
         applyPartialBlockAccessView(
             transactionProcessingResult.getPartialBlockAccessView(), blockAccessListBuilder);

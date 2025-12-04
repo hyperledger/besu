@@ -177,8 +177,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     return blockProcessingResult;
   }
 
-  record BalParallelPreprocessingContext(
-      BalConcurrentTransactionProcessor parallelProcessor) implements PreprocessingContext {}
+  record BalParallelPreprocessingContext(BalConcurrentTransactionProcessor parallelProcessor)
+      implements PreprocessingContext {}
 
   record ParallelizedPreProcessingContext(
       ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor)
