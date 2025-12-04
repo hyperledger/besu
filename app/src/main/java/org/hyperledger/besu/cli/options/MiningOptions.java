@@ -125,7 +125,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
           "Maximum number of blobs allowed per transaction during block building. "
               + "Only applies from Osaka hardfork onwards. (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private int maxBlobsPerTransaction = DEFAULT_MAX_BLOBS_PER_TRANSACTION;
+  private Integer maxBlobsPerTransaction = DEFAULT_MAX_BLOBS_PER_TRANSACTION;
 
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
