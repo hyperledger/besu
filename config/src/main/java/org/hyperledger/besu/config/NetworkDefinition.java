@@ -167,7 +167,7 @@ public enum NetworkDefinition {
   public boolean isL1Network() {
     return switch (this) {
       case MAINNET, SEPOLIA, HOLESKY, HOODI, EPHEMERY -> true;
-      case LINEA, LINEA_SEPOLIA -> false;
+      case LINEA_MAINNET, LINEA_SEPOLIA -> false;
       // Development/experimental networks are L1-like
       case DEV, FUTURE_EIPS, EXPERIMENTAL_EIPS -> true;
       // Not Ethereum but still L1

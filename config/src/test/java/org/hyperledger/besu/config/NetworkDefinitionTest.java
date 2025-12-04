@@ -33,7 +33,7 @@ public class NetworkDefinitionTest {
 
   @Test
   public void isL1Network_returnsFalse_forL2Networks() {
-    assertThat(NetworkDefinition.LINEA.isL1Network()).isFalse();
+    assertThat(NetworkDefinition.LINEA_MAINNET.isL1Network()).isFalse();
     assertThat(NetworkDefinition.LINEA_SEPOLIA.isL1Network()).isFalse();
   }
 
