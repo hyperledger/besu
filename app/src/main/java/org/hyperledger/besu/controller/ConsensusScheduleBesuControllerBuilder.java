@@ -63,10 +63,12 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -235,7 +237,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
     // - IBF/1 (IBFT2) for pre-migration communication
     // - istanbul/100 (QBFT) for post-migration communication
     final SubProtocolConfiguration mergedConfig = new SubProtocolConfiguration();
-    final java.util.Set<String> addedProtocolNames = new java.util.HashSet<>();
+    final Set<String> addedProtocolNames = new HashSet<>();
 
     // Add sub-protocols from each consensus builder (sorted by block number for determinism)
     besuControllerBuilderSchedule.entrySet().stream()
@@ -243,7 +245,9 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .forEach(
             entry -> {
               final SubProtocolConfiguration builderConfig =
-                  entry.getValue().createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
+                  entry
+                      .getValue()
+                      .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
               final List<SubProtocol> subProtocols = builderConfig.getSubProtocols();
               final List<ProtocolManager> protocolManagers = builderConfig.getProtocolManagers();
               for (int i = 0; i < subProtocols.size(); i++) {
