@@ -35,6 +35,7 @@
 - Add experimental `callTracer` tracer option to `debug_trace*` methods. Enabled using `--Xenable-extra-debug-tracers=true` option. Issue [#8326][issue_8326] implemented via PR [#8960][PR_8960] and [#9072][PR_9072].
 
 ### Bug fixes
+- Fix non-deterministic sub-protocol registration during IBFT2 to QBFT consensus migration [#9516](https://github.com/hyperledger/besu/pull/9516)
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
 - Fix an issue where Besu does not support `0x80` as transaction type when decoding eth/69 receipts [#9520](https://github.com/hyperledger/besu/issues/9520)
 
