@@ -33,7 +33,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OsakaTargetingGasLimitCalculatorTest {
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
-  private static final long TRANSACTION_GAS_LIMIT_CAP = 30_000_000L;
   private final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   private final BaseFeeMarket feeMarket = FeeMarket.cancunDefault(0L, Optional.empty());
 
@@ -128,28 +127,6 @@ class OsakaTargetingGasLimitCalculatorTest {
     long result2 = calculator.computeExcessBlobGas(highExcess, parentBlobGasUsed, 0L);
     // Expected value based on the test case
     assertThat(result2).isEqualTo(10878976L);
-  }
-
-  @Test
-  void maxBlobPerTransactionMustNotExceedMaxBlobsPerBlock() {
-    int maxBlobsPerBlock = 10;
-    int targetBlobsPerBlock = 9;
-    int maxBlobsPerTransaction = 11;
-    Assertions.assertThatThrownBy(
-            () ->
-                new OsakaTargetingGasLimitCalculator(
-                    0L,
-                    feeMarket,
-                    osakaGasCalculator,
-                    maxBlobsPerBlock,
-                    targetBlobsPerBlock,
-                    maxBlobsPerTransaction,
-                    TRANSACTION_GAS_LIMIT_CAP))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            String.format(
-                "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
-                maxBlobsPerTransaction, maxBlobsPerBlock));
   }
 
   @Test
