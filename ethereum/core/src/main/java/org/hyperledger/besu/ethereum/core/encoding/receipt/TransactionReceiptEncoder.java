@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -88,6 +89,50 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
     rlpOutput.endList();
+  }
+
+  public static Bytes writeSyncReceiptForRootCalc(final SyncTransactionReceipt receipt) {
+    final boolean isFrontier =
+        receipt.getTransactionTypeCode().get(0) != TransactionType.FRONTIER.getSerializedType();
+
+    List<Bytes> encodedLogs =
+        receipt.getLogs().stream().map(TransactionReceiptEncoder::rlpEncodeListNoCopy).toList();
+    List<Bytes> mainList =
+        List.of(
+            rlpEncodeNoCopy(receipt.getStatusOrStateRoot()),
+            rlpEncodeNoCopy(receipt.getCumulativeGasUsed()),
+            rlpEncodeNoCopy(receipt.getBloomFilter()),
+            rlpEncodeListNoCopy(encodedLogs));
+
+    return !isFrontier
+        ? rlpEncodeNoCopy(
+            Bytes.concatenate(
+                rlpEncodeNoCopy(receipt.getTransactionTypeCode()), rlpEncodeListNoCopy(mainList)))
+        : rlpEncodeListNoCopy(mainList);
+  }
+
+  private static Bytes rlpEncodeNoCopy(final Bytes bytes) {
+    if (bytes.size() == 1 && Byte.toUnsignedInt(bytes.get(0)) <= 127) {
+      return bytes;
+    } else if (bytes.size() <= 55) {
+      return Bytes.concatenate(Bytes.of((byte) (0x80 + bytes.size())), bytes);
+    } else { // bytes.size > 55
+      Bytes length = Bytes.minimalBytes(bytes.size());
+      return Bytes.concatenate(Bytes.of((byte) (0xb7 + length.size())), length, bytes);
+    }
+  }
+
+  private static Bytes rlpEncodeListNoCopy(final List<Bytes> encodedBytesList) {
+    int totalLength = encodedBytesList.stream().mapToInt(Bytes::size).sum();
+
+    if (totalLength <= 55) {
+      return Bytes.concatenate(
+          Bytes.of((byte) (0xc0 + totalLength)), Bytes.concatenate(encodedBytesList));
+    } else { // totalLength > 55
+      Bytes length = Bytes.minimalBytes(totalLength);
+      return Bytes.concatenate(
+          Bytes.of((byte) (0xf8 + length.size())), length, Bytes.concatenate(encodedBytesList));
+    }
   }
 
   /**

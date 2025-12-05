@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
@@ -122,7 +123,9 @@ public class GetSyncReceiptsFromPeerTask
         final List<BlockHeader> blockHeaders =
             headersByReceiptsRoot.get(
                 Util.getRootFromListOfBytes(
-                    receiptsInBlock.stream().map(SyncTransactionReceipt::getRlp).toList()));
+                    receiptsInBlock.stream()
+                        .map(TransactionReceiptEncoder::writeSyncReceiptForRootCalc)
+                        .toList()));
         if (blockHeaders == null) {
           // Contains receipts that we didn't request, so mustn't be the response we're looking for.
           throw new InvalidPeerTaskResponseException();
