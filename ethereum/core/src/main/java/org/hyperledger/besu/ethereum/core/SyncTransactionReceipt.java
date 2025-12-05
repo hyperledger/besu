@@ -51,6 +51,9 @@ public class SyncTransactionReceipt {
 
   public void parseComponents(final RLPInput rlpInput) {
     // The first byte indicates whether the receipt is typed (eth/68) or flat (eth/69).
+    if (rlpInput.isDone()) {
+      return;
+    }
     if (!rlpInput.nextIsList()) {
       decodeTypedReceipt(rlpInput);
     } else {
@@ -129,7 +132,7 @@ public class SyncTransactionReceipt {
 
   private void decodeLegacyReceipt(
       final RLPInput input, final Bytes statusOrStateRoot, final Bytes cumulativeGas) {
-    transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getEthSerializedType());
+    transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
     this.statusOrStateRoot = statusOrStateRoot;
     this.cumulativeGasUsed = cumulativeGas;
     parseLogs(input);
