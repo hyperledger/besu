@@ -168,20 +168,20 @@ public class BlockAddedEvent {
   @Override
   public String toString() {
     return "BlockAddedEvent{"
-        + "eventType="
-        + eventType
-        + ", block="
-        + header.toLogString()
-        + ", commonAncestorHash="
-        + commonAncestorHash
-        + ", addedTransactions count="
-        + addedTransactions.size()
-        + ", removedTransactions count="
-        + removedTransactions.size()
-        + ", transactionReceipts count ="
-        + transactionReceipts.size()
-        + ", logsWithMetadata count="
-        + logsWithMetadata.size()
-        + '}';
+                + "eventType="
+                + eventType
+                + ", block="
+                + header.toLogString()
+                + ", commonAncestorHash="
+                + commonAncestorHash
+                + ", addedTransactions count="
+                + addedTransactions.size()
+                + ", removedTransactions count="
+                + removedTransactions.size()
+                + ", transactionReceipts count ="
+                + transactionReceipts
+            != null
+        ? "" + transactionReceipts.size()
+        : 0 + ", logsWithMetadata count=" + logsWithMetadata.size() + '}';
   }
 }

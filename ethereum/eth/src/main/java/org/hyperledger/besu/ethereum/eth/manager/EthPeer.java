@@ -225,6 +225,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void disconnect(final DisconnectReason reason) {
+    LOG.info("Disconnection peer {} due to {}", getLoggableId(), reason);
     connection.disconnect(reason);
   }
 

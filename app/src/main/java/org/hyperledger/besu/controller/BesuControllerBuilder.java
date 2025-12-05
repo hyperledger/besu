@@ -741,7 +741,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final PeerTaskExecutor peerTaskExecutor =
         new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
     final EthContext ethContext =
-        new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
+        new EthContext(
+            ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor, blockchain);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
@@ -819,7 +820,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT
+        || syncConfig.getSyncMode() == SyncMode.POS) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
       ethPeers.snapServerPeersNeeded(true);
     } else {
