@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
@@ -31,7 +32,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         parent);
   }
 
-  public BonsaiWorldStateLayerStorage(
+  private BonsaiWorldStateLayerStorage(
       final SnappedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent) {
@@ -49,5 +50,16 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ((LayeredKeyValueStorage) composedWorldStateStorage).clone(),
         trieLogStorage,
         parentWorldStateStorage);
+  }
+
+  /** Merge this layer to a storage transaction. */
+  @Override
+  public void mergeTo(final SegmentedKeyValueStorageTransaction transaction) {
+    getComposedWorldStateStorage().mergeTo(transaction);
+  }
+
+  @Override
+  public LayeredKeyValueStorage getComposedWorldStateStorage() {
+    return (LayeredKeyValueStorage) super.getComposedWorldStateStorage();
   }
 }
