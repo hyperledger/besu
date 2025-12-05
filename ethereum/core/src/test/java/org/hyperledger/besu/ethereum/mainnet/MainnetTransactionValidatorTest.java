@@ -66,6 +66,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -284,8 +285,17 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
   }
 
-  @Test
-  public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
+  static List<Arguments> transactionWithMaxFeeTimesGasLimitGreaterThanBalanceArguments =
+      List.of(
+          Arguments.of(
+              transactionSimulationParams, ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE)),
+          Arguments.of(transactionPoolParams, ValidationResult.valid()));
+
+  @ParameterizedTest
+  @FieldSource("transactionWithMaxFeeTimesGasLimitGreaterThanBalanceArguments")
+  public void transactionWithMaxFeeTimesGasLimitGreaterThanBalance(
+      final TransactionValidationParams txValidationParams,
+      final ValidationResult<TransactionInvalidReason> validationResult) {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -304,8 +314,8 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
                     .chainId(BigInteger.ONE)
                     .signAndBuild(new SECP256K1().generateKeyPair()),
                 account(Wei.of(100), 0),
-                transactionPoolParams))
-        .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
+                txValidationParams))
+        .isEqualTo(validationResult);
   }
 
   @Test
