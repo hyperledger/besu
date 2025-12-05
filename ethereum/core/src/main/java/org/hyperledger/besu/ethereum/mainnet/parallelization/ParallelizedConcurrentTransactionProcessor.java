@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessListLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -157,7 +157,7 @@ public class ParallelizedConcurrentTransactionProcessor {
           final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
               (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
           final WorldUpdater transactionUpdater = roundWorldStateUpdater.updater();
-          final Optional<AccessLocationTracker> transactionLocationTracker =
+          final Optional<AccessListLocationTracker> transactionLocationTracker =
               blockAccessListBuilder.map(
                   b ->
                       BlockAccessListBuilder.createTransactionAccessLocationTracker(

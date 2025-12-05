@@ -18,10 +18,12 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.AccessListTraceTracker;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -82,6 +84,8 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
     List<TraceFrame> traceFrames = null;
     TransactionProcessingResult result = null;
+    AccessListTraceTracker accessListTracker = new AccessListTraceTracker();
+
     // If it is not a reward Block trace
     if (transactionTrace.getTransaction() != null) {
       BlockHeader header = block.getHeader();
@@ -96,6 +100,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
                       .orElse(BlobGas.ZERO));
       final BlockHashLookup blockHashLookup =
           protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
+
       result =
           transactionProcessor.processTransaction(
               chainUpdater.getNextUpdater(),
@@ -104,12 +109,18 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
               header.getCoinbase(),
               tracer,
               blockHashLookup,
-              blobGasPrice);
+              ImmutableTransactionValidationParams.builder().build(),
+              blobGasPrice,
+              Optional.of(accessListTracker));
 
       traceFrames = tracer.copyTraceFrames();
       tracer.reset();
     }
     return new TransactionTrace(
-        transactionTrace.getTransaction(), result, traceFrames, transactionTrace.getBlock());
+        transactionTrace.getTransaction(),
+        result,
+        traceFrames,
+        transactionTrace.getBlock(),
+        accessListTracker);
   }
 }
