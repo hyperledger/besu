@@ -33,6 +33,13 @@ public class BalConfigurationOptions {
   boolean balOptimizationEnabled = true;
 
   @CommandLine.Option(
+      names = {"--Xbal-perfect-parallelization-enabled"},
+      hidden = true,
+      description =
+          "Allows disabling BAL-based perfect parallelization even when BALs are present.")
+  boolean balPerfectParallelizationEnabled = true;
+
+  @CommandLine.Option(
       names = {"--Xbal-lenient-on-state-root-mismatch"},
       hidden = true,
       description =
@@ -74,6 +81,7 @@ public class BalConfigurationOptions {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
+        .isPerfectParallelizationEnabled(balPerfectParallelizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
