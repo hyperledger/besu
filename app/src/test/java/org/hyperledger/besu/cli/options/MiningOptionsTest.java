@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MAX_BLOBS_PER_TRANSACTION;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -365,6 +366,30 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
           assertThat(new String(miningParams.getExtraData().toArray(), StandardCharsets.UTF_8))
               .matches(expectedRegex);
         });
+  }
+
+  @Test
+  public void maxBlobsDefaultValue() {
+    internalTestSuccess(
+        miningParams ->
+            assertThat(miningParams.getMaxBlobsPerTransaction())
+                .isEqualTo(DEFAULT_MAX_BLOBS_PER_TRANSACTION));
+  }
+
+  @Test
+  public void maxBlobsOption() {
+    internalTestSuccess(
+        miningParams -> assertThat(miningParams.getMaxBlobsPerTransaction()).isEqualTo(3),
+        "--max-blobs",
+        "3");
+  }
+
+  @Test
+  public void maxBlobsOptionWithZero() {
+    internalTestSuccess(
+        miningParams -> assertThat(miningParams.getMaxBlobsPerTransaction()).isEqualTo(0),
+        "--max-blobs",
+        "0");
   }
 
   @Override
