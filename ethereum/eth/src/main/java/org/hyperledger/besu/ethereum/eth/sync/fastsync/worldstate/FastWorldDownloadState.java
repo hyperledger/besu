@@ -70,7 +70,7 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       updater.commit();
 
       internalFuture.complete(null);
-      // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
+      // There are no more inputs to process so make sure we wake up any threads waiting to dequeue
       // so they can give up waiting.
       notifyAll();
 

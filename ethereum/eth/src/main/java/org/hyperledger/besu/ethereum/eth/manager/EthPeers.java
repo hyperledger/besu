@@ -656,6 +656,16 @@ public class EthPeers implements PeerSelector {
             .log();
       }
     }
+    // Log overall snap peer status after each check
+    logSnapPeerStatus();
+  }
+
+  public void logSnapPeerStatus() {
+    long snapPeerCount =
+        streamAvailablePeers().filter(EthPeerImmutableAttributes::isServingSnap).count();
+    long totalPeerCount = streamAvailablePeers().count();
+
+    LOG.info("AAAAA SNAP_PEERS: {}/{} peers marked as serving snap", snapPeerCount, totalPeerCount);
   }
 
   private int comparePeerPriorities(final EthPeer p1, final EthPeer p2) {

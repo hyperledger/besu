@@ -77,7 +77,7 @@ public class RetryingGetStorageRangeFromPeerTask
     final GetStorageRangeFromPeerTask task =
         GetStorageRangeFromPeerTask.forStorageRange(
             ethContext, accountHashes, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    task.assignPeer(peer);
+    //    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
