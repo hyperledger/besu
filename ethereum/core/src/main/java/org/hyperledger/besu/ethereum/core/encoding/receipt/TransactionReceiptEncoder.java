@@ -93,7 +93,7 @@ public class TransactionReceiptEncoder {
 
   public static Bytes writeSyncReceiptForRootCalc(final SyncTransactionReceipt receipt) {
     final boolean isFrontier =
-        receipt.getTransactionTypeCode().get(0) != TransactionType.FRONTIER.getSerializedType();
+            !receipt.getTransactionTypeCode().isEmpty() && receipt.getTransactionTypeCode().get(0) != TransactionType.FRONTIER.getSerializedType();
 
     List<Bytes> encodedLogs =
         receipt.getLogs().stream().map(TransactionReceiptEncoder::rlpEncodeListNoCopy).toList();
