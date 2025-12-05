@@ -12,16 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.config;
 
 import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-
 /** The enum Network name. */
-public enum NetworkName {
+public enum NetworkDefinition {
   /** Mainnet network name. */
   MAINNET("/mainnet.json", BigInteger.valueOf(1), true, true),
   /** Sepolia network name. */
@@ -40,7 +38,7 @@ public enum NetworkName {
    * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
    * info</a>
    */
-  LINEA("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
+  LINEA_MAINNET("/linea-mainnet.json", BigInteger.valueOf(59144), true, true),
   /** Linea sepolia network name */
   LINEA_SEPOLIA("/linea-sepolia.json", BigInteger.valueOf(59141), true, true),
   /** LUKSO mainnet network name. */
@@ -68,15 +66,16 @@ public enum NetworkName {
     MORDOR.deprecationDate = "November 2025";
   }
 
-  NetworkName(final String genesisFile, final BigInteger networkId) {
+  NetworkDefinition(final String genesisFile, final BigInteger networkId) {
     this(genesisFile, networkId, true);
   }
 
-  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
+  NetworkDefinition(
+      final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
     this(genesisFile, networkId, canSnapSync, false);
   }
 
-  NetworkName(
+  NetworkDefinition(
       final String genesisFile,
       final BigInteger networkId,
       final boolean canSnapSync,
@@ -122,7 +121,8 @@ public enum NetworkName {
    * @return the string
    */
   public String normalize() {
-    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
+    String n = name().toLowerCase(Locale.ROOT);
+    return n.substring(0, 1).toUpperCase(Locale.ROOT) + n.substring(1);
   }
 
   /**

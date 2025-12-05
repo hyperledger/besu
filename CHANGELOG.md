@@ -12,7 +12,8 @@
   - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
   - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
   - Return null result if block not found for `debug_accountAt`, `debug_setHead`, `eth_call`, `eth_getBlockReceipts`, `eth_getProof`, `eth_simulateV1`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount` [#9303](https://github.com/hyperledger/besu/pull/9303)
-- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481), `eth_coinbase` [#9487](https://github.com/hyperledger/besu/pull/9487)
+- Remove PoW CLI options: `--miner-enabled`, `--miner-coinbase` [#9486](https://github.com/hyperledger/besu/pull/9486)
 
 ### Upcoming Breaking Changes
 - ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
@@ -20,6 +21,7 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - ETC (Ethereum Classic) network support
   - Proof of Work consensus (PoW)
+  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
   - Fast Sync
 
 ### Additions and Improvements
@@ -28,10 +30,13 @@
 - Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 - Performance: 5-6x faster toFastHex calculation for engine_getBlobsV2 [#9426](https://github.com/hyperledger/besu/pull/9426)
 - Performance: Optimise `engine_getPayload*` methods and `engine_getBlobsV2` [#9445](https://github.com/hyperledger/besu/pull/9445)
-- Add Linea named networks for mainnet and sepolia on Linea network [#9436](https://github.com/hyperledger/besu/pull/9436)
+- Add Linea named networks for `linea_mainnet` and `linea_sepolia` [#9436](https://github.com/hyperledger/besu/pull/9436), [#9518](https://github.com/hyperledger/besu/pull/9518)
+- Add `eth_subscribe` and `eth_unsubscribe` support to IPC service [#9504](https://github.com/hyperledger/besu/pull/9504)
 
 ### Bug fixes
+- Fix non-deterministic sub-protocol registration during IBFT2 to QBFT consensus migration [#9516](https://github.com/hyperledger/besu/pull/9516)
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
+- Fix an issue where Besu does not support `0x80` as transaction type when decoding eth/69 receipts [#9520](https://github.com/hyperledger/besu/issues/9520)
 
 ## 25.11.0
 

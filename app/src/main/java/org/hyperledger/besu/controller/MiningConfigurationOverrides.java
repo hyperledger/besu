@@ -17,17 +17,16 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 
 /**
- * This interface wraps the provided MiningParameters to enable controller-specific parameter
- * overrides.
+ * This interface allows for modification to MiningConfiguration to enable controller-specific
+ * parameter overrides.
  */
-public interface MiningParameterOverrides {
+public interface MiningConfigurationOverrides {
   /**
-   * Overrides MiningParameter.
+   * Overrides MiningConfiguration set from CLI.
    *
-   * @param fromCli The mining parameters that contains original values.
-   * @return MiningParameters constructed from provided param with additional overridden parameters.
+   * @param fromCli The mining configuration that contains original values.
    */
-  default MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
-    return fromCli;
+  default void overrideMiningConfiguration(final MiningConfiguration fromCli) {
+    // no-op
   }
 }

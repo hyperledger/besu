@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
@@ -408,6 +409,7 @@ public class BlockSimulator {
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
             .gasUsed(simResult.getCumulativeGasUsed())
+            .blobGasUsed(simResult.getCumulativeBlobGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
             .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
@@ -498,8 +500,10 @@ public class BlockSimulator {
                                 ? getNextBaseFee(newProtocolSpec, header, blockNumber)
                                 : Wei.ZERO))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
-            .parentBeaconBlockRoot(Bytes32.ZERO)
-            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO));
+            .parentBeaconBlockRoot(blockOverrides.getParentBeaconBlockRoot().orElse(Bytes32.ZERO))
+            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO))
+            .excessBlobGas(
+                ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, header));
 
     return builder
         .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
