@@ -166,6 +166,8 @@ public class DebugOperationTracer implements OperationTracer {
             .setVirtualOperation(currentOperation.isVirtualOperation())
             .setMaybeUpdatedMemory(frame.getMaybeUpdatedMemory())
             .setMaybeUpdatedStorage(frame.getMaybeUpdatedStorage())
+            .setSoftFailureReason(operationResult.getSoftFailureReason())
+            .setGasAvailableForChildCall(operationResult.getGasAvailableForChildCall())
             .build();
 
     traceFrames.add(lastFrame);
