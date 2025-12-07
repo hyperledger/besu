@@ -52,7 +52,8 @@ public class VersionedHash {
     }
     this.hashish =
         Bytes32.wrap(
-            Bytes.concatenate(Bytes.of(SHA256_VERSION_ID), hash.slice(1, hash.size() - 1)));
+            Bytes.concatenate(
+                Bytes.of(SHA256_VERSION_ID), hash.getBytes().slice(1, hash.getBytes().size() - 1)));
   }
 
   /**

@@ -47,7 +47,7 @@ public class BonsaiReferenceTestUpdateAccumulator extends BonsaiWorldStateUpdate
 
   @Override
   protected Hash hashAndSaveAccountPreImage(final Address address) {
-    return preImageProxy.hashAndSavePreImage(address);
+    return preImageProxy.hashAndSavePreImage(address.getBytes());
   }
 
   @Override

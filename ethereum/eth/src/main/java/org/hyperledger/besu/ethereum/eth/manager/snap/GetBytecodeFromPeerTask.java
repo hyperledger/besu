@@ -123,8 +123,8 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
     final Map<Bytes32, Bytes> codeByHash = new HashMap<>();
     for (int i = 0; i < bytecodes.size(); i++) {
       final Hash hash = Hash.hash(bytecodes.get(i));
-      if (codeHashes.get(i).equals(hash)) {
-        codeByHash.put(hash, bytecodes.get(i));
+      if (codeHashes.get(i).equals(hash.getBytes())) {
+        codeByHash.put(Bytes32.wrap(hash.getBytes()), bytecodes.get(i));
       }
     }
     return Optional.of(codeByHash);

@@ -35,6 +35,7 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionTestFixture {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -222,7 +223,7 @@ public class TransactionTestFixture {
             Bytes.concatenate(
                 org.hyperledger.besu.ethereum.core.CodeDelegation.MAGIC, rlpOutput.encoded()));
 
-    final var signature = SIGNATURE_ALGORITHM.get().sign(hash, keys);
+    final var signature = SIGNATURE_ALGORITHM.get().sign(Bytes32.wrap(hash.getBytes()), keys);
 
     return new org.hyperledger.besu.ethereum.core.CodeDelegation(
         chainId,

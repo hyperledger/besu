@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.IntSupplier;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +122,8 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
 
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
-      if (worldStateStorageCoordinator.isWorldStateAvailable(stateRoot, header.getHash())) {
+      if (worldStateStorageCoordinator.isWorldStateAvailable(
+          Bytes32.wrap(stateRoot.getBytes()), header.getHash())) {
         LOG.info(
             "World state already available for block {} ({}). State root {}",
             header.getNumber(),

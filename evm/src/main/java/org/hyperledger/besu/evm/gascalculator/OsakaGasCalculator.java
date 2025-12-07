@@ -44,7 +44,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
 
   /** Instantiates a new Osaka Gas Calculator. */
   public OsakaGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.getInt(16), P256_VERIFY.getInt(16));
+    this(BLS12_MAP_FP2_TO_G2.getBytes().getInt(16), P256_VERIFY.getBytes().getInt(16));
   }
 
   /**
@@ -64,12 +64,12 @@ public class OsakaGasCalculator extends PragueGasCalculator {
    * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
    */
   protected OsakaGasCalculator(final int maxPrecompile) {
-    this(maxPrecompile, P256_VERIFY.getInt(16));
+    this(maxPrecompile, P256_VERIFY.getBytes().getInt(16));
   }
 
   @Override
   public boolean isPrecompile(final Address address) {
-    final byte[] addressBytes = address.toArrayUnsafe();
+    final byte[] addressBytes = address.getBytes().toArrayUnsafe();
 
     // First 18 bytes must be zero:
     for (int i = 0; i < 18; i++) {
@@ -78,7 +78,7 @@ public class OsakaGasCalculator extends PragueGasCalculator {
       }
     }
     // Interpret last two bytes as big-endian unsigned short.
-    final int precompileValue = address.getInt(16);
+    final int precompileValue = address.getBytes().getInt(16);
 
     // values in range [1, 0x01FF] inclusive to include L1 and L2 precompiles,
     // assert max precompile in each range:

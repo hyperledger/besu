@@ -81,20 +81,20 @@ public class CliqueBlockHashing {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeBytes(header.getParentHash());
-    out.writeBytes(header.getOmmersHash());
-    out.writeBytes(header.getCoinbase());
-    out.writeBytes(header.getStateRoot());
-    out.writeBytes(header.getTransactionsRoot());
-    out.writeBytes(header.getReceiptsRoot());
-    out.writeBytes(header.getLogsBloom());
+    out.writeBytes(header.getParentHash().getBytes());
+    out.writeBytes(header.getOmmersHash().getBytes());
+    out.writeBytes(header.getCoinbase().getBytes());
+    out.writeBytes(header.getStateRoot().getBytes());
+    out.writeBytes(header.getTransactionsRoot().getBytes());
+    out.writeBytes(header.getReceiptsRoot().getBytes());
+    out.writeBytes(header.getLogsBloom().getBytes());
     out.writeBytes(header.getDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(extraDataSerializer.get());
-    out.writeBytes(header.getMixHash());
+    out.writeBytes(header.getMixHash().getBytes());
     out.writeLong(header.getNonce());
     header.getBaseFee().ifPresent(out::writeUInt256Scalar);
     out.endList();
