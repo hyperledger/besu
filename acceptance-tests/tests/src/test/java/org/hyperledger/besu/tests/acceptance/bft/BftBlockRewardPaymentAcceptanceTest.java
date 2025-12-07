@@ -145,7 +145,8 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
       throw new RuntimeException("Unable to generate genesis config.");
     }
 
-    final String miningBeneficiary = initialMiningBeneficiary.map(Address::toHexString).orElse("");
+    final String miningBeneficiary =
+        initialMiningBeneficiary.map(addr -> addr.getBytes().toHexString()).orElse("");
     final String bftOptions = formatKeyValues("miningbeneficiary", miningBeneficiary);
     final String configWithMiningBeneficiary =
         configureBftOptions(initialConfig.get(), bftOptions, miningBeneficiaryTransitions);
@@ -250,7 +251,7 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
             "block",
             blockNumber,
             "miningbeneficiary",
-            miningBeneficiary.map(Address::toHexString).orElse("")));
+            miningBeneficiary.map(addr -> addr.getBytes().toHexString()).orElse("")));
     stringBuilder.append("}");
     return stringBuilder.toString();
   }

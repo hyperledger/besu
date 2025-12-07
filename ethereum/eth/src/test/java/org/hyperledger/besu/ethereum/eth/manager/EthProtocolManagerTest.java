@@ -117,7 +117,7 @@ public final class EthProtocolManagerTest {
   private static BlockDataGenerator gen;
   private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private static final ForkId forkId = new ForkId(Hash.ZERO, 0);
+  private static final ForkId forkId = new ForkId(Hash.ZERO.getBytes(), 0);
 
   @BeforeAll
   public static void setup() {

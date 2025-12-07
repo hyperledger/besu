@@ -83,8 +83,8 @@ public class SyncBlockBodyTest {
 
     assertThat(syncBlockBody.getTransactionsRoot())
         .isEqualTo(BodyValidation.transactionsRoot(block.getBody().getTransactions()));
-    assertThat(syncBlockBody.getWithdrawalsRoot())
-        .isEqualTo(BodyValidation.withdrawalsRoot(block.getBody().getWithdrawals().get()));
+    assertThat(syncBlockBody.getWithdrawalsRoot().orElseThrow())
+        .isEqualTo(BodyValidation.withdrawalsRoot(block.getBody().getWithdrawals().orElseThrow()));
     assertThat(syncBlockBody.getOmmersHash())
         .isEqualTo(BodyValidation.ommersHash(block.getBody().getOmmers()));
   }
@@ -105,7 +105,7 @@ public class SyncBlockBodyTest {
     assertThat(syncBlockBody.getOmmersHash())
         .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(syncBlockBody.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(syncBlockBody.getWithdrawalsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(syncBlockBody.getWithdrawalsRoot().orElseThrow()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(syncBlockBody.getEncodedTransactions()).isEqualTo(Collections.emptyList());
   }
 
@@ -120,7 +120,7 @@ public class SyncBlockBodyTest {
     assertThat(emptySBB.getOmmersHash())
         .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(emptySBB.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(emptySBB.getWithdrawalsRoot()).isNull();
+    assertThat(emptySBB.getWithdrawalsRoot()).isEmpty();
     assertThat(emptySBB.getEncodedTransactions()).isEqualTo(Collections.emptyList());
   }
 
@@ -135,7 +135,7 @@ public class SyncBlockBodyTest {
     assertThat(emptySBB.getOmmersHash())
         .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(emptySBB.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(emptySBB.getWithdrawalsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
+    assertThat(emptySBB.getWithdrawalsRoot().orElseThrow()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(emptySBB.getEncodedTransactions()).isEqualTo(Collections.emptyList());
   }
 

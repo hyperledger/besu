@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValu
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,7 @@ public class ForestKeyValueStorageWorldStateStorageTest {
   @Test
   public void getNodeData_returnsEmptyValue() {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getNodeData(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getNodeData(Bytes32.wrap(Hash.EMPTY.getBytes()))).contains(Bytes.EMPTY);
   }
 
   @Test
@@ -84,22 +85,29 @@ public class ForestKeyValueStorageWorldStateStorageTest {
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
-        .putAccountStateTrieNode(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
-        .putAccountStateTrieNode(Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+        .putAccountStateTrieNode(
+            Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes()),
+            MerkleTrie.EMPTY_TRIE_NODE)
+        .putAccountStateTrieNode(Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes()), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getAccountStateTrieNode(MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getAccountStateTrieNode(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getAccountStateTrieNode(Bytes32.wrap(Hash.EMPTY.getBytes())))
+        .contains(Bytes.EMPTY);
   }
 
   @Test
   public void getAccountStateTrieNode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStateTrieNode(Hash.hash(bytes), bytes).commit();
+    storage
+        .updater()
+        .putAccountStateTrieNode(Bytes32.wrap(Hash.hash(bytes).getBytes()), bytes)
+        .commit();
 
-    assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
+    assertThat(storage.getAccountStateTrieNode(Bytes32.wrap(Hash.hash(bytes).getBytes())))
+        .contains(bytes);
   }
 
   @Test
@@ -108,22 +116,28 @@ public class ForestKeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode(Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes()),
+            MerkleTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes()), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getAccountStorageTrieNode(MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getAccountStorageTrieNode(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getAccountStorageTrieNode(Bytes32.wrap(Hash.EMPTY.getBytes())))
+        .contains(Bytes.EMPTY);
   }
 
   @Test
   public void getAccountStorageTrieNode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
+    storage
+        .updater()
+        .putAccountStorageTrieNode(Bytes32.wrap(Hash.hash(bytes).getBytes()), bytes)
+        .commit();
 
-    assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
+    assertThat(storage.getAccountStateTrieNode(Bytes32.wrap(Hash.hash(bytes).getBytes())))
+        .contains(bytes);
   }
 
   @Test
@@ -132,22 +146,26 @@ public class ForestKeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode(Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes()),
+            MerkleTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes()), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getNodeData(MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getNodeData(Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getNodeData(Bytes32.wrap(Hash.EMPTY.getBytes()))).contains(Bytes.EMPTY);
   }
 
   @Test
   public void getNodeData_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final ForestWorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
+    storage
+        .updater()
+        .putAccountStorageTrieNode(Bytes32.wrap(Hash.hash(bytes).getBytes()), bytes)
+        .commit();
 
-    assertThat(storage.getNodeData(Hash.hash(bytes))).contains(bytes);
+    assertThat(storage.getNodeData(Bytes32.wrap(Hash.hash(bytes).getBytes()))).contains(bytes);
   }
 
   @Test
@@ -180,7 +198,8 @@ public class ForestKeyValueStorageWorldStateStorageTest {
 
   @Test
   public void isWorldStateAvailable_emptyTrieStateAlwaysAvailable() {
-    assertThat(emptyStorage().isWorldStateAvailable(Hash.EMPTY_TRIE_HASH)).isTrue();
+    assertThat(emptyStorage().isWorldStateAvailable(Bytes32.wrap(Hash.EMPTY_TRIE_HASH.getBytes())))
+        .isTrue();
   }
 
   private ForestWorldStateKeyValueStorage emptyStorage() {

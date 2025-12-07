@@ -171,7 +171,7 @@ public class ByteCodeBuilder {
         .push(0)
         .push(0)
         .push(0)
-        .push(Bytes.fromHexString(address.toHexString()))
+        .push(Bytes.fromHexString(address.getBytes().toHexString()))
         .push(gasLimit.toMinimalBytes())
         .op(callType);
     return this;
@@ -229,7 +229,7 @@ public class ByteCodeBuilder {
         .push(32)
         .push(0)
         .push(0)
-        .push(Bytes.fromHexString(address.toHexString()))
+        .push(Bytes.fromHexString(address.getBytes().toHexString()))
         .push(gasLimit.toMinimalBytes())
         .op(callType);
     return this;
@@ -255,7 +255,7 @@ public class ByteCodeBuilder {
    */
   public ByteCodeBuilder callerIs(final Address caller) {
     byteCode.append(Operation.CALLER);
-    this.push(Bytes.fromHexString(caller.toHexString()));
+    this.push(Bytes.fromHexString(caller.getBytes().toHexString()));
     byteCode.append(Operation.EQ);
     return this;
   }

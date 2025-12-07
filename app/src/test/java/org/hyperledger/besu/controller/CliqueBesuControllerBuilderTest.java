@@ -68,6 +68,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -106,12 +107,12 @@ public class CliqueBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfig.getExtraData())
         .thenReturn(
             "0x0000000000000000000000000000000000000000000000000000000000000000b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
     lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
@@ -219,7 +220,7 @@ public class CliqueBesuControllerBuilderTest {
             0,
             Bytes.EMPTY,
             Wei.ZERO,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
             null,
             null,

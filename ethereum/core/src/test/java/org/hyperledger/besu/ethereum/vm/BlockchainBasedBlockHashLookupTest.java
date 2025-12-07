@@ -155,7 +155,7 @@ class BlockchainBasedBlockHashLookupTest {
 
     op.execute(messageFrameMock, null);
 
-    verify(messageFrameMock).pushStackItem(hash);
+    verify(messageFrameMock).pushStackItem(hash.getBytes());
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {

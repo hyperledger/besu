@@ -69,6 +69,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -258,7 +259,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         new BftBlockHashing(new IbftExtraDataCodec())
             .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
-    final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
+    final SECPSignature localCommitSeal = nodeKey.sign(Bytes32.wrap(commitSealHash.getBytes()));
 
     // Receive Proposal Message
     round.handleProposalMessage(
@@ -306,7 +307,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         new BftBlockHashing(new IbftExtraDataCodec())
             .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
-    final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
+    final SECPSignature localCommitSeal = nodeKey.sign(Bytes32.wrap(commitSealHash.getBytes()));
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, never()).multicastCommit(any(), any(), any());

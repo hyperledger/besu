@@ -60,7 +60,8 @@ class DebugTraceTransactionStepFactoryTest {
     // Set up transaction hash chain
     when(mockTransactionTrace.getTransaction()).thenReturn(mockTransaction);
     when(mockTransaction.getHash()).thenReturn(mockHash);
-    when(mockHash.toHexString()).thenReturn(EXPECTED_HASH);
+    Bytes hashBytes = Bytes.fromHexString(EXPECTED_HASH);
+    when(mockHash.getBytes()).thenReturn(hashBytes);
 
     // Minimal setup for DebugStructLoggerTracerResult - just enough to avoid NPE
     when(mockTransactionTrace.getGas()).thenReturn(0L);
