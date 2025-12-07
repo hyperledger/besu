@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class TransactionTrace {
 
@@ -29,7 +30,7 @@ public class TransactionTrace {
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
-  private final Optional<List<PartialBlockAccessView.AccountChanges>> accountChanges;
+  private final Optional<Set<Address>> accountChanges;
 
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
@@ -67,12 +68,12 @@ public class TransactionTrace {
       final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames,
       final Optional<Block> block,
-      final List<PartialBlockAccessView.AccountChanges> accessListTracker) {
+      final Set<Address> touchedAccounts) {
     this.transaction = transaction;
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
-    this.accountChanges = Optional.ofNullable(accessListTracker);
+    this.accountChanges = Optional.ofNullable(touchedAccounts);
   }
 
   public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
@@ -107,7 +108,7 @@ public class TransactionTrace {
     return block;
   }
 
-  public Optional<List<PartialBlockAccessView.AccountChanges>> getAccountChanges() {
+  public Optional<Set<Address>> getAccountChanges() {
     return accountChanges;
   }
 }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -35,7 +36,9 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ExecuteTransactionStep implements Function<TransactionTrace, TransactionTrace> {
 
@@ -89,7 +92,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
     AccessLocationTracker accessListTracker = new AccessLocationTracker(0);
 
     // If it is not a reward Block trace
-    List<PartialBlockAccessView.AccountChanges> accountChanges = null;
+    Set<Address> touchedAccounts = null;
     if (transactionTrace.getTransaction() != null) {
       BlockHeader header = block.getHeader();
       final Optional<BlockHeader> maybeParentHeader =
@@ -119,16 +122,19 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
       traceFrames = tracer.copyTraceFrames();
       tracer.reset();
-      accountChanges =
+      touchedAccounts =
           accessListTracker
               .createPartialBlockAccessView(nextUpdater.updater().updater())
-              .accountChanges();
+              .accountChanges()
+              .stream()
+              .map(PartialBlockAccessView.AccountChanges::getAddress)
+              .collect(Collectors.toUnmodifiableSet());
     }
     return new TransactionTrace(
         transactionTrace.getTransaction(),
         result,
         traceFrames,
         transactionTrace.getBlock(),
-        accountChanges);
+        touchedAccounts);
   }
 }

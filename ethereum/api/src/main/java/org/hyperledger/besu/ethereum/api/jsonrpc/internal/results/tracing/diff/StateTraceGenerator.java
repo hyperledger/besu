@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -95,14 +95,15 @@ public class StateTraceGenerator {
     final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
     // Compare modified accounts (existing or new accounts touched by the tx)
-    getTouchedAccounts(transactionUpdater, transactionTrace)
-        .forEach(
-            address -> {
-              final Account originalAccount = previousUpdater.get(address);
-              final MutableAccount updatedAccount = transactionUpdater.getAccount(address);
-              processAccountDiff(
-                  address, stateDiffResult, updatedAccount, originalAccount, isPreState);
-            });
+    final Collection<Address> touchedAccounts =
+        getTouchedAccounts(transactionUpdater, transactionTrace);
+
+    for (Address address : touchedAccounts) {
+      final Account original = previousUpdater.get(address);
+      final MutableAccount updated = transactionUpdater.getAccount(address);
+      processAccountDiff(address, stateDiffResult, updated, original, isPreState);
+    }
+
     processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
     return Stream.of(stateDiffResult);
   }
@@ -128,14 +129,13 @@ public class StateTraceGenerator {
    */
   private Collection<Address> getTouchedAccounts(
       final WorldUpdater transactionUpdater, final TransactionTrace transactionTrace) {
-    var accountChanges = transactionTrace.getAccountChanges();
-    return accountChanges
-        .<Collection<Address>>map(
-            changes ->
-                changes.stream().map(PartialBlockAccessView.AccountChanges::getAddress).toList())
+    return transactionTrace
+        .getAccountChanges()
         .orElseGet(
             () ->
-                transactionUpdater.getTouchedAccounts().stream().map(Account::getAddress).toList());
+                transactionUpdater.getTouchedAccounts().stream()
+                    .map(Account::getAddress)
+                    .collect(Collectors.toUnmodifiableSet()));
   }
 
   /**
