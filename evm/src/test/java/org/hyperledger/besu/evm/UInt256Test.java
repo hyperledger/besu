@@ -346,9 +346,11 @@ public class UInt256Test {
 
   @Test
   public void mulMod_from_bytes() {
-    byte[] a = new byte[] {
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-    };
+    byte[] a =
+        new byte[] {
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 1
+        };
     byte[] b = new byte[] {1};
     byte[] m = new byte[] {-1};
     UInt256 aint = UInt256.fromBytesBE(a);
