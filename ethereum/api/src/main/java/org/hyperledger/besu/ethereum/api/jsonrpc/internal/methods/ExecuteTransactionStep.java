@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -89,7 +90,8 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
     List<TraceFrame> traceFrames = null;
     TransactionProcessingResult result = null;
-    AccessLocationTracker accessListTracker = new AccessLocationTracker(0);
+    AccessLocationTracker accessListTracker =
+        BlockAccessList.BlockAccessListBuilder.createTransactionAccessLocationTracker(0);
 
     // If it is not a reward Block trace
     Set<Address> touchedAccounts = null;
