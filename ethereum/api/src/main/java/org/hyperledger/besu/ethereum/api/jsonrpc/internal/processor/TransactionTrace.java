@@ -30,14 +30,14 @@ public class TransactionTrace {
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
-  private final Optional<Set<Address>> accountChanges;
+  private final Optional<Set<Address>> touchedAccounts;
 
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
     this.result = null;
     this.traceFrames = null;
     this.block = block;
-    this.accountChanges = Optional.empty();
+    this.touchedAccounts = Optional.empty();
   }
 
   public TransactionTrace(
@@ -48,7 +48,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = Optional.empty();
-    this.accountChanges = Optional.empty();
+    this.touchedAccounts = Optional.empty();
   }
 
   public TransactionTrace(
@@ -60,7 +60,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
-    this.accountChanges = Optional.empty();
+    this.touchedAccounts = Optional.empty();
   }
 
   public TransactionTrace(
@@ -73,7 +73,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
-    this.accountChanges = Optional.ofNullable(touchedAccounts);
+    this.touchedAccounts = Optional.ofNullable(touchedAccounts);
   }
 
   public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
@@ -81,7 +81,7 @@ public class TransactionTrace {
     this.result = null;
     this.traceFrames = null;
     this.block = block;
-    this.accountChanges = Optional.empty();
+    this.touchedAccounts = Optional.empty();
   }
 
   public Transaction getTransaction() {
@@ -108,7 +108,7 @@ public class TransactionTrace {
     return block;
   }
 
-  public Optional<Set<Address>> getAccountChanges() {
-    return accountChanges;
+  public Optional<Set<Address>> getTouchedAccounts() {
+    return touchedAccounts;
   }
 }

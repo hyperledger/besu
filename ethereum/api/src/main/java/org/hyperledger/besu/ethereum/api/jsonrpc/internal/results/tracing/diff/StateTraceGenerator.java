@@ -130,7 +130,7 @@ public class StateTraceGenerator {
   private Collection<Address> getTouchedAccounts(
       final WorldUpdater transactionUpdater, final TransactionTrace transactionTrace) {
     return transactionTrace
-        .getAccountChanges()
+        .getTouchedAccounts()
         .orElseGet(
             () ->
                 transactionUpdater.getTouchedAccounts().stream()
