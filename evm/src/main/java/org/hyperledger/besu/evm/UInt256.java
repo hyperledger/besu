@@ -48,8 +48,7 @@ public final class UInt256 {
   // Mask for long values
   private static final long MASK_L = 0xFFFFFFFFL;
 
-  // Fixed arrays
-  private static final byte[] ZERO_BYTES = new byte[32];
+  // Arrays of zeros.
   // We accomodate up to a result of a multiplication
   private static final int[] ZERO_INTS = new int[17];
 
@@ -103,55 +102,40 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    int msb = Arrays.mismatch(bytes, ZERO_BYTES);  // Most significant byte index
-    if (msb == -1) return ZERO;
-    int[] limbs = new int[N_LIMBS];
-    int len = (bytes.length - msb);
-    int nFullInts = len >> N_BYTES_PER_LIMB_LOG;
-    int nRemaining = len & (N_BYTES_PER_LIMB - 1);
+    int byteLen = bytes.length;
+    if (byteLen == 0) return ZERO;
 
-    int offset = N_LIMBS - nFullInts;
-    int i = 7;
-    int j = bytes.length - 4;
-    switch(nFullInts) {
-      // Fall through
-      case 8:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 7:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 6:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 5:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 4:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 3:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 2:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
-      // Fall through
-      case 1:
-        limbs[i--] = getIntBE(bytes, j);
-        j -= 4;
+    int[] limbs = new int[N_LIMBS];
+
+    // Fast path for exactly 32 bytes
+    if (byteLen == 32) {
+      limbs[7] = getIntBE(bytes, 28);
+      limbs[6] = getIntBE(bytes, 24);
+      limbs[5] = getIntBE(bytes, 20);
+      limbs[4] = getIntBE(bytes, 16);
+      limbs[3] = getIntBE(bytes, 12);
+      limbs[2] = getIntBE(bytes, 8);
+      limbs[1] = getIntBE(bytes, 4);
+      limbs[0] = getIntBE(bytes, 0);
+      return new UInt256(limbs, 0);
     }
-    if (nRemaining != 0) {
-      limbs[i] = getIntBEPartial(bytes, j, nRemaining);
-      offset--;
+
+    // General path for variable length
+    int limbIndex = N_LIMBS;
+    int byteIndex = byteLen - 1;
+
+    while (byteIndex >= 0 && limbIndex >= 1) {
+      int limb = 0;
+      int shift = 0;
+
+      for (int j = 0; j < 4 && byteIndex >= 0; j++, byteIndex--, shift += 8) {
+        limb |= (bytes[byteIndex] & 0xFF) << shift;
+      }
+
+      limbs[--limbIndex] = limb;
     }
-    return new UInt256(limbs, offset);
+
+    return new UInt256(limbs, limbIndex);
   }
 
   // Helper method to read 4 bytes as big-endian int
@@ -249,14 +233,9 @@ public final class UInt256 {
    */
   public byte[] toBytesBE() {
     byte[] result = new byte[BYTESIZE];
-    putIntBE(result, 0, limbs[0]);
-    putIntBE(result, 4, limbs[1]);
-    putIntBE(result, 8, limbs[2]);
-    putIntBE(result, 12, limbs[3]);
-    putIntBE(result, 16, limbs[4]);
-    putIntBE(result, 20, limbs[5]);
-    putIntBE(result, 24, limbs[6]);
-    putIntBE(result, 28, limbs[7]);
+    for (int i = this.limbs.length - N_LIMBS, j = 0; i < this.limbs.length; i++, j += 4) {
+      putIntBE(result, j, limbs[i]);
+    }
     return result;
   }
 
@@ -383,7 +362,7 @@ public final class UInt256 {
     if (modulus.isZero()) return ZERO;
     int[] sum = addImpl(this.limbs, other.limbs);
     int[] rem = knuthRemainder(sum, modulus.limbs);
-    return new UInt256(rem, modulus.offset);
+    return new UInt256(rem, rem.length - modulus.limbs.length + modulus.offset);
   }
 
   /**
@@ -397,7 +376,8 @@ public final class UInt256 {
     if (this.isZero() || other.isZero() || modulus.isZero()) return ZERO;
     int[] result = addMul(this.limbs, this.offset, other.limbs, other.offset);
     result = knuthRemainder(result, modulus.limbs);
-    return new UInt256(result, modulus.offset);
+    UInt256 res = new UInt256(result, result.length - modulus.limbs.length + modulus.offset);
+    return res;
   }
 
   /**
@@ -619,7 +599,7 @@ public final class UInt256 {
       y = b;
       yOffset = bOffset;
     }
-    int[] lhs = new int[a.length + b.length - xOffset - yOffset + 1];
+    int[] lhs = new int[x.length + y.length - xOffset - yOffset];
 
     // Main algo
     int xLen = x.length - xOffset;
@@ -627,7 +607,7 @@ public final class UInt256 {
       long carry = 0;
       long yi = y[i] & MASK_L;
 
-      int k = i + xLen - yOffset + 1;
+      int k = i + xLen - yOffset;
       for (int j = x.length - 1; j >= xOffset; j--, k--) {
         long prod = yi * (x[j] & MASK_L);
         long sum = (lhs[k] & MASK_L) + prod + carry;
