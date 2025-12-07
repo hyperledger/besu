@@ -345,6 +345,21 @@ public class UInt256Test {
   }
 
   @Test
+  public void mulMod_from_bytes() {
+    byte[] a = new byte[] {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+    };
+    byte[] b = new byte[] {1};
+    byte[] m = new byte[] {-1};
+    UInt256 aint = UInt256.fromBytesBE(a);
+    UInt256 bint = UInt256.fromBytesBE(b);
+    UInt256 mint = UInt256.fromBytesBE(m);
+    UInt256 result = aint.mulMod(bint, mint);
+    byte[] got = result.toBytesBE();
+    assertThat(got).containsExactly(a);
+  }
+
+  @Test
   public void signedMod_no_padding() {
     Bytes aBytes =
         Bytes.fromHexString("0xe8e8e8e2000100000009ea02000000000000ff3ffffff80000001000220000");
