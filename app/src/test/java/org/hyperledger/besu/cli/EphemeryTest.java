@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
+import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,11 +26,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -433,7 +433,7 @@ public class EphemeryTest extends CommandTestAbstract {
     return new MainnetBesuControllerBuilder()
         .genesisConfig(genesisConfig)
         .synchronizerConfiguration(syncConfig)
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .dataDirectory(dataDir)
         .networkId(networkId)
         .miningParameters(miningConfiguration)
@@ -460,7 +460,7 @@ public class EphemeryTest extends CommandTestAbstract {
     dbNodeKey = NodeKeyUtils.createFrom(keyPair);
   }
 
-  private GenesisConfig getFastSyncGenesis(final NetworkName networkName) throws IOException {
+  private GenesisConfig getFastSyncGenesis(final NetworkDefinition networkName) throws IOException {
     final ObjectNode jsonNode =
         (ObjectNode)
             new ObjectMapper()

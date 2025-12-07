@@ -966,8 +966,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
-      ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
-
       initialProcess();
 
       if (network.equals(EPHEMERY)) {
@@ -991,6 +989,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void initialProcess() throws Exception {
     if (network.equals(EPHEMERY)) {
       genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
+      if (BigInteger.ZERO.equals(ephemeryNextCycleId)) {
+        ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
+      }
       dataPath = dataPath.resolve("Ephemery-data-chain-" + ephemeryNextCycleId);
       ephemeryNextCycleId = ephemeryNextCycleId.add(BigInteger.ONE);
     }
