@@ -108,7 +108,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
   public void failIfInconsistencyDetectedDuringVariablesMigration() {
     populateBlockchainStorage(kvBlockchain, variableValues);
     // create and inconsistency putting a different chain head in variables storage
-    variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD.shiftLeft(1));
+    variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD.getBytes().shiftLeft(1));
     populateVariablesStorage(kvVariables, variableValues);
     assertThrows(
         IllegalStateException.class,

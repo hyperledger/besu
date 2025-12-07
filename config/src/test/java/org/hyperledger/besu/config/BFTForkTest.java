@@ -17,8 +17,6 @@ package org.hyperledger.besu.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.datatypes.Address;
-
 import java.util.Collections;
 import java.util.Map;
 
@@ -43,7 +41,8 @@ public class BFTForkTest {
         JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, BENEFICIARY));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
+    assertThat(bftFork.getMiningBeneficiary().map(a -> a.getBytes().toHexString()))
+        .contains(BENEFICIARY);
   }
 
   @Test
@@ -53,7 +52,8 @@ public class BFTForkTest {
             Map.of(BftFork.MINING_BENEFICIARY_KEY, BENEFICIARY.substring(2)));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
+    assertThat(bftFork.getMiningBeneficiary().map(a -> a.getBytes().toHexString()))
+        .contains(BENEFICIARY);
   }
 
   @Test
@@ -63,7 +63,8 @@ public class BFTForkTest {
             Map.of(BftFork.MINING_BENEFICIARY_KEY, "\t" + BENEFICIARY + "  "));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
+    assertThat(bftFork.getMiningBeneficiary().map(a -> a.getBytes().toHexString()))
+        .contains(BENEFICIARY);
   }
 
   @Test

@@ -88,11 +88,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -128,11 +128,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -161,7 +161,7 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode an empty vote
     encoder.writeNull();
@@ -215,11 +215,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.DROP_BYTE_VALUE);
     encoder.endList();
 
@@ -276,11 +276,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -361,11 +361,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -399,11 +399,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -431,11 +431,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -469,11 +469,11 @@ public class IbftExtraDataRLPEncoderTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode vote
     encoder.startList();
-    encoder.writeBytes(voteRecipient);
+    encoder.writeBytes(voteRecipient.getBytes());
     encoder.writeByte(voteType);
     encoder.endList();
 

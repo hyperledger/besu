@@ -41,6 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
 public class ValidatorPeer extends DefaultValidatorPeer {
 
@@ -67,7 +69,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final QbftBlock block) {
     final QbftBlock commitBlock = createCommitBlockFromProposalBlock(block, rId.getRoundNumber());
-    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
+    final SECPSignature commitSeal = nodeKey.sign(Bytes32.wrap(commitBlock.getHash().getBytes()));
     return injectCommit(rId, block.getHash(), commitSeal);
   }
 

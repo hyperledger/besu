@@ -147,7 +147,7 @@ public class CallParameterTest {
         .satisfies(
             auth -> {
               assertThat(auth.chainId()).isEqualTo(BigInteger.ONE);
-              assertThat(auth.address().toHexString())
+              assertThat(auth.address().getBytes().toHexString())
                   .isEqualTo("0x6b7879a5d747e30a3adb37a9e41c046928fce933");
               assertThat(auth.nonce()).isEqualTo(130L);
               assertThat(auth.v()).isEqualTo((byte) 0x1);
@@ -190,7 +190,7 @@ public class CallParameterTest {
         .satisfies(
             auth -> {
               assertThat(auth.chainId()).isEqualTo(BigInteger.ONE);
-              assertThat(auth.address().toHexString())
+              assertThat(auth.address().getBytes().toHexString())
                   .isEqualTo("0x6b7879a5d747e30a3adb37a9e41c046928fce933");
               assertThat(auth.nonce()).isEqualTo(130L);
               assertThat(auth.authorizer())
