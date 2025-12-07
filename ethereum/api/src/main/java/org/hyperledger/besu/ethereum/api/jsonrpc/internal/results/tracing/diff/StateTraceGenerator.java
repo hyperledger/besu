@@ -166,7 +166,7 @@ public class StateTraceGenerator {
    * @param accountAddress The address of the account being processed.
    * @param stateDiff The aggregated diff being built for this transaction.
    * @param updatedAccount The account state after transaction execution.
-   * @param originalAccount The account state before transaction execution, or {@code null} if the
+   * @param rootAccount The account state before transaction execution, or {@code null} if the
    *     account was newly created.
    * @param isPreState Whether pre-state mode is enabled.
    */
@@ -174,22 +174,22 @@ public class StateTraceGenerator {
       final Address accountAddress,
       final StateDiffTrace stateDiff,
       final Account updatedAccount,
-      final Account originalAccount,
+      final Account rootAccount,
       final boolean isPreState) {
 
     // Compute storage differences for this account
     final Map<String, DiffNode> storageDiff =
         updatedAccount == null
             ? Collections.emptyMap()
-            : calculateStorageDiff((MutableAccount) updatedAccount, originalAccount, isPreState);
+            : calculateStorageDiff((MutableAccount) updatedAccount, rootAccount, isPreState);
 
     // Build account-level diff
     final AccountDiff accountDiff =
         new AccountDiff(
-            createDiffNode(originalAccount, updatedAccount, StateTraceGenerator::balanceAsHex),
-            createDiffNode(originalAccount, updatedAccount, StateTraceGenerator::codeAsHex),
-            createDiffNode(originalAccount, updatedAccount, StateTraceGenerator::codeHashAsHex),
-            createDiffNode(originalAccount, updatedAccount, StateTraceGenerator::nonceAsHex),
+            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::balanceAsHex),
+            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeAsHex),
+            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeHashAsHex),
+            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::nonceAsHex),
             storageDiff);
 
     // Record only if something changed (or always if pre-state)
@@ -214,15 +214,13 @@ public class StateTraceGenerator {
    * </ul>
    *
    * @param updatedAccount The account state after transaction execution (mutable).
-   * @param originalAccount The account state before the transaction, or {@code null} if the account
-   *     was newly created during the transaction.
+   * @param rootAccount The account state before the transaction, or {@code null} if the account was
+   *     newly created during the transaction.
    * @param isPreState Whether pre-state mode is active.
    * @return A map of storage slot key → {@link DiffNode}, representing the diff of each slot.
    */
   private Map<String, DiffNode> calculateStorageDiff(
-      final MutableAccount updatedAccount,
-      final Account originalAccount,
-      final boolean isPreState) {
+      final MutableAccount updatedAccount, final Account rootAccount, final boolean isPreState) {
 
     final Map<String, DiffNode> storageDiff = new TreeMap<>();
 
@@ -231,7 +229,7 @@ public class StateTraceGenerator {
         .getUpdatedStorage()
         .forEach(
             (key, newValue) -> {
-              if (originalAccount == null) {
+              if (rootAccount == null) {
                 // Case 1: Account did not exist before this transaction
                 // Record non-zero slots in diff mode, or all slots in pre-state mode
                 if (!UInt256.ZERO.equals(newValue) || isPreState) {
@@ -240,9 +238,8 @@ public class StateTraceGenerator {
               } else {
                 // Case 2: Account existed pre-transaction
                 // Record differences, or everything if pre-state mode is enabled
-                if (!originalAccount.getStorageValue(key).equals(newValue) || isPreState) {
-                  final String originalValueHex =
-                      originalAccount.getStorageValue(key).toHexString();
+                if (!rootAccount.getStorageValue(key).equals(newValue) || isPreState) {
+                  final String originalValueHex = rootAccount.getStorageValue(key).toHexString();
                   storageDiff.put(
                       key.toHexString(), new DiffNode(originalValueHex, newValue.toHexString()));
                 }
