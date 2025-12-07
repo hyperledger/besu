@@ -102,13 +102,13 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    // Unchecked : bytes.length <= BYTESIZE 
+    // Unchecked : bytes.length <= BYTESIZE
     if (bytes.length == 0) return ZERO;
-    int msb = Arrays.mismatch(bytes, ZERO_BYTES);  // Most significant byte index
+    int msb = Arrays.mismatch(bytes, ZERO_BYTES); // Most significant byte index
     if (msb == -1 || msb >= bytes.length) return ZERO;
     int[] limbs = new int[N_LIMBS];
-    int i = N_LIMBS - 1;  // Index in int array
-    int b = bytes.length - 1;  // Index in bytes array
+    int i = N_LIMBS - 1; // Index in int array
+    int b = bytes.length - 1; // Index in bytes array
     int limb;
     for (; b >= msb; i--) {
       int shift = 0;

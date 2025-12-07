@@ -13,11 +13,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.vm.operations;
+
 import org.hyperledger.besu.evm.UInt256;
 
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -31,7 +31,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
-
 
 @State(Scope.Thread)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
@@ -85,7 +84,6 @@ public class UIntFromBytesBenchmark {
     "SIZE_RAND_PAD_0",
     "SIZE_RAND_PAD_RAND"
   })
-
   private String caseName;
 
   @Setup(Level.Iteration)
@@ -117,4 +115,3 @@ public class UIntFromBytesBenchmark {
     index = (index + 1) % SAMPLE_SIZE;
   }
 }
-
