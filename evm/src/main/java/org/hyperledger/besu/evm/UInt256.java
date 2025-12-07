@@ -52,7 +52,6 @@ public final class UInt256 {
   // We accomodate up to a result of a multiplication
   private static final int[] ZERO_INTS = new int[17];
 
-
   private final int[] limbs;
   private final int offset;
 
@@ -246,7 +245,7 @@ public final class UInt256 {
     bytes[offset + 2] = (byte) (value >>> 8);
     bytes[offset + 3] = (byte) value;
   }
-  
+
   /**
    * Convert to BigInteger.
    *
@@ -461,7 +460,7 @@ public final class UInt256 {
   // region Support (private) Algorithms
   // --------------------------------------------------------------------------
 
-  // Effective length of a big-endian int array: leading zeroes are ignored 
+  // Effective length of a big-endian int array: leading zeroes are ignored
   private static int effectiveLength(final int[] x) {
     // Unchecked : x.length <= N_LIMBS
     int offset = Arrays.mismatch(x, ZERO_INTS);
@@ -523,7 +522,7 @@ public final class UInt256 {
     // Unchecked: result length should be at least x.length + 1
     // Unchecked: 0 <= shift < N_BITS_PER_LIMB
     if (shift == 0) {
-      int xLen =  x.length - xOffset;
+      int xLen = x.length - xOffset;
       int resultOffset = result.length - xLen;
       System.arraycopy(x, xOffset, result, resultOffset, xLen);
       return 0;
@@ -542,7 +541,7 @@ public final class UInt256 {
     // Unchecked: result length should be at least x.length
     // Unchecked: 0 <= shift < N_BITS_PER_LIMB
     if (shift == 0) {
-      int xLen =  x.length - xOffset;
+      int xLen = x.length - xOffset;
       int resultOffset = result.length - xLen;
       System.arraycopy(x, xOffset, result, resultOffset, xLen);
       return 0;
@@ -574,7 +573,8 @@ public final class UInt256 {
     return sum;
   }
 
-  private static long adc(final int[] sum, final int a, final int b, final long carry, final int index) {
+  private static long adc(
+      final int[] sum, final int a, final int b, final long carry, final int index) {
     long aL = a & MASK_L;
     long bL = b & MASK_L;
     long s = aL + bL + carry;
@@ -644,7 +644,8 @@ public final class UInt256 {
     // Shortcut: if modulus has a single limb
     if (modLen == 1) {
       if (divLen == 1) {
-        result[N_LIMBS - 1] = Integer.remainderUnsigned(dividend[dividend.length - 1], modulus[modulus.length - 1]);
+        result[N_LIMBS - 1] =
+            Integer.remainderUnsigned(dividend[dividend.length - 1], modulus[modulus.length - 1]);
         return result;
       }
       long d = modulus[modulus.length - 1] & MASK_L;
@@ -685,7 +686,8 @@ public final class UInt256 {
       long qhat = Long.divideUnsigned(dividendPart, vn1);
       long rhat = Long.remainderUnsigned(dividendPart, vn1);
 
-      while (qhat == 0x1_0000_0000L || Long.compareUnsigned(qhat * vn2, (rhat << N_BITS_PER_LIMB) | ujn2) > 0) {
+      while (qhat == 0x1_0000_0000L
+          || Long.compareUnsigned(qhat * vn2, (rhat << N_BITS_PER_LIMB) | ujn2) > 0) {
         qhat--;
         rhat += vn1;
         if (rhat >= 0x1_0000_0000L) break;
