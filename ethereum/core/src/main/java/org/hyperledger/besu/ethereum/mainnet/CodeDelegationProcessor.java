@@ -19,7 +19,7 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessListLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -70,7 +70,7 @@ public class CodeDelegationProcessor {
   public CodeDelegationResult process(
       final WorldUpdater worldUpdater,
       final Transaction transaction,
-      final Optional<AccessListLocationTracker> eip7928AccessList) {
+      final Optional<AccessLocationTracker> eip7928AccessList) {
     final CodeDelegationResult result = new CodeDelegationResult();
 
     transaction
@@ -87,7 +87,7 @@ public class CodeDelegationProcessor {
       final WorldUpdater worldUpdater,
       final CodeDelegation codeDelegation,
       final CodeDelegationResult result,
-      final Optional<AccessListLocationTracker> eip7928AccessList) {
+      final Optional<AccessLocationTracker> eip7928AccessList) {
     LOG.trace("Processing code delegation: {}", codeDelegation);
 
     if (maybeChainId.isPresent()

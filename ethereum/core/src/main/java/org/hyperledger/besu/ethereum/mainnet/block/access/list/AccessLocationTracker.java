@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView.AccountChangesBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView.PartialBlockAccessViewBuilder;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.Eip7928AccessList;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -33,7 +34,7 @@ import io.vertx.core.impl.ConcurrentHashSet;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class AccessLocationTracker implements AccessListLocationTracker {
+public class AccessLocationTracker implements Eip7928AccessList {
 
   private final int blockAccessIndex;
   private final Map<Address, AccountAccessList> touchedAccounts = new ConcurrentHashMap<>();
@@ -84,7 +85,6 @@ public class AccessLocationTracker implements AccessListLocationTracker {
     }
   }
 
-  @Override
   public PartialBlockAccessView createPartialBlockAccessView(final WorldUpdater updater) {
     StackedUpdater<?, ?> stackedUpdater = (StackedUpdater<?, ?>) updater;
     PartialBlockAccessViewBuilder builder = new PartialBlockAccessViewBuilder();

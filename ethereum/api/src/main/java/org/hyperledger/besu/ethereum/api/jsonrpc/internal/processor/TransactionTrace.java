@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
@@ -28,14 +29,14 @@ public class TransactionTrace {
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
-  private final Optional<AccessListTraceTracker> accessListTracker;
+  private final Optional<List<PartialBlockAccessView.AccountChanges>> accountChanges;
 
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
     this.result = null;
     this.traceFrames = null;
     this.block = block;
-    this.accessListTracker = Optional.empty();
+    this.accountChanges = Optional.empty();
   }
 
   public TransactionTrace(
@@ -46,7 +47,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = Optional.empty();
-    this.accessListTracker = Optional.empty();
+    this.accountChanges = Optional.empty();
   }
 
   public TransactionTrace(
@@ -58,7 +59,7 @@ public class TransactionTrace {
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
-    this.accessListTracker = Optional.empty();
+    this.accountChanges = Optional.empty();
   }
 
   public TransactionTrace(
@@ -66,12 +67,12 @@ public class TransactionTrace {
       final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames,
       final Optional<Block> block,
-      final AccessListTraceTracker accessListTracker) {
+      final List<PartialBlockAccessView.AccountChanges> accessListTracker) {
     this.transaction = transaction;
     this.result = result;
     this.traceFrames = traceFrames;
     this.block = block;
-    this.accessListTracker = Optional.of(accessListTracker);
+    this.accountChanges = Optional.ofNullable(accessListTracker);
   }
 
   public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
@@ -79,7 +80,7 @@ public class TransactionTrace {
     this.result = null;
     this.traceFrames = null;
     this.block = block;
-    this.accessListTracker = Optional.empty();
+    this.accountChanges = Optional.empty();
   }
 
   public Transaction getTransaction() {
@@ -106,7 +107,7 @@ public class TransactionTrace {
     return block;
   }
 
-  public Optional<AccessListTraceTracker> getAccessListTracker() {
-    return accessListTracker;
+  public Optional<List<PartialBlockAccessView.AccountChanges>> getAccountChanges() {
+    return accountChanges;
   }
 }

@@ -17,17 +17,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -98,11 +97,12 @@ public class StateTraceGenerator {
     // Compare modified accounts (existing or new accounts touched by the tx)
     getTouchedAccounts(transactionUpdater, transactionTrace)
         .forEach(
-            updatedAccount -> {
-              final Account rootAccount = previousUpdater.get(updatedAccount.getAddress());
-              processAccountDiff(stateDiffResult, updatedAccount, rootAccount, isPreState);
+            address -> {
+              final Account originalAccount = previousUpdater.get(address);
+              final MutableAccount updatedAccount = transactionUpdater.getAccount(address);
+              processAccountDiff(
+                  address, stateDiffResult, updatedAccount, originalAccount, isPreState);
             });
-
     processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
     return Stream.of(stateDiffResult);
   }
@@ -126,17 +126,16 @@ public class StateTraceGenerator {
    *     details.
    * @return a collection of touched {@link Account} instances.
    */
-  private Collection<? extends Account> getTouchedAccounts(
+  private Collection<Address> getTouchedAccounts(
       final WorldUpdater transactionUpdater, final TransactionTrace transactionTrace) {
-    return transactionTrace
-        .getAccessListTracker()
-        .map(
-            accessListTracker ->
-                accessListTracker.getTouchedAccounts().stream()
-                    .map(transactionUpdater::get)
-                    .filter(Objects::nonNull)
-                    .toList())
-        .orElseGet(() -> new ArrayList<>(transactionUpdater.getTouchedAccounts()));
+    var accountChanges = transactionTrace.getAccountChanges();
+    return accountChanges
+        .<Collection<Address>>map(
+            changes ->
+                changes.stream().map(PartialBlockAccessView.AccountChanges::getAddress).toList())
+        .orElseGet(
+            () ->
+                transactionUpdater.getTouchedAccounts().stream().map(Account::getAddress).toList());
   }
 
   /**
@@ -152,6 +151,7 @@ public class StateTraceGenerator {
    *       modified, showing the “before” values of touched accounts.
    * </ul>
    *
+   * @param accountAddress The address of the account being processed.
    * @param stateDiff The aggregated diff being built for this transaction.
    * @param updatedAccount The account state after transaction execution.
    * @param rootAccount The account state before transaction execution, or {@code null} if the
@@ -159,16 +159,19 @@ public class StateTraceGenerator {
    * @param isPreState Whether pre-state mode is enabled.
    */
   private void processAccountDiff(
+      final Address accountAddress,
       final StateDiffTrace stateDiff,
-      final Account updatedAccount,
+      final MutableAccount updatedAccount,
       final Account rootAccount,
       final boolean isPreState) {
 
-    final Address accountAddress = updatedAccount.getAddress();
-
     // Compute storage differences for this account
-    final Map<String, DiffNode> storageDiff =
-        calculateStorageDiff((MutableAccount) updatedAccount, rootAccount, isPreState);
+    final Map<String, DiffNode> storageDiff;
+    if (updatedAccount == null) {
+      storageDiff = Collections.emptyMap();
+    } else {
+      storageDiff = calculateStorageDiff(updatedAccount, rootAccount, isPreState);
+    }
 
     // Build account-level diff
     final AccountDiff accountDiff =
@@ -210,6 +213,7 @@ public class StateTraceGenerator {
       final MutableAccount updatedAccount, final Account rootAccount, final boolean isPreState) {
 
     final Map<String, DiffNode> storageDiff = new TreeMap<>();
+
     // Iterate through all updated storage slots in this transaction
     updatedAccount
         .getUpdatedStorage()

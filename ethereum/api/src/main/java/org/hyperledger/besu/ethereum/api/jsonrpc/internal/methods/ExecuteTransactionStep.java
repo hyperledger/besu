@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.AccessListTraceTracker;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -26,10 +25,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 import java.util.Optional;
@@ -84,9 +86,10 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
     List<TraceFrame> traceFrames = null;
     TransactionProcessingResult result = null;
-    AccessListTraceTracker accessListTracker = new AccessListTraceTracker();
+    AccessLocationTracker accessListTracker = new AccessLocationTracker(0);
 
     // If it is not a reward Block trace
+    List<PartialBlockAccessView.AccountChanges> accountChanges = null;
     if (transactionTrace.getTransaction() != null) {
       BlockHeader header = block.getHeader();
       final Optional<BlockHeader> maybeParentHeader =
@@ -101,9 +104,10 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       final BlockHashLookup blockHashLookup =
           protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
 
+      WorldUpdater nextUpdater = chainUpdater.getNextUpdater();
       result =
           transactionProcessor.processTransaction(
-              chainUpdater.getNextUpdater(),
+              nextUpdater,
               header,
               transactionTrace.getTransaction(),
               header.getCoinbase(),
@@ -115,12 +119,16 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
       traceFrames = tracer.copyTraceFrames();
       tracer.reset();
+      accountChanges =
+          accessListTracker
+              .createPartialBlockAccessView(nextUpdater.updater().updater())
+              .accountChanges();
     }
     return new TransactionTrace(
         transactionTrace.getTransaction(),
         result,
         traceFrames,
         transactionTrace.getBlock(),
-        accessListTracker);
+        accountChanges);
   }
 }

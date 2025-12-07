@@ -27,7 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessListLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -202,7 +202,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice,
-      final Optional<AccessListLocationTracker> accessLocationTracker) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -591,7 +591,7 @@ public class MainnetTransactionProcessor {
       final WorldUpdater worldUpdater,
       final Set<Address> warmAddressList,
       final Account contract,
-      final Optional<AccessListLocationTracker> accessLocationTracker) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     if (contract == null) {
       return CodeV0.EMPTY_CODE;
     }
@@ -619,7 +619,7 @@ public class MainnetTransactionProcessor {
       final WorldUpdater worldUpdater,
       final Set<Address> warmAddressList,
       final Account contract,
-      final Optional<AccessListLocationTracker> accessLocationTracker) {
+      final Optional<AccessLocationTracker> accessLocationTracker) {
     // we need to look up the target account and its code, but do NOT charge gas for it
     final CodeDelegationHelper.Target target =
         getTarget(worldUpdater, gasCalculator::isPrecompile, contract, accessLocationTracker);
