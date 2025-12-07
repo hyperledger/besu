@@ -38,7 +38,7 @@ public class BonsaiAccountTest {
         new BonsaiAccount(
             bonsaiWorldState,
             Address.ZERO,
-            Hash.hash(Address.ZERO),
+            Hash.hash(Address.ZERO.getBytes()),
             0,
             Wei.ONE,
             Hash.EMPTY_TRIE_HASH,
@@ -66,7 +66,7 @@ public class BonsaiAccountTest {
         new BonsaiAccount(
             bonsaiWorldState,
             Address.ZERO,
-            Hash.hash(Address.ZERO),
+            Hash.hash(Address.ZERO.getBytes()),
             0,
             Wei.ONE,
             Hash.EMPTY_TRIE_HASH,

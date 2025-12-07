@@ -41,7 +41,7 @@ public final class AccountRangeMessageTest {
     final Map<Bytes32, Bytes> keys = new HashMap<>();
     final PmtStateTrieAccountValue accountValue =
         new PmtStateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
-    keys.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), RLP.encode(accountValue::writeTo));
+    keys.put(Bytes32.leftPad(Bytes.of(1)), RLP.encode(accountValue::writeTo));
 
     final List<Bytes> proofs = new ArrayList<>();
     proofs.add(Bytes32.random());
@@ -125,8 +125,8 @@ public final class AccountRangeMessageTest {
     assertThat(expectedWei).isEqualTo(balance);
 
     // Verify the storageRoot and codeHash
-    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY);
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY_TRIE_HASH.getBytes());
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY.getBytes());
 
     // Exit the list
     in.leaveList();

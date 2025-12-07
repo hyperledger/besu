@@ -139,7 +139,7 @@ public final class BlockBodiesMessageTest {
       Assertions.assertThat(next.getTransactionsRoot())
           .isEqualTo(blockHeaders[i].getTransactionsRoot());
       Assertions.assertThat(next.getOmmersHash()).isEqualTo(blockHeaders[i].getOmmersHash());
-      Assertions.assertThat(next.getWithdrawalsRoot())
+      Assertions.assertThat(next.getWithdrawalsRoot().orElse(null))
           .isEqualTo(blockHeaders[i].getWithdrawalsRoot().orElse(null));
     }
   }
@@ -158,8 +158,8 @@ public final class BlockBodiesMessageTest {
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
     final List<SyncBlockBody> bodies = message.syncBodies(protocolSchedule);
     Assertions.assertThat(bodies.size()).isEqualTo(1);
-    Assertions.assertThat(bodies.getFirst().getWithdrawalsRoot())
-        .isEqualTo(block.getHeader().getWithdrawalsRoot().get());
+    Assertions.assertThat(bodies.getFirst().getWithdrawalsRoot().orElseThrow())
+        .isEqualTo(block.getHeader().getWithdrawalsRoot().orElseThrow());
   }
 
   @Test

@@ -121,10 +121,10 @@ public class MergeBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     lenient().when(genesisConfig.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
     lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);

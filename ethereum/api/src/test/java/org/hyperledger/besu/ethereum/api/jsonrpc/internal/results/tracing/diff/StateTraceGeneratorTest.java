@@ -69,8 +69,8 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    assertThat(diff).containsKey(A.toHexString());
-    AccountDiff a = diff.get(A.toHexString());
+    assertThat(diff).containsKey(A.getBytes().toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getBalance()).isNotNull();
     assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
   }
@@ -108,8 +108,8 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
 
-    assertThat(diff).containsKey(A.toHexString());
-    assertThat(diff.get(A.toHexString()).getBalance().getFrom()).contains("0xa");
+    assertThat(diff).containsKey(A.getBytes().toHexString());
+    assertThat(diff.get(A.getBytes().toHexString()).getBalance().getFrom()).contains("0xa");
   }
 
   @Test
@@ -127,7 +127,7 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    AccountDiff a = diff.get(A.toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getStorage()).containsKey(UInt256.ONE.toHexString());
     assertThat(a.getStorage()).doesNotContainKey(UInt256.ZERO.toHexString());
   }
@@ -147,7 +147,7 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
 
-    assertThat(diff.get(A.toHexString()).getStorage())
+    assertThat(diff.get(A.toString()).getStorage())
         .containsKeys(UInt256.ZERO.toHexString(), UInt256.ONE.toHexString());
   }
 
@@ -165,7 +165,7 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    AccountDiff a = diff.get(A.toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getBalance().getFrom()).contains("0x64");
     assertThat(a.getBalance().getTo()).isEmpty();
   }

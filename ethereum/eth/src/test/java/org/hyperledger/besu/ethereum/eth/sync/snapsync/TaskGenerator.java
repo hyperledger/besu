@@ -91,7 +91,7 @@ public class TaskGenerator {
             worldStateStorageCoordinator,
             rootHash,
             accountHash,
-            stateTrieAccountValue.getStorageRoot(),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             withData,
             withNullTaskElement);
     final BytecodeRequest bytecodeRequest =
@@ -138,7 +138,11 @@ public class TaskGenerator {
 
     final StorageRangeDataRequest request =
         SnapDataRequest.createStorageRangeDataRequest(
-            rootHash, accountHash, storageRoot, RangeManager.MIN_RANGE, RangeManager.MAX_RANGE);
+            rootHash,
+            Bytes32.wrap(accountHash.getBytes()),
+            storageRoot,
+            RangeManager.MIN_RANGE,
+            RangeManager.MAX_RANGE);
     if (withData) {
       request.setProofValid(true);
       request.addResponse(null, worldStateProofProvider, slots, new ArrayDeque<>());
@@ -158,7 +162,8 @@ public class TaskGenerator {
       final Hash codeHash,
       final boolean withData) {
     final BytecodeRequest request =
-        SnapDataRequest.createBytecodeRequest(accountHash, rootHash, codeHash);
+        SnapDataRequest.createBytecodeRequest(
+            Bytes32.wrap(accountHash.getBytes()), rootHash, Bytes32.wrap(codeHash.getBytes()));
     if (withData) {
       request.setCode(worldStateKeyValueStorage.getCode(codeHash, accountHash).get());
     }

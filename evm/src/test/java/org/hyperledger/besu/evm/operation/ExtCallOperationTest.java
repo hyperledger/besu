@@ -60,7 +60,7 @@ public class ExtCallOperationTest {
             100,
             99,
             ExceptionalHaltReason.INSUFFICIENT_GAS,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             true,
             true),
         Arguments.of(
@@ -90,15 +90,15 @@ public class ExtCallOperationTest {
             AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM,
             true,
             false),
-        Arguments.of("gas", 64000, 59000, 58900, null, CONTRACT_ADDRESS, true, true),
-        Arguments.of("gas", 384100, 378100, 378000, null, CONTRACT_ADDRESS, true, true),
+        Arguments.of("gas", 64000, 59000, 58900, null, CONTRACT_ADDRESS.getBytes(), true, true),
+        Arguments.of("gas", 384100, 378100, 378000, null, CONTRACT_ADDRESS.getBytes(), true, true),
         Arguments.of(
             "Invalid code",
             384100,
             100,
             384100,
             ExceptionalHaltReason.INVALID_CODE,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             false,
             true));
   }
@@ -120,11 +120,11 @@ public class ExtCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
             .code(SIMPLE_EOF)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     if (warmAddress) {
@@ -158,7 +158,7 @@ public class ExtCallOperationTest {
             35000,
             25900,
             null,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             Wei.of(100),
             Wei.of(200),
             false),
@@ -168,7 +168,7 @@ public class ExtCallOperationTest {
             9000,
             40000,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             Wei.of(100),
             Wei.of(200),
             true),
@@ -188,7 +188,7 @@ public class ExtCallOperationTest {
             9100,
             5000,
             ExceptionalHaltReason.INSUFFICIENT_GAS,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             Wei.of(100),
             Wei.of(200),
             false));
@@ -212,11 +212,11 @@ public class ExtCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
             .code(SIMPLE_EOF)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(valueSent)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .isStatic(isStatic)
             .build();
@@ -249,11 +249,11 @@ public class ExtCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(400000)
             .code(SIMPLE_EOF)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
@@ -289,11 +289,11 @@ public class ExtCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(400000)
             .code(LEGACY_CODE)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);

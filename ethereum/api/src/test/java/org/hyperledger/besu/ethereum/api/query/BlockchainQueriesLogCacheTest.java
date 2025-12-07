@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,9 +91,9 @@ public class BlockchainQueriesLogCacheTest {
 
   private static void writeThreeEntries(final LogsBloomFilter filter, final RandomAccessFile file)
       throws IOException {
-    file.write(filter.toArray());
-    file.write(filter.toArray());
-    file.write(filter.toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
   }
 
   @BeforeEach
@@ -113,7 +114,7 @@ public class BlockchainQueriesLogCacheTest {
             0,
             Bytes.EMPTY,
             null,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
             null,
             null,

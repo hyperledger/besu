@@ -129,14 +129,14 @@ public final class RangeManagerTest {
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
+            Bytes32.wrap(Hash.ZERO.getBytes()), RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
 
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
@@ -144,7 +144,7 @@ public final class RangeManagerTest {
     // generate the proof
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.wrap(Hash.ZERO.getBytes()));
     proofs.addAll(
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
@@ -170,14 +170,14 @@ public final class RangeManagerTest {
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
+            Bytes32.wrap(Hash.ZERO.getBytes()), RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
 
     final WorldStateProofProvider worldStateProofProvider =
         new WorldStateProofProvider(worldStateStorageCoordinator);
@@ -185,7 +185,7 @@ public final class RangeManagerTest {
     // generate the proof
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.wrap(Hash.ZERO.getBytes()));
     proofs.addAll(
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));

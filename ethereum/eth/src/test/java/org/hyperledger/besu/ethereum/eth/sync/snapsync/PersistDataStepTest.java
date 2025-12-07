@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -99,7 +100,8 @@ public class PersistDataStepTest {
 
     persistDataStep.persist(List.of(new StubTask(accountTrieNodeDataRequest)));
 
-    verify(updater, times(1)).putAccountStateTrieNode(location, hash, stateTrieNode);
+    verify(updater, times(1))
+        .putAccountStateTrieNode(location, Bytes32.wrap(hash.getBytes()), stateTrieNode);
     assertDataPersisted(result);
   }
 
@@ -112,7 +114,7 @@ public class PersistDataStepTest {
     assertThat(
             worldStateStorageCoordinator
                 .getStrategy(BonsaiWorldStateKeyValueStorage.class)
-                .getTrieNodeUnsafe(tasks.get(0).getData().getRootHash()))
+                .getTrieNodeUnsafe(tasks.get(0).getData().getRootHash().getBytes()))
         .isEmpty();
   }
 
@@ -143,7 +145,7 @@ public class PersistDataStepTest {
             StoredMerklePatriciaTrie<Bytes, Bytes> trie =
                 new StoredMerklePatriciaTrie<>(
                     worldStateStorageCoordinator::getAccountStateTrieNode,
-                    data.getRootHash(),
+                    Bytes32.wrap(data.getRootHash().getBytes()),
                     b -> b,
                     b -> b);
             data.getAccounts().forEach((key, value) -> assertThat(trie.get(key)).isPresent());
@@ -153,7 +155,7 @@ public class PersistDataStepTest {
                 new StoredMerklePatriciaTrie<>(
                     (location, hash) ->
                         worldStateStorageCoordinator.getAccountStorageTrieNode(
-                            Hash.wrap(data.getAccountHash()), location, hash),
+                            data.getAccountHash(), location, hash),
                     data.getStorageRoot(),
                     b -> b,
                     b -> b);

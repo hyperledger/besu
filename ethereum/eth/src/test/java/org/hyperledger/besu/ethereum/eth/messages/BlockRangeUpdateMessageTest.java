@@ -49,7 +49,7 @@ public class BlockRangeUpdateMessageTest {
     tmp.startList();
     tmp.writeLongScalar(earliestBlockNumber);
     tmp.writeLongScalar(latestBlockNumber);
-    tmp.writeBytes(latestBlockHash);
+    tmp.writeBytes(latestBlockHash.getBytes());
     tmp.endList();
 
     final RawMessage rawMsg = new RawMessage(EthProtocolMessages.BLOCK_RANGE_UPDATE, tmp.encoded());

@@ -42,7 +42,7 @@ public class GenesisReaderTest {
     configNode.put("londonBlock", 1);
     final var allocNode = mapper.createObjectNode();
     allocNode.putIfAbsent(
-        Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
+        Address.BLS12_G2MULTIEXP.getBytes().toUnprefixedHexString(), generateAllocation(Wei.ONE));
     final var rootNode = mapper.createObjectNode();
     rootNode.put("chainId", 12);
     rootNode.putIfAbsent(CONFIG_FIELD, configNode);
@@ -63,7 +63,7 @@ public class GenesisReaderTest {
     configNode.put("londonBlock", 1);
     final var allocNode = mapper.createObjectNode();
     allocNode.putIfAbsent(
-        Address.BLS12_G2MULTIEXP.toUnprefixedHexString(), generateAllocation(Wei.ONE));
+        Address.BLS12_G2MULTIEXP.getBytes().toUnprefixedHexString(), generateAllocation(Wei.ONE));
     final var rootNode = mapper.createObjectNode();
     rootNode.put("chainId", 12);
     rootNode.putIfAbsent(CONFIG_FIELD, configNode);

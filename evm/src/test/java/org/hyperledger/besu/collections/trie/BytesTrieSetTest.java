@@ -163,7 +163,11 @@ class BytesTrieSetTest {
   }
 
   @Test
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "SuspiciousMethodCalls"})
+  @SuppressWarnings({
+    "MismatchedQueryAndUpdateOfCollection",
+    "SuspiciousMethodCalls",
+    "CollectionIncompatibleType"
+  })
   void checkWrongClassRemove() {
     BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.remove(this))
@@ -172,7 +176,11 @@ class BytesTrieSetTest {
   }
 
   @Test
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "SuspiciousMethodCalls"})
+  @SuppressWarnings({
+    "MismatchedQueryAndUpdateOfCollection",
+    "SuspiciousMethodCalls",
+    "CollectionIncompatibleType"
+  })
   void checkWrongClassContains() {
     BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.contains(this))

@@ -52,7 +52,7 @@ class BonsaiWorldStateTest {
 
   private static final Bytes CODE = Bytes.of(10);
   private static final Hash CODE_HASH = Hash.hash(CODE);
-  private static final Hash ACCOUNT_HASH = Hash.hash(Address.ZERO);
+  private static final Hash ACCOUNT_HASH = Hash.hash(Address.ZERO.getBytes());
   private static final Address ACCOUNT = Address.ZERO;
 
   private BonsaiWorldState worldState;

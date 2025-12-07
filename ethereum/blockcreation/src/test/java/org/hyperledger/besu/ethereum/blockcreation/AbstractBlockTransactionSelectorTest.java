@@ -113,6 +113,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -1855,7 +1856,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
           SignatureAlgorithmFactory.getInstance().createPrivateKey(BigInteger.valueOf(seed));
       final var publicKey = SignatureAlgorithmFactory.getInstance().createPublicKey(privateKey);
       this.keyPair = new KeyPair(privateKey, publicKey);
-      this.address = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+      this.address =
+          Address.extract(Bytes32.wrap(Hash.hash(publicKey.getEncodedBytes()).getBytes()));
     }
 
     public KeyPair keyPair() {

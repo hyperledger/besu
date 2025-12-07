@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class PrepareTest {
@@ -39,7 +40,9 @@ public class PrepareTest {
         new PreparePayload(new ConsensusRoundIdentifier(1, 1), Hash.ZERO);
 
     final SignedData<PreparePayload> signedPreparePayload =
-        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
+        SignedData.create(
+            preparePayload,
+            nodeKey.sign(Bytes32.wrap(preparePayload.hashForSignature().getBytes())));
 
     final Prepare prepareMsg = new Prepare(signedPreparePayload);
 

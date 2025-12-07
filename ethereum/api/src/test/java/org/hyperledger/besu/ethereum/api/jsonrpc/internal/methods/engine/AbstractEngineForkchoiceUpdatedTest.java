@@ -449,7 +449,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();
     assertThat(forkchoiceRes.getPayloadStatus().getLatestValidHashAsString())
-        .isEqualTo(mockHeader.getHash().toHexString());
+        .isEqualTo(mockHeader.getHash().getBytes().toHexString());
     assertThat(forkchoiceRes.getPayloadId()).isNull();
     assertThat(forkchoiceRes.getPayloadId()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();

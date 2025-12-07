@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,7 +83,7 @@ public class SignedDataValidatorTest {
   public void receivingACommitMessageBeforeProposalFails() {
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, Hash.ZERO, proposerKey.sign(block.getHash()));
+            roundIdentifier, Hash.ZERO, proposerKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     assertThat(validator.validateCommit(commitMsg.getSignedPayload())).isFalse();
   }
@@ -132,7 +133,9 @@ public class SignedDataValidatorTest {
         validatorMessageFactory.createPrepare(invalidRoundIdentifier, block.getHash());
     final Commit commitMsg =
         validatorMessageFactory.createCommit(
-            invalidRoundIdentifier, block.getHash(), proposerKey.sign(block.getHash()));
+            invalidRoundIdentifier,
+            block.getHash(),
+            proposerKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validatePrepare(prepareMsg.getSignedPayload())).isFalse();
@@ -157,7 +160,9 @@ public class SignedDataValidatorTest {
 
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), nonValidatorKey.sign(block.getHash()));
+            roundIdentifier,
+            block.getHash(),
+            nonValidatorKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validateCommit(commitMsg.getSignedPayload())).isFalse();
@@ -170,11 +175,15 @@ public class SignedDataValidatorTest {
 
     final Commit proposerCommitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), proposerKey.sign(block.getHash()));
+            roundIdentifier,
+            block.getHash(),
+            proposerKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     final Commit validatorCommitMsg =
         validatorMessageFactory.createCommit(
-            roundIdentifier, block.getHash(), validatorKey.sign(block.getHash()));
+            roundIdentifier,
+            block.getHash(),
+            validatorKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
     assertThat(validator.validateCommit(proposerCommitMsg.getSignedPayload())).isTrue();

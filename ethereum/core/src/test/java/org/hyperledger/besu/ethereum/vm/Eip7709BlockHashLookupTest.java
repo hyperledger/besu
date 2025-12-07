@@ -73,7 +73,8 @@ class Eip7709BlockHashLookupTest {
       final BlockHeader header = createHeader(i, parentHeader);
       headers.add(header);
       contractAccount.setStorageValue(
-          UInt256.valueOf(i % HISTORY_SERVE_WINDOW), UInt256.fromBytes(header.getHash()));
+          UInt256.valueOf(i % HISTORY_SERVE_WINDOW),
+          UInt256.fromBytes(header.getHash().getBytes()));
       parentHeader = header;
     }
     return worldUpdaterMock;
@@ -184,7 +185,7 @@ class Eip7709BlockHashLookupTest {
 
     op.execute(frame, null);
 
-    verify(frame).pushStackItem(hash);
+    verify(frame).pushStackItem(hash.getBytes());
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {
