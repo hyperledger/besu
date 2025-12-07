@@ -135,8 +135,8 @@ public class SyncBlockBody {
     return Hash.wrap(org.hyperledger.besu.crypto.Hash.keccak256(ommersListBytes));
   }
 
-  public Hash getWithdrawalsRoot() {
-    return withdrawalBytes.map(Util::getRootFromListOfBytes).orElse(null);
+  public Optional<Hash> getWithdrawalsRoot() {
+    return withdrawalBytes.map(Util::getRootFromListOfBytes);
   }
 
   public Bytes getRlp() {

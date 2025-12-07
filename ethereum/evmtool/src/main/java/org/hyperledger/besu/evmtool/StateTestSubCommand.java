@@ -334,10 +334,10 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("d", spec.getDataIndex());
         summaryLine.put("g", spec.getGasIndex());
         summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("stateRoot", worldState.rootHash().toHexString());
+        summaryLine.put("stateRoot", worldState.rootHash().getBytes().toHexString());
         final List<Log> logs = result.getLogs();
         final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-        summaryLine.put("postLogsHash", actualLogsHash.toHexString());
+        summaryLine.put("postLogsHash", actualLogsHash.getBytes().toHexString());
         summaryLine.put(
             "pass",
             spec.getExpectException() == null

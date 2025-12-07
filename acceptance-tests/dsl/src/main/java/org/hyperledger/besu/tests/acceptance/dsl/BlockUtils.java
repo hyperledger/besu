@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 public class BlockUtils {
@@ -51,7 +52,7 @@ public class BlockUtils {
         block.getTimestamp().longValue(),
         Bytes.fromHexString(block.getExtraData()),
         null,
-        mixHash,
+        Bytes32.wrap(mixHash.getBytes()),
         new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
         null,
         null,

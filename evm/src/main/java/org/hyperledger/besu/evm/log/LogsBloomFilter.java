@@ -17,13 +17,13 @@ package org.hyperledger.besu.evm.log;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
 /**
@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
  * the corresponding double-bytes are: bd2b, 01af, cd27, corresponding to the following bits in the
  * bloom filter: 1323, 431, 1319
  */
-public class LogsBloomFilter extends DelegatingBytes {
+public class LogsBloomFilter extends BytesHolder {
 
   /** The constant BYTE_SIZE. */
   public static final int BYTE_SIZE = 256;
@@ -126,12 +126,12 @@ public class LogsBloomFilter extends DelegatingBytes {
     if (subset == null) {
       return true;
     }
-    if (subset.size() != size()) {
+    if (getBytes().size() != subset.getBytes().size()) {
       return false;
     }
-    for (int i = 0; i < size(); i++) {
-      final byte subsetValue = subset.get(i);
-      if ((get(i) & subsetValue) != subsetValue) {
+    for (int i = 0; i < getBytes().size(); i++) {
+      final byte subsetValue = subset.getBytes().get(i);
+      if ((getBytes().get(i) & subsetValue) != subsetValue) {
         return false;
       }
     }
@@ -164,7 +164,7 @@ public class LogsBloomFilter extends DelegatingBytes {
      */
     public Builder insertFilter(final LogsBloomFilter other) {
       for (int i = 0; i < data.size(); ++i) {
-        data.set(i, (byte) ((data.get(i) | other.get(i)) & 0xff));
+        data.set(i, (byte) ((data.get(i) | other.getBytes().get(i)) & 0xff));
       }
       return this;
     }
@@ -176,10 +176,10 @@ public class LogsBloomFilter extends DelegatingBytes {
      * @return the builder
      */
     public Builder insertLog(final Log log) {
-      insertBytes((Bytes) log.getLogger());
+      insertBytes(log.getLogger().getBytes());
 
       for (final LogTopic topic : log.getTopics()) {
-        insertBytes(topic);
+        insertBytes(topic.getBytes());
       }
       return this;
     }

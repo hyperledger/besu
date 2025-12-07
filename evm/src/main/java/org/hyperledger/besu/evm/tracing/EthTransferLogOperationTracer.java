@@ -92,8 +92,8 @@ public class EthTransferLogOperationTracer implements OperationTracer {
   private void emitTransferLogs(final Address sender, final Address recipient, final Wei value) {
     final ImmutableList.Builder<LogTopic> builder = ImmutableList.builderWithExpectedSize(3);
     builder.add(LogTopic.create(SIMULATION_TRANSFER_TOPIC));
-    builder.add(LogTopic.create(leftPad(sender)));
-    builder.add(LogTopic.create(leftPad(recipient)));
+    builder.add(LogTopic.create(leftPad(sender.getBytes())));
+    builder.add(LogTopic.create(leftPad(recipient.getBytes())));
     traceTransfers.add(
         new org.hyperledger.besu.evm.log.Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
   }

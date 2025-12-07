@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.math.BigInteger;
 import java.util.Locale;
@@ -76,7 +78,7 @@ public class Scalars {
             throws CoercingSerializeException {
           Address result = convertImpl(input);
           if (result != null) {
-            return result.toHexString();
+            return result.getBytes().toHexString();
           } else {
             throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
           }
@@ -245,6 +247,10 @@ public class Scalars {
         Bytes32 convertImpl(final Object input) {
           if (input instanceof Bytes32 bytes32) {
             return bytes32;
+          } else if (input instanceof Hash hash) {
+            return Bytes32.wrap(hash.getBytes());
+          } else if (input instanceof LogTopic logTopic) {
+            return Bytes32.wrap(logTopic.getBytes());
           } else if (input instanceof Bytes bytes) {
             if (bytes.size() <= 32) {
               return Bytes32.leftPad((Bytes) input);

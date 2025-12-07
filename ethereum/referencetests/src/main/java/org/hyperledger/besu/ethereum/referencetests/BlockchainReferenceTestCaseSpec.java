@@ -214,7 +214,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
-          Hash.fromHexString(mixHash), // mixHash
+          Bytes32.wrap(Hash.fromHexString(mixHash).getBytes()), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
           blobGasUsed != null ? Long.decode(blobGasUsed) : 0,

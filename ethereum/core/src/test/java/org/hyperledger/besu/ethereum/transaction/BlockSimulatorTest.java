@@ -60,6 +60,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -236,7 +237,8 @@ public class BlockSimulatorTest {
     var expectedDifficulty = BigInteger.ONE;
     var expectedMixHashOrPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
     var expectedPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
-    var expectedParentBeaconBlockRoot = Hash.hash(Bytes.fromHexString("0x03"));
+    var expectedParentBeaconBlockRoot =
+        Bytes32.wrap(Hash.hash(Bytes.fromHexString("0x03")).getBytes());
     var expectedExtraData = Bytes.fromHexString("0x02");
 
     BlockOverrides blockOverrides =

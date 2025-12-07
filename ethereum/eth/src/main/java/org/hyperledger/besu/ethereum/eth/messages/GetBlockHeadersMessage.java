@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** PV62 GetBlockHeaders Message. */
 public final class GetBlockHeadersMessage extends AbstractMessageData {
@@ -146,7 +147,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
 
       final Optional<Hash> blockHash;
       final OptionalLong blockNumber;
-      if (input.nextSize() == Hash.SIZE) {
+      if (input.nextSize() == Bytes32.SIZE) {
         blockHash = Optional.of(Hash.wrap(input.readBytes32()));
         blockNumber = OptionalLong.empty();
       } else {
@@ -184,7 +185,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
       out.startList();
 
       if (blockHash.isPresent()) {
-        out.writeBytes(blockHash.get());
+        out.writeBytes(blockHash.get().getBytes());
       } else {
         out.writeLongScalar(blockNumber.getAsLong());
       }

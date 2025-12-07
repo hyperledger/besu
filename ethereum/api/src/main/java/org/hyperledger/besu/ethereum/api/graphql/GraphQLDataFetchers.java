@@ -133,7 +133,7 @@ public class GraphQLDataFetchers {
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
-          return Optional.of(transaction.getHash());
+          return Optional.of(Bytes32.wrap(transaction.getHash().getBytes()));
         } else {
           throw new GraphQLException(GraphQLError.of(validationResult.getInvalidReason()));
         }
@@ -310,7 +310,7 @@ public class GraphQLDataFetchers {
                 });
       } else {
         // return account on latest block
-        final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
+        final long latestBn = blockchainQuery.latestBlock().orElseThrow().getHeader().getNumber();
         return blockchainQuery.getAndMapWorldState(
             latestBn,
             ws -> {
