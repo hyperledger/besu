@@ -62,6 +62,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonRpcResponseUtils {
@@ -124,7 +125,7 @@ public class JsonRpcResponseUtils {
             timestamp,
             extraData,
             baseFee,
-            mixHash,
+            Bytes32.wrap(mixHash.getBytes()),
             nonce,
             withdrawalsRoot,
             null, // ToDo 4844: set with the value of blob_gas_used field

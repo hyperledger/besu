@@ -97,8 +97,7 @@ public class BlockSimulatorTest {
             blockchain,
             0);
     blockHeader = BlockHeaderBuilder.createDefault().buildBlockHeader();
-    when(miningConfiguration.getCoinbase())
-        .thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
+    when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.fromHexString("0x1")));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getMiningBeneficiaryCalculator())
@@ -249,7 +248,7 @@ public class BlockSimulatorTest {
             .baseFeePerGas(expectedBaseFeePerGas)
             .gasLimit(expectedGasLimit)
             .difficulty(expectedDifficulty)
-            .mixHashOrPrevRandao(expectedMixHashOrPrevRandao)
+            .mixHashOrPrevRandao(Bytes32.wrap(expectedMixHashOrPrevRandao.getBytes()))
             .extraData(expectedExtraData)
             .parentBeaconBlockRoot(expectedParentBeaconBlockRoot)
             .build();
@@ -265,7 +264,7 @@ public class BlockSimulatorTest {
     assertEquals(expectedGasLimit, result.getGasLimit());
     assertThat(result.getDifficulty()).isEqualTo(Difficulty.of(expectedDifficulty));
     assertEquals(expectedMixHashOrPrevRandao, result.getMixHash());
-    assertEquals(expectedPrevRandao, result.getPrevRandao().get());
+    assertEquals(expectedPrevRandao.getBytes(), result.getPrevRandao().get());
     assertEquals(expectedExtraData, result.getExtraData());
   }
 

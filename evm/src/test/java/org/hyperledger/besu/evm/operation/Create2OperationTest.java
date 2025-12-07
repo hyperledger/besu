@@ -218,7 +218,7 @@ public class Create2OperationTest {
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
+    final String calculatedTopic = log.getTopics().get(0).getBytes().toUnprefixedHexString();
     assertThat(calculatedTopic).isEqualTo(TOPIC);
     assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
   }

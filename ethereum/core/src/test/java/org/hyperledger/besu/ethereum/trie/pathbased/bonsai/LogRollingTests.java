@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,7 +94,7 @@ class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Bytes32.wrap(Hash.ZERO.getBytes()),
           0,
           Hash.EMPTY_LIST_HASH,
           null, // blobGasUSed
@@ -118,7 +119,7 @@ class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Bytes32.wrap(Hash.ZERO.getBytes()),
           0,
           null,
           null, // blobGasUsed
@@ -190,7 +191,8 @@ class LogRollingTests {
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
-    final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
+    final Optional<byte[]> value =
+        trieLogStorage.get(headerOne.getHash().getBytes().toArrayUnsafe());
 
     final TrieLogLayer layer =
         TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
@@ -337,9 +339,9 @@ class LogRollingTests {
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
-  private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Bytes key) {
+  private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Hash key) {
     return storage
-        .get(key.toArrayUnsafe())
+        .get(key.getBytes().toArrayUnsafe())
         .map(bytes -> TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }

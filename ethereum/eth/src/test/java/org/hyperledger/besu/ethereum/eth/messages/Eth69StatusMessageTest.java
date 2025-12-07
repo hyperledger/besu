@@ -55,7 +55,7 @@ public class Eth69StatusMessageTest {
     assertThat(msg.protocolVersion()).isEqualTo(version);
     assertThat(msg.networkId()).isEqualTo(networkId);
     assertThat(msg.bestHash()).isEqualTo(bestHash);
-    assertThat(msg.genesisHash()).isEqualTo(genesisHash);
+    assertThat(msg.genesisHash()).isEqualTo(genesisHash.getBytes());
     assertThat(msg.forkId()).isEqualTo(forkId);
     assertThat(msg.blockRange().get()).isEqualTo(blockRange);
   }
@@ -69,7 +69,7 @@ public class Eth69StatusMessageTest {
     assertThat(copy.protocolVersion()).isEqualTo(version);
     assertThat(copy.networkId()).isEqualTo(networkId);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
-    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+    assertThat(copy.genesisHash()).isEqualTo(genesisHash.getBytes());
     assertThat(copy.forkId()).isEqualTo(forkId);
     assertThat(copy.blockRange().get()).isEqualTo(blockRange);
   }
@@ -108,8 +108,8 @@ public class Eth69StatusMessageTest {
     out.writeIntScalar(69);
     out.writeBigIntegerScalar(networkId);
     out.writeUInt256Scalar(Difficulty.of(1000L));
-    out.writeBytes(bestHash);
-    out.writeBytes(genesisHash);
+    out.writeBytes(bestHash.getBytes());
+    out.writeBytes(genesisHash.getBytes());
     forkId.writeTo(out);
     out.endList();
     assertThrows(
