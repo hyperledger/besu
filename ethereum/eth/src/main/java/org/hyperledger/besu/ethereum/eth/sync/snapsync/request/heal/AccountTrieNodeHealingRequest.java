@@ -107,7 +107,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
             worldStateStorageCoordinator::getAccountStateTrieNode,
-            Hash.hash(data),
+            Bytes32.wrap(Hash.hash(data).getBytes()),
             getLocation(),
             Function.identity(),
             Function.identity());
@@ -129,7 +129,10 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
                   // If we were to do so, we would be attempting to request storage that does not
                   // exist from our peers,
                   // which would cause sync issues.
-                  !stateTrieAccountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
+                  !stateTrieAccountValue
+                      .getStorageRoot()
+                      .getBytes()
+                      .equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
           .ifPresent(
               stateTrieAccountValue -> {
                 // an account need a heal step
@@ -168,22 +171,26 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
+      builder.add(
+          createBytecodeRequest(
+              Bytes32.wrap(accountHash.getBytes()),
+              getRootHash(),
+              Bytes32.wrap(accountValue.getCodeHash().getBytes())));
     }
 
     // Retrieve the storage root from the database, if available
     final Hash storageRootFoundInDb =
         worldStateStorageCoordinator
-            .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
+            .getTrieNodeUnsafe(Bytes.concatenate(accountHash.getBytes(), Bytes.EMPTY))
             .map(Hash::hash)
             .orElse(Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH));
     if (!storageRootFoundInDb.equals(accountValue.getStorageRoot())) {
       // If the storage root is not found in the database, add the account to the list of accounts
       // to be repaired
-      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash.getBytes()));
       // If the account's storage root is not empty,
       // fill it with trie heal before completing with a flat heal
-      if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      if (!accountValue.getStorageRoot().getBytes().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         SnapDataRequest storageTrieRequest =
             createStorageTrieNodeDataRequest(
                 accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);

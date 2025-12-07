@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes;
 
 /** A single log result. */
 @JsonPropertyOrder({
@@ -61,7 +61,7 @@ public class LogResult implements JsonRpcResult {
     this.topics = new ArrayList<>(logWithMetadata.getTopics().size());
     this.removed = logWithMetadata.isRemoved();
 
-    for (final Bytes topic : logWithMetadata.getTopics()) {
+    for (final LogTopic topic : logWithMetadata.getTopics()) {
       topics.add(topic.toString());
     }
   }

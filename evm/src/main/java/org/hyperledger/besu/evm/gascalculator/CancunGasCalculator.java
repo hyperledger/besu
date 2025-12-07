@@ -28,7 +28,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
 
   /** Instantiates a new Cancun Gas Calculator. */
   public CancunGasCalculator() {
-    this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
+    this(KZG_POINT_EVAL.getBytes().toArrayUnsafe()[19]);
   }
 
   /**

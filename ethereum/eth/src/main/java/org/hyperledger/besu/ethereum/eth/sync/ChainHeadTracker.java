@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -85,7 +84,7 @@ public class ChainHeadTracker {
               () -> {
                 GetHeadersFromPeerTask task =
                     new GetHeadersFromPeerTask(
-                        Hash.wrap(peer.chainState().getBestBlock().getHash()),
+                        peer.chainState().getBestBlock().getHash(),
                         0,
                         1,
                         0,
@@ -156,7 +155,7 @@ public class ChainHeadTracker {
     return GetHeadersFromPeerByHashTask.forSingleHash(
             protocolSchedule,
             ethContext,
-            Hash.wrap(peer.chainState().getBestBlock().getHash()),
+            peer.chainState().getBestBlock().getHash(),
             0,
             metricsSystem)
         .assignPeer(peer)

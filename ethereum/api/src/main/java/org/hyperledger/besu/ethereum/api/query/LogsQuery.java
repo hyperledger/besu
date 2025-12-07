@@ -62,7 +62,7 @@ public class LogsQuery {
             : emptyList();
     this.addressBlooms =
         this.addresses.stream()
-            .map(address -> LogsBloomFilter.builder().insertBytes(address).build())
+            .map(address -> LogsBloomFilter.builder().insertBytes(address.getBytes()).build())
             .collect(toUnmodifiableList());
     this.topicsBlooms =
         this.topics.stream()
@@ -70,7 +70,9 @@ public class LogsQuery {
                 subTopics ->
                     subTopics.stream()
                         .filter(Objects::nonNull)
-                        .map(logTopic -> LogsBloomFilter.builder().insertBytes(logTopic).build())
+                        .map(
+                            logTopic ->
+                                LogsBloomFilter.builder().insertBytes(logTopic.getBytes()).build())
                         .collect(Collectors.toList()))
             .collect(toUnmodifiableList());
   }

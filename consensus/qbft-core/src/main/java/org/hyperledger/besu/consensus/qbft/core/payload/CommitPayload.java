@@ -70,7 +70,7 @@ public class CommitPayload extends QbftPayload {
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     writeConsensusRound(rlpOutput);
-    rlpOutput.writeBytes(digest);
+    rlpOutput.writeBytes(digest.getBytes());
     rlpOutput.writeBytes(commitSeal.encodedBytes());
     rlpOutput.endList();
   }

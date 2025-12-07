@@ -33,7 +33,7 @@ public class CallerOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getSenderAddress());
+    frame.pushStackItem(frame.getSenderAddress().getBytes());
 
     return successResponse;
   }

@@ -74,12 +74,12 @@ public class Log {
    */
   public void writeTo(final RLPOutput out, final boolean compacted) {
     out.startList();
-    out.writeBytes(logger);
+    out.writeBytes(logger.getBytes());
     if (compacted) {
-      out.writeList(topics, (topic, listOut) -> encodeTrimmedData(listOut, topic));
+      out.writeList(topics, (topic, listOut) -> encodeTrimmedData(listOut, topic.getBytes()));
       encodeTrimmedData(out, data);
     } else {
-      out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
+      out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic.getBytes()));
       out.writeBytes(data);
     }
     out.endList();

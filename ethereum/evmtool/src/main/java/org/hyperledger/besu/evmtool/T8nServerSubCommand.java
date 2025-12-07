@@ -202,7 +202,9 @@ public class T8nServerSubCommand implements Runnable {
                       new FileOutputStream(
                           outDir
                               .resolve(
-                                  String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                                  String.format(
+                                      "trace-%d-%s.jsonl",
+                                      txIndex, txHash.getBytes().toHexString()))
                               .toFile());
 
                   var jsonTracer =

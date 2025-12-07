@@ -108,7 +108,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       return composedWorldStateStorage
           .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
     }
   }
 
@@ -118,9 +118,11 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
+          .get(
+              TRIE_BRANCH_STORAGE,
+              Bytes.concatenate(accountHash.getBytes(), location).toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
     }
   }
 
@@ -284,7 +286,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       }
       composedWorldStateTransaction.put(
           TRIE_BRANCH_STORAGE,
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+          Bytes.concatenate(accountHash.getBytes(), location).toArrayUnsafe(),
           node.toArrayUnsafe());
       return this;
     }
