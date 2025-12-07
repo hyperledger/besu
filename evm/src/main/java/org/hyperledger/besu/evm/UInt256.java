@@ -49,7 +49,8 @@ public final class UInt256 {
   private static final long MASK_L = 0xFFFFFFFFL;
 
   // Arrays of zeros.
-  // We accomodate up to a result of a multiplication
+  private static final byte[] ZERO_BYTES = new byte[32];
+  // For int, we accomodate up to a result of a multiplication
   private static final int[] ZERO_INTS = new int[17];
 
   private final int[] limbs;
@@ -101,48 +102,23 @@ public final class UInt256 {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    int byteLen = bytes.length;
-    if (byteLen == 0) return ZERO;
-
+    // Unchecked : bytes.length <= BYTESIZE 
+    if (bytes.length == 0) return ZERO;
+    int msb = Arrays.mismatch(bytes, ZERO_BYTES);  // Most significant byte index
+    if (msb == -1 || msb >= bytes.length) return ZERO;
     int[] limbs = new int[N_LIMBS];
-
-    // Fast path for exactly 32 bytes
-    if (byteLen == 32) {
-      limbs[7] = getIntBE(bytes, 28);
-      limbs[6] = getIntBE(bytes, 24);
-      limbs[5] = getIntBE(bytes, 20);
-      limbs[4] = getIntBE(bytes, 16);
-      limbs[3] = getIntBE(bytes, 12);
-      limbs[2] = getIntBE(bytes, 8);
-      limbs[1] = getIntBE(bytes, 4);
-      limbs[0] = getIntBE(bytes, 0);
-      return new UInt256(limbs, 0);
-    }
-
-    // General path for variable length
-    int limbIndex = N_LIMBS;
-    int byteIndex = byteLen - 1;
-
-    while (byteIndex >= 0 && limbIndex >= 1) {
-      int limb = 0;
+    int i = N_LIMBS - 1;  // Index in int array
+    int b = bytes.length - 1;  // Index in bytes array
+    int limb;
+    for (; b >= msb; i--) {
       int shift = 0;
-
-      for (int j = 0; j < 4 && byteIndex >= 0; j++, byteIndex--, shift += 8) {
-        limb |= (bytes[byteIndex] & 0xFF) << shift;
+      limb = 0;
+      for (int j = 0; j < 4 && b >= msb; j++, b--, shift += 8) {
+        limb |= ((bytes[b] & 0xFF) << shift);
       }
-
-      limbs[--limbIndex] = limb;
+      limbs[i] = limb;
     }
-
-    return new UInt256(limbs, limbIndex);
-  }
-
-  // Helper method to read 4 bytes as big-endian int
-  private static int getIntBE(final byte[] bytes, final int offset) {
-    return ((bytes[offset] & 0xFF) << 24)
-        | ((bytes[offset + 1] & 0xFF) << 16)
-        | ((bytes[offset + 2] & 0xFF) << 8)
-        | (bytes[offset + 3] & 0xFF);
+    return new UInt256(limbs, i + 1);
   }
 
   /**
