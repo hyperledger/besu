@@ -246,14 +246,6 @@ public final class UInt256 {
     bytes[offset + 3] = (byte) value;
   }
 
-  // Helper method to write 4 bytes from big-endian int
-  private static void putIntBE(final byte[] bytes, final int offset, final int value) {
-    bytes[offset] = (byte) (value >>> 24);
-    bytes[offset + 1] = (byte) (value >>> 16);
-    bytes[offset + 2] = (byte) (value >>> 8);
-    bytes[offset + 3] = (byte) value;
-  }
-  
   /**
    * Convert to BigInteger.
    *
