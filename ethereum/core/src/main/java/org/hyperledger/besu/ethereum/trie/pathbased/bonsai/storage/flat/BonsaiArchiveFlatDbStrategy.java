@@ -128,20 +128,26 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest =
         calculateArchiveKeyWithMaxSuffix(
-            getStateArchiveContextForRead(storage), accountHash.toArrayUnsafe());
+            getStateArchiveContextForRead(storage), accountHash.getBytes().toArrayUnsafe());
 
     // Find the nearest account state for this address and block context
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount =
         storage
             .getNearestBefore(ACCOUNT_INFO_STATE, keyNearest)
-            .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
+            .filter(
+                found ->
+                    accountHash.getBytes().commonPrefixLength(found.key())
+                        >= accountHash.getBytes().size());
 
     // If there isn't a match look in the archive DB segment
     if (nearestAccount.isEmpty()) {
       accountFound =
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
-              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
+              .filter(
+                  found ->
+                      accountHash.getBytes().commonPrefixLength(found.key())
+                          >= accountHash.getBytes().size());
 
       if (accountFound.isPresent()) {
         getAccountFromArchiveCounter.inc();
@@ -219,12 +225,12 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             calculateArchiveKeyNoContextMinSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
-        .takeWhile(pair -> pair.slice(0, Hash.SIZE).equals(accountHash))
+        .takeWhile(pair -> pair.slice(0, Bytes32.SIZE).equals(accountHash.getBytes()))
         .distinct()
         .map(
             key ->
                 new Pair<>(
-                    Bytes32.wrap(trimSuffix(key.slice(Hash.SIZE).toArrayUnsafe())),
+                    Bytes32.wrap(trimSuffix(key.slice(Bytes32.SIZE).toArrayUnsafe())),
                     valueMapper.apply(
                         Bytes.of(
                                 storage
@@ -250,12 +256,12 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
             calculateArchiveKeyNoContextMaxSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(endKeyHash))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
-        .takeWhile(pair -> pair.slice(0, Hash.SIZE).equals(accountHash))
+        .takeWhile(pair -> pair.slice(0, Bytes32.SIZE).equals(accountHash.getBytes()))
         .distinct()
         .map(
             key ->
                 new Pair<>(
-                    Bytes32.wrap(trimSuffix(key.slice(Hash.SIZE).toArrayUnsafe())),
+                    Bytes32.wrap(trimSuffix(key.slice(Bytes32.SIZE).toArrayUnsafe())),
                     valueMapper.apply(
                         Bytes.of(
                                 storage
@@ -279,7 +285,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
     byte[] keySuffixed =
         calculateArchiveKeyWithMinSuffix(
-            getStateArchiveContextForWrite(storage).get(), accountHash.toArrayUnsafe());
+            getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
   }
@@ -293,7 +299,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // insert a key suffixed with block context, with 'deleted account' value
     byte[] keySuffixed =
         calculateArchiveKeyWithMinSuffix(
-            getStateArchiveContextForWrite(storage).get(), accountHash.toArrayUnsafe());
+            getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, DELETED_ACCOUNT_VALUE);
   }
@@ -406,7 +412,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   }
 
   public static byte[] calculateNaturalSlotKey(final Hash accountHash, final Hash slotHash) {
-    return Bytes.concatenate(accountHash, slotHash).toArrayUnsafe();
+    return Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes()).toArrayUnsafe();
   }
 
   public static byte[] calculateArchiveKeyWithMinSuffix(

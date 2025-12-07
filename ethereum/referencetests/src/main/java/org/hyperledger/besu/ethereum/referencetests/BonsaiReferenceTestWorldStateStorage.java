@@ -59,7 +59,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
                 e ->
                     AccountStorageEntry.create(
                         UInt256.fromBytes(RLP.decodeValue(e.getValue())),
-                        Hash.wrap(e.getKey()),
+                        e.getKey(),
                         preImageProxy.getStorageTrieKeyPreimage(e.getKey())),
                 (a, b) -> a,
                 TreeMap::new));
@@ -84,6 +84,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
         .filter(Optional::isPresent)
         .map(Optional::get)
         .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)
-        .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
+        .sorted(
+            Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO).getBytes()));
   }
 }

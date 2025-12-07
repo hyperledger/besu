@@ -83,17 +83,17 @@ public class BackwardChain {
       final StorageProvider storageProvider, final BlockHeaderFunctions blockHeaderFunctions) {
     return new BackwardChain(
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             BlocksHeadersConvertor.of(blockHeaderFunctions),
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_HEADERS)),
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             BlocksConvertor.of(blockHeaderFunctions),
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_BLOCKS)),
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new HashConvertor(),
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)),

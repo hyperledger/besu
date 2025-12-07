@@ -131,7 +131,7 @@ public class ForestMutableWorldState implements MutableWorldState {
   public Account get(final Address address) {
     final Hash addressHash = address.addressHash();
     return accountStateTrie
-        .get(addressHash)
+        .get(Bytes32.wrap(addressHash.getBytes()))
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
         .orElse(null);
   }
@@ -261,7 +261,7 @@ public class ForestMutableWorldState implements MutableWorldState {
         storageTrie = updatedTrie;
       }
       if (storageTrie == null) {
-        storageTrie = newAccountStorageTrie(getStorageRoot());
+        storageTrie = newAccountStorageTrie(Bytes32.wrap(getStorageRoot().getBytes()));
       }
       return storageTrie;
     }
@@ -317,7 +317,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     @Override
     public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
-          .get(Hash.hash(key))
+          .get(Bytes32.wrap(Hash.hash(key).getBytes()))
           .map(ForestMutableWorldState::convertToUInt256)
           .orElse(UInt256.ZERO);
     }
@@ -387,7 +387,7 @@ public class ForestMutableWorldState implements MutableWorldState {
       final Hash addressHash = address.addressHash();
       return wrapped
           .accountStateTrie
-          .get(addressHash)
+          .get(Bytes32.wrap(addressHash.getBytes()))
           .map(bytes -> wrapped.deserializeAccount(address, addressHash, bytes))
           .orElse(null);
     }
@@ -414,7 +414,7 @@ public class ForestMutableWorldState implements MutableWorldState {
 
       for (final Address address : getDeletedAccounts()) {
         final Hash addressHash = address.addressHash();
-        wrapped.accountStateTrie.remove(addressHash);
+        wrapped.accountStateTrie.remove(Bytes32.wrap(addressHash.getBytes()));
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
       }
@@ -438,7 +438,7 @@ public class ForestMutableWorldState implements MutableWorldState {
           // Apply any storage updates
           final MerkleTrie<Bytes32, Bytes> storageTrie =
               freshState
-                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
+                  ? wrapped.newAccountStorageTrie(Bytes32.wrap(Hash.EMPTY_TRIE_HASH.getBytes()))
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
           final TreeSet<Map.Entry<UInt256, UInt256>> entries =
@@ -449,23 +449,25 @@ public class ForestMutableWorldState implements MutableWorldState {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
-              storageTrie.remove(keyHash);
+              storageTrie.remove(Bytes32.wrap(keyHash.getBytes()));
             } else {
-              wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
+              wrapped.newStorageKeyPreimages.put(Bytes32.wrap(keyHash.getBytes()), entry.getKey());
               storageTrie.put(
-                  keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
+                  Bytes32.wrap(keyHash.getBytes()),
+                  RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
             }
           }
           storageRoot = Hash.wrap(storageTrie.getRootHash());
         }
 
         // Save address preimage
-        wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
+        wrapped.newAccountKeyPreimages.put(
+            Bytes32.wrap(updated.getAddressHash().getBytes()), updated.getAddress());
         // Lastly, save the new account.
         final Bytes account =
             serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
-        wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+        wrapped.accountStateTrie.put(Bytes32.wrap(updated.getAddressHash().getBytes()), account);
       }
     }
 

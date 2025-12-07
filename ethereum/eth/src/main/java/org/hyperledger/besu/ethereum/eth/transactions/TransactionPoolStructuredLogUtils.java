@@ -135,7 +135,7 @@ public class TransactionPoolStructuredLogUtils {
           .addArgument(
               () ->
                   configuration.getPrioritySenders().stream()
-                      .map(Address::toHexString)
+                      .map(Address::toString)
                       .collect(Collectors.joining(",")))
           .log();
 
@@ -405,13 +405,13 @@ public class TransactionPoolStructuredLogUtils {
       final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
       final var strMaxConfirmedNonceBySender =
           maxConfirmedNonceBySender.entrySet().stream()
-              .map(e -> e.getKey().toHexString() + "," + e.getValue())
+              .map(e -> e.getKey().toString() + "," + e.getValue())
               .collect(Collectors.joining(","));
       final var strReorgNonceRangeBySender =
           reorgNonceRangeBySender.entrySet().stream()
               .map(
                   e ->
-                      e.getKey().toHexString()
+                      e.getKey().toString()
                           + ","
                           + e.getValue().getStart()
                           + ","

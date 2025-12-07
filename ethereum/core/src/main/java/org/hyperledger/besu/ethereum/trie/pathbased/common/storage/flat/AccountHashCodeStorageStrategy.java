@@ -29,7 +29,7 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     return storage
-        .get(CODE_STORAGE, accountHash.toArrayUnsafe())
+        .get(CODE_STORAGE, accountHash.getBytes().toArrayUnsafe())
         .map(Bytes::wrap)
         .filter(b -> Hash.hash(b).equals(codeHash));
   }
@@ -41,7 +41,7 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
       final Hash accountHash,
       final Hash codeHash,
       final Bytes code) {
-    transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+    transaction.put(CODE_STORAGE, accountHash.getBytes().toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   @Override
@@ -50,6 +50,6 @@ public class AccountHashCodeStorageStrategy implements CodeStorageStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash codeHash) {
-    transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
+    transaction.remove(CODE_STORAGE, accountHash.getBytes().toArrayUnsafe());
   }
 }

@@ -41,7 +41,7 @@ public final class GetPooledTransactionsMessage extends AbstractMessageData {
   public static GetPooledTransactionsMessage create(final List<Hash> pooledTransactions) {
     List<Hash> tx = pooledTransactions;
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(tx, (h, w) -> w.writeBytes(h));
+    out.writeList(tx, (h, w) -> w.writeBytes(h.getBytes()));
     return new GetPooledTransactionsMessage(out.encoded());
   }
 

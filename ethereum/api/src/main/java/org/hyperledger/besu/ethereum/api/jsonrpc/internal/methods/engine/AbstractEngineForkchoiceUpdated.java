@@ -294,7 +294,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             .setMessage(message)
             .addArgument(payloadAttributes::getTimestamp)
             .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
-            .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+            .addArgument(
+                () -> payloadAttributes.getSuggestedFeeRecipient().getBytes().toHexString());
     if (payloadAttributes.getWithdrawals() != null) {
       message += ", withdrawals: {}";
       builder =
@@ -319,7 +320,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final Hash safeBlockHash, final Hash finalizedBlockHash, final BlockHeader newBlock) {
     Optional<BlockHeader> maybeFinalizedBlock = Optional.empty();
 
-    if (!finalizedBlockHash.isZero()) {
+    if (!finalizedBlockHash.getBytes().isZero()) {
       maybeFinalizedBlock = protocolContext.getBlockchain().getBlockHeader(finalizedBlockHash);
 
       // if the finalized block hash is not zero, we always need to have its block, because we
@@ -338,8 +339,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     // Once we have at least one finalized block, the transition block has either been finalized
     // directly
     // or through one of its descendants.
-    if (safeBlockHash.isZero()) {
-      return finalizedBlockHash.isZero();
+    if (safeBlockHash.getBytes().isZero()) {
+      return finalizedBlockHash.getBytes().isZero();
     }
 
     final Optional<BlockHeader> maybeSafeBlock =

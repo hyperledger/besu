@@ -31,7 +31,7 @@ public class CodeDelegationResult {
 
   public CodeDelegationResult(final CodeDelegation codeDelegation) {
     chainId = Quantity.create(UInt256.valueOf(codeDelegation.chainId()));
-    address = codeDelegation.address().toHexString();
+    address = codeDelegation.address().getBytes().toHexString();
     nonce = Quantity.create(codeDelegation.nonce());
     yParity = Quantity.create(codeDelegation.v());
     r = Quantity.create(codeDelegation.r());

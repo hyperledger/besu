@@ -26,6 +26,6 @@ public class HashConvertor implements ValueConvertor<Hash> {
 
   @Override
   public byte[] toBytes(final Hash value) {
-    return value.toArrayUnsafe();
+    return value.getBytes().toArrayUnsafe();
   }
 }

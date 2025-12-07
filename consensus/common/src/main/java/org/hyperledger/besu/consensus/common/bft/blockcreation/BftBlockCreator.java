@@ -102,7 +102,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
               .getByBlockNumberOrTimestamp(pendingHeader.getNumber(), blockTimestamp);
       Address beneficiaryAddress =
           protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
-      return !beneficiaryAddress.isZero() ? beneficiaryAddress : localAddress;
+      return !beneficiaryAddress.getBytes().isZero() ? beneficiaryAddress : localAddress;
     };
   }
 

@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 /** The Message factory. */
 public class MessageFactory {
 
@@ -113,7 +115,8 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final SECPSignature signature = nodeKey.sign(payload.hashForSignature());
+    final SECPSignature signature =
+        nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes()));
     return SignedData.create(payload, signature);
   }
 }

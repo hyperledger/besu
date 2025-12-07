@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.wri
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -66,7 +67,7 @@ public class AccessListTransactionEncoder {
     rlpOutput.writeLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
-    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeBytes(to.map(BytesHolder::getBytes).map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
     /*
@@ -97,7 +98,7 @@ public class AccessListTransactionEncoder {
           accessListEntries.get(),
           (accessListEntry, accessListEntryRLPOutput) -> {
             accessListEntryRLPOutput.startList();
-            out.writeBytes(accessListEntry.address());
+            out.writeBytes(accessListEntry.address().getBytes());
             out.writeList(
                 accessListEntry.storageKeys(),
                 (storageKeyBytes, storageKeyBytesRLPOutput) ->

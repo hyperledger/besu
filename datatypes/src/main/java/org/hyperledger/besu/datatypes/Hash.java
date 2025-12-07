@@ -22,10 +22,9 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.DelegatingBytes32;
 
 /** A 32-bytes hash value as used in Ethereum blocks, usually the result of the KEC algorithm. */
-public class Hash extends DelegatingBytes32 {
+public class Hash extends BytesHolder {
 
   /** The constant ZERO. */
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
@@ -88,9 +87,6 @@ public class Hash extends DelegatingBytes32 {
    * @return the hash
    */
   public static Hash wrap(final Bytes32 bytes) {
-    if (bytes instanceof Hash) {
-      return (Hash) bytes;
-    }
     return new Hash(bytes);
   }
 
@@ -125,7 +121,7 @@ public class Hash extends DelegatingBytes32 {
    * @return shortened string with only the beginning and the end of the hex representation
    */
   public String toShortLogString() {
-    final var hexRepresentation = toFastHex(false);
+    final var hexRepresentation = getBytes().toFastHex(false);
     String firstPart = hexRepresentation.substring(0, 5);
     String lastPart = hexRepresentation.substring(hexRepresentation.length() - 5);
     return firstPart + "....." + lastPart;

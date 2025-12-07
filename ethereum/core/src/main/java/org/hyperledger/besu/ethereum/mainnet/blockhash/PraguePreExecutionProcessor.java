@@ -64,7 +64,7 @@ public class PraguePreExecutionProcessor extends CancunPreExecutionProcessor {
     SystemCallProcessor processor =
         new SystemCallProcessor(context.getProtocolSpec().getTransactionProcessor());
 
-    Bytes inputData = context.getBlockHeader().getParentHash();
+    Bytes inputData = context.getBlockHeader().getParentHash().getBytes();
     try {
       processor.process(historyStorageAddress, context, inputData, accessLocationTracker);
     } catch (InvalidSystemCallAddressException e) {

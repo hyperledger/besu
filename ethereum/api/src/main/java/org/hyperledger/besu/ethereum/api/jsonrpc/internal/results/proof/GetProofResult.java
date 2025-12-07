@@ -83,9 +83,9 @@ public class GetProofResult {
               return new GetProofResult(
                   address,
                   pmtStateTrieAccountValue.getBalance(),
-                  pmtStateTrieAccountValue.getCodeHash(),
+                  Bytes32.wrap(pmtStateTrieAccountValue.getCodeHash().getBytes()),
                   pmtStateTrieAccountValue.getNonce(),
-                  pmtStateTrieAccountValue.getStorageRoot(),
+                  Bytes32.wrap(pmtStateTrieAccountValue.getStorageRoot().getBytes()),
                   worldStateProof.getAccountProof(),
                   storageEntries);
             })
@@ -93,9 +93,9 @@ public class GetProofResult {
             new GetProofResult(
                 address,
                 Wei.ZERO,
-                Hash.EMPTY,
+                Bytes32.wrap(Hash.EMPTY.getBytes()),
                 0L,
-                Hash.EMPTY_TRIE_HASH,
+                Bytes32.wrap(Hash.EMPTY_TRIE_HASH.getBytes()),
                 worldStateProof.getAccountProof(),
                 new ArrayList<>()));
   }

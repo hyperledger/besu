@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ForestWorldStateArchive implements WorldStateArchive {
@@ -63,7 +64,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return worldStateKeyValueStorage.isWorldStateAvailable(rootHash);
+    return worldStateKeyValueStorage.isWorldStateAvailable(Bytes32.wrap(rootHash.getBytes()));
   }
 
   @Override
@@ -81,12 +82,15 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   }
 
   private Optional<MutableWorldState> getWorldState(final Hash rootHash) {
-    if (!worldStateKeyValueStorage.isWorldStateAvailable(rootHash)) {
+    if (!worldStateKeyValueStorage.isWorldStateAvailable(Bytes32.wrap(rootHash.getBytes()))) {
       return Optional.empty();
     }
     return Optional.of(
         new ForestMutableWorldState(
-            rootHash, worldStateKeyValueStorage, preimageStorage, evmConfiguration));
+            Bytes32.wrap(rootHash.getBytes()),
+            worldStateKeyValueStorage,
+            preimageStorage,
+            evmConfiguration));
   }
 
   @Override
@@ -97,7 +101,7 @@ public class ForestWorldStateArchive implements WorldStateArchive {
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     // query by location is not supported, only query by content
-    return worldStateKeyValueStorage.getNodeData(hash);
+    return worldStateKeyValueStorage.getNodeData(Bytes32.wrap(hash.getBytes()));
   }
 
   public ForestWorldStateKeyValueStorage getWorldStateStorage() {

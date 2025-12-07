@@ -112,7 +112,8 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(bftExtraData.getVanityData());
-    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(
+        bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     if (bftExtraData.getVote().isPresent()) {
       encodeVote(encoder, bftExtraData.getVote().get());
@@ -146,7 +147,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
   protected void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
     final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
     rlpOutput.startList();
-    rlpOutput.writeBytes(vote.getRecipient());
+    rlpOutput.writeBytes(vote.getRecipient().getBytes());
     if (voteType == VoteType.ADD) {
       rlpOutput.writeByte(ADD_BYTE_VALUE);
     } else {

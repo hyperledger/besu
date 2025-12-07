@@ -53,7 +53,7 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return keyValueStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
+      return keyValueStorage.get(codeHash.getBytes().toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
@@ -81,7 +81,7 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
   public Optional<Bytes> getNodeData(final Bytes32 hash) {
     if (hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
-    } else if (hash.equals(Hash.EMPTY)) {
+    } else if (hash.equals(Hash.EMPTY.getBytes())) {
       return Optional.of(Bytes.EMPTY);
     } else {
       return keyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
@@ -148,7 +148,7 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     public Updater putCode(final Bytes code) {
       // Skip the hash calculation for empty code
       final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
-      return putCode(codeHash, code);
+      return putCode(Bytes32.wrap(codeHash.getBytes()), code);
     }
 
     public Updater putCode(final Bytes32 codeHash, final Bytes code) {

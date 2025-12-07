@@ -26,7 +26,7 @@ public class WithdrawalEncoder {
     rlpOutput.startList();
     rlpOutput.writeBigIntegerScalar(withdrawal.getIndex().toBigInteger());
     rlpOutput.writeBigIntegerScalar(withdrawal.getValidatorIndex().toBigInteger());
-    rlpOutput.writeBytes(withdrawal.getAddress());
+    rlpOutput.writeBytes(withdrawal.getAddress().getBytes());
     rlpOutput.writeUInt64Scalar(withdrawal.getAmount());
     rlpOutput.endList();
   }

@@ -49,7 +49,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   protected TrieNodeHealingRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
-    this.nodeHash = nodeHash;
+    this.nodeHash = Bytes32.wrap(nodeHash.getBytes());
     this.location = location;
     this.data = Bytes.EMPTY;
   }
@@ -130,7 +130,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   @Override
   public boolean isResponseReceived() {
-    return !data.isEmpty() && Hash.hash(data).equals(getNodeHash());
+    return !data.isEmpty() && Hash.hash(data).getBytes().equals(getNodeHash());
   }
 
   @Override

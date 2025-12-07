@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.Function;
 
 import com.google.common.primitives.Longs;
 import graphql.schema.DataFetchingEnvironment;
@@ -87,7 +86,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the hash of the block
    */
   public Bytes32 getHash() {
-    return header.getHash();
+    return Bytes32.wrap(header.getHash().getBytes());
   }
 
   /**
@@ -107,7 +106,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the transactions root of the block
    */
   public Bytes32 getTransactionsRoot() {
-    return header.getTransactionsRoot();
+    return Bytes32.wrap(header.getTransactionsRoot().getBytes());
   }
 
   /**
@@ -116,7 +115,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the state root of the block
    */
   public Bytes32 getStateRoot() {
-    return header.getStateRoot();
+    return Bytes32.wrap(header.getStateRoot().getBytes());
   }
 
   /**
@@ -125,7 +124,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the receipts root of the block
    */
   public Bytes32 getReceiptsRoot() {
-    return header.getReceiptsRoot();
+    return Bytes32.wrap(header.getReceiptsRoot().getBytes());
   }
 
   /**
@@ -200,7 +199,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the logs bloom of the block
    */
   public Bytes getLogsBloom() {
-    return header.getLogsBloom();
+    return header.getLogsBloom().getBytes();
   }
 
   /**
@@ -209,7 +208,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the mix hash of the block
    */
   public Bytes32 getMixHash() {
-    return header.getMixHash();
+    return Bytes32.wrap(header.getMixHash().getBytes());
   }
 
   /**
@@ -227,7 +226,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the ommer hash of the block
    */
   public Bytes32 getOmmerHash() {
-    return header.getOmmersHash();
+    return Bytes32.wrap(header.getOmmersHash().getBytes());
   }
 
   /**
@@ -404,7 +403,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return an Optional containing the withdrawals root if it exists, otherwise an empty Optional
    */
   Optional<Bytes32> getWithdrawalsRoot() {
-    return header.getWithdrawalsRoot().map(Function.identity());
+    return header.getWithdrawalsRoot().map(h -> Bytes32.wrap(h.getBytes()));
   }
 
   /**

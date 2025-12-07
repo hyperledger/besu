@@ -28,7 +28,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "accessList",
@@ -121,7 +120,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
-    this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
+    this.to = transaction.getTo().map(a -> a.getBytes().toHexString()).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);

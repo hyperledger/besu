@@ -66,7 +66,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
-    tmp.writeBytes(worldStateRootHash);
+    tmp.writeBytes(worldStateRootHash.getBytes());
     tmp.writeList(accountHashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
@@ -82,8 +82,8 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
             Optional.of(requestId),
             range.worldStateRootHash(),
             range.hashes(),
-            range.startKeyHash(),
-            range.endKeyHash())
+            Bytes32.wrap(range.startKeyHash().getBytes()),
+            range.endKeyHash() != null ? Bytes32.wrap(range.endKeyHash().getBytes()) : null)
         .getData();
   }
 

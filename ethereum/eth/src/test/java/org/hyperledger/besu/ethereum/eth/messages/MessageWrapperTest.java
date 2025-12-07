@@ -60,6 +60,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class MessageWrapperTest {
@@ -394,7 +395,7 @@ public class MessageWrapperTest {
           Long.decode(timestamp),
           Bytes.fromHexString(extraData),
           null,
-          Hash.fromHexString(mixHash),
+          Bytes32.wrap(Hash.fromHexString(mixHash).getBytes()),
           Bytes.fromHexStringLenient(nonce).toLong(),
           null,
           null,

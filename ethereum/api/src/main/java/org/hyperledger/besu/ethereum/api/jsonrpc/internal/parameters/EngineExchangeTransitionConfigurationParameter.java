@@ -51,7 +51,7 @@ public class EngineExchangeTransitionConfigurationParameter {
 
   @JsonProperty("terminalBlockHash")
   public String getTerminalBlockHashAsHexString() {
-    return terminalBlockHash.toShortHexString();
+    return terminalBlockHash.getBytes().toShortHexString();
   }
 
   public long getTerminalBlockNumber() {

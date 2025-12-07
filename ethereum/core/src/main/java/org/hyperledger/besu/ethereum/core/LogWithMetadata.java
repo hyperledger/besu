@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -207,7 +206,7 @@ public class LogWithMetadata extends Log
         pluginObject.getTransactionIndex(),
         pluginObject.getLogger(),
         pluginObject.getData(),
-        pluginObject.getTopics().stream().map(LogTopic::create).collect(Collectors.toList()),
+        pluginObject.getTopics(),
         pluginObject.isRemoved());
   }
 }

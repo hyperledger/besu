@@ -29,7 +29,7 @@ public final class BlockAccessListEncoder {
         bal.accountChanges(),
         (acct, acctOut) -> {
           acctOut.startList();
-          acctOut.writeBytes(acct.address());
+          acctOut.writeBytes(acct.address().getBytes());
 
           acctOut.writeList(
               acct.storageChanges(),
