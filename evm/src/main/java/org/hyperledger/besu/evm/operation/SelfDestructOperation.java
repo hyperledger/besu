@@ -61,18 +61,26 @@ public class SelfDestructOperation extends AbstractOperation {
 
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
-    // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
-    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
+    final long beneficiaryAccessCost =
+        beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost();
+    final long staticCost =
+        gasCalculator().selfDestructOperationBaseGasCost() + beneficiaryAccessCost;
 
+    if (frame.getRemainingGas() < staticCost) {
+      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
+    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final Address originatorAddress = frame.getRecipientAddress();
     final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
-            + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
+            + beneficiaryAccessCost;
 
     // With the cost we can test for out-of-gas early WithdrawalRequests
     if (frame.getRemainingGas() < cost) {

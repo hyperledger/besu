@@ -378,6 +378,9 @@ public interface GasCalculator {
    */
   long selfDestructOperationGasCost(Account recipient, Wei inheritance);
 
+  /** Returns the base cost for executing a {@link SelfDestructOperation}. */
+  long selfDestructOperationBaseGasCost();
+
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.
    *

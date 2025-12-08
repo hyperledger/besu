@@ -476,6 +476,11 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
+  public long selfDestructOperationBaseGasCost() {
+    return SELFDESTRUCT_OPERATION_GAS_COST;
+  }
+
+  @Override
   public long keccak256OperationGasCost(
       final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(

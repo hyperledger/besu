@@ -31,9 +31,9 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
   private static final long EXT_CODE_BASE_GAS_COST = 700L;
 
-  private static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
+  protected static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
 
-  private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
+  protected static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
 
   private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
@@ -124,6 +124,11 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     } else {
       return SELFDESTRUCT_OPERATION_GAS_COST;
     }
+  }
+
+  @Override
+  public long selfDestructOperationBaseGasCost() {
+    return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
   @Override
