@@ -18,11 +18,15 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class StoredNode<V> implements Node<V> {
+
   private final NodeFactory<V> nodeFactory;
   private final Bytes location;
   private final Bytes32 hash;
