@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.List;

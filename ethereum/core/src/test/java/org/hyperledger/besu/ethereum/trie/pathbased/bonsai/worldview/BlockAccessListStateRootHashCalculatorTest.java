@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.N
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 

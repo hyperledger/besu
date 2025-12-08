@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
