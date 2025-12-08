@@ -25,8 +25,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -35,12 +33,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnap
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -49,6 +43,13 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.StateRootCommitter;
+import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

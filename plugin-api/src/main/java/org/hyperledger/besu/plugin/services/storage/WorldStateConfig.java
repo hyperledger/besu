@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
+package org.hyperledger.besu.plugin.services.storage;
 
 /** WorldStateConfig encapsulates the shared configuration parameters for the world state. */
 public class WorldStateConfig {

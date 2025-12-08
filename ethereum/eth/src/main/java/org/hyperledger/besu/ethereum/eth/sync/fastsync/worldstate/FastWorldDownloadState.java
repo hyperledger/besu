@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordina
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCacheModule;
 import org.hyperledger.besu.evm.EVM;

@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.get
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.tasks.Task;

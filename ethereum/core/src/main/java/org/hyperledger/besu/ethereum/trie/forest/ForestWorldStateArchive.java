@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.forest;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;

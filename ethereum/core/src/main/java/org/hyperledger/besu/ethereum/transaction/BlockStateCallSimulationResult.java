@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;

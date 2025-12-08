@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;

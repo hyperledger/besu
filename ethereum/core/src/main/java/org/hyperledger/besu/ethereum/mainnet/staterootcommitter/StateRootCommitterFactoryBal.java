@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
+import org.hyperledger.besu.plugin.services.storage.StateRootCommitter;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

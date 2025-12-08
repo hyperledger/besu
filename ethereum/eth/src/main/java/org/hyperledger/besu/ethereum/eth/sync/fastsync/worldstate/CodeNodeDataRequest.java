@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordina
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.Optional;

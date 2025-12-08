@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;

@@ -26,6 +26,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 public class WorldStateStorageCoordinator {
   private final WorldStateKeyValueStorage worldStateKeyValueStorage;

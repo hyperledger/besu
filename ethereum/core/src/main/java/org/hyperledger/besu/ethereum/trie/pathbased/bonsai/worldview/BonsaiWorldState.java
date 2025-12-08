@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.Path
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCached
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
+import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;

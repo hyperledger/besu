@@ -12,12 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.BlockHeader;
