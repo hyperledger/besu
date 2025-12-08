@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
@@ -56,7 +57,7 @@ public class Tracer {
    * This class force the use of the processTracing method to do tracing. processTracing allows you
    * to cleanly manage the worldstate, to close it etc
    */
-  public static class TraceableState implements MutableWorldState {
+  public static class TraceableState extends BaseMutableWorldState {
     private final MutableWorldState mutableWorldState;
 
     private TraceableState(final MutableWorldState mutableWorldState) {
@@ -64,7 +65,7 @@ public class Tracer {
     }
 
     @Override
-    public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
+    public void persist(final org.hyperledger.besu.plugin.data.BlockHeader blockHeader, final StateRootCommitter committer) {
       mutableWorldState.persist(blockHeader, committer);
     }
 

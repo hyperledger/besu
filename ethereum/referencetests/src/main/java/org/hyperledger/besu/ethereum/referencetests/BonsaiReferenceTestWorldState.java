@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.Worl
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -281,7 +281,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public synchronized void saveTrieLog(
         final PathBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
-        final BlockHeader forBlockHeader,
+        final org.hyperledger.besu.ethereum.core.BlockHeader forBlockHeader,
         final PathBasedWorldState forWorldState) {
       // notify trie log added observers, synchronously
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);

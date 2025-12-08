@@ -22,7 +22,9 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBa
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
@@ -50,8 +52,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class PathBasedWorldState
-    implements MutableWorldState, PathBasedWorldView, StorageSubscriber {
+public abstract class PathBasedWorldState extends BaseMutableWorldState
+    implements PathBasedWorldView, StorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(PathBasedWorldState.class);
 
@@ -223,7 +225,9 @@ public abstract class PathBasedWorldState
     try {
       final Hash calculatedRootHash =
           committer.computeRootAndCommit(this, stateUpdater, blockHeader, worldStateConfig);
-
+      final org.hyperledger.besu.ethereum.core.BlockHeader coreBlockHeader = blockHeader == null ?
+              null :
+              BlockHeaderBuilder.fromHeader(blockHeader).buildBlockHeader();
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
@@ -231,15 +235,15 @@ public abstract class PathBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, coreBlockHeader, this);
             };
         cacheWorldState =
-            () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
+            () -> cachedWorldStorageManager.addCachedLayer(coreBlockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
-        worldStateBlockHash = blockHeader.getHash();
+            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getBlockHash().toArrayUnsafe());
+        worldStateBlockHash = blockHeader.getBlockHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;

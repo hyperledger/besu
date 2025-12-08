@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.trie.forest.worldview;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -53,7 +53,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class ForestMutableWorldState implements MutableWorldState {
+public class ForestMutableWorldState extends BaseMutableWorldState {
 
   private final EvmConfiguration evmConfiguration;
   private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
