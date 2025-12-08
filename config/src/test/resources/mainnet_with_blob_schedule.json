@@ -27,6 +27,11 @@
         "max": 10,
         "baseFeeUpdateFraction": 5007716
       },
+      "amsterdam": {
+        "target": 8,
+        "max": 11,
+        "baseFeeUpdateFraction": 6000000
+      },
       "bpo1": {
         "target": 11,
         "max": 12,
