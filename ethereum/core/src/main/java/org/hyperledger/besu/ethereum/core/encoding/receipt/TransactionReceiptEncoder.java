@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -93,10 +94,28 @@ public class TransactionReceiptEncoder {
 
   public static Bytes writeSyncReceiptForRootCalc(final SyncTransactionReceipt receipt) {
     final boolean isFrontier =
-            !receipt.getTransactionTypeCode().isEmpty() && receipt.getTransactionTypeCode().get(0) != TransactionType.FRONTIER.getSerializedType();
+        !receipt.getTransactionTypeCode().isEmpty()
+            && receipt.getTransactionTypeCode().get(0)
+                == TransactionType.FRONTIER.getSerializedType();
 
     List<Bytes> encodedLogs =
-        receipt.getLogs().stream().map(TransactionReceiptEncoder::rlpEncodeListNoCopy).toList();
+        receipt.getLogs().stream()
+            .map(
+                (List<Bytes> log) -> {
+                  Bytes encodedLogAddress = rlpEncodeNoCopy(log.getFirst());
+                  List<Bytes> encodedLogTopics = new ArrayList<>();
+                  for (int i = 1; i < log.size() - 1; i++) {
+                    encodedLogTopics.add(rlpEncodeNoCopy(log.get(i)));
+                  }
+                  Bytes encodedLogData = rlpEncodeNoCopy(log.getLast());
+                  return rlpEncodeListNoCopy(
+                      List.of(
+                          Bytes.concatenate(
+                              encodedLogAddress,
+                              rlpEncodeListNoCopy(encodedLogTopics),
+                              encodedLogData)));
+                })
+            .toList();
     List<Bytes> mainList =
         List.of(
             rlpEncodeNoCopy(receipt.getStatusOrStateRoot()),
@@ -105,9 +124,8 @@ public class TransactionReceiptEncoder {
             rlpEncodeListNoCopy(encodedLogs));
 
     return !isFrontier
-        ? rlpEncodeNoCopy(
-            Bytes.concatenate(
-                rlpEncodeNoCopy(receipt.getTransactionTypeCode()), rlpEncodeListNoCopy(mainList)))
+        ? Bytes.concatenate(
+            rlpEncodeNoCopy(receipt.getTransactionTypeCode()), rlpEncodeListNoCopy(mainList))
         : rlpEncodeListNoCopy(mainList);
   }
 
@@ -131,7 +149,7 @@ public class TransactionReceiptEncoder {
     } else { // totalLength > 55
       Bytes length = Bytes.minimalBytes(totalLength);
       return Bytes.concatenate(
-          Bytes.of((byte) (0xf8 + length.size())), length, Bytes.concatenate(encodedBytesList));
+          Bytes.of((byte) (0xf7 + length.size())), length, Bytes.concatenate(encodedBytesList));
     }
   }
 
