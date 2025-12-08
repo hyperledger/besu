@@ -67,14 +67,14 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   @CommandLine.Option(
       names = {"--p2p-enabled"},
       description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      fallbackValue= "true")
   public final Boolean p2pEnabled = true;
 
   /** Boolean option to indicate if peers should be discovered. */
   @CommandLine.Option(
       names = {"--discovery-enabled"},
       description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          fallbackValue= "true")
   public final Boolean peerDiscoveryEnabled = true;
 
   /**
@@ -97,8 +97,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   @CommandLine.Option(
       names = {"--p2p-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})")
   public String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
   /** The network interface address on which this node listens for P2P communication. */
@@ -107,16 +106,14 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       names = {"--p2p-interface"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description =
-          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})")
   public String p2pInterface = NetworkUtility.INADDR_ANY;
 
   /** The port on which this node listens for P2P communication. */
   @CommandLine.Option(
       names = {"--p2p-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})")
   public final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
   /** The maximum number of peers this node can connect to. */
@@ -139,7 +136,6 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       paramLabel = DefaultCommandValues.MANDATORY_DOUBLE_FORMAT_HELP,
       description =
           "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
-      arity = "1",
       converter = PercentageConverter.class)
   public final Percentage maxRemoteConnectionsPercentage =
       Fraction.fromFloat(DefaultCommandValues.DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
@@ -189,7 +185,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
           "Always use of bootnodes for discovery in PoA networks. Disabling this reverts "
               + " to the same behaviour as non-PoA networks, where neighbours are only discovered from bootnodes on first startup."
               + "(default: ${DEFAULT-VALUE})",
-      arity = "1")
+          fallbackValue= "true")
   private final Boolean poaDiscoveryRetryBootnodes = true;
 
   private Collection<Bytes> bannedNodeIds = new ArrayList<>();
