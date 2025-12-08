@@ -376,14 +376,20 @@ public interface GasCalculator {
    * @param inheritance The amount the recipient will receive
    * @return the cost for executing the self destruct operation
    */
-  long selfDestructOperationGasCost(Account recipient, Wei inheritance);
+  default long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+    return selfDestructOperationBaseGasCost();
+  }
+  ;
 
   /**
    * Returns the base cost for executing a {@link SelfDestructOperation}.
    *
    * @return the base cost for executing a {@link SelfDestructOperation}
    */
-  long selfDestructOperationBaseGasCost();
+  default long selfDestructOperationBaseGasCost() {
+    return 0L;
+  }
+  ;
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.

@@ -74,7 +74,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
-      return SELFDESTRUCT_OPERATION_GAS_COST;
+      return selfDestructOperationBaseGasCost();
     }
   }
 }
