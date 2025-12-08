@@ -67,14 +67,14 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   @CommandLine.Option(
       names = {"--p2p-enabled"},
       description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
-      fallbackValue= "true")
+      fallbackValue = "true")
   public final Boolean p2pEnabled = true;
 
   /** Boolean option to indicate if peers should be discovered. */
   @CommandLine.Option(
       names = {"--discovery-enabled"},
       description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
-          fallbackValue= "true")
+      fallbackValue = "true")
   public final Boolean peerDiscoveryEnabled = true;
 
   /**
@@ -185,7 +185,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
           "Always use of bootnodes for discovery in PoA networks. Disabling this reverts "
               + " to the same behaviour as non-PoA networks, where neighbours are only discovered from bootnodes on first startup."
               + "(default: ${DEFAULT-VALUE})",
-          fallbackValue= "true")
+      fallbackValue = "true")
   private final Boolean poaDiscoveryRetryBootnodes = true;
 
   private Collection<Bytes> bannedNodeIds = new ArrayList<>();
