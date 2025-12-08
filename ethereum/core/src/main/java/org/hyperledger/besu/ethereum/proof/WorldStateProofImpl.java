@@ -53,19 +53,23 @@ public class WorldStateProofImpl implements WorldStateProof {
     this.storageProofs = new HashMap<>();
   }
 
+  @Override
   public Optional<AccountValue> getStateTrieAccountValue() {
     return stateTrieAccountValue;
   }
 
+  @Override
   public List<Bytes> getAccountProof() {
     return accountProof.getProofRelatedNodes();
   }
 
-  public List<UInt256> getStorageKeys() {
+    @Override
+    public List<UInt256> getStorageKeys() {
     return new ArrayList<>(storageProofs.keySet());
   }
 
-  public UInt256 getStorageValue(final UInt256 key) {
+    @Override
+    public UInt256 getStorageValue(final UInt256 key) {
     Optional<Bytes> value = storageProofs.get(key).getValue();
     if (value.isEmpty()) {
       return UInt256.ZERO;
@@ -74,6 +78,7 @@ public class WorldStateProofImpl implements WorldStateProof {
     }
   }
 
+  @Override
   public List<Bytes> getStorageProof(final UInt256 key) {
     return storageProofs.get(key).getProofRelatedNodes();
   }
