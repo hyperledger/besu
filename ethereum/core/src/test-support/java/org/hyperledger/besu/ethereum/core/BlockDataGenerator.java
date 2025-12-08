@@ -66,6 +66,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 
 public class BlockDataGenerator {
 

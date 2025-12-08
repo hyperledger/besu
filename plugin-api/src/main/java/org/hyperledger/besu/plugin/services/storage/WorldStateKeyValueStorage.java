@@ -12,16 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
+package org.hyperledger.besu.plugin.services.storage;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.plugin.services.storage.StateRootCommitter;
+import java.util.Collection;
 
-import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes32;
 
-public interface StateRootCommitterFactory {
-  StateRootCommitter forBlock(
-      ProtocolContext protocolContext, BlockHeader blockHeader, Optional<BlockAccessList> maybeBal);
+public interface WorldStateKeyValueStorage {
+
+  DataStorageFormat getDataStorageFormat();
+
+  Updater updater();
+
+  void clear();
+
+  interface NodesAddedListener {
+    void onNodesAdded(Collection<Bytes32> nodeHash);
+  }
+
+  interface Updater {
+    void commit();
+  }
 }
