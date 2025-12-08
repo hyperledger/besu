@@ -72,7 +72,6 @@ public class SelfDestructOperation extends AbstractOperation {
       return new OperationResult(baseCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
     final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final Address originatorAddress = frame.getRecipientAddress();
     final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
