@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.datatypes.Address;
 

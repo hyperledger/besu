@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.evm.tracing.OperationTracer.NO_TRACING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -56,7 +56,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
