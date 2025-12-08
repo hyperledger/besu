@@ -42,6 +42,7 @@ import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,9 +79,12 @@ public class WorldStateProofProvider {
               account -> {
                 final SortedMap<UInt256, Proof<Bytes>> storageProofs =
                     getStorageProofs(accountHash, account, accountStorageKeys);
-                return new WorldStateProof(account, accountProof, storageProofs);
+                  return (WorldStateProof) new WorldStateProofImpl(account, accountProof, storageProofs);
               })
-          .or(() -> Optional.of(new WorldStateProof(accountProof)));
+          .or(() -> {
+              WorldStateProof worldStateProof = new WorldStateProofImpl(accountProof);
+              return Optional.of(worldStateProof);
+          });
     }
   }
 

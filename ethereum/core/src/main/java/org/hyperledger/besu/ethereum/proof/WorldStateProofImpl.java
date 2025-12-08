@@ -28,8 +28,9 @@ import java.util.SortedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
-public class WorldStateProof {
+public class WorldStateProofImpl implements WorldStateProof {
 
   private final Optional<AccountValue> stateTrieAccountValue;
 
@@ -37,7 +38,7 @@ public class WorldStateProof {
 
   private final Map<UInt256, Proof<Bytes>> storageProofs;
 
-  public WorldStateProof(
+  public WorldStateProofImpl(
       final PmtStateTrieAccountValue stateTrieAccountValue,
       final Proof<Bytes> accountProof,
       final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
@@ -46,7 +47,7 @@ public class WorldStateProof {
     this.storageProofs = storageProofs;
   }
 
-  public WorldStateProof(final Proof<Bytes> accountProof) {
+  public WorldStateProofImpl(final Proof<Bytes> accountProof) {
     this.stateTrieAccountValue = Optional.empty();
     this.accountProof = accountProof;
     this.storageProofs = new HashMap<>();

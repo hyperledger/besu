@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 public interface WorldStateArchive extends Closeable {
   Optional<WorldState> get(Hash rootHash, Hash blockHash);

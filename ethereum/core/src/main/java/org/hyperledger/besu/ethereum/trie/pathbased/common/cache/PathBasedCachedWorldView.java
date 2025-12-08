@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 
@@ -44,7 +44,7 @@ public class PathBasedCachedWorldView implements StorageSubscriber {
   }
 
   public Hash getBlockHash() {
-    return blockHeader.getHash();
+    return blockHeader.getBlockHash();
   }
 
   public synchronized void close() {
@@ -52,7 +52,7 @@ public class PathBasedCachedWorldView implements StorageSubscriber {
     try {
       worldStateKeyValueStorage.close();
     } catch (final Exception e) {
-      LOG.warn("Failed to close worldstate storage for block " + blockHeader.toLogString(), e);
+      LOG.warn("Failed to close worldstate storage for block " + blockHeader.toString(), e);
     }
   }
 
@@ -68,7 +68,7 @@ public class PathBasedCachedWorldView implements StorageSubscriber {
     } catch (final Exception e) {
       LOG.warn(
           "During update, failed to close prior worldstate storage for block "
-              + blockHeader.toLogString(),
+              + blockHeader.toString(),
           e);
     }
   }
