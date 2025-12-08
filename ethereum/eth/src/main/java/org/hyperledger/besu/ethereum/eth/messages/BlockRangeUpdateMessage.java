@@ -41,7 +41,7 @@ public class BlockRangeUpdateMessage extends AbstractMessageData {
 
   public static BlockRangeUpdateMessage create(
       final long earliestBlockNumber, final long latestBlockNumber, final Hash blockHash)
-      throws IllegalArgumentException {
+      {
     final BlockRangeUpdateMessageData msgData =
         new BlockRangeUpdateMessageData(earliestBlockNumber, latestBlockNumber, blockHash);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
