@@ -182,7 +182,7 @@ public class PeerTaskExecutor {
       } catch (InvalidPeerTaskResponseException e) {
         peer.recordUselessResponse(e.getMessage());
         invalidResponseCounter.labels(taskClassName).inc();
-        LOG.info(
+        LOG.debug(
             "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
         executorResult =
             new PeerTaskExecutorResult<>(
@@ -194,11 +194,7 @@ public class PeerTaskExecutor {
             "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
             peer.getLoggableId(),
             e);
-        LOG.trace(
-            "Peer {} Malformed message data: {} for task {}",
-            peer,
-            e.getMessageData(),
-            taskClassName);
+        LOG.trace("Peer {} Malformed message data: {}", peer, e.getMessageData());
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
         executorResult =
             new PeerTaskExecutorResult<>(
