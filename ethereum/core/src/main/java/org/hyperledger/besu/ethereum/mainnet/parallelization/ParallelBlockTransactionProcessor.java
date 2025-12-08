@@ -27,20 +27,57 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-public interface ParallelBlockTransactionProcessor {
-  void runAsyncBlock(
+public abstract class ParallelBlockTransactionProcessor {
+
+  protected CompletableFuture<ParallelizedTransactionContext>[] futures;
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void runAsyncBlock(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Executor executor,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+
+    futures = new CompletableFuture[transactions.size()];
+
+    for (int i = 0; i < transactions.size(); i++) {
+      final int txIndex = i;
+      final Transaction transaction = transactions.get(i);
+
+      futures[i] =
+          CompletableFuture.supplyAsync(
+              () ->
+                  runTransaction(
+                      protocolContext,
+                      blockHeader,
+                      txIndex,
+                      transaction,
+                      miningBeneficiary,
+                      blockHashLookup,
+                      blobGasPrice,
+                      blockAccessListBuilder),
+              executor);
+    }
+  }
+
+  protected abstract ParallelizedTransactionContext runTransaction(
       ProtocolContext protocolContext,
       BlockHeader blockHeader,
-      List<Transaction> transactions,
+      int transactionLocation,
+      Transaction transaction,
       Address miningBeneficiary,
       BlockHashLookup blockHashLookup,
       Wei blobGasPrice,
-      Executor executor,
       Optional<BlockAccessListBuilder> blockAccessListBuilder);
 
-  Optional<TransactionProcessingResult> getProcessingResult(
+  public abstract Optional<TransactionProcessingResult> getProcessingResult(
       MutableWorldState worldState,
       Address miningBeneficiary,
       Transaction transaction,

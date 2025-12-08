@@ -36,25 +36,21 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class BalConcurrentTransactionProcessor implements ParallelBlockTransactionProcessor {
+public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionProcessor {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(BalConcurrentTransactionProcessor.class);
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final BlockAccessList blockAccessList;
-
-  private CompletableFuture<ParallelizedTransactionContext>[] futures;
 
   public BalConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -64,37 +60,7 @@ public class BalConcurrentTransactionProcessor implements ParallelBlockTransacti
   }
 
   @Override
-  public void runAsyncBlock(
-      final ProtocolContext protocolContext,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Wei blobGasPrice,
-      final Executor executor,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-
-    futures = new CompletableFuture[transactions.size()];
-    for (int i = 0; i < transactions.size(); i++) {
-      final Transaction transaction = transactions.get(i);
-      final int transactionLocation = i;
-      futures[i] =
-          CompletableFuture.supplyAsync(
-              () ->
-                  runTransaction(
-                      protocolContext,
-                      blockHeader,
-                      transactionLocation,
-                      transaction,
-                      miningBeneficiary,
-                      blockHashLookup,
-                      blobGasPrice,
-                      blockAccessListBuilder),
-              executor);
-    }
-  }
-
-  public ParallelizedTransactionContext runTransaction(
+  protected ParallelizedTransactionContext runTransaction(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final int transactionLocation,
