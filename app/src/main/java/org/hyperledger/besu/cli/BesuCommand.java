@@ -595,7 +595,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--auto-log-bloom-caching-enabled"},
       description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
-      fallbackValue = "true")
+      arity = "1")
   private final Boolean autoLogBloomCachingEnabled = true;
 
   @Option(
