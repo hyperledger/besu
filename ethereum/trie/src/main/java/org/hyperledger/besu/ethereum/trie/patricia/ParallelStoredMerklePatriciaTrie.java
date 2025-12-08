@@ -53,7 +53,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
             Executors.newVirtualThreadPerTaskExecutor();
 
 
-    private static final int PARALLEL_GROUP_SIZE_THRESHOLD = 16;
+    //private static final int PARALLEL_GROUP_SIZE_THRESHOLD = 0;
 
     private final Map<K, Optional<V>> pendingUpdates = new HashMap<>();
 
@@ -173,7 +173,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
         final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
                 groupedUpdates.entrySet().stream()
                         .collect(Collectors.partitioningBy(
-                                entry -> entry.getValue().size() > PARALLEL_GROUP_SIZE_THRESHOLD,
+                                entry -> !entry.getValue().isEmpty(),
                                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)
                         ));
 
