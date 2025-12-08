@@ -18,7 +18,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.ArrayList;
@@ -40,8 +43,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GetSyncReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<SyncTransactionReceipt>>> {
+  private static final Logger LOG = LoggerFactory.getLogger(GetSyncReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
   private final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByBlockHeader =
@@ -124,7 +132,27 @@ public class GetSyncReceiptsFromPeerTask
             headersByReceiptsRoot.get(
                 Util.getRootFromListOfBytes(
                     receiptsInBlock.stream()
-                        .map(TransactionReceiptEncoder::writeSyncReceiptForRootCalc)
+                        .map(
+                            (str) -> {
+                              Bytes receiptRlpForRootCalc =
+                                  TransactionReceiptEncoder.writeSyncReceiptForRootCalc(str);
+                              Bytes oldRlpForRootCalc =
+                                  RLP.encode(
+                                      (rlpOut) ->
+                                          TransactionReceiptEncoder.writeTo(
+                                              TransactionReceiptDecoder.readFrom(
+                                                  RLP.input(str.getRlp()), false),
+                                              rlpOut,
+                                              TransactionReceiptEncodingConfiguration.TRIE_ROOT));
+                              if (!receiptRlpForRootCalc.equals(oldRlpForRootCalc)) {
+                                LOG.info(
+                                    "Raw RLP: {}\nold RLP for root calc: {}\nnew RLP for root calc: {}",
+                                    str.getRlp(),
+                                    oldRlpForRootCalc,
+                                    receiptRlpForRootCalc);
+                              }
+                              return receiptRlpForRootCalc;
+                            })
                         .toList()));
         if (blockHeaders == null) {
           // Contains receipts that we didn't request, so mustn't be the response we're looking for.

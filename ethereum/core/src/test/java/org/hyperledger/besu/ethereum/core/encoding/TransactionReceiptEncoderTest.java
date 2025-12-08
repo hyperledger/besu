@@ -16,11 +16,16 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,5 +57,100 @@ public class TransactionReceiptEncoderTest {
     String expectedRlpHex =
         "0xf90161a0000000000000000000000000000000000000000000000000000000000000000102b9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000010800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020f83af838940000000000000000000000000000000000000003e1a0000000000000000000000000000000000000000000000000000000000000000504";
     Assertions.assertEquals(expectedRlpHex, actualRlp.toHexString());
+  }
+
+  @Test
+  public void testWriteSyncReceiptForRootCalcForFrontierTransaction() {
+    Hash stateRoot = Hash.fromHexStringLenient("01");
+    final long cumulativeGasUsed = 2;
+    final List<Log> logs =
+        List.of(
+            new Log(
+                Address.fromHexString("03"),
+                Bytes.fromHexStringLenient("04"),
+                List.of(LogTopic.fromHexString("05"))));
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.fromHexString("0x" + "deadbeef".repeat(64));
+    final Optional<Bytes> revertReason = Optional.of(Bytes.fromHexString("06"));
+    TransactionReceipt transactionReceipt =
+        new TransactionReceipt(
+            TransactionType.FRONTIER,
+            stateRoot,
+            cumulativeGasUsed,
+            logs,
+            bloomFilter,
+            revertReason);
+
+    Bytes encodedReceipt =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT));
+    Bytes encodedReceiptForTrieRoot =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.TRIE_ROOT));
+
+    Bytes encodedSyncReceipt =
+        TransactionReceiptEncoder.writeSyncReceiptForRootCalc(
+            new SyncTransactionReceipt(encodedReceipt));
+
+    Assertions.assertEquals(
+        encodedReceiptForTrieRoot.toHexString(), encodedSyncReceipt.toHexString());
+  }
+
+  @Test
+  public void testWriteSyncReceiptForRootCalcForNonFrontierTransaction() {
+    Hash stateRoot = Hash.fromHexStringLenient("01");
+    final long cumulativeGasUsed = 2;
+    final List<Log> logs =
+        List.of(
+            new Log(
+                Address.fromHexString("03"),
+                Bytes.fromHexStringLenient("04"),
+                List.of(LogTopic.fromHexString("05"))));
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.fromHexString("0x" + "deadbeef".repeat(64));
+    final Optional<Bytes> revertReason = Optional.of(Bytes.fromHexString("06"));
+    TransactionReceipt transactionReceipt =
+        new TransactionReceipt(
+            TransactionType.EIP1559, stateRoot, cumulativeGasUsed, logs, bloomFilter, revertReason);
+
+    Bytes encodedReceipt =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT));
+    Bytes encodedReceiptForTrieRoot =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.TRIE_ROOT));
+
+    Bytes encodedSyncReceipt =
+        TransactionReceiptEncoder.writeSyncReceiptForRootCalc(
+            new SyncTransactionReceipt(encodedReceipt));
+
+    Assertions.assertEquals(
+        encodedReceiptForTrieRoot.toHexString(), encodedSyncReceipt.toHexString());
+  }
+
+  @Test
+  public void testRealWorldReceipt() {
+    Bytes rawRlp = Bytes.fromHexString("0xc68001825208c0");
+
+    TransactionReceipt transactionReceipt =
+        TransactionReceiptDecoder.readFrom(RLP.input(rawRlp), false);
+    SyncTransactionReceipt syncTransactionReceipt = new SyncTransactionReceipt(rawRlp);
+
+    Bytes reencodedTransactionReceipt =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.TRIE_ROOT));
+    Bytes reencodedSyncTransactionReceipt =
+        TransactionReceiptEncoder.writeSyncReceiptForRootCalc(syncTransactionReceipt);
+
+    Assertions.assertEquals(
+        reencodedTransactionReceipt.toHexString(), reencodedSyncTransactionReceipt.toHexString());
   }
 }

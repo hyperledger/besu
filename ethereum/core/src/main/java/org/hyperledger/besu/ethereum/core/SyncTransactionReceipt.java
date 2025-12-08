@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -64,6 +65,9 @@ public class SyncTransactionReceipt {
   private void decodeTypedReceipt(final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     transactionTypeCode = input.readBytes();
+    input = new BytesValueRLPInput(transactionTypeCode.slice(1), false);
+    transactionTypeCode = transactionTypeCode.slice(0, 1);
+
     input.enterList();
     statusOrStateRoot = input.readBytes();
     cumulativeGasUsed = input.readBytes();
@@ -103,7 +107,10 @@ public class SyncTransactionReceipt {
 
   private void decodeEth69Receipt(
       final RLPInput input, final Bytes transactionByteRlp, final Bytes statusOrStateRoot) {
-    transactionTypeCode = transactionByteRlp;
+    transactionTypeCode =
+        transactionByteRlp.isEmpty()
+            ? Bytes.of(TransactionType.FRONTIER.getSerializedType())
+            : transactionByteRlp;
     this.statusOrStateRoot = statusOrStateRoot;
     cumulativeGasUsed = input.readBytes();
     parseLogs(input);
