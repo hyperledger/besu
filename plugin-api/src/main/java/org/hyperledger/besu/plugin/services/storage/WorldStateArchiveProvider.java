@@ -26,7 +26,9 @@ public interface WorldStateArchiveProvider {
    * @return a world state archive instance
    */
   WorldStateArchive create(
-      WorldStatePreimageStorage preimageStorage, EvmConfiguration evmConfiguration);
+      WorldStateKeyValueStorage worldStateKeyValueStorage,
+      WorldStatePreimageStorage preimageStorage,
+      EvmConfiguration evmConfiguration);
 
   /**
    * Returns the data storage format this provider supports.
