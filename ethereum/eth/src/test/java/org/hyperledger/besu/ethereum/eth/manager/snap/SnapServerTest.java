@@ -125,8 +125,8 @@ public class SnapServerTest {
 
   final SnapTestAccount acct1 = createTestAccount("10");
   final SnapTestAccount acct2 = createTestAccount("20");
-  final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage);
-  final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage);
+  final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage, storage);
+  final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage, storage);
 
   @BeforeEach
   public void setup() {
@@ -321,7 +321,8 @@ public class SnapServerTest {
   public void assertPartialStorageLimitHashBetweenSlots() {
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
-    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 2, inMemoryStorage);
+    SnapTestAccount testAccount =
+        createTestContractAccount(accountFullHash, 2, inMemoryStorage, storage);
 
     Hash startHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString("12"))); // slot 2
     Hash endHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString("13"))); // between slots 2 and 3
@@ -582,7 +583,8 @@ public class SnapServerTest {
   public void assertStorageTrieShortAccountHashPathRequest() {
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
-    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 1, inMemoryStorage);
+    SnapTestAccount testAccount =
+        createTestContractAccount(accountFullHash, 1, inMemoryStorage, storage);
     insertTestAccounts(testAccount);
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
@@ -731,24 +733,29 @@ public class SnapServerTest {
   }
 
   static SnapTestAccount createTestContractAccount(
-      final String hexAddr, final BonsaiWorldStateKeyValueStorage storage) {
+      final String hexAddr,
+      final BonsaiWorldStateKeyValueStorage bonsaiStorage,
+      final SegmentedInMemoryKeyValueStorage storage) {
     final Hash acctHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr)));
-    return createTestContractAccount(acctHash, 1, storage);
+    return createTestContractAccount(acctHash, 1, bonsaiStorage, storage);
   }
 
   static SnapTestAccount createTestContractAccount(
-      final Hash acctHash, final int slotKeyGap, final BonsaiWorldStateKeyValueStorage storage) {
+      final Hash acctHash,
+      final int slotKeyGap,
+      final BonsaiWorldStateKeyValueStorage bonsaiStorage,
+      final SegmentedInMemoryKeyValueStorage storage) {
     MerkleTrie<Bytes32, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
-            (loc, hash) -> storage.getAccountStorageTrieNode(acctHash, loc, hash),
+            (loc, hash) -> bonsaiStorage.getAccountStorageTrieNode(acctHash, loc, hash),
             Hash.EMPTY_TRIE_HASH,
             a -> a,
             a -> a);
     Bytes32 mockCode = Bytes32.random();
 
     // mock some storage data
-    var flatdb = storage.getFlatDbStrategy();
-    var updater = storage.updater();
+    var flatdb = bonsaiStorage.getFlatDbStrategy();
+    var updater = bonsaiStorage.updater();
     updater.putCode(Hash.hash(mockCode), mockCode);
     IntStream.iterate(10, i -> i < 20, i -> i + slotKeyGap)
         .boxed()
@@ -759,7 +766,7 @@ public class SnapServerTest {
               rlpOut.writeBytes(mockBytes32);
               trie.put(mockBytes32, rlpOut.encoded());
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
-                  (SegmentedKeyValueStorage) storage,
+                  storage,
                   updater.getWorldStateTransaction(),
                   acctHash,
                   Hash.wrap(mockBytes32),
