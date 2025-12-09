@@ -32,8 +32,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,7 +50,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     extends StoredMerklePatriciaTrie<K, V> {
 
-  private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
+  private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10);
 
   private final Map<K, Optional<V>> pendingUpdates = new HashMap<>();
 
@@ -180,22 +182,27 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
           singleEntry.getValue(),
           maybeCommitCache);
     } else {
-      final List<CompletableFuture<Void>> futures =
-          groupedUpdates.entrySet().stream()
-              .map(
-                  entry -> {
-                    return CompletableFuture.runAsync(
-                        () ->
-                            processGroup(
-                                wrapper,
-                                entry.getKey(),
-                                Bytes.concatenate(location, Bytes.of(entry.getKey())),
-                                entry.getValue(),
-                                maybeCommitCache),
-                        EXECUTOR);
-                  })
-              .toList();
-      CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+        final List<Future<?>> futures = new ArrayList<>();
+        for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : groupedUpdates.entrySet()) {
+            Future<?> future = EXECUTOR.submit(() ->
+                    processGroup(
+                            wrapper,
+                            entry.getKey(),
+                            Bytes.concatenate(location, Bytes.of(entry.getKey())),
+                            entry.getValue(),
+                            maybeCommitCache)
+            );
+            futures.add(future);
+        }
+        for (final Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                futures.forEach(f -> f.cancel(true));
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Error processing large groups in parallel", e);
+            }
+        }
     }
   }
 
