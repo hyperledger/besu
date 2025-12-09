@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus;
-import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl;
 
 import java.util.List;
 
@@ -63,7 +63,7 @@ public class MainnetBlockImporter implements BlockImporter {
                 context
                     .getWorldStateArchive()
                     .getWorldState(
-                        WorldStateQueryParams.newBuilder()
+                        WorldStateQueryParamsImpl.newBuilder()
                             .withBlockHeader(block.getHeader())
                             .withShouldWorldStateUpdateHead(true)
                             .build());

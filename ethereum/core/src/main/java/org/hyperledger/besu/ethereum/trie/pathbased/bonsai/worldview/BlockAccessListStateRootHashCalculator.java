@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.N
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
-import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
@@ -58,7 +58,7 @@ public class BlockAccessListStateRootHashCalculator {
             protocolContext
                 .getWorldStateArchive()
                 .getWorldState(
-                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(
+                    WorldStateQueryParamsImpl.withBlockHeaderAndNoUpdateNodeHead(
                         maybeParentHeader.get()))
                 .orElseThrow();
     ws.disableCacheMerkleTrieLoader();

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl.withBlockHeaderAndUpdateNodeHead;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl;
 import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -213,12 +213,12 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenParentWorldStateNotAvailable() {
-    final ArgumentCaptor<WorldStateQueryParams> captor =
-        ArgumentCaptor.forClass(WorldStateQueryParams.class);
+    final ArgumentCaptor<WorldStateQueryParamsImpl> captor =
+        ArgumentCaptor.forClass(WorldStateQueryParamsImpl.class);
     when(worldStateArchive.getWorldState(captor.capture()))
         .thenAnswer(
             invocation -> {
-              WorldStateQueryParams capturedParams = captor.getValue();
+              WorldStateQueryParamsImpl capturedParams = captor.getValue();
               if (capturedParams.getBlockHeader().equals(blockParent.getHeader())) {
                 return Optional.empty();
               }
