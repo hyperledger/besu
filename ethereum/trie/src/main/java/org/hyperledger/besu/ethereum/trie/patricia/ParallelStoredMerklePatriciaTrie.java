@@ -49,8 +49,6 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
         extends StoredMerklePatriciaTrie<K, V> {
 
-    private static final int PARALLEL_GROUP_SIZE_THRESHOLD = 32;
-
     private final Map<K, Optional<V>> pendingUpdates = new HashMap<>();
 
     public ParallelStoredMerklePatriciaTrie(
@@ -165,32 +163,14 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
             final Map<Byte, List<UpdateEntry<V>>> groupedUpdates,
             final Optional<CommitCache> maybeCommitCache) {
 
-        final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
-                groupedUpdates.entrySet().stream()
-                        .collect(Collectors.partitioningBy(
-                                entry -> entry.getValue().size() > PARALLEL_GROUP_SIZE_THRESHOLD,
-                                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)
-                        ));
-
-        final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
-        final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);
-
-        if (!largeGroups.isEmpty()) {
-            largeGroups.entrySet().parallelStream().forEach(entry -> {
-                processGroup(
-                        wrapper,
-                        entry.getKey(),
-                        Bytes.concatenate(location, Bytes.of(entry.getKey())),
-                        entry.getValue(),
-                        maybeCommitCache);
-            });
-        }
-        for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : smallGroups.entrySet()) {
-            final byte nibble = entry.getKey();
-            final List<UpdateEntry<V>> updates = entry.getValue();
-            final Bytes childLocation = Bytes.concatenate(location, Bytes.of(nibble));
-            processGroup(wrapper, nibble, childLocation, updates, maybeCommitCache);
-        }
+        groupedUpdates.entrySet().parallelStream().forEach(entry -> {
+            processGroup(
+                    wrapper,
+                    entry.getKey(),
+                    Bytes.concatenate(location, Bytes.of(entry.getKey())),
+                    entry.getValue(),
+                    maybeCommitCache);
+        });
     }
 
     private void processGroup(
