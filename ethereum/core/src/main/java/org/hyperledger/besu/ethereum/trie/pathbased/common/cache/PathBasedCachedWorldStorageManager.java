@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWor
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
       LoggerFactory.getLogger(PathBasedCachedWorldStorageManager.class);
   private final PathBasedWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
-  protected final WorldStateConfig worldStateConfig;
+  protected final WorldStateConfigImpl worldStateConfig;
   private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
       Caffeine.newBuilder()
           .maximumSize(RETAINED_LAYERS)
@@ -63,7 +63,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfigImpl worldStateConfig) {
     worldStateKeyValueStorage.subscribe(this);
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;

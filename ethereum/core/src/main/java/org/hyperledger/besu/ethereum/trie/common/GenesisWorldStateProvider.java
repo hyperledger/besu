@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.common;
 
-import static org.hyperledger.besu.plugin.services.storage.WorldStateConfig.createStatefulConfigWithTrie;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl.createStatefulConfigWithTrie;
 
 import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
