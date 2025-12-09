@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
 import java.util.Locale;
@@ -33,30 +35,26 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class BytesScalarTest {
-
+public class VersionedHashScalarTest {
   private GraphQLScalarType scalar;
 
-  private final String str = "0x10";
-  private final Bytes value = Bytes.fromHexString(str);
-  private final StringValue strValue = StringValue.newStringValue(str).build();
+  private final VersionedHash versionedHash =
+      new VersionedHash(
+          (byte) 1,
+          Hash.hash(
+              Bytes.fromHexString(
+                  "0x1234567812345678123456781234567812345678123456781234567812345678")));
+  private final StringValue strValue =
+      StringValue.newStringValue(versionedHash.getBytes().toHexString()).build();
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
 
   @Test
   public void parseValueTest() {
     final var result =
-        scalar.getCoercing().parseValue(str, GraphQLContext.newContext().build(), Locale.ENGLISH);
-    assertThat(result).isEqualTo(value);
-  }
-
-  @Test
-  public void parseValueErrorTest() {
-    assertThatThrownBy(
-            () ->
-                scalar
-                    .getCoercing()
-                    .parseValue(3.2f, GraphQLContext.newContext().build(), Locale.ENGLISH))
-        .isInstanceOf(CoercingParseValueException.class);
+        scalar
+            .getCoercing()
+            .parseValue(strValue.getValue(), GraphQLContext.newContext().build(), Locale.ENGLISH);
+    assertThat(result).isEqualTo(versionedHash);
   }
 
   @Test
@@ -71,13 +69,23 @@ public class BytesScalarTest {
   }
 
   @Test
-  public void serializeTest() {
+  public void parseValueErrorTest() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(3.2f, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isInstanceOf(CoercingParseValueException.class);
+  }
+
+  @Test
+  public void serializeVersionedHashTest() {
     final String result =
         (String)
             scalar
                 .getCoercing()
-                .serialize(value, GraphQLContext.newContext().build(), Locale.ENGLISH);
-    assertThat(result).isEqualTo(str);
+                .serialize(versionedHash, GraphQLContext.newContext().build(), Locale.ENGLISH);
+    assertThat(result).isEqualTo(versionedHash.getBytes().toHexString());
   }
 
   @Test
@@ -92,8 +100,8 @@ public class BytesScalarTest {
 
   @Test
   public void parseLiteralTest() {
-    final Bytes result =
-        (Bytes)
+    final VersionedHash result =
+        (VersionedHash)
             scalar
                 .getCoercing()
                 .parseLiteral(
@@ -101,7 +109,7 @@ public class BytesScalarTest {
                     CoercedVariables.emptyVariables(),
                     GraphQLContext.newContext().build(),
                     Locale.ENGLISH);
-    assertThat(result).isEqualTo(value);
+    assertThat(result).isEqualTo(versionedHash);
   }
 
   @Test
@@ -134,6 +142,6 @@ public class BytesScalarTest {
 
   @BeforeEach
   public void before() {
-    scalar = Scalars.bytesScalar();
+    scalar = Scalars.versionedHashScalar();
   }
 }
