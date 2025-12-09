@@ -163,11 +163,12 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
       // 408 can occur in resource-constrained CI environments when request processing is slow
       // 504 is the expected timeout when the method execution times out
       assertThat(response.code())
-          .as("Should receive a timeout HTTP status code (504 Gateway Timeout or 408 Request Timeout)")
+          .as(
+              "Should receive a timeout HTTP status code (504 Gateway Timeout or 408 Request Timeout)")
           .satisfiesAnyOf(
               code -> assertThat(code).isEqualTo(504), // Gateway timeout (preferred)
-              code -> assertThat(code).isEqualTo(408)  // Request timeout (acceptable in CI)
-          );
+              code -> assertThat(code).isEqualTo(408) // Request timeout (acceptable in CI)
+              );
 
       String responseBody = response.body().string();
 
@@ -187,7 +188,8 @@ public class RpcTimeoutInterruptionIntegrationTest extends AbstractJsonRpcHttpSe
     // For 408, the request might not have reached the method execution stage
     if (methodInvocations.get() > 0) {
       assertThat(methodWasInterrupted.get())
-          .as("Method execution should have been interrupted due to timeout when method was invoked")
+          .as(
+              "Method execution should have been interrupted due to timeout when method was invoked")
           .isTrue();
     }
   }
