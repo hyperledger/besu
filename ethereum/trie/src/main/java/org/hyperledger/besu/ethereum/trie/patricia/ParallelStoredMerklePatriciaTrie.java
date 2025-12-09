@@ -49,15 +49,10 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
         extends StoredMerklePatriciaTrie<K, V> {
 
-    private static final ExecutorService VIRTUAL_THREAD =
-            Executors.newVirtualThreadPerTaskExecutor();
-
-
-    //private static final int PARALLEL_GROUP_SIZE_THRESHOLD = 0;
+    private static final int PARALLEL_GROUP_SIZE_THRESHOLD = 32;
 
     private final Map<K, Optional<V>> pendingUpdates = new HashMap<>();
 
-    // Constructors
     public ParallelStoredMerklePatriciaTrie(
             final NodeLoader nodeLoader,
             final Function<V, Bytes> valueSerializer,
@@ -160,9 +155,9 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     }
 
     /**
-     * Traite les groupes d'updates pour un BranchNode.
-     * Si un seul groupe ou total updates petit : traite séquentiellement.
-     * Sinon : crée des tasks en parallèle.
+     * Processes update groups for a BranchNode.
+     * If only one group or total updates are small: processes sequentially.
+     * Otherwise: creates parallel tasks.
      */
     private void processGroupsAtBranch(
             final BranchWrapper wrapper,
@@ -173,41 +168,28 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
         final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
                 groupedUpdates.entrySet().stream()
                         .collect(Collectors.partitioningBy(
-                                entry -> !entry.getValue().isEmpty(),
+                                entry -> entry.getValue().size() > PARALLEL_GROUP_SIZE_THRESHOLD,
                                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)
                         ));
 
         final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
         final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);
 
-        final List<Future<?>> largeGroupFutures = new ArrayList<>();
         if (!largeGroups.isEmpty()) {
-            for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : largeGroups.entrySet()) {
-                Future<?> future = VIRTUAL_THREAD.submit(() ->
-                        processGroup(
-                                wrapper,
-                                entry.getKey(),
-                                Bytes.concatenate(location, Bytes.of(entry.getKey())),
-                                entry.getValue(),
-                                maybeCommitCache)
-                );
-                largeGroupFutures.add(future);
-            }
+            largeGroups.entrySet().parallelStream().forEach(entry -> {
+                processGroup(
+                        wrapper,
+                        entry.getKey(),
+                        Bytes.concatenate(location, Bytes.of(entry.getKey())),
+                        entry.getValue(),
+                        maybeCommitCache);
+            });
         }
         for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : smallGroups.entrySet()) {
             final byte nibble = entry.getKey();
             final List<UpdateEntry<V>> updates = entry.getValue();
             final Bytes childLocation = Bytes.concatenate(location, Bytes.of(nibble));
             processGroup(wrapper, nibble, childLocation, updates, maybeCommitCache);
-        }
-        for (final Future<?> future : largeGroupFutures) {
-            try {
-                future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                largeGroupFutures.forEach(f -> f.cancel(true));
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Error processing large groups in parallel", e);
-            }
         }
     }
 
@@ -273,6 +255,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
         processGroupsAtBranch(branchWrapper, location, childGroups, maybeCommitCache);
 
+
         final Node<V> newBranch = branchWrapper.applyUpdates();
         commitOrHashNode(newBranch, location, maybeCommitCache);
         return newBranch;
@@ -291,7 +274,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     }
 
     /**
-     * Applique les updates séquentiellement avec le visitor pattern.
+     * Applies updates sequentially using the visitor pattern.
      */
     private Node<V> applyUpdatesSequentially(
             final Node<V> node,
@@ -381,6 +364,9 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
                 Bytes.EMPTY);
     }
 
+    /**
+     * Represents a pending update entry with its path and optional value.
+     */
     private record UpdateEntry<V>(Bytes path, Optional<V> value) {
         byte getNibble(final int index) {
             return index >= path.size() ? 0 : path.get(index);
