@@ -20,9 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,34 +41,30 @@ public class DownloadBackwardHeadersStep
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final int headerRequestSize;
-  private final long checkpointBlockNumber;
+  private final long trustAnchorBlockNumber;
 
   /**
    * Creates a new DownloadBackwardHeadersStep.
    *
    * @param protocolSchedule the protocol schedule
    * @param ethContext the eth context
-   * @param syncConfig the synchronizer configuration (unused but kept for API compatibility)
    * @param headerRequestSize the number of headers to request per batch
-   * @param metricsSystem the metrics system (unused but kept for consistency)
-   * @param checkpointBlockNumber the lowest header that we want to download
+   * @param trustAnchorBlockNumber the lowest header that we want to download
    */
   public DownloadBackwardHeadersStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final SynchronizerConfiguration syncConfig,
       final int headerRequestSize,
-      final MetricsSystem metricsSystem,
-      final long checkpointBlockNumber) {
+      final long trustAnchorBlockNumber) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.headerRequestSize = headerRequestSize;
-    this.checkpointBlockNumber = checkpointBlockNumber;
+    this.trustAnchorBlockNumber = trustAnchorBlockNumber;
   }
 
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
-    final long remainingHeaders = startBlockNumber - checkpointBlockNumber;
+    final long remainingHeaders = startBlockNumber - trustAnchorBlockNumber;
     final int headersToRequest = (int) Math.min(headerRequestSize, remainingHeaders);
 
     return ethContext
@@ -104,8 +98,6 @@ public class DownloadBackwardHeadersStep
           } catch (InterruptedException e) {
             // do nothing
           }
-        } else if (result.result().isEmpty()) {
-          // TODO: we should punish the peer here
         } else {
           LOG.warn(
               "Failed to download headers from block {} (response: {})",

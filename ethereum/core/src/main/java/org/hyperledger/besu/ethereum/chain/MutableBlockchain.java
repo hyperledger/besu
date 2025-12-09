@@ -119,17 +119,23 @@ public interface MutableBlockchain extends Blockchain {
       final List<TransactionReceipt> receipts,
       final Optional<Difficulty> maybeTotalDifficulty);
 
+  /**
+   * Import blocks and receipts during syncing and update the chain state
+   *
+   * @param blocksAndReceipts The blocks and receipts to import
+   * @param indexTransactions Boolean whether to index transactions
+   */
   void unsafeImportSyncBodyAndReceipts(
       List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
   /**
-   * Adds a block header to the blockchain, without updating the chain state.
+   * Stores block headers, without updating the chain state.
    *
-   * @param blockHeader The block to append.
+   * @param blockHeaders The block headers to store.
    */
-  void importHeader(BlockHeader blockHeader);
+  void storeBlockHeaders(List<BlockHeader> blockHeaders);
 
   Difficulty calculateTotalDifficulty(final BlockHeader blockHeader);
 

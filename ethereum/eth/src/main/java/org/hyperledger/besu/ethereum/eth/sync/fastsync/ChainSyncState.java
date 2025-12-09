@@ -20,55 +20,51 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Immutable state for chain synchronization in two-stage fast sync. This state is managed
- * exclusively by the chain downloader and persisted separately from world state sync state to avoid
- * concurrent modification issues.
+ * Immutable state for the chain synchronization in two-stages. This state is managed exclusively by
+ * the SnapSyncChainDownloader.
  *
- * <p>All fields are non-null and immutable. Updates create new instances.
+ * <p>Updates create new instances.
  *
  * @param pivotBlockHeader header of the pivot block
- * @param checkpointBlockHeader header of the checkpoint block
+ * @param blockDownloadAnchor header of the checkpoint block
  * @param headerDownloadAnchor set if the anchor is different from the checkpoint block header
  * @param headersDownloadComplete true if the header download has finished
  */
 public record ChainSyncState(
     BlockHeader pivotBlockHeader,
-    BlockHeader checkpointBlockHeader,
+    BlockHeader blockDownloadAnchor,
     BlockHeader headerDownloadAnchor,
     boolean headersDownloadComplete) {
 
   /**
-   * Creates a new state with an initial pivot block for full sync from genesis.
+   * Creates a new state with an initial pivot block.
    *
    * @param pivotBlockHeader the pivot block header
-   * @param checkpointBlockHeader the checkpoint block to start bodies download from
+   * @param blockDownloadAnchor the checkpoint block to start bodies download from
    * @param headerDownloadAnchor set if the anchor is different from the checkpoint block header
    * @return new ChainSyncState
    */
   public static ChainSyncState initialSync(
       final BlockHeader pivotBlockHeader,
-      final BlockHeader checkpointBlockHeader,
+      final BlockHeader blockDownloadAnchor,
       final BlockHeader headerDownloadAnchor) {
-    return new ChainSyncState(pivotBlockHeader, checkpointBlockHeader, headerDownloadAnchor, false);
+    return new ChainSyncState(pivotBlockHeader, blockDownloadAnchor, headerDownloadAnchor, false);
   }
 
   /**
-   * Creates a new state for continuing sync to an updated pivot.
+   * Creates a new state for continuing sync to an updated pivot that is used once the previous
+   * pivot block has been reached (previous pivot becomes the new block download anchor).
    *
    * @param newPivotHeader the new pivot block header
    * @param previousPivotHeader the previous pivot block header
@@ -85,9 +81,15 @@ public record ChainSyncState(
    * @return new ChainSyncState instance
    */
   public ChainSyncState withHeadersDownloadComplete() {
-    return new ChainSyncState(this.pivotBlockHeader, this.checkpointBlockHeader, null, true);
+    return new ChainSyncState(this.pivotBlockHeader, this.blockDownloadAnchor, null, true);
   }
 
+  /**
+   * Creates a new state when we restart the sync from the current chain head.
+   *
+   * @param chainHeadHeader the current head of our local chain
+   * @return new ChainSyncState instance
+   */
   public ChainSyncState fromHead(final BlockHeader chainHeadHeader) {
     return new ChainSyncState(
         this.pivotBlockHeader,
@@ -113,6 +115,17 @@ public record ChainSyncState(
 
     final EthPeer ethPeer;
 
+    ethPeer = getEthPeer(ethPeers, task);
+
+    try {
+      return getHeader(ethContext, ethPeer, ethPeers, task).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static EthPeer getEthPeer(final EthPeers ethPeers, final GetHeadersFromPeerTask task) {
+    final EthPeer ethPeer;
     try {
       ethPeer =
           ethPeers
@@ -121,22 +134,14 @@ public record ChainSyncState(
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-
-    try {
-      return getHeader(
-              ethContext, ethPeer, ethPeers, Collections.synchronizedSet(new HashSet<>()), task)
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    return ethPeer;
   }
 
   private static CompletableFuture<BlockHeader> getHeader(
       final EthContext ethContext,
       final EthPeer ethPeer,
       final EthPeers ethPeers,
-      final Set<EthPeer> peersUsed,
-      final PeerTask<List<BlockHeader>> task) {
+      final GetHeadersFromPeerTask task) {
     return ethContext
         .getScheduler()
         .scheduleServiceTask(
@@ -149,23 +154,8 @@ public record ChainSyncState(
                     new RuntimeException("Unexpected internal issue"));
               } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                   || taskResult.result().isEmpty()) {
-                // recursively call executePivotQueryWithPeerTaskSystem to retry with a different
-                // peer.
-                try {
-                  return getHeader(
-                      ethContext,
-                      ethPeers
-                          .waitForPeer(
-                              (p) ->
-                                  !peersUsed.contains(p.ethPeer())
-                                      && task.getPeerRequirementFilter().test(p))
-                          .get(),
-                      ethPeers,
-                      peersUsed,
-                      task);
-                } catch (InterruptedException | ExecutionException e) {
-                  return CompletableFuture.failedFuture(e);
-                }
+                ethPeer.recordUselessResponse("headers");
+                return getHeader(ethContext, getEthPeer(ethPeers, task), ethPeers, task);
               }
               return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
             });
@@ -176,7 +166,7 @@ public record ChainSyncState(
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final ChainSyncState that = (ChainSyncState) o;
-    return Objects.equals(checkpointBlockHeader, that.checkpointBlockHeader)
+    return Objects.equals(blockDownloadAnchor, that.blockDownloadAnchor)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader)
         && Objects.equals(headerDownloadAnchor, that.headerDownloadAnchor)
         && headersDownloadComplete == that.headersDownloadComplete;
@@ -185,7 +175,7 @@ public record ChainSyncState(
   @Override
   public int hashCode() {
     return Objects.hash(
-        pivotBlockHeader, checkpointBlockHeader, headerDownloadAnchor, headersDownloadComplete);
+        pivotBlockHeader, blockDownloadAnchor, headerDownloadAnchor, headersDownloadComplete);
   }
 
   @Override
@@ -196,7 +186,7 @@ public record ChainSyncState(
         + ", pivotBlockHash="
         + pivotBlockHeader.getHash()
         + ", checkpointBlockNumber="
-        + checkpointBlockHeader.getNumber()
+        + blockDownloadAnchor.getNumber()
         + ", headerDownloadAnchorNumber="
         + headerDownloadAnchor.getNumber()
         + ", headersDownloadComplete="

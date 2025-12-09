@@ -136,7 +136,7 @@ public class ChainSyncStateStorage {
         state.pivotBlockHeader().writeTo(output);
 
         // Write the checkpoint block header
-        state.checkpointBlockHeader().writeTo(output);
+        state.blockDownloadAnchor().writeTo(output);
 
         // Write progress fields
         output.writeByte((byte) (state.headersDownloadComplete() ? 1 : 0));
@@ -161,7 +161,7 @@ public class ChainSyncStateStorage {
         LOG.debug(
             "Stored chain sync state: pivot={}, checkpoint block={}, headers complete={}",
             state.pivotBlockHeader().getNumber(),
-            state.checkpointBlockHeader().getNumber(),
+            state.blockDownloadAnchor().getNumber(),
             state.headersDownloadComplete());
 
       } catch (final IOException e) {

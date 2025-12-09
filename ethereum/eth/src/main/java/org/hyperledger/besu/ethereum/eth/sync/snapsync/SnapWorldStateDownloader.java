@@ -245,7 +245,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       // Set the world state stable listener if available
       final WorldStateHealFinishedListener worldStateHealFinishedListener =
-          fastSyncActions.getWorldStateStableListener();
+          fastSyncActions.getWorldStateHealFinishedListener();
       if (worldStateHealFinishedListener != null) {
         newDownloadState.setWorldStateHealFinishedListener(worldStateHealFinishedListener);
         LOG.debug("World state stable listener registered with download state");

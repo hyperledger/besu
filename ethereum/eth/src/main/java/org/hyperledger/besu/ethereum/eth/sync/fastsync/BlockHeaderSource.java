@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,51 +38,52 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private final long pivotBlockNumber;
   private final int batchSize;
 
-  private long currentBlock;
+  private final AtomicLong currentBlock;
 
   /**
    * Creates a new BlockHeaderSource.
    *
    * @param blockchain the blockchain to read headers from
-   * @param checkpointBlockNumber the block number before the block to start with
+   * @param startBlockNumber the block number before the block to start with
    * @param pivotBlockNumber the block number to stop at (inclusive)
    * @param batchSize the number of headers to return per batch
    */
   public BlockHeaderSource(
       final Blockchain blockchain,
-      final long checkpointBlockNumber,
+      final long startBlockNumber,
       final long pivotBlockNumber,
       final int batchSize) {
     this.blockchain = blockchain;
     this.pivotBlockNumber = pivotBlockNumber;
     this.batchSize = batchSize;
-    this.currentBlock = checkpointBlockNumber + 1;
+    this.currentBlock = new AtomicLong(startBlockNumber);
 
     LOG.debug(
         "BlockHeaderSource created: start={}, end={}, batchSize={}",
-        checkpointBlockNumber,
+        startBlockNumber,
         pivotBlockNumber,
         batchSize);
   }
 
   @Override
   public synchronized boolean hasNext() {
-    return currentBlock <= pivotBlockNumber;
+    return currentBlock.get() <= pivotBlockNumber;
   }
 
   @Override
   public synchronized List<BlockHeader> next() {
-    if (currentBlock > pivotBlockNumber) {
+    if (currentBlock.get() > pivotBlockNumber) {
       LOG.debug("BlockHeaderSource exhausted at block {}", currentBlock);
       return null;
     }
 
+    long start = currentBlock.getAndAdd(batchSize);
     final List<BlockHeader> batch = new ArrayList<>();
-    final long batchEnd = Math.min(currentBlock + batchSize - 1, pivotBlockNumber);
+    final long batchEnd = Math.min(start + batchSize - 1, pivotBlockNumber);
 
     LOG.trace("BlockHeaderSource reading batch: blocks {} to {}", currentBlock, batchEnd);
 
-    for (long blockNumber = currentBlock; blockNumber <= batchEnd; blockNumber++) {
+    for (long blockNumber = start; blockNumber <= batchEnd; blockNumber++) {
       final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
 
       if (blockHeader.isEmpty()) {
@@ -99,22 +101,6 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
       return null;
     }
 
-    currentBlock += batch.size();
-
-    LOG.trace(
-        "BlockHeaderSource returning batch of {} headers, next block: {}",
-        batch.size(),
-        currentBlock);
-
     return batch;
-  }
-
-  /**
-   * Get the current block number position.
-   *
-   * @return the current block number
-   */
-  public synchronized long getCurrentBlock() {
-    return currentBlock;
   }
 }

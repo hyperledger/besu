@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.List;
-import java.util.OptionalLong;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -41,8 +39,6 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   private final EthContext ethContext;
   private final SyncState syncState;
   private final long startBlock;
-  private long accumulatedTime = 0L;
-  private OptionalLong logStartBlock = OptionalLong.empty();
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
   private final long pivotHeaderNumber;
@@ -66,7 +62,6 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
 
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
-    final long startTime = System.nanoTime();
     blockchain.unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
     final SyncBlockWithReceipts lastBlock = blocksWithReceipts.getLast();
     LOG.atTrace()
@@ -74,20 +69,15 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
         .addArgument(lastBlock.getBlock()::toLogString)
         .log();
 
-    if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
-    }
     final long lastBlockNumber = lastBlock.getNumber();
-    int peerCount = -1; // ethContext is not available in tests
-    if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
-      peerCount = ethContext.getEthPeers().peerCount();
-    }
-    final long endTime = System.nanoTime();
-    accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
 
     syncState.setSyncProgress(startBlock, lastBlockNumber, pivotHeaderNumber);
 
     if (shouldLog.get()) {
+      int peerCount = -1; // ethContext is not available in tests
+      if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+        peerCount = ethContext.getEthPeers().peerCount();
+      }
       final long blocksPercent = getBlocksPercent(lastBlockNumber, pivotHeaderNumber);
       throttledLog(
           LOG::info,
@@ -96,15 +86,6 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
               lastBlockNumber, pivotHeaderNumber, blocksPercent, peerCount),
           shouldLog,
           PRINT_DELAY_SECONDS);
-      LOG.debug(
-          "Completed importing chain segment {} to {} ({} blocks in {}ms), Peer count: {}",
-          logStartBlock.getAsLong(),
-          lastBlockNumber,
-          lastBlockNumber - logStartBlock.getAsLong() + 1,
-          accumulatedTime,
-          peerCount);
-      accumulatedTime = 0L;
-      logStartBlock = OptionalLong.empty();
     }
   }
 

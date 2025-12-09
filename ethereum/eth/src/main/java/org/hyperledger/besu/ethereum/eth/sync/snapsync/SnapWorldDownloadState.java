@@ -178,7 +178,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         // Start the healing process
         startTrieHeal();
       }
-      // if all snapsync tasks are completed, and the healing was running, and blockchain is behind
+      // if all snapsync tasks are completed and the healing was running and blockchain is behind
       // the pivot block
       else if (pivotBlockSelector.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
@@ -192,19 +192,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         notifyWorldStateHealFinished();
 
         syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
-        syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
             && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
                 || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.ARCHIVE))) {
-          LOG.info("Starting the flat database healing process ", new Exception("Stack trace"));
           startFlatDatabaseHeal(header);
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
         else {
-          LOG.info("Flat database healing process has finished?????", new Exception("Stack trace"));
           final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
           applyForStrategy(
               updater,
