@@ -129,7 +129,8 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
   }
 
   protected boolean mineBlock() throws InterruptedException {
-    // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
+    // Ensure the block is allowed to be mined - i.e. the timestamp on the new block
+    // is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
     final var timing = new BlockCreationTiming();
 
@@ -142,6 +143,8 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
     final var blockCreationResult = minerBlockCreator.createBlock(newBlockTimestamp, parentHeader);
     timing.registerAll(blockCreationResult.getBlockCreationTimings());
+    timing.setHighScoreSelectionTime(
+        blockCreationResult.getTransactionSelectionResults().getHighScoreSelectionTime());
 
     final Block block = blockCreationResult.getBlock();
     LOG.trace(
