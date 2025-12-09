@@ -69,10 +69,7 @@ public class DownloadBackwardHeadersStep
 
     return ethContext
         .getScheduler()
-        .scheduleServiceTask(
-            () -> {
-              return downloadAllHeaders(startBlockNumber, headersToRequest);
-            });
+        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest));
   }
 
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
