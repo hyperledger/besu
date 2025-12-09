@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
@@ -86,77 +84,122 @@ public class StateTraceGenerator {
       return Stream.empty();
     }
 
-    // Get the world state: transactionUpdater is post-transaction, previousUpdater is
-    // pre-transaction
     final WorldUpdater transactionUpdater = getTransactionUpdater(traceFrames);
-    final WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();
+    final WorldUpdater parentUpdater = transactionUpdater.parentUpdater().get();
 
     final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
+    // In pre-state mode, we capture the full pre-state of all accounts touched during execution.
+    // Only the parent updater is relevant here. Post-transaction state does not matter.
+    // To identify which accounts were read, we rely on the transaction trace’s access list (BAL).
     if (isPreState) {
-      processPreStateMode(transactionUpdater, previousUpdater, stateDiffResult, transactionTrace);
+      processPreStateMode(parentUpdater, stateDiffResult, transactionTrace);
     } else {
-      processDiffMode(transactionUpdater, previousUpdater, stateDiffResult);
+      // In diff mode, include only accounts whose state changed.
+      // Use the transaction updater to detect modifications and compare them to the parent state.
+      // As we need only modified accounts, we can rely on the world updater's touched accounts.
+      processDiffMode(transactionUpdater, parentUpdater, stateDiffResult);
     }
 
-    processDeletedAccounts(stateDiffResult, transactionUpdater, previousUpdater);
+    processDeletedAccounts(stateDiffResult, transactionUpdater, parentUpdater);
     return Stream.of(stateDiffResult);
   }
 
   private void processDiffMode(
       final WorldUpdater transactionUpdater,
-      final WorldUpdater previousUpdater,
+      final WorldUpdater parentUpdater,
       final StateDiffTrace stateDiffResult) {
     transactionUpdater
         .getTouchedAccounts()
         .forEach(
             updatedAccount -> {
-              final Account rootAccount = previousUpdater.get(updatedAccount.getAddress());
-              processAccountDiff(
-                  updatedAccount.getAddress(), stateDiffResult, updatedAccount, rootAccount, false);
+              final Account rootAccount = parentUpdater.get(updatedAccount.getAddress());
+              // Compute the storage diff for this account.
+              // We compare the post-transaction storage (from updatedAccount) against the
+              // pre-transaction storage (from rootAccount).
+              final Map<String, DiffNode> storageDiff = new TreeMap<>();
+              ((MutableAccount) updatedAccount)
+                  .getUpdatedStorage()
+                  .forEach(
+                      (key, newValue) -> {
+                        if (rootAccount == null) {
+                          // Case 1: The account did not exist before this transaction.
+                          // In diff mode, include only non-zero storage writes.
+                          if (!UInt256.ZERO.equals(newValue)) {
+                            storageDiff.put(
+                                key.toHexString(), new DiffNode(null, newValue.toHexString()));
+                          }
+                        } else {
+                          // Case 2: The account existed pre-transaction.
+                          // Include the slot only if the value actually changed.
+                          if (!rootAccount.getStorageValue(key).equals(newValue)) {
+                            final String originalValueHex =
+                                rootAccount.getStorageValue(key).toHexString();
+                            storageDiff.put(
+                                key.toHexString(),
+                                new DiffNode(originalValueHex, newValue.toHexString()));
+                          }
+                        }
+                      });
+
+              // Build the account-level diff (balance, code, codeHash, nonce, storage).
+              final AccountDiff accountDiff =
+                  new AccountDiff(
+                      createDiffNode(
+                          rootAccount, updatedAccount, StateTraceGenerator::balanceAsHex),
+                      createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeAsHex),
+                      createDiffNode(
+                          rootAccount, updatedAccount, StateTraceGenerator::codeHashAsHex),
+                      createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::nonceAsHex),
+                      storageDiff);
+
+              // Record this account only if something actually changed.
+              if (accountDiff.hasDifference()) {
+                stateDiffResult.put(updatedAccount.getAddress().toHexString(), accountDiff);
+              }
             });
   }
 
   private void processPreStateMode(
-      final WorldUpdater transactionUpdater,
-      final WorldUpdater previousUpdater,
+      final WorldUpdater parentUpdater,
       final StateDiffTrace stateDiffResult,
       final TransactionTrace transactionTrace) {
+
     final var touchedAccounts = transactionTrace.getTouchedAccounts().orElseThrow();
 
-    for (PartialBlockAccessView.AccountChanges accountChanges : touchedAccounts) {
+    for (var accountChanges : touchedAccounts) {
+      final var address = accountChanges.getAddress();
+      final var original = parentUpdater.get(address);
 
-      Map<String, DiffNode> storageDiff = new TreeMap<>();
+      // Build the storage portion of the pre-state.
+      // For each accessed slot, we extract the pre-transaction value directly from the parent
+      // updater.
+      final Map<String, DiffNode> storageDiff = new TreeMap<>();
+      accountChanges
+          .getSlots()
+          .forEach(
+              slotKey -> {
+                // The pre-state mode only cares about the *original* value.
+                var account = parentUpdater.get(address);
+                if (account != null) {
+                  final UInt256 value = account.getStorageValue(slotKey);
+                  storageDiff.put(slotKey.toHexString(), new DiffNode(value.toHexString(), null));
+                }
+              });
 
-      accountChanges.getStorageChanges().forEach(slotChange -> storageDiff.put(
-        slotChange.slot().getSlotHash().toHexString(),
-        new DiffNode(slotChange.slot().getSlotHash().toHexString(), slotChange.newValue().toHexString())
-      ));
+      // Build the account-level pre-state diff.
+      // All fields represent the original state; "to" values are intentionally null in pre-state
+      // mode.
+      final var accountDiff =
+          new AccountDiff(
+              createDiffNode(original, null, StateTraceGenerator::balanceAsHex),
+              createDiffNode(original, null, StateTraceGenerator::codeAsHex),
+              createDiffNode(original, null, StateTraceGenerator::codeHashAsHex),
+              createDiffNode(original, null, StateTraceGenerator::nonceAsHex),
+              storageDiff);
 
-      accountChanges.getStorageReads().forEach(slotKey -> {
-        // Only add storage reads that were not already included via storage changes
-        if (!storageDiff.containsKey(slotKey.getSlotHash().toHexString())) {
-          final var originalValue = transactionUpdater
-            .get(accountChanges.getAddress())
-            .getStorageValue(slotKey.getSlotKey().get());
-          storageDiff.put(
-            slotKey.getSlotHash().toHexString(),
-            new DiffNode(originalValue.toHexString(), originalValue.toHexString())
-          );
-        }
-      });
-
-
-
-      final var original = previousUpdater.get(accountChanges.getAddress());
-      final AccountDiff accountDiff =
-        new AccountDiff(
-          createDiffNode(original, null, StateTraceGenerator::balanceAsHex),
-          createDiffNode(original, null, StateTraceGenerator::codeAsHex),
-          createDiffNode(original, null, StateTraceGenerator::codeHashAsHex),
-          createDiffNode(original, null, StateTraceGenerator::nonceAsHex),
-          storageDiff);
-      stateDiffResult.put(accountChanges.getAddress().toHexString(), accountDiff);
+      // In pre-state mode, every touched account is included.
+      stateDiffResult.put(address.toHexString(), accountDiff);
     }
   }
 
@@ -168,104 +211,6 @@ public class StateTraceGenerator {
   private WorldUpdater getTransactionUpdater(final List<TraceFrame> traceFrames) {
     // Transaction updater sits two levels above the frame's updater
     return traceFrames.getFirst().getWorldUpdater().parentUpdater().get().parentUpdater().get();
-  }
-
-  /**
-   * Process an account that was touched during the transaction and record its state difference
-   * compared to the pre-transaction state.
-   *
-   * <p>Behavior differs depending on mode:
-   *
-   * <ul>
-   *   <li><b>Diff mode</b> (isPreState = false): Only accounts with at least one modified field
-   *       (including storage) are included.
-   *   <li><b>Pre-state mode</b> (isPreState = true): The account is included even if no fields were
-   *       modified, showing the “before” values of touched accounts.
-   * </ul>
-   *
-   * @param accountAddress The address of the account being processed.
-   * @param stateDiff The aggregated diff being built for this transaction.
-   * @param updatedAccount The account state after transaction execution.
-   * @param rootAccount The account state before transaction execution, or {@code null} if the
-   *     account was newly created.
-   * @param isPreState Whether pre-state mode is enabled.
-   */
-  private void processAccountDiff(
-      final Address accountAddress,
-      final StateDiffTrace stateDiff,
-      final Account updatedAccount,
-      final Account rootAccount,
-      final boolean isPreState) {
-
-    // Compute storage differences for this account
-    final Map<String, DiffNode> storageDiff =
-        updatedAccount == null
-            ? Collections.emptyMap()
-            : calculateStorageDiff((MutableAccount) updatedAccount, rootAccount, isPreState);
-
-    // Build account-level diff
-    final AccountDiff accountDiff =
-        new AccountDiff(
-            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::balanceAsHex),
-            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeAsHex),
-            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeHashAsHex),
-            createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::nonceAsHex),
-            storageDiff);
-
-    // Record only if something changed (or always if pre-state)
-    if (isPreState || accountDiff.hasDifference()) {
-      stateDiff.put(accountAddress.toHexString(), accountDiff);
-    }
-  }
-
-  /**
-   * Calculate the storage differences for an account between the pre-transaction and
-   * post-transaction world states.
-   *
-   * <p>Behavior differs based on the mode:
-   *
-   * <ul>
-   *   <li><b>Diff mode</b> (isPreState = false): Only includes storage slots whose values changed
-   *       compared to the pre-transaction state. New accounts will only include non-zero storage
-   *       slots.
-   *   <li><b>Pre-state mode</b> (isPreState = true): Includes all storage slots that were touched,
-   *       even if the value did not change. New accounts will include both zero and non-zero
-   *       values.
-   * </ul>
-   *
-   * @param updatedAccount The account state after transaction execution (mutable).
-   * @param rootAccount The account state before the transaction, or {@code null} if the account was
-   *     newly created during the transaction.
-   * @param isPreState Whether pre-state mode is active.
-   * @return A map of storage slot key → {@link DiffNode}, representing the diff of each slot.
-   */
-  private Map<String, DiffNode> calculateStorageDiff(
-      final MutableAccount updatedAccount, final Account rootAccount, final boolean isPreState) {
-
-    final Map<String, DiffNode> storageDiff = new TreeMap<>();
-
-    // Iterate through all updated storage slots in this transaction
-    updatedAccount
-        .getUpdatedStorage()
-        .forEach(
-            (key, newValue) -> {
-              if (rootAccount == null) {
-                // Case 1: Account did not exist before this transaction
-                // Record non-zero slots in diff mode, or all slots in pre-state mode
-                if (!UInt256.ZERO.equals(newValue) || isPreState) {
-                  storageDiff.put(key.toHexString(), new DiffNode(null, newValue.toHexString()));
-                }
-              } else {
-                // Case 2: Account existed pre-transaction
-                // Record differences, or everything if pre-state mode is enabled
-                if (!rootAccount.getStorageValue(key).equals(newValue) || isPreState) {
-                  final String originalValueHex = rootAccount.getStorageValue(key).toHexString();
-                  storageDiff.put(
-                      key.toHexString(), new DiffNode(originalValueHex, newValue.toHexString()));
-                }
-              }
-            });
-    return storageDiff;
   }
 
   /** Record accounts deleted during the transaction. */

@@ -21,18 +21,20 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -97,36 +99,18 @@ public class StateTraceGeneratorTest {
 
   @Test
   void shouldIncludeUnchangedAccounts_whenPreState() {
-    Address A = Address.fromHexString("0xabc1");
-
-    Account pre = mockAccount(A, 10, 1, Map.of());
-    MutableAccount post = mockAccount(A, 10, 1, Map.of());
-
-    StorageSlotKey slot0 =
-      new StorageSlotKey(UInt256.ZERO);
-
-    StorageSlotKey slot1 =
-      new StorageSlotKey(UInt256.ONE);
-    var changes =
-      Optional.of(List.of(new PartialBlockAccessView.AccountChanges(
-        A, Optional.empty(), Optional.empty(), Optional.empty(), List.of(slot0, slot1), List.of())));
-
-    WorldUpdater prev = mock(WorldUpdater.class);
-    when(prev.get(A)).thenReturn(pre);
-
-    WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
-    TraceFrame f = mockFrame(mockWorldUpdater(tx));
-
-    TransactionTrace txTrace = trace(f);
-    when(txTrace.getTouchedAccounts()).thenReturn(changes);
+    Address address = Address.fromHexString("0xabc1");
+    // Both pre and post states are the same, but we are generating pre-state trace so it should be
+    // included
+    MutableAccount account = mockAccount(address, 10, 1, Map.of(UInt256.ZERO, UInt256.ONE));
+    TransactionTrace txTrace = mockFrameWithUpdater(address, account, account);
 
     StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
-
-    assertThat(diff).containsKey(A.toHexString());
-    assertThat(diff.get(A.toHexString()).getBalance().getFrom()).contains("0xa");
-
-    assertThat(diff.get(A.toHexString()).getStorage())
-      .containsKeys(slot0.getSlotHash().toHexString(), slot1.getSlotHash().toHexString());
+    assertThat(diff).containsKey(address.toHexString());
+    AccountDiff a = diff.get(address.toHexString());
+    assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
+    assertThat(a.getStorage().get(UInt256.ZERO.toHexString()).getFrom().orElseThrow())
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
   }
 
   @Test
@@ -152,41 +136,13 @@ public class StateTraceGeneratorTest {
   @Test
   void shouldIncludeAllSlots_whenPreStateMode() {
     Address A = Address.fromHexString("0xdead");
-
-    MutableAccount post =
+    // Pre and post both have non-zero and zero slots, all should be included in pre-state
+    MutableAccount account =
         mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
-
-    StorageSlotKey slot0 =
-        new StorageSlotKey(UInt256.ZERO);
-
-    StorageSlotKey slot1 =
-      new StorageSlotKey(UInt256.ONE);
-
-    PartialBlockAccessView.SlotChange slotChange0 =
-        new PartialBlockAccessView.SlotChange(
-          slot0, UInt256.ZERO);
-
-    PartialBlockAccessView.SlotChange slotChange1 =
-      new PartialBlockAccessView.SlotChange(
-        slot1, UInt256.valueOf(999));
-
-    var changes =
-      Optional.of(List.of(new PartialBlockAccessView.AccountChanges(
-            A, Optional.empty(), Optional.empty(), Optional.empty(), List.of(slot0, slot1),
-        List.of(slotChange0, slotChange1))));
-
-    WorldUpdater prev = mock(WorldUpdater.class);
-    when(prev.get(A)).thenReturn(null);
-
-    WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
-    TraceFrame f = mockFrame(mockWorldUpdater(tx));
-
-    TransactionTrace txTrace = trace(f);
-    when(txTrace.getTouchedAccounts()).thenReturn(changes);
+    TransactionTrace txTrace = mockFrameWithUpdater(A, account, account);
     StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
-
     assertThat(diff.get(A.toHexString()).getStorage())
-        .containsKeys(slot0.getSlotHash().toHexString(), slot1.getSlotHash().toHexString());
+        .containsKeys(UInt256.ZERO.toHexString(), UInt256.ONE.toHexString());
   }
 
   @Test
@@ -253,5 +209,36 @@ public class StateTraceGeneratorTest {
     when(mid.parentUpdater()).thenReturn(Optional.of(root));
     when(root.parentUpdater()).thenReturn(Optional.of(leaf));
     return mid;
+  }
+
+  private TransactionTrace mockFrameWithUpdater(
+      final Address address, final MutableAccount preState, final MutableAccount postState) {
+    WorldUpdater original = mock(WorldUpdater.class);
+    when(original.get(address)).thenReturn(preState);
+    WorldUpdater previous = mock(WorldUpdater.class);
+    when(previous.parentUpdater()).thenReturn(Optional.of(original));
+    WorldUpdater txUpdater = mockWorldUpdater(previous);
+    when(txUpdater.get(postState.getAddress())).thenReturn(postState);
+    TraceFrame f = mockFrame(txUpdater);
+
+    TransactionTrace txTrace = mock(TransactionTrace.class);
+    when(txTrace.getTraceFrames()).thenReturn(List.of(f));
+    Set<UInt256> slots = new java.util.HashSet<>();
+    slots.addAll(preState.getUpdatedStorage().keySet());
+    slots.addAll(postState.getUpdatedStorage().keySet());
+    Collection<AccessLocationTracker.AccountAccessList> touchedAccounts =
+        Collections.singleton(mockAccountAccessListEntry(address, slots));
+
+    when(txTrace.getTouchedAccounts()).thenReturn(Optional.of(touchedAccounts));
+    return txTrace;
+  }
+
+  private AccessLocationTracker.AccountAccessList mockAccountAccessListEntry(
+      final Address address, final Set<UInt256> slots) {
+    AccessLocationTracker.AccountAccessList entry =
+        mock(AccessLocationTracker.AccountAccessList.class);
+    when(entry.getAddress()).thenReturn(address);
+    when(entry.getSlots()).thenReturn(slots);
+    return entry;
   }
 }
