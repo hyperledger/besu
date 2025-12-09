@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -85,22 +84,11 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-    if (!chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      return null;
-    }
 
-    try (BonsaiWorldState ws =
-        (BonsaiWorldState)
-            protocolContext
-                .getWorldStateArchive()
-                .getWorldState(
-                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
-                .orElse(null)) {
-      if (ws == null) {
-        return null;
-      }
+    final BonsaiWorldState ws = getWorldState(protocolContext, blockHeader);
+    if (ws == null) return null;
 
+    try {
       ws.disableCacheMerkleTrieLoader();
       final ParallelizedTransactionContext.Builder contextBuilder =
           new ParallelizedTransactionContext.Builder();
@@ -165,6 +153,8 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
     } catch (Exception ex) {
       // no op as failing to get worldstate
       return null;
+    } finally {
+      ws.close();
     }
   }
 

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -70,26 +69,10 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final Wei blobGasPrice,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
 
-    final BlockHeader parentHeader =
-        protocolContext
-            .getBlockchain()
-            .getBlockHeader(blockHeader.getParentHash())
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Parent header not found for block " + blockHeader.getHash()));
+    final BonsaiWorldState ws = getWorldState(protocolContext, blockHeader);
+    if (ws == null) return null;
 
-    try (BonsaiWorldState ws =
-        (BonsaiWorldState)
-            protocolContext
-                .getWorldStateArchive()
-                .getWorldState(
-                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(parentHeader))
-                .orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "World state not found for parent block " + parentHeader.getHash()))) {
-
+    try {
       ws.disableCacheMerkleTrieLoader();
       final ParallelizedTransactionContext.Builder ctxBuilder =
           new ParallelizedTransactionContext.Builder();
@@ -126,6 +109,8 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       ctxBuilder.transactionAccumulator(blockUpdater).transactionProcessingResult(result);
 
       return ctxBuilder.build();
+    } finally {
+      ws.close();
     }
   }
 

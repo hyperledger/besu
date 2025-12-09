@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -65,6 +67,22 @@ public abstract class ParallelBlockTransactionProcessor {
                       blockAccessListBuilder),
               executor);
     }
+  }
+
+  protected BonsaiWorldState getWorldState(
+      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+
+    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
+    if (!chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
+      return null;
+    }
+
+    return (BonsaiWorldState)
+        protocolContext
+            .getWorldStateArchive()
+            .getWorldState(
+                WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
+            .orElse(null);
   }
 
   protected abstract ParallelizedTransactionContext runTransaction(
