@@ -21,8 +21,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
@@ -100,16 +102,31 @@ public class StateTraceGeneratorTest {
     Account pre = mockAccount(A, 10, 1, Map.of());
     MutableAccount post = mockAccount(A, 10, 1, Map.of());
 
+    StorageSlotKey slot0 =
+      new StorageSlotKey(UInt256.ZERO);
+
+    StorageSlotKey slot1 =
+      new StorageSlotKey(UInt256.ONE);
+    var changes =
+      Optional.of(List.of(new PartialBlockAccessView.AccountChanges(
+        A, Optional.empty(), Optional.empty(), Optional.empty(), List.of(slot0, slot1), List.of())));
+
     WorldUpdater prev = mock(WorldUpdater.class);
     when(prev.get(A)).thenReturn(pre);
 
     WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
     TraceFrame f = mockFrame(mockWorldUpdater(tx));
 
-    StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
+    TransactionTrace txTrace = trace(f);
+    when(txTrace.getTouchedAccounts()).thenReturn(changes);
+
+    StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
 
     assertThat(diff).containsKey(A.toHexString());
     assertThat(diff.get(A.toHexString()).getBalance().getFrom()).contains("0xa");
+
+    assertThat(diff.get(A.toHexString()).getStorage())
+      .containsKeys(slot0.getSlotHash().toHexString(), slot1.getSlotHash().toHexString());
   }
 
   @Test
@@ -139,16 +156,37 @@ public class StateTraceGeneratorTest {
     MutableAccount post =
         mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
 
+    StorageSlotKey slot0 =
+        new StorageSlotKey(UInt256.ZERO);
+
+    StorageSlotKey slot1 =
+      new StorageSlotKey(UInt256.ONE);
+
+    PartialBlockAccessView.SlotChange slotChange0 =
+        new PartialBlockAccessView.SlotChange(
+          slot0, UInt256.ZERO);
+
+    PartialBlockAccessView.SlotChange slotChange1 =
+      new PartialBlockAccessView.SlotChange(
+        slot1, UInt256.valueOf(999));
+
+    var changes =
+      Optional.of(List.of(new PartialBlockAccessView.AccountChanges(
+            A, Optional.empty(), Optional.empty(), Optional.empty(), List.of(slot0, slot1),
+        List.of(slotChange0, slotChange1))));
+
     WorldUpdater prev = mock(WorldUpdater.class);
     when(prev.get(A)).thenReturn(null);
 
     WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
     TraceFrame f = mockFrame(mockWorldUpdater(tx));
 
-    StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
+    TransactionTrace txTrace = trace(f);
+    when(txTrace.getTouchedAccounts()).thenReturn(changes);
+    StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
 
     assertThat(diff.get(A.toHexString()).getStorage())
-        .containsKeys(UInt256.ZERO.toHexString(), UInt256.ONE.toHexString());
+        .containsKeys(slot0.getSlotHash().toHexString(), slot1.getSlotHash().toHexString());
   }
 
   @Test

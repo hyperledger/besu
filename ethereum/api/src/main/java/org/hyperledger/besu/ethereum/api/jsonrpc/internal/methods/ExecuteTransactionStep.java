@@ -94,7 +94,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
         BlockAccessList.BlockAccessListBuilder.createTransactionAccessLocationTracker(0);
 
     // If it is not a reward Block trace
-    Set<Address> touchedAccounts = null;
+    List<PartialBlockAccessView.AccountChanges> touchedAccounts = null;
     if (transactionTrace.getTransaction() != null) {
       BlockHeader header = block.getHeader();
       final Optional<BlockHeader> maybeParentHeader =
@@ -127,10 +127,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       touchedAccounts =
           accessListTracker
               .createPartialBlockAccessView(nextUpdater.updater().updater())
-              .accountChanges()
-              .stream()
-              .map(PartialBlockAccessView.AccountChanges::getAddress)
-              .collect(Collectors.toUnmodifiableSet());
+              .accountChanges();
     }
     return new TransactionTrace(
         transactionTrace.getTransaction(),

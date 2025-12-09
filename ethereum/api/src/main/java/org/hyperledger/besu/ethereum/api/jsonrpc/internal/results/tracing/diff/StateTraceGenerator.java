@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -122,21 +122,41 @@ public class StateTraceGenerator {
       final WorldUpdater previousUpdater,
       final StateDiffTrace stateDiffResult,
       final TransactionTrace transactionTrace) {
+    final var touchedAccounts = transactionTrace.getTouchedAccounts().orElseThrow();
 
-    final var touchedAccounts =
-        transactionTrace
-            .getTouchedAccounts()
-            .orElseGet(
-                () ->
-                    transactionUpdater.getTouchedAccounts().stream()
-                        .map(Account::getAddress)
-                        .collect(Collectors.toUnmodifiableSet()));
+    for (PartialBlockAccessView.AccountChanges accountChanges : touchedAccounts) {
 
-    for (Address address : touchedAccounts) {
-      final var original = previousUpdater.get(address);
-      final var updated = transactionUpdater.getAccount(address);
+      Map<String, DiffNode> storageDiff = new TreeMap<>();
 
-      processAccountDiff(address, stateDiffResult, updated, original, true);
+      accountChanges.getStorageChanges().forEach(slotChange -> storageDiff.put(
+        slotChange.slot().getSlotHash().toHexString(),
+        new DiffNode(slotChange.slot().getSlotHash().toHexString(), slotChange.newValue().toHexString())
+      ));
+
+      accountChanges.getStorageReads().forEach(slotKey -> {
+        // Only add storage reads that were not already included via storage changes
+        if (!storageDiff.containsKey(slotKey.getSlotHash().toHexString())) {
+          final var originalValue = transactionUpdater
+            .get(accountChanges.getAddress())
+            .getStorageValue(slotKey.getSlotKey().get());
+          storageDiff.put(
+            slotKey.getSlotHash().toHexString(),
+            new DiffNode(originalValue.toHexString(), originalValue.toHexString())
+          );
+        }
+      });
+
+
+
+      final var original = previousUpdater.get(accountChanges.getAddress());
+      final AccountDiff accountDiff =
+        new AccountDiff(
+          createDiffNode(original, null, StateTraceGenerator::balanceAsHex),
+          createDiffNode(original, null, StateTraceGenerator::codeAsHex),
+          createDiffNode(original, null, StateTraceGenerator::codeHashAsHex),
+          createDiffNode(original, null, StateTraceGenerator::nonceAsHex),
+          storageDiff);
+      stateDiffResult.put(accountChanges.getAddress().toHexString(), accountDiff);
     }
   }
 

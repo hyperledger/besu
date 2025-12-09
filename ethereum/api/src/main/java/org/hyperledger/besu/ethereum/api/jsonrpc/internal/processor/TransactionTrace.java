@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
@@ -30,7 +31,7 @@ public class TransactionTrace {
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
-  private final Optional<Set<Address>> touchedAccounts;
+  private final Optional<List<PartialBlockAccessView.AccountChanges>> touchedAccounts;
 
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
@@ -68,7 +69,7 @@ public class TransactionTrace {
       final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames,
       final Optional<Block> block,
-      final Set<Address> touchedAccounts) {
+      final List<PartialBlockAccessView.AccountChanges> touchedAccounts) {
     this.transaction = transaction;
     this.result = result;
     this.traceFrames = traceFrames;
@@ -108,7 +109,7 @@ public class TransactionTrace {
     return block;
   }
 
-  public Optional<Set<Address>> getTouchedAccounts() {
+  public Optional<List<PartialBlockAccessView.AccountChanges>> getTouchedAccounts() {
     return touchedAccounts;
   }
 }
