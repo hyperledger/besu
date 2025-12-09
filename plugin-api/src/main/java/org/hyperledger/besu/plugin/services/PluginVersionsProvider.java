@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import java.util.Collection;
+import java.util.Map;
 
 /** The interface Plugin versions provider. */
 public interface PluginVersionsProvider {
   /**
-   * Gets plugin versions.
+   * Gets plugin versions by name.
    *
    * @return the plugin versions
    */
-  Collection<String> getPluginVersions();
+  Map<String, String> getPluginVersions();
 }

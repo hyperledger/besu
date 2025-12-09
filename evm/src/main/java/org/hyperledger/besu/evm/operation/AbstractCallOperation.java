@@ -216,12 +216,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       // For the following, we either increment the gas or return zero, so we don't get double
       // charged. If we return zero then the traces don't have the right per-opcode cost.
-      frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
+      final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
+      frame.incrementRemainingGas(gasAvailableForChildCall + cost);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
-      return new OperationResult(cost, 1, softFailureReason);
+      return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));

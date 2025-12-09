@@ -257,6 +257,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.jackson.DatabindCodec;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -853,11 +857,38 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
+      if (parseResult.isUsageHelpRequested() || parseResult.isVersionHelpRequested()) {
+        // suppressing the info log to avoid that plugin registrations logs are printed
+        // before the help or the version information
+        suppressInfoLog();
+      }
       besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
       besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
     };
+  }
+
+  @SuppressWarnings("BannedMethod")
+  private void suppressInfoLog() {
+    // this is specific for Log4j2, in case we switch to another logging framework,
+    // this need to be adapted for it
+
+    // silence already created loggers
+    LoggerContext.getContext(false).getLoggers().forEach(logger -> logger.setLevel(Level.WARN));
+
+    // silence future loggers by configuration
+    if (LogManager.getFactory() instanceof Log4jContextFactory log4jContextFactory) {
+      final var selector = log4jContextFactory.getSelector();
+      selector
+          .getLoggerContexts()
+          .forEach(
+              ctx ->
+                  ctx.getConfiguration()
+                      .getLoggers()
+                      .values()
+                      .forEach(loggerConfig -> loggerConfig.setLevel(Level.WARN)));
+    }
   }
 
   private IExecutionStrategy createDefaultValueProviderTask(final IExecutionStrategy nextStep) {

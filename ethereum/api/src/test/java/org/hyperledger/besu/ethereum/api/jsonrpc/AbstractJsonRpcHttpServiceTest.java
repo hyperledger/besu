@@ -222,7 +222,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
   }
 
-  protected void startService() throws Exception {
+  protected void startService() {
     startService(blockchainSetupUtil);
   }
 

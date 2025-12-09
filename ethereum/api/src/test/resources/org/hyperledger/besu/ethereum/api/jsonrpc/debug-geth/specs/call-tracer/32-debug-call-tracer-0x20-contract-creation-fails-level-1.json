@@ -1,0 +1,43 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x20",
+      {
+        "tracer": "callTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x3a9118fe52689f19ec58b4e1a50a0ae07021812f4c0d72c703a669e90622f3cd",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0x11fa1",
+          "gasUsed": "0x11e62",
+          "to": "0x0180000000000000000000000000000000000000",
+          "input": "0x000000000000000000000000000000000000000000000000000000000000ea60",
+          "calls": [
+            {
+              "from": "0x0180000000000000000000000000000000000000",
+              "gas": "0x4ea8",
+              "gasUsed": "0x4ea8",
+              "input": "0x600c600055602060406000f000",
+              "error": "out of gas",
+              "value": "0x0",
+              "type": "CREATE"
+            }
+          ],
+          "value": "0x0",
+          "type": "CALL"
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

@@ -41,9 +41,16 @@ public class DebugGethTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySp
         "debug-geth/chain-data/genesis.json", "debug-geth/chain-data/blocks.bin", storageFormat);
   }
 
+  /**
+   * Method source for parameterized test jsonRPCCallWithSpecFile
+   *
+   * @return Paths to spec files
+   */
   public static Object[][] specs() {
     return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
-        new String[] {"debug-geth/specs/prestate-tracer/diff-mode-true"});
+        new String[] {
+          "debug-geth/specs/prestate-tracer/diff-mode-true", "debug-geth/specs/call-tracer"
+        });
   }
 
   @Test
