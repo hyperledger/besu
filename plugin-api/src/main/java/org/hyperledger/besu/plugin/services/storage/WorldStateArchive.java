@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.io.Closeable;
 import java.util.List;
@@ -25,7 +26,6 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 public interface WorldStateArchive extends Closeable {
   Optional<WorldState> get(Hash rootHash, Hash blockHash);

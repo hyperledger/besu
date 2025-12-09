@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
 

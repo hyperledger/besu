@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,7 +43,6 @@ import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,12 +79,14 @@ public class WorldStateProofProvider {
               account -> {
                 final SortedMap<UInt256, Proof<Bytes>> storageProofs =
                     getStorageProofs(accountHash, account, accountStorageKeys);
-                  return (WorldStateProof) new WorldStateProofImpl(account, accountProof, storageProofs);
+                return (WorldStateProof)
+                    new WorldStateProofImpl(account, accountProof, storageProofs);
               })
-          .or(() -> {
-              WorldStateProof worldStateProof = new WorldStateProofImpl(accountProof);
-              return Optional.of(worldStateProof);
-          });
+          .or(
+              () -> {
+                WorldStateProof worldStateProof = new WorldStateProofImpl(accountProof);
+                return Optional.of(worldStateProof);
+              });
     }
   }
 
