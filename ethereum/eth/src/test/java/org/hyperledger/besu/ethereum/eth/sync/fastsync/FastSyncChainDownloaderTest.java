@@ -138,7 +138,6 @@ public class FastSyncChainDownloaderTest {
           new NoOpMetricsSystem(),
           new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
           SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-          new FastSyncStateStorage(tempDir),
           tempDir);
     } catch (Exception e) {
       throw new RuntimeException("Failed to create temp directory for test", e);

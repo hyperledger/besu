@@ -35,7 +35,6 @@ import com.google.common.base.Stopwatch;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
-  //  private static final Logger LOG = LoggerFactory.getLogger(AbstractEthTask.class);
   private double taskTimeInSec = -1.0D;
   private final OperationTimer taskTimer;
   protected final CompletableFuture<T> result = new CompletableFuture<>();
@@ -73,13 +72,9 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   @Override
   public final CompletableFuture<T> run() {
     if (!result.isDone() && started.compareAndSet(false, true)) {
-      //      LOG.info("WSD: execution starting for task: {}", getClass().getSimpleName());
       executeTaskTimed();
       result.whenComplete((r, t) -> cleanup());
     }
-    //    else {
-    //      LOG.info("WSD: execution already started for task: {}", getClass().getSimpleName());
-    //    }
     return result;
   }
 

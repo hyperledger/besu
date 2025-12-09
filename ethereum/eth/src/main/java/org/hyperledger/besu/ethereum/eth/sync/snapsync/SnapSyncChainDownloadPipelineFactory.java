@@ -50,8 +50,9 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapSyncDownloadPipelineFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncDownloadPipelineFactory.class);
+public class SnapSyncChainDownloadPipelineFactory {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(SnapSyncChainDownloadPipelineFactory.class);
 
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
@@ -62,7 +63,7 @@ public class SnapSyncDownloadPipelineFactory {
   protected final FastSyncValidationPolicy detachedValidationPolicy;
   protected final ValidationPolicy downloadHeaderValidation;
 
-  public SnapSyncDownloadPipelineFactory(
+  public SnapSyncChainDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -117,7 +118,7 @@ public class SnapSyncDownloadPipelineFactory {
 
     BlockHeader anchorForHeaderDownload =
         chainState.headerDownloadAnchor() == null
-            ? chainState.checkpointBlockHeader()
+            ? chainState.blockDownloadAnchor()
             : chainState.headerDownloadAnchor();
 
     final long pivotBlockNumber = chainState.pivotBlockHeader().getNumber();
@@ -134,12 +135,7 @@ public class SnapSyncDownloadPipelineFactory {
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule,
-            ethContext,
-            syncConfig,
-            headerRequestSize,
-            metricsSystem,
-            anchorForHeaderDownload.getNumber());
+            protocolSchedule, ethContext, headerRequestSize, anchorForHeaderDownload.getNumber());
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
@@ -176,22 +172,22 @@ public class SnapSyncDownloadPipelineFactory {
   public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
       final long startBlock, final BlockHeader pivotHeader, final SyncState syncState) {
 
-    long endBlock = pivotHeader.getNumber();
+    long pivotHeaderNumber = pivotHeader.getNumber();
 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = 128; // syncConfig.getDownloaderHeaderRequestSize();
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    LOG.info(
-        "Creating forward bodies and receipts download pipeline: startBlock={}, endBlock={}, parallelism={}, batchSize={}",
+    LOG.debug(
+        "Creating forward bodies and receipts download pipeline: startBlock={}, pivotHeaderNumber={}, parallelism={}, batchSize={}",
         startBlock,
-        endBlock,
+        pivotHeaderNumber,
         downloaderParallelism,
         headerRequestSize);
 
     final BlockHeaderSource headerSource =
-        new BlockHeaderSource(blockchain, startBlock, endBlock, headerRequestSize);
+        new BlockHeaderSource(blockchain, startBlock, pivotHeaderNumber, headerRequestSize);
 
     final DownloadSyncBodiesStep downloadBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);

@@ -182,7 +182,6 @@ public class FastSyncActions {
         metricsSystem,
         currentState,
         syncDurationMetrics,
-        fastSyncStateStorage,
         fastSyncDataDirectory);
   }
 
@@ -265,7 +264,7 @@ public class FastSyncActions {
    *
    * @param listener the world state stable listener
    */
-  public void setWorldStateStableListener(final WorldStateHealFinishedListener listener) {
+  public void setWorldStateHealFinishedListener(final WorldStateHealFinishedListener listener) {
     this.worldStateHealFinishedListener = listener;
     LOG.debug("World state stable listener registered");
   }
@@ -275,7 +274,7 @@ public class FastSyncActions {
    *
    * @return the world state stable listener, or null if not set
    */
-  public WorldStateHealFinishedListener getWorldStateStableListener() {
+  public WorldStateHealFinishedListener getWorldStateHealFinishedListener() {
     return worldStateHealFinishedListener;
   }
 

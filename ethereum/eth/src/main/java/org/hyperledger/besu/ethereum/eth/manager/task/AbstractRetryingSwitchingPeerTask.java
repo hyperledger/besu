@@ -68,12 +68,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             .or(this::selectNextPeer); // otherwise select a new one from the pool
 
     if (maybePeer.isEmpty()) {
-      //      LOG.atInfo()
-      //          .setMessage("WSD: No peer found to try to execute task at attempt {}, tried peers
-      // {}")
-      //          .addArgument(this::getRetryCount)
-      //          .addArgument(triedPeers)
-      //          .log();
+      LOG.atTrace()
+          .setMessage("No peer found to try to execute task at attempt {}, tried peers {}")
+          .addArgument(this::getRetryCount)
+          .addArgument(triedPeers)
+          .log();
       final var ex = new NoAvailablePeersException();
       return CompletableFuture.failedFuture(ex);
     }
@@ -81,21 +80,21 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final EthPeer peerToUse = maybePeer.get();
     assignPeer(peerToUse);
 
-    //    LOG.atInfo()
-    //        .setMessage("WSD: Trying to execute task on peer {}, attempt {}")
-    //        .addArgument(this::getAssignedPeer)
-    //        .addArgument(this::getRetryCount)
-    //        .log();
+    LOG.atTrace()
+        .setMessage("Trying to execute task on peer {}, attempt {}")
+        .addArgument(this::getAssignedPeer)
+        .addArgument(this::getRetryCount)
+        .log();
 
     return executeTaskOnCurrentPeer(peerToUse)
         .thenApply(
             peerResult -> {
-              //              LOG.atInfo()
-              //                  .setMessage("WSD: Got result {} from peer {}, attempt {}")
-              //                  .addArgument(peerResult)
-              //                  .addArgument(peerToUse)
-              //                  .addArgument(this::getRetryCount)
-              //                  .log();
+              LOG.atTrace()
+                  .setMessage("Got result {} from peer {}, attempt {}")
+                  .addArgument(peerResult)
+                  .addArgument(peerToUse)
+                  .addArgument(this::getRetryCount)
+                  .log();
               result.complete(peerResult);
               return peerResult;
             });

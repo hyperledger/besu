@@ -45,8 +45,8 @@ public class BackwardHeaderSource implements Iterator<Long> {
     this.stopBlock = stopBlock;
     this.batchSize = batchSize;
 
-    LOG.info(
-        "BackwardHeaderSource starting fresh: startBlock={}, stopBlock={}, batchSize={}",
+    LOG.debug(
+        "BackwardHeaderSource: startBlock={}, stopBlock={}, batchSize={}",
         startBlock,
         stopBlock,
         batchSize);

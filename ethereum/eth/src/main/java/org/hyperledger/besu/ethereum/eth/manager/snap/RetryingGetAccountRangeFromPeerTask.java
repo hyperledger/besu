@@ -30,9 +30,6 @@ import org.apache.tuweni.bytes.Bytes32;
 public class RetryingGetAccountRangeFromPeerTask
     extends AbstractRetryingSwitchingPeerTask<AccountRangeMessage.AccountRangeData> {
 
-  //  private static final Logger LOG =
-  //      LoggerFactory.getLogger(RetryingGetAccountRangeFromPeerTask.class);
-
   public static final int MAX_RETRIES = 4;
 
   private final EthContext ethContext;
@@ -52,9 +49,6 @@ public class RetryingGetAccountRangeFromPeerTask
         metricsSystem,
         data -> data.accounts().isEmpty() && data.proofs().isEmpty(),
         MAX_RETRIES);
-    //    LOG.info(
-    //        "WSD: created RetryingGetAccountRangeFromPeerTask for {} to {}", startKeyHash,
-    // endKeyHash);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -78,8 +72,6 @@ public class RetryingGetAccountRangeFromPeerTask
     final GetAccountRangeFromPeerTask task =
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    //    task.assignPeer(peer);
-    //    LOG.info("WSD: starting task for {} to {} on peer {}", startKeyHash, endKeyHash, peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

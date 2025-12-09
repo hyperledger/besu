@@ -63,7 +63,6 @@ public class RetryingGetBytecodeFromPeerTask
   protected CompletableFuture<Map<Bytes32, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetBytecodeFromPeerTask task =
         GetBytecodeFromPeerTask.forBytecode(ethContext, codeHashes, blockHeader, metricsSystem);
-    //    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

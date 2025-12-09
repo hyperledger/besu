@@ -50,7 +50,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
     this.currentChildHeader = pivotBlockHeader;
     this.totalHeaders = pivotBlockNumber - anchorForHeaderImportNumber;
     // store the pivot block header as the first imported header
-    this.blockchainStorage.importHeader(pivotBlockHeader);
+    this.blockchainStorage.storeBlockHeaders(List.of(pivotBlockHeader));
   }
 
   @Override
@@ -68,13 +68,15 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
     }
 
     currentChildHeader = blockHeaders.getLast();
+
     if (currentChildHeader.getNumber() == lowestHeaderToImport) {
       if (!currentChildHeader.getParentHash().equals(checkpointBlockHash)) {
         throw new IllegalStateException(
             "The lower header parent hash does not match the checkpoint hash");
       }
     }
-    blockHeaders.forEach(blockchainStorage::importHeader);
+
+    blockchainStorage.storeBlockHeaders(blockHeaders);
 
     if (logInfo.get()) {
       final long downloadedHeaders =

@@ -58,7 +58,6 @@ public class PersistDataStep {
       for (Task<SnapDataRequest> task : tasks) {
         if (task.getData().isResponseReceived()) {
           // enqueue child requests
-          //          LOG.info("WSD: got a response for {}", task.getClass().getSimpleName());
           final Stream<SnapDataRequest> childRequests =
               task.getData()
                   .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState);

@@ -66,9 +66,8 @@ public class DownloadSyncBodiesStep
     final int numSyncBlocksToGet = headers.size();
     final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
     do {
-      // geth asks for a maximum of 128 bodies at a time
       final List<BlockHeader> headersForBodiesStillToGet =
-          headers.subList(syncBlocks.size(), Math.min(128, numSyncBlocksToGet));
+          headers.subList(syncBlocks.size(), numSyncBlocksToGet);
       GetSyncBlockBodiesFromPeerTask task =
           new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
       PeerTaskExecutorResult<List<SyncBlock>> result =

@@ -527,10 +527,14 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public void importHeader(final BlockHeader blockHeader) {
+  public void storeBlockHeaders(final List<BlockHeader> blockHeaders) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    updater.putBlockHeader(blockHeader.getHash(), blockHeader);
-    updater.putBlockHash(blockHeader.getNumber(), blockHeader.getBlockHash());
+    blockHeaders.forEach(
+        header -> {
+          final Hash hash = header.getHash();
+          updater.putBlockHeader(hash, header);
+          updater.putBlockHash(header.getNumber(), hash);
+        });
     updater.commit();
   }
 
@@ -616,13 +620,16 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final boolean transactionIndexing) {
 
+    if (blockIsAlreadyTracked(block.getHeader())) {
+      return;
+    }
+
     final Hash hash = block.getHash();
-    final BlockHeader header = block.getHeader();
-    final Difficulty td = calculateTotalDifficultyForSyncing(header);
+    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
-    updater.putBlockHeader(hash, header);
+    updater.putBlockHeader(hash, block.getHeader());
     updater.putSyncBlockBody(hash, block.getBody());
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
@@ -664,8 +671,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
       final SyncBlock block = blockAndReceipts.getBlock();
-      final Hash blockHash = block.getHash();
       final BlockHeader header = block.getHeader();
+      final Hash blockHash = header.getHash();
       final SyncBlockBody body = block.getBody();
       updater.putBlockHash(header.getNumber(), blockHash);
       updater.putSyncBlockBody(blockHash, body);

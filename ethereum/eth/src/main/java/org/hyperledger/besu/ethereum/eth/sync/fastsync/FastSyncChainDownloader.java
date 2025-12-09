@@ -20,13 +20,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +48,10 @@ public class FastSyncChainDownloader {
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
       final SyncDurationMetrics syncDurationMetrics,
-      final FastSyncStateStorage fastSyncStateStorage,
-      final java.nio.file.Path fastSyncDataDirectory) {
+      final Path fastSyncDataDirectory) {
 
-    final SnapSyncDownloadPipelineFactory pipelineFactory =
-        new SnapSyncDownloadPipelineFactory(
+    final SnapSyncChainDownloadPipelineFactory pipelineFactory =
+        new SnapSyncChainDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
 
     final BlockHeader pivotBlockHeader =
@@ -58,12 +59,12 @@ public class FastSyncChainDownloader {
             .getPivotBlockHeader()
             .orElseThrow(() -> new RuntimeException("pivot block header not available"));
     final Hash pivotBlockHash = pivotBlockHeader.getHash();
-    LOG.info(
+    LOG.debug(
         "Using two-stage fast sync with pivotHash={}, pivotBlockNumber={}, ",
         pivotBlockHash,
         pivotBlockHeader.getNumber());
 
-    final ChainSyncStateStorage chainStateStorage =
+    final ChainSyncStateStorage chainSyncStateStorage =
         new ChainSyncStateStorage(fastSyncDataDirectory);
 
     return new SnapSyncChainDownloader(
@@ -75,6 +76,6 @@ public class FastSyncChainDownloader {
         metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
-        chainStateStorage);
+        chainSyncStateStorage);
   }
 }

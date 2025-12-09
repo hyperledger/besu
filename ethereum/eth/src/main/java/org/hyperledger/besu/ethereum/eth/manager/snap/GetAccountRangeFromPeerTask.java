@@ -32,11 +32,13 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetAccountRangeFromPeerTask
     extends AbstractPeerRequestTask<AccountRangeMessage.AccountRangeData> {
 
-  //  private static final Logger LOG = LoggerFactory.getLogger(GetAccountRangeFromPeerTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GetAccountRangeFromPeerTask.class);
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
@@ -71,22 +73,19 @@ public class GetAccountRangeFromPeerTask
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            //            LOG.atInfo()
-            //                .setMessage(
-            //                    "WSD: Requesting account range [{} ,{}] for state root {} from
-            // peer {} .")
-            //                .addArgument(startKeyHash)
-            //                .addArgument(endKeyHash)
-            //                .addArgument(blockHeader.getStateRoot())
-            //                .addArgument(peer.getLoggableId())
-            //                .log();
+            LOG.atTrace()
+                .setMessage("Requesting account range [{} ,{}] for state root {} from peer {} .")
+                .addArgument(startKeyHash)
+                .addArgument(endKeyHash)
+                .addArgument(blockHeader)
+                .addArgument(peer)
+                .log();
             if (!peer.isServingSnap()) {
-              //              LOG.atInfo()
-              //                  .setMessage("WSD: EthPeer that is not serving snap called in {},
-              // peer: {}")
-              //                  .addArgument(GetAccountRangeFromPeerTask.class)
-              //                  .addArgument(peer)
-              //                  .log();
+              LOG.atDebug()
+                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+                  .addArgument(GetAccountRangeFromPeerTask.class)
+                  .addArgument(peer)
+                  .log();
               throw new RuntimeException(
                   "EthPeer that is not serving snap called in "
                       + GetAccountRangeFromPeerTask.class);
@@ -109,16 +108,11 @@ public class GetAccountRangeFromPeerTask
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
-      //      LOG.info("WSD: Peer {} closed stream before receiving account range data", peer);
       return Optional.empty();
     }
     final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
     final AccountRangeMessage.AccountRangeData accountRangeData =
         accountRangeMessage.accountData(true);
-    //    LOG.info(
-    //        "WSD: Received account range data from peer {}, data size {}",
-    //        peer,
-    //        accountRangeData.accounts().size());
     return Optional.of(accountRangeData);
   }
 }

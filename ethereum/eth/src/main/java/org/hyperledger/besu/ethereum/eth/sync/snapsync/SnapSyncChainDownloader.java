@@ -63,14 +63,14 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
 
-  private final SnapSyncDownloadPipelineFactory pipelineFactory;
+  private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final SyncDurationMetrics syncDurationMetrics;
-  private final ChainSyncStateStorage chainStateStorage;
+  private final ChainSyncStateStorage chainSyncStateStorage;
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
-  private final AtomicReference<ChainSyncState> chainState;
+  private final AtomicReference<ChainSyncState> chainSyncState;
   private final AtomicReference<BlockHeader> pendingPivotUpdate = new AtomicReference<>(null);
   private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
@@ -81,7 +81,20 @@ public class SnapSyncChainDownloader
   private Instant overallStartTime;
 
   /**
-   * Creates a new TwoStageFastSyncChainDownloader.
+   * Creates a new TwoStageFastSyncChainDownloader. The first stage is to download all headers from
+   * a safe pivot down to the genesis. Due to the chain of parent hashes in the headers, as well as
+   * the trusted pivot and the known genesis, we can be sure that we can trust the downloaded
+   * headers.
+   *
+   * <p>The second stage is to download the bodies and receipts. Bodies and receipts are validated
+   * by checking the transactions root and the receipts root against the values contained in th
+   * trusted headers from the first stage. Bodies and receipts might not be downloaded from genesis,
+   * but from a checkpoint block, e.g. for mainnet from the merge block.
+   *
+   * <p>Once the second stage is completed we start downloading headers, bodies, and receipts, when
+   * the pivot block is updated. In this case we download the headers from the new pivot down to the
+   * new pivot block, followed by the bodies and receipts from the old pivot block to the new pivot
+   * block.
    *
    * @param pipelineFactory the pipeline factory for creating download pipelines
    * @param protocolContext the protocol context providing access to blockchain
@@ -93,7 +106,7 @@ public class SnapSyncChainDownloader
    * @param chainStateStorage the storage for chain sync state
    */
   public SnapSyncChainDownloader(
-      final SnapSyncDownloadPipelineFactory pipelineFactory,
+      final SnapSyncChainDownloadPipelineFactory pipelineFactory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -107,7 +120,7 @@ public class SnapSyncChainDownloader
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.syncDurationMetrics = syncDurationMetrics;
-    this.chainStateStorage = chainStateStorage;
+    this.chainSyncStateStorage = chainStateStorage;
 
     // Initialize or load chain sync state
     ChainSyncState chainSyncState =
@@ -127,7 +140,7 @@ public class SnapSyncChainDownloader
         // the current head of chain is the lower trust anchor
         checkpointBlockHeader = blockchain.getChainHeadHeader();
         checkpointHash = checkpointBlockHeader.getHash();
-        LOG.info(
+        LOG.debug(
             "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
             checkpointBlockHeader.getNumber(),
             checkpointHash);
@@ -140,7 +153,7 @@ public class SnapSyncChainDownloader
             getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
         blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
         blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
-        LOG.info(
+        LOG.debug(
             "Using checkpoint {} as lower trust anchor: {}, {}",
             checkpoint.blockNumber(),
             checkpoint.blockHash(),
@@ -157,7 +170,7 @@ public class SnapSyncChainDownloader
       LOG.info("Loaded existing chain sync state: {}", chainSyncState);
     }
 
-    this.chainState = new AtomicReference<>(chainSyncState);
+    this.chainSyncState = new AtomicReference<>(chainSyncState);
   }
 
   @Override
@@ -175,9 +188,9 @@ public class SnapSyncChainDownloader
 
   @Override
   public CompletableFuture<Void> start() {
-    final ChainSyncState initialState = chainState.get();
+    final ChainSyncState initialState = chainSyncState.get();
     final BlockHeader pivotBlockHeader = initialState.pivotBlockHeader();
-    final BlockHeader checkpointBlockHeader = initialState.checkpointBlockHeader();
+    final BlockHeader checkpointBlockHeader = initialState.blockDownloadAnchor();
     LOG.info(
         "Starting two-stage fast sync chain download from pivot block {}, {}, and checkpoint block {}.",
         pivotBlockHeader.getHash(),
@@ -203,7 +216,7 @@ public class SnapSyncChainDownloader
               } else {
                 final Duration totalDuration = Duration.between(overallStartTime, Instant.now());
                 LOG.info(
-                    "Two-stage fast sync chain download complete in {} seconds",
+                    "Two-stage fast sync chain download finished in {} seconds (including pivot updates)",
                     totalDuration.getSeconds());
                 // Stop metrics on success
                 syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
@@ -219,15 +232,15 @@ public class SnapSyncChainDownloader
   }
 
   /**
-   * Determines whether Stage 1 (backward header download) needs to run based on the persisted
-   * state.
+   * Determines whether Stage 1 (backward header download) needs to run based on the current chain
+   * sync state.
    *
    * @param state the chain sync state to use for this stage
    * @return CompletableFuture that completes when Stage 1 is done (or skipped)
    */
   private CompletableFuture<Void> determineStage1Execution(final ChainSyncState state) {
     if (state.headersDownloadComplete()) {
-      LOG.info(
+      LOG.debug(
           "Backward header download already complete for pivot {}. Skipping Stage 1.",
           state.pivotBlockHeader().getNumber());
       return CompletableFuture.completedFuture(null);
@@ -237,12 +250,12 @@ public class SnapSyncChainDownloader
   }
 
   private CompletableFuture<Void> runStage1BackwardHeaderDownload(final ChainSyncState state) {
-    LOG.info(
+    LOG.debug(
         "Stage 1: Starting backward header download from pivot {} down to stop block {}",
         state.pivotBlockHeader().getNumber(),
         state.headerDownloadAnchor() != null
             ? state.headerDownloadAnchor().getNumber()
-            : state.checkpointBlockHeader().getNumber());
+            : state.blockDownloadAnchor().getNumber());
 
     final Instant stage1StartTime = Instant.now();
 
@@ -256,14 +269,14 @@ public class SnapSyncChainDownloader
         .thenApply(
             ignore -> {
               final Duration stage1Duration = Duration.between(stage1StartTime, Instant.now());
-              LOG.info(
+              LOG.debug(
                   "Stage 1 complete: Backward header download finished in {} seconds",
                   stage1Duration.getSeconds());
 
               // Mark headers download as complete and persist
-              chainState.updateAndGet(ChainSyncState::withHeadersDownloadComplete);
-              chainStateStorage.storeState(chainState.get());
-              LOG.info("Persisted backward header download completion state");
+              chainSyncState.updateAndGet(ChainSyncState::withHeadersDownloadComplete);
+              chainSyncStateStorage.storeState(chainSyncState.get());
+              LOG.debug("Persisted backward header download completion state");
 
               return null;
             });
@@ -276,7 +289,7 @@ public class SnapSyncChainDownloader
     final long pivotBlockNumber = pivotBlockHeader.getNumber();
 
     // Validate blockchain head is in expected range
-    final long expectedMinStart = state.checkpointBlockHeader().getNumber();
+    final long expectedMinStart = state.blockDownloadAnchor().getNumber();
     if (blockchainHead < expectedMinStart) {
       throw new IllegalStateException(
           String.format(
@@ -286,28 +299,28 @@ public class SnapSyncChainDownloader
 
     // Check if already at or past pivot
     if (blockchainHead >= pivotBlockNumber) {
-      LOG.info(
+      LOG.debug(
           "Stage 2: Blockchain head ({}) already at or past pivot ({}). Skipping bodies/receipts download.",
           blockchainHead,
           pivotBlockNumber);
       return CompletableFuture.completedFuture(null);
     }
 
-    LOG.info(
+    LOG.debug(
         "Stage 2: Starting forward bodies and receipts download from {} to pivot {}",
         blockchainHead,
         pivotBlockNumber);
 
     final Instant stage2StartTime = Instant.now();
 
-    final Pipeline<List<BlockHeader>> bodiesReceiptsPipeline =
+    final Pipeline<List<BlockHeader>> bodiesAndReceiptsPipeline =
         pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(
             blockchainHead, pivotBlockHeader, syncState);
-    currentPipeline = bodiesReceiptsPipeline;
+    currentPipeline = bodiesAndReceiptsPipeline;
 
     return ethContext
         .getScheduler()
-        .startPipeline(bodiesReceiptsPipeline)
+        .startPipeline(bodiesAndReceiptsPipeline)
         .thenApply(
             ignore -> {
               final Duration stage2Duration = Duration.between(stage2StartTime, Instant.now());
@@ -365,6 +378,10 @@ public class SnapSyncChainDownloader
               if (error != null) {
                 handleDownloadError(error, overallResult);
               } else {
+                // we are stopping the time after the initial chain download has finished. From now
+                // on we are only
+                // waiting for new pivots or the world state download to finish.
+                syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
                 handlePivotUpdateLoop(overallResult);
               }
             });
@@ -378,7 +395,7 @@ public class SnapSyncChainDownloader
    */
   private CompletableFuture<Void> performSingleDownloadCycle() {
     // Snapshot state once - both stages use the same snapshot
-    final ChainSyncState currentState = chainState.get();
+    final ChainSyncState currentState = chainSyncState.get();
 
     return determineStage1Execution(currentState)
         .thenCompose(
@@ -401,9 +418,9 @@ public class SnapSyncChainDownloader
       final Throwable error, final CompletableFuture<Void> overallResult) {
 
     // Update chain state to current blockchain head
-    chainState.updateAndGet(
+    chainSyncState.updateAndGet(
         state -> state.fromHead(protocolContext.getBlockchain().getChainHeadHeader()));
-    chainStateStorage.storeState(chainState.get());
+    chainSyncStateStorage.storeState(chainSyncState.get());
 
     if (shouldRetry(error)) {
       LOG.warn("Chain sync encountered error, will retry from saved state", error);
@@ -455,27 +472,27 @@ public class SnapSyncChainDownloader
    */
   private CompletableFuture<Boolean> checkForPivotUpdate() {
     final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
-    final BlockHeader previousPivot = chainState.get().pivotBlockHeader();
+    final BlockHeader previousPivot = chainSyncState.get().pivotBlockHeader();
 
     // Check if there's an immediate pivot update available
     if (pivotUpdateFuture.isDone()) {
       pivotUpdateFuture = new CompletableFuture<>();
 
       if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
-        LOG.info(
+        LOG.debug(
             "Pivot block has been updated from {} to {}. Continuing sync to new pivot.",
             previousPivot.getNumber(),
             updatedPivot.getNumber());
 
         // Update chain state to new pivot
-        chainState.updateAndGet(state -> state.continueToNewPivot(updatedPivot, previousPivot));
-        chainStateStorage.storeState(chainState.get());
+        chainSyncState.updateAndGet(state -> state.continueToNewPivot(updatedPivot, previousPivot));
+        chainSyncStateStorage.storeState(chainSyncState.get());
 
         return CompletableFuture.completedFuture(true); // Need to continue
       }
     }
 
-    LOG.info(
+    LOG.debug(
         "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
 
     // Wait for either a pivot update or world state heal to complete
@@ -488,7 +505,7 @@ public class SnapSyncChainDownloader
                 return true; // Need to continue with another cycle
               } else {
                 // World state heal finished
-                LOG.info(
+                LOG.debug(
                     "World state heal finished (current pivot number: {}). Chain download complete.",
                     previousPivot.getNumber());
                 return false; // All done
