@@ -44,7 +44,7 @@ public class BlobTransactionEncoder {
         .get()
         .forEach(
             vh -> {
-              out.writeBytes(vh.toBytes());
+              out.writeBytes(vh.getBytes());
             });
     out.endList();
     TransactionEncoder.writeSignatureAndRecoveryId(transaction, out);
@@ -53,6 +53,6 @@ public class BlobTransactionEncoder {
 
   public static void writeBlobVersionedHashes(
       final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
-    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
+    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.getBytes()));
   }
 }

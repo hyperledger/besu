@@ -1214,7 +1214,10 @@ public class Transaction
                 accessListEntries.stream().map(this::accessListDetachedCopy).toList());
     final Optional<List<VersionedHash>> detachedVersionedHashes =
         versionedHashes.map(
-            hashes -> hashes.stream().map(vh -> new VersionedHash(vh.toBytes().copy())).toList());
+            hashes ->
+                hashes.stream()
+                    .map(vh -> new VersionedHash(Bytes32.wrap(vh.getBytes().copy())))
+                    .toList());
     final Optional<BlobsWithCommitments> detachedBlobsWithCommitments =
         blobsWithCommitments.map(
             withCommitments ->
