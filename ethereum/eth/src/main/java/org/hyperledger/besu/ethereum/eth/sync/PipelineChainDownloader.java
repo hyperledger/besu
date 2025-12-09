@@ -106,7 +106,15 @@ public class PipelineChainDownloader implements ChainDownloader {
   private CompletableFuture<Void> selectSyncTargetAndDownload() {
     return syncTargetManager
         .findSyncTarget()
-        .thenCompose(this::startDownloadForSyncTarget)
+        .thenCompose(
+            (syncTarget) -> {
+              try {
+                return startDownloadForSyncTarget(syncTarget);
+              } catch (Exception e) {
+                LOG.warn("Exception while running download for sync target", e);
+                throw new RuntimeException(e);
+              }
+            })
         .thenRun(pipelineCompleteCounter::inc);
   }
 
