@@ -258,20 +258,20 @@ public class BonsaiWorldState extends PathBasedWorldState {
         final Hash slotHash = storageUpdate.getKey().getSlotHash();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         try {
-            if(!storageUpdate.getValue().isUnchanged()) {
-                if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-                    maybeStateUpdater.ifPresent(
-                            bonsaiUpdater ->
-                                    bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
-                    storageTrie.remove(slotHash);
-                } else {
-                    maybeStateUpdater.ifPresent(
-                            bonsaiUpdater ->
-                                    bonsaiUpdater.putStorageValueBySlotHash(
-                                            updatedAddressHash, slotHash, updatedStorage));
-                    storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
-                }
+          if (!storageUpdate.getValue().isUnchanged()) {
+            if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
+              storageTrie.remove(slotHash);
+            } else {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.putStorageValueBySlotHash(
+                          updatedAddressHash, slotHash, updatedStorage));
+              storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
             }
+          }
         } catch (MerkleTrieException e) {
           // need to throw to trigger the heal
           throw new MerkleTrieException(
