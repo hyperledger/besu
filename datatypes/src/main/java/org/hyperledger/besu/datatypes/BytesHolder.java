@@ -19,21 +19,52 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * A wrapper class that holds a {@link Bytes} value.
+ *
+ * <p>This class serves as a base holder for byte sequences, implementing {@link Comparable} to
+ * allow for ordered collections and comparisons. Subclasses can extend this to create specialized
+ * byte holders with domain-specific semantics.
+ */
 public class BytesHolder implements Comparable<BytesHolder> {
   private final Bytes value;
 
+  /**
+   * Constructs a BytesHolder with the given bytes value.
+   *
+   * @param value the bytes value to hold
+   */
   protected BytesHolder(final Bytes value) {
     this.value = value;
   }
 
+  /**
+   * Returns the underlying bytes value.
+   *
+   * @return the bytes value held by this instance
+   */
   public Bytes getBytes() {
     return value;
   }
 
+  /**
+   * Creates a default BytesHolder instance with the given bytes value.
+   *
+   * @param value the bytes value to hold
+   * @return a new BytesHolder instance
+   */
   public static BytesHolder createDefaultHolder(final Bytes value) {
     return new BytesHolder(value);
   }
 
+  /**
+   * Compares this BytesHolder to another object for equality.
+   *
+   * <p>Two BytesHolder instances are equal if they contain the same byte sequence.
+   *
+   * @param obj the object to compare with
+   * @return {@code true} if the objects are equal, {@code false} otherwise
+   */
   @Override
   public boolean equals(final Object obj) {
     if (obj == this) {
@@ -45,16 +76,36 @@ public class BytesHolder implements Comparable<BytesHolder> {
     return Arrays.equals(value.toArrayUnsafe(), other.value.toArrayUnsafe());
   }
 
+  /**
+   * Returns the hash code of this BytesHolder.
+   *
+   * @return the hash code based on the underlying bytes value
+   */
   @Override
   public int hashCode() {
     return value.hashCode();
   }
 
+  /**
+   * Returns a string representation of this BytesHolder.
+   *
+   * @return the string representation of the underlying bytes value
+   */
   @Override
   public String toString() {
     return value.toString();
   }
 
+  /**
+   * Compares this BytesHolder with another for ordering.
+   *
+   * <p>The comparison is performed lexicographically on the underlying byte sequences.
+   *
+   * @param bytesHolder the BytesHolder to compare with
+   * @return a negative integer, zero, or a positive integer as this BytesHolder is less than, equal
+   *     to, or greater than the specified BytesHolder
+   * @throws NullPointerException if bytesHolder is null
+   */
   @Override
   public int compareTo(final BytesHolder bytesHolder) {
     Objects.requireNonNull(bytesHolder, "bytesHolder cannot be null");
