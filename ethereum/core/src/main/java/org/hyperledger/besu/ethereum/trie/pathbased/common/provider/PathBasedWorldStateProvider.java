@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCached
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -60,7 +60,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
-  protected final WorldStateConfig worldStateConfig;
+  protected final WorldStateConfigImpl worldStateConfig;
 
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -85,7 +85,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateConfig = WorldStateConfig.newBuilder().build();
+    this.worldStateConfig = WorldStateConfigImpl.newBuilder().build();
     ;
   }
 
@@ -333,7 +333,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     }
   }
 
-  public WorldStateConfig getWorldStateSharedSpec() {
+  public WorldStateConfigImpl getWorldStateSharedSpec() {
     return worldStateConfig;
   }
 

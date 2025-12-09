@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCached
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -70,7 +70,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig,
+      final WorldStateConfigImpl worldStateConfig,
       final CodeCache codeCache) {
     this(
         worldStateKeyValueStorage,
@@ -88,7 +88,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
-      final WorldStateConfig worldStateConfig,
+      final WorldStateConfigImpl worldStateConfig,
       final CodeCache codeCache) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
