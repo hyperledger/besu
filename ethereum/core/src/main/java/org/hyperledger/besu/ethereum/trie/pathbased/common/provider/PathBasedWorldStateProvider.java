@@ -19,9 +19,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
-import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -30,11 +27,14 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
@@ -230,8 +230,13 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     return cachedWorldStorageManager
         .getWorldState(blockHeader.getBlockHash())
         .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-        .or(() -> cachedWorldStorageManager.getHeadWorldState(blockHeaderHash -> blockchain.getBlockHeader(blockHeaderHash).map((header) -> header)))
-        .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getBlockHash()))
+        .or(
+            () ->
+                cachedWorldStorageManager.getHeadWorldState(
+                    blockHeaderHash ->
+                        blockchain.getBlockHeader(blockHeaderHash).map((header) -> header)))
+        .flatMap(
+            worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getBlockHash()))
         .map(MutableWorldState::freezeStorage);
   }
 

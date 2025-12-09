@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +29,6 @@ import java.util.SortedMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
 public class WorldStateProofImpl implements WorldStateProof {
 
@@ -63,13 +63,13 @@ public class WorldStateProofImpl implements WorldStateProof {
     return accountProof.getProofRelatedNodes();
   }
 
-    @Override
-    public List<UInt256> getStorageKeys() {
+  @Override
+  public List<UInt256> getStorageKeys() {
     return new ArrayList<>(storageProofs.keySet());
   }
 
-    @Override
-    public UInt256 getStorageValue(final UInt256 key) {
+  @Override
+  public UInt256 getStorageValue(final UInt256 key) {
     Optional<Bytes> value = storageProofs.get(key).getValue();
     if (value.isEmpty()) {
       return UInt256.ZERO;

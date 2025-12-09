@@ -41,8 +41,8 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 import org.hyperledger.besu.evm.tracing.AccessListOperationTracer;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;

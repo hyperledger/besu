@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
 
-import jakarta.validation.constraints.NotNull;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -41,16 +42,16 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.StateRootCommitter;
 import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
 import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import jakarta.validation.constraints.NotNull;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class PathBasedWorldState extends BaseMutableWorldState
     implements PathBasedWorldView, StorageSubscriber {
@@ -225,9 +226,10 @@ public abstract class PathBasedWorldState extends BaseMutableWorldState
     try {
       final Hash calculatedRootHash =
           committer.computeRootAndCommit(this, stateUpdater, blockHeader, worldStateConfig);
-      final org.hyperledger.besu.ethereum.core.BlockHeader coreBlockHeader = blockHeader == null ?
-              null :
-              BlockHeaderBuilder.fromHeader(blockHeader).buildBlockHeader();
+      final org.hyperledger.besu.ethereum.core.BlockHeader coreBlockHeader =
+          blockHeader == null
+              ? null
+              : BlockHeaderBuilder.fromHeader(blockHeader).buildBlockHeader();
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
@@ -238,11 +240,15 @@ public abstract class PathBasedWorldState extends BaseMutableWorldState
               trieLogManager.saveTrieLog(accumulator, calculatedRootHash, coreBlockHeader, this);
             };
         cacheWorldState =
-            () -> cachedWorldStorageManager.addCachedLayer(coreBlockHeader, calculatedRootHash, this);
+            () ->
+                cachedWorldStorageManager.addCachedLayer(coreBlockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getBlockHash().toArrayUnsafe());
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_HASH_KEY,
+                blockHeader.getBlockHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getBlockHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
