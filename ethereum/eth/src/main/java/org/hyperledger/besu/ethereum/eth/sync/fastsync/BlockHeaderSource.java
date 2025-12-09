@@ -56,7 +56,7 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
     this.blockchain = blockchain;
     this.pivotBlockNumber = pivotBlockNumber;
     this.batchSize = batchSize;
-    this.currentBlock = new AtomicLong(startBlockNumber);
+    this.currentBlock = new AtomicLong(startBlockNumber + 1);
 
     LOG.debug(
         "BlockHeaderSource created: start={}, end={}, batchSize={}",
