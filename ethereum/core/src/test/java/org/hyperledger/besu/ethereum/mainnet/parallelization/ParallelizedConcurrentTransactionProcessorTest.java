@@ -55,6 +55,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +78,8 @@ class ParallelizedConcurrentTransactionProcessorTest {
   private BonsaiWorldState worldState;
 
   private ParallelizedConcurrentTransactionProcessor processor;
+
+  private final Executor sameThreadExecutor = Runnable::run;
 
   @BeforeEach
   void setUp() {
@@ -131,14 +134,14 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Optional.empty(),
                 ValidationResult.valid()));
 
-    processor.runTransaction(
+    processor.runAsyncBlock(
         protocolContext,
         blockHeader,
-        0,
-        transaction,
+        Collections.singletonList(transaction),
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
         blobGasPrice,
+        sameThreadExecutor,
         Optional.empty());
 
     verify(transactionProcessor, times(1))
@@ -178,14 +181,14 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Optional.empty(),
                 Optional.empty()));
 
-    processor.runTransaction(
+    processor.runAsyncBlock(
         protocolContext,
         blockHeader,
-        0,
-        transaction,
+        Collections.singletonList(transaction),
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
         blobGasPrice,
+        sameThreadExecutor,
         Optional.empty());
 
     Optional<TransactionProcessingResult> result =
@@ -212,14 +215,14 @@ class ParallelizedConcurrentTransactionProcessorTest {
                 Optional.empty(),
                 ValidationResult.valid()));
 
-    processor.runTransaction(
+    processor.runAsyncBlock(
         protocolContext,
         blockHeader,
-        0,
-        transaction,
+        Collections.singletonList(transaction),
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
         blobGasPrice,
+        sameThreadExecutor,
         Optional.empty());
 
     verify(transactionProcessor, times(1))
@@ -267,14 +270,14 @@ class ParallelizedConcurrentTransactionProcessorTest {
 
     BlockAccessListBuilder balBuilder = mock(BlockAccessListBuilder.class);
 
-    processor.runTransaction(
+    processor.runAsyncBlock(
         protocolContext,
         blockHeader,
-        0,
-        transaction,
+        Collections.singletonList(transaction),
         miningBeneficiary,
         (__, ___) -> Hash.EMPTY,
         blobGasPrice,
+        sameThreadExecutor,
         Optional.of(balBuilder));
 
     verify(transactionProcessor)
