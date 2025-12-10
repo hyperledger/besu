@@ -1,60 +1,78 @@
 {
+  "cli": [
+    "state-test",
+    "stdin",
+    "--trace",
+    "--trace.memory",
+    "--trace.stack",
+    "--trace.returndata",
+    "--trace.noeip-3155",
+    "--notime"
+  ],
+  "stdin": {
     "excessBlobGasTest": {
-        "_info": {
-            "comment": "Test that verifies BLOBBASEFEE opcode correctly uses currentExcessBlobGas from environment"
+      "_info": {
+        "comment": "Test that verifies BLOBBASEFEE opcode correctly uses currentExcessBlobGas from environment"
+      },
+      "env": {
+        "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+        "currentGasLimit": "0x05f5e100",
+        "currentNumber": "0x01",
+        "currentTimestamp": "0x03e8",
+        "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "currentDifficulty": "0x00",
+        "currentBaseFee": "0x0a",
+        "currentExcessBlobGas": "0x240000"
+      },
+      "pre": {
+        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+          "nonce": "0x00",
+          "balance": "0x3635c9adc5dea00000",
+          "code": "0x",
+          "storage": {}
         },
-        "env": {
-            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
-            "currentGasLimit": "0x05f5e100",
-            "currentNumber": "0x01",
-            "currentTimestamp": "0x03e8",
-            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "currentDifficulty": "0x00",
-            "currentBaseFee": "0x0a",
-            "currentExcessBlobGas": "0x240000"
-        },
-        "pre": {
-            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
-                "nonce": "0x00",
-                "balance": "0x3635c9adc5dea00000",
-                "code": "0x",
-                "storage": {}
-            },
-            "0x1000000000000000000000000000000000000000": {
-                "nonce": "0x00",
-                "balance": "0x00",
-                "code": "0x4a600055",
-                "storage": {}
-            }
-        },
-        "transaction": {
-            "nonce": "0x00",
-            "gasPrice": "0x0a",
-            "gasLimit": [
-                "0x030d40"
-            ],
-            "to": "0x1000000000000000000000000000000000000000",
-            "value": [
-                "0x00"
-            ],
-            "data": [
-                "0x"
-            ],
-            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
-        },
-        "post": {
-            "Cancun": [
-                {
-                    "hash": "0x4f0dafcdc942cf538ffe1f870ab031c2761857b3066f595e56c74bcb222eb0bb",
-                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "indexes": {
-                        "data": 0,
-                        "gas": 0,
-                        "value": 0
-                    }
-                }
-            ]
+        "0x1000000000000000000000000000000000000000": {
+          "nonce": "0x00",
+          "balance": "0x00",
+          "code": "0x4a600055",
+          "storage": {}
         }
+      },
+      "transaction": {
+        "nonce": "0x00",
+        "gasPrice": "0x0a",
+        "gasLimit": [
+          "0x030d40"
+        ],
+        "to": "0x1000000000000000000000000000000000000000",
+        "value": [
+          "0x00"
+        ],
+        "data": [
+          "0x"
+        ],
+        "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+      },
+      "post": {
+        "Cancun": [
+          {
+            "hash": "0x4f0dafcdc942cf538ffe1f870ab031c2761857b3066f595e56c74bcb222eb0bb",
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ]
+      }
     }
+  },
+  "stdout": [
+    {"pc":0,"op":"0x4a","gas":179000,"gasCost":2,"memSize":0,"stack":[],"depth":1,"refund":0,"opName":"BLOBBASEFEE"},
+    {"pc":1,"op":"0x60","gas":178998,"gasCost":3,"memSize":0,"stack":["0x2"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":3,"op":"0x55","gas":178995,"gasCost":22100,"memSize":0,"stack":["0x2","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"output":"","gasUsed":43105,"test":"excessBlobGasTest","fork":"Cancun","d":0,"g":0,"v":0,"stateRoot":"0x4f0dafcdc942cf538ffe1f870ab031c2761857b3066f595e56c74bcb222eb0bb","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+  ]
 }

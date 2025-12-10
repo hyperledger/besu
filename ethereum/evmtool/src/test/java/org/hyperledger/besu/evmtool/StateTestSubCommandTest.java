@@ -166,7 +166,7 @@ class StateTestSubCommandTest {
     final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
     cmd.parseArgs(
-        StateTestSubCommandTest.class.getResource("state-test/excess-blob-gas.json").getPath());
+        StateTestSubCommandTest.class.getResource("excess-blob-gas.json").getPath());
     stateTestSubCommand.run();
 
     final String output = baos.toString(UTF_8);
