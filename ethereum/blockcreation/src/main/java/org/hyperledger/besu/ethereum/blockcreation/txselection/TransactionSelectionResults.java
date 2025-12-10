@@ -37,15 +37,16 @@ public class TransactionSelectionResults {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionSelectionResults.class);
 
   private final List<Transaction> selectedTransactions = Lists.newArrayList();
-  private final Map<TransactionType, List<Transaction>> transactionsByType = new EnumMap<>(TransactionType.class);
+  private final Map<TransactionType, List<Transaction>> transactionsByType =
+      new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
 
   /**
-   * Access to this field needs to be guarded, since it is possible to read it
-   * while another
+   * Access to this field needs to be guarded, since it is possible to read it while another
    * processing thread is writing, when the selection time is over.
    */
-  private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions = new ConcurrentHashMap<>();
+  private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions =
+      new ConcurrentHashMap<>();
 
   private long cumulativeGasUsed = 0;
   private long highScoreSelectionTime = 0;
@@ -102,8 +103,9 @@ public class TransactionSelectionResults {
   public void logSelectionStats() {
     if (LOG.isDebugEnabled()) {
       final var notSelectedTxs = getNotSelectedTransactions();
-      final Map<TransactionSelectionResult, Long> notSelectedStats = notSelectedTxs.values().stream()
-          .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+      final Map<TransactionSelectionResult, Long> notSelectedStats =
+          notSelectedTxs.values().stream()
+              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
       LOG.debug(
           "Selection stats: Totals[Evaluated={}, Selected={}, NotSelected={}, Discarded={}]; Detailed[{}]",
