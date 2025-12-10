@@ -121,6 +121,16 @@ public abstract class MiningConfiguration {
     return this;
   }
 
+  /**
+   * Returns the maximum blobs per transaction for block building. Note: Only applies from Osaka
+   * hardfork onwards.
+   *
+   * @return the maximum blobs per transaction
+   */
+  public int getMaxBlobsPerTransaction() {
+    return getMutableInitValues().getMaxBlobsPerTransaction();
+  }
+
   public Optional<Iterable<Long>> getNonceGenerator() {
     return getMutableRuntimeValues().nonceGenerator;
   }
@@ -223,6 +233,12 @@ public abstract class MiningConfiguration {
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
     double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
+    /**
+     * Maximum blobs per transaction during block building. Note: This setting only applies from
+     * Osaka hardfork onwards. Pre-Osaka forks use the block blob limit as the transaction limit.
+     */
+    int DEFAULT_MAX_BLOBS_PER_TRANSACTION = 6;
+
     MutableInitValues DEFAULT = ImmutableMiningConfiguration.MutableInitValues.builder().build();
 
     @Value.Default
@@ -248,6 +264,15 @@ public abstract class MiningConfiguration {
     @Value.Default
     default double getMinBlockOccupancyRatio() {
       return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+    }
+
+    /**
+     * Returns the maximum blobs per transaction for block building. Note: Only applies from Osaka
+     * hardfork onwards.
+     */
+    @Value.Default
+    default int getMaxBlobsPerTransaction() {
+      return DEFAULT_MAX_BLOBS_PER_TRANSACTION;
     }
 
     OptionalInt getBlockPeriodSeconds();

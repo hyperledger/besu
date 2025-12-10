@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -58,16 +56,28 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
+      final int maxBlobsPerTransaction) {
+    this(
+        londonForkBlock,
+        feeMarket,
+        gasCalculator,
+        maxBlobsPerBlock,
+        targetBlobsPerBlock,
+        maxBlobsPerTransaction,
+        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+  }
+
+  public OsakaTargetingGasLimitCalculator(
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final int maxBlobsPerBlock,
+      final int targetBlobsPerBlock,
       final int maxBlobsPerTransaction,
       final long transactionGasLimitCap) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
     this.transactionGasLimitCap = transactionGasLimitCap;
     this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
-    checkArgument(
-        maxBlobsPerBlock >= maxBlobsPerTransaction,
-        "maxBlobsPerTransaction (%s) must not be greater than maxBlobsPerBlock (%s)",
-        maxBlobsPerTransaction,
-        maxBlobsPerBlock);
   }
 
   @Override

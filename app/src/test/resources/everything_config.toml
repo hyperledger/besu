@@ -166,6 +166,7 @@ block-txs-selection-max-time=5000
 poa-block-txs-selection-max-time=75
 plugin-block-txs-selection-max-time=50
 Xpos-block-creation-max-time=5
+max-blobs=0
 
 # Permissioning
 permissions-nodes-config-file-enabled=false

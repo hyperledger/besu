@@ -16,6 +16,8 @@ package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
+
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -52,6 +54,44 @@ public class BlobScheduleOptionsTest {
     assertThat(BlobSchedule.CANCUN_DEFAULT.getMax()).isEqualTo(6);
     assertThat(BlobSchedule.PRAGUE_DEFAULT.getTarget()).isEqualTo(6);
     assertThat(BlobSchedule.PRAGUE_DEFAULT.getMax()).isEqualTo(9);
+  }
+
+  @Test
+  public void getBlobScheduleByHardforkId() {
+    // Cancun and Cancun_EOF should return Cancun schedule
+    assertBlobScheduleMatches(
+        options.getBlobSchedule(MainnetHardforkId.CANCUN), options.getCancun());
+    assertBlobScheduleMatches(
+        options.getBlobSchedule(MainnetHardforkId.CANCUN_EOF), options.getCancun());
+
+    // Prague and Osaka should return Prague schedule
+    assertBlobScheduleMatches(
+        options.getBlobSchedule(MainnetHardforkId.PRAGUE), options.getPrague());
+    assertBlobScheduleMatches(
+        options.getBlobSchedule(MainnetHardforkId.OSAKA), options.getPrague());
+
+    // BPO forks should return their own schedules
+    assertBlobScheduleMatches(options.getBlobSchedule(MainnetHardforkId.BPO1), options.getBpo1());
+    assertBlobScheduleMatches(options.getBlobSchedule(MainnetHardforkId.BPO2), options.getBpo2());
+    assertBlobScheduleMatches(options.getBlobSchedule(MainnetHardforkId.BPO3), options.getBpo3());
+    assertBlobScheduleMatches(options.getBlobSchedule(MainnetHardforkId.BPO4), options.getBpo4());
+    assertBlobScheduleMatches(options.getBlobSchedule(MainnetHardforkId.BPO5), options.getBpo5());
+
+    // Forks without blob schedules should return empty
+    assertThat(options.getBlobSchedule(MainnetHardforkId.LONDON)).isEmpty();
+    assertThat(options.getBlobSchedule(MainnetHardforkId.SHANGHAI)).isEmpty();
+    assertThat(options.getBlobSchedule(MainnetHardforkId.AMSTERDAM)).isEmpty();
+  }
+
+  private void assertBlobScheduleMatches(
+      final Optional<BlobSchedule> actual, final Optional<BlobSchedule> expected) {
+    assertThat(actual.isPresent()).isEqualTo(expected.isPresent());
+    if (actual.isPresent()) {
+      assertThat(actual.get().getTarget()).isEqualTo(expected.get().getTarget());
+      assertThat(actual.get().getMax()).isEqualTo(expected.get().getMax());
+      assertThat(actual.get().getBaseFeeUpdateFraction())
+          .isEqualTo(expected.get().getBaseFeeUpdateFraction());
+    }
   }
 
   private void assertParsed(

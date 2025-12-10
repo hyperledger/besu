@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -113,6 +115,27 @@ public class BlobScheduleOptions {
    */
   public Optional<BlobSchedule> getBlobSchedule(final String key) {
     return JsonUtil.getObjectNode(blobScheduleOptionsConfigRoot, key).map(BlobSchedule::create);
+  }
+
+  /**
+   * Gets the blob schedule for a specific hardfork. Note that some hardforks share blob schedules
+   * (e.g., Osaka uses Prague's blob schedule).
+   *
+   * @param hardforkId the hardfork to get the blob schedule for
+   * @return the blob schedule for the hardfork, or empty if the hardfork doesn't have a blob
+   *     schedule
+   */
+  public Optional<BlobSchedule> getBlobSchedule(final MainnetHardforkId hardforkId) {
+    return switch (hardforkId) {
+      case CANCUN, CANCUN_EOF -> getCancun();
+      case PRAGUE, OSAKA -> getPrague();
+      case BPO1 -> getBpo1();
+      case BPO2 -> getBpo2();
+      case BPO3 -> getBpo3();
+      case BPO4 -> getBpo4();
+      case BPO5 -> getBpo5();
+      default -> Optional.empty();
+    };
   }
 
   /**
