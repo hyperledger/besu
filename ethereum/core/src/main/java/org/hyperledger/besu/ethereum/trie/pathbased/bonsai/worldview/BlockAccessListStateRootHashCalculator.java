@@ -26,7 +26,11 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.C
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.List;
@@ -35,31 +39,38 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+@SuppressWarnings("rawtypes")
 public class BlockAccessListStateRootHashCalculator {
 
   private BlockAccessListStateRootHashCalculator() {}
 
   private static BonsaiWorldState prepareWorldState(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
-    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-    if (!chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      throw new IllegalStateException("Chain head is not the parent of the processed block");
+    final Hash parentHash = blockHeader.getParentHash();
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(parentHash);
+    if (maybeParentHeader.isEmpty()) {
+      throw new IllegalStateException(
+          String.format("Parent %s of block %s not found", parentHash, blockHeader.getHash()));
     }
     final BonsaiWorldState ws =
         (BonsaiWorldState)
             protocolContext
                 .getWorldStateArchive()
                 .getWorldState(
-                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
+                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(
+                        maybeParentHeader.get()))
                 .orElseThrow();
     ws.disableCacheMerkleTrieLoader();
     return ws;
   }
 
-  private static Hash accumulateAccessListAndComputeRoot(
-      final BonsaiWorldState worldState, final BlockAccessList blockAccessList) {
-    final BonsaiWorldStateUpdateAccumulator accumulator =
-        (BonsaiWorldStateUpdateAccumulator) worldState.getAccumulator();
+  private static BalRootComputation accumulateAccessListAndComputeRoot(
+      final PathBasedWorldState worldState, final BlockAccessList blockAccessList) {
+
+    final PathBasedWorldStateUpdateAccumulator accumulator = worldState.getAccumulator();
+    PathBasedWorldStateKeyValueStorage.Updater worldStateKeyValueStorageUpdater =
+        worldState.getWorldStateStorage().updater();
 
     for (AccountChanges accountChanges : blockAccessList.accountChanges()) {
       final Address address = accountChanges.address();
@@ -112,10 +123,13 @@ public class BlockAccessListStateRootHashCalculator {
 
     accumulator.clearAccountsThatAreEmpty();
     accumulator.commit();
-    return worldState.calculateRootHash(Optional.empty(), accumulator);
+    final Hash root =
+        worldState.calculateRootHash(Optional.of(worldStateKeyValueStorageUpdater), accumulator);
+    worldStateKeyValueStorageUpdater.commit();
+    return new BalRootComputation(root, accumulator);
   }
 
-  public static CompletableFuture<Hash> computeStateRootFromBlockAccessListAsync(
+  public static CompletableFuture<BalRootComputation> computeAsync(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final BlockAccessList bal) {

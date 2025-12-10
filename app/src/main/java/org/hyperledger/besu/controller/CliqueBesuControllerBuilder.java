@@ -136,7 +136,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
+        balConfiguration,
         metricsSystem);
   }
 
@@ -172,8 +172,17 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
-    // Clique mines by default, reflect that with in the mining parameters:
-    return fromCli.setMiningEnabled(true);
+  public void overrideMiningConfiguration(final MiningConfiguration fromCli) {
+    // Clique ignores CLI mining options and enforces its own requirements:
+    // - Mining is always enabled (actual block production depends on validator status)
+    // - Coinbase is always the local validator address (not user-configurable)
+    // All other CLI configuration values are preserved
+    fromCli.setMiningEnabled(true);
+
+    final Address localValidatorAddress =
+        nodeKey != null ? Util.publicKeyToAddress(nodeKey.getPublicKey()) : null;
+    if (localValidatorAddress != null) {
+      fromCli.setCoinbase(localValidatorAddress);
+    }
   }
 }

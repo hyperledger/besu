@@ -14,13 +14,20 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.datatypes.p2p.MessageData;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.data.p2p.Peer;
 import org.hyperledger.besu.plugin.data.p2p.PeerConnection;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
 
 import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Default implementation of the {@link P2PService} interface, providing methods to manage P2P
@@ -29,14 +36,17 @@ import java.util.Collection;
 public class P2PServiceImpl implements P2PService {
 
   private final P2PNetwork p2PNetwork;
+  private final EthPeers ethPeers;
 
   /**
    * Creates a new P2PServiceImpl.
    *
    * @param p2PNetwork the P2P network
+   * @param ethPeers the Ethereum peers manager
    */
-  public P2PServiceImpl(final P2PNetwork p2PNetwork) {
+  public P2PServiceImpl(final P2PNetwork p2PNetwork, final EthPeers ethPeers) {
     this.p2PNetwork = p2PNetwork;
+    this.ethPeers = ethPeers;
   }
 
   /** Enables P2P discovery. */
@@ -119,5 +129,34 @@ public class P2PServiceImpl implements P2PService {
       final MessageListener networkSubscriber) {
     final Capability wireCap = Capability.create(capability.getName(), capability.getVersion());
     p2PNetwork.subscribe(wireCap, networkSubscriber::onMessage);
+  }
+
+  /**
+   * Send a message to a specific peer.
+   *
+   * @param protocol the protocol to use
+   * @param peerId the peer id to send the message to
+   * @param messageData the message data to send
+   * @throws PeerConnection.PeerNotConnected if the peer is not connected
+   */
+  @Override
+  public void send(final String protocol, final Bytes peerId, final MessageData messageData)
+      throws PeerConnection.PeerNotConnected {
+    ethPeers
+        .getPeerByPeerId(new DefaultPeerId(peerId))
+        .orElseThrow(() -> new PeerConnection.PeerNotConnected("Peer not connected"))
+        .send(new RawMessage(messageData.getCode(), messageData.getData()), protocol);
+  }
+
+  /**
+   * Disconnect from a specific peer.
+   *
+   * @param peerId the peer id to disconnect from
+   */
+  @Override
+  public void disconnect(final Bytes peerId) {
+    ethPeers
+        .getPeerByPeerId(new DefaultPeerId(peerId))
+        .ifPresent(peer -> peer.disconnect(DisconnectMessage.DisconnectReason.REQUESTED));
   }
 }

@@ -5,6 +5,64 @@
 ### Breaking Changes
 
 ### Upcoming Breaking Changes
+- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - ETC (Ethereum Classic) network support
+    - Proof of Work consensus (PoW)
+    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+    - Fast Sync
+  
+### Additions and Improvements
+
+##  25.12.0-RC1
+
+### Breaking Changes
+- Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)
+  - Remove`--Xbonsai-parallel-tx-processing-enabled` deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
+  - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
+  - Remove `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
+  - Remove `--Xhistory-expiry-prune` deprecated since 25.7.0. Use `--history-expiry-prune` instead.
+- RPC changes to enhance compatibility with other ELs
+  - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
+  - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
+  - Return null result if block not found for `debug_accountAt`, `debug_setHead`, `eth_call`, `eth_getBlockReceipts`, `eth_getProof`, `eth_simulateV1`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount` [#9303](https://github.com/hyperledger/besu/pull/9303)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481), `eth_coinbase` [#9487](https://github.com/hyperledger/besu/pull/9487)
+- Remove PoW CLI options: `--miner-enabled`, `--miner-coinbase` [#9486](https://github.com/hyperledger/besu/pull/9486)
+
+### Upcoming Breaking Changes
+- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - ETC (Ethereum Classic) network support
+  - Proof of Work consensus (PoW)
+  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+  - Fast Sync
+
+### Additions and Improvements
+- Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
+- Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
+- Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
+- Performance: 5-6x faster toFastHex calculation for engine_getBlobsV2 [#9426](https://github.com/hyperledger/besu/pull/9426)
+- Performance: Optimise `engine_getPayload*` methods and `engine_getBlobsV2` [#9445](https://github.com/hyperledger/besu/pull/9445)
+- Add Linea named networks for `linea_mainnet` and `linea_sepolia` [#9436](https://github.com/hyperledger/besu/pull/9436), [#9518](https://github.com/hyperledger/besu/pull/9518)
+- Add `eth_subscribe` and `eth_unsubscribe` support to IPC service [#9504](https://github.com/hyperledger/besu/pull/9504)
+- Add experimental `callTracer` tracer option to `debug_trace*` methods. Enabled using `--Xenable-extra-debug-tracers=true` option. Issue [#8326][issue_8326] implemented via PR [#8960][PR_8960] and [#9072][PR_9072].
+
+### Bug fixes
+- Fix non-deterministic sub-protocol registration during IBFT2 to QBFT consensus migration [#9516](https://github.com/hyperledger/besu/pull/9516)
+- Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
+- Fix an issue where Besu does not support `0x80` as transaction type when decoding eth/69 receipts [#9520](https://github.com/hyperledger/besu/issues/9520)
+
+[issue_8326]: https://github.com/hyperledger/besu/issues/8326
+[PR_9072]: https://github.com/hyperledger/besu/pull/9072
+[PR_8960]: https://github.com/hyperledger/besu/pull/8960
+
+## 25.11.0
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
 - Deprecated CLI options
   - `--Xbonsai-parallel-tx-processing-enabled` is deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
   - `--Xsnapsync-server-enabled` is deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
@@ -15,6 +73,7 @@
   - Fast Sync
 
 ### Additions and Improvements
+- Add Osaka, BPO1 and BPO2 fork times for mainnet [#9380](https://github.com/hyperledger/besu/pull/9380)
 - Add blockTimestamp to receipt logs for `eth_getBlockReceipts` and `eth_getTransactionReceipt` results [#9294](https://github.com/hyperledger/besu/pull/9294)
 - Upgrade to execution-spec-tests v5.3.0 [#9301](https://github.com/hyperledger/besu/pull/9301)
 - Update to netty 4.2.7.Final [#9330](https://github.com/hyperledger/besu/pull/9330)

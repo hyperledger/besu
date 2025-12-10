@@ -85,6 +85,27 @@ public class ProposalValidator {
    * @return the boolean
    */
   public boolean validate(final Proposal msg) {
+    return validate(msg, true);
+  }
+
+  /**
+   * Validate without block validation.
+   *
+   * @param msg the Proposal msg
+   * @return the boolean
+   */
+  public boolean validateWithoutBlockValidation(final Proposal msg) {
+    return validate(msg, false);
+  }
+
+  /**
+   * Validate with optional block validation.
+   *
+   * @param msg the Proposal msg
+   * @param validateBlock whether to validate the block
+   * @return the boolean
+   */
+  private boolean validate(final Proposal msg, final boolean validateBlock) {
     final QbftBlockValidator blockValidator =
         protocolSchedule.getBlockValidator(msg.getBlock().getHeader());
 
@@ -92,7 +113,12 @@ public class ProposalValidator {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator);
 
-    if (!payloadValidator.validate(msg.getSignedPayload())) {
+    final boolean payloadValid =
+        validateBlock
+            ? payloadValidator.validate(msg.getSignedPayload())
+            : payloadValidator.validateWithoutBlockValidation(msg.getSignedPayload());
+
+    if (!payloadValid) {
       LOG.info("{}: invalid proposal payload in proposal message", ERROR_PREFIX);
       return false;
     }

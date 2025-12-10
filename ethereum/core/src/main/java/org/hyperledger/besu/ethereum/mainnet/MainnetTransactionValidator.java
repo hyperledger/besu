@@ -120,7 +120,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
           blobsValidator.validate(transaction);
       if (!blobTransactionResult.isValid()) {
-        LOG.info(
+        LOG.debug(
             "Blob transaction {} validation failed: {}",
             transaction.getHash().toHexString(),
             blobTransactionResult.getErrorMessage());
@@ -298,7 +298,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     final Wei upfrontCost =
         transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
-    if (upfrontCost.compareTo(senderBalance) > 0) {
+    if (!validationParams.allowUnderpriced() && upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(

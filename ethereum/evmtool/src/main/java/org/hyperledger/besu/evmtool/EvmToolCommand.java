@@ -18,8 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -54,6 +54,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -254,7 +255,7 @@ public class EvmToolCommand implements Runnable {
   @Option(
       names = {"--chain"},
       description = "Name of a well known network that will be used for this invocation.")
-  private final NetworkName network = null;
+  private final NetworkDefinition network = null;
 
   @Option(
       names = {"--repeat"},
@@ -471,6 +472,7 @@ public class EvmToolCommand implements Runnable {
                         .traceStack(!hideStack)
                         .traceReturnData(showReturnData)
                         .traceStorage(showStorage)
+                        .traceOpcodes(Collections.emptySet())
                         .eip3155Strict(eip3155strict)
                         .build())
                 : OperationTracer.NO_TRACING;

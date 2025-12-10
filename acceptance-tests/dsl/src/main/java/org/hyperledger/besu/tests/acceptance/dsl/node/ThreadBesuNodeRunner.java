@@ -28,9 +28,9 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -534,7 +534,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .synchronizerConfiguration(synchronizerConfiguration)
           .metricsSystem((ObservableMetricsSystem) metricsSystem)
           .dataStorageConfiguration(dataStorageConfiguration)
-          .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+          .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
           .clock(Clock.systemUTC())
           .storageProvider(storageProvider)
           .evmConfiguration(EvmConfiguration.DEFAULT)
@@ -575,7 +575,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     public EthNetworkConfig.Builder provideEthNetworkConfigBuilder() {
       final EthNetworkConfig.Builder networkConfigBuilder =
-          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkName.DEV));
+          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkDefinition.DEV));
       return networkConfigBuilder;
     }
 
