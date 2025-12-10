@@ -176,7 +176,7 @@ public class SnapSyncChainDownloader
   @Override
   public void onPivotUpdated(final BlockHeader newPivotBlockHeader) {
     pendingPivotUpdate.getAndSet(newPivotBlockHeader);
-    LOG.info("Received pivot update from block no {}", newPivotBlockHeader.getNumber());
+    LOG.info("Received pivot update to block no {}", newPivotBlockHeader.getNumber());
     pivotUpdateFuture.complete(null);
   }
 
