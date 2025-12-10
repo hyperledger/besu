@@ -46,7 +46,6 @@ import org.hyperledger.besu.evm.operation.CallCodeOperation;
 import org.hyperledger.besu.evm.operation.CallDataCopyOperation;
 import org.hyperledger.besu.evm.operation.CallDataLoadOperation;
 import org.hyperledger.besu.evm.operation.CallDataSizeOperation;
-import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.CallOperation;
 import org.hyperledger.besu.evm.operation.CallValueOperation;
 import org.hyperledger.besu.evm.operation.CallerOperation;
@@ -57,25 +56,15 @@ import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
-import org.hyperledger.besu.evm.operation.DataCopyOperation;
-import org.hyperledger.besu.evm.operation.DataLoadNOperation;
-import org.hyperledger.besu.evm.operation.DataLoadOperation;
-import org.hyperledger.besu.evm.operation.DataSizeOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
-import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
-import org.hyperledger.besu.evm.operation.EOFCreateOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
-import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
-import org.hyperledger.besu.evm.operation.ExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
-import org.hyperledger.besu.evm.operation.ExtDelegateCallOperation;
-import org.hyperledger.besu.evm.operation.ExtStaticCallOperation;
 import org.hyperledger.besu.evm.operation.GasLimitOperation;
 import org.hyperledger.besu.evm.operation.GasOperation;
 import org.hyperledger.besu.evm.operation.GasPriceOperation;
@@ -83,7 +72,6 @@ import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
-import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
@@ -112,13 +100,7 @@ import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
-import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
-import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
-import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
-import org.hyperledger.besu.evm.operation.RetFOperation;
-import org.hyperledger.besu.evm.operation.ReturnContractOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
-import org.hyperledger.besu.evm.operation.ReturnDataLoadOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
@@ -138,7 +120,6 @@ import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
-import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
@@ -941,79 +922,6 @@ public class MainnetEVMs {
   }
 
   /**
-   * CancunEOF evm.
-   *
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM cancunEOF(final EvmConfiguration evmConfiguration) {
-    return cancunEOF(DEV_NET_CHAIN_ID, evmConfiguration);
-  }
-
-  /**
-   * CancunEOF evm.
-   *
-   * @param chainId the chain id
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM cancunEOF(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return cancunEOF(new CancunGasCalculator(), chainId, evmConfiguration);
-  }
-
-  /**
-   * CancunEOF evm.
-   *
-   * @param gasCalculator the gas calculator
-   * @param chainId the chain id
-   * @param evmConfiguration the evm configuration
-   * @return the evm
-   */
-  public static EVM cancunEOF(
-      final GasCalculator gasCalculator,
-      final BigInteger chainId,
-      final EvmConfiguration evmConfiguration) {
-    return new EVM(
-        cancunEOFOperations(gasCalculator, chainId, evmConfiguration),
-        gasCalculator,
-        evmConfiguration,
-        EvmSpecVersion.CANCUN_EOF);
-  }
-
-  /**
-   * Operation registry for PragueEOF's operations.
-   *
-   * @param gasCalculator the gas calculator
-   * @param chainId the chain id
-   * @return the operation registry
-   */
-  private static OperationRegistry cancunEOFOperations(
-      final GasCalculator gasCalculator,
-      final BigInteger chainId,
-      final EvmConfiguration evmConfiguration) {
-    OperationRegistry operationRegistry = new OperationRegistry();
-    registerCancunEOFOperations(operationRegistry, gasCalculator, chainId, evmConfiguration);
-    return operationRegistry;
-  }
-
-  /**
-   * Register CancunEOF's operations.
-   *
-   * @param registry the registry
-   * @param gasCalculator the gas calculator
-   * @param chainID the chain id
-   */
-  private static void registerCancunEOFOperations(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final BigInteger chainID,
-      final EvmConfiguration evmConfiguration) {
-    registerCancunOperations(registry, gasCalculator, chainID, evmConfiguration);
-
-    registerEOFOperations(registry, gasCalculator);
-  }
-
-  /**
    * Prague evm.
    *
    * @param evmConfiguration the evm configuration
@@ -1146,47 +1054,6 @@ public class MainnetEVMs {
 
     // EIP-7939: CLZ opcode
     registry.put(new CountLeadingZerosOperation(gasCalculator));
-  }
-
-  private static void registerEOFOperations(
-      final OperationRegistry registry, final GasCalculator gasCalculator) {
-    // EIP-663 Unlimited Swap and Dup
-    registry.put(new DupNOperation(gasCalculator));
-    registry.put(new SwapNOperation(gasCalculator));
-    registry.put(new ExchangeOperation(gasCalculator));
-
-    // EIP-3540 EOF Aware EXTCODE* operations
-    registry.put(new ExtCodeCopyOperation(gasCalculator, true));
-    registry.put(new ExtCodeHashOperation(gasCalculator, true));
-    registry.put(new ExtCodeSizeOperation(gasCalculator, true));
-
-    // EIP-4200 relative jump
-    registry.put(new RelativeJumpOperation(gasCalculator));
-    registry.put(new RelativeJumpIfOperation(gasCalculator));
-    registry.put(new RelativeJumpVectorOperation(gasCalculator));
-
-    // EIP-4750 EOF Code Sections
-    registry.put(new CallFOperation(gasCalculator));
-    registry.put(new RetFOperation(gasCalculator));
-
-    // EIP-6209 JUMPF Instruction
-    registry.put(new JumpFOperation(gasCalculator));
-
-    // EIP-7069 Revamped EOF Call
-    registry.put(new ExtCallOperation(gasCalculator));
-    registry.put(new ExtDelegateCallOperation(gasCalculator));
-    registry.put(new ExtStaticCallOperation(gasCalculator));
-    registry.put(new ReturnDataLoadOperation(gasCalculator));
-
-    // EIP-7480 EOF Data Section Access
-    registry.put(new DataLoadOperation(gasCalculator));
-    registry.put(new DataLoadNOperation(gasCalculator));
-    registry.put(new DataSizeOperation(gasCalculator));
-    registry.put(new DataCopyOperation(gasCalculator));
-
-    // EIP-7620 EOF Create and Return Contract operation
-    registry.put(new EOFCreateOperation(gasCalculator));
-    registry.put(new ReturnContractOperation(gasCalculator));
   }
 
   /**
@@ -1526,8 +1393,6 @@ public class MainnetEVMs {
       final EvmConfiguration evmConfiguration) {
     OperationRegistry operationRegistry = new OperationRegistry();
     registerFutureEipsOperations(operationRegistry, gasCalculator, chainId, evmConfiguration);
-
-    registerEOFOperations(operationRegistry, gasCalculator);
     return operationRegistry;
   }
 

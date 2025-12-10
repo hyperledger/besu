@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -174,7 +173,7 @@ public class SystemCallProcessor {
 
   private Code getCode(final Account contract, final AbstractMessageProcessor processor) {
     if (contract == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     // Bonsai accounts may have a fully cached code, so we use that one

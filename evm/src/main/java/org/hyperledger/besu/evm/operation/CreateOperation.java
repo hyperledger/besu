@@ -38,7 +38,7 @@ public class CreateOperation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public CreateOperation(final GasCalculator gasCalculator) {
-    super(0xF0, "CREATE", 3, 1, gasCalculator, 0);
+    super(0xF0, "CREATE", 3, 1, gasCalculator);
   }
 
   @Override

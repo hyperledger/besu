@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -29,6 +28,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
+
+  /** EOF prefix byte (0xEF). */
+  private static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
 
   static final Bytes EOF_SIZE = Bytes.of(2);
 
@@ -86,7 +88,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
           final Bytes code = account.getCode();
           if (enableEIP3540
               && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+              && code.get(0) == EOF_PREFIX_BYTE
               && code.get(1) == 0) {
             codeSize = EOF_SIZE;
           } else {

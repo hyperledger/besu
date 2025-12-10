@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -129,7 +128,6 @@ public class EVM {
 
     codeFactory =
         new CodeFactory(
-            evmSpecVersion.maxEofVersion,
             evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
@@ -143,15 +141,6 @@ public class EVM {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
-  }
-
-  /**
-   * Gets max eof version.
-   *
-   * @return the max eof version
-   */
-  public int getMaxEOFVersion() {
-    return evmSpecVersion.maxEofVersion;
   }
 
   /**
@@ -443,15 +432,5 @@ public class EVM {
    */
   public Code wrapCodeForCreation(final Bytes codeBytes) {
     return codeFactory.createCode(codeBytes, true);
-  }
-
-  /**
-   * Parse the EOF Layout of a byte-stream. No Code or stack validation is performed.
-   *
-   * @param bytes the bytes to parse
-   * @return an EOF layout represented by they byte-stream.
-   */
-  public EOFLayout parseEOF(final Bytes bytes) {
-    return EOFLayout.parseEOF(bytes, true);
   }
 }

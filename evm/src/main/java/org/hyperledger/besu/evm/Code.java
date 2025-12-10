@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,149 +15,167 @@
 package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.code.CodeSection;
+import org.hyperledger.besu.evm.code.OpcodeInfo;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
-import java.util.Optional;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
+import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents EVM code associated with an account. */
-public interface Code {
+public class Code {
+
+  /** The constant EMPTY_CODE. */
+  public static final Code EMPTY_CODE = new Code(Bytes.EMPTY);
+
+  /** The bytes representing the code. */
+  private final Bytes bytes;
+
+  /** The hash of the code, needed for accessing metadata about the bytecode */
+  private Hash codeHash;
+
+  private Integer size;
+
+  /** Bit mask for jump destinations, used to optimize JUMP/JUMPI operations */
+  private long[] jumpDestBitMask = null;
 
   /**
-   * Size of the code in bytes. This is for the whole container, not just the code section in
-   * formats that have sections.
+   * Public constructor.
    *
-   * @return size of code in bytes.
+   * @param byteCode The byte representation of the code.
    */
-  int getSize();
+  public Code(final Bytes byteCode) {
+    this(byteCode, byteCode.isEmpty() ? Hash.EMPTY : null);
+  }
 
   /**
-   * Size of the data in bytes. This is for the data only,
+   * Public constructor.
    *
-   * @return size of code in bytes.
+   * @param byteCode The byte representation of the code.
+   * @param codeHash the hash of the bytecode
    */
-  int getDataSize();
+  public Code(final Bytes byteCode, final Hash codeHash) {
+    this.bytes = byteCode;
+    this.codeHash = codeHash;
+  }
 
   /**
-   * Declared size of the data in bytes. For containers with aux data this may be larger.
+   * Returns true if the object is equal to this; otherwise false.
    *
-   * @return the declared data size
+   * @param other The object to compare this with.
+   * @return True if the object is equal to this, otherwise false.
    */
-  int getDeclaredDataSize();
+  @Override
+  public boolean equals(final Object other) {
+    if (other == null) return false;
+    if (other == this) return true;
+    if (!(other instanceof Code that)) return false;
+
+    return this.getCodeHash().equals(that.getCodeHash());
+  }
+
+  @Override
+  public int hashCode() {
+    return bytes.hashCode();
+  }
 
   /**
-   * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
-   * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
+   * Size of the Code, in bytes
    *
-   * @return container bytes.
+   * @return The number of bytes in the code.
    */
-  Bytes getBytes();
+  public int getSize() {
+    if (size == null) {
+      size = bytes.size();
+    }
+
+    return size;
+  }
 
   /**
-   * Hash of the entire container
+   * Get the bytes for the code.
+   *
+   * @return code bytes.
+   */
+  public Bytes getBytes() {
+    return bytes;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("bytes", bytes).toString();
+  }
+
+  /**
+   * Hash of the code
    *
    * @return hash of the code.
    */
-  Hash getCodeHash();
+  public Hash getCodeHash() {
+    if (codeHash != null) {
+      return codeHash;
+    }
+
+    codeHash = Hash.hash(bytes);
+    return codeHash;
+  }
 
   /**
-   * For V0 and V1, is the target jump location valid?
+   * Is the target jump location valid?
    *
-   * @param jumpDestination index from PC=0. Code section for v1, whole container in V0
+   * @param jumpDestination index from PC=0.
    * @return true if the operation is both a valid opcode and a JUMPDEST
    */
-  boolean isJumpDestInvalid(final int jumpDestination);
+  public boolean isJumpDestInvalid(final int jumpDestination) {
+    if (jumpDestination < 0 || jumpDestination >= getSize()) {
+      return true;
+    }
+
+    if (jumpDestBitMask == null) {
+      jumpDestBitMask = calculateJumpDestBitMask();
+    }
+
+    // This selects which long in the array holds the bit for the given offset:
+    //	1)	>>> 6 is equivalent to jumpDestination / 64
+    //	2)	Each long holds 64 bits, so this finds the correct chunk
+    final long targetLong = jumpDestBitMask[jumpDestination >>> 6];
+
+    // 1) & 0x3F is jumpDestination % 64
+    // 2)	1L << ... gives a mask for the specific bit in that long
+    final long targetBit = 1L << (jumpDestination & 0x3F);
+
+    // If the bit is not set, then it is an invalid jump destination
+    return (targetLong & targetBit) == 0L;
+  }
 
   /**
    * Code is considered valid by the EVM.
    *
    * @return isValid
    */
-  boolean isValid();
-
-  /**
-   * The Code Section Info associated with a code section. If the code does not support sections or
-   * an out-of-section code is requested null will be returned.
-   *
-   * @param section the section number to retrieve.
-   * @return The code section, or null of there is no associated section
-   */
-  CodeSection getCodeSection(final int section);
-
-  /**
-   * The number of code sections in this container.
-   *
-   * @return 1 for legacy, count for valid, zero for invalid.
-   */
-  int getCodeSectionCount();
-
-  /**
-   * Returns the EOF version of the code. Legacy code is version 0, invalid code -1.
-   *
-   * @return The version of hte ode.
-   */
-  int getEofVersion();
-
-  /**
-   * Returns the count of subcontainers, or zero if there are none or if the code version does not
-   * support subcontainers.
-   *
-   * @return The subcontainer count or zero if not supported;
-   */
-  int getSubcontainerCount();
-
-  /**
-   * Returns the subcontainer at the selected index. If the container doesn't exist or is invalid,
-   * an empty result is returned. Legacy code always returns empty.
-   *
-   * @param index the index in the container to return
-   * @param auxData any Auxiliary data to append to the subcontainer code. If fetching an initcode
-   *     container, pass null.
-   * @param evm the EVM in which we are instantiating the code
-   * @return Either the subcontainer, or empty.
-   */
-  Optional<Code> getSubContainer(final int index, final Bytes auxData, EVM evm);
-
-  /**
-   * Loads data from the appropriate data section
-   *
-   * @param offset Where within the data section to start copying
-   * @param length how many bytes to copy
-   * @return A slice of the code containing the requested data
-   */
-  Bytes getData(final int offset, final int length);
-
-  /**
-   * Read a signed 16-bit big-endian integer
-   *
-   * @param startIndex the index to start reading the integer in the code
-   * @return a java int representing the 16-bit signed integer.
-   */
-  int readBigEndianI16(final int startIndex);
-
-  /**
-   * Read an unsigned 16 bit big-endian integer
-   *
-   * @param startIndex the index to start reading the integer in the code
-   * @return a java int representing the 16-bit unsigned integer.
-   */
-  int readBigEndianU16(final int startIndex);
-
-  /**
-   * Read an unsigned 8-bit integer
-   *
-   * @param startIndex the index to start reading the integer in the code
-   * @return a java int representing the 8-bit unsigned integer.
-   */
-  int readU8(final int startIndex);
+  public boolean isValid() {
+    return true;
+  }
 
   /**
    * A more readable representation of the hex bytes, including whitespace and comments after hashes
    *
    * @return The pretty printed code
    */
-  String prettyPrint();
+  public String prettyPrint() {
+    int i = 0;
+    int len = bytes.size();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream ps = new PrintStream(out);
+    ps.println("0x # Legacy EVM Code");
+    while (i < len) {
+      i += printInstruction(i, ps);
+    }
+    return out.toString(StandardCharsets.UTF_8);
+  }
 
   /**
    * Returns a bitmask of valid jump destinations for this code. The bitmask is an array of longs,
@@ -165,8 +183,8 @@ public interface Code {
    *
    * @return an array of long values representing the jump destinations, or null if not set
    */
-  default long[] getJumpDestBitMask() {
-    return null;
+  public long[] getJumpDestBitMask() {
+    return jumpDestBitMask;
   }
 
   /**
@@ -175,7 +193,222 @@ public interface Code {
    *
    * @param jumpDestBitMask an array of long values representing the jump destinations
    */
-  default void setJumpDestBitMask(final long[] jumpDestBitMask) {
-    // empty default method to allow setting the jump destination bitmask
+  public void setJumpDestBitMask(final long[] jumpDestBitMask) {
+    this.jumpDestBitMask = jumpDestBitMask;
+  }
+
+  /**
+   * Computes a bitmask where each bit set to 1 indicates a valid `JUMPDEST` opcode in the EVM
+   * bytecode. The bitmap is organized in 64-byte chunks, each represented as a `long` (64 bits).
+   * This is used for efficiently validating dynamic jumps (`JUMP`, `JUMPI`) at runtime.
+   */
+  long[] calculateJumpDestBitMask() {
+    // Total number of bytes in the bytecode
+    final int size = getSize();
+
+    // Allocate enough longs to cover all bytes, one long (64 bits) per 64-byte chunk
+    final long[] bitmap = new long[(size >> 6) + 1];
+
+    // Get the raw EVM bytecode as a byte array (no copying)
+    final byte[] rawCode = getBytes().toArrayUnsafe();
+    final int length = rawCode.length;
+
+    // Iterate through the bytecode
+    for (int i = 0; i < length; ) {
+      // One 64-bit entry corresponds to 64 bytecode positions
+      long thisEntry = 0L;
+
+      // Compute which bitmap entry we are in (i / 64)
+      final int entryPos = i >> 6;
+
+      // Compute the number of bytes we can safely examine in this 64-byte window
+      final int max = Math.min(64, length - (entryPos << 6));
+
+      // j is the position within this 64-byte window
+      int j = i & 0x3F;
+
+      // Scan through this 64-byte chunk of the bytecode
+      for (; j < max; i++, j++) {
+        final byte operationNum = rawCode[i];
+
+        // Skip all opcodes below 0x5b (JUMPDEST), since only PUSH1–PUSH32 and JUMPDEST matter
+        if (operationNum >= JumpDestOperation.OPCODE) {
+          switch (operationNum) {
+            // JUMPDEST opcode (0x5b): mark as a valid jump destination
+            case JumpDestOperation.OPCODE:
+              thisEntry |= 1L << j; // Set the bit at position j
+              break;
+            // PUSH1–PUSH32 opcodes (0x60–0x7f): these consume 1-32 bytes of data that should be
+            // skipped
+            case 0x60:
+              i += 1;
+              j += 1;
+              break;
+            case 0x61:
+              i += 2;
+              j += 2;
+              break;
+            case 0x62:
+              i += 3;
+              j += 3;
+              break;
+            case 0x63:
+              i += 4;
+              j += 4;
+              break;
+            case 0x64:
+              i += 5;
+              j += 5;
+              break;
+            case 0x65:
+              i += 6;
+              j += 6;
+              break;
+            case 0x66:
+              i += 7;
+              j += 7;
+              break;
+            case 0x67:
+              i += 8;
+              j += 8;
+              break;
+            case 0x68:
+              i += 9;
+              j += 9;
+              break;
+            case 0x69:
+              i += 10;
+              j += 10;
+              break;
+            case 0x6a:
+              i += 11;
+              j += 11;
+              break;
+            case 0x6b:
+              i += 12;
+              j += 12;
+              break;
+            case 0x6c:
+              i += 13;
+              j += 13;
+              break;
+            case 0x6d:
+              i += 14;
+              j += 14;
+              break;
+            case 0x6e:
+              i += 15;
+              j += 15;
+              break;
+            case 0x6f:
+              i += 16;
+              j += 16;
+              break;
+            case 0x70:
+              i += 17;
+              j += 17;
+              break;
+            case 0x71:
+              i += 18;
+              j += 18;
+              break;
+            case 0x72:
+              i += 19;
+              j += 19;
+              break;
+            case 0x73:
+              i += 20;
+              j += 20;
+              break;
+            case 0x74:
+              i += 21;
+              j += 21;
+              break;
+            case 0x75:
+              i += 22;
+              j += 22;
+              break;
+            case 0x76:
+              i += 23;
+              j += 23;
+              break;
+            case 0x77:
+              i += 24;
+              j += 24;
+              break;
+            case 0x78:
+              i += 25;
+              j += 25;
+              break;
+            case 0x79:
+              i += 26;
+              j += 26;
+              break;
+            case 0x7a:
+              i += 27;
+              j += 27;
+              break;
+            case 0x7b:
+              i += 28;
+              j += 28;
+              break;
+            case 0x7c:
+              i += 29;
+              j += 29;
+              break;
+            case 0x7d:
+              i += 30;
+              j += 30;
+              break;
+            case 0x7e:
+              i += 31;
+              j += 31;
+              break;
+            case 0x7f:
+              i += 32;
+              j += 32;
+              break;
+            default:
+              // No default case needed: any unhandled opcode >= 0x5b but not PUSH or JUMPDEST is
+              // skipped
+          }
+        }
+      }
+
+      // Store the computed bitmask for this 64-byte chunk
+      bitmap[entryPos] = thisEntry;
+    }
+
+    // Return the full jump destination bitmask
+    return bitmap;
+  }
+
+  /**
+   * Prints an individual instruction, including immediate data
+   *
+   * @param offset Offset within the code
+   * @param out the print stream to write to
+   * @return the number of bytes to advance the PC (includes consideration of immediate arguments)
+   */
+  public int printInstruction(final int offset, final PrintStream out) {
+    int codeByte = bytes.get(offset) & 0xff;
+    OpcodeInfo info = OpcodeInfo.getLegacyOpcode(codeByte);
+    String push = "";
+    String decimalPush = "";
+    if (info.pcAdvance() > 1) {
+      int start = Math.min(bytes.size(), offset + 1);
+      int end = Math.min(bytes.size(), info.pcAdvance() - 1);
+      Bytes slice = bytes.slice(start, end);
+      push = slice.toUnprefixedHexString();
+      if (info.pcAdvance() < 5) {
+        decimalPush = "(" + slice.toLong() + ")";
+      }
+    }
+    String name = info.name();
+    if (codeByte == 0x5b) {
+      name = "JUMPDEST";
+    }
+    out.printf("%02x%s # [ %d ] %s%s%n", codeByte, push, offset, name, decimalPush);
+    return Math.max(1, info.pcAdvance());
   }
 }

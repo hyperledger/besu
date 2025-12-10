@@ -37,8 +37,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -382,9 +380,7 @@ public class MainnetTransactionProcessor {
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
         validationResult =
-            ValidationResult.invalid(
-                TransactionInvalidReason.EOF_CODE_INVALID,
-                ((CodeInvalid) initialFrame.getCode()).getInvalidReason());
+            ValidationResult.invalid(TransactionInvalidReason.EXECUTION_HALTED, "Invalid code");
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -593,12 +589,12 @@ public class MainnetTransactionProcessor {
       final Account contract,
       final Optional<AccessLocationTracker> accessLocationTracker) {
     if (contract == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final Hash codeHash = contract.getCodeHash();
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     if (hasCodeDelegation(contract.getCode())) {

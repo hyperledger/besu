@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -30,6 +29,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
+
+  /** EOF prefix byte (0xEF). */
+  private static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
 
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
   static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
@@ -87,7 +89,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       } else {
         if (enableEIP3540) {
           final Bytes code = account.getCode();
-          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+          if (code.size() >= 2 && code.get(0) == EOF_PREFIX_BYTE && code.get(1) == 0) {
             frame.pushStackItem(EOF_REPLACEMENT_HASH);
           } else {
             frame.pushStackItem(account.getCodeHash());

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -44,9 +43,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult INVALID_OPERATION =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The EOF Version this create operation requires initcode to be in */
-  protected final int eofVersion;
-
   /**
    * Instantiates a new Abstract create operation.
    *
@@ -55,25 +51,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
-   * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final GasCalculator gasCalculator,
-      final int eofVersion) {
+      final GasCalculator gasCalculator) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
-    this.eofVersion = eofVersion;
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getCode().getEofVersion() != eofVersion) {
-      return INVALID_OPERATION;
-    }
-
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;
@@ -106,8 +95,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
-        || code == null
-        || code.getEofVersion() != frame.getCode().getEofVersion()) {
+        || code == null) {
       fail(frame);
     } else {
       account.incrementNonce();
@@ -241,7 +229,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
         frame.setReturnData(childFrame.getOutputData());
         frame.pushStackItem(Bytes.EMPTY);
-        onInvalid(frame, (CodeInvalid) outputCode);
+        onInvalid(frame, outputCode);
       }
     } else {
       frame.setReturnData(childFrame.getOutputData());
@@ -284,7 +272,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param frame the frame running the successful operation
    * @param invalidCode the code object containing the invalid code
    */
-  protected void onInvalid(final MessageFrame frame, final CodeInvalid invalidCode) {
+  protected void onInvalid(final MessageFrame frame, final Code invalidCode) {
     // no-op by default
   }
 }

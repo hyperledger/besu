@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -56,7 +55,7 @@ public class EVMExecutor {
   private Wei blobGasPrice = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
   private BlockHashLookup blockHashLookup = (__, ___) -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();

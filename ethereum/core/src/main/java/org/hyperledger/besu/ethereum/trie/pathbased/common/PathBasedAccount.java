@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.HashMap;
@@ -83,7 +82,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.immutable = !mutable;
 
     if (codeHash.equals(Hash.EMPTY)) {
-      this.code = CodeV0.EMPTY_CODE;
+      this.code = Code.EMPTY_CODE;
     }
   }
 
@@ -125,7 +124,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     this.codeCache = codeCache;
 
     if (code == null && codeHash.equals(Hash.EMPTY)) {
-      this.code = CodeV0.EMPTY_CODE;
+      this.code = Code.EMPTY_CODE;
     } else {
       // as this constructor is only used for copying accounts, we assume the code must have
       // originated
@@ -204,7 +203,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
 
     // cache miss get the code from the disk, set it and put it in the cache
     final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
-    code = new CodeV0(byteCode, codeHash);
+    code = new Code(byteCode, codeHash);
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;
@@ -217,7 +216,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     }
 
     if (byteCode == null || byteCode.isEmpty()) {
-      this.code = CodeV0.EMPTY_CODE;
+      this.code = Code.EMPTY_CODE;
       this.codeHash = Hash.EMPTY;
       return;
     }
@@ -233,7 +232,7 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
       return;
     }
 
-    this.code = new CodeV0(byteCode, codeHash);
+    this.code = new Code(byteCode, codeHash);
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, this.code));
   }
 

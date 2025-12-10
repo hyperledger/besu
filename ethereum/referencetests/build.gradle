@@ -142,22 +142,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -169,8 +153,7 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',

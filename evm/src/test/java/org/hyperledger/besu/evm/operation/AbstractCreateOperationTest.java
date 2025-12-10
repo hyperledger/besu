@@ -30,7 +30,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -73,16 +72,6 @@ class AbstractCreateOperationTest {
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
-  public static final Bytes INVALID_EOF =
-      Bytes.fromHexString(
-          "0x"
-              + "73EF00990100040200010001030000000000000000" // PUSH20 contract
-              + "6000" // PUSH1 0x00
-              + "52" // MSTORE
-              + "6014" // PUSH1 20
-              + "600c" // PUSH1 12
-              + "F3" // RETURN
-          );
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
   /** The Create operation. */
@@ -93,7 +82,7 @@ class AbstractCreateOperationTest {
     private MessageFrame failureFrame;
     private Optional<ExceptionalHaltReason> failureHaltReason;
     private MessageFrame invalidFrame;
-    private CodeInvalid invalidInvalidCode;
+    private Code invalidInvalidCode;
 
     /**
      * Instantiates a new Create operation.
@@ -101,7 +90,7 @@ class AbstractCreateOperationTest {
      * @param gasCalculator the gas calculator
      */
     public FakeCreateOperation(final GasCalculator gasCalculator) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, 0);
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator);
     }
 
     @Override
@@ -147,7 +136,7 @@ class AbstractCreateOperationTest {
     }
 
     @Override
-    protected void onInvalid(final MessageFrame frame, final CodeInvalid invalidCode) {
+    protected void onInvalid(final MessageFrame frame, final Code invalidCode) {
       invalidFrame = frame;
       invalidInvalidCode = invalidCode;
     }
@@ -226,19 +215,5 @@ class AbstractCreateOperationTest {
         .contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     assertThat(operation.invalidFrame).isNull();
     assertThat(operation.invalidInvalidCode).isNull();
-  }
-
-  @Test
-  void onInvalid() {
-    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
-
-    executeOperation(INVALID_EOF, evm);
-
-    assertThat(operation.successFrame).isNull();
-    assertThat(operation.successCreatedAddress).isNull();
-    assertThat(operation.failureFrame).isNull();
-    assertThat(operation.failureHaltReason).isNull();
-    assertThat(operation.invalidFrame).isNotNull();
-    assertThat(operation.invalidInvalidCode).isNotNull();
   }
 }

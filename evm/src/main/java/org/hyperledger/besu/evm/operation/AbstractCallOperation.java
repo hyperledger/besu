@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -345,13 +344,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final Hash codeHash = account.getCodeHash();
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final boolean accountHasCodeCache = account.getCodeCache() != null;

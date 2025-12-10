@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.code;
+package org.hyperledger.besu.evm;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.Type.MESSAGE_CALL;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -23,8 +23,6 @@ import static org.mockito.Mockito.times;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -39,7 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-class CodeV0Test {
+class CodeTest {
 
   private static final int CURRENT_PC = 1;
   private EVM evm;
@@ -53,7 +51,7 @@ class CodeV0Test {
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) spy(evm.wrapCode(jumpBytes));
+    final Code getsCached = spy(evm.wrapCode(jumpBytes));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);
@@ -70,7 +68,7 @@ class CodeV0Test {
   }
 
   @NotNull
-  private MessageFrame createJumpFrame(final CodeV0 getsCached) {
+  private MessageFrame createJumpFrame(final Code getsCached) {
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MESSAGE_CALL)

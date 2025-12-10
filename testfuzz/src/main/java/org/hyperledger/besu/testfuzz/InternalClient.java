@@ -17,10 +17,6 @@ package org.hyperledger.besu.testfuzz;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
-import org.hyperledger.besu.evm.code.EOFLayout;
-import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,18 +41,10 @@ class InternalClient implements FuzzingClient {
     try {
       Bytes clientData = Bytes.fromHexString(data);
       Code code = evm.wrapCode(clientData);
-      if (code.getEofVersion() < 1) {
-        return "err: legacy EVM";
-      } else if (!code.isValid()) {
-        return "err: " + ((CodeInvalid) code).getInvalidReason();
+      if (!code.isValid()) {
+        return "err: invalid code";
       } else {
-        EOFLayout layout = ((CodeV1) code).getEofLayout();
-        if (EOFContainerMode.INITCODE.equals(layout.containerMode().get())) {
-          return "err: initcode container when runtime mode expected";
-        }
-        return "OK %d/%d/%d"
-            .formatted(
-                layout.getCodeSectionCount(), layout.getSubcontainerCount(), layout.dataLength());
+        return "OK %d".formatted(code.getSize());
       }
     } catch (RuntimeException e) {
       return "fail: " + e.getMessage();
