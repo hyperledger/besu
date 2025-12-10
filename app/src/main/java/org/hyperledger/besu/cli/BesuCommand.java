@@ -2670,7 +2670,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
       builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
     } else {
-      MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId()))
+      MergeCoordinator.getDefaultGasLimitByChainId(genesisConfigOptionsSupplier.get().getChainId())
           .ifPresent(builder::setTargetGasLimit);
     }
 
