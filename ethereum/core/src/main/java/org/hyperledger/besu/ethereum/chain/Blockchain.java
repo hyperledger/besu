@@ -138,6 +138,15 @@ public interface Blockchain {
   Optional<BlockHeader> getBlockHeader(long blockNumber);
 
   /**
+   * Returns a list of block headers starting from the given block number.
+   *
+   * @param startBlockNumber The number of the first block header.
+   * @param numberOfHeaders The number of blocks to retrieve.
+   * @return The block headers.
+   */
+  List<BlockHeader> getBlockHeaders(long startBlockNumber, int numberOfHeaders);
+
+  /**
    * Return true if the block corresponding the hash is present.
    *
    * @param blockHash The hash of the block to check.
