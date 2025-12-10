@@ -3,6 +3,21 @@
 ## Unreleased
 
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - ETC (Ethereum Classic) network support
+    - Proof of Work consensus (PoW)
+    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+    - Fast Sync
+  
+### Additions and Improvements
+
+##  25.12.0-RC1
+
+### Breaking Changes
 - Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)
   - Remove`--Xbonsai-parallel-tx-processing-enabled` deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
   - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
