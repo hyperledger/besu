@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
@@ -85,7 +86,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
               instanceof PathBasedLayeredWorldStateKeyValueStorage) {
         LOG.atDebug()
             .setMessage("updating layered world state for block {}, state root hash {}")
-            .addArgument(blockHeader::toString)
+            .addArgument(() -> Util.toLogString(blockHeader))
             .addArgument(worldStateRootHash::toShortHexString)
             .log();
         cachedPathBasedWorldView
@@ -96,7 +97,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
     } else {
       LOG.atDebug()
           .setMessage("adding layered world state for block {}, state root hash {}")
-          .addArgument(blockHeader::toString)
+          .addArgument(Util.toLogString(blockHeader))
           .addArgument(worldStateRootHash::toShortHexString)
           .log();
       if (forWorldState.isModifyingHeadWorldState()) {
@@ -155,7 +156,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
   public Optional<PathBasedWorldState> getNearestWorldState(final BlockHeader blockHeader) {
     LOG.atDebug()
         .setMessage("getting nearest worldstate for {}")
-        .addArgument(blockHeader.toString())
+        .addArgument(Util.toLogString(blockHeader))
         .log();
 
     return Optional.ofNullable(
@@ -166,7 +167,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
               // or else search the nearest state in the cache
               LOG.atDebug()
                   .setMessage("searching cache for nearest worldstate for {}")
-                  .addArgument(blockHeader.toString())
+                  .addArgument(Util.toLogString(blockHeader))
                   .log();
 
               final List<PathBasedCachedWorldView> cachedPathBasedWorldViews =
