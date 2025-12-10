@@ -16,11 +16,16 @@ package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+/**
+ * Provider interface for world state archive implementations. Plugins can implement this to provide
+ * alternative storage formats.
+ */
 public interface WorldStateArchiveProvider {
 
   /**
    * Creates a world state archive instance.
    *
+   * @param worldStateKeyValueStorage the world state key value storage
    * @param preimageStorage the preimage storage
    * @param evmConfiguration the EVM configuration
    * @return a world state archive instance
