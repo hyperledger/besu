@@ -76,7 +76,7 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
     }
 
     long start = currentBlock.getAndAdd(batchSize);
-    final int actualLength = (int) Math.min(batchSize, pivotBlockNumber - start);
+    final int actualLength = (int) Math.min(batchSize, pivotBlockNumber - start + 1);
 
     LOG.trace(
         "BlockHeaderSource reading batch: {} blocks from block number {}", actualLength, start);
