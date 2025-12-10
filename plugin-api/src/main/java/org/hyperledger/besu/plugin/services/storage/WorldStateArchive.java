@@ -27,9 +27,37 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Provides an abstraction over archival and retrieval operations for Ethereum world state data.
+ *
+ * <p>The {@code WorldStateArchive} manages various representations of the world state, including
+ * immutable and mutable snapshots, and handles world state queries, proofs, and repair operations.
+ *
+ * <p>This interface supports retrieval of world state by root hash and block hash, as well as
+ * queries using specific parameters via {@link WorldStateQueryParams}. It enables management of the
+ * archive cache, delivers Merkle proofs for accounts and storage, and exposes repair (healing)
+ * capabilities for resolving inconsistencies.
+ *
+ * <p>Implementations of {@code WorldStateArchive} typically maintain world state persistence,
+ * access node data, and allow for the recovery of corrupted or missing world state data.
+ */
 public interface WorldStateArchive extends Closeable {
+  /**
+   * Retrieves the immutable world state associated with the given root hash and block hash.
+   *
+   * @param rootHash the root hash of the world state
+   * @param blockHash the block hash associated with the world state
+   * @return an {@link Optional} containing the {@link WorldState} if available, otherwise empty
+   */
   Optional<WorldState> get(Hash rootHash, Hash blockHash);
 
+  /**
+   * Checks if the world state for the given root hash and block hash is available in the archive.
+   *
+   * @param rootHash the root hash of the world state
+   * @param blockHash the block hash associated with the world state
+   * @return {@code true} if the world state is available; {@code false} otherwise
+   */
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
   /**
@@ -60,11 +88,19 @@ public interface WorldStateArchive extends Closeable {
    */
   void resetArchiveStateTo(BlockHeader blockHeader);
 
+  /**
+   * Retrieves the raw node data associated with the specified hash from the world state storage.
+   *
+   * @param hash the hash of the node data to retrieve
+   * @return an {@link Optional} containing the node data as {@link Bytes} if present, otherwise
+   *     empty
+   */
   Optional<Bytes> getNodeData(Hash hash);
 
   /**
    * Retrieves an account proof based on the provided parameters.
    *
+   * @param <U> The type of the mapped result returned by this method.
    * @param blockHeader The header of the block for which to retrieve the account proof.
    * @param accountAddress The address of the account for which to retrieve the proof.
    * @param accountStorageKeys The storage keys of the account for which to retrieve the proof.

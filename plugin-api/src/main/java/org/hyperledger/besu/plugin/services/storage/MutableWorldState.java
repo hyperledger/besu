@@ -19,6 +19,13 @@ import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
+/**
+ * Represents a mutable view of the Ethereum world state.
+ *
+ * <p>A world state refers to the mapping between addresses and account data, including balances,
+ * storage, code, and other fields. This interface provides the ability to persist modifications,
+ * calculate the state root hash, and manage underlying trie storage mechanisms.
+ */
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
   /**
@@ -32,8 +39,26 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    */
   void persist(BlockHeader blockHeader, StateRootCommitter committer);
 
+  /**
+   * Persists the accumulated changes in the world state using the given {@link BlockHeader} and a
+   * default synchronous {@link StateRootCommitter} implementation.
+   *
+   * @param blockHeader the block header representing the imported block for which the world state
+   *     changes are being persisted; if this does not represent a forward transition from one block
+   *     to the next, {@code null} should be passed
+   */
   void persist(final BlockHeader blockHeader);
 
+  /**
+   * Calculates or reads the state root hash for the specified world state using the provided {@link
+   * WorldStateKeyValueStorage.Updater}, {@link BlockHeader}, and {@link WorldStateConfig}.
+   *
+   * @param stateUpdater the updater for the world state key-value storage
+   * @param blockHeader the block header for the computation
+   * @param cfg the world state configuration
+   * @return the computed or retrieved {@link Hash} representing the state root
+   * @throws UnsupportedOperationException if the operation is not supported by the implementation
+   */
   default Hash calculateOrReadRootHash(
       final WorldStateKeyValueStorage.Updater stateUpdater,
       final BlockHeader blockHeader,
@@ -41,11 +66,23 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
     throw new UnsupportedOperationException("calculateOrReadRootHash is not supported");
   }
 
+  /**
+   * Returns an immutable (frozen) view of the current world state storage.
+   *
+   * @return an immutable {@link MutableWorldState}
+   * @throws UnsupportedOperationException if the operation is not supported by the implementation
+   */
   default MutableWorldState freezeStorage() {
     // no op
     throw new UnsupportedOperationException("cannot freeze");
   }
 
+  /**
+   * Disables the use of the state trie in the world state.
+   *
+   * @return a {@link MutableWorldState} with the trie disabled
+   * @throws UnsupportedOperationException if the operation is not supported by the implementation
+   */
   default MutableWorldState disableTrie() {
     // no op
     throw new UnsupportedOperationException("cannot disable trie");

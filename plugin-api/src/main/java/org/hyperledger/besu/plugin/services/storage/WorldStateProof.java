@@ -22,15 +22,58 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Represents a cryptographic proof of a world state for a given account and its associated storage
+ * in Ethereum.
+ *
+ * <p>The {@code WorldStateProof} provides access to:
+ *
+ * <ul>
+ *   <li>The proof for the account node in the state trie,
+ *   <li>The decoded account value (if available),
+ *   <li>Proofs for each storage key belonging to the account.
+ * </ul>
+ *
+ * The proofs are used to verify the inclusion and values of account and storage data within the
+ * Ethereum world state trie.
+ */
 public interface WorldStateProof {
 
+  /**
+   * Returns the state trie account value if present.
+   *
+   * @return an {@link Optional} containing the state trie account value, or empty if not present
+   */
   Optional<AccountValue> getStateTrieAccountValue();
 
+  /**
+   * Returns the list of RLP-encoded nodes comprising the account proof.
+   *
+   * @return a list of bytes representing the proof nodes leading to the account
+   */
   List<Bytes> getAccountProof();
 
+  /**
+   * Returns the list of storage keys for which proofs are present in this world state proof.
+   *
+   * @return a list of storage keys
+   */
   List<UInt256> getStorageKeys();
 
+  /**
+   * Returns the value stored at the given storage key. If the value is not present, returns {@link
+   * UInt256#ZERO}.
+   *
+   * @param key the storage key
+   * @return the value at the specified storage key, or zero if not present
+   */
   UInt256 getStorageValue(final UInt256 key);
 
+  /**
+   * Returns the list of RLP-encoded nodes comprising the storage proof for a given key.
+   *
+   * @param key the storage key
+   * @return a list of bytes representing the proof nodes leading to the storage value
+   */
   List<Bytes> getStorageProof(final UInt256 key);
 }

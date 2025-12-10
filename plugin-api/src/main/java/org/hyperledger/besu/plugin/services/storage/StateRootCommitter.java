@@ -17,12 +17,34 @@ package org.hyperledger.besu.plugin.services.storage;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
+/**
+ * The StateRootCommitter interface defines the contract for computing and committing the state root
+ * for the Ethereum world state after processing a block.
+ *
+ * <p>Implementations of this interface are responsible for processing the {@link
+ * MutableWorldState}, calculating the new state root hash, and persisting any required changes into
+ * storage.
+ */
 public interface StateRootCommitter {
+
+  /**
+   * Computes the state root hash and commits the changes to the world state storage.
+   *
+   * @param worldState the mutable world state to be updated
+   * @param stateUpdater the updater for the world state key-value storage
+   * @param blockHeader the block header representing the current block
+   * @param worldStateConfig the world state configuration
+   * @return the computed state root {@link Hash}
+   */
   Hash computeRootAndCommit(
       MutableWorldState worldState,
       WorldStateKeyValueStorage.Updater stateUpdater,
       BlockHeader blockHeader,
       WorldStateConfig worldStateConfig);
 
+  /**
+   * Cancels any ongoing root computation or commit operations, if supported by the implementation.
+   * Default implementation does nothing.
+   */
   default void cancel() {}
 }

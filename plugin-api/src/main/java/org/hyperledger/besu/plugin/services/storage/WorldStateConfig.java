@@ -14,12 +14,37 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
+/**
+ * WorldStateConfig encapsulates the shared configuration parameters for managing the Ethereum world
+ * state, such as trie enablement and stateful operation.
+ */
 public interface WorldStateConfig {
+
+  /**
+   * Returns {@code true} if the trie is disabled for the world state.
+   *
+   * @return true if the trie is disabled, false otherwise
+   */
   boolean isTrieDisabled();
 
+  /**
+   * Returns {@code true} if the world state is stateful.
+   *
+   * @return true if the mode is stateful, false otherwise
+   */
   boolean isStateful();
 
+  /**
+   * Sets whether the trie is disabled for the world state.
+   *
+   * @param trieDisabled true to disable the trie, false otherwise
+   */
   void setTrieDisabled(final boolean trieDisabled);
 
+  /**
+   * Sets whether the world state is stateful.
+   *
+   * @param stateful true if stateful, false otherwise
+   */
   void setStateful(final boolean stateful);
 }

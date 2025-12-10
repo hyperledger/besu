@@ -19,6 +19,17 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Optional;
 
+/**
+ * Encapsulates parameters required for querying the Ethereum world state.
+ *
+ * <p>This class defines fields such as the block header, block hash, state root, and a flag
+ * indicating whether the world state should update the node head. It supports construction via a
+ * builder pattern and provides several static convenience methods for common query configurations.
+ *
+ * <p>Instances of {@code WorldStateQueryParams} are immutable and used to provide context and
+ * constraints for operations that query the world state in relation to a particular block or state
+ * root.
+ */
 public interface WorldStateQueryParams {
   /**
    * Gets the block header.
