@@ -65,6 +65,7 @@ import com.google.common.io.Files;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
@@ -161,7 +162,7 @@ public class WorldStateDownloaderBenchmark {
     final Optional<Bytes> rootData =
         worldStateStorageCoordinator
             .getStrategy(ForestWorldStateKeyValueStorage.class)
-            .getNodeData(blockHeader.getStateRoot());
+            .getNodeData(Bytes32.wrap(blockHeader.getStateRoot().getBytes()));
     if (rootData.isEmpty()) {
       throw new IllegalStateException("World state download did not complete.");
     }
