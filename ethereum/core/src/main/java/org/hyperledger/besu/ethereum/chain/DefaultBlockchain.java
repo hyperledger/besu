@@ -375,6 +375,35 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public List<BlockHeader> getBlockHeaders(final long firstBlock, final int numberOfHeaders) {
+    List<BlockHeader> headers = new ArrayList<>(numberOfHeaders);
+
+    final Optional<BlockHeader> optionalBlockHeaderStart =
+        getBlockHeader(firstBlock + numberOfHeaders - 1);
+    if (optionalBlockHeaderStart.isEmpty()) {
+      LOG.error("Missing header at block number {}", firstBlock + numberOfHeaders - 1);
+      throw new IllegalStateException(
+          "Missing header at block " + (firstBlock + numberOfHeaders - 1));
+    } else {
+      final BlockHeader startBlockHeader = optionalBlockHeaderStart.get();
+      headers.add(startBlockHeader);
+      Hash nextHash = startBlockHeader.getParentHash();
+      for (int i = 0; i < numberOfHeaders - 1; i++) {
+        Optional<BlockHeader> optionalBlockHeader = getBlockHeader(nextHash);
+        if (optionalBlockHeader.isEmpty()) {
+          LOG.error("Missing header for block {}", nextHash);
+          throw new IllegalStateException("Missing header for block " + nextHash);
+        } else {
+          BlockHeader blockHeader = optionalBlockHeader.get();
+          headers.addFirst(blockHeader);
+          nextHash = blockHeader.getParentHash();
+        }
+      }
+    }
+    return headers;
+  }
+
+  @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
     return blockHeadersCache
         .map(

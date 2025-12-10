@@ -18,10 +18,8 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -78,29 +76,11 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
     }
 
     long start = currentBlock.getAndAdd(batchSize);
-    final List<BlockHeader> batch = new ArrayList<>();
-    final long batchEnd = Math.min(start + batchSize - 1, pivotBlockNumber);
+    final int actualLength = (int) Math.min(batchSize, pivotBlockNumber - start);
 
-    LOG.trace("BlockHeaderSource reading batch: blocks {} to {}", currentBlock, batchEnd);
+    LOG.trace(
+        "BlockHeaderSource reading batch: {} blocks from block number {}", actualLength, start);
 
-    for (long blockNumber = start; blockNumber <= batchEnd; blockNumber++) {
-      final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
-
-      if (blockHeader.isEmpty()) {
-        LOG.error(
-            "Gap detected: missing header at block {}. Stopping forward header reading.",
-            blockNumber);
-        throw new IllegalStateException("Gap detected: missing header at block " + blockNumber);
-      }
-
-      batch.add(blockHeader.get());
-    }
-
-    if (batch.isEmpty()) {
-      LOG.debug("BlockHeaderSource returning empty batch.");
-      return null;
-    }
-
-    return batch;
+    return blockchain.getBlockHeaders(start, actualLength);
   }
 }
