@@ -188,7 +188,7 @@ public record ChainSyncState(
         + ", checkpointBlockNumber="
         + blockDownloadAnchor.getNumber()
         + ", headerDownloadAnchorNumber="
-        + headerDownloadAnchor.getNumber()
+        + (headerDownloadAnchor != null ? headerDownloadAnchor.getNumber() : "null")
         + ", headersDownloadComplete="
         + headersDownloadComplete
         + '}';
