@@ -102,7 +102,7 @@ public class Util {
    * @param blockHeader block header
    * @return the log string for block headers
    */
-  public static String toLogString(BlockHeader blockHeader) {
+  public static String toLogString(final BlockHeader blockHeader) {
     return blockHeader.getNumber() + " (" + blockHeader.getBlockHash() + ")";
   }
 }
