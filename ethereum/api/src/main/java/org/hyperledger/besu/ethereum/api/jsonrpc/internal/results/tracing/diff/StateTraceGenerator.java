@@ -144,14 +144,7 @@ public class StateTraceGenerator {
 
               // Build the account-level diff (balance, code, codeHash, nonce, storage).
               final AccountDiff accountDiff =
-                  new AccountDiff(
-                      createDiffNode(
-                          rootAccount, updatedAccount, StateTraceGenerator::balanceAsHex),
-                      createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::codeAsHex),
-                      createDiffNode(
-                          rootAccount, updatedAccount, StateTraceGenerator::codeHashAsHex),
-                      createDiffNode(rootAccount, updatedAccount, StateTraceGenerator::nonceAsHex),
-                      storageDiff);
+                  createAccountDiff(rootAccount, updatedAccount, storageDiff);
 
               // Record this account only if something actually changed.
               if (accountDiff.hasDifference()) {
@@ -180,9 +173,8 @@ public class StateTraceGenerator {
           .forEach(
               slotKey -> {
                 // The pre-state mode only cares about the *original* value.
-                var account = parentUpdater.get(address);
-                if (account != null) {
-                  final UInt256 value = account.getStorageValue(slotKey);
+                if (original != null) {
+                  final UInt256 value = original.getStorageValue(slotKey);
                   storageDiff.put(slotKey.toHexString(), new DiffNode(value.toHexString(), null));
                 }
               });
@@ -190,13 +182,7 @@ public class StateTraceGenerator {
       // Build the account-level pre-state diff.
       // All fields represent the original state; "to" values are intentionally null in pre-state
       // mode.
-      final var accountDiff =
-          new AccountDiff(
-              createDiffNode(original, null, StateTraceGenerator::balanceAsHex),
-              createDiffNode(original, null, StateTraceGenerator::codeAsHex),
-              createDiffNode(original, null, StateTraceGenerator::codeHashAsHex),
-              createDiffNode(original, null, StateTraceGenerator::nonceAsHex),
-              storageDiff);
+      final var accountDiff = createAccountDiff(original, null, storageDiff);
 
       // In pre-state mode, every touched account is included.
       stateDiffResult.put(address.toHexString(), accountDiff);
@@ -226,15 +212,20 @@ public class StateTraceGenerator {
               final Account deletedAccount = previousUpdater.get(accountAddress);
               if (deletedAccount != null) {
                 final AccountDiff accountDiff =
-                    new AccountDiff(
-                        createDiffNode(deletedAccount, null, StateTraceGenerator::balanceAsHex),
-                        createDiffNode(deletedAccount, null, StateTraceGenerator::codeAsHex),
-                        createDiffNode(deletedAccount, null, StateTraceGenerator::codeHashAsHex),
-                        createDiffNode(deletedAccount, null, StateTraceGenerator::nonceAsHex),
-                        Collections.emptyMap());
+                    createAccountDiff(deletedAccount, null, Collections.emptyMap());
                 stateDiff.put(accountAddress.toHexString(), accountDiff);
               }
             });
+  }
+
+  private AccountDiff createAccountDiff(
+      final Account from, final Account to, final Map<String, DiffNode> storageDiff) {
+    return new AccountDiff(
+        createDiffNode(from, to, StateTraceGenerator::balanceAsHex),
+        createDiffNode(from, to, StateTraceGenerator::codeAsHex),
+        createDiffNode(from, to, StateTraceGenerator::codeHashAsHex),
+        createDiffNode(from, to, StateTraceGenerator::nonceAsHex),
+        storageDiff);
   }
 
   /** Create a {@link DiffNode} by extracting a field from two account states. */

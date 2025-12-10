@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
 import java.util.List;
@@ -107,10 +106,9 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       final BlockHashLookup blockHashLookup =
           protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
 
-      WorldUpdater nextUpdater = chainUpdater.getNextUpdater();
       result =
           transactionProcessor.processTransaction(
-              nextUpdater,
+              chainUpdater.getNextUpdater(),
               header,
               transactionTrace.getTransaction(),
               header.getCoinbase(),
