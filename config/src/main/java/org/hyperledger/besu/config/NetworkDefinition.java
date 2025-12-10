@@ -69,7 +69,7 @@ public enum NetworkDefinition {
    * href="https://docs.linea.build/get-started/how-to/run-a-node/besu">Linea Besu developer
    * info</a>
    */
-  LINEA(
+  LINEA_MAINNET(
       "/linea-mainnet.json",
       59144, // chain id
       59144, // network id
