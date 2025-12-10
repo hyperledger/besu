@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +95,15 @@ public class StateTraceGenerator {
     // Only the parent updater is relevant here. Post-transaction state does not matter.
     // To identify which accounts were read, we rely on the transaction trace’s access list (BAL).
     if (isPreState) {
-      processPreStateMode(parentUpdater, stateDiffResult, transactionTrace);
+      processPreStateMode(
+          parentUpdater,
+          stateDiffResult,
+          transactionTrace
+              .getTouchedAccounts()
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "Touched accounts must be present in pre-state mode")));
     } else {
       // In diff mode, include only accounts whose state changed.
       // Use the transaction updater to detect modifications and compare them to the parent state.
@@ -156,9 +166,7 @@ public class StateTraceGenerator {
   private void processPreStateMode(
       final WorldUpdater parentUpdater,
       final StateDiffTrace stateDiffResult,
-      final TransactionTrace transactionTrace) {
-
-    final var touchedAccounts = transactionTrace.getTouchedAccounts().orElseThrow();
+      final Collection<AccessLocationTracker.AccountAccessList> touchedAccounts) {
 
     for (var accountChanges : touchedAccounts) {
       final var address = accountChanges.getAddress();

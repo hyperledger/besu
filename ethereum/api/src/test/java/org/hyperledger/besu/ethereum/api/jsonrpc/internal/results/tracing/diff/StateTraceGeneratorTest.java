@@ -38,6 +38,7 @@ import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -162,6 +163,21 @@ public class StateTraceGeneratorTest {
     AccountDiff a = diff.get(A.toHexString());
     assertThat(a.getBalance().getFrom()).contains("0x64");
     assertThat(a.getBalance().getTo()).isEmpty();
+  }
+
+  @Test
+  void shouldThrowIfEmptyTouchedAccountsInPreStateMode() {
+    Address A = Address.fromHexString("0xdead");
+    MutableAccount account =
+        mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
+    TransactionTrace txTrace = mockFrameWithUpdater(A, account, account);
+    when(txTrace.getTouchedAccounts()).thenReturn(Optional.empty());
+
+    Exception exception =
+        Assertions.assertThrows(
+            IllegalArgumentException.class, () -> generator.generatePreState(txTrace));
+    assertThat(exception.getMessage())
+        .isEqualTo("Touched accounts must be present in pre-state mode");
   }
 
   private TraceFrame mockFrame(final WorldUpdater updater) {
