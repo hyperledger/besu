@@ -152,15 +152,6 @@ public class Code {
   }
 
   /**
-   * Code is considered valid by the EVM.
-   *
-   * @return isValid
-   */
-  public boolean isValid() {
-    return true;
-  }
-
-  /**
    * A more readable representation of the hex bytes, including whitespace and comments after hashes
    *
    * @return The pretty printed code

@@ -439,10 +439,6 @@ public class EvmToolCommand implements Runnable {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
       Code code = new Code(codeBytes);
-      if (!code.isValid()) {
-        out.println("Invalid code");
-        return;
-      }
 
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;

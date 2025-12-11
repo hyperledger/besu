@@ -81,8 +81,6 @@ class AbstractCreateOperationTest {
     private Address successCreatedAddress;
     private MessageFrame failureFrame;
     private Optional<ExceptionalHaltReason> failureHaltReason;
-    private MessageFrame invalidFrame;
-    private Code invalidInvalidCode;
 
     /**
      * Instantiates a new Create operation.
@@ -133,12 +131,6 @@ class AbstractCreateOperationTest {
         final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
       failureFrame = frame;
       failureHaltReason = haltReason;
-    }
-
-    @Override
-    protected void onInvalid(final MessageFrame frame, final Code invalidCode) {
-      invalidFrame = frame;
-      invalidInvalidCode = invalidCode;
     }
   }
 
@@ -198,8 +190,6 @@ class AbstractCreateOperationTest {
         .isEqualTo(Address.fromHexString("0xecccb0113190dfd26a044a7f26f45152a4270a64"));
     assertThat(operation.failureFrame).isNull();
     assertThat(operation.failureHaltReason).isNull();
-    assertThat(operation.invalidFrame).isNull();
-    assertThat(operation.invalidInvalidCode).isNull();
   }
 
   @Test
@@ -213,7 +203,5 @@ class AbstractCreateOperationTest {
     assertThat(operation.failureFrame).isNotNull();
     assertThat(operation.failureHaltReason)
         .contains(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    assertThat(operation.invalidFrame).isNull();
-    assertThat(operation.invalidInvalidCode).isNull();
   }
 }

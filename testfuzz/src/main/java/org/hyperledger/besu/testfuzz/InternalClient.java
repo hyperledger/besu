@@ -41,11 +41,7 @@ class InternalClient implements FuzzingClient {
     try {
       Bytes clientData = Bytes.fromHexString(data);
       Code code = new Code(clientData);
-      if (!code.isValid()) {
-        return "err: invalid code";
-      } else {
-        return "OK %d".formatted(code.getSize());
-      }
+      return "OK %d".formatted(code.getSize());
     } catch (RuntimeException e) {
       return "fail: " + e.getMessage();
     }

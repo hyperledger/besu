@@ -99,14 +99,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       fail(frame);
     } else {
       account.incrementNonce();
-
-      if (!code.isValid()) {
-        fail(frame);
-      } else {
-        frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code);
-        frame.incrementRemainingGas(cost);
-      }
+      frame.decrementRemainingGas(cost);
+      spawnChildMessage(frame, code);
+      frame.incrementRemainingGas(cost);
     }
     return new OperationResult(cost, null, getPcIncrement());
   }
@@ -216,21 +211,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      Code outputCode =
-          (childFrame.getCreatedCode() != null)
-              ? childFrame.getCreatedCode()
-              : new Code(childFrame.getOutputData());
-      if (outputCode.isValid()) {
-        Address createdAddress = childFrame.getContractAddress();
-        frame.pushStackItem(Words.fromAddress(createdAddress));
-        frame.setReturnData(Bytes.EMPTY);
-        onSuccess(frame, createdAddress);
-      } else {
-        frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
-        frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(Bytes.EMPTY);
-        onInvalid(frame, outputCode);
-      }
+      Address createdAddress = childFrame.getContractAddress();
+      frame.pushStackItem(Words.fromAddress(createdAddress));
+      frame.setReturnData(Bytes.EMPTY);
+      onSuccess(frame, createdAddress);
     } else {
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(Bytes.EMPTY);
@@ -261,18 +245,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    */
   protected void onFailure(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    // no-op by default
-  }
-
-  /**
-   * Called when the child {@code CONTRACT_CREATION} message has completed successfully but the
-   * returned contract is invalid per chain rules, used to give library users a chance to do
-   * implementation specific logic.
-   *
-   * @param frame the frame running the successful operation
-   * @param invalidCode the code object containing the invalid code
-   */
-  protected void onInvalid(final MessageFrame frame, final Code invalidCode) {
     // no-op by default
   }
 }

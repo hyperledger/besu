@@ -94,11 +94,6 @@ public class SystemCallProcessor {
             inputData,
             accessLocationTracker);
 
-    if (!frame.getCode().isValid()) {
-      throw new RuntimeException(
-          "System call did not execute to completion - opcode invalid at address: " + callAddress);
-    }
-
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
     while (!stack.isEmpty()) {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);

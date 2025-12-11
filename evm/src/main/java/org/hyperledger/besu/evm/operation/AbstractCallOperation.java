@@ -228,11 +228,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Code code = getCode(evm, frame, contract);
 
-    // invalid code results in a quick exit
-    if (!code.isValid()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
-    }
-
     MessageFrame.Builder builder =
         MessageFrame.builder()
             .parentMessageFrame(frame)
