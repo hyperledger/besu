@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.datatypes.Address;
@@ -82,21 +83,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * to fill 100% of the block.
    */
   private static final double TRY_FILL_BLOCK = 1.0;
-
-  // if you change these gas limits, also update the tests in MergeCoordinatorTest
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
-  // testnets might have higher gas limits than mainnet and are incrementally updated
-  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
-  // next target gas limit TBD
-  // private static final long NEXT_STEP_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
-
-  private static final Map<BigInteger, Long> TESTNET_CHAIN_IDS =
-      Map.of(
-          BigInteger.valueOf(11155111), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Sepolia
-          BigInteger.valueOf(17000), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Holesky
-          BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
-          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
-          );
 
   /** The Mining parameters. */
   protected final MiningConfiguration miningConfiguration;
@@ -186,7 +172,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       miningParams.setCoinbase(Address.ZERO);
     }
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
+      getDefaultGasLimit(protocolSchedule).ifPresent(miningParams::setTargetGasLimit);
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningConfiguration = miningParams;
@@ -974,11 +960,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return job.cancelled.get();
   }
 
-  private long getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
+  private Optional<Long> getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
     return protocolSchedule
         .getChainId()
-        .map(TESTNET_CHAIN_IDS::get)
-        .orElse(DEFAULT_TARGET_GAS_LIMIT);
+        .flatMap(NetworkDefinition::fromChainId)
+        .map(NetworkDefinition::getTargetGasLimit);
   }
 
   /**
@@ -987,8 +973,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param chainId the chain id
    * @return default gas limit by chain id
    */
-  public static long getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
-    return chainId.map(TESTNET_CHAIN_IDS::get).orElse(DEFAULT_TARGET_GAS_LIMIT);
+  public static Optional<Long> getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
+    return chainId
+        .flatMap(NetworkDefinition::fromChainId)
+        .map(NetworkDefinition::getTargetGasLimit);
   }
 
   private static class BlockCreationTask {
