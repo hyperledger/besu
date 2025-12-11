@@ -165,8 +165,7 @@ class StateTestSubCommandTest {
         new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
     final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(stateTestSubCommand);
-    cmd.parseArgs(
-        StateTestSubCommandTest.class.getResource("excess-blob-gas.json").getPath());
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("excess-blob-gas.json").getPath());
     stateTestSubCommand.run();
 
     final String output = baos.toString(UTF_8);
