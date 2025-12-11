@@ -1018,14 +1018,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldReturnExpectedTargetGasLimitForMainnet() {
     final long targetGasLimitMainnet =
-        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_MAINNET));
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_MAINNET)).orElseThrow();
     assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT);
   }
 
   @Test
   public void shouldReturnExpectedTargetGasLimitForTestnet() {
     final long targetGasLimitMainnet =
-        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI));
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI)).orElseThrow();
     assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
   }
 

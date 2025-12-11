@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 
@@ -147,7 +146,7 @@ public class DebugTraceTransactionTest {
             any(Tracer.TraceableState.class),
             eq(blockHash),
             eq(transactionHash),
-            any(OperationTracer.class)))
+            any(DebugOperationTracer.class)))
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
