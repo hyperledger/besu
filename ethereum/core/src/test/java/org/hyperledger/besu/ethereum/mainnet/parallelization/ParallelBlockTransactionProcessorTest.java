@@ -53,6 +53,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -374,5 +375,47 @@ class ParallelBlockTransactionProcessorTest {
     final TransactionProcessingResult result = maybeResult.get();
     assertTrue(result.getPartialBlockAccessView().isPresent(), "Expected BAL view to be present");
     verify(beneficiaryChanges).setPostBalance(any(Wei.class));
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("processorVariants")
+  void testGetProcessingResultReturnsEmptyWhenProcessTransactionThrows(
+      final ProcessorVariant variant) {
+    final ProcessorTestFixture f = createFixture(variant);
+
+    when(f.transactionProcessor()
+            .processTransaction(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenThrow(new RuntimeException("boom"));
+
+    final Counter confirmedCounter = mock(Counter.class);
+    final Counter conflictCounter = mock(Counter.class);
+
+    f.processor()
+        .runAsyncBlock(
+            f.env().protocolContext(),
+            f.env().blockHeader(),
+            Collections.singletonList(f.transaction()),
+            MINING_BENEFICIARY,
+            (__, ___) -> Hash.EMPTY,
+            BLOB_GAS_PRICE,
+            sameThreadExecutor,
+            Optional.empty());
+
+    final Optional<TransactionProcessingResult> maybeResult =
+        f.processor()
+            .getProcessingResult(
+                f.env().worldState(),
+                MINING_BENEFICIARY,
+                f.transaction(),
+                0,
+                Optional.of(confirmedCounter),
+                Optional.of(conflictCounter));
+
+    assertTrue(
+        maybeResult.isEmpty(),
+        "Expected empty result when processTransaction throws, so block processor re-executes");
+
+    verify(confirmedCounter, times(0)).inc();
+    verify(conflictCounter, times(0)).inc();
   }
 }
