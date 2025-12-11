@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -226,11 +225,7 @@ public abstract class PathBasedWorldState extends BaseMutableWorldState
     try {
       final Hash calculatedRootHash =
           committer.computeRootAndCommit(this, stateUpdater, blockHeader, worldStateConfig);
-      final org.hyperledger.besu.ethereum.core.BlockHeader coreBlockHeader =
-          blockHeader == null
-              ? null
-              : org.hyperledger.besu.ethereum.core.BlockHeader.convertPluginBlockHeader(
-                  blockHeader, new MainnetBlockHeaderFunctions());
+
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
@@ -238,11 +233,10 @@ public abstract class PathBasedWorldState extends BaseMutableWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, coreBlockHeader, this);
+              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, blockHeader, this);
             };
         cacheWorldState =
-            () ->
-                cachedWorldStorageManager.addCachedLayer(coreBlockHeader, calculatedRootHash, this);
+            () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
