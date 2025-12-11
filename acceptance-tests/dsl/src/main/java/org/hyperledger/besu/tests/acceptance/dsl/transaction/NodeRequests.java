@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins.PluginsRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.util.Optional;
@@ -43,6 +44,7 @@ public class NodeRequests {
   private final MinerRequestFactory miner;
   private final TxPoolRequestFactory txPool;
   private final DebugRequestFactory debug;
+  private final PluginsRequestFactory plugins;
 
   public NodeRequests(
       final Web3jService web3jService,
@@ -56,7 +58,8 @@ public class NodeRequests {
       final TxPoolRequestFactory txPool,
       final DebugRequestFactory debug,
       final Optional<WebSocketService> websocketService,
-      final LoginRequestFactory login) {
+      final LoginRequestFactory login,
+      final PluginsRequestFactory plugins) {
     this.web3jService = web3jService;
     this.netEth = netEth;
     this.clique = clique;
@@ -69,6 +72,7 @@ public class NodeRequests {
     this.debug = debug;
     this.websocketService = websocketService;
     this.login = login;
+    this.plugins = plugins;
   }
 
   public Web3j eth() {
@@ -113,6 +117,10 @@ public class NodeRequests {
 
   public DebugRequestFactory debug() {
     return debug;
+  }
+
+  public PluginsRequestFactory plugins() {
+    return plugins;
   }
 
   public void shutdown() {
