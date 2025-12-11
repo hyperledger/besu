@@ -333,14 +333,4 @@ public record OpcodeInfo(
     OpcodeInfo.validOpcode("INVALID", 0xfe, 0, 0, 1),
     OpcodeInfo.validOpcode("SELFDESTRUCT", 0xff, 1, 0, 0),
   };
-
-  /**
-   * Gets the opcode info for a specific opcode (legacy alias)
-   *
-   * @param i opcode
-   * @return the OpcodeInfo object describing that opcode
-   */
-  public static OpcodeInfo getLegacyOpcode(final int i) {
-    return getOpcode(i);
-  }
 }

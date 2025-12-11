@@ -172,12 +172,11 @@ class ExtCodeCopyOperationTest {
       final long src,
       final long len,
       final Bytes expected,
-      final boolean eof,
       final long gasCost) {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
 
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), eof);
+    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator());
     MessageFrame frame =
         new TestMessageFrameBuilder()
             .worldUpdater(worldStateUpdater)
@@ -200,7 +199,7 @@ class ExtCodeCopyOperationTest {
     Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
     account.setCode(code);
 
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), false);
+    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator());
     MessageFrame frame =
         new TestMessageFrameBuilder()
             .worldUpdater(worldStateUpdater)
@@ -216,30 +215,5 @@ class ExtCodeCopyOperationTest {
     assertThat(frame.readMemory(0, 9)).isEqualTo(code);
     assertThat(frame.memoryWordSize()).isEqualTo(1);
     assertThat(result.getGasCost()).isEqualTo(106);
-  }
-
-  @Test
-  void testExtCodeEOFDirtyMemory() {
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
-    account.setCode(code);
-
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), true);
-    MessageFrame frame =
-        new TestMessageFrameBuilder()
-            .worldUpdater(worldStateUpdater)
-            .pushStackItem(Bytes.ofUnsignedLong(9))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(REQUESTED_ADDRESS)
-            .build();
-    frame.writeMemory(0, 15, Bytes.fromHexString("0x112233445566778899aabbccddeeff"));
-
-    Operation.OperationResult result = subject.execute(frame, evm);
-
-    assertThat(frame.readMemory(0, 16))
-        .isEqualTo(Bytes.fromHexString("0xEF0000000000000000aabbccddeeff00"));
-    assertThat(frame.memoryWordSize()).isEqualTo(1);
-    assertThat(result.getGasCost()).isEqualTo(2603);
   }
 }

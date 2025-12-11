@@ -30,32 +30,13 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Ext code copy operation. */
 public class ExtCodeCopyOperation extends AbstractOperation {
 
-  /** EOF prefix byte (0xEF). */
-  private static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
-
-  /** This is the "code" legacy contracts see when copying code from an EOF contract. */
-  public static final Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
-
-  private final boolean enableEIP3540;
-
   /**
    * Instantiates a new Ext code copy operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ExtCodeCopyOperation(final GasCalculator gasCalculator) {
-    this(gasCalculator, false);
-  }
-
-  /**
-   * Instantiates a new Ext code copy operation.
-   *
-   * @param gasCalculator the gas calculator
-   * @param enableEIP3540 enable EIP-3540 semantics (don't copy EOF)
-   */
-  public ExtCodeCopyOperation(final GasCalculator gasCalculator, final boolean enableEIP3540) {
     super(0x3C, "EXTCODECOPY", 4, 0, gasCalculator);
-    this.enableEIP3540 = enableEIP3540;
   }
 
   /**
@@ -97,11 +78,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final Account account = getAccount(address, frame);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
-    if (enableEIP3540 && code.size() >= 2 && code.get(0) == EOF_PREFIX_BYTE && code.get(1) == 0) {
-      frame.writeMemory(memOffset, sourceOffset, numBytes, EOF_REPLACEMENT_CODE);
-    } else {
-      frame.writeMemory(memOffset, sourceOffset, numBytes, code);
-    }
+    frame.writeMemory(memOffset, sourceOffset, numBytes, code);
 
     return new OperationResult(cost, null);
   }

@@ -392,7 +392,7 @@ public class Code {
    */
   public int printInstruction(final int offset, final PrintStream out) {
     int codeByte = bytes.get(offset) & 0xff;
-    OpcodeInfo info = OpcodeInfo.getLegacyOpcode(codeByte);
+    OpcodeInfo info = OpcodeInfo.getOpcode(codeByte);
     String push = "";
     String decimalPush = "";
     if (info.pcAdvance() > 1) {

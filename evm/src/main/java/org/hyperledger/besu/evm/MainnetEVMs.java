@@ -239,8 +239,8 @@ public class MainnetEVMs {
     registry.put(new CodeSizeOperation(gasCalculator));
     registry.put(new CodeCopyOperation(gasCalculator));
     registry.put(new GasPriceOperation(gasCalculator));
-    registry.put(new ExtCodeCopyOperation(gasCalculator, false));
-    registry.put(new ExtCodeSizeOperation(gasCalculator, false));
+    registry.put(new ExtCodeCopyOperation(gasCalculator));
+    registry.put(new ExtCodeSizeOperation(gasCalculator));
     registry.put(new BlockHashOperation(gasCalculator));
     registry.put(new CoinbaseOperation(gasCalculator));
     registry.put(new TimestampOperation(gasCalculator));
@@ -489,7 +489,7 @@ public class MainnetEVMs {
     registry.put(new SarOperation(gasCalculator));
     registry.put(new ShlOperation(gasCalculator));
     registry.put(new ShrOperation(gasCalculator));
-    registry.put(new ExtCodeHashOperation(gasCalculator, false));
+    registry.put(new ExtCodeHashOperation(gasCalculator));
   }
 
   /**
