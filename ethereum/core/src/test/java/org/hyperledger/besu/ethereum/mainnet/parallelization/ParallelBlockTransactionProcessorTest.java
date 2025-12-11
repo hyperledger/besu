@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -48,19 +49,21 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -377,45 +380,158 @@ class ParallelBlockTransactionProcessorTest {
     verify(beneficiaryChanges).setPostBalance(any(Wei.class));
   }
 
-  @ParameterizedTest(name = "{index}: {0}")
-  @MethodSource("processorVariants")
-  void testGetProcessingResultReturnsEmptyWhenProcessTransactionThrows(
-      final ProcessorVariant variant) {
-    final ProcessorTestFixture f = createFixture(variant);
+  @Test
+  void testPreStateSetup() {
+    final TestEnvironment env = createTestEnvironment();
 
-    when(f.transactionProcessor()
-            .processTransaction(any(), any(), any(), any(), any(), any(), any(), any(), any()))
-        .thenThrow(new RuntimeException("boom"));
+    final Address accountAddress =
+        Address.fromHexString("0x1000000000000000000000000000000000000001");
+    final StorageSlotKey slot1 = new StorageSlotKey(UInt256.ONE);
+    final StorageSlotKey slot2 = new StorageSlotKey(UInt256.valueOf(2));
 
-    final Counter confirmedCounter = mock(Counter.class);
-    final Counter conflictCounter = mock(Counter.class);
+    final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
-    f.processor()
-        .runAsyncBlock(
-            f.env().protocolContext(),
-            f.env().blockHeader(),
-            Collections.singletonList(f.transaction()),
-            MINING_BENEFICIARY,
-            (__, ___) -> Hash.EMPTY,
-            BLOB_GAS_PRICE,
-            sameThreadExecutor,
-            Optional.empty());
+    {
+      final PartialBlockAccessView.PartialBlockAccessViewBuilder p0 =
+          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(0);
+      final PartialBlockAccessView.AccountChangesBuilder a0 =
+          p0.getOrCreateAccountBuilder(accountAddress);
 
-    final Optional<TransactionProcessingResult> maybeResult =
-        f.processor()
-            .getProcessingResult(
-                f.env().worldState(),
-                MINING_BENEFICIARY,
-                f.transaction(),
-                0,
-                Optional.of(confirmedCounter),
-                Optional.of(conflictCounter));
+      a0.withPostBalance(Wei.of(100));
+      a0.withNonceChange(1L);
+      a0.withNewCode(Bytes.fromHexString("0xAA"));
+      a0.addStorageChange(slot1, UInt256.valueOf(1));
+      a0.addStorageChange(slot2, UInt256.valueOf(3));
 
-    assertTrue(
-        maybeResult.isEmpty(),
-        "Expected empty result when processTransaction throws, so block processor re-executes");
+      balBuilder.apply(p0.build());
+    }
+    {
+      final PartialBlockAccessView.PartialBlockAccessViewBuilder p1 =
+          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(1);
+      final PartialBlockAccessView.AccountChangesBuilder a1 =
+          p1.getOrCreateAccountBuilder(accountAddress);
 
-    verify(confirmedCounter, times(0)).inc();
-    verify(conflictCounter, times(0)).inc();
+      a1.withPostBalance(Wei.of(200));
+      a1.withNonceChange(2L);
+      a1.withNewCode(Bytes.fromHexString("0xBB"));
+      a1.addStorageChange(slot1, UInt256.valueOf(5));
+      a1.addStorageChange(slot2, null);
+
+      balBuilder.apply(p1.build());
+    }
+    {
+      final PartialBlockAccessView.PartialBlockAccessViewBuilder p2 =
+          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(2);
+      final PartialBlockAccessView.AccountChangesBuilder a2 =
+          p2.getOrCreateAccountBuilder(accountAddress);
+
+      a2.withPostBalance(Wei.of(300));
+      a2.withNonceChange(3L);
+      a2.withNewCode(Bytes.fromHexString("0xCC"));
+      a2.addStorageChange(slot1, UInt256.valueOf(7));
+      a2.addStorageChange(slot2, null);
+
+      balBuilder.apply(p2.build());
+    }
+
+    final BlockAccessList blockAccessList = balBuilder.build();
+
+    final MainnetTransactionProcessor transactionProcessor =
+        mock(MainnetTransactionProcessor.class);
+
+    final AtomicInteger locationCounter = new AtomicInteger(0);
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              final int transactionLocation = locationCounter.getAndIncrement();
+              final WorldUpdater worldUpdater = invocation.getArgument(0, WorldUpdater.class);
+              final Account account = worldUpdater.get(accountAddress);
+
+              assertTrue(account != null, "Expected account to exist in world updater");
+
+              if (transactionLocation == 0) {
+                // transactionLocation = 0 -> balIndex = 1 -> latest < 1 is tx0
+                assertTrue(account.getBalance().equals(Wei.of(100)), "tx0: expected balance 100");
+                assertTrue(account.getNonce() == 1L, "tx0: expected nonce 1");
+                assertTrue(
+                    account.getCode().equals(Bytes.fromHexString("0xAA")),
+                    "tx0: expected code 0xAA");
+                assertTrue(
+                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(1)),
+                    "tx0: expected slot1 = 1");
+                assertTrue(
+                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.valueOf(3)),
+                    "tx0: expected slot2 = 3");
+              } else if (transactionLocation == 1) {
+                // transactionLocation = 1 -> balIndex = 2 -> latest < 2 is tx1
+                assertTrue(account.getBalance().equals(Wei.of(200)), "tx1: expected balance 200");
+                assertTrue(account.getNonce() == 2L, "tx1: expected nonce 2");
+                assertTrue(
+                    account.getCode().equals(Bytes.fromHexString("0xBB")),
+                    "tx1: expected code 0xBB");
+                assertTrue(
+                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(5)),
+                    "tx1: expected slot1 = 5");
+                assertTrue(
+                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.ZERO),
+                    "tx1: expected slot2 = 0 (null -> ZERO)");
+              } else if (transactionLocation == 2) {
+                // transactionLocation = 2 -> balIndex = 3 -> latest < 3 is tx2
+                assertTrue(account.getBalance().equals(Wei.of(300)), "tx2: expected balance 300");
+                assertTrue(account.getNonce() == 3L, "tx2: expected nonce 3");
+                assertTrue(
+                    account.getCode().equals(Bytes.fromHexString("0xCC")),
+                    "tx2: expected code 0xCC");
+                assertTrue(
+                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(7)),
+                    "tx2: expected slot1 = 7");
+                assertTrue(
+                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.ZERO),
+                    "tx2: expected slot2 = 0 (null -> ZERO)");
+              } else {
+                throw new IllegalStateException(
+                    "Unexpected transactionLocation " + transactionLocation);
+              }
+
+              return TransactionProcessingResult.successful(
+                  Collections.emptyList(),
+                  0,
+                  0,
+                  Bytes.EMPTY,
+                  Optional.empty(),
+                  ValidationResult.valid());
+            });
+
+    final BalConcurrentTransactionProcessor processor =
+        new BalConcurrentTransactionProcessor(transactionProcessor, blockAccessList);
+
+    final Transaction tx0 = mockTransaction();
+    final Transaction tx1 = mockTransaction();
+    final Transaction tx2 = mockTransaction();
+
+    processor.runAsyncBlock(
+        env.protocolContext(),
+        env.blockHeader(),
+        java.util.List.of(tx0, tx1, tx2),
+        MINING_BENEFICIARY,
+        (__, ___) -> Hash.EMPTY,
+        BLOB_GAS_PRICE,
+        sameThreadExecutor,
+        Optional.empty());
+
+    final Transaction[] txs = new Transaction[] {tx0, tx1, tx2};
+    for (int i = 0; i < txs.length; i++) {
+      final Optional<TransactionProcessingResult> maybeResult =
+          processor.getProcessingResult(
+              env.worldState(), MINING_BENEFICIARY, txs[i], i, Optional.empty(), Optional.empty());
+
+      assertTrue(
+          maybeResult.isPresent(),
+          "Expected processing result for transactionLocation " + i + " to be present");
+      assertTrue(
+          maybeResult.get().isSuccessful(),
+          "Expected processing result for transactionLocation " + i + " to be successful");
+    }
   }
 }
