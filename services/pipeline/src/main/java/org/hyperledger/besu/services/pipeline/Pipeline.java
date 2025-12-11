@@ -143,7 +143,7 @@ public class Pipeline<I> {
             });
     overallFuture.exceptionally(
         error -> {
-            LOG.warn("Exception while running download for sync target", error);
+          LOG.warn("Exception while running download for sync target", error);
           if (ExceptionUtils.rootCause(error) instanceof CancellationException) {
             abort();
           }
