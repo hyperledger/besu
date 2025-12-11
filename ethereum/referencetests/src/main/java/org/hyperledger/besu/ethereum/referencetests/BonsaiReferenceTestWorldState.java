@@ -281,11 +281,11 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public synchronized void saveTrieLog(
         final PathBasedWorldStateUpdateAccumulator<?> localUpdater,
         final Hash forWorldStateRootHash,
-        final org.hyperledger.besu.ethereum.core.BlockHeader forBlockHeader,
+        final BlockHeader forBlockHeader,
         final PathBasedWorldState forWorldState) {
       // notify trie log added observers, synchronously
       TrieLog trieLog = trieLogFactory.create(localUpdater, forBlockHeader);
-      trieLogCache.put(forBlockHeader.getHash(), trieLogFactory.serialize(trieLog));
+      trieLogCache.put(forBlockHeader.getBlockHash(), trieLogFactory.serialize(trieLog));
       trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
     }
 

@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
@@ -68,7 +68,7 @@ public class TrieLogManager {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
-    if (rootWorldStateStorage.getTrieLog(forBlockHeader.getHash()).isEmpty()) {
+    if (rootWorldStateStorage.getTrieLog(forBlockHeader.getBlockHash()).isEmpty()) {
       final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
           forWorldState.getWorldStateStorage().updater();
       boolean success = false;
@@ -98,7 +98,7 @@ public class TrieLogManager {
       final BlockHeader blockHeader, final PathBasedWorldStateUpdateAccumulator<?> localUpdater) {
     LOG.atDebug()
         .setMessage("Adding layered world state for {}")
-        .addArgument(blockHeader::toLogString)
+        .addArgument(blockHeader::toString)
         .log();
     final TrieLog trieLog = trieLogFactory.create(localUpdater, blockHeader);
     trieLog.freeze();
@@ -112,13 +112,13 @@ public class TrieLogManager {
       final PathBasedWorldStateKeyValueStorage.Updater stateUpdater) {
     LOG.atDebug()
         .setMessage("Persisting trie log for block hash {} and world state root {}")
-        .addArgument(blockHeader::toLogString)
+        .addArgument(blockHeader::toString)
         .addArgument(worldStateRootHash::toHexString)
         .log();
 
     stateUpdater
         .getTrieLogStorageTransaction()
-        .put(blockHeader.getHash().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
+        .put(blockHeader.getBlockHash().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
   }
 
   public long getMaxLayersToLoad() {
@@ -172,7 +172,7 @@ public class TrieLogManager {
         return TrieLogManager.this
             .blockchain
             .getBlockHeader(blockNumber)
-            .map(BlockHeader::getHash)
+            .map(BlockHeader::getBlockHash)
             .flatMap(this::getRawTrieLogLayer);
       }
 
@@ -202,7 +202,7 @@ public class TrieLogManager {
         return TrieLogManager.this
             .blockchain
             .getBlockHeader(blockNumber)
-            .map(BlockHeader::getHash)
+            .map(BlockHeader::getBlockHash)
             .flatMap(TrieLogManager.this::getTrieLogLayer);
       }
 
