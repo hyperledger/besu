@@ -77,10 +77,15 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.metricsSystem = metricsSystem;
 
+    long ourChainHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
+    long peerChainEstimatedHeight = peer.chainState().getEstimatedHeight();
     maximumPossibleCommonAncestorNumber =
-        Math.min(
-            protocolContext.getBlockchain().getChainHeadBlockNumber(),
-            peer.chainState().getEstimatedHeight());
+        Math.min(ourChainHeadBlockNumber, peerChainEstimatedHeight);
+    LOG.info(
+        "maximumPossibleCommonAncestorNumber is {}. Our chain head = {}. Peer chain height estimate = {}",
+        maximumPossibleCommonAncestorNumber,
+        ourChainHeadBlockNumber,
+        peerChainEstimatedHeight);
     minimumPossibleCommonAncestorNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     commonAncestorCandidate =
         protocolContext.getBlockchain().getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
@@ -170,7 +175,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     final int skipInterval = initialQuery ? 0 : calculateSkipInterval(range, headerRequestSize);
     final int count =
         initialQuery ? headerRequestSize : calculateCount((double) range, skipInterval);
-    LOG.debug(
+    LOG.info(
         "Searching for common ancestor with {} between {} and {}",
         peer,
         minimumPossibleCommonAncestorNumber,
@@ -193,7 +198,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     final int skipInterval = initialQuery ? 0 : calculateSkipInterval(range, headerRequestSize);
     final int count =
         initialQuery ? headerRequestSize : calculateCount((double) range, skipInterval);
-    LOG.debug(
+    LOG.info(
         "Searching for common ancestor with {} between {} and {}",
         peer,
         minimumPossibleCommonAncestorNumber,
@@ -225,6 +230,7 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
 
   private CompletableFuture<Void> processHeaders(final List<BlockHeader> headers) {
     initialQuery = false;
+    LOG.info("Got headers for blocks {}", headers.stream().map(BlockHeader::getNumber).toList());
     if (headers.isEmpty()) {
       // Nothing to do
       return CompletableFuture.completedFuture(null);
@@ -236,6 +242,9 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
     // Means the insertion point is in the next header request.
     if (!maybeAncestorNumber.isPresent()) {
       maximumPossibleCommonAncestorNumber = headers.get(headers.size() - 1).getNumber() - 1L;
+      LOG.info(
+          "Didn't find any potential common ancestors, setting maximumPossibleCommonAncestorNumber to {}",
+          maximumPossibleCommonAncestorNumber);
       return CompletableFuture.completedFuture(null);
     }
     final int ancestorNumber = maybeAncestorNumber.getAsInt();
@@ -245,6 +254,10 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
       maximumPossibleCommonAncestorNumber = headers.get(ancestorNumber - 1).getNumber() - 1L;
     }
     minimumPossibleCommonAncestorNumber = headers.get(ancestorNumber).getNumber();
+    LOG.info(
+        "Found a common ancestor candidate. maximumPossibleCommonAncestorNumber now {}, minimumPossibleCommonAncestorNumber now {}",
+        maximumPossibleCommonAncestorNumber,
+        minimumPossibleCommonAncestorNumber);
 
     return CompletableFuture.completedFuture(null);
   }
