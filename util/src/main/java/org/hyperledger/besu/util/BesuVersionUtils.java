@@ -64,7 +64,6 @@ public final class BesuVersionUtils {
             "Partial or missing Besu version metadata, commit: {} version: {}",
             Optional.ofNullable(commit).orElse("NONE/null"),
             Optional.ofNullable(implVersion).orElse("NONE/null"));
-        implVersion = "junit-test";
       }
     }
     COMMIT = commit;
