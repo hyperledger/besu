@@ -40,7 +40,7 @@ class InternalClient implements FuzzingClient {
   public String differentialFuzz(final String data) {
     try {
       Bytes clientData = Bytes.fromHexString(data);
-      Code code = evm.wrapCode(clientData);
+      Code code = new Code(clientData);
       if (!code.isValid()) {
         return "err: invalid code";
       } else {

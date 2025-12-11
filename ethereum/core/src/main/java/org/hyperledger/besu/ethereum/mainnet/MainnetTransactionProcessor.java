@@ -342,7 +342,7 @@ public class MainnetTransactionProcessor {
         accessLocationTracker.ifPresent(t -> t.addTouchedAccount(contractAddress));
 
         final Bytes initCodeBytes = transaction.getPayload();
-        Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
+        Code code = new Code(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)

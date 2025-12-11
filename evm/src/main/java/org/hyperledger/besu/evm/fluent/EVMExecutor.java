@@ -124,7 +124,7 @@ public class EVMExecutor {
    */
   public Bytes execute(
       final Bytes codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
-    this.code = evmSpec.getEvm().wrapCode(codeBytes);
+    this.code = new Code(codeBytes);
     this.callData = inputData;
     this.ethValue = value;
     this.receiver = receiver;
@@ -331,7 +331,7 @@ public class EVMExecutor {
    * @return the evm executor
    */
   public EVMExecutor code(final Bytes codeBytes) {
-    this.code = evmSpec.getEvm().wrapCode(codeBytes);
+    this.code = new Code(codeBytes);
     return this;
   }
 

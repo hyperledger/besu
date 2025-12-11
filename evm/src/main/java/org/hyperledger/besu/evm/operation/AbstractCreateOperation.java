@@ -104,7 +104,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         fail(frame);
       } else {
         frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code, evm);
+        spawnChildMessage(frame, code);
         frame.incrementRemainingGas(cost);
       }
     }
@@ -161,7 +161,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(Bytes.EMPTY);
   }
 
-  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
+  private void spawnChildMessage(final MessageFrame parent, final Code code) {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
     final Address contractAddress = generateTargetContractAddress(parent, code);
@@ -184,7 +184,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .value(value)
             .apparentValue(value)
             .code(code)
-            .completer(child -> complete(parent, child, evm));
+            .completer(child -> complete(parent, child));
 
     if (parent.getEip7928AccessList().isPresent()) {
       builder.eip7928AccessList(parent.getEip7928AccessList().get());
@@ -206,7 +206,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     return Bytes.EMPTY;
   }
 
-  private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
+  private void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     frame.incrementRemainingGas(childFrame.getRemainingGas());
@@ -219,7 +219,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code outputCode =
           (childFrame.getCreatedCode() != null)
               ? childFrame.getCreatedCode()
-              : evm.wrapCodeForCreation(childFrame.getOutputData());
+              : new Code(childFrame.getOutputData());
       if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));

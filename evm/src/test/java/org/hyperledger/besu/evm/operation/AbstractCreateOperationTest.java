@@ -119,7 +119,7 @@ class AbstractCreateOperationTest {
       final long inputOffset = clampedToLong(frame.getStackItem(1));
       final long inputSize = clampedToLong(frame.getStackItem(2));
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      return evm.wrapCode(inputData);
+      return new Code(inputData);
     }
 
     @Override
@@ -152,7 +152,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.wrapCode(SIMPLE_CREATE))
+            .code(new Code(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup((__, ___) -> Hash.ZERO)

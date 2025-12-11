@@ -71,6 +71,6 @@ public class Create2Operation extends AbstractCreateOperation {
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
-    return evm.wrapCode(inputData);
+    return new Code(inputData);
   }
 }

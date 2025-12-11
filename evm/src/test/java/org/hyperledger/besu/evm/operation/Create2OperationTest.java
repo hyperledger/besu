@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -142,7 +143,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.wrapCode(codeBytes))
+            .code(new Code(codeBytes))
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup((__, ___) -> Hash.ZERO)
@@ -175,8 +176,7 @@ public class Create2OperationTest {
       final int ignoredExpectedGas) {
     setUp(sender, salt, code);
     final Address targetContractAddress =
-        operation.generateTargetContractAddress(
-            messageFrame, evm.wrapCode(Bytes.fromHexString(code)));
+        operation.generateTargetContractAddress(messageFrame, new Code(Bytes.fromHexString(code)));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
@@ -254,7 +254,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.wrapCode(SIMPLE_CREATE))
+            .code(new Code(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup((__, ___) -> Hash.ZERO)
