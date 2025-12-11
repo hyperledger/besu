@@ -240,8 +240,8 @@ public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
         BlockchainUtil.findHighestKnownBlockIndex(protocolContext.getBlockchain(), headers, false);
 
     // Means the insertion point is in the next header request.
-    if (!maybeAncestorNumber.isPresent()) {
-      maximumPossibleCommonAncestorNumber = headers.get(headers.size() - 1).getNumber() - 1L;
+    if (maybeAncestorNumber.isEmpty()) {
+      maximumPossibleCommonAncestorNumber = headers.getLast().getNumber() - 1L;
       LOG.info(
           "Didn't find any potential common ancestors, setting maximumPossibleCommonAncestorNumber to {}",
           maximumPossibleCommonAncestorNumber);
