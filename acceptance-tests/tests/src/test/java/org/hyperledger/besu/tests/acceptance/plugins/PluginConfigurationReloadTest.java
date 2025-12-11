@@ -68,26 +68,18 @@ public class PluginConfigurationReloadTest extends AcceptanceTestBase {
   }
 
   public void assertConfigReloadForPlugins(final int... pluginIds) {
-    // use await since the reload is done asynchronously and the file could take more that than the
-    // first check to appear
-    await()
-        .ignoreExceptions() // consider assertion failures as return false
-        .until(
-            () -> {
-              final var reloadConfFiles =
-                  pluginNode
-                      .homeDirectory()
-                      .resolve("plugins")
-                      .toFile()
-                      .listFiles((dir, name) -> name.startsWith("reloadConfiguration."));
+    final var reloadConfFiles =
+        pluginNode
+            .homeDirectory()
+            .resolve("plugins")
+            .toFile()
+            .listFiles((dir, name) -> name.startsWith("reloadConfiguration."));
 
-              assertThat(reloadConfFiles).hasSize(pluginIds.length);
+    assertThat(reloadConfFiles).hasSize(pluginIds.length);
 
-              final var foundFilenames = Arrays.stream(reloadConfFiles).map(File::getName).toList();
-              assertThat(foundFilenames)
-                  .containsExactlyInAnyOrderElementsOf(
-                      Arrays.stream(pluginIds).mapToObj(i -> "reloadConfiguration." + i).toList());
-              return true;
-            });
+    final var foundFilenames = Arrays.stream(reloadConfFiles).map(File::getName).toList();
+    assertThat(foundFilenames)
+        .containsExactlyInAnyOrderElementsOf(
+            Arrays.stream(pluginIds).mapToObj(i -> "reloadConfiguration." + i).toList());
   }
 }
