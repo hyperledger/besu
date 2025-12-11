@@ -142,6 +142,10 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
         final PathBasedWorldStateUpdateAccumulator<?> txAccumulator = ctx.transactionAccumulator();
         final TransactionProcessingResult result = ctx.transactionProcessingResult();
 
+        if (!result.isSuccessful()) {
+          return Optional.empty();
+        }
+
         blockAccumulator.importStateChangesFromSource(txAccumulator);
 
         confirmedParallelizedTransactionCounter.ifPresent(Counter::inc);
