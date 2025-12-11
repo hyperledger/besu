@@ -96,7 +96,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_PARAM_COUNT:
         case INVALID_PAYLOAD_ID_PARAMS:
         case INVALID_PENDING_TRANSACTIONS_PARAMS:
-        case INVAlID_PLUGIN_NAME_PARAMS:
+        case INVALID_PLUGIN_NAME_PARAMS:
         case INVALID_POSITION_PARAMS:
         case INVALID_POW_HASH_PARAMS:
         case INVALID_PRIVATE_FROM_PARAMS:
