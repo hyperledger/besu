@@ -1747,7 +1747,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     assertThat(nonceResult.length() == 18 && nonceResult.startsWith("0x")).isTrue();
     assertThat(Long.parseUnsignedLong(nonceResult.substring(2), 16)).isEqualTo(header.getNonce());
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(header.getHash());
-    assertThat(Bytes.fromHexString(result.getString("logsBloom"))).isEqualTo(header.getLogsBloom());
+    assertThat(Bytes.fromHexString(result.getString("logsBloom")))
+        .isEqualTo(header.getLogsBloom().getBytes());
   }
 
   private int hexStringToInt(final String hexString) {

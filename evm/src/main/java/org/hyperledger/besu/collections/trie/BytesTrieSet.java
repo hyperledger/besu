@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.collections.trie;
 
+import org.hyperledger.besu.datatypes.BytesHolder;
+
 import java.util.AbstractSet;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -22,16 +24,14 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * A Bytes optimized set that stores values in a trie by byte
  *
  * @param <E> Type of trie
  */
-public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
+public class BytesTrieSet<E extends BytesHolder> extends AbstractSet<E> {
 
-  record Node<E extends Bytes>(byte[] leafArray, E leafObject, Node<E>[] children) {
+  record Node<E extends BytesHolder>(byte[] leafArray, E leafObject, Node<E>[] children) {
 
     @Override
     public boolean equals(final Object o) {
@@ -57,7 +57,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
       if (leafObject == null) sb.append("null");
       else {
         sb.append('[');
-        sb.append(leafObject.toHexString());
+        sb.append(leafObject.getBytes().toHexString());
         sb.append(']');
       }
       sb.append(", children=");
@@ -91,7 +91,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
     this.byteLength = byteLength;
   }
 
-  static class NodeWalker<E extends Bytes> {
+  static class NodeWalker<E extends BytesHolder> {
     final Node<E> node;
     int lastRead;
 
@@ -178,11 +178,11 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
 
   @Override
   public boolean contains(final Object o) {
-    if (!(o instanceof Bytes bytes)) {
+    if (!(o instanceof BytesHolder bytes)) {
       throw new IllegalArgumentException(
           "Expected Bytes, got " + (o == null ? "null" : o.getClass().getName()));
     }
-    byte[] array = bytes.toArrayUnsafe();
+    byte[] array = bytes.getBytes().toArrayUnsafe();
     if (array.length != byteLength) {
       throw new IllegalArgumentException(
           "Byte array is size " + array.length + " but set is size " + byteLength);
@@ -205,11 +205,11 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
   @Override
   public boolean remove(final Object o) {
     // Two base cases, size==0 and size==1;
-    if (!(o instanceof Bytes bytes)) {
+    if (!(o instanceof BytesHolder bytes)) {
       throw new IllegalArgumentException(
           "Expected Bytes, got " + (o == null ? "null" : o.getClass().getName()));
     }
-    byte[] array = bytes.toArrayUnsafe();
+    byte[] array = bytes.getBytes().toArrayUnsafe();
     if (array.length != byteLength) {
       throw new IllegalArgumentException(
           "Byte array is size " + array.length + " but set is size " + byteLength);
@@ -256,7 +256,7 @@ public class BytesTrieSet<E extends Bytes> extends AbstractSet<E> {
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public boolean add(final E bytes) {
-    byte[] array = bytes.toArrayUnsafe();
+    byte[] array = bytes.getBytes().toArrayUnsafe();
     if (array.length != byteLength) {
       throw new IllegalArgumentException(
           "Byte array is size " + array.length + " but set is size " + byteLength);

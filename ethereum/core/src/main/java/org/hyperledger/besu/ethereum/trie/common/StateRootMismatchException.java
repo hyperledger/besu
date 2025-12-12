@@ -29,9 +29,9 @@ public class StateRootMismatchException extends RuntimeException {
   @Override
   public String getMessage() {
     return "World State Root does not match expected value, header "
-        + expectedRoot.toHexString()
+        + expectedRoot.getBytes().toHexString()
         + " calculated "
-        + actualRoot.toHexString();
+        + actualRoot.getBytes().toHexString();
   }
 
   public Hash getActualRoot() {

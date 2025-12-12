@@ -122,7 +122,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       if (!blobTransactionResult.isValid()) {
         LOG.debug(
             "Blob transaction {} validation failed: {}",
-            transaction.getHash().toHexString(),
+            transaction.getHash().getBytes().toHexString(),
             blobTransactionResult.getErrorMessage());
         return blobTransactionResult;
       }
@@ -247,7 +247,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
             TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
             String.format(
                 "tx max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
-                transaction.getSender().toHexString(),
+                transaction.getSender().getBytes().toHexString(),
                 transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
                 maybeBlobFee.get().toHumanReadableString()));
       }

@@ -1032,7 +1032,8 @@ public class BlockchainQueries {
                   return mapper.apply(ws);
                 }
               } catch (Exception ex) {
-                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+                LOG.error(
+                    "failed worldstate query for " + blockHash.getBytes().toShortHexString(), ex);
               }
               LOG.atDebug()
                   .setMessage("Failed to find worldstate for {}")

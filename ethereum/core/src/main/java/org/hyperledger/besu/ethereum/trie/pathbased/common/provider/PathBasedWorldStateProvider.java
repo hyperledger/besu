@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return cachedWorldStorageManager.contains(blockHash)
         || headWorldState.blockHash().equals(blockHash)
-        || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
+        || worldStateKeyValueStorage.isWorldStateAvailable(
+            Bytes32.wrap(rootHash.getBytes()), blockHash);
   }
 
   /**
@@ -327,7 +329,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
           throw re;
         }
         throw new MerkleTrieException(
-            "invalid", Optional.of(Address.ZERO), Hash.EMPTY, Bytes.EMPTY);
+            "invalid", Optional.of(Address.ZERO), Bytes32.wrap(Hash.EMPTY.getBytes()), Bytes.EMPTY);
       }
     }
   }
@@ -374,7 +376,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
                 ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
       }
     } catch (Exception ex) {
-      LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);
+      LOG.error(
+          "failed proof query for " + blockHeader.getBlockHash().getBytes().toShortHexString(), ex);
     }
     return Optional.empty();
   }

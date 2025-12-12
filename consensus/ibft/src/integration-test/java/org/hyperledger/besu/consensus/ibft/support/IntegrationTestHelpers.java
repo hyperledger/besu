@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 public class IntegrationTestHelpers {
 
   public static SignedData<CommitPayload> createSignedCommitPayload(
@@ -40,8 +42,10 @@ public class IntegrationTestHelpers {
 
     final SECPSignature commitSeal =
         nodeKey.sign(
-            new BftBlockHashing(ibftExtraDataEncoder)
-                .calculateDataHashForCommittedSeal(block.getHeader(), extraData));
+            Bytes32.wrap(
+                new BftBlockHashing(ibftExtraDataEncoder)
+                    .calculateDataHashForCommittedSeal(block.getHeader(), extraData)
+                    .getBytes()));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 

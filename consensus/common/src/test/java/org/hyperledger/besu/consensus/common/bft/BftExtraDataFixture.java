@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class BftExtraDataFixture {
 
@@ -119,7 +120,9 @@ public class BftExtraDataFixture {
                           .calculateDataHashForCommittedSeal(
                               header, extraDataForCommittedSealCalculation);
 
-                  return committerNodeKeys.get(i).sign(headerHashForCommitters);
+                  return committerNodeKeys
+                      .get(i)
+                      .sign(Bytes32.wrap(headerHashForCommitters.getBytes()));
                 })
             .collect(Collectors.toList());
 

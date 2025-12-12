@@ -118,7 +118,9 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION,
+            method.getName(),
+            new Object[] {transaction.getHash().getBytes().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -144,7 +146,9 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION,
+            method.getName(),
+            new Object[] {transaction.getHash().getBytes().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =

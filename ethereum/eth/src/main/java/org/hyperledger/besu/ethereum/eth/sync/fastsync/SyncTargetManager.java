@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,6 +200,6 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       }
     }
     return !worldStateStorageCoordinator.isWorldStateAvailable(
-        pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());
+        Bytes32.wrap(pivotBlockHeader.getStateRoot().getBytes()), pivotBlockHeader.getBlockHash());
   }
 }

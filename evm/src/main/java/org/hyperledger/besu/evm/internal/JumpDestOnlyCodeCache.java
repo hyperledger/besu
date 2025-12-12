@@ -32,7 +32,7 @@ public class JumpDestOnlyCodeCache {
   static class CodeScale implements Weigher<Hash, Code> {
     @Override
     public int weigh(final Hash key, final Code code) {
-      return ((code.getSize() * 9 + 7) / 8) + key.size();
+      return ((code.getSize() * 9 + 7) / 8) + key.getBytes().size();
     }
   }
 

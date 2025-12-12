@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +40,9 @@ public class SnapCommitVisitorTest {
     for (int i = 0; i < 16; i++) {
       children.add(
           new StoredNode<>(
-              storedNodeFactory, Bytes.concatenate(Bytes.of(0x00), Bytes.of(i)), Hash.ZERO));
+              storedNodeFactory,
+              Bytes.concatenate(Bytes.of(0x00), Bytes.of(i)),
+              Bytes32.wrap(Hash.ZERO.getBytes())));
     }
     final BranchNode<Bytes> validBranchNode =
         new BranchNode<>(
@@ -64,7 +67,9 @@ public class SnapCommitVisitorTest {
     for (int i = 0; i < 16; i++) {
       children.add(
           new StoredNode<>(
-              storedNodeFactory, Bytes.concatenate(Bytes.of(0x01), Bytes.of(i)), Hash.ZERO));
+              storedNodeFactory,
+              Bytes.concatenate(Bytes.of(0x01), Bytes.of(i)),
+              Bytes32.wrap(Hash.ZERO.getBytes())));
     }
 
     final BranchNode<Bytes> invalidBranchNode =
@@ -79,8 +84,10 @@ public class SnapCommitVisitorTest {
         new SnapCommitVisitor<>(
             (location, hash, value) -> {},
             RangeManager.MIN_RANGE,
-            Hash.fromHexString(
-                "0x1effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+            Bytes32.wrap(
+                Hash.fromHexString(
+                        "0x1effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+                    .getBytes()));
     Assertions.assertThat(invalidBranchNode.isHealNeeded()).isFalse();
     snapCommitVisitor.visit(invalidBranchNode.getLocation().get(), invalidBranchNode);
     Assertions.assertThat(invalidBranchNode.isHealNeeded()).isTrue();
@@ -93,7 +100,10 @@ public class SnapCommitVisitorTest {
         new ExtensionNode<>(
             Bytes.of(0x00),
             Bytes.of(0x01),
-            new StoredNode<>(storedNodeFactory, Bytes.of((byte) 0x00, (byte) 0x01), Hash.ZERO),
+            new StoredNode<>(
+                storedNodeFactory,
+                Bytes.of((byte) 0x00, (byte) 0x01),
+                Bytes32.wrap(Hash.ZERO.getBytes())),
             storedNodeFactory);
     validExtensionNode.markDirty();
     final SnapCommitVisitor<Bytes> snapCommitVisitor =
@@ -111,15 +121,20 @@ public class SnapCommitVisitorTest {
         new ExtensionNode<>(
             Bytes.of(0x00),
             Bytes.of(0x03),
-            new StoredNode<>(storedNodeFactory, Bytes.of((byte) 0x00, (byte) 0x03), Hash.ZERO),
+            new StoredNode<>(
+                storedNodeFactory,
+                Bytes.of((byte) 0x00, (byte) 0x03),
+                Bytes32.wrap(Hash.ZERO.getBytes())),
             storedNodeFactory);
     inValidExtensionNode.markDirty();
     final SnapCommitVisitor<Bytes> snapCommitVisitor =
         new SnapCommitVisitor<>(
             (location, hash, value) -> {},
             RangeManager.MIN_RANGE,
-            Hash.fromHexString(
-                "0x02ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+            Bytes32.wrap(
+                Hash.fromHexString(
+                        "0x02ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+                    .getBytes()));
     Assertions.assertThat(inValidExtensionNode.isHealNeeded()).isFalse();
     snapCommitVisitor.visit(inValidExtensionNode.getLocation().get(), inValidExtensionNode);
     Assertions.assertThat(inValidExtensionNode.isHealNeeded()).isTrue();

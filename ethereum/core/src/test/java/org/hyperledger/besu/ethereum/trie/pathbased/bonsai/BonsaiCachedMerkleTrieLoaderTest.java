@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -83,26 +84,29 @@ class BonsaiCachedMerkleTrieLoaderTest {
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(emptyStorage, location, hash),
+            (Bytes location, Bytes32 hash) ->
+                merkleTrieLoader.getAccountStateTrieNode(
+                    emptyStorage, location, Bytes32.wrap(hash)),
             trie.getRootHash(),
             Function.identity(),
             Function.identity());
 
     final Hash hashAccountZero = accounts.get(0).addressHash();
-    assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
+    assertThat(cachedTrie.get(hashAccountZero.getBytes()))
+        .isEqualTo(trie.get(hashAccountZero.getBytes()));
   }
 
   @Test
   void shouldAddStorageNodesInCacheDuringPreload() {
     final Hash hashAccountZero = accounts.get(0).addressHash();
     final PmtStateTrieAccountValue stateTrieAccountValue =
-        PmtStateTrieAccountValue.readFrom(RLP.input(trie.get(hashAccountZero).orElseThrow()));
+        PmtStateTrieAccountValue.readFrom(
+            RLP.input(trie.get(hashAccountZero.getBytes()).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
+            (Bytes location, Bytes32 hash) ->
                 inMemoryWorldState.getAccountStorageTrieNode(hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
     final List<Bytes> originalSlots = new ArrayList<>();
@@ -124,10 +128,10 @@ class BonsaiCachedMerkleTrieLoaderTest {
             DataStorageConfiguration.DEFAULT_CONFIG);
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
+            (Bytes location, Bytes32 hash) ->
                 merkleTrieLoader.getAccountStorageTrieNode(
-                    emptyStorage, hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
+                    emptyStorage, hashAccountZero, location, Bytes32.wrap(hash)),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
     cachedTrie.visitLeafs(
@@ -142,25 +146,28 @@ class BonsaiCachedMerkleTrieLoaderTest {
   void shouldFallbackWhenAccountNodesIsNotInCache() {
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
-                merkleTrieLoader.getAccountStateTrieNode(inMemoryWorldState, location, hash),
+            (Bytes location, Bytes32 hash) ->
+                merkleTrieLoader.getAccountStateTrieNode(
+                    inMemoryWorldState, location, Bytes32.wrap(hash)),
             trie.getRootHash(),
             Function.identity(),
             Function.identity());
     final Hash hashAccountZero = accounts.get(0).addressHash();
-    assertThat(cachedTrie.get(hashAccountZero)).isEqualTo(trie.get(hashAccountZero));
+    assertThat(cachedTrie.get(hashAccountZero.getBytes()))
+        .isEqualTo(trie.get(hashAccountZero.getBytes()));
   }
 
   @Test
   void shouldFallbackWhenStorageNodesIsNotInCache() {
     final Hash hashAccountZero = accounts.get(0).addressHash();
     final PmtStateTrieAccountValue stateTrieAccountValue =
-        PmtStateTrieAccountValue.readFrom(RLP.input(trie.get(hashAccountZero).orElseThrow()));
+        PmtStateTrieAccountValue.readFrom(
+            RLP.input(trie.get(hashAccountZero.getBytes()).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
+            (Bytes location, Bytes32 hash) ->
                 inMemoryWorldState.getAccountStorageTrieNode(hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
     final List<Bytes> originalSlots = new ArrayList<>();
@@ -173,10 +180,10 @@ class BonsaiCachedMerkleTrieLoaderTest {
     final List<Bytes> cachedSlots = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
+            (Bytes location, Bytes32 hash) ->
                 merkleTrieLoader.getAccountStorageTrieNode(
-                    inMemoryWorldState, hashAccountZero, location, hash),
-            stateTrieAccountValue.getStorageRoot(),
+                    inMemoryWorldState, hashAccountZero, location, Bytes32.wrap(hash)),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
     cachedTrie.visitLeafs(

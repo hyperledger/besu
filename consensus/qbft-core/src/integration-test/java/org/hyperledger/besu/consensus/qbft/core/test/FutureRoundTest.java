@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class FutureRoundTest {
@@ -107,7 +108,10 @@ public class FutureRoundTest {
     final QbftBlock commitBlock =
         createCommitBlockFromProposalBlock(futureBlock, futureRoundId.getRoundNumber());
     final SECPSignature commitSeal =
-        context.getLocalNodeParams().getNodeKey().sign(commitBlock.getHash());
+        context
+            .getLocalNodeParams()
+            .getNodeKey()
+            .sign(Bytes32.wrap(commitBlock.getHash().getBytes()));
     final Commit expectedCommit =
         localNodeMessageFactory.createCommit(futureRoundId, futureBlock.getHash(), commitSeal);
     peers.verifyMessagesReceived(expectedCommit);

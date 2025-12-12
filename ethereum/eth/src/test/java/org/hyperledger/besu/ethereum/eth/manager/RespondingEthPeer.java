@@ -144,7 +144,7 @@ public class RespondingEthPeer {
             .networkId(BigInteger.ONE)
             .genesisHash(gen.hash())
             .bestHash(chainHeadHash)
-            .forkId(new ForkId(Hash.ZERO, 0));
+            .forkId(new ForkId(Hash.ZERO.getBytes(), 0));
     if (capability.getVersion() < EthProtocolVersion.V69) {
       statusMessageBuilder.totalDifficulty(totalDifficulty);
     } else if (EthProtocol.isEth69Compatible(capability)) {

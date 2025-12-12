@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TestHelpers {
 
@@ -44,7 +45,7 @@ public class TestHelpers {
         CliqueBlockHashing.calculateDataHashForProposerSeal(unsealedHeader, unsignedExtraData);
 
     final SECPSignature proposerSignature =
-        SignatureAlgorithmFactory.getInstance().sign(signingHash, signer);
+        SignatureAlgorithmFactory.getInstance().sign(Bytes32.wrap(signingHash.getBytes()), signer);
 
     final Bytes signedExtraData =
         new CliqueExtraData(

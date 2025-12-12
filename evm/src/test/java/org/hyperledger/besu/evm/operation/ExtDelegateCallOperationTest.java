@@ -64,7 +64,7 @@ public class ExtDelegateCallOperationTest {
             100,
             99,
             ExceptionalHaltReason.INSUFFICIENT_GAS,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             true,
             true),
         Arguments.of(
@@ -94,15 +94,15 @@ public class ExtDelegateCallOperationTest {
             AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM,
             true,
             false),
-        Arguments.of("gas", 64000, 59000, 58900, null, CONTRACT_ADDRESS, true, true),
-        Arguments.of("gas", 384100, 378100, 378000, null, CONTRACT_ADDRESS, true, true),
+        Arguments.of("gas", 64000, 59000, 58900, null, CONTRACT_ADDRESS.getBytes(), true, true),
+        Arguments.of("gas", 384100, 378100, 378000, null, CONTRACT_ADDRESS.getBytes(), true, true),
         Arguments.of(
             "Invalid code",
             384100,
             100,
             384100,
             ExceptionalHaltReason.INVALID_CODE,
-            CONTRACT_ADDRESS,
+            CONTRACT_ADDRESS.getBytes(),
             false,
             true));
   }
@@ -124,10 +124,10 @@ public class ExtDelegateCallOperationTest {
         new TestMessageFrameBuilder()
             .code(SIMPLE_EOF)
             .initialGas(parentGas)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     if (warmAddress) {
@@ -155,7 +155,7 @@ public class ExtDelegateCallOperationTest {
 
   static Iterable<Arguments> delegateData() {
     return List.of(
-        Arguments.of("EOF", 40000, 35000, 34900L, null, CONTRACT_ADDRESS),
+        Arguments.of("EOF", 40000, 35000, 34900L, null, CONTRACT_ADDRESS.getBytes()),
         Arguments.of(
             "Legacy", 40000, 100, 40000, null, AbstractExtCallOperation.EOF1_EXCEPTION_STACK_ITEM),
         Arguments.of(
@@ -185,10 +185,10 @@ public class ExtDelegateCallOperationTest {
         new TestMessageFrameBuilder()
             .code(SIMPLE_EOF)
             .initialGas(parentGas)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
@@ -231,10 +231,10 @@ public class ExtDelegateCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(400000)
             .code(SIMPLE_EOF)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
@@ -270,11 +270,11 @@ public class ExtDelegateCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(400000)
             .code(LEGACY_CODE)
-            .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
+            .pushStackItem(CONTRACT_ADDRESS.getBytes()) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(CONTRACT_ADDRESS)
+            .pushStackItem(CONTRACT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);

@@ -70,7 +70,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
             "Block processing error: ommer block number {} more than {} generations. Block {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
-            header.getHash().toHexString());
+            header.getHash().getBytes().toHexString());
         return false;
       }
 

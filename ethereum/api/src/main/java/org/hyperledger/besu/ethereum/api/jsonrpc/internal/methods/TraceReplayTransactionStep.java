@@ -53,7 +53,7 @@ public class TraceReplayTransactionStep
         .ifPresent(revertReason -> builder.revertReason(revertReason.toHexString()));
 
     builder.output(transactionTrace.getResult().getOutput().toString());
-    builder.transactionHash(transactionTrace.getTransaction().getHash().toHexString());
+    builder.transactionHash(transactionTrace.getTransaction().getHash().getBytes().toHexString());
 
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       new StateTraceGenerator()

@@ -55,7 +55,7 @@ class GenesisConfigTest {
             config
                 .streamAllocations()
                 .map(GenesisAccount::address)
-                .map(Address::toUnprefixedHexString))
+                .map(a -> a.getBytes().toUnprefixedHexString()))
         .contains(
             "000d836201318ec6899a67540690382780743280",
             "001762430ea9c3a26e5749afdb70da5f78ddbb8c",
@@ -72,7 +72,7 @@ class GenesisConfigTest {
             config
                 .streamAllocations()
                 .map(GenesisAccount::address)
-                .map(Address::toUnprefixedHexString))
+                .map(a -> a.getBytes().toUnprefixedHexString()))
         .contains(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",
@@ -328,7 +328,7 @@ class GenesisConfigTest {
             .streamAllocations()
             .collect(Collectors.toMap(GenesisAccount::address, Function.identity()));
     assertThat(allocations.keySet())
-        .map(Address::toUnprefixedHexString)
+        .map(addr -> addr.getBytes().toUnprefixedHexString())
         .containsOnly(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",

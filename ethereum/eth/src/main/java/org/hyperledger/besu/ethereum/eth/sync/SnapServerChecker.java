@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +80,11 @@ public class SnapServerChecker {
   public CompletableFuture<AbstractPeerTask.PeerTaskResult<AccountRangeMessage.AccountRangeData>>
       getAccountRangeFromPeer(final EthPeer peer, final BlockHeader header) {
     return GetAccountRangeFromPeerTask.forAccountRange(
-            ethContext, Hash.ZERO, Hash.ZERO, header, metricsSystem)
+            ethContext,
+            Bytes32.wrap(Hash.ZERO.getBytes()),
+            Bytes32.wrap(Hash.ZERO.getBytes()),
+            header,
+            metricsSystem)
         .assignPeer(peer)
         .run();
   }

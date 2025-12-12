@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -129,7 +130,7 @@ public class FastWorldDownloadStateTest {
             result ->
                 assertThat(
                         worldStateStorageCoordinator.getAccountStateTrieNode(
-                            Bytes.EMPTY, ROOT_NODE_HASH))
+                            Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(header);
@@ -148,7 +149,9 @@ public class FastWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }

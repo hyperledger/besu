@@ -98,8 +98,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final Bytes32 endStorageRange) {
     this(
         rootHash,
-        accountHash,
-        accountHash,
+        Bytes32.wrap(accountHash.getBytes()),
+        Bytes32.wrap(accountHash.getBytes()),
         Optional.of(startStorageRange),
         Optional.of(endStorageRange));
   }
@@ -159,7 +159,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final ArrayDeque<Bytes> proofs) {
     if (!accounts.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
-          startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
+          startKeyHash, endKeyHash, Bytes32.wrap(getRootHash().getBytes()), proofs, accounts)) {
         // this happens on repivot and on bad proofs
         LOG.atTrace()
             .setMessage("invalid range proof received for account range {} {}")
@@ -194,7 +194,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
     // new request is added if the response does not match all the requested range
-    findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
+    findNewBeginElementInRange(
+            Bytes32.wrap(getRootHash().getBytes()),
+            taskElement.proofs(),
+            taskElement.keys(),
+            endKeyHash)
         .ifPresentOrElse(
             missingRightElement -> {
               downloadState
@@ -217,13 +221,16 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             createStorageRangeDataRequest(
                 getRootHash(),
                 account.getKey(),
-                accountValue.getStorageRoot(),
+                Bytes32.wrap(accountValue.getStorageRoot().getBytes()),
                 startStorageRange.orElse(MIN_RANGE),
                 endStorageRange.orElse(MAX_RANGE)));
       }
       if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
         childRequests.add(
-            createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
+            createBytecodeRequest(
+                account.getKey(),
+                getRootHash(),
+                Bytes32.wrap(accountValue.getCodeHash().getBytes())));
       }
     }
     return childRequests.stream();
@@ -253,7 +260,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         out -> {
           out.startList();
           out.writeByte(getRequestType().getValue());
-          out.writeBytes(getRootHash());
+          out.writeBytes(getRootHash().getBytes());
           out.writeBytes(getStartKeyHash());
           out.writeBytes(getEndKeyHash());
           out.endList();

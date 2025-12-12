@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class Util {
@@ -41,7 +42,7 @@ public class Util {
    */
   public static Address signatureToAddress(final SECPSignature seal, final Hash dataHash) {
     return SignatureAlgorithmFactory.getInstance()
-        .recoverPublicKeyFromSignature(dataHash, seal)
+        .recoverPublicKeyFromSignature(Bytes32.wrap(dataHash.getBytes()), seal)
         .map(Util::publicKeyToAddress)
         .orElse(null);
   }
@@ -51,7 +52,7 @@ public class Util {
   }
 
   public static Address publicKeyToAddress(final Bytes publicKeyBytes) {
-    return Address.extract(Hash.hash(publicKeyBytes));
+    return Address.extract(Bytes32.wrap(Hash.hash(publicKeyBytes).getBytes()));
   }
 
   /**

@@ -64,8 +64,7 @@ public class LogAdapter extends AdapterBase {
    * @return a list of topics of the log.
    */
   public List<LogTopic> getTopics() {
-    final List<LogTopic> topics = logWithMetadata.getTopics();
-    return new ArrayList<>(topics);
+    return new ArrayList<>(logWithMetadata.getTopics());
   }
 
   /**

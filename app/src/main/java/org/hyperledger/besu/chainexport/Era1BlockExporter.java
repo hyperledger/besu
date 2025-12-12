@@ -130,7 +130,8 @@ public class Era1BlockExporter {
                       .ifPresent(
                           (difficulty) -> {
                             difficultiesForFile.put(block, difficulty);
-                            accumulator.addBlock(block.getHash(), difficulty.toUInt256());
+                            accumulator.addBlock(
+                                Bytes32.wrap(block.getHash().getBytes()), difficulty.toUInt256());
                           });
                 });
       }

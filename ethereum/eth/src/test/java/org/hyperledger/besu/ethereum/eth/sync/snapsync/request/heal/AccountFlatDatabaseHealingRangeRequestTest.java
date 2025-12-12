@@ -86,7 +86,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -97,12 +97,12 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.ZERO);
     proofs.addAll(
         proofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
@@ -158,7 +158,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -169,7 +169,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Create a request for healing the flat database with no more accounts
     final AccountFlatDatabaseHealingRangeRequest request =
@@ -205,7 +205,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, 10, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -216,12 +216,12 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.ZERO);
     proofs.addAll(
         proofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
@@ -266,7 +266,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     // Create a collector to gather account entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -277,12 +277,12 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.ZERO);
     proofs.addAll(
         proofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));

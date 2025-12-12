@@ -214,7 +214,8 @@ public class StateBackupService {
       return;
     }
     final Optional<Bytes> worldStateRoot =
-        worldStateKeyValueStorage.getAccountStateTrieNode(header.get().getStateRoot());
+        worldStateKeyValueStorage.getAccountStateTrieNode(
+            Bytes32.wrap(header.get().getStateRoot().getBytes()));
     if (worldStateRoot.isEmpty()) {
       backupStatus.currentAccount = null;
       return;
@@ -227,7 +228,7 @@ public class StateBackupService {
       final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
-              header.get().getStateRoot(),
+              Bytes32.wrap(header.get().getStateRoot().getBytes()),
               Function.identity(),
               Function.identity());
       accountTrie.visitLeafs(this::visitAccount);
@@ -241,7 +242,7 @@ public class StateBackupService {
     }
 
     backupStatus.currentAccount = nodeKey;
-    final Bytes nodeValue = node.getValue().orElse(Hash.EMPTY);
+    final Bytes nodeValue = node.getValue().orElse(Hash.EMPTY.getBytes());
     final PmtStateTrieAccountValue account =
         PmtStateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
 
@@ -266,7 +267,7 @@ public class StateBackupService {
     final StoredMerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
-            account.getStorageRoot(),
+            Bytes32.wrap(account.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
     storageTrie.visitLeafs(

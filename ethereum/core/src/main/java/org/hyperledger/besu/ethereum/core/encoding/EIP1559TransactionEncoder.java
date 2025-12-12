@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder.writeAccessList;
 import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndRecoveryId;
 
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -31,7 +32,8 @@ public class EIP1559TransactionEncoder {
     out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
     out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeBytes(
+        transaction.getTo().map(BytesHolder::getBytes).map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     writeAccessList(out, transaction.getAccessList());

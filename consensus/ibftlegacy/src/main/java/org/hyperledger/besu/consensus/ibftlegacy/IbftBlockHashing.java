@@ -54,7 +54,7 @@ public class IbftBlockHashing {
         serializeHeader(header, () -> encodeExtraDataWithoutCommittedSeals(ibftExtraData, null));
 
     // Proposer hash is the hash of the hash
-    return Hash.hash(Hash.hash(headerRlp));
+    return Hash.hash(Hash.hash(headerRlp).getBytes());
   }
 
   /**
@@ -70,7 +70,7 @@ public class IbftBlockHashing {
       final BlockHeader header, final IbftLegacyExtraData ibftExtraData) {
     // The data signed by a committer is an array of [Hash, COMMIT_MSG_CODE]
     final Hash dataHash = Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
-    final Bytes seal = Bytes.wrap(dataHash, COMMIT_MSG_CODE);
+    final Bytes seal = Bytes.wrap(dataHash.getBytes(), COMMIT_MSG_CODE);
     return Hash.hash(seal);
   }
 
@@ -130,7 +130,7 @@ public class IbftBlockHashing {
     final BytesValueRLPOutput extraDataEncoding = new BytesValueRLPOutput();
     extraDataEncoding.startList();
     extraDataEncoding.writeList(
-        ibftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+        ibftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     if (proposerSeal != null) {
       extraDataEncoding.writeBytes(proposerSeal.encodedBytes());

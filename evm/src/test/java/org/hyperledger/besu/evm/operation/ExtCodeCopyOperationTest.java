@@ -184,7 +184,7 @@ class ExtCodeCopyOperationTest {
             .pushStackItem(Bytes.ofUnsignedLong(len))
             .pushStackItem(Bytes.ofUnsignedLong(src))
             .pushStackItem(Bytes.ofUnsignedLong(dst))
-            .pushStackItem(REQUESTED_ADDRESS)
+            .pushStackItem(REQUESTED_ADDRESS.getBytes())
             .build();
 
     Operation.OperationResult result = subject.execute(frame, evm);
@@ -207,7 +207,7 @@ class ExtCodeCopyOperationTest {
             .pushStackItem(Bytes.ofUnsignedLong(9))
             .pushStackItem(Bytes.ofUnsignedLong(0))
             .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(REQUESTED_ADDRESS)
+            .pushStackItem(REQUESTED_ADDRESS.getBytes())
             .build();
     frame.warmUpAddress(REQUESTED_ADDRESS);
 
@@ -231,7 +231,7 @@ class ExtCodeCopyOperationTest {
             .pushStackItem(Bytes.ofUnsignedLong(9))
             .pushStackItem(Bytes.ofUnsignedLong(0))
             .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(REQUESTED_ADDRESS)
+            .pushStackItem(REQUESTED_ADDRESS.getBytes())
             .build();
     frame.writeMemory(0, 15, Bytes.fromHexString("0x112233445566778899aabbccddeeff"));
 

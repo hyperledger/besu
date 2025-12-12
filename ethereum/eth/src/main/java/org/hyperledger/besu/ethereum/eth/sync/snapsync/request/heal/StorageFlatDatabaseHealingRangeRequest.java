@@ -91,7 +91,11 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               (key, value) -> {
                 final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
                     createStorageFlatHealingRangeRequest(
-                        getRootHash(), accountHash, storageRoot, key, value);
+                        getRootHash(),
+                        Bytes32.wrap(accountHash.getBytes()),
+                        storageRoot,
+                        key,
+                        value);
                 childRequests.add(storageRangeDataRequest);
               });
     }

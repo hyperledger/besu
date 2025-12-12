@@ -157,7 +157,7 @@ public class StateTraceGenerator {
 
     // Record only if something changed (or always if pre-state)
     if (isPreState || accountDiff.hasDifference()) {
-      stateDiff.put(accountAddress.toHexString(), accountDiff);
+      stateDiff.put(accountAddress.getBytes().toHexString(), accountDiff);
     }
   }
 
@@ -229,7 +229,7 @@ public class StateTraceGenerator {
                         createDiffNode(deletedAccount, null, StateTraceGenerator::codeHashAsHex),
                         createDiffNode(deletedAccount, null, StateTraceGenerator::nonceAsHex),
                         Collections.emptyMap());
-                stateDiff.put(accountAddress.toHexString(), accountDiff);
+                stateDiff.put(accountAddress.getBytes().toHexString(), accountDiff);
               }
             });
   }
@@ -246,7 +246,7 @@ public class StateTraceGenerator {
   }
 
   private static String codeHashAsHex(final Account account) {
-    return account.getCodeHash().toHexString();
+    return account.getCodeHash().getBytes().toHexString();
   }
 
   private static String codeAsHex(final Account account) {

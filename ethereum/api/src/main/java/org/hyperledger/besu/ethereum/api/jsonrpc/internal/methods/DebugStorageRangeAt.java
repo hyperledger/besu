@@ -177,7 +177,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       final TraceableState worldState) {
     final Account account = worldState.get(accountAddress);
     final NavigableMap<Bytes32, AccountStorageEntry> entries =
-        account.storageEntriesFrom(startKey, limit + 1);
+        account.storageEntriesFrom(Bytes32.wrap(startKey.getBytes()), limit + 1);
 
     Bytes32 nextKey = null;
     if (entries.size() == limit + 1) {

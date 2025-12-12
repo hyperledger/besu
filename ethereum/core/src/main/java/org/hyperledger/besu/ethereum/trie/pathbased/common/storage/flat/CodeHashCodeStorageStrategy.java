@@ -29,7 +29,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
   @Override
   public Optional<Bytes> getFlatCode(
       final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
-    return storage.get(CODE_STORAGE, codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    return storage.get(CODE_STORAGE, codeHash.getBytes().toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
       final Hash accountHash,
       final Hash codeHash,
       final Bytes code) {
-    transaction.put(CODE_STORAGE, codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+    transaction.put(CODE_STORAGE, codeHash.getBytes().toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   @Override
@@ -51,6 +51,6 @@ public class CodeHashCodeStorageStrategy implements CodeStorageStrategy {
 
   public static boolean isCodeHashValue(final byte[] key, final byte[] value) {
     final Hash valueHash = Hash.hash(Bytes.wrap(value));
-    return Bytes.wrap(key).equals(valueHash);
+    return Bytes.wrap(key).equals(valueHash.getBytes());
   }
 }

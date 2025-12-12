@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
@@ -78,8 +79,14 @@ public class PersistDataStepTest {
         persistDataStep.persist(tasks, blockHeader, downloadState);
     assertThat(result).isSameAs(tasks);
 
-    assertThat(worldStateKeyValueStorage.contains(withData.getData().getHash())).isTrue();
-    assertThat(worldStateKeyValueStorage.contains(withoutData.getData().getHash())).isFalse();
+    assertThat(
+            worldStateKeyValueStorage.contains(
+                Bytes32.wrap(withData.getData().getHash().getBytes())))
+        .isTrue();
+    assertThat(
+            worldStateKeyValueStorage.contains(
+                Bytes32.wrap(withoutData.getData().getHash().getBytes())))
+        .isFalse();
   }
 
   @Test
@@ -90,7 +97,10 @@ public class PersistDataStepTest {
         persistDataStep.persist(tasks, blockHeader, downloadState);
     assertThat(result).isSameAs(tasks);
 
-    assertThat(worldStateKeyValueStorage.contains(rootNode.getData().getHash())).isFalse();
+    assertThat(
+            worldStateKeyValueStorage.contains(
+                Bytes32.wrap(rootNode.getData().getHash().getBytes())))
+        .isFalse();
     verify(downloadState).setRootNodeData(rootNode.getData().getData());
   }
 
@@ -122,7 +132,9 @@ public class PersistDataStepTest {
   private void assertDataPersisted(final List<Task<NodeDataRequest>> tasks) {
     tasks.forEach(
         task ->
-            assertThat(worldStateKeyValueStorage.getNodeData(task.getData().getHash()))
+            assertThat(
+                    worldStateKeyValueStorage.getNodeData(
+                        Bytes32.wrap(task.getData().getHash().getBytes())))
                 .isEqualTo(Optional.of(task.getData().getData())));
   }
 }

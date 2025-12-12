@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
         getBonsaiWorldStateKeyValueStorage().updater();
     final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredMerklePatriciaTrie<Bytes, Bytes>(
             (l, h) -> {
               final Optional<Bytes> node =
                   getBonsaiWorldStateKeyValueStorage().getAccountStateTrieNode(l, h);
@@ -117,28 +118,28 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
               }
               return node;
             },
-            headWorldState.getWorldStateRootHash(),
+            Bytes32.wrap(headWorldState.getWorldStateRootHash().getBytes()),
             Function.identity(),
             Function.identity());
     try {
       accountTrie
-          .get(accountHash)
+          .get(accountHash.getBytes())
           .map(RLP::input)
           .map(PmtStateTrieAccountValue::readFrom)
           .ifPresent(
               account -> {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-                    new StoredMerklePatriciaTrie<>(
+                    new StoredMerklePatriciaTrie<Bytes, Bytes>(
                         (l, h) -> {
                           Optional<Bytes> node =
                               getBonsaiWorldStateKeyValueStorage()
                                   .getAccountStorageTrieNode(accountHash, l, h);
                           if (node.isPresent()) {
-                            keysToDelete.add(Bytes.concatenate(accountHash, l));
+                            keysToDelete.add(Bytes.concatenate(accountHash.getBytes(), l));
                           }
                           return node;
                         },
-                        account.getStorageRoot(),
+                        Bytes32.wrap(account.getStorageRoot().getBytes()),
                         Function.identity(),
                         Function.identity());
                 try {

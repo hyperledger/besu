@@ -89,7 +89,7 @@ public class BlockRangeUpdateMessage extends AbstractMessageData {
       out.startList();
       out.writeLongScalar(earliestBlockNumber);
       out.writeLongScalar(latestBlockNumber);
-      out.writeBytes(blockHash);
+      out.writeBytes(blockHash.getBytes());
       out.endList();
     }
 

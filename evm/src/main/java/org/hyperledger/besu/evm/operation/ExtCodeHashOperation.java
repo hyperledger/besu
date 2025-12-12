@@ -88,12 +88,12 @@ public class ExtCodeHashOperation extends AbstractOperation {
         if (enableEIP3540) {
           final Bytes code = account.getCode();
           if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-            frame.pushStackItem(EOF_REPLACEMENT_HASH);
+            frame.pushStackItem(EOF_REPLACEMENT_HASH.getBytes());
           } else {
-            frame.pushStackItem(account.getCodeHash());
+            frame.pushStackItem(account.getCodeHash().getBytes());
           }
         } else {
-          frame.pushStackItem(account.getCodeHash());
+          frame.pushStackItem(account.getCodeHash().getBytes());
         }
       }
       return new OperationResult(cost, null);

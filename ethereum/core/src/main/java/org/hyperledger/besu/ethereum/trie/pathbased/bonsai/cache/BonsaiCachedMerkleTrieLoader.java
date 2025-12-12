@@ -70,13 +70,13 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
               (location, hash) -> {
                 Optional<Bytes> node =
                     getAccountStateTrieNode(worldStateKeyValueStorage, location, hash);
-                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
+                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes).getBytes(), bytes));
                 return node;
               },
-              worldStateRootHash,
+              Bytes32.wrap(worldStateRootHash.getBytes()),
               Function.identity(),
               Function.identity());
-      accountTrie.get(account.addressHash());
+      accountTrie.get(account.addressHash().getBytes());
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
@@ -101,23 +101,24 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
       worldStateKeyValueStorage
-          .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
+          .getStateTrieNode(Bytes.concatenate(accountHash.getBytes(), Bytes.EMPTY))
           .ifPresent(
               storageRoot -> {
                 try {
                   final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-                      new StoredMerklePatriciaTrie<>(
+                      new StoredMerklePatriciaTrie<Bytes, Bytes>(
                           (location, hash) -> {
                             Optional<Bytes> node =
                                 getAccountStorageTrieNode(
                                     worldStateKeyValueStorage, accountHash, location, hash);
-                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
+                            node.ifPresent(
+                                bytes -> storageNodes.put(Hash.hash(bytes).getBytes(), bytes));
                             return node;
                           },
-                          Hash.hash(storageRoot),
+                          Bytes32.wrap(Hash.hash(storageRoot).getBytes()),
                           Function.identity(),
                           Function.identity());
-                  storageTrie.get(slotKey.getSlotHash());
+                  storageTrie.get(slotKey.getSlotHash().getBytes());
                 } catch (MerkleTrieException e) {
                   // ignore exception for the cache
                 }

@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -149,7 +150,7 @@ public class SpuriousBehaviourTest {
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
+    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Bytes32.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);

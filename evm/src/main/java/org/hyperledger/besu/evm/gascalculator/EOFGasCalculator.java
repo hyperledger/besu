@@ -30,7 +30,7 @@ public class EOFGasCalculator extends OsakaGasCalculator {
 
   /** Instantiates a new EOF Gas Calculator. */
   public EOFGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.getBytes().toArrayUnsafe()[19]);
   }
 
   /**

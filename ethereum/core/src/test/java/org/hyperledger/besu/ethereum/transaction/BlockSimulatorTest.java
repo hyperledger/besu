@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,8 +94,7 @@ public class BlockSimulatorTest {
             blockchain,
             0);
     blockHeader = BlockHeaderBuilder.createDefault().buildBlockHeader();
-    when(miningConfiguration.getCoinbase())
-        .thenReturn(Optional.ofNullable(Address.fromHexString("0x1")));
+    when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.fromHexString("0x1")));
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getMiningBeneficiaryCalculator())
@@ -230,7 +230,8 @@ public class BlockSimulatorTest {
     var expectedDifficulty = BigInteger.ONE;
     var expectedMixHashOrPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
     var expectedPrevRandao = Hash.hash(Bytes.fromHexString("0x01"));
-    var expectedParentBeaconBlockRoot = Hash.hash(Bytes.fromHexString("0x03"));
+    var expectedParentBeaconBlockRoot =
+        Bytes32.wrap(Hash.hash(Bytes.fromHexString("0x03")).getBytes());
     var expectedExtraData = Bytes.fromHexString("0x02");
 
     BlockOverrides blockOverrides =
@@ -241,7 +242,7 @@ public class BlockSimulatorTest {
             .baseFeePerGas(expectedBaseFeePerGas)
             .gasLimit(expectedGasLimit)
             .difficulty(expectedDifficulty)
-            .mixHashOrPrevRandao(expectedMixHashOrPrevRandao)
+            .mixHashOrPrevRandao(Bytes32.wrap(expectedMixHashOrPrevRandao.getBytes()))
             .extraData(expectedExtraData)
             .parentBeaconBlockRoot(expectedParentBeaconBlockRoot)
             .build();
@@ -257,7 +258,7 @@ public class BlockSimulatorTest {
     assertEquals(expectedGasLimit, result.getGasLimit());
     assertThat(result.getDifficulty()).isEqualTo(Difficulty.of(expectedDifficulty));
     assertEquals(expectedMixHashOrPrevRandao, result.getMixHash());
-    assertEquals(expectedPrevRandao, result.getPrevRandao().get());
+    assertEquals(expectedPrevRandao.getBytes(), result.getPrevRandao().get());
     assertEquals(expectedExtraData, result.getExtraData());
   }
 

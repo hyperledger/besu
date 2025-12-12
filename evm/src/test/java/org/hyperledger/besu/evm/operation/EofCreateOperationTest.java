@@ -84,7 +84,7 @@ class EofCreateOperationTest {
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
-    final Bytes calculatedTopic = log.getTopics().get(0);
+    final Bytes calculatedTopic = log.getTopics().get(0).getBytes();
     assertThat(calculatedTopic).isEqualTo(CALL_DATA);
   }
 
@@ -128,7 +128,7 @@ class EofCreateOperationTest {
     }
 
     final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).slice(0, 2).toHexString();
+    final String calculatedTopic = log.getTopics().get(0).getBytes().slice(0, 2).toHexString();
     assertThat(calculatedTopic).isEqualTo("0xc0de");
 
     assertThat(createFrame.getCreates())

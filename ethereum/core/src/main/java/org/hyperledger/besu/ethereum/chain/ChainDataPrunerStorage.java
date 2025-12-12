@@ -67,7 +67,7 @@ public class ChainDataPrunerStorage {
         transaction,
         FORK_BLOCKS_PREFIX,
         UInt256.valueOf(blockNumber),
-        RLP.encode(o -> o.writeList(forkBlocks, (val, out) -> out.writeBytes(val))));
+        RLP.encode(o -> o.writeList(forkBlocks, (val, out) -> out.writeBytes(val.getBytes()))));
   }
 
   public void removeForkBlocks(

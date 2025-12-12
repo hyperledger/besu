@@ -213,7 +213,7 @@ public class StateTraceResult {
 
       var fromCodeHash = accountDiff.getCodeHash().getFrom();
       if (fromCodeHash.isPresent()) {
-        if (!Hash.EMPTY.toHexString().equals(fromCodeHash.get())) {
+        if (!Hash.EMPTY.getBytes().toHexString().equals(fromCodeHash.get())) {
           gen.writeStringField("codeHash", fromCodeHash.get());
         }
       }
@@ -281,7 +281,7 @@ public class StateTraceResult {
       // Code hash
       if (accountDiff.getCodeHash().hasDifference()) {
         String codeHash = accountDiff.getCodeHash().getTo().get();
-        if (!Hash.EMPTY.toHexString().equals(codeHash)) {
+        if (!Hash.EMPTY.getBytes().toHexString().equals(codeHash)) {
           gen.writeStringField("codeHash", codeHash);
         }
       }

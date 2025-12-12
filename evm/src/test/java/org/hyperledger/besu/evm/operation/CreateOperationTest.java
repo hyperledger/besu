@@ -99,7 +99,7 @@ class CreateOperationTest {
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
+    final String calculatedTopic = log.getTopics().get(0).getBytes().toUnprefixedHexString();
     assertThat(calculatedTopic).isEqualTo(TOPIC);
 
     // WHEN the memory that the create operation was executed from is altered.
@@ -109,7 +109,7 @@ class CreateOperationTest {
         Bytes.random(SIMPLE_CREATE.size()));
 
     // THEN the logs still have the expected topic
-    final String calculatedTopicAfter = log.getTopics().get(0).toUnprefixedHexString();
+    final String calculatedTopicAfter = log.getTopics().get(0).getBytes().toUnprefixedHexString();
     assertThat(calculatedTopicAfter).isEqualTo(TOPIC);
   }
 
@@ -191,7 +191,7 @@ class CreateOperationTest {
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
+    final String calculatedTopic = log.getTopics().get(0).getBytes().toUnprefixedHexString();
     assertThat(calculatedTopic).isEqualTo(TOPIC);
     assertThat(result.getGasCost()).isEqualTo(SHANGHAI_CREATE_GAS);
   }

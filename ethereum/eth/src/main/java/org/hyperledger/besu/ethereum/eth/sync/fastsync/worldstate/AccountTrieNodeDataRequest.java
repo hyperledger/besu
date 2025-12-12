@@ -41,12 +41,11 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   protected void doPersist(final WorldStateKeyValueStorage.Updater updater) {
     applyForStrategy(
         updater,
-        onBonsai -> {
-          onBonsai.putAccountStateTrieNode(getLocation().orElse(Bytes.EMPTY), getHash(), getData());
-        },
-        onForest -> {
-          onForest.putAccountStateTrieNode(getHash(), getData());
-        });
+        onBonsai ->
+            onBonsai.putAccountStateTrieNode(
+                getLocation().orElse(Bytes.EMPTY), Bytes32.wrap(getHash().getBytes()), getData()),
+        onForest ->
+            onForest.putAccountStateTrieNode(Bytes32.wrap(getHash().getBytes()), getData()));
   }
 
   @Override
@@ -56,7 +55,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
         .flatMap(
             location ->
                 worldStateKeyValueStorage
-                    .getAccountStateTrieNode(location, getHash())
+                    .getAccountStateTrieNode(location, Bytes32.wrap(getHash().getBytes()))
                     .filter(data -> Hash.hash(data).equals(getHash())));
   }
 
@@ -93,7 +92,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
     }
     // Add storage, if appropriate
-    if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+    if (!accountValue.getStorageRoot().getBytes().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
 
       final NodeDataRequest storageNode =
@@ -107,7 +106,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   protected void writeTo(final RLPOutput out) {
     out.startList();
     out.writeByte(getRequestType().getValue());
-    out.writeBytes(getHash());
+    out.writeBytes(getHash().getBytes());
     getLocation().ifPresent(out::writeBytes);
     out.endList();
   }

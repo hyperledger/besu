@@ -343,7 +343,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
 
     // Wait for code to be queryable with retry logic
     final Bytes expectedCode =
-        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
+        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS.getBytes());
     final AtomicReference<Bytes> authorizerCodeHolder = new AtomicReference<>();
     WaitUtils.waitFor(
         30,
@@ -416,7 +416,7 @@ public class CodeDelegationTransactionAcceptanceTest extends AcceptanceTestBase 
 
     // Wait for code to be queryable with retry logic
     final Bytes expectedCode =
-        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS);
+        Bytes.concatenate(Bytes.fromHexString("ef0100"), SEND_ALL_ETH_CONTRACT_ADDRESS.getBytes());
     final AtomicReference<Bytes> authorizerCodeHolder = new AtomicReference<>();
     WaitUtils.waitFor(
         30,

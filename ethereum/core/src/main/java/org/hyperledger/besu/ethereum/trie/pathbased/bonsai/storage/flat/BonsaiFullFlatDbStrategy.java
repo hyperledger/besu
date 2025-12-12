@@ -62,7 +62,7 @@ public class BonsaiFullFlatDbStrategy extends BonsaiFlatDbStrategy {
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     final Optional<Bytes> accountFound =
-        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+        storage.get(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe()).map(Bytes::wrap);
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
     } else {
@@ -84,7 +84,8 @@ public class BonsaiFullFlatDbStrategy extends BonsaiFlatDbStrategy {
         storage
             .get(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+                Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+                    .toArrayUnsafe())
             .map(Bytes::wrap);
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();

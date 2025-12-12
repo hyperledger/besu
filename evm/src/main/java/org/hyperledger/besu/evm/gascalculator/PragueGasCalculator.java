@@ -42,7 +42,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.getBytes().toArrayUnsafe()[19]);
   }
 
   /**

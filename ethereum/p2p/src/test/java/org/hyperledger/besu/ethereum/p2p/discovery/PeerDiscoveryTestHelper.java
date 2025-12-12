@@ -125,7 +125,10 @@ public class PeerDiscoveryTestHelper {
             PacketType.PONG,
             packetPackage
                 .pongPacketDataFactory()
-                .create(toAgent.getAdvertisedPeer().get().getEndpoint(), pingHash, UInt64.ONE),
+                .create(
+                    toAgent.getAdvertisedPeer().get().getEndpoint(),
+                    pingHash.getBytes(),
+                    UInt64.ONE),
             toAgent.getNodeKey());
   }
 

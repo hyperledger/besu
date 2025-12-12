@@ -75,7 +75,8 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue) {
-    transaction.put(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
+    transaction.put(
+        ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe(), accountValue.toArrayUnsafe());
   }
 
   @Override
@@ -83,7 +84,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash) {
-    transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
+    transaction.remove(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
   }
 
   @Override
@@ -95,7 +96,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Bytes storageValue) {
     transaction.put(
         ACCOUNT_STORAGE_STORAGE,
-        Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
+        Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes()).toArrayUnsafe(),
         storageValue.toArrayUnsafe());
   }
 
@@ -106,7 +107,8 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       final Hash accountHash,
       final Hash slotHash) {
     transaction.remove(
-        ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+        ACCOUNT_STORAGE_STORAGE,
+        Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes()).toArrayUnsafe());
   }
 
   @Override
@@ -131,12 +133,14 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
     return storage
         .streamFromKey(
-            ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-        .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+            ACCOUNT_STORAGE_STORAGE,
+            Bytes.concatenate(accountHash.getBytes(), startKeyHash).toArrayUnsafe())
+        .takeWhile(
+            pair -> Bytes.wrap(pair.getKey()).slice(0, Bytes32.SIZE).equals(accountHash.getBytes()))
         .map(
             pair ->
                 new Pair<>(
-                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Bytes32.SIZE)),
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 
@@ -151,12 +155,12 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
     return storage
         .streamFromKey(
             ACCOUNT_STORAGE_STORAGE,
-            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
+            Bytes.concatenate(accountHash.getBytes(), startKeyHash).toArrayUnsafe(),
+            Bytes.concatenate(accountHash.getBytes(), endKeyHash).toArrayUnsafe())
         .map(
             pair ->
                 new Pair<>(
-                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Bytes32.SIZE)),
                     valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
   }
 

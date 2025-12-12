@@ -81,7 +81,10 @@ public class GraphQLProvider {
         .scalar(Scalars.bigIntScalar())
         .scalar(Scalars.bytesScalar())
         .scalar(Scalars.bytes32Scalar())
+        .scalar(Scalars.hashScalar())
         .scalar(Scalars.longScalar())
+        .scalar(Scalars.logTopicScalar())
+        .scalar(Scalars.versionedHashScalar())
         .type(
             TypeRuntimeWiring.newTypeWiring("Query")
                 .dataFetcher("account", graphQLDataFetchers.getAccountDataFetcher())
