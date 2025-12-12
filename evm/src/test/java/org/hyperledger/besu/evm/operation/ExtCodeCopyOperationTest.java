@@ -57,7 +57,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "00000000000000000000000000000000000000000000000000000000000000000123456789abcdef"),
-            false,
             2609L
           },
           {
@@ -68,7 +67,6 @@ class ExtCodeCopyOperationTest {
             16,
             Bytes.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -80,7 +78,6 @@ class ExtCodeCopyOperationTest {
             16,
             Bytes.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef000000000000000000000000000000000000000000000000"),
-            false,
             2612L
           },
           {
@@ -92,7 +89,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x000000000123456789abcdef0000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -104,7 +100,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x445566778899aabb000000000000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -116,47 +111,24 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x00000000445566778899aabb0000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
-            "EOF-reserved pre-eof",
+            "Code starting with 0xEF00",
             Bytes.fromHexString("0xEF009f918bf09f9fa9"),
             0,
             0,
             9,
             Bytes.fromHexString("0xEF009f918bf09f9fa9"),
-            false,
             2606L
           },
           {
-            "EOF-reserved post-epf",
-            Bytes.fromHexString("0xEF009f918bf09f9fa9"),
-            0,
-            0,
-            9,
-            Bytes.fromHexString("0xEF000000000000000000"),
-            true,
-            2606L
-          },
-          {
-            "EF-reserved pre-epf",
+            "Code starting with 0xEFF0",
             Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
             0,
             0,
             9,
             Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            false,
-            2606L
-          },
-          {
-            "EOF-reserved post-eof",
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            0,
-            0,
-            9,
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            true,
             2606L
           }
         });
