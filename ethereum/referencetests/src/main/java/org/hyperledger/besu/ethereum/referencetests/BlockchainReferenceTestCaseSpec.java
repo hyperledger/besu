@@ -101,7 +101,6 @@ public class BlockchainReferenceTestCaseSpec {
 
     final MutableWorldState worldState = worldStateArchive.getWorldState();
     final WorldUpdater updater = worldState.updater();
-
     for (final Map.Entry<String, ReferenceTestWorldState.AccountMock> entry : accounts.entrySet()) {
       ReferenceTestWorldState.insertAccount(
           updater, Address.fromHexString(entry.getKey()), entry.getValue());

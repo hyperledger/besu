@@ -221,6 +221,7 @@ bonsai-limit-trie-logs-enabled=true
 bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 bonsai-parallel-tx-processing-enabled=false
+hash-preimage-storage-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false

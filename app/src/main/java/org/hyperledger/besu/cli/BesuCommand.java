@@ -2585,6 +2585,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
+    if (!dataStorageOptions.toDomainObject().getHashPreImageStorageEnabled()) {
+      rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.HASH_PREIMAGE_STORE);
+    }
   }
 
   private void validatePostMergeCheckpointBlockRequirements() {

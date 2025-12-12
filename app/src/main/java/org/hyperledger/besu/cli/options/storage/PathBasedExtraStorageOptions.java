@@ -61,6 +61,7 @@ public class PathBasedExtraStorageOptions
   public static final String PARALLEL_TX_PROCESSING_ENABLED =
       "--bonsai-parallel-tx-processing-enabled";
 
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {LIMIT_TRIE_LOGS_ENABLED},
       fallbackValue = "true",
