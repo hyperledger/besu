@@ -126,11 +126,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         mergeCoordinator.getOrSyncHeadByHash(
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
-    // Return SYNCING if we don't have the header OR if we're still syncing
     if (maybeNewHead.isEmpty() || mergeContext.get().isSyncing()) {
-      LOG.debug(
-          "Node is syncing or block header not yet available for {}, returning SYNCING response",
-          forkChoice.getHeadBlockHash());
       return syncingResponse(requestId, forkChoice);
     }
 

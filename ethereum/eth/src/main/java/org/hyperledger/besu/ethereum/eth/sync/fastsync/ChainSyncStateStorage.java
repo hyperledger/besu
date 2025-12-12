@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -65,14 +66,14 @@ public class ChainSyncStateStorage {
       try {
         final byte[] data = Files.readAllBytes(stateFile.toPath());
         final BytesValueRLPInput input =
-            new BytesValueRLPInput(org.apache.tuweni.bytes.Bytes.wrap(data), false);
+            new BytesValueRLPInput(Bytes.wrap(data), false);
 
         input.enterList();
 
         // Read version
         final byte version = input.readByte();
         if (version != FORMAT_VERSION) {
-          LOG.warn("Old chain sync state format version: {}", version);
+          LOG.warn("Wrong chain sync state format version: {}, expected version {}", version, FORMAT_VERSION);
           return null;
         }
 
@@ -82,7 +83,7 @@ public class ChainSyncStateStorage {
         // Read checkpoint block header
         final BlockHeader checkpointBlockHeader = headerReader.apply(input);
 
-        // Read progress fields
+        // Read header complete field
         final boolean headersDownloadComplete = input.readByte() == 1;
 
         BlockHeader headerDownloadAnchor = null;

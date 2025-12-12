@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
+  public static final long ONE_SECOND = 1000L;
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -66,6 +67,9 @@ public class DownloadBackwardHeadersStep
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
     final long remainingHeaders = startBlockNumber - trustAnchorBlockNumber;
     final int headersToRequest = (int) Math.min(headerRequestSize, remainingHeaders);
+    if (headersToRequest < 1) {
+      throw new IllegalStateException("Number of headers to request is less than 1:" + headersToRequest);
+    }
 
     return ethContext
         .getScheduler()
@@ -91,17 +95,18 @@ public class DownloadBackwardHeadersStep
       if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
         if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
           try {
-            Thread.sleep(1000L);
+            Thread.sleep(ONE_SECOND); // TODO: Stefan: replace with async scheduler: return ethContext.getScheduler().scheduleFutureTask(() -> downloadAllHeaders(...), Duration.ofSeconds(1));
           } catch (InterruptedException e) {
             // do nothing
           }
         } else {
           LOG.warn(
-              "Failed to download headers from block {} (response: {})",
+              "Failed to download {} headers from block {} (response: {})",
+              headersToRequest,
               startBlockNumber,
               peerTaskExecutorResponseCode);
           return CompletableFuture.failedFuture(
-              new RuntimeException("Failed to download headers from block " + startBlockNumber));
+              new RuntimeException("Failed to download headers starting from block " + startBlockNumber));
         }
       } else {
         headers.addAll(result.result().get());

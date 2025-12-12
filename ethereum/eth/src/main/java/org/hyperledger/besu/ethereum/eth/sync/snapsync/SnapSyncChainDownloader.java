@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
+  public static final int SMALL_DELAY = 100;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
@@ -175,9 +176,11 @@ public class SnapSyncChainDownloader
 
   @Override
   public void onPivotUpdated(final BlockHeader newPivotBlockHeader) {
-    pendingPivotUpdate.getAndSet(newPivotBlockHeader);
+    synchronized (this) {
+      pendingPivotUpdate.getAndSet(newPivotBlockHeader);
+      pivotUpdateFuture.complete(null);
+    }
     LOG.info("Received pivot update to block no {}", newPivotBlockHeader.getNumber());
-    pivotUpdateFuture.complete(null);
   }
 
   @Override
@@ -429,7 +432,7 @@ public class SnapSyncChainDownloader
       // Use a small delay to avoid tight retry loops
       ethContext
           .getScheduler()
-          .scheduleFutureTask(() -> attemptDownload(overallResult), Duration.ofMillis(100));
+          .scheduleFutureTask(() -> attemptDownload(overallResult), Duration.ofMillis(SMALL_DELAY));
     } else {
       // Non-retryable error - fail (metrics will be stopped by outer handler)
       overallResult.completeExceptionally(error);
@@ -471,12 +474,16 @@ public class SnapSyncChainDownloader
    * @return CompletableFuture<Boolean> - true if should continue, false if complete
    */
   private CompletableFuture<Boolean> checkForPivotUpdate() {
-    final BlockHeader updatedPivot = pendingPivotUpdate.getAndSet(null);
-    final BlockHeader previousPivot = chainSyncState.get().pivotBlockHeader();
 
+    final BlockHeader previousPivot;
     // Check if there's an immediate pivot update available
     if (pivotUpdateFuture.isDone()) {
-      pivotUpdateFuture = new CompletableFuture<>();
+      final BlockHeader updatedPivot;
+      synchronized (this) {
+        updatedPivot = pendingPivotUpdate.getAndSet(null);
+        pivotUpdateFuture = new CompletableFuture<>();
+      }
+      previousPivot = chainSyncState.get().pivotBlockHeader();
 
       if (updatedPivot != null && updatedPivot.getNumber() > previousPivot.getNumber()) {
         LOG.debug(
@@ -489,6 +496,9 @@ public class SnapSyncChainDownloader
         chainSyncStateStorage.storeState(chainSyncState.get());
 
         return CompletableFuture.completedFuture(true); // Need to continue
+      } else {
+        LOG.error("The pivot block number has not increased, even though onPivotUpdated() has been called. previous pivot: {}, updated pivot: {}", previousPivot.getNumber(), updatedPivot != null ? updatedPivot.getNumber() : "null");
+        throw new IllegalStateException("The pivot block number has not increased");
       }
     }
 
@@ -505,9 +515,6 @@ public class SnapSyncChainDownloader
                 return true; // Need to continue with another cycle
               } else {
                 // World state heal finished
-                LOG.debug(
-                    "World state heal finished (current pivot number: {}). Chain download complete.",
-                    previousPivot.getNumber());
                 return false; // All done
               }
             });

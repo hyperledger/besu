@@ -59,11 +59,13 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
       String message =
           "Received invalid header list: expected hash "
               + currentChildHeader.getParentHash()
-              + "  for highest Block number "
-              + blockHeaders.getFirst().getNumber()
+              + " for block number "
+              + (currentChildHeader.getNumber() - 1)
               + " ,but got "
-              + blockHeaders.getFirst().getHash();
-      LOG.info(message);
+              + blockHeaders.getFirst().getHash()
+              + " from block with number "
+              + blockHeaders.getFirst().getNumber();
+      LOG.warn(message);
       throw new IllegalStateException(message);
     }
 

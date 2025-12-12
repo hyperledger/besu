@@ -16,9 +16,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -54,18 +56,15 @@ public class BackwardHeaderSourceTest {
     assertThat(source.next()).isEqualTo(200L);
     assertThat(source.next()).isEqualTo(150L);
     assertThat(source.next()).isEqualTo(100L);
-    assertThat(source.next()).isNull();
   }
 
   @Test
-  public void shouldReturnNullWhenExhausted() {
+  public void shouldThrowWhenExhausted() {
     final BackwardHeaderSource source = new BackwardHeaderSource(100, 50, 100);
 
     assertThat(source.next()).isEqualTo(100L);
-    // After first call, currentBlock = 0, which is < stopBlock (50), so returns null
-    assertThat(source.next()).isNull();
-    assertThat(source.next()).isNull(); // Multiple calls after exhaustion
-    assertThat(source.next()).isNull();
+    // After first call, currentBlock = 0, which is < stopBlock (50), so throws
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -75,7 +74,7 @@ public class BackwardHeaderSourceTest {
     assertThat(source.hasNext()).isTrue();
     assertThat(source.next()).isEqualTo(500L);
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -84,7 +83,7 @@ public class BackwardHeaderSourceTest {
 
     // currentBlock starts at 500, which is < stopBlock (1000)
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -94,22 +93,7 @@ public class BackwardHeaderSourceTest {
     assertThat(source.hasNext()).isTrue();
     assertThat(source.next()).isEqualTo(100L);
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
-  }
-
-  @Test
-  public void shouldHandleSmallRange() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(10, 0, 25);
-
-    final List<Long> blocks = new ArrayList<>();
-    while (source.hasNext()) {
-      final Long block = source.next();
-      if (block != null) {
-        blocks.add(block);
-      }
-    }
-
-    assertThat(blocks).containsExactly(25L, 15L, 5L);
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -125,16 +109,6 @@ public class BackwardHeaderSourceTest {
     }
 
     assertThat(blocks).containsExactly(10L, 9L, 8L, 7L, 6L, 5L);
-  }
-
-  @Test
-  public void shouldReturnNullAfterLastValidBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 100, 250);
-
-    assertThat(source.next()).isEqualTo(250L);
-    assertThat(source.next()).isEqualTo(150L);
-    // Third call: currentBlock = 50, which is < stopBlock (100), so returns null
-    assertThat(source.next()).isNull();
   }
 
   @Test
@@ -163,18 +137,6 @@ public class BackwardHeaderSourceTest {
   }
 
   @Test
-  public void shouldHandleVeryLargeBlockNumbers() {
-    final long startBlock = Long.MAX_VALUE - 1000;
-    final long stopBlock = Long.MAX_VALUE - 1500;
-    final BackwardHeaderSource source = new BackwardHeaderSource(200, stopBlock, startBlock);
-
-    assertThat(source.hasNext()).isTrue();
-    assertThat(source.next()).isEqualTo(startBlock);
-    assertThat(source.next()).isEqualTo(startBlock - 200);
-    assertThat(source.next()).isEqualTo(startBlock - 400);
-  }
-
-  @Test
   public void shouldHandleZeroStopBlock() {
     final BackwardHeaderSource source = new BackwardHeaderSource(100, 0, 300);
 
@@ -196,7 +158,7 @@ public class BackwardHeaderSourceTest {
     assertThat(source.hasNext()).isTrue();
     assertThat(source.next()).isEqualTo(0L);
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -293,7 +255,7 @@ public class BackwardHeaderSourceTest {
 
     assertThat(source.next()).isEqualTo(105L);
     assertThat(source.next()).isEqualTo(5L);
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test

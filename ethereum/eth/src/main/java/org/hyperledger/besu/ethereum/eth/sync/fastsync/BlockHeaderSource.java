@@ -20,14 +20,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reads stored block headers from the blockchain database in forward direction. Used in Pipeline 2
- * to supply headers for bodies and receipts download. Thread-safe for parallel consumption.
+ * Reads stored block headers from the blockchain database in forward direction. Used in the second stage to supply headers for bodies and receipts download. Thread-safe for parallel consumption.
  */
 public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockHeaderSource.class);
@@ -72,7 +72,7 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   public synchronized List<BlockHeader> next() {
     if (currentBlock.get() > pivotBlockNumber) {
       LOG.debug("BlockHeaderSource exhausted at block {}", currentBlock);
-      return null;
+      throw new NoSuchElementException("BlockHeaderSource exhausted at block " + currentBlock);
     }
 
     long start = currentBlock.getAndAdd(batchSize);

@@ -57,12 +57,12 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
     this.startBlock = startBlock;
     this.pivotHeaderNumber = pivotHeader.getNumber();
     this.transactionIndexingEnabled = transactionIndexingEnabled;
-    blockchain = protocolContext.getBlockchain();
+    this.blockchain = protocolContext.getBlockchain();
   }
 
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
-    blockchain.unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
+    blockchain.unsafeImportSyncBodiesAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
     final SyncBlockWithReceipts lastBlock = blocksWithReceipts.getLast();
     LOG.atTrace()
         .setMessage("Imported blocks up to {}")

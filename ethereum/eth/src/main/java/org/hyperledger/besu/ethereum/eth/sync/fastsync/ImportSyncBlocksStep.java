@@ -55,22 +55,6 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final BlockHeader pivotHeader,
-      final boolean transactionIndexingEnabled) {
-    this(
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        null,
-        0L,
-        pivotHeader,
-        transactionIndexingEnabled);
-  }
-
-  public ImportSyncBlocksStep(
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final EthContext ethContext,
       final SyncState syncState,
       final long startBlock,
       final BlockHeader pivotHeader,
@@ -100,7 +84,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
-    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    final long lastBlock = blocksWithReceipts.getLast().getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
