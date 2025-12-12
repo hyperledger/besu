@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.SimulationMessageCallProcessor;
 
@@ -106,10 +108,14 @@ public class SimulationTransactionProcessorFactory {
     precompileOverrides.forEach(
         (oldAddress, newAddress) -> {
           if (!originalAddresses.contains(oldAddress)) {
-            throw new IllegalArgumentException("Address " + oldAddress + " is not a precompile.");
+            throw new BlockStateCallException(
+                "Address " + oldAddress + " is not a precompile.",
+                BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
           }
           if (newRegistry.getPrecompileAddresses().contains(newAddress)) {
-            throw new IllegalArgumentException("Duplicate precompile address: " + newAddress);
+            throw new BlockStateCallException(
+                "Duplicate precompile address: " + newAddress,
+                BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
           }
           newRegistry.put(newAddress, originalRegistry.get(oldAddress));
         });
@@ -119,8 +125,9 @@ public class SimulationTransactionProcessorFactory {
         .forEach(
             originalAddress -> {
               if (newRegistry.getPrecompileAddresses().contains(originalAddress)) {
-                throw new IllegalArgumentException(
-                    "Duplicate precompile address: " + originalAddress);
+                throw new BlockStateCallException(
+                    "Duplicate precompile address: " + originalAddress,
+                    BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
               }
               newRegistry.put(originalAddress, originalRegistry.get(originalAddress));
             });
