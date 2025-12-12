@@ -32,16 +32,12 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -93,38 +89,9 @@ public class DownloadReceiptsStepTest {
   }
 
   @Test
-  public void shouldDownloadReceiptsForBlocks() {
+  public void shouldDownloadReceiptsForBlocks() throws ExecutionException, InterruptedException {
     DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(
-            protocolSchedule,
-            ethProtocolManager.ethContext(),
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            new NoOpMetricsSystem());
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-
-    final List<Block> blocks = asList(block(1), block(2), block(3), block(4));
-    final CompletableFuture<List<BlockWithReceipts>> result = downloadReceiptsStep.apply(blocks);
-
-    peer.respond(RespondingEthPeer.blockchainResponder(blockchain));
-
-    assertThat(result)
-        .isCompletedWithValue(
-            asList(
-                blockWithReceipts(1),
-                blockWithReceipts(2),
-                blockWithReceipts(3),
-                blockWithReceipts(4)));
-  }
-
-  @Test
-  public void shouldDownloadReceiptsForBlocksUsingPeerTaskSystem()
-      throws ExecutionException, InterruptedException {
-    DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(
-            protocolSchedule,
-            ethProtocolManager.ethContext(),
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
-            new NoOpMetricsSystem());
+        new DownloadReceiptsStep(protocolSchedule, ethProtocolManager.ethContext());
 
     final List<Block> blocks = asList(mockBlock(), mockBlock(), mockBlock(), mockBlock());
     Map<BlockHeader, List<TransactionReceipt>> receiptsMap = new HashMap<>();
@@ -148,17 +115,6 @@ public class DownloadReceiptsStepTest {
     assertThat(result.get().get(2).getReceipts().size()).isEqualTo(1);
     assertThat(result.get().get(3).getBlock()).isEqualTo(blocks.get(3));
     assertThat(result.get().get(3).getReceipts().size()).isEqualTo(1);
-  }
-
-  private Block block(final long number) {
-    final BlockHeader header = blockchain.getBlockHeader(number).get();
-    return new Block(header, blockchain.getBlockBody(header.getHash()).get());
-  }
-
-  private BlockWithReceipts blockWithReceipts(final long number) {
-    final Block block = block(number);
-    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(block.getHash()).get();
-    return new BlockWithReceipts(block, receipts);
   }
 
   private Block mockBlock() {

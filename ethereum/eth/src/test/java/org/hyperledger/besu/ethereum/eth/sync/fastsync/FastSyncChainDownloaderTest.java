@@ -22,7 +22,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -31,19 +38,32 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
@@ -60,6 +80,7 @@ import org.mockito.Mock;
 import org.mockito.Mock.Strictness;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 @ExtendWith({MockitoExtension.class})
 public class FastSyncChainDownloaderTest {
@@ -113,6 +134,63 @@ public class FastSyncChainDownloaderTest {
         .thenAnswer(getHeadersAnswer);
     when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
         .thenAnswer(getHeadersAnswer);
+    when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetSyncReceiptsFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
+              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
+                  new HashMap<>();
+              task.getBlockHeaders()
+                  .forEach(
+                      (bh) ->
+                          getReceiptsFromPeerTaskResult.put(
+                              bh,
+                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                                  .map(
+                                      (tr) ->
+                                          new SyncTransactionReceipt(
+                                              RLP.encode(
+                                                  (rlpOut) ->
+                                                      TransactionReceiptEncoder.writeTo(
+                                                          tr,
+                                                          rlpOut,
+                                                          TransactionReceiptEncodingConfiguration
+                                                              .DEFAULT))))
+                                  .toList()));
+
+              return new PeerTaskExecutorResult<>(
+                  Optional.of(getReceiptsFromPeerTaskResult),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Collections.emptyList());
+            });
+    Answer<PeerTaskExecutorResult<List<SyncBlock>>> getBlockBodiesAnswer =
+        (invocationOnMock) -> {
+          GetSyncBlockBodiesFromPeerTask task =
+              invocationOnMock.getArgument(0, GetSyncBlockBodiesFromPeerTask.class);
+          List<Block> blocks =
+              task.getBlockHeaders().stream()
+                  .map((bh) -> new Block(bh, otherBlockchain.getBlockBody(bh.getBlockHash()).get()))
+                  .toList();
+          List<SyncBlock> syncBlocks = new ArrayList<>();
+          for (Block block : blocks) {
+            BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+            block.getBody().writeWrappedBodyTo(rlpOutput);
+            SyncBlockBody syncBlockBody =
+                SyncBlockBody.readWrappedBodyFrom(
+                    new BytesValueRLPInput(rlpOutput.encoded(), true), true, protocolSchedule);
+            syncBlocks.add(new SyncBlock(block.getHeader(), syncBlockBody));
+          }
+          return new PeerTaskExecutorResult<>(
+              Optional.of(syncBlocks),
+              PeerTaskExecutorResponseCode.SUCCESS,
+              Collections.emptyList());
+        };
+    when(peerTaskExecutor.execute(any(GetSyncBlockBodiesFromPeerTask.class)))
+        .thenAnswer(getBlockBodiesAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetSyncBlockBodiesFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getBlockBodiesAnswer);
   }
 
   @AfterEach
