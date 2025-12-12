@@ -193,7 +193,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
     final CompletableFuture<ParallelizedTransactionContext> future = futures[transactionLocation];
 
     if (future != null && future.isDone()) {
-      final ParallelizedTransactionContext parallelizedTransactionContext = future.join();
+      final ParallelizedTransactionContext parallelizedTransactionContext = future.resultNow();
       if (parallelizedTransactionContext == null) {
         return Optional.empty();
       }
