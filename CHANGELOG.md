@@ -15,7 +15,7 @@
   
 ### Additions and Improvements
 
-##  25.12.0-RC1
+##  25.12.0
 
 ### Breaking Changes
 - Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)

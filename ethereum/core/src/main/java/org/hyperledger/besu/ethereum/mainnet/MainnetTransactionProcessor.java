@@ -528,6 +528,17 @@ public class MainnetTransactionProcessor {
       // need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
+      final var cause = re.getCause();
+      // in case of an interruption then just return without calling any other tracing method
+      if (cause != null && cause instanceof InterruptedException) {
+        LOG.atDebug()
+            .setMessage("Interrupted while processing the transaction with hash {}")
+            .addArgument(transaction::getHash)
+            .log();
+        return TransactionProcessingResult.invalid(
+            ValidationResult.invalid(TransactionInvalidReason.EXECUTION_INTERRUPTED));
+      }
+
       operationTracer.traceEndTransaction(
           worldState.updater(),
           transaction,
@@ -537,16 +548,6 @@ public class MainnetTransactionProcessor {
           0,
           EMPTY_ADDRESS_SET,
           0L);
-
-      final var cause = re.getCause();
-      if (cause != null && cause instanceof InterruptedException) {
-        LOG.atDebug()
-            .setMessage("Interrupted while processing the transaction with hash {}")
-            .addArgument(transaction::getHash)
-            .log();
-        return TransactionProcessingResult.invalid(
-            ValidationResult.invalid(TransactionInvalidReason.EXECUTION_INTERRUPTED));
-      }
 
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
