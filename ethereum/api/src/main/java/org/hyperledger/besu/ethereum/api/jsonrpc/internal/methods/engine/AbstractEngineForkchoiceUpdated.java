@@ -126,7 +126,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         mergeCoordinator.getOrSyncHeadByHash(
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
-    if (maybeNewHead.isEmpty()) {
+    if (maybeNewHead.isEmpty() || mergeContext.get().isSyncing()) {
       return syncingResponse(requestId, forkChoice);
     }
 
@@ -189,10 +189,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         validateParameter(forkChoice, maybePayloadAttributes);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
-    }
-
-    if (mergeContext.get().isSyncing()) {
-      return syncingResponse(requestId, forkChoice);
     }
 
     maybePayloadAttributes.ifPresentOrElse(

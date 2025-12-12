@@ -19,6 +19,8 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -49,6 +51,8 @@ public class DynamicPivotBlockSelector {
   private final FastSyncActions syncActions;
 
   private final SnapSyncProcessState syncState;
+  private final FastSyncStateStorage fastSyncStateStorage;
+  private final PivotUpdateListener pivotUpdateListener;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
@@ -58,11 +62,15 @@ public class DynamicPivotBlockSelector {
       final EthContext ethContext,
       final FastSyncActions fastSyncActions,
       final SnapSyncProcessState fastSyncState,
+      final FastSyncStateStorage fastSyncStateStorage,
+      final PivotUpdateListener pivotUpdateListener,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
     this.ethContext = ethContext;
     this.syncActions = fastSyncActions;
     this.syncState = fastSyncState;
+    this.fastSyncStateStorage = fastSyncStateStorage;
+    this.pivotUpdateListener = pivotUpdateListener;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
     this.lastPivotBlockFound = Optional.empty();
@@ -195,6 +203,17 @@ public class DynamicPivotBlockSelector {
                 .addArgument(blockHeader.getStateRoot())
                 .log();
             syncState.setCurrentHeader(blockHeader);
+
+            // Persist the updated pivot to storage
+            fastSyncStateStorage.storeState(syncState);
+            LOG.debug("Persisted updated pivot block to storage: {}", blockHeader.getNumber());
+
+            // Notify chain downloader of pivot update
+            if (pivotUpdateListener != null) {
+              pivotUpdateListener.onPivotUpdated(blockHeader);
+              LOG.debug("Notified chain downloader of pivot update: {}", blockHeader.getNumber());
+            }
+
             lastPivotBlockFound = Optional.empty();
           }
           onSwitchDone.accept(blockHeader, true);

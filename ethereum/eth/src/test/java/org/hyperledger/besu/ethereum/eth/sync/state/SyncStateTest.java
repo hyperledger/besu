@@ -26,6 +26,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -45,9 +47,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
+import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
 
 import java.util.List;
 import java.util.Optional;
@@ -627,5 +633,210 @@ public class SyncStateTest {
     // Sanity check this logic still holds
     assertThat(peer.chainState().getEstimatedHeight()).isEqualTo(blockHeight);
     assertThat(peer.chainState().getEstimatedTotalDifficulty()).isEqualTo(totalDifficulty);
+  }
+
+  // New tests for PR changes
+
+  @Test
+  public void shouldSubscribeAndUnsubscribeTTDReachedListener() {
+    TTDReachedListener listener = mock(TTDReachedListener.class);
+
+    long listenerId = syncState.subscribeTTDReached(listener);
+    assertThat(listenerId).isGreaterThanOrEqualTo(0);
+
+    boolean unsubscribed = syncState.unsubscribeTTDReached(listenerId);
+    assertThat(unsubscribed).isTrue();
+
+    // Unsubscribing again should return false
+    boolean unsubscribedAgain = syncState.unsubscribeTTDReached(listenerId);
+    assertThat(unsubscribedAgain).isFalse();
+  }
+
+  @Test
+  public void shouldNotifyTTDReachedListeners() {
+    TTDReachedListener listener = mock(TTDReachedListener.class);
+    syncState.subscribeTTDReached(listener);
+
+    syncState.setReachedTerminalDifficulty(true);
+
+    verify(listener).onTTDReached(true);
+  }
+
+  @Test
+  public void shouldNotifyMultipleTTDReachedListeners() {
+    TTDReachedListener listener1 = mock(TTDReachedListener.class);
+    TTDReachedListener listener2 = mock(TTDReachedListener.class);
+
+    syncState.subscribeTTDReached(listener1);
+    syncState.subscribeTTDReached(listener2);
+
+    syncState.setReachedTerminalDifficulty(false);
+
+    verify(listener1).onTTDReached(false);
+    verify(listener2).onTTDReached(false);
+  }
+
+  @Test
+  public void shouldSubscribeAndUnsubscribeCompletionListener() {
+    InitialSyncCompletionListener listener = mock(InitialSyncCompletionListener.class);
+
+    long listenerId = syncState.subscribeCompletionReached(listener);
+    assertThat(listenerId).isGreaterThanOrEqualTo(0);
+
+    boolean unsubscribed = syncState.unsubscribeInitialConditionReached(listenerId);
+    assertThat(unsubscribed).isTrue();
+
+    // Unsubscribing again should return false
+    boolean unsubscribedAgain = syncState.unsubscribeInitialConditionReached(listenerId);
+    assertThat(unsubscribedAgain).isFalse();
+  }
+
+  @Test
+  public void shouldNotifyCompletionListenersWhenSyncCompleted() {
+    SyncState syncStateWithInitialPhase =
+        new SyncState(blockchain, ethPeers, true, Optional.empty());
+    InitialSyncCompletionListener listener = mock(InitialSyncCompletionListener.class);
+
+    syncStateWithInitialPhase.subscribeCompletionReached(listener);
+    syncStateWithInitialPhase.markInitialSyncPhaseAsDone();
+
+    verify(listener).onInitialSyncCompleted();
+  }
+
+  @Test
+  public void shouldNotifyCompletionListenersOnRestart() {
+    SyncState syncStateWithInitialPhase =
+        new SyncState(blockchain, ethPeers, true, Optional.empty());
+    InitialSyncCompletionListener listener = mock(InitialSyncCompletionListener.class);
+
+    syncStateWithInitialPhase.subscribeCompletionReached(listener);
+    syncStateWithInitialPhase.markInitialSyncRestart();
+
+    verify(listener).onInitialSyncRestart();
+  }
+
+  @Test
+  public void shouldHandleCheckpointConstruction() {
+    Checkpoint checkpoint =
+        ImmutableCheckpoint.builder()
+            .blockNumber(100L)
+            .blockHash(Hash.ZERO)
+            .totalDifficulty(Difficulty.of(1000L))
+            .build();
+    SyncState syncStateWithCheckpoint =
+        new SyncState(blockchain, ethPeers, false, Optional.of(checkpoint));
+
+    assertThat(syncStateWithCheckpoint.getCheckpoint()).isPresent();
+    assertThat(syncStateWithCheckpoint.getCheckpoint().get()).isEqualTo(checkpoint);
+  }
+
+  @Test
+  public void shouldReturnEmptyCheckpointWhenNotSet() {
+    assertThat(syncState.getCheckpoint()).isEmpty();
+  }
+
+  @Test
+  public void shouldTrackInitialSyncPhaseState() {
+    SyncState syncStateWithPhase = new SyncState(blockchain, ethPeers, true, Optional.empty());
+
+    assertThat(syncStateWithPhase.isInitialSyncPhaseDone()).isFalse();
+
+    syncStateWithPhase.markInitialSyncPhaseAsDone();
+    assertThat(syncStateWithPhase.isInitialSyncPhaseDone()).isTrue();
+
+    syncStateWithPhase.markInitialSyncRestart();
+    assertThat(syncStateWithPhase.isInitialSyncPhaseDone()).isFalse();
+  }
+
+  @Test
+  public void shouldTrackResyncNeeded() {
+    assertThat(syncState.isResyncNeeded()).isFalse();
+
+    syncState.markResyncNeeded();
+    assertThat(syncState.isResyncNeeded()).isTrue();
+
+    syncState.markInitialSyncPhaseAsDone();
+    assertThat(syncState.isResyncNeeded()).isFalse();
+  }
+
+  @Test
+  public void shouldTrackAccountToRepair() {
+    assertThat(syncState.getAccountToRepair()).isEmpty();
+
+    Address testAddress = Address.fromHexString("0x1234567890123456789012345678901234567890");
+    syncState.markAccountToRepair(Optional.of(testAddress));
+
+    assertThat(syncState.getAccountToRepair()).isPresent();
+    assertThat(syncState.getAccountToRepair().get()).isEqualTo(testAddress);
+
+    syncState.markAccountToRepair(Optional.empty());
+    assertThat(syncState.getAccountToRepair()).isEmpty();
+  }
+
+  @Test
+  public void shouldReturnFalseForTTDBeforeInitialSyncComplete() {
+    SyncState syncStateWithPhase = new SyncState(blockchain, ethPeers, true, Optional.empty());
+
+    syncStateWithPhase.setReachedTerminalDifficulty(true);
+
+    assertThat(syncStateWithPhase.hasReachedTerminalDifficulty()).isPresent();
+    assertThat(syncStateWithPhase.hasReachedTerminalDifficulty().get()).isFalse();
+  }
+
+  @Test
+  public void shouldReturnTTDStatusAfterInitialSyncComplete() {
+    SyncState syncStateWithPhase = new SyncState(blockchain, ethPeers, true, Optional.empty());
+
+    syncStateWithPhase.setReachedTerminalDifficulty(true);
+    syncStateWithPhase.markInitialSyncPhaseAsDone();
+
+    assertThat(syncStateWithPhase.hasReachedTerminalDifficulty()).isPresent();
+    assertThat(syncStateWithPhase.hasReachedTerminalDifficulty().get()).isTrue();
+  }
+
+  @Test
+  public void shouldNotifyMultipleSyncProgressUpdates() {
+    SyncStatusListener listener = mock(SyncStatusListener.class);
+    syncState.subscribeSyncStatus(listener);
+
+    syncState.setSyncProgress(0, 10, 100);
+    syncState.setSyncProgress(0, 50, 100);
+    syncState.setSyncProgress(0, 100, 100);
+
+    verify(listener, times(3)).onSyncStatusChanged(syncStatusCaptor.capture());
+
+    List<Optional<SyncStatus>> statuses = syncStatusCaptor.getAllValues();
+    assertThat(statuses.get(0).get().getCurrentBlock()).isEqualTo(10);
+    assertThat(statuses.get(1).get().getCurrentBlock()).isEqualTo(50);
+    assertThat(statuses.get(2).get().getCurrentBlock()).isEqualTo(100);
+  }
+
+  @Test
+  public void shouldReturnLocalChainHeight() {
+    assertThat(syncState.getLocalChainHeight()).isEqualTo(OUR_CHAIN_HEAD_NUMBER);
+
+    advanceLocalChain(OUR_CHAIN_HEAD_NUMBER + 10);
+    assertThat(syncState.getLocalChainHeight()).isEqualTo(OUR_CHAIN_HEAD_NUMBER + 10);
+  }
+
+  @Test
+  public void shouldReturnBestPeerChainHead() {
+    updateChainState(syncTargetPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
+    doReturn(Optional.of(syncTargetPeer.getEthPeer())).when(ethPeers).bestPeerWithHeightEstimate();
+
+    Optional<ChainHeadEstimate> bestPeer = syncState.getBestPeerChainHead();
+
+    assertThat(bestPeer).isPresent();
+    assertThat(bestPeer.get().getEstimatedHeight()).isEqualTo(TARGET_CHAIN_HEIGHT);
+  }
+
+  @Test
+  public void shouldReturnEmptyBestPeerChainHeadWhenNoPeers() {
+    syncTargetPeer.disconnect(DisconnectReason.REQUESTED);
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
+
+    Optional<ChainHeadEstimate> bestPeer = syncState.getBestPeerChainHead();
+
+    assertThat(bestPeer).isEmpty();
   }
 }

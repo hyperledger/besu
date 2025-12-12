@@ -72,7 +72,6 @@ public class RetryingGetAccountRangeFromPeerTask
     final GetAccountRangeFromPeerTask task =
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

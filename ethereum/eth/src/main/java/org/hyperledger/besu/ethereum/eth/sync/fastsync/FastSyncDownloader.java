@@ -200,10 +200,26 @@ public class FastSyncDownloader<REQUEST> {
         return CompletableFuture.failedFuture(
             new CancellationException("FastSyncDownloader stopped"));
       }
-      final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
       final ChainDownloader chainDownloader =
           fastSyncActions.createChainDownloader(currentState, syncDurationMetrics);
+
+      // Register chain downloader as pivot update listener if it implements the interface
+      if (chainDownloader instanceof PivotUpdateListener) {
+        fastSyncActions.setChainDownloaderListener((PivotUpdateListener) chainDownloader);
+        LOG.debug("Registered chain downloader as pivot update listener");
+      }
+
+      // Register chain downloader as world state heal finished listener if it implements the
+      // interface
+      if (chainDownloader instanceof WorldStateHealFinishedListener) {
+        fastSyncActions.setWorldStateHealFinishedListener(
+            (WorldStateHealFinishedListener) chainDownloader);
+        LOG.debug("Registered chain downloader as world state stable listener");
+      }
+
+      final CompletableFuture<Void> worldStateFuture =
+          worldStateDownloader.run(fastSyncActions, currentState);
+
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.
