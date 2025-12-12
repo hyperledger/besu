@@ -22,13 +22,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -82,6 +86,11 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
 
     List<TraceFrame> traceFrames = null;
     TransactionProcessingResult result = null;
+    AccessLocationTracker accessListTracker =
+        BlockAccessList.BlockAccessListBuilder.createTransactionAccessLocationTracker(0);
+
+    Collection<AccessLocationTracker.AccountAccessList> touchedAccounts = null;
+
     // If it is not a reward Block trace
     if (transactionTrace.getTransaction() != null) {
       BlockHeader header = block.getHeader();
@@ -96,6 +105,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
                       .orElse(BlobGas.ZERO));
       final BlockHashLookup blockHashLookup =
           protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, header);
+
       result =
           transactionProcessor.processTransaction(
               chainUpdater.getNextUpdater(),
@@ -104,12 +114,19 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
               header.getCoinbase(),
               tracer,
               blockHashLookup,
-              blobGasPrice);
+              ImmutableTransactionValidationParams.builder().build(),
+              blobGasPrice,
+              Optional.of(accessListTracker));
 
       traceFrames = tracer.copyTraceFrames();
       tracer.reset();
+      touchedAccounts = accessListTracker.getTouchedAccounts();
     }
     return new TransactionTrace(
-        transactionTrace.getTransaction(), result, traceFrames, transactionTrace.getBlock());
+        transactionTrace.getTransaction(),
+        result,
+        traceFrames,
+        transactionTrace.getBlock(),
+        touchedAccounts);
   }
 }
