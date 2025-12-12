@@ -91,7 +91,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
 
-  // difficultyForSyncing is thread safe, as it is only used in the one thread of the import step
   private Difficulty difficultyForSyncing = Difficulty.ZERO;
 
   private DefaultBlockchain(
@@ -695,7 +694,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void unsafeImportSyncBodyAndReceipts(
+  public void unsafeImportSyncBodiesAndReceipts(
       final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
@@ -743,6 +742,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockHeader.getDifficulty().add(parentTotalDifficulty);
   }
 
+  /**
+   * Calculates the total difficulty (TD) during the sync.
+   * This method calculates the TD relying on the TD of the previous block being available.
+   * This method has to be called IN ORDER and is NOT THREAD SAFE.
+   *
+   * @param blockHeader The block header of the block for which the total difficulty is needed.
+   * @return The total difficulty
+   */
   private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       difficultyForSyncing = blockHeader.getDifficulty();

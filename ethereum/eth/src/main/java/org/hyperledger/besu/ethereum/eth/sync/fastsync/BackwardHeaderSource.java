@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -33,10 +34,10 @@ public class BackwardHeaderSource implements Iterator<Long> {
   private final long stopBlock;
 
   /**
-   * Creates a new BackwardHeaderSource with resume capability using ChainSyncState.
+   * Creates a new BackwardHeaderSource.
    *
    * @param batchSize the number of blocks in each batch
-   * @param stopBlock the lowest header to download
+   * @param stopBlock stopBlock +1 is the lowest header to download
    * @param startBlock the highest header to download
    */
   public BackwardHeaderSource(final int batchSize, final long stopBlock, final long startBlock) {
@@ -63,9 +64,9 @@ public class BackwardHeaderSource implements Iterator<Long> {
 
     if (block >= stopBlock) {
       return block;
+    } else {
+      LOG.debug("BackwardHeaderSource exhausted at block {} (stopBlock={})", block, stopBlock);
+      throw new NoSuchElementException("BackwardHeaderSource exhausted at block " + block);
     }
-
-    LOG.debug("BackwardHeaderSource exhausted at block {} (stopBlock={})", block, stopBlock);
-    return null;
   }
 }

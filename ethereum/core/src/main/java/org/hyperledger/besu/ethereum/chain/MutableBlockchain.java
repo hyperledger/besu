@@ -120,12 +120,14 @@ public interface MutableBlockchain extends Blockchain {
       final Optional<Difficulty> maybeTotalDifficulty);
 
   /**
-   * Import blocks and receipts during syncing and update the chain state
+   * Import blocks and receipts during syncing and update the chain state.
+   * This method is NOT THREAD SAFE. It has to be called from a single thread.
+   * Blocks and receipts have to be imported in order.
    *
    * @param blocksAndReceipts The blocks and receipts to import
    * @param indexTransactions Boolean whether to index transactions
    */
-  void unsafeImportSyncBodyAndReceipts(
+  void unsafeImportSyncBodiesAndReceipts(
       List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
