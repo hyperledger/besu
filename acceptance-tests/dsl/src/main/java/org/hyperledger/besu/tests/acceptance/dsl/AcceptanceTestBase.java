@@ -44,6 +44,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins.PluginsTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
@@ -104,6 +105,7 @@ public class AcceptanceTestBase {
   protected final TxPoolTransactions txPoolTransactions;
   protected final ExitedWithCode exitedSuccessfully;
   protected final DebugTransactions debug;
+  protected final PluginsTransactions plugins;
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
@@ -134,6 +136,7 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
     exitedSuccessfully = new ExitedWithCode(0);
     debug = new DebugTransactions();
+    plugins = new PluginsTransactions();
   }
 
   @BeforeEach
