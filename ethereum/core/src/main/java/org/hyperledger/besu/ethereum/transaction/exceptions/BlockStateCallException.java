@@ -24,6 +24,7 @@ public class BlockStateCallException extends RuntimeException {
   /** The result of the block state call. */
   private final TransactionSimulatorResult result;
 
+  /** The block state call error. */
   private final BlockStateCallError error;
 
   /**
