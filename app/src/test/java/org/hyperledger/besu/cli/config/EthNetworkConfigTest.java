@@ -105,4 +105,13 @@ public class EthNetworkConfigTest {
     assertThat(config.bootNodes()).isNotEmpty();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(42));
   }
+
+  @Test
+  public void testNetworkDefinitionChainIdsMatchGenesis() {
+    for (NetworkDefinition network : NetworkDefinition.values()) {
+      EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(network);
+      assertThat(config.genesisConfig().getConfigOptions().getChainId().orElseThrow())
+          .isEqualTo(network.getChainId());
+    }
+  }
 }
