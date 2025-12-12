@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -93,5 +94,15 @@ public class Util {
               trie.put(indexKey(i), bytes.get(i));
             });
     return Hash.wrap(trie.getRootHash());
+  }
+
+  /**
+   * Generates log string
+   *
+   * @param blockHeader block header
+   * @return the log string for block headers
+   */
+  public static String toLogString(final BlockHeader blockHeader) {
+    return blockHeader.getNumber() + " (" + blockHeader.getBlockHash() + ")";
   }
 }

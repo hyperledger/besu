@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHealer;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive.WorldStateHealer;
 
 import java.util.Optional;
 import java.util.function.Supplier;
