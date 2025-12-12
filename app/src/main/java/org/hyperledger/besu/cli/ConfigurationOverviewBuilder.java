@@ -507,14 +507,18 @@ public class ConfigurationOverviewBuilder {
     lines.add("Maximum heap size: " + normalizeSize(Runtime.getRuntime().maxMemory()));
     lines.add("OS: " + PlatformDetector.getOS());
 
-    if (SystemInfo.getCurrentPlatform() == PlatformEnum.LINUX) {
-      final String glibcVersion = PlatformDetector.getGlibc();
-      if (glibcVersion != null) {
-        lines.add("glibc: " + glibcVersion);
-      }
+   if (SystemInfo.getCurrentPlatform() == PlatformEnum.LINUX) {
+  final String glibcVersion = PlatformDetector.getGlibc();
+  
+  
+  checkGlibcVersion(glibcVersion);
+  
+  if (glibcVersion != null) {
+    lines.add("glibc: " + glibcVersion);
+  }
 
-      detectJemalloc(lines);
-    }
+  detectJemalloc(lines);
+}
 
     final HardwareAbstractionLayer hardwareInfo = new SystemInfo().getHardware();
 
@@ -564,6 +568,64 @@ public class ConfigurationOverviewBuilder {
               }
             });
   }
+
+
+  /**
+   * Checks if the glibc version meets the minimum required version.
+   *
+   * @param glibcVersion the detected glibc version
+   */
+  private void checkGlibcVersion(final String glibcVersion) {
+    if (glibcVersion == null) {
+      // Cannot determine version, log warning but allow startup
+      logger.warn("Unable to determine glibc version. Minimum required version is 2.28");
+      return;
+    }
+
+    final String minVersion = "2.28";
+    if (!isGlibcVersionSufficient(glibcVersion, minVersion)) {
+      logger.error("Insufficient glibc version detected.");
+      logger.error("Required: {} or higher", minVersion);
+      logger.error("Found: {}", glibcVersion);
+      logger.error("Please upgrade your system's glibc to version {} or higher.", minVersion);
+      throw new RuntimeException(
+          "Besu requires glibc version " + minVersion + " or higher. Found: " + glibcVersion);
+    }
+  }
+
+  /**
+   
+   * Compares glibc version strings.
+   *
+   * @param current the current glibc version
+   * @param required the required minimum version
+   * @return true if current version is sufficient, false otherwise
+   */
+
+  private boolean isGlibcVersionSufficient(final String current, final String required) {
+    try {
+      final String[] currentParts = current.split("\\.");
+      final String[] requiredParts = required.split("\\.");
+
+      for (int i = 0; i < Math.min(currentParts.length, requiredParts.length); i++) {
+        final int currentNum = Integer.parseInt(currentParts[i].trim());
+        final int requiredNum = Integer.parseInt(requiredParts[i].trim());
+
+        if (currentNum > requiredNum) {
+          return true;
+        }
+        if (currentNum < requiredNum) {
+          return false;
+        }
+      }
+      return true; // Versions are equal
+    } catch (final NumberFormatException e) {
+      logger.warn("Unable to parse glibc version: {}", current, e);
+      return true; // Assume sufficient if unable to parse
+    }
+  }
+
+
 
   /**
    * Normalize gas string.<br>
