@@ -849,7 +849,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
       notifySelected(evaluationContext, processingResult);
       LOG.atTrace()
-          .setMessage("Selected and commited {} with location {} for block creation")
+          .setMessage("Selected and committed {} with location {} for block creation")
           .addArgument(transaction::toTraceLog)
           .addArgument(currentTxnLocation.get())
           .log();
@@ -863,7 +863,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           evaluationContext.getTransaction(), selectionResult);
       notifyNotSelected(evaluationContext, selectionResult);
       LOG.atTrace()
-          .setMessage("Previously selected {} decision reverted due to rollback")
+          .setMessage("Transaction {} removed from selection due to rollback")
           .addArgument(transaction::toTraceLog)
           .log();
     }
