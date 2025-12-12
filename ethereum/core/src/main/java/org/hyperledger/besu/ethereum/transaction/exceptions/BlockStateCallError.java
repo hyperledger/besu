@@ -30,6 +30,8 @@ public enum BlockStateCallError {
   TIMESTAMPS_NOT_ASCENDING(-38021, "Timestamps are not ascending"),
   /** Invalid precompile address. */
   INVALID_PRECOMPILE_ADDRESS(-32000, "Invalid precompile address"),
+  /** Duplicated move precompile target. */
+  DUPLICATED_PRECOMPILE_TARGET(-38023, "Duplicated move precompile target"),
   /** The nonce is invalid. */
   INVALID_NONCES(-32602, "Invalid nonces"),
   /** Upfront cost exceeds balance. */

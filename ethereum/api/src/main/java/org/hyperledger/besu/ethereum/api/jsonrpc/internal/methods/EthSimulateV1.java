@@ -130,17 +130,23 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcErrorResponse handleBlockSimulationException(
       final JsonRpcRequestContext request, final BlockStateCallException e) {
-    JsonRpcError error =
-        e.getResult()
-            .map(
-                r -> {
-                  BlockStateCallError blockStateCallError =
-                      BlockStateCallError.of(r.getValidationResult().getInvalidReason());
-                  String message = r.getInvalidReason().orElse(blockStateCallError.getMessage());
-                  return new JsonRpcError(blockStateCallError.getCode(), message, null);
-                })
-            .orElseGet(() -> new JsonRpcError(RpcErrorType.INTERNAL_ERROR));
-
+    JsonRpcError error;
+    // if an explicit error is provided, use it
+    if (e.getError().isPresent()) {
+      error = new JsonRpcError(e.getError().get().getCode(), e.getMessage(), null);
+    } else {
+      // otherwise, try to extract from the result, if any
+      error =
+          e.getResult()
+              .map(
+                  r -> {
+                    BlockStateCallError blockStateCallError =
+                        BlockStateCallError.of(r.getValidationResult().getInvalidReason());
+                    String message = r.getInvalidReason().orElse(blockStateCallError.getMessage());
+                    return new JsonRpcError(blockStateCallError.getCode(), message, null);
+                  })
+              .orElseGet(() -> new JsonRpcError(RpcErrorType.INTERNAL_ERROR));
+    }
     return new JsonRpcErrorResponse(request.getRequest().getId(), error);
   }
 

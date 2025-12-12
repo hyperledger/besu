@@ -24,6 +24,9 @@ public class BlockStateCallException extends RuntimeException {
   /** The result of the block state call. */
   private final TransactionSimulatorResult result;
 
+  /** The block state call error. */
+  private final BlockStateCallError error;
+
   /**
    * Constructs a new BlockStateCallException with the given message.
    *
@@ -32,6 +35,7 @@ public class BlockStateCallException extends RuntimeException {
   public BlockStateCallException(final String message) {
     super(message);
     this.result = null;
+    this.error = null;
   }
 
   /**
@@ -43,6 +47,19 @@ public class BlockStateCallException extends RuntimeException {
   public BlockStateCallException(final String message, final TransactionSimulatorResult result) {
     super(message);
     this.result = result;
+    this.error = null;
+  }
+
+  /**
+   * Constructs an exception with a message and an error descriptor.
+   *
+   * @param message the message
+   * @param error the block state call error
+   */
+  public BlockStateCallException(final String message, final BlockStateCallError error) {
+    super(message);
+    this.result = null;
+    this.error = error;
   }
 
   /**
@@ -52,5 +69,14 @@ public class BlockStateCallException extends RuntimeException {
    */
   public Optional<TransactionSimulatorResult> getResult() {
     return Optional.ofNullable(result);
+  }
+
+  /**
+   * Returns the block state call error, if present.
+   *
+   * @return optional error descriptor
+   */
+  public Optional<BlockStateCallError> getError() {
+    return Optional.ofNullable(error);
   }
 }
