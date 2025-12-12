@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
@@ -43,13 +42,11 @@ public class StreamingOperationTracer implements OperationTracer {
   private final PrintWriter out;
   private final OpCodeTracerConfig opCodeTracerConfig;
   private int pc;
-  private int section;
   private List<String> stack;
   private long gas;
   private Bytes memory;
   private int memorySize;
   private int depth;
-  private int functionDepth;
   private String storageString;
 
   // Flags used for implementing traceOpcodes functionality
@@ -114,7 +111,6 @@ public class StreamingOperationTracer implements OperationTracer {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
     pc = messageFrame.getPC();
-    section = messageFrame.getSection();
     gas = messageFrame.getRemainingGas();
     memorySize = messageFrame.memoryWordSize() * 32;
     if (opCodeTracerConfig.traceMemory() && memorySize > 0) {
@@ -123,8 +119,6 @@ public class StreamingOperationTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
-    functionDepth =
-        messageFrame.getCode().getEofVersion() > 0 ? messageFrame.returnStackSize() + 1 : 0;
 
     StringBuilder sb = new StringBuilder();
     if (opCodeTracerConfig.traceStorage()) {
@@ -195,19 +189,10 @@ public class StreamingOperationTracer implements OperationTracer {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
-    boolean eofContract = messageFrame.getCode().getEofVersion() > 0;
-    if (eofContract) {
-      sb.append("\"section\":").append(section).append(",");
-    }
     if (opCodeTracerConfig.eip3155Strict()) {
       sb.append("\"op\":").append(opcode).append(",");
     } else {
       sb.append("\"op\":\"").append(fastHexByte(opcode)).append("\",");
-    }
-    OpcodeInfo opInfo = OpcodeInfo.getOpcode(opcode);
-    if (eofContract && opInfo.pcAdvance() > 1) {
-      var immediate = messageFrame.getCode().getBytes().slice(pc + 1, opInfo.pcAdvance() - 1);
-      sb.append("\"immediate\":\"").append(immediate.toHexString()).append("\",");
     }
     if (opCodeTracerConfig.eip3155Strict()) {
       sb.append("\"gas\":\"").append(shortNumber(gas)).append("\",");
@@ -227,9 +212,6 @@ public class StreamingOperationTracer implements OperationTracer {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
-    if (functionDepth > 0) {
-      sb.append("\"functionDepth\":").append(functionDepth).append(",");
-    }
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
     if (executeResult.getHaltReason() != null) {

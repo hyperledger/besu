@@ -317,15 +317,7 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return isPragueAtGenesis(genesis) || isCancunEOFAtGenesis(genesis);
-  }
-
-  private static boolean isCancunEOFAtGenesis(final GenesisConfig genesis) {
-    final OptionalLong cancunEOFTimestamp = genesis.getConfigOptions().getCancunEOFTime();
-    if (cancunEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunEOFTimestamp.getAsLong();
-    }
-    return false;
+    return isPragueAtGenesis(genesis);
   }
 
   private static boolean isPragueAtGenesis(final GenesisConfig genesis) {

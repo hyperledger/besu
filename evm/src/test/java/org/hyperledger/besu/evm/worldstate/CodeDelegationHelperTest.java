@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
@@ -134,7 +134,7 @@ class CodeDelegationHelperTest {
     Bytes targetCode = Bytes.fromHexString("60006000");
 
     when(worldUpdater.get(targetAddress)).thenReturn(targetAccount);
-    when(targetAccount.getOrCreateCachedCode()).thenReturn(new CodeV0(targetCode));
+    when(targetAccount.getOrCreateCachedCode()).thenReturn(new Code(targetCode));
     when(gasCalculator.isPrecompile(targetAddress)).thenReturn(false);
 
     CodeDelegationHelper.Target target =

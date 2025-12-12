@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -51,7 +51,7 @@ public class BenchmarkHelper {
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .apparentValue(Wei.ZERO)
-        .code(CodeV0.EMPTY_CODE)
+        .code(Code.EMPTY_CODE)
         .completer(__ -> {})
         .build();
   }
@@ -73,7 +73,7 @@ public class BenchmarkHelper {
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .apparentValue(Wei.ZERO)
-        .code(CodeV0.EMPTY_CODE)
+        .code(Code.EMPTY_CODE)
         .completer(__ -> {})
         .build();
   }

@@ -245,18 +245,6 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder cancunEOFDefinition() {
-    return MainnetProtocolSpecs.cancunEOFDefinition(
-        chainId,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        evmConfiguration,
-        miningConfiguration,
-        isParallelTxProcessingEnabled,
-        balConfiguration,
-        metricsSystem);
-  }
-
   public ProtocolSpecBuilder pragueDefinition() {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,

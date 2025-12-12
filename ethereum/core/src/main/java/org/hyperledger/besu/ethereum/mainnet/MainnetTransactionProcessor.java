@@ -37,9 +37,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -344,7 +341,7 @@ public class MainnetTransactionProcessor {
         accessLocationTracker.ifPresent(t -> t.addTouchedAccount(contractAddress));
 
         final Bytes initCodeBytes = transaction.getPayload();
-        Code code = contractCreationProcessor.wrapCodeForCreation(initCodeBytes);
+        Code code = new Code(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -374,24 +371,14 @@ public class MainnetTransactionProcessor {
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 
-      if (initialFrame.getCode().isValid()) {
-        while (!messageFrameStack.isEmpty()) {
-          process(messageFrameStack.peekFirst(), operationTracer);
-        }
-      } else {
-        initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        initialFrame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INVALID_CODE));
-        validationResult =
-            ValidationResult.invalid(
-                TransactionInvalidReason.EOF_CODE_INVALID,
-                ((CodeInvalid) initialFrame.getCode()).getInvalidReason());
+      while (!messageFrameStack.isEmpty()) {
+        process(messageFrameStack.peekFirst(), operationTracer);
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         worldUpdater.commit();
       } else {
-        if (initialFrame.getExceptionalHaltReason().isPresent()
-            && initialFrame.getCode().isValid()) {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
           validationResult =
               ValidationResult.invalid(
                   TransactionInvalidReason.EXECUTION_HALTED,
@@ -594,12 +581,12 @@ public class MainnetTransactionProcessor {
       final Account contract,
       final Optional<AccessLocationTracker> accessLocationTracker) {
     if (contract == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final Hash codeHash = contract.getCodeHash();
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     if (hasCodeDelegation(contract.getCode())) {

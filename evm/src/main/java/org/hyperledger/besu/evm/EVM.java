@@ -19,8 +19,6 @@ import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -97,7 +95,6 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
-  private final CodeFactory codeFactory;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
 
@@ -127,11 +124,6 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
     this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
-    codeFactory =
-        new CodeFactory(
-            evmSpecVersion.maxEofVersion,
-            evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
-
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
   }
@@ -143,15 +135,6 @@ public class EVM {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
-  }
-
-  /**
-   * Gets max eof version.
-   *
-   * @return the max eof version
-   */
-  public int getMaxEOFVersion() {
-    return evmSpecVersion.maxEofVersion;
   }
 
   /**
@@ -418,40 +401,10 @@ public class EVM {
 
     Code result = jumpDestOnlyCodeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = wrapCode(codeBytes);
+      result = new Code(codeBytes);
       jumpDestOnlyCodeCache.put(codeHash, result);
     }
 
     return result;
-  }
-
-  /**
-   * Wraps code bytes into the correct Code object
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code
-   */
-  public Code wrapCode(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes);
-  }
-
-  /**
-   * Wraps code for creation. Allows dangling data, which is not allowed in a transaction.
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code
-   */
-  public Code wrapCodeForCreation(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes, true);
-  }
-
-  /**
-   * Parse the EOF Layout of a byte-stream. No Code or stack validation is performed.
-   *
-   * @param bytes the bytes to parse
-   * @return an EOF layout represented by they byte-stream.
-   */
-  public EOFLayout parseEOF(final Bytes bytes) {
-    return EOFLayout.parseEOF(bytes, true);
   }
 }
