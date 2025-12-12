@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.PreprocessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
@@ -85,7 +86,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
-  private final BalConfiguration balConfiguration;
+  protected final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -232,7 +233,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               blobGasPrice,
-              blockAccessListBuilder);
+              blockAccessListBuilder,
+              maybeBlockBal);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -558,8 +560,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards);
 
-  public interface PreprocessingContext {}
-
   public interface PreprocessingFunction {
     Optional<PreprocessingContext> run(
         final ProtocolContext protocolContext,
@@ -568,7 +568,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
-        final Optional<BlockAccessListBuilder> blockAccessListBuilder);
+        final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+        final Optional<BlockAccessList> maybeBlockBal);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -580,7 +581,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final Address miningBeneficiary,
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
-          final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+          final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+          final Optional<BlockAccessList> maybeBlockBal) {
         return Optional.empty();
       }
     }
