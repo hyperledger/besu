@@ -83,7 +83,7 @@ public class ImportSyncBlocksStepTest {
                                                     tr,
                                                     out,
                                                     TransactionReceiptEncodingConfiguration
-                                                        .TRIE_ROOT))))
+                                                        .DEFAULT))))
                             .toList()))
             .collect(toList());
 
