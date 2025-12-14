@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallValidationException;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
@@ -168,15 +168,14 @@ public class SimulationTransactionProcessorFactoryTest {
     Map<Address, Address> precompileOverrides = new HashMap<>();
     precompileOverrides.put(NON_EXISTENT_ADDRESS, OVERRIDE_ADDRESS);
 
-    BlockStateCallException exception =
+    BlockStateCallValidationException exception =
         assertThrows(
-            BlockStateCallException.class,
+            BlockStateCallValidationException.class,
             () ->
                 new SimulationMessageCallProcessor(
                     originalProcessor, createSupplier(precompileOverrides)));
 
-    assertThat(exception.getError().orElseThrow())
-        .isEqualTo(BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
     Assertions.assertThat(exception.getMessage())
         .contains("Address " + NON_EXISTENT_ADDRESS + " is not a precompile.");
   }
@@ -187,14 +186,13 @@ public class SimulationTransactionProcessorFactoryTest {
     precompileOverrides.put(ORIGINAL_ADDRESS_1, OVERRIDE_ADDRESS);
     precompileOverrides.put(ORIGINAL_ADDRESS_2, OVERRIDE_ADDRESS); // Duplicate new address
 
-    BlockStateCallException exception =
+    BlockStateCallValidationException exception =
         assertThrows(
-            BlockStateCallException.class,
+            BlockStateCallValidationException.class,
             () ->
                 new SimulationMessageCallProcessor(
                     originalProcessor, createSupplier(precompileOverrides)));
-    assertThat(exception.getError().orElseThrow())
-        .isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
     Assertions.assertThat(exception.getMessage())
         .contains("Duplicate precompile address: " + OVERRIDE_ADDRESS);
   }
@@ -204,14 +202,13 @@ public class SimulationTransactionProcessorFactoryTest {
     Map<Address, Address> precompileOverrides = new HashMap<>();
     precompileOverrides.put(ORIGINAL_ADDRESS_1, ORIGINAL_ADDRESS_2);
 
-    BlockStateCallException exception =
+    BlockStateCallValidationException exception =
         assertThrows(
-            BlockStateCallException.class,
+            BlockStateCallValidationException.class,
             () ->
                 new SimulationMessageCallProcessor(
                     originalProcessor, createSupplier(precompileOverrides)));
-    assertThat(exception.getError().orElseThrow())
-        .isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
     Assertions.assertThat(exception.getMessage())
         .contains("Duplicate precompile address: " + ORIGINAL_ADDRESS_2);
   }

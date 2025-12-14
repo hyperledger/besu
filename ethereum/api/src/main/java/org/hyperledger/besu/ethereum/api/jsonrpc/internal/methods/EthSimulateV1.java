@@ -38,7 +38,8 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulationResult;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallSimulationException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallValidationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -109,7 +110,10 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
         return new JsonRpcErrorResponse(request.getRequest().getId(), error);
       }
       return process(header, simulateV1Parameter);
-    } catch (final BlockStateCallException e) {
+    } catch (final BlockStateCallValidationException e) {
+      JsonRpcError error = new JsonRpcError(e.getError().getCode(), e.getMessage(), null);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), error);
+    } catch (final BlockStateCallSimulationException e) {
       return handleBlockSimulationException(request, e);
     } catch (final JsonRpcParameterException e) {
       return errorResponse(request, INVALID_PARAMS);
@@ -129,24 +133,18 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   private JsonRpcErrorResponse handleBlockSimulationException(
-      final JsonRpcRequestContext request, final BlockStateCallException e) {
-    JsonRpcError error;
-    // if an explicit error is provided, use it
-    if (e.getError().isPresent()) {
-      error = new JsonRpcError(e.getError().get().getCode(), e.getMessage(), null);
-    } else {
-      // otherwise, try to extract from the result, if any
-      error =
-          e.getResult()
-              .map(
-                  r -> {
-                    BlockStateCallError blockStateCallError =
-                        BlockStateCallError.of(r.getValidationResult().getInvalidReason());
-                    String message = r.getInvalidReason().orElse(blockStateCallError.getMessage());
-                    return new JsonRpcError(blockStateCallError.getCode(), message, null);
-                  })
-              .orElseGet(() -> new JsonRpcError(RpcErrorType.INTERNAL_ERROR));
-    }
+      final JsonRpcRequestContext request, final BlockStateCallSimulationException e) {
+    JsonRpcError error =
+        e.getResult()
+            .map(
+                r -> {
+                  BlockStateCallError blockStateCallError =
+                      BlockStateCallError.of(r.getValidationResult().getInvalidReason());
+                  String message = r.getInvalidReason().orElse(blockStateCallError.getMessage());
+                  return new JsonRpcError(blockStateCallError.getCode(), message, null);
+                })
+            .orElseGet(() -> new JsonRpcError(RpcErrorType.INTERNAL_ERROR));
+
     return new JsonRpcErrorResponse(request.getRequest().getId(), error);
   }
 

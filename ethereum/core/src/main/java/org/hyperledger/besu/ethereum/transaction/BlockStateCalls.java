@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.transaction;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallValidationException;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -52,7 +52,8 @@ public class BlockStateCalls {
               header.getNumber() + MAX_BLOCK_CALL_SIZE,
               header.getNumber(),
               MAX_BLOCK_CALL_SIZE);
-      throw new BlockStateCallException(errorMessage, BlockStateCallError.TOO_MANY_BLOCK_CALLS);
+      throw new BlockStateCallValidationException(
+          errorMessage, BlockStateCallError.TOO_MANY_BLOCK_CALLS);
     }
     List<BlockStateCall> filledCalls = new ArrayList<>();
     long currentBlock = header.getNumber();
@@ -95,14 +96,14 @@ public class BlockStateCalls {
     long blockNumber = blockStateCall.getBlockOverrides().getBlockNumber().orElseThrow();
     long timestamp = blockStateCall.getBlockOverrides().getTimestamp().orElseThrow();
     if (blockNumber <= currentBlockNumber) {
-      throw new BlockStateCallException(
+      throw new BlockStateCallValidationException(
           String.format(
               "Block number is invalid. Trying to add a call at block number %s, while current block number is %s.",
               blockNumber, currentBlockNumber),
           BlockStateCallError.BLOCK_NUMBERS_NOT_ASCENDING);
     }
     if (timestamp <= currentTimestamp) {
-      throw new BlockStateCallException(
+      throw new BlockStateCallValidationException(
           String.format(
               "Timestamp is invalid. Trying to add a call at timestamp %s, while current timestamp is %s.",
               timestamp, currentTimestamp),
