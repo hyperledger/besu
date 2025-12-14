@@ -210,6 +210,13 @@ public class LogsBloomFilter extends DelegatingBytes {
       return this;
     }
 
+    /**
+     * Insert logs.
+     *
+     * @param logs the logs with each log separated into components, ordered like [logger
+     *     address][topics...][data]
+     * @return the builder
+     */
     public Builder insertSyncLogs(final Collection<List<Bytes>> logs) {
       logs.forEach(this::insertSyncLog);
       return this;
