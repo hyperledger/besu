@@ -185,6 +185,12 @@ public class LogsBloomFilter extends DelegatingBytes {
       return this;
     }
 
+    /**
+     * Insert log.
+     *
+     * @param log the log components, ordered like [logger address][topics...][data]
+     * @return the builder
+     */
     public Builder insertSyncLog(final List<Bytes> log) {
       // first byte is logger address, middle bytes are topics, final bytes are data (not used here)
       for (int i = 0; i < log.size() - 1; i++) {
