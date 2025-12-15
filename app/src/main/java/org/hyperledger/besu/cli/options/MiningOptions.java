@@ -57,30 +57,26 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--miner-extra-data"},
       description =
           "A hex string representing the (32) bytes to be included in the extra data "
-              + "field of a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "field of a mined block (default: ${DEFAULT-VALUE})")
   private Bytes extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
       names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})")
   private Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 
   @Option(
       names = {"--min-gas-price"},
       description =
           "Minimum price (in Wei) offered by a transaction for it to be included in a mined "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "block (default: ${DEFAULT-VALUE})")
   private Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
       names = {"--min-priority-fee"},
       description =
           "Minimum priority fee per gas (in Wei) offered by a transaction for it to be included in a "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "block (default: ${DEFAULT-VALUE})")
   private Wei minPriorityFeePerGas = DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 
   @Option(
@@ -142,8 +138,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     @CommandLine.Option(
         hidden = true,
         names = {"--Xpos-slot-duration"},
-        description = "The slot duration in PoS in seconds (default: ${DEFAULT-VALUE})",
-        arity = "1")
+        description = "The slot duration in PoS in seconds (default: ${DEFAULT-VALUE})")
     @Positive
     Integer posSlotDuration = DEFAULT_POS_SLOT_DURATION_SECS;
 
