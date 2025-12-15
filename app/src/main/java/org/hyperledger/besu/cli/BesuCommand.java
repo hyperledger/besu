@@ -405,8 +405,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--identity",
       paramLabel = "<String>",
-      description = "Identification for this node in the Client ID",
-      arity = "1")
+      description = "Identification for this node in the Client ID")
   private final Optional<String> identityString = Optional.empty();
 
   private Boolean printPathsAndExit = Boolean.FALSE;
@@ -499,8 +498,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--network-id"},
       paramLabel = "<BIG INTEGER>",
       description =
-          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
-      arity = "1")
+          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)")
   private final BigInteger networkId = null;
 
   @Option(
@@ -508,8 +506,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Path to file containing the KZG trusted setup, mandatory for custom networks that support data blobs, "
-              + "optional for overriding named networks default.",
-      arity = "1")
+              + "optional for overriding named networks default.")
   private final Path kzgTrustedSetupFile = null;
 
   @Option(
@@ -585,16 +582,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
-      description = "Identity for the key-value storage to be used.",
-      arity = "1")
+      description = "Identity for the key-value storage to be used.")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--security-module"},
       paramLabel = "<NAME>",
-      description = "Identity for the Security Module to be used.",
-      arity = "1")
+      description = "Identity for the Security Module to be used.")
   private String securityModuleName = DEFAULT_SECURITY_MODULE;
 
   @Option(
@@ -2716,8 +2711,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
       builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
     } else {
-      builder.setTargetGasLimit(
-          MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId())));
+      MergeCoordinator.getDefaultGasLimitByChainId(genesisConfigOptionsSupplier.get().getChainId())
+          .ifPresent(builder::setTargetGasLimit);
     }
 
     builder
