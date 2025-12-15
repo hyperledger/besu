@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.time.Duration;
@@ -100,7 +99,6 @@ public class SnapSyncChainDownloader
    * @param protocolContext the protocol context providing access to the blockchain
    * @param ethContext the ethContext for running pipelines
    * @param syncState the sync state tracker
-   * @param metricsSystem the metrics system (unused but kept for API compatibility)
    * @param syncDurationMetrics the sync duration metrics tracker
    * @param initialPivotHeader the initial pivot block header
    * @param chainStateStorage the storage for chain sync state
@@ -495,7 +493,10 @@ public class SnapSyncChainDownloader
 
         return CompletableFuture.completedFuture(true); // Need to continue
       } else {
-        LOG.error("The pivot block number has not increased, even though onPivotUpdated() has been called. previous pivot: {}, updated pivot: {}", previousPivot.getNumber(), updatedPivot != null ? updatedPivot.getNumber() : "null");
+        LOG.error(
+            "The pivot block number has not increased, even though onPivotUpdated() has been called. previous pivot: {}, updated pivot: {}",
+            previousPivot.getNumber(),
+            updatedPivot != null ? updatedPivot.getNumber() : "null");
         throw new IllegalStateException("The pivot block number has not increased");
       }
     }

@@ -64,7 +64,8 @@ public class ImportSyncBlocksStepTest {
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
     importSyncBlocksStep =
-        new ImportSyncBlocksStep(protocolSchedule, protocolContext, null, null, 0, pivotHeader, false);
+        new ImportSyncBlocksStep(
+            protocolSchedule, protocolContext, null, null, 0, pivotHeader, false);
   }
 
   @Test

@@ -68,7 +68,8 @@ public class DownloadBackwardHeadersStep
     final long remainingHeaders = startBlockNumber - trustAnchorBlockNumber;
     final int headersToRequest = (int) Math.min(headerRequestSize, remainingHeaders);
     if (headersToRequest < 1) {
-      throw new IllegalStateException("Number of headers to request is less than 1:" + headersToRequest);
+      throw new IllegalStateException(
+          "Number of headers to request is less than 1:" + headersToRequest);
     }
 
     return ethContext
@@ -95,7 +96,9 @@ public class DownloadBackwardHeadersStep
       if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
         if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
           try {
-            Thread.sleep(ONE_SECOND); // TODO: Stefan: replace with async scheduler: return ethContext.getScheduler().scheduleFutureTask(() -> downloadAllHeaders(...), Duration.ofSeconds(1));
+            Thread.sleep(ONE_SECOND); // TODO: Stefan: replace with async scheduler: return
+            // ethContext.getScheduler().scheduleFutureTask(() ->
+            // downloadAllHeaders(...), Duration.ofSeconds(1));
           } catch (InterruptedException e) {
             // do nothing
           }
@@ -106,7 +109,8 @@ public class DownloadBackwardHeadersStep
               startBlockNumber,
               peerTaskExecutorResponseCode);
           return CompletableFuture.failedFuture(
-              new RuntimeException("Failed to download headers starting from block " + startBlockNumber));
+              new RuntimeException(
+                  "Failed to download headers starting from block " + startBlockNumber));
         }
       } else {
         headers.addAll(result.result().get());

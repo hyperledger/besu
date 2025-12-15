@@ -27,7 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reads stored block headers from the blockchain database in forward direction. Used in the second stage to supply headers for bodies and receipts download. Thread-safe for parallel consumption.
+ * Reads stored block headers from the blockchain database in forward direction. Used in the second
+ * stage to supply headers for bodies and receipts download. Thread-safe for parallel consumption.
  */
 public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockHeaderSource.class);

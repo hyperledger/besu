@@ -73,7 +73,6 @@ public class FastSyncChainDownloader {
         protocolContext,
         ethContext,
         syncState,
-        metricsSystem,
         syncDurationMetrics,
         pivotBlockHeader,
         chainSyncStateStorage);

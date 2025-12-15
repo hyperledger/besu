@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,6 @@ public class SnapSyncChainDownloaderTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private EthContext ethContext;
   @Mock private SyncState syncState;
-  @Mock private MetricsSystem metricsSystem;
   @Mock private SyncDurationMetrics syncDurationMetrics;
   @Mock private MutableBlockchain blockchain;
   @Mock private EthScheduler scheduler;
@@ -83,7 +81,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);
@@ -110,7 +107,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);
@@ -127,7 +123,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);
@@ -148,7 +143,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);
@@ -169,7 +163,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);
@@ -198,7 +191,6 @@ public class SnapSyncChainDownloaderTest {
             protocolContext,
             ethContext,
             syncState,
-            metricsSystem,
             syncDurationMetrics,
             pivotBlockHeader,
             chainSyncStateStorage);

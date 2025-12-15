@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -29,6 +28,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.function.Function;
 
 import com.google.common.io.MoreFiles;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,15 +65,17 @@ public class ChainSyncStateStorage {
 
       try {
         final byte[] data = Files.readAllBytes(stateFile.toPath());
-        final BytesValueRLPInput input =
-            new BytesValueRLPInput(Bytes.wrap(data), false);
+        final BytesValueRLPInput input = new BytesValueRLPInput(Bytes.wrap(data), false);
 
         input.enterList();
 
         // Read version
         final byte version = input.readByte();
         if (version != FORMAT_VERSION) {
-          LOG.warn("Wrong chain sync state format version: {}, expected version {}", version, FORMAT_VERSION);
+          LOG.warn(
+              "Wrong chain sync state format version: {}, expected version {}",
+              version,
+              FORMAT_VERSION);
           return null;
         }
 

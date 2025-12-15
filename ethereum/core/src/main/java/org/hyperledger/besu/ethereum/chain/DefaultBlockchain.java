@@ -743,9 +743,9 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   /**
-   * Calculates the total difficulty (TD) during the sync.
-   * This method calculates the TD relying on the TD of the previous block being available.
-   * This method has to be called IN ORDER and is NOT THREAD SAFE.
+   * Calculates the total difficulty (TD) during the sync. This method calculates the TD relying on
+   * the TD of the previous block being available. This method has to be called IN ORDER and is NOT
+   * THREAD SAFE.
    *
    * @param blockHeader The block header of the block for which the total difficulty is needed.
    * @return The total difficulty
