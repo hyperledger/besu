@@ -89,8 +89,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       names = {TX_POOL_SAVE_FILE},
       paramLabel = "<STRING>",
       description =
-          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
-      arity = "1")
+          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)")
   private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
   @CommandLine.Option(
@@ -98,8 +97,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       paramLabel = "<Percentage>",
       converter = PercentageConverter.class,
       description =
-          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})")
   private Percentage priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP;
 
   @CommandLine.Option(
@@ -107,15 +105,13 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       paramLabel = "<Percentage>",
       converter = PercentageConverter.class,
       description =
-          "Blob price bump percentage to replace an already existing transaction blob tx (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Blob price bump percentage to replace an already existing transaction blob tx (default: ${DEFAULT-VALUE})")
   private Percentage blobPriceBump = TransactionPoolConfiguration.DEFAULT_BLOB_PRICE_BUMP;
 
   @CommandLine.Option(
       names = {RPC_TX_FEECAP},
       description =
-          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})")
   private Wei txFeeCap = TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP;
 
   @CommandLine.Option(
@@ -141,8 +137,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       paramLabel = "<Wei>",
       description =
           "Transactions with gas price (in Wei) lower than this minimum will not be accepted into the txpool"
-              + "(not to be confused with min-gas-price, that is applied on block creation) (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "(not to be confused with min-gas-price, that is applied on block creation) (default: ${DEFAULT-VALUE})")
   private Wei minGasPrice = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_GAS_PRICE;
 
   @CommandLine.ArgGroup(
@@ -163,8 +158,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_LAYER_MAX_CAPACITY},
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
         description =
-            "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})")
     Long txPoolLayerMaxCapacity =
         TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
 
@@ -172,8 +166,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_MAX_PRIORITIZED},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})")
     Integer txPoolMaxPrioritized =
         TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
 
@@ -182,8 +175,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "MAP<TYPE,INTEGER>",
         split = ",",
         description =
-            "Max number of pending transactions, of a specific type, that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Max number of pending transactions, of a specific type, that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})")
     Map<TransactionType, Integer> txPoolMaxPrioritizedByType =
         TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE;
 
@@ -191,8 +183,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_MAX_FUTURE_BY_SENDER},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})")
     Integer txPoolMaxFutureBySender = TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
 
     @CommandLine.Option(
@@ -200,8 +191,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<Byte>",
         description =
             "Remove a pending transaction from the txpool if its score is lower than this value."
-                + "Accepts values between -128 and 127 (default: ${DEFAULT-VALUE})",
-        arity = "1")
+                + "Accepts values between -128 and 127 (default: ${DEFAULT-VALUE})")
     Byte minScore = TransactionPoolConfiguration.DEFAULT_TX_POOL_MIN_SCORE;
 
     @CommandLine.Option(
@@ -209,8 +199,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<Boolean>",
         description =
             "If enabled a pending transaction can stay in the prioritized layer, only if its sender has enough balance (default: ${DEFAULT-VALUE})",
-        fallbackValue = "true",
-        arity = "0..1")
+        fallbackValue = "true")
     Boolean balanceCheckEnabled = TransactionPoolConfiguration.DEFAULT_TX_POOL_ENABLE_BALANCE_CHECK;
   }
 
@@ -229,8 +218,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_RETENTION_HOURS},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})")
     Integer pendingTxRetentionPeriod = TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
     @CommandLine.Option(
@@ -238,8 +226,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
         converter = FractionConverter.class,
         description =
-            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})")
     Fraction txPoolLimitByAccountPercentage =
         TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
@@ -247,8 +234,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_MAX_SIZE},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})")
     Integer txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
   }
 
@@ -269,8 +255,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<INTEGER>",
         hidden = true,
         description =
-            "Keep alive of incoming transaction messages in seconds (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "Keep alive of incoming transaction messages in seconds (default: ${DEFAULT-VALUE})")
     private Integer txMessageKeepAliveSeconds =
         TransactionPoolConfiguration.Unstable.DEFAULT_TX_MSG_KEEP_ALIVE;
 
@@ -280,8 +265,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         converter = DurationMillisConverter.class,
         hidden = true,
         description =
-            "The period for which the announced transactions remain in the buffer before being requested from the peers in milliseconds (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "The period for which the announced transactions remain in the buffer before being requested from the peers in milliseconds (default: ${DEFAULT-VALUE})")
     private Duration eth65TrxAnnouncedBufferingPeriod =
         TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
 
@@ -290,8 +274,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<LONG>",
         hidden = true,
         description =
-            "The number of exchanged txs that are remembered with each peer, to minimize broadcasting duplicates (default: ${DEFAULT-VALUE})",
-        arity = "1")
+            "The number of exchanged txs that are remembered with each peer, to minimize broadcasting duplicates (default: ${DEFAULT-VALUE})")
     private int maxTrackedSeenTxsPerPeer =
         TransactionPoolConfiguration.Unstable.DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER;
 
