@@ -367,12 +367,8 @@ public class BlockSimulator {
 
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
-            transactionSimulationResult
-                .getInvalidReason()
-                .orElse("Transaction simulator result is invalid"),
-            transactionSimulationResult.isInvalid()
-                ? transactionSimulationResult.getValidationResult().getInvalidReason()
-                : TransactionInvalidReason.INTERNAL_ERROR);
+            transactionSimulationResult.getValidationResult().getErrorMessage(),
+            transactionSimulationResult.getValidationResult().getInvalidReason());
       }
 
       transactionSimulationResult
