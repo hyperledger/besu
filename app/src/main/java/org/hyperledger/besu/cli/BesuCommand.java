@@ -257,6 +257,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.jackson.DatabindCodec;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -401,8 +405,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--identity",
       paramLabel = "<String>",
-      description = "Identification for this node in the Client ID",
-      arity = "1")
+      description = "Identification for this node in the Client ID")
   private final Optional<String> identityString = Optional.empty();
 
   private Boolean printPathsAndExit = Boolean.FALSE;
@@ -495,8 +498,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--network-id"},
       paramLabel = "<BIG INTEGER>",
       description =
-          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
-      arity = "1")
+          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)")
   private final BigInteger networkId = null;
 
   @Option(
@@ -504,8 +506,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Path to file containing the KZG trusted setup, mandatory for custom networks that support data blobs, "
-              + "optional for overriding named networks default.",
-      arity = "1")
+              + "optional for overriding named networks default.")
   private final Path kzgTrustedSetupFile = null;
 
   @Option(
@@ -581,16 +582,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
-      description = "Identity for the key-value storage to be used.",
-      arity = "1")
+      description = "Identity for the key-value storage to be used.")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--security-module"},
       paramLabel = "<NAME>",
-      description = "Identity for the Security Module to be used.",
-      arity = "1")
+      description = "Identity for the Security Module to be used.")
   private String securityModuleName = DEFAULT_SECURITY_MODULE;
 
   @Option(
@@ -853,11 +852,38 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
+      if (parseResult.isUsageHelpRequested() || parseResult.isVersionHelpRequested()) {
+        // suppressing the info log to avoid that plugin registrations logs are printed
+        // before the help or the version information
+        suppressInfoLog();
+      }
       besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
       besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
     };
+  }
+
+  @SuppressWarnings("BannedMethod")
+  private void suppressInfoLog() {
+    // this is specific for Log4j2, in case we switch to another logging framework,
+    // this need to be adapted for it
+
+    // silence already created loggers
+    LoggerContext.getContext(false).getLoggers().forEach(logger -> logger.setLevel(Level.WARN));
+
+    // silence future loggers by configuration
+    if (LogManager.getFactory() instanceof Log4jContextFactory log4jContextFactory) {
+      final var selector = log4jContextFactory.getSelector();
+      selector
+          .getLoggerContexts()
+          .forEach(
+              ctx ->
+                  ctx.getConfiguration()
+                      .getLoggers()
+                      .values()
+                      .forEach(loggerConfig -> loggerConfig.setLevel(Level.WARN)));
+    }
   }
 
   private IExecutionStrategy createDefaultValueProviderTask(final IExecutionStrategy nextStep) {
@@ -2685,8 +2711,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {
       builder.setTargetGasLimit(miningParametersSupplier.get().getTargetGasLimit().getAsLong());
     } else {
-      builder.setTargetGasLimit(
-          MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(ethNetworkConfig.networkId())));
+      MergeCoordinator.getDefaultGasLimitByChainId(genesisConfigOptionsSupplier.get().getChainId())
+          .ifPresent(builder::setTargetGasLimit);
     }
 
     builder
