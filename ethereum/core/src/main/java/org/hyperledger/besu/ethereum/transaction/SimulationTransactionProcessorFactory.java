@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallValidationException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.SimulationMessageCallProcessor;
 
@@ -108,12 +108,12 @@ public class SimulationTransactionProcessorFactory {
     precompileOverrides.forEach(
         (oldAddress, newAddress) -> {
           if (!originalAddresses.contains(oldAddress)) {
-            throw new BlockStateCallValidationException(
+            throw new BlockStateCallException(
                 "Address " + oldAddress + " is not a precompile.",
                 BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
           }
           if (newRegistry.getPrecompileAddresses().contains(newAddress)) {
-            throw new BlockStateCallValidationException(
+            throw new BlockStateCallException(
                 "Duplicate precompile address: " + newAddress,
                 BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
           }
@@ -125,7 +125,7 @@ public class SimulationTransactionProcessorFactory {
         .forEach(
             originalAddress -> {
               if (newRegistry.getPrecompileAddresses().contains(originalAddress)) {
-                throw new BlockStateCallValidationException(
+                throw new BlockStateCallException(
                     "Duplicate precompile address: " + originalAddress,
                     BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
               }

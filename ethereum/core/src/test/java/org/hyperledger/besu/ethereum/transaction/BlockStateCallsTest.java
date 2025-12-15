@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallValidationException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.time.Duration;
@@ -147,9 +147,9 @@ class BlockStateCallsTest {
     // BlockHeader is at block number 1
     // BlockStateCall block number is 1
     // Should throw an exception because the block number is not greater than 1
-    BlockStateCallValidationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallValidationException.class,
+            BlockStateCallException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
                     mockProtocolSpec, List.of(createBlockStateCall(1L, 1012L)), mockBlockHeader));
@@ -170,9 +170,9 @@ class BlockStateCallsTest {
     // BlockHeader is at block number 1 and timestamp 1000
     // BlockStateCall is at block number 2 and timestamp 1000
     // Should throw an exception because the timestamp is not greater than the 1000
-    BlockStateCallValidationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallValidationException.class,
+            BlockStateCallException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
                     mockProtocolSpec,
@@ -195,9 +195,9 @@ class BlockStateCallsTest {
     // BlockHeader is at block number 1 and timestamp 1000
     // BlockStateCall is at block number 3 and timestamp 1012
     // Should throw an exception because the timestamp is not greater than 1012
-    BlockStateCallValidationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallValidationException.class,
+            BlockStateCallException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
                     mockProtocolSpec, List.of(createBlockStateCall(3L, 1012L)), mockBlockHeader));
@@ -213,9 +213,9 @@ class BlockStateCallsTest {
     long maxAllowedBlockNumber = MAX_BLOCK_CALL_SIZE + 1;
     long invalidBlockNumber = maxAllowedBlockNumber + 1;
     BlockStateCall blockStateCall = createBlockStateCall(invalidBlockNumber, null);
-    BlockStateCallValidationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallValidationException.class,
+            BlockStateCallException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
                     mockProtocolSpec, List.of(blockStateCall), mockBlockHeader));
@@ -233,9 +233,9 @@ class BlockStateCallsTest {
     blockStateCalls.add(createBlockStateCall(101L, 1609459212L));
     blockStateCalls.add(createBlockStateCall(257L, 1609459248L));
     blockStateCalls.add(createBlockStateCall(null, 1609459224L));
-    BlockStateCallValidationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallValidationException.class,
+            BlockStateCallException.class,
             () ->
                 BlockStateCalls.fillBlockStateCalls(
                     mockProtocolSpec, blockStateCalls, mockBlockHeader));

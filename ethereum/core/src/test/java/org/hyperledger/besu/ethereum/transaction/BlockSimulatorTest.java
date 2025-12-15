@@ -41,10 +41,11 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
-import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallSimulationException;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -139,7 +140,6 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldStopWhenTransactionSimulationIsInvalid() {
-
     when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.updater()).thenReturn(updater);
@@ -151,20 +151,24 @@ public class BlockSimulatorTest {
     when(transactionSimulatorResult.isInvalid()).thenReturn(true);
     when(transactionSimulatorResult.getInvalidReason())
         .thenReturn(Optional.of("Invalid Transaction"));
-
+    when(transactionSimulatorResult.getValidationResult())
+        .thenReturn(
+            ValidationResult.invalid(
+                TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE, "Invalid Transaction"));
     when(transactionSimulator.processWithWorldUpdater(
             any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any(),
             any()))
         .thenReturn(Optional.of(transactionSimulatorResult));
 
-    BlockStateCallSimulationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallSimulationException.class,
+            BlockStateCallException.class,
             () ->
                 blockSimulator.process(
                     blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals("Transaction simulator result is invalid", exception.getMessage());
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.UPFRONT_COST_EXCEEDS_BALANCE);
+    assertEquals("Invalid Transaction", exception.getMessage());
   }
 
   @Test
@@ -182,14 +186,14 @@ public class BlockSimulatorTest {
             any()))
         .thenReturn(Optional.empty());
 
-    BlockStateCallSimulationException exception =
+    BlockStateCallException exception =
         assertThrows(
-            BlockStateCallSimulationException.class,
+            BlockStateCallException.class,
             () ->
                 blockSimulator.process(
                     blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals("Transaction simulator result is empty", exception.getMessage());
+    assertEquals("Transaction simulation returned no result", exception.getMessage());
   }
 
   @Test
