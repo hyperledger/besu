@@ -14,6 +14,7 @@
     - Fast Sync
   
 ### Additions and Improvements
+- Performance: Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
 
 ##  25.12.0
 
