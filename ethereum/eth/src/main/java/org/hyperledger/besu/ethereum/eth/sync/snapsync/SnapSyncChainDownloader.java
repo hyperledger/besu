@@ -84,8 +84,7 @@ public class SnapSyncChainDownloader
   /**
    * Creates a new TwoStageFastSyncChainDownloader. The first stage is to download all headers from
    * a safe pivot down to the genesis. Due to the chain of parent hashes in the headers, as well as
-   * the trusted pivot and the known genesis, we can be sure that we can trust the downloaded
-   * headers.
+   * the trusted pivot and the known genesis, we can trust the downloaded headers.
    *
    * <p>The second stage is to download the bodies and receipts. Bodies and receipts are validated
    * by checking the transactions root and the receipts root against the values contained in th
@@ -98,7 +97,7 @@ public class SnapSyncChainDownloader
    * block.
    *
    * @param pipelineFactory the pipeline factory for creating download pipelines
-   * @param protocolContext the protocol context providing access to blockchain
+   * @param protocolContext the protocol context providing access to the blockchain
    * @param ethContext the ethContext for running pipelines
    * @param syncState the sync state tracker
    * @param metricsSystem the metrics system (unused but kept for API compatibility)
@@ -112,7 +111,6 @@ public class SnapSyncChainDownloader
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final SyncDurationMetrics syncDurationMetrics,
       final BlockHeader initialPivotHeader,
       final ChainSyncStateStorage chainStateStorage) {
@@ -239,7 +237,7 @@ public class SnapSyncChainDownloader
    * sync state.
    *
    * @param state the chain sync state to use for this stage
-   * @return CompletableFuture that completes when Stage 1 is done (or skipped)
+   * @return CompletableFuture that completes when Stage 1 is done
    */
   private CompletableFuture<Void> determineStage1Execution(final ChainSyncState state) {
     if (state.headersDownloadComplete()) {
@@ -296,7 +294,7 @@ public class SnapSyncChainDownloader
     if (blockchainHead < expectedMinStart) {
       throw new IllegalStateException(
           String.format(
-              "Blockchain head (%d) is before expected start (%d). Headers may not have been downloaded yet.",
+              "Blockchain head (%d) is before expected start (%d).",
               blockchainHead, expectedMinStart));
     }
 

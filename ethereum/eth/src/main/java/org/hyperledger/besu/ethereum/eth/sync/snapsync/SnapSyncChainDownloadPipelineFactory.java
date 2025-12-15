@@ -96,14 +96,6 @@ public class SnapSyncChainDownloadPipelineFactory {
     }
   }
 
-  public CompletionStage<Void> startPipeline(
-      final EthScheduler scheduler,
-      final SyncState syncState,
-      final SyncTarget syncTarget,
-      final Pipeline<?> pipeline) {
-    return scheduler.startPipeline(pipeline);
-  }
-
   /**
    * Creates Pipeline 1: Backward header download from pivot block to checkpoint block. Downloads
    * headers in reverse direction, validates boundaries, and stores in database. Supports
