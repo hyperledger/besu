@@ -36,6 +36,12 @@ public interface BalConfiguration {
     return true;
   }
 
+  /** Returns whether the BAL-computed state root should be trusted without verification. */
+  @Value.Default
+  default boolean isBalStateRootTrusted() {
+    return false;
+  }
+
   /**
    * Returns whether mismatches between BAL and synchronously computed state roots should only log
    * an error instead of throwing an exception.
