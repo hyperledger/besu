@@ -49,7 +49,9 @@ public class DebugGethTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySp
   public static Object[][] specs() {
     return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
         new String[] {
-          "debug-geth/specs/prestate-tracer/diff-mode-true", "debug-geth/specs/call-tracer"
+          "debug-geth/specs/prestate-tracer/diff-mode-true",
+          "debug-geth/specs/prestate-tracer/diff-mode-false",
+          "debug-geth/specs/call-tracer"
         });
   }
 

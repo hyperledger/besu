@@ -645,7 +645,8 @@ public class BesuNodeFactory {
                 MiningConfiguration.newDefault()
                     .setCoinbase(AddressHelpers.ofValue(1))
                     .setExtraData(Bytes.EMPTY)
-                    .setMiningEnabled(true))
+                    .setMiningEnabled(true)
+                    .setTargetGasLimit(60_000_000L)) // make tests agnostic to gas limit changes
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .engineRpcEnabled(true)
