@@ -199,7 +199,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         paramLabel = "<Boolean>",
         description =
             "If enabled a pending transaction can stay in the prioritized layer, only if its sender has enough balance (default: ${DEFAULT-VALUE})",
-        fallbackValue = "true")
+        fallbackValue = "true",
+        arity = "0..1")
     Boolean balanceCheckEnabled = TransactionPoolConfiguration.DEFAULT_TX_POOL_ENABLE_BALANCE_CHECK;
   }
 
