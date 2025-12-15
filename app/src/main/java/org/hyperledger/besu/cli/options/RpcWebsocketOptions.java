@@ -70,8 +70,7 @@ public class RpcWebsocketOptions {
       names = {"--rpc-ws-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
-              + " (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + " (default: ${DEFAULT-VALUE})")
   private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm =
       DefaultCommandValues.DEFAULT_JWT_ALGORITHM;
 
@@ -84,29 +83,25 @@ public class RpcWebsocketOptions {
   @CommandLine.Option(
       names = {"--rpc-ws-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Host for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})")
   private String rpcWsHost;
 
   @CommandLine.Option(
       names = {"--rpc-ws-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})")
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
 
   @CommandLine.Option(
       names = {"--rpc-ws-max-frame-size"},
       description =
-          "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
-      arity = "1")
+          "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.")
   private final Integer rpcWsMaxFrameSize = DefaultCommandValues.DEFAULT_WS_MAX_FRAME_SIZE;
 
   @CommandLine.Option(
       names = {"--rpc-ws-max-active-connections"},
       description =
-          "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
-      arity = "1")
+          "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.")
   private final Integer rpcWsMaxConnections = DefaultCommandValues.DEFAULT_WS_MAX_CONNECTIONS;
 
   @CommandLine.Option(
@@ -138,15 +133,13 @@ public class RpcWebsocketOptions {
       names = {"--rpc-ws-authentication-credentials-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})")
   private String rpcWsAuthenticationCredentialsFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-ws-authentication-jwt-public-key-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-      description = "JWT public key file for JSON-RPC WebSocket authentication",
-      arity = "1")
+      description = "JWT public key file for JSON-RPC WebSocket authentication")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
   @CommandLine.Option(
