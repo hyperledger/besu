@@ -68,4 +68,10 @@ public interface BalConfiguration {
   default Duration getBalStateRootTimeout() {
     return Duration.ofSeconds(1);
   }
+
+  /** Returns the timeout to use when waiting for BAL transaction processing results. */
+  @Value.Default
+  default Duration getBalProcessingTimeout() {
+    return Duration.ofSeconds(1);
+  }
 }

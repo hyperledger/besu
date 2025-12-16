@@ -72,6 +72,13 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for the BAL-computed state root.")
   private long balStateRootTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  @CommandLine.Option(
+      names = {"--Xbal-processing-timeout"},
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description = "Timeout in milliseconds when waiting for BAL transaction processing results.")
+  private long balProcessingTimeoutMs = Duration.ofSeconds(1).toMillis();
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -86,6 +93,7 @@ public class BalConfigurationOptions {
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
+        .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();
   }
 }

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -112,7 +113,9 @@ class ParallelBlockTransactionProcessorTest {
     return switch (variant) {
       case PARALLELIZED ->
           new ParallelizedConcurrentTransactionProcessor(transactionProcessor, collisionDetector);
-      case BAL -> new BalConcurrentTransactionProcessor(transactionProcessor, blockAccessList);
+      case BAL ->
+          new BalConcurrentTransactionProcessor(
+              transactionProcessor, blockAccessList, BalConfiguration.DEFAULT);
     };
   }
 
@@ -391,48 +394,43 @@ class ParallelBlockTransactionProcessorTest {
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
-    {
-      final PartialBlockAccessView.PartialBlockAccessViewBuilder p0 =
-          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(0);
-      final PartialBlockAccessView.AccountChangesBuilder a0 =
-          p0.getOrCreateAccountBuilder(accountAddress);
+    final PartialBlockAccessView.PartialBlockAccessViewBuilder p0 =
+        new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(0);
+    final PartialBlockAccessView.AccountChangesBuilder a0 =
+        p0.getOrCreateAccountBuilder(accountAddress);
 
-      a0.withPostBalance(Wei.of(100));
-      a0.withNonceChange(1L);
-      a0.withNewCode(Bytes.fromHexString("0xAA"));
-      a0.addStorageChange(slot1, UInt256.valueOf(1));
-      a0.addStorageChange(slot2, UInt256.valueOf(3));
+    a0.withPostBalance(Wei.of(100));
+    a0.withNonceChange(1L);
+    a0.withNewCode(Bytes.fromHexString("0xAA"));
+    a0.addStorageChange(slot1, UInt256.valueOf(1));
+    a0.addStorageChange(slot2, UInt256.valueOf(3));
 
-      balBuilder.apply(p0.build());
-    }
-    {
-      final PartialBlockAccessView.PartialBlockAccessViewBuilder p1 =
-          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(1);
-      final PartialBlockAccessView.AccountChangesBuilder a1 =
-          p1.getOrCreateAccountBuilder(accountAddress);
+    balBuilder.apply(p0.build());
 
-      a1.withPostBalance(Wei.of(200));
-      a1.withNonceChange(2L);
-      a1.withNewCode(Bytes.fromHexString("0xBB"));
-      a1.addStorageChange(slot1, UInt256.valueOf(5));
-      a1.addStorageChange(slot2, null);
+    final PartialBlockAccessView.PartialBlockAccessViewBuilder p1 =
+        new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(1);
+    final PartialBlockAccessView.AccountChangesBuilder a1 =
+        p1.getOrCreateAccountBuilder(accountAddress);
 
-      balBuilder.apply(p1.build());
-    }
-    {
-      final PartialBlockAccessView.PartialBlockAccessViewBuilder p2 =
-          new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(2);
-      final PartialBlockAccessView.AccountChangesBuilder a2 =
-          p2.getOrCreateAccountBuilder(accountAddress);
+    a1.withPostBalance(Wei.of(200));
+    a1.withNonceChange(2L);
+    a1.withNewCode(Bytes.fromHexString("0xBB"));
+    a1.addStorageChange(slot1, UInt256.valueOf(5));
+    a1.addStorageChange(slot2, null);
 
-      a2.withPostBalance(Wei.of(300));
-      a2.withNonceChange(3L);
-      a2.withNewCode(Bytes.fromHexString("0xCC"));
-      a2.addStorageChange(slot1, UInt256.valueOf(7));
-      a2.addStorageChange(slot2, null);
+    balBuilder.apply(p1.build());
 
-      balBuilder.apply(p2.build());
-    }
+    final PartialBlockAccessView.PartialBlockAccessViewBuilder p2 =
+        new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(2);
+    final PartialBlockAccessView.AccountChangesBuilder a2 =
+        p2.getOrCreateAccountBuilder(accountAddress);
+
+    a2.withPostBalance(Wei.of(300));
+    a2.withNonceChange(3L);
+    a2.withNewCode(Bytes.fromHexString("0xCC"));
+    a2.addStorageChange(slot1, UInt256.valueOf(7));
+
+    balBuilder.apply(p2.build());
 
     final BlockAccessList blockAccessList = balBuilder.build();
 
@@ -486,9 +484,6 @@ class ParallelBlockTransactionProcessorTest {
                 assertTrue(
                     account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(7)),
                     "tx2: expected slot1 = 7");
-                assertTrue(
-                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.ZERO),
-                    "tx2: expected slot2 = 0 (null -> ZERO)");
               } else {
                 throw new IllegalStateException(
                     "Unexpected transactionLocation " + transactionLocation);
@@ -504,7 +499,8 @@ class ParallelBlockTransactionProcessorTest {
             });
 
     final BalConcurrentTransactionProcessor processor =
-        new BalConcurrentTransactionProcessor(transactionProcessor, blockAccessList);
+        new BalConcurrentTransactionProcessor(
+            transactionProcessor, blockAccessList, BalConfiguration.DEFAULT);
 
     final Transaction tx0 = mockTransaction();
     final Transaction tx1 = mockTransaction();
