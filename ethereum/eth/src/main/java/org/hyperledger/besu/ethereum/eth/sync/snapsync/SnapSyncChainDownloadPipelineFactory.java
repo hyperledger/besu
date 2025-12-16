@@ -111,7 +111,7 @@ public class SnapSyncChainDownloadPipelineFactory {
             : chainState.headerDownloadAnchor();
 
     final long pivotBlockNumber = chainState.pivotBlockHeader().getNumber();
-    LOG.debug(
+    LOG.info(
         "Creating backward header download pipeline from pivot={} down to lowest block={}, parallelism={}, batchSize={}",
         pivotBlockNumber,
         anchorForHeaderDownload.getNumber(),
@@ -168,7 +168,7 @@ public class SnapSyncChainDownloadPipelineFactory {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    LOG.debug(
+    LOG.info(
         "Creating forward bodies and receipts download pipeline: startBlock={}, pivotHeaderNumber={}, parallelism={}, batchSize={}",
         startBlock,
         pivotHeaderNumber,

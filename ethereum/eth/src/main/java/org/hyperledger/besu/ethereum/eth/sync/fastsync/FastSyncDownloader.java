@@ -101,7 +101,7 @@ public class FastSyncDownloader<REQUEST> {
           onBonsai.clearFlatDatabase();
           onBonsai.clearTrieLog();
         });
-    LOG.debug("Start fast sync with initial sync state {}", fastSyncState);
+    LOG.info("Start fast sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 

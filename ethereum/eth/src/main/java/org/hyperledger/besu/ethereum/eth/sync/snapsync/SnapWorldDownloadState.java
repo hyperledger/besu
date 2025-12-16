@@ -173,6 +173,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
 
+      LOG.info("Stefan: Calling checkCompletion");
       // if all snapsync tasks are completed and the healing process was not running
       if (!snapSyncState.isHealTrieInProgress()) {
         // Start the healing process

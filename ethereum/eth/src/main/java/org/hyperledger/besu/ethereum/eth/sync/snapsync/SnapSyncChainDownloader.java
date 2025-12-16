@@ -74,6 +74,7 @@ public class SnapSyncChainDownloader
   private final AtomicReference<BlockHeader> pendingPivotUpdate = new AtomicReference<>(null);
   private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
+  private volatile SnapWorldDownloadState worldDownloadState;
 
   private final AtomicBoolean downloadInProgress = new AtomicBoolean(false);
 
@@ -183,6 +184,15 @@ public class SnapSyncChainDownloader
   public void onWorldStateHealFinished() {
     LOG.info("World state download is stable, no more pivot updates expected");
     worldStateHealFinishedFuture.complete(null);
+  }
+
+  /**
+   * Sets the world download state reference so the chain downloader can trigger completion checks.
+   *
+   * @param worldDownloadState the world download state
+   */
+  public void setWorldDownloadState(final SnapWorldDownloadState worldDownloadState) {
+    this.worldDownloadState = worldDownloadState;
   }
 
   @Override
@@ -501,7 +511,15 @@ public class SnapSyncChainDownloader
       }
     }
 
-    LOG.debug(
+    // Proactively check if world state download is already complete before waiting.
+    // This ensures that if all tasks are complete, the healing process gets triggered
+    // immediately without waiting for the next pipeline cycle.
+    if (worldDownloadState != null) {
+      final BlockHeader currentPivot = chainSyncState.get().pivotBlockHeader();
+      worldDownloadState.checkCompletion(currentPivot);
+    }
+
+    LOG.info(
         "No immediate pivot update detected. Waiting for world state heal to finish or pivot update ...");
 
     // Wait for either a pivot update or world state heal to complete

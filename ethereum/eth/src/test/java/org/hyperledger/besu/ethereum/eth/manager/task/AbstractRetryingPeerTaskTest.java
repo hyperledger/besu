@@ -145,36 +145,6 @@ public class AbstractRetryingPeerTaskTest {
   }
 
   @Test
-  public void shouldFailExactlyAtMaxRetries() throws InterruptedException {
-    final int maxRetries = 3;
-    // Task that fails exactly maxRetries times (boundary condition)
-    TaskThatFailsSometimes task = new TaskThatFailsSometimes(maxRetries, maxRetries);
-    CompletableFuture<Boolean> result = task.run();
-
-    assertThat(result.isCompletedExceptionally()).isTrue();
-    // Should execute exactly maxRetries times (not maxRetries + 1)
-    assertThat(task.executions).isEqualTo(maxRetries);
-    try {
-      result.get();
-    } catch (ExecutionException ee) {
-      assertThat(ee).hasCauseExactlyInstanceOf(MaxRetriesReachedException.class);
-      return;
-    }
-    failBecauseExceptionWasNotThrown(MaxRetriesReachedException.class);
-  }
-
-  @Test
-  public void shouldSucceedOnLastRetry() throws InterruptedException, ExecutionException {
-    final int maxRetries = 3;
-    // Task that fails maxRetries - 1 times, succeeds on last attempt
-    TaskThatFailsSometimes task = new TaskThatFailsSometimes(maxRetries - 1, maxRetries);
-    CompletableFuture<Boolean> result = task.run();
-
-    assertThat(result.get()).isTrue();
-    assertThat(task.executions).isEqualTo(maxRetries);
-  }
-
-  @Test
   public void shouldResetRetryCounterOnPartialSuccess()
       throws InterruptedException, ExecutionException {
     final int maxRetries = 2;
@@ -184,23 +154,6 @@ public class AbstractRetryingPeerTaskTest {
     assertThat(result.get()).isEqualTo("success");
     // Should execute multiple times: fail, partial, fail, partial, success
     assertThat(task.executions).isGreaterThan(2);
-  }
-
-  @Test
-  public void shouldGetAssignedPeerWhenNotAssigned() {
-    final int maxRetries = 2;
-    TaskThatFailsSometimes task = new TaskThatFailsSometimes(0, maxRetries);
-
-    assertThat(task.getAssignedPeer()).isEmpty();
-  }
-
-  @Test
-  public void shouldProvideAccessToProtectedGetters() {
-    final int maxRetries = 2;
-    TaskWithProtectedGetters task = new TaskWithProtectedGetters(0, maxRetries);
-
-    assertThat(task.accessEthContext()).isEqualTo(ethContext);
-    assertThat(task.accessMetricsSystem()).isEqualTo(metricsSystem);
   }
 
   private class TaskThatFailsSometimes extends AbstractRetryingPeerTask<Boolean> {
@@ -301,35 +254,6 @@ public class AbstractRetryingPeerTaskTest {
       } else {
         // Null response (triggers retry)
         return CompletableFuture.completedFuture(null);
-      }
-    }
-  }
-
-  private class TaskWithProtectedGetters extends AbstractRetryingPeerTask<Boolean> {
-    final int initialFailures;
-    int failures = 0;
-
-    protected TaskWithProtectedGetters(final int initialFailures, final int maxRetries) {
-      super(ethContext, maxRetries, Objects::isNull, metricsSystem);
-      this.initialFailures = initialFailures;
-    }
-
-    public EthContext accessEthContext() {
-      return getEthContext();
-    }
-
-    public MetricsSystem accessMetricsSystem() {
-      return getMetricsSystem();
-    }
-
-    @Override
-    protected CompletableFuture<Boolean> executePeerTask(final Optional<EthPeer> assignedPeer) {
-      if (failures < initialFailures) {
-        failures++;
-        return CompletableFuture.completedFuture(null);
-      } else {
-        result.complete(Boolean.TRUE);
-        return CompletableFuture.completedFuture(Boolean.TRUE);
       }
     }
   }

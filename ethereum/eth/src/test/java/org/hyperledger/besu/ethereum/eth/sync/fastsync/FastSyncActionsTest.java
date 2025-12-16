@@ -239,8 +239,9 @@ public class FastSyncActionsTest {
     FastSyncState expectedResult = new FastSyncState(123, false);
 
     when(pivotBlockSelector.selectNewPivotBlock())
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.of(expectedResult));
+        .thenReturn(
+            CompletableFuture.failedFuture(new RuntimeException("No pivot block available")))
+        .thenReturn(CompletableFuture.completedFuture(expectedResult));
     when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.runAsync(() -> {}));
 
     CompletableFuture<FastSyncState> resultFuture =

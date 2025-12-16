@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -73,7 +74,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock() {
+  public CompletableFuture<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     final var now = System.currentTimeMillis();
 
@@ -87,7 +88,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         lastPivotBlockChange = now;
         inFallbackMode = false;
         fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
-        return Optional.of(selectLastSafeBlockAsPivot(safeBlockHash));
+        return selectLastSafeBlockAsPivot(safeBlockHash);
       }
 
       // otherwise verify if we need to fallback to a previous head block
@@ -95,14 +96,11 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         lastPivotBlockChange = now;
         inFallbackMode = true;
         lastFallbackBlockHash = fallbackBlockHash;
-        final var fallbackPivot = selectFallbackBlockAsPivot(fallbackBlockHash);
-        fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
-        return Optional.of(fallbackPivot);
+        return selectFallbackBlockAsPivot(fallbackBlockHash);
       }
 
       // if not enough time has passed the return again the previous value
-      return Optional.of(
-          selectLastSafeBlockAsPivot(inFallbackMode ? lastFallbackBlockHash : lastSafeBlockHash));
+      return selectLastSafeBlockAsPivot(inFallbackMode ? lastFallbackBlockHash : lastSafeBlockHash);
     }
 
     if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < now) {
@@ -111,7 +109,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
           "Waiting for consensus client, this may be because your consensus client is still syncing");
     }
     LOG.debug("No finalized block hash announced yet");
-    return Optional.empty();
+    return CompletableFuture.failedFuture(
+        new RuntimeException("No finalized block hash announced yet"));
   }
 
   @Override
@@ -120,17 +119,66 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     return CompletableFuture.completedFuture(null);
   }
 
-  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+  private CompletableFuture<FastSyncState> selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return new FastSyncState(safeHash, true);
+    return retrieveForHash(safeHash).thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
-  private FastSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
+  private CompletableFuture<BlockHeader> retrieveForHash(final Hash pivotHash) {
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(
+            () -> {
+              GetHeadersFromPeerTask task =
+                  new GetHeadersFromPeerTask(
+                      pivotHash,
+                      1,
+                      0,
+                      GetHeadersFromPeerTask.Direction.FORWARD,
+                      ethContext.getEthPeers().peerCount(),
+                      protocolSchedule);
+              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+                  ethContext.getPeerTaskExecutor().execute(task);
+              if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
+                  || taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
+                LOG.error(
+                    "Failed to download pivot block header. Response Code was {}",
+                    taskResult.responseCode());
+                return CompletableFuture.failedFuture(new NoAvailablePeersException());
+              } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                  || taskResult.result().isEmpty()) {
+                LOG.error(
+                    "Failed to download pivot block header. Response Code was {}",
+                    taskResult.responseCode());
+                return CompletableFuture.failedFuture(
+                    new RuntimeException(
+                        "Failed to download pivot block header. Response Code was "
+                            + taskResult.responseCode()));
+              } else {
+                return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
+              }
+            })
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", pivotHash);
+              } else {
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
+              }
+            });
+  }
+
+  private CompletableFuture<FastSyncState> selectFallbackBlockAsPivot(
+      final Hash fallbackBlockHash) {
     LOG.debug(
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return new FastSyncState(fallbackBlockHash, true);
+    return retrieveForHash(fallbackBlockHash)
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
   @Override

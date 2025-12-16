@@ -249,6 +249,13 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       if (worldStateHealFinishedListener != null) {
         newDownloadState.setWorldStateHealFinishedListener(worldStateHealFinishedListener);
         LOG.debug("World state stable listener registered with download state");
+
+        // Set the bidirectional reference so the chain downloader can trigger completion checks
+        if (worldStateHealFinishedListener instanceof SnapSyncChainDownloader) {
+          ((SnapSyncChainDownloader) worldStateHealFinishedListener)
+              .setWorldDownloadState(newDownloadState);
+          LOG.debug("World download state reference registered with chain downloader");
+        }
       }
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());

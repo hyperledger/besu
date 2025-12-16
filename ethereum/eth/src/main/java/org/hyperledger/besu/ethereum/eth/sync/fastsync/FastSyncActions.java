@@ -115,8 +115,7 @@ public class FastSyncActions {
   private CompletableFuture<FastSyncState> selectNewPivotBlock() {
     return pivotBlockSelector
         .selectNewPivotBlock()
-        .map(CompletableFuture::completedFuture)
-        .orElseGet(this::retrySelectPivotBlockAfterDelay);
+        .exceptionallyCompose(throwable -> retrySelectPivotBlockAfterDelay());
   }
 
   <T> CompletableFuture<T> scheduleFutureTask(

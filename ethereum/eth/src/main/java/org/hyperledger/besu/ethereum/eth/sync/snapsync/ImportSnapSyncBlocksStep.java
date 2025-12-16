@@ -64,7 +64,7 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     blockchain.unsafeImportSyncBodiesAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
     final SyncBlockWithReceipts lastBlock = blocksWithReceipts.getLast();
-    LOG.atTrace()
+    LOG.atInfo()
         .setMessage("Imported blocks up to {}")
         .addArgument(lastBlock.getBlock()::toLogString)
         .log();
