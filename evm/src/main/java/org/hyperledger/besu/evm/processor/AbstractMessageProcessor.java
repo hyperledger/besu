@@ -237,24 +237,4 @@ public abstract class AbstractMessageProcessor {
   public Code getOrCreateCachedJumpDest(final Hash codeHash, final Bytes codeBytes) {
     return evm.getOrCreateCachedJumpDest(codeHash, codeBytes);
   }
-
-  /**
-   * Wraps code in the correct Code object.
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code from the evm
-   */
-  public Code wrapCode(final Bytes codeBytes) {
-    return evm.wrapCode(codeBytes);
-  }
-
-  /**
-   * Wraps the code from the evm, with handling for EOF code plus calldata
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code from the evm
-   */
-  public Code wrapCodeForCreation(final Bytes codeBytes) {
-    return evm.wrapCodeForCreation(codeBytes);
-  }
 }

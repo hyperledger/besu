@@ -58,6 +58,7 @@ def eipBlockchainReferenceTests = tasks.register("eipBlockchainReferenceTests") 
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPBlockchainReferenceTest",
     "org.hyperledger.besu.ethereum.vm.eip",
+    "EIPTests${File.separatorChar}BlockchainTests${File.separatorChar}StateTests${File.separatorChar}stEOF" // exclude EOF tests
     )
 }
 
@@ -74,6 +75,7 @@ def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPStateReferenceTest",
     "org.hyperledger.besu.ethereum.vm.eip",
+    "EIPTests${File.separatorChar}StateTests${File.separatorChar}stEOF" // exclude EOF tests
     )
 }
 
@@ -142,22 +144,6 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
-def eofReferenceTests = tasks.register("eofReferenceTests") {
-  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  inputs.files fileTree(referenceTestsPath),
-    fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  generateTestFiles(
-    fileTree(referenceTestsPath),
-    file("src/reference-test/templates/EOFReferenceTest.java.template"),
-    "EOFTests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest",
-    "org.hyperledger.besu.ethereum.vm.eof"
-    )
-}
-
 sourceSets {
   referenceTest {
     java {
@@ -169,8 +155,7 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests,
-        eofReferenceTests
+        generalstateRegressionReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -297,7 +282,8 @@ def generateTestFiles(
   jsonPath.getFiles().forEach { testJsonFile ->
     def parentFile = testJsonFile.getParentFile()
     def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-    if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+    def isExcluded = excludedPath.any { excluded -> parentPathFile.startsWith(excluded) }
+    if (!testJsonFile.getName().toString().startsWith(".") && !isExcluded) {
       def pathFile = testJsonFile.getPath()
       paths << pathFile.substring(pathFile.indexOf(pathstrip))
     }
