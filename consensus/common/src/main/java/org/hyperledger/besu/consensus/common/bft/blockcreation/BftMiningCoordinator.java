@@ -160,7 +160,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
     }
     syncState.subscribeSyncStatus(
         syncStatus -> {
-          if (syncState.syncTarget().isPresent()) {
+          if (syncState.syncTarget().isPresent() || !syncState.isInitialSyncPhaseDone()) {
             // We're syncing so stop doing other stuff
             LOG.info("Stopping BFT mining coordinator while we are syncing");
             stop();
