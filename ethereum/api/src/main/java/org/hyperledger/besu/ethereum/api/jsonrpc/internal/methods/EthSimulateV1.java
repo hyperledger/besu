@@ -110,7 +110,8 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       }
       return process(header, simulateV1Parameter);
     } catch (final BlockStateCallException e) {
-      return handleBlockSimulationException(request, e);
+      JsonRpcError error = new JsonRpcError(e.getError().getCode(), e.getMessage(), null);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), error);
     } catch (final JsonRpcParameterException e) {
       return errorResponse(request, INVALID_PARAMS);
     } catch (Exception e) {
@@ -126,22 +127,6 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
             result ->
                 BlockStateCallResult.create(result, simulateV1Parameter.isReturnFullTransactions()))
         .collect(Collectors.toList());
-  }
-
-  private JsonRpcErrorResponse handleBlockSimulationException(
-      final JsonRpcRequestContext request, final BlockStateCallException e) {
-    JsonRpcError error =
-        e.getResult()
-            .map(
-                r -> {
-                  BlockStateCallError blockStateCallError =
-                      BlockStateCallError.of(r.getValidationResult().getInvalidReason());
-                  String message = r.getInvalidReason().orElse(blockStateCallError.getMessage());
-                  return new JsonRpcError(blockStateCallError.getCode(), message, null);
-                })
-            .orElseGet(() -> new JsonRpcError(RpcErrorType.INTERNAL_ERROR));
-
-    return new JsonRpcErrorResponse(request.getRequest().getId(), error);
   }
 
   private Set<Address> getValidPrecompileAddresses(final BlockHeader header) {
