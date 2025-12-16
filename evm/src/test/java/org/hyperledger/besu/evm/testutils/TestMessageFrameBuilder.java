@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
@@ -50,9 +49,8 @@ public class TestMessageFrameBuilder {
   private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private int pc = 0;
-  private int section = 0;
   private final List<Bytes> stackItems = new ArrayList<>();
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private Bytes memory = Bytes.EMPTY;
@@ -118,11 +116,6 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  public TestMessageFrameBuilder section(final int section) {
-    this.section = section;
-    return this;
-  }
-
   public TestMessageFrameBuilder blockValues(final BlockValues blockValues) {
     this.blockValues = Optional.of(blockValues);
     return this;
@@ -173,7 +166,6 @@ public class TestMessageFrameBuilder {
             .isStatic(isStatic)
             .build();
     frame.setPC(pc);
-    frame.setSection(section);
     stackItems.forEach(frame::pushStackItem);
     frame.writeMemory(0, memory.size(), memory);
     return frame;
