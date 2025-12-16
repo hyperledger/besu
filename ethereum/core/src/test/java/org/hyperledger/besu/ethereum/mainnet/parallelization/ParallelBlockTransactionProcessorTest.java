@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -389,8 +390,28 @@ class ParallelBlockTransactionProcessorTest {
 
     final Address accountAddress =
         Address.fromHexString("0x1000000000000000000000000000000000000001");
-    final StorageSlotKey slot1 = new StorageSlotKey(UInt256.ONE);
-    final StorageSlotKey slot2 = new StorageSlotKey(UInt256.valueOf(2));
+
+    final UInt256 slot1Key = UInt256.ONE;
+    final UInt256 slot2Key = UInt256.valueOf(2);
+    final StorageSlotKey slot1 = new StorageSlotKey(slot1Key);
+    final StorageSlotKey slot2 = new StorageSlotKey(slot2Key);
+
+    final Wei tx0Balance = Wei.of(100);
+    final long tx0Nonce = 1L;
+    final Bytes tx0Code = Bytes.fromHexString("0xAA");
+    final UInt256 tx0Slot1Value = UInt256.valueOf(1);
+    final UInt256 tx0Slot2Value = UInt256.valueOf(3);
+
+    final Wei tx1Balance = Wei.of(200);
+    final long tx1Nonce = 2L;
+    final Bytes tx1Code = Bytes.fromHexString("0xBB");
+    final UInt256 tx1Slot1Value = UInt256.valueOf(5);
+    final UInt256 tx1Slot2Value = UInt256.ZERO;
+
+    final Wei tx2Balance = Wei.of(300);
+    final long tx2Nonce = 3L;
+    final Bytes tx2Code = Bytes.fromHexString("0xCC");
+    final UInt256 tx2Slot1Value = UInt256.valueOf(7);
 
     final BlockAccessList.BlockAccessListBuilder balBuilder = BlockAccessList.builder();
 
@@ -398,38 +419,32 @@ class ParallelBlockTransactionProcessorTest {
         new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(0);
     final PartialBlockAccessView.AccountChangesBuilder a0 =
         p0.getOrCreateAccountBuilder(accountAddress);
-
-    a0.withPostBalance(Wei.of(100));
-    a0.withNonceChange(1L);
-    a0.withNewCode(Bytes.fromHexString("0xAA"));
-    a0.addStorageChange(slot1, UInt256.valueOf(1));
-    a0.addStorageChange(slot2, UInt256.valueOf(3));
-
+    a0.withPostBalance(tx0Balance);
+    a0.withNonceChange(tx0Nonce);
+    a0.withNewCode(tx0Code);
+    a0.addStorageChange(slot1, tx0Slot1Value);
+    a0.addStorageChange(slot2, tx0Slot2Value);
     balBuilder.apply(p0.build());
 
     final PartialBlockAccessView.PartialBlockAccessViewBuilder p1 =
         new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(1);
     final PartialBlockAccessView.AccountChangesBuilder a1 =
         p1.getOrCreateAccountBuilder(accountAddress);
-
-    a1.withPostBalance(Wei.of(200));
-    a1.withNonceChange(2L);
-    a1.withNewCode(Bytes.fromHexString("0xBB"));
-    a1.addStorageChange(slot1, UInt256.valueOf(5));
+    a1.withPostBalance(tx1Balance);
+    a1.withNonceChange(tx1Nonce);
+    a1.withNewCode(tx1Code);
+    a1.addStorageChange(slot1, tx1Slot1Value);
     a1.addStorageChange(slot2, null);
-
     balBuilder.apply(p1.build());
 
     final PartialBlockAccessView.PartialBlockAccessViewBuilder p2 =
         new PartialBlockAccessView.PartialBlockAccessViewBuilder().withTxIndex(2);
     final PartialBlockAccessView.AccountChangesBuilder a2 =
         p2.getOrCreateAccountBuilder(accountAddress);
-
-    a2.withPostBalance(Wei.of(300));
-    a2.withNonceChange(3L);
-    a2.withNewCode(Bytes.fromHexString("0xCC"));
-    a2.addStorageChange(slot1, UInt256.valueOf(7));
-
+    a2.withPostBalance(tx2Balance);
+    a2.withNonceChange(tx2Nonce);
+    a2.withNewCode(tx2Code);
+    a2.addStorageChange(slot1, tx2Slot1Value);
     balBuilder.apply(p2.build());
 
     final BlockAccessList blockAccessList = balBuilder.build();
@@ -448,45 +463,33 @@ class ParallelBlockTransactionProcessorTest {
 
               assertTrue(account != null, "Expected account to exist in world updater");
 
-              if (transactionLocation == 0) {
-                // transactionLocation = 0 -> balIndex = 1 -> latest < 1 is tx0
-                assertTrue(account.getBalance().equals(Wei.of(100)), "tx0: expected balance 100");
-                assertTrue(account.getNonce() == 1L, "tx0: expected nonce 1");
-                assertTrue(
-                    account.getCode().equals(Bytes.fromHexString("0xAA")),
-                    "tx0: expected code 0xAA");
-                assertTrue(
-                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(1)),
-                    "tx0: expected slot1 = 1");
-                assertTrue(
-                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.valueOf(3)),
-                    "tx0: expected slot2 = 3");
-              } else if (transactionLocation == 1) {
-                // transactionLocation = 1 -> balIndex = 2 -> latest < 2 is tx1
-                assertTrue(account.getBalance().equals(Wei.of(200)), "tx1: expected balance 200");
-                assertTrue(account.getNonce() == 2L, "tx1: expected nonce 2");
-                assertTrue(
-                    account.getCode().equals(Bytes.fromHexString("0xBB")),
-                    "tx1: expected code 0xBB");
-                assertTrue(
-                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(5)),
-                    "tx1: expected slot1 = 5");
-                assertTrue(
-                    account.getStorageValue(UInt256.valueOf(2)).equals(UInt256.ZERO),
-                    "tx1: expected slot2 = 0 (null -> ZERO)");
-              } else if (transactionLocation == 2) {
-                // transactionLocation = 2 -> balIndex = 3 -> latest < 3 is tx2
-                assertTrue(account.getBalance().equals(Wei.of(300)), "tx2: expected balance 300");
-                assertTrue(account.getNonce() == 3L, "tx2: expected nonce 3");
-                assertTrue(
-                    account.getCode().equals(Bytes.fromHexString("0xCC")),
-                    "tx2: expected code 0xCC");
-                assertTrue(
-                    account.getStorageValue(UInt256.ONE).equals(UInt256.valueOf(7)),
-                    "tx2: expected slot1 = 7");
-              } else {
-                throw new IllegalStateException(
-                    "Unexpected transactionLocation " + transactionLocation);
+              switch (transactionLocation) {
+                case 0 -> {
+                  // transactionLocation = 0 -> balIndex = 1 -> latest < 1 is tx0
+                  assertEquals(tx0Balance, account.getBalance());
+                  assertEquals(tx0Nonce, account.getNonce());
+                  assertEquals(tx0Code, account.getCode());
+                  assertEquals(tx0Slot1Value, account.getStorageValue(slot1Key));
+                  assertEquals(tx0Slot2Value, account.getStorageValue(slot2Key));
+                }
+                case 1 -> {
+                  // transactionLocation = 1 -> balIndex = 2 -> latest < 2 is tx1
+                  assertEquals(tx1Balance, account.getBalance());
+                  assertEquals(tx1Nonce, account.getNonce());
+                  assertEquals(tx1Code, account.getCode());
+                  assertEquals(tx1Slot1Value, account.getStorageValue(slot1Key));
+                  assertEquals(tx1Slot2Value, account.getStorageValue(slot2Key));
+                }
+                case 2 -> {
+                  // transactionLocation = 2 -> balIndex = 3 -> latest < 3 is tx2
+                  assertEquals(tx2Balance, account.getBalance());
+                  assertEquals(tx2Nonce, account.getNonce());
+                  assertEquals(tx2Code, account.getCode());
+                  assertEquals(tx2Slot1Value, account.getStorageValue(slot1Key));
+                }
+                default ->
+                    throw new IllegalStateException(
+                        "Unexpected transactionLocation " + transactionLocation);
               }
 
               return TransactionProcessingResult.successful(
