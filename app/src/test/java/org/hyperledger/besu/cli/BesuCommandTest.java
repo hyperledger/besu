@@ -433,7 +433,7 @@ public class BesuCommandTest extends CommandTestAbstract {
           .describedAs("Option '%s' should be a configurable option.", tomlKey)
           .isNotNull();
       // Verify TOML stores it by the appropriate type
-      if (optionSpec.type().equals(Boolean.class)) {
+      if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
         tomlResult.getBoolean(tomlKey);
       } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);

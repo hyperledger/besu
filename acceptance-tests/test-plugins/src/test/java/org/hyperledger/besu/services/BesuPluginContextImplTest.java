@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -59,7 +60,7 @@ public class BesuPluginContextImplTest {
   private BesuPluginContextImpl contextImpl;
 
   private static final PluginConfiguration DEFAULT_CONFIGURATION =
-      PluginConfiguration.builder()
+      ImmutablePluginConfiguration.builder()
           .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
           .externalPluginsEnabled(true)
           .continueOnPluginError(true)
@@ -254,7 +255,7 @@ public class BesuPluginContextImplTest {
   @Test
   void shouldNotRegisterAnyPluginsIfExternalPluginsDisabled() {
     PluginConfiguration config =
-        PluginConfiguration.builder()
+        ImmutablePluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .externalPluginsEnabled(false)
             .build();
@@ -275,8 +276,8 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_REGISTER);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(false)
             .build();
@@ -295,7 +296,7 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_REGISTER);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
+        ImmutablePluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(true)
             .build();
@@ -310,8 +311,8 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_EXTERNAL_SERVICES);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(false)
             .build();
@@ -333,8 +334,8 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_EXTERNAL_SERVICES);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(true)
             .build();
@@ -351,8 +352,8 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_START);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(false)
             .build();
@@ -373,8 +374,8 @@ public class BesuPluginContextImplTest {
     System.setProperty(TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_BEFORE_MAIN_LOOP);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(true)
             .build();
@@ -393,8 +394,8 @@ public class BesuPluginContextImplTest {
         TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(false)
             .build();
@@ -419,8 +420,8 @@ public class BesuPluginContextImplTest {
         TEST_PICO_CLI_PLUGIN_TEST_OPTION, FAIL_AFTER_EXTERNAL_SERVICE_POST_MAIN_LOOP);
 
     PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
+        ImmutablePluginConfiguration.builder()
+            .requestedPluginsInfo(List.of(new PluginInfo(TEST_PICO_CLI_PLUGIN)))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
             .continueOnPluginError(true)
             .build();
@@ -435,8 +436,8 @@ public class BesuPluginContextImplTest {
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {
-    return PluginConfiguration.builder()
-        .requestedPlugins(List.of(new PluginInfo(pluginName)))
+    return ImmutablePluginConfiguration.builder()
+        .requestedPluginsInfo(List.of(new PluginInfo(pluginName)))
         .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
         .build();
   }
