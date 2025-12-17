@@ -149,8 +149,8 @@ final class DeFramer extends ByteToMessageDecoder {
             ctx.close();
             return;
           }
-          // If we can find the DiscoveryPeer for the peer in the PeerTable we use it, because
-          // it could contains additional information, like the fork id.
+          // If we can find the peer in the peerLookup we use it, because it could contains
+          // additional information, like the fork id.
           final Optional<Peer> existingPeer = peerLookup.getPeer(peer.get());
           if (existingPeer.isPresent()) {
             peer = existingPeer;
