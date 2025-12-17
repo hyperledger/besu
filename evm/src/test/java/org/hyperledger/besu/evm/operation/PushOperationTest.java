@@ -20,7 +20,7 @@ import static org.hyperledger.besu.evm.operation.PushOperation.staticOperation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
@@ -52,7 +52,7 @@ public class PushOperationTest {
           .sender(Address.ZERO)
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
-          .code(CodeV0.EMPTY_CODE)
+          .code(Code.EMPTY_CODE)
           .completer(messageFrame -> {})
           .build();
   ;

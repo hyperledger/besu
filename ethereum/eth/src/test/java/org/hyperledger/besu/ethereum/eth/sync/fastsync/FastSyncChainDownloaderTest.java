@@ -208,7 +208,7 @@ public class FastSyncChainDownloaderTest {
     // So the import can only make it as far as block 15 (3 checkpoints 5 blocks apart)
     final RespondingEthPeer.Responder shorterLimitedRangeResponder =
         RespondingEthPeer.targetedResponder(
-            (cap, msg) -> {
+            (cap, peer, msg) -> {
               if (msg.getCode() == EthProtocolMessages.GET_BLOCK_HEADERS) {
                 final GetBlockHeadersMessage request = GetBlockHeadersMessage.readFrom(msg);
                 return request.skip() == 0
@@ -217,7 +217,7 @@ public class FastSyncChainDownloaderTest {
                 return true;
               }
             },
-            (cap, msg) -> shorterResponder.respond(cap, msg).get());
+            (cap, peer, msg) -> shorterResponder.respond(cap, peer, msg).get());
 
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder()

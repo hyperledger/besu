@@ -49,10 +49,12 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -236,7 +238,8 @@ public class BlockSimulator {
             ws,
             protocolSpec,
             blockHashLookup,
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     protocolSpec
         .getPreExecutionProcessor()
@@ -357,11 +360,15 @@ public class BlockSimulator {
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
-              () -> new BlockStateCallException("Transaction simulator result is empty"));
+              () ->
+                  new BlockStateCallException(
+                      "Transaction simulation returned no result",
+                      BlockStateCallError.EMPTY_SIMULATION_RESULT));
 
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
-            "Transaction simulator result is invalid", transactionSimulationResult);
+            transactionSimulationResult.getValidationResult().getErrorMessage(),
+            transactionSimulationResult.getValidationResult().getInvalidReason());
       }
 
       transactionSimulationResult
@@ -406,6 +413,7 @@ public class BlockSimulator {
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
             .gasUsed(simResult.getCumulativeGasUsed())
+            .blobGasUsed(simResult.getCumulativeBlobGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
             .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
@@ -496,8 +504,10 @@ public class BlockSimulator {
                                 ? getNextBaseFee(newProtocolSpec, header, blockNumber)
                                 : Wei.ZERO))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
-            .parentBeaconBlockRoot(Bytes32.ZERO)
-            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO));
+            .parentBeaconBlockRoot(blockOverrides.getParentBeaconBlockRoot().orElse(Bytes32.ZERO))
+            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO))
+            .excessBlobGas(
+                ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, header));
 
     return builder
         .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))

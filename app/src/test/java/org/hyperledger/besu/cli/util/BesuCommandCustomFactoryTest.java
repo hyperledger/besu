@@ -20,8 +20,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 import org.hyperledger.besu.util.BesuVersionUtils;
 
-import java.util.Arrays;
-
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +34,8 @@ public class BesuCommandCustomFactoryTest {
 
   @BeforeEach
   public void initMocks() {
-    when(pluginVersionsProvider.getPluginVersions()).thenReturn(Arrays.asList("v1", "v2"));
+    when(pluginVersionsProvider.getPluginVersions())
+        .thenReturn(ImmutableMap.of("plugin1", "v1", "plugin2", "v2"));
   }
 
   @Test
@@ -44,6 +44,6 @@ public class BesuCommandCustomFactoryTest {
         new BesuCommandCustomFactory(pluginVersionsProvider);
     final VersionProvider versionProvider = besuCommandCustomFactory.create(VersionProvider.class);
     assertThat(versionProvider.getVersion())
-        .containsExactly(BesuVersionUtils.version(), "v1", "v2");
+        .containsExactly(BesuVersionUtils.version(), "plugin1/v1", "plugin2/v2");
   }
 }

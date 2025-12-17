@@ -170,6 +170,7 @@ public class EthEstimateGasTest {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     when(transactionSimulator.process(
             eq(modifiedEip1559TransactionCallParameter()),
+            eq(Optional.empty()),
             any(TransactionValidationParams.class),
             any(OperationTracer.class),
             eq(latestBlockHeader)))
@@ -440,7 +441,7 @@ public class EthEstimateGasTest {
                 modifiedLegacyTransactionCallParameter(
                     BLOCK_GAS_LIMIT, Wei.ZERO, OptionalLong.empty(), Optional.empty())),
             eq(Optional.empty()), // no account overrides
-            eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
+            eq(TransactionValidationParams.transactionSimulatorAllowUnderpricedAndFutureNonce()),
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }
@@ -510,7 +511,7 @@ public class EthEstimateGasTest {
         .processOnPending(
             eq(modifiedEip1559TransactionCallParameter(TX_GAS_LIMIT_CAP, OptionalLong.empty())),
             eq(Optional.empty()), // no account overrides
-            eq(TransactionValidationParams.transactionSimulatorAllowFutureNonce()),
+            eq(TransactionValidationParams.transactionSimulatorAllowUnderpricedAndFutureNonce()),
             any(OperationTracer.class),
             eq(pendingBlockHeader));
   }

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -95,11 +94,6 @@ public class SystemCallProcessor {
             inputData,
             accessLocationTracker);
 
-    if (!frame.getCode().isValid()) {
-      throw new RuntimeException(
-          "System call did not execute to completion - opcode invalid at address: " + callAddress);
-    }
-
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
     while (!stack.isEmpty()) {
       processor.process(stack.peekFirst(), OperationTracer.NO_TRACING);
@@ -137,7 +131,7 @@ public class SystemCallProcessor {
       final ProcessableBlockHeader blockHeader,
       final BlockHashLookup blockHashLookup,
       final Bytes inputData,
-      final Optional<AccessLocationTracker> accessLocationTracker) {
+      final Optional<AccessLocationTracker> maybeAccessLocationTracker) {
 
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
@@ -163,16 +157,18 @@ public class SystemCallProcessor {
             .blockHashLookup(blockHashLookup)
             .code(getCode(worldUpdater.get(callAddress), processor));
 
-    if (accessLocationTracker.isPresent()) {
-      builder.eip7928AccessList(accessLocationTracker.get());
-    }
+    maybeAccessLocationTracker.ifPresent(
+        tracker -> {
+          builder.eip7928AccessList(tracker);
+          tracker.addTouchedAccount(callAddress);
+        });
 
     return builder.build();
   }
 
   private Code getCode(final Account contract, final AbstractMessageProcessor processor) {
     if (contract == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     // Bonsai accounts may have a fully cached code, so we use that one

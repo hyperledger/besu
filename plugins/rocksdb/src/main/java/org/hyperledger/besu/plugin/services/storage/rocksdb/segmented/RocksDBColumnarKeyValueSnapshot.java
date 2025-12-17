@@ -313,5 +313,10 @@ public class RocksDBColumnarKeyValueSnapshot
         public void rollback() {
           // no-op
         }
+
+        @Override
+        public void close() {
+          // no-op
+        }
       };
 }

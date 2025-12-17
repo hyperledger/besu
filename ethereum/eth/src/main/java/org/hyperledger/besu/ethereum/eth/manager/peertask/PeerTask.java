@@ -47,8 +47,10 @@ public interface PeerTask<T> {
    * @param messageData the response MessageData to be parsed
    * @return a T built from the response MessageData
    * @throws InvalidPeerTaskResponseException if the response messageData is invalid
+   * @throws MalformedRlpFromPeerException if the peer sent malformed RLP
    */
-  T processResponse(MessageData messageData) throws InvalidPeerTaskResponseException;
+  T processResponse(MessageData messageData)
+      throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException;
 
   /**
    * Gets the number of times this task may be attempted against other peers

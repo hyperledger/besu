@@ -154,11 +154,16 @@ public class T8nExecutor {
             transactions.add(tx);
           } else {
             Transaction.Builder builder = Transaction.builder();
-            int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+            byte type = Bytes.fromHexStringLenient(txNode.get("type").textValue(), 1).get(0);
             BigInteger chainId =
                 Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
                     .toUnsignedBigInteger();
-            TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
+            TransactionType transactionType =
+                TransactionType.fromEthSerializedType(type)
+                    .orElseThrow(
+                        (() ->
+                            new IllegalArgumentException(
+                                "Unsupported transaction type: %x".formatted(type))));
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
             builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
@@ -367,7 +372,8 @@ public class T8nExecutor {
             protocolSpec
                 .getPreExecutionProcessor()
                 .createBlockHashLookup(blockchain, referenceTestEnv),
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     if (!referenceTestEnv.isStateTest()) {
       protocolSpec.getPreExecutionProcessor().process(blockProcessingContext, Optional.empty());

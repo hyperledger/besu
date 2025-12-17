@@ -105,11 +105,12 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
+        // TODO should this be null result or invalid params?
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
       } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
+        // return null if a future block is requested
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
       }
 
       result =
@@ -122,19 +123,17 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else {
       Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
       if (blockHash.isEmpty()) {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_HASH_PARAMS);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
       }
 
-      // return error if block hash does not find a block
+      // return null if block hash does not find a block
       Optional<BlockHeader> maybeBlockHeader =
           getBlockchainQueries().getBlockHeaderByHash(blockHash.get());
       if (maybeBlockHeader.isEmpty()) {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
       }
 
-      if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
+      if (blockParameterOrBlockHash.getRequireCanonical()
           && !getBlockchainQueries().blockIsOnCanonicalChain(blockHash.get())) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), RpcErrorType.JSON_RPC_NOT_CANONICAL_ERROR);
@@ -150,7 +149,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     Object response = handleParamTypes(requestContext);
 
-    if (response instanceof JsonRpcErrorResponse) {
+    if (response instanceof JsonRpcResponse) {
       return (JsonRpcResponse) response;
     }
 

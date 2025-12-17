@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.storage;
 
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+
 public interface PathBasedLayeredWorldStateKeyValueStorage
     extends PathBasedSnapshotWorldStateKeyValueStorage {
 
   PathBasedWorldStateKeyValueStorage clone();
+
+  void mergeTo(final SegmentedKeyValueStorageTransaction transaction);
 }

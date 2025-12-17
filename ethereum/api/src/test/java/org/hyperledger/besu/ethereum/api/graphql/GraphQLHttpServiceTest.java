@@ -15,20 +15,19 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Path;
@@ -55,7 +54,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 public class GraphQLHttpServiceTest {
 
@@ -69,35 +67,31 @@ public class GraphQLHttpServiceTest {
   private static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
+  private static final String EXPECTED_CHAIN_ID = "0x1";
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
   private static Map<GraphQLContextType, Object> graphQlContextMap;
-  private static PoWMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
 
   @BeforeAll
   public static void initServerAndClient() throws Exception {
-    blockchainQueries = Mockito.mock(BlockchainQueries.class);
-    final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
-    graphQL = Mockito.mock(GraphQL.class);
-
-    miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
-    graphQlContextMap =
-        Map.of(
-            GraphQLContextType.BLOCKCHAIN_QUERIES,
-            blockchainQueries,
-            GraphQLContextType.TRANSACTION_POOL,
-            Mockito.mock(TransactionPool.class),
-            GraphQLContextType.MINING_COORDINATOR,
-            miningCoordinatorMock,
-            GraphQLContextType.SYNCHRONIZER,
-            synchronizer);
+    // Mock blockchain queries for the uncle count tests
+    blockchainQueries = mock(BlockchainQueries.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.LATEST);
     final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
+
+    // Context map with both chain ID and blockchain queries
+    graphQlContextMap =
+        Map.of(
+            GraphQLContextType.CHAIN_ID,
+            Optional.of(BigInteger.valueOf(1)),
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries);
+
     service = createGraphQLHttpService();
     service.start().join();
     // Build an OkHttp client.
@@ -109,17 +103,12 @@ public class GraphQLHttpServiceTest {
   private static GraphQLHttpService createGraphQLHttpService(final GraphQLConfiguration config)
       throws Exception {
     return new GraphQLHttpService(
-        vertx, folder, config, graphQL, graphQlContextMap, Mockito.mock(EthScheduler.class));
+        vertx, folder, config, graphQL, graphQlContextMap, mock(EthScheduler.class));
   }
 
   private static GraphQLHttpService createGraphQLHttpService() throws Exception {
     return new GraphQLHttpService(
-        vertx,
-        folder,
-        createGraphQLConfig(),
-        graphQL,
-        graphQlContextMap,
-        Mockito.mock(EthScheduler.class));
+        vertx, folder, createGraphQLConfig(), graphQL, graphQlContextMap, mock(EthScheduler.class));
   }
 
   private static GraphQLConfiguration createGraphQLConfig() {
@@ -214,61 +203,51 @@ public class GraphQLHttpServiceTest {
 
   @Test
   public void query_get() throws Exception {
-    final Wei price = Wei.of(16);
-    Mockito.when(blockchainQueries.gasPrice()).thenReturn(price);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
-
-    try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {
+    try (final Response resp = client.newCall(buildGetRequest("?query={chainID}")).execute()) {
       Assertions.assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_jsonPost() throws Exception {
-    final RequestBody body = RequestBody.create("{\"query\":\"{gasPrice}\"}", JSON);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{\"query\":\"{chainID}\"}", JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
+      Assertions.assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_graphqlPost() throws Exception {
-    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{chainID}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
+      Assertions.assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
   @Test
   public void query_untypedPost() throws Exception {
-    final RequestBody body = RequestBody.create("{gasPrice}", null);
-    final Wei price = Wei.of(16);
-    Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+    final RequestBody body = RequestBody.create("{chainID}", null);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(200); // Check general format of result
+      Assertions.assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getString("gasPrice");
-      Assertions.assertThat(result).isEqualTo("0x10");
+      final String result = json.getJsonObject("data").getString("chainID");
+      Assertions.assertThat(result).isEqualTo(EXPECTED_CHAIN_ID);
     }
   }
 
@@ -309,7 +288,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void responseContainsJsonContentTypeHeader() throws Exception {
 
-    final RequestBody body = RequestBody.create("{gasPrice}", GRAPHQL);
+    final RequestBody body = RequestBody.create("{block{number}}", GRAPHQL);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       Assertions.assertThat(resp.header("Content-Type")).isEqualTo(JSON.toString());
@@ -321,14 +300,13 @@ public class GraphQLHttpServiceTest {
     final int uncleCount = 4;
     final Hash blockHash = Hash.hash(Bytes.of(1));
     @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
+    final BlockWithMetadata<TransactionWithMetadata, Hash> block = mock(BlockWithMetadata.class);
     @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
+    final List<Hash> list = mock(List.class);
 
-    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
+    when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
+    when(block.getOmmers()).thenReturn(list);
+    when(list.size()).thenReturn(uncleCount);
 
     final String query = "{block(hash:\"" + blockHash + "\") {ommerCount}}";
 
@@ -348,14 +326,13 @@ public class GraphQLHttpServiceTest {
   public void ethGetUncleCountByBlockNumber() throws Exception {
     final int uncleCount = 5;
     @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
+    final BlockWithMetadata<TransactionWithMetadata, Hash> block = mock(BlockWithMetadata.class);
     @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
-    Mockito.when(blockchainQueries.blockByNumber(ArgumentMatchers.anyLong()))
+    final List<Hash> list = mock(List.class);
+    when(blockchainQueries.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
+    when(block.getOmmers()).thenReturn(list);
+    when(list.size()).thenReturn(uncleCount);
 
     final String query = "{block(number:\"3\") {ommerCount}}";
 
@@ -375,13 +352,12 @@ public class GraphQLHttpServiceTest {
   public void ethGetUncleCountByBlockLatest() throws Exception {
     final int uncleCount = 5;
     @SuppressWarnings("unchecked")
-    final BlockWithMetadata<TransactionWithMetadata, Hash> block =
-        Mockito.mock(BlockWithMetadata.class);
+    final BlockWithMetadata<TransactionWithMetadata, Hash> block = mock(BlockWithMetadata.class);
     @SuppressWarnings("unchecked")
-    final List<Hash> list = Mockito.mock(List.class);
-    Mockito.when(blockchainQueries.latestBlock()).thenReturn(Optional.of(block));
-    Mockito.when(block.getOmmers()).thenReturn(list);
-    Mockito.when(list.size()).thenReturn(uncleCount);
+    final List<Hash> list = mock(List.class);
+    when(blockchainQueries.latestBlock()).thenReturn(Optional.of(block));
+    when(block.getOmmers()).thenReturn(list);
+    when(list.size()).thenReturn(uncleCount);
 
     final String query = "{block {ommerCount}}";
 

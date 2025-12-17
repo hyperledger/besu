@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -68,7 +68,7 @@ public class BesuNodeConfiguration {
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
   private final List<String> runCommand;
-  private final NetworkName network;
+  private final NetworkDefinition network;
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
@@ -91,7 +91,7 @@ public class BesuNodeConfiguration {
       final DataStorageConfiguration dataStorageConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
-      final NetworkName network,
+      final NetworkDefinition network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
@@ -270,7 +270,7 @@ public class BesuNodeConfiguration {
     return runCommand;
   }
 
-  public NetworkName getNetwork() {
+  public NetworkDefinition getNetwork() {
     return network;
   }
 

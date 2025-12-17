@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -216,22 +215,18 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       // For the following, we either increment the gas or return zero, so we don't get double
       // charged. If we return zero then the traces don't have the right per-opcode cost.
-      frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
+      final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
+      frame.incrementRemainingGas(gasAvailableForChildCall + cost);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
-      return new OperationResult(cost, 1, softFailureReason);
+      return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
     final Code code = getCode(evm, frame, contract);
-
-    // invalid code results in a quick exit
-    if (!code.isValid()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
-    }
 
     MessageFrame.Builder builder =
         MessageFrame.builder()
@@ -344,13 +339,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final Hash codeHash = account.getCodeHash();
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final boolean accountHasCodeCache = account.getCodeCache() != null;

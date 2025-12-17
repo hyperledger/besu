@@ -28,8 +28,8 @@ public class NoopMiningCoordinator implements MiningCoordinator {
 
   private final MiningConfiguration miningConfiguration;
 
-  public NoopMiningCoordinator(final MiningConfiguration miningConfiguration) {
-    this.miningConfiguration = miningConfiguration;
+  public NoopMiningCoordinator() {
+    this.miningConfiguration = MiningConfiguration.newDefault();
   }
 
   @Override

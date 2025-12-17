@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -83,7 +83,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
-  private NetworkName network = null;
+  private NetworkDefinition network = null;
   private boolean secp256K1Native = true;
   private boolean altbn128Native = true;
   private final List<String> plugins = new ArrayList<>();
@@ -265,7 +265,7 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder network(final NetworkName network) {
+  public BesuNodeConfigurationBuilder network(final NetworkDefinition network) {
     this.network = network;
     return this;
   }

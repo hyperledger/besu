@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
@@ -43,11 +42,9 @@ class ExtCodeSizeOperationTest {
   private final WorldUpdater worldStateUpdater = toyWorld.updater();
 
   private final ExtCodeSizeOperation operation =
-      new ExtCodeSizeOperation(new ConstantinopleGasCalculator(), false);
+      new ExtCodeSizeOperation(new ConstantinopleGasCalculator());
   private final ExtCodeSizeOperation operationIstanbul =
-      new ExtCodeSizeOperation(new IstanbulGasCalculator(), false);
-  private final ExtCodeSizeOperation operationEOF =
-      new ExtCodeSizeOperation(new PragueGasCalculator(), true);
+      new ExtCodeSizeOperation(new IstanbulGasCalculator());
 
   @Test
   void shouldCharge700Gas() {
@@ -115,7 +112,7 @@ class ExtCodeSizeOperationTest {
   }
 
   @Test
-  void shouldGetNonEOFSize() {
+  void shouldGetSize() {
     final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
@@ -130,32 +127,6 @@ class ExtCodeSizeOperationTest {
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
     assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
-
-    final MessageFrame frameEOF = createMessageFrame(value);
-    operationEOF.execute(frameEOF, null);
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
-  }
-
-  @Test
-  void shouldGetEOFSize() {
-    final Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    account.setCode(code);
-    final UInt256 value =
-        UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
-            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
-
-    final MessageFrame frame = createMessageFrame(value);
-    operation.execute(frame, null);
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
-
-    final MessageFrame frameIstanbul = createMessageFrame(value);
-    operationIstanbul.execute(frameIstanbul, null);
-
-    assertThat(frameIstanbul.getStackItem(0).toInt()).isEqualTo(9);
-    final MessageFrame frameEOF = createMessageFrame(value);
-    operationEOF.execute(frameEOF, null);
-    assertThat(frameEOF.getStackItem(0).toInt()).isEqualTo(2);
   }
 
   private Bytes executeOperation(final Address requestedAddress) {

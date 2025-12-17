@@ -113,7 +113,7 @@ public class FastSyncActionsTest {
                 new DeterministicEthScheduler(() -> timeoutCount.getAndDecrement() > 0))
             .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
             .setTransactionPool(blockchainSetupUtil.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .build();
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();

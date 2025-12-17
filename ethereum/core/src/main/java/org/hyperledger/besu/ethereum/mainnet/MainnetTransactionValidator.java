@@ -298,7 +298,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     final Wei upfrontCost =
         transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
-    if (upfrontCost.compareTo(senderBalance) > 0) {
+    if (!validationParams.allowUnderpriced() && upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(

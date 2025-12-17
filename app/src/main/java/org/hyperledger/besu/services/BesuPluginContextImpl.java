@@ -30,10 +30,10 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -84,7 +84,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
 
   private final List<BesuPlugin> registeredPlugins = new ArrayList<>();
 
-  private final List<String> pluginVersions = new ArrayList<>();
+  private final Map<String, String> pluginVersions = new LinkedHashMap<>();
   private PluginConfiguration config;
 
   /** Instantiates a new Besu plugin context. */
@@ -206,7 +206,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   private boolean registerPlugin(final BesuPlugin plugin) {
     try {
       plugin.register(this);
-      pluginVersions.add(plugin.getVersion());
+      pluginVersions.put(plugin.getName().orElse("<Unnamed Plugin>"), plugin.getVersion());
       LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
     } catch (final Exception e) {
       if (config.isContinueOnPluginError()) {
@@ -378,8 +378,8 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   }
 
   @Override
-  public Collection<String> getPluginVersions() {
-    return Collections.unmodifiableList(pluginVersions);
+  public Map<String, String> getPluginVersions() {
+    return Collections.unmodifiableMap(pluginVersions);
   }
 
   /**

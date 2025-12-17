@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -78,7 +79,8 @@ class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          protocolSchedule);
+          protocolSchedule,
+          BalConfiguration.DEFAULT);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);

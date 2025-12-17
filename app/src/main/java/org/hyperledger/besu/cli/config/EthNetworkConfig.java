@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.config;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -62,11 +63,11 @@ public record EthNetworkConfig(
   /**
    * Gets network config.
    *
-   * @param networkName the network name
+   * @param networkDefinition the network name
    * @return the network config
    */
-  public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
-    final URL genesisSource = jsonConfigSource(networkName.getGenesisFile());
+  public static EthNetworkConfig getNetworkConfig(final NetworkDefinition networkDefinition) {
+    final URL genesisSource = jsonConfigSource(networkDefinition.getGenesisFile());
     final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisSource);
     final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
@@ -80,7 +81,7 @@ public record EthNetworkConfig(
 
     return new EthNetworkConfig(
         genesisConfig,
-        networkName.getNetworkId(),
+        networkDefinition.getNetworkId(),
         bootNodes,
         genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
   }
@@ -95,7 +96,7 @@ public record EthNetworkConfig(
    * @param network the named network
    * @return the json string
    */
-  public static String jsonConfig(final NetworkName network) {
+  public static String jsonConfig(final NetworkDefinition network) {
     try (final InputStream genesisFileInputStream =
         EthNetworkConfig.class.getResourceAsStream(network.getGenesisFile())) {
       return new String(genesisFileInputStream.readAllBytes(), StandardCharsets.UTF_8);

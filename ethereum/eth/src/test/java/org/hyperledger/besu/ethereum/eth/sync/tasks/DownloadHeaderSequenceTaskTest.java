@@ -112,7 +112,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
 
     // Respond with only the reference header
     final RespondingEthPeer.Responder responder =
-        (cap, message) ->
+        (cap, peer, message) ->
             Optional.of(BlockHeadersMessage.create(Collections.singletonList(referenceHeader)));
     respondingPeer.respondWhile(responder, () -> !future.isDone());
 
@@ -176,8 +176,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     // Filter response to include only reference header and previous header
     final RespondingEthPeer.Responder fullResponder = getFullResponder();
     final RespondingEthPeer.Responder responder =
-        (cap, message) -> {
-          final Optional<MessageData> fullResponse = fullResponder.respond(cap, message);
+        (cap, peer, message) -> {
+          final Optional<MessageData> fullResponse = fullResponder.respond(cap, peer, message);
           if (!fullResponse.isPresent()
               || message.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
             return fullResponse;

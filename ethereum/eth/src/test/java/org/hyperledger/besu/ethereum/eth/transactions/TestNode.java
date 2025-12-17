@@ -69,7 +69,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
@@ -153,13 +152,7 @@ public class TestNode implements Closeable {
     when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
+    final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;
     final EthPeers ethPeers =
         new EthPeers(
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -185,6 +178,7 @@ public class TestNode implements Closeable {
             scheduler,
             new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem));
 
+    final EthProtocolConfiguration ethProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -194,6 +188,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
+            ethProtocolConfiguration,
             new BlobCache(),
             MiningConfiguration.newDefault());
 
@@ -203,7 +198,7 @@ public class TestNode implements Closeable {
             BigInteger.ONE,
             worldStateArchive,
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            ethProtocolConfiguration,
             ethPeers,
             ethMessages,
             ethContext,

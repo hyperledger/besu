@@ -131,4 +131,48 @@ class StateTestSubCommandTest {
     stateTestSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("File content error: ");
   }
+
+  @Test
+  void invalidTransactionShouldNotModifyState() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
+    final CommandLine cmd = new CommandLine(stateTestSubCommand);
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("HighGasPrice.json").getPath());
+    stateTestSubCommand.run();
+
+    final String output = baos.toString(UTF_8);
+    // Invalid transaction should have validation error
+    assertThat(output).contains("validationError");
+    // Should have the upfront gas cost error message
+    assertThat(output).contains("Upfront gas cost cannot exceed 2^256 Wei");
+    // State root should match expected (no state modification occurred)
+    assertThat(output)
+        .contains(
+            "\"stateRoot\":\"0x1751725d1aad5298768fbcf64069b2c1b85aeaffcc561146067d6beedd08052a\"");
+    // Both error and validationError fields should be present for invalid transactions
+    assertThat(output).contains("\"error\":\"Upfront gas cost cannot exceed 2^256 Wei\"");
+  }
+
+  @Test
+  void shouldUseExcessBlobGasFromEnvironment() {
+    // Tests that BLOBBASEFEE opcode uses currentExcessBlobGas from the test environment.
+    // With excessBlobGas=0x240000 and Cancun blob fee fraction (3338477), blob price = 2.
+    // The contract stores BLOBBASEFEE result in storage slot 0.
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    EvmToolCommand parentCommand =
+        new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8));
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(parentCommand);
+    final CommandLine cmd = new CommandLine(stateTestSubCommand);
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("excess-blob-gas.json").getPath());
+    stateTestSubCommand.run();
+
+    final String output = baos.toString(UTF_8);
+    // State root should match expected value (computed with correct blob gas price = 2)
+    assertThat(output)
+        .contains(
+            "\"stateRoot\":\"0x4f0dafcdc942cf538ffe1f870ab031c2761857b3066f595e56c74bcb222eb0bb\"");
+    assertThat(output).contains("\"pass\":true");
+  }
 }

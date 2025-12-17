@@ -131,7 +131,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Besu controller builder that builds Besu Controller. */
-public abstract class BesuControllerBuilder implements MiningParameterOverrides {
+public abstract class BesuControllerBuilder implements MiningConfigurationOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
@@ -781,6 +781,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
+            ethereumWireProtocolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningConfiguration);
 

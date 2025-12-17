@@ -24,10 +24,10 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -99,7 +99,8 @@ public class BlocksSubCommand implements Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Supplier<Era1BlockImporter> era1BlockImporter;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
-  private final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory;
+  private final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter>
+      era1BlockExporterFactory;
 
   private final PrintWriter out;
 
@@ -118,7 +119,7 @@ public class BlocksSubCommand implements Runnable {
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Supplier<Era1BlockImporter> era1BlockImporter,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final BiFunction<Blockchain, NetworkName, Era1BlockExporter> era1BlockExporterFactory,
+      final BiFunction<Blockchain, NetworkDefinition, Era1BlockExporter> era1BlockExporterFactory,
       final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;

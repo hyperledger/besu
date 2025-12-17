@@ -69,9 +69,6 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   private static final String INVALID_BLOCK_ACCESS_LIST_ENCODING = "0xzz";
   private static final String INVALID_BLOCK_ACCESS_LIST_RLP = "0x01";
 
-  private final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
-      new ScheduledProtocolSpec.Hardfork("Amsterdam", 80);
-
   @BeforeEach
   @Override
   public void before() {

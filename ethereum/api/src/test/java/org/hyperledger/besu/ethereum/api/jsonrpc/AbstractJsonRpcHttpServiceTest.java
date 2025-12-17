@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -146,7 +146,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
     final MiningConfiguration miningConfiguration = mock(MiningConfiguration.class);
-    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
     final ApiConfiguration apiConfiguration = createApiConfiguration();
     when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -201,7 +200,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             filterManager,
             transactionPoolMock,
             miningConfiguration,
-            miningCoordinatorMock,
+            new NoopMiningCoordinator(),
             new NoOpMetricsSystem(),
             supportedCapabilities,
             Optional.empty(),

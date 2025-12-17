@@ -24,7 +24,6 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.internal.CodeCache;
 
 import java.util.Map;
@@ -246,7 +245,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     // if it is not a BonsaiAccount, we don't have access to the code cache
     // so we just return the code as is.
     if (codeCache == null) {
-      return new CodeV0(getCode(), getCodeHash());
+      return new Code(getCode(), getCodeHash());
     }
 
     // if the code already exists in the cache, return it
@@ -255,8 +254,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
       return cachedCode;
     }
 
-    // if the code is not in the cache, create a new CodeV0 instance and put it in the cache
-    final Code newCode = new CodeV0(getCode(), getCodeHash());
+    // if the code is not in the cache, create a new Code instance and put it in the cache
+    final Code newCode = new Code(getCode(), getCodeHash());
     codeCache.put(getCodeHash(), newCode);
 
     return newCode;

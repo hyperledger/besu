@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -43,13 +45,14 @@ public class BlockStateCalls {
       final BlockHeader header) {
     long lastPresentBlockNumber = findLastBlockNumber(blockStateCalls);
     if (lastPresentBlockNumber > header.getNumber() + MAX_BLOCK_CALL_SIZE) {
-      throw new IllegalArgumentException(
+      String errorMessage =
           String.format(
               "Block number %d exceeds the limit of %d (header: %d + MAX_BLOCK_CALL_SIZE: %d)",
               lastPresentBlockNumber,
               header.getNumber() + MAX_BLOCK_CALL_SIZE,
               header.getNumber(),
-              MAX_BLOCK_CALL_SIZE));
+              MAX_BLOCK_CALL_SIZE);
+      throw new BlockStateCallException(errorMessage, BlockStateCallError.TOO_MANY_BLOCK_CALLS);
     }
     List<BlockStateCall> filledCalls = new ArrayList<>();
     long currentBlock = header.getNumber();
@@ -92,16 +95,18 @@ public class BlockStateCalls {
     long blockNumber = blockStateCall.getBlockOverrides().getBlockNumber().orElseThrow();
     long timestamp = blockStateCall.getBlockOverrides().getTimestamp().orElseThrow();
     if (blockNumber <= currentBlockNumber) {
-      throw new IllegalArgumentException(
+      throw new BlockStateCallException(
           String.format(
               "Block number is invalid. Trying to add a call at block number %s, while current block number is %s.",
-              blockNumber, currentBlockNumber));
+              blockNumber, currentBlockNumber),
+          BlockStateCallError.BLOCK_NUMBERS_NOT_ASCENDING);
     }
     if (timestamp <= currentTimestamp) {
-      throw new IllegalArgumentException(
+      throw new BlockStateCallException(
           String.format(
               "Timestamp is invalid. Trying to add a call at timestamp %s, while current timestamp is %s.",
-              timestamp, currentTimestamp));
+              timestamp, currentTimestamp),
+          BlockStateCallError.TIMESTAMPS_NOT_ASCENDING);
     }
     blockStateCalls.add(blockStateCall);
   }

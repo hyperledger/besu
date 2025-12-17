@@ -85,9 +85,8 @@ public class JsonRpcConfigurationTest {
     assertThat(configuration.getNoAuthRpcApis())
         .containsExactly(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name());
 
-    configuration.setNoAuthRpcApis(Lists.newArrayList(RpcMethod.MINER_SET_COINBASE.name()));
-    assertThat(configuration.getNoAuthRpcApis())
-        .containsExactly(RpcMethod.MINER_SET_COINBASE.name());
+    configuration.setNoAuthRpcApis(Lists.newArrayList(RpcMethod.ETH_CALL.name()));
+    assertThat(configuration.getNoAuthRpcApis()).containsExactly(RpcMethod.ETH_CALL.name());
   }
 
   @Test

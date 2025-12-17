@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,7 +146,7 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
     }
 
     final List<BlobAndProofV2> results =
-        validBundles.stream().map(this::createBlobAndProofV2).toList();
+        validBundles.parallelStream().map(this::createBlobAndProofV2).toList();
 
     hitCounter.inc();
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
@@ -164,9 +165,9 @@ public class EngineGetBlobsV2 extends ExecutionEngineJsonRpcMethod {
 
   private BlobAndProofV2 createBlobAndProofV2(final BlobProofBundle blobProofBundle) {
     return new BlobAndProofV2(
-        blobProofBundle.getBlob().getData().toHexString(),
-        blobProofBundle.getKzgProof().stream()
-            .map(proof -> proof.getData().toHexString())
+        HexUtils.toFastHex(blobProofBundle.getBlob().getData(), true),
+        blobProofBundle.getKzgProof().parallelStream()
+            .map(proof -> HexUtils.toFastHex(proof.getData(), true))
             .toList());
   }
 

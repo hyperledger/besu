@@ -36,13 +36,25 @@ public interface BalConfiguration {
     return true;
   }
 
+  /** Returns whether the BAL-computed state root should be trusted without verification. */
+  @Value.Default
+  default boolean isBalStateRootTrusted() {
+    return false;
+  }
+
   /**
    * Returns whether mismatches between BAL and synchronously computed state roots should only log
    * an error instead of throwing an exception.
    */
   @Value.Default
-  default boolean isBalLenientOnMismatch() {
+  default boolean isBalLenientOnStateRootMismatch() {
     return true;
+  }
+
+  /** Returns whether the BALs should be logged when a constructed and block's BALs mismatch. */
+  @Value.Default
+  default boolean shouldLogBalsOnMismatch() {
+    return false;
   }
 
   /** Returns the timeout to use when waiting for the BAL-computed state root. */

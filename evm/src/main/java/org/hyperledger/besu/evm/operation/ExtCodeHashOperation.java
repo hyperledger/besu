@@ -15,10 +15,8 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -30,30 +28,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
-
-  // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
-  static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
-
-  private final boolean enableEIP3540;
-
   /**
    * Instantiates a new Ext code hash operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
-    this(gasCalculator, false);
-  }
-
-  /**
-   * Instantiates a new Ext code copy operation.
-   *
-   * @param gasCalculator the gas calculator
-   * @param enableEIP3540 enable EIP-3540 semantics (don't copy EOF)
-   */
-  public ExtCodeHashOperation(final GasCalculator gasCalculator, final boolean enableEIP3540) {
     super(0x3F, "EXTCODEHASH", 1, 1, gasCalculator);
-    this.enableEIP3540 = enableEIP3540;
   }
 
   /**
@@ -85,16 +66,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        if (enableEIP3540) {
-          final Bytes code = account.getCode();
-          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-            frame.pushStackItem(EOF_REPLACEMENT_HASH);
-          } else {
-            frame.pushStackItem(account.getCodeHash());
-          }
-        } else {
-          frame.pushStackItem(account.getCodeHash());
-        }
+        frame.pushStackItem(account.getCodeHash());
       }
       return new OperationResult(cost, null);
 
