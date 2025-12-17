@@ -17,9 +17,22 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
-@FunctionalInterface
-public interface PeerLookup {
-  Optional<Peer> getPeer(PeerId peerId);
+/** A lookup service for peers by their ID. */
+public final class PeerLookup {
+
+  private Function<PeerId, Optional<Peer>> lookupFn;
+
+  /** Set the lookup function. */
+  public void set(final Function<PeerId, Optional<Peer>> lookupFn) {
+    this.lookupFn = Objects.requireNonNull(lookupFn);
+  }
+
+  /** Get the peer with the given ID. */
+  public Optional<Peer> getPeer(final PeerId peerId) {
+    return lookupFn == null ? Optional.empty() : lookupFn.apply(peerId);
+  }
 }

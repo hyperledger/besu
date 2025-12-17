@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -69,7 +68,7 @@ import org.slf4j.LoggerFactory;
  * The peer discovery agent is the network component that sends and receives peer discovery messages
  * via UDP.
  */
-public abstract class PeerDiscoveryAgent implements PeerLookup {
+public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
   private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -444,7 +443,6 @@ public abstract class PeerDiscoveryAgent implements PeerLookup {
     return localNode;
   }
 
-  @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
     return peerTable.get(peerId).map(peer -> peer);
   }

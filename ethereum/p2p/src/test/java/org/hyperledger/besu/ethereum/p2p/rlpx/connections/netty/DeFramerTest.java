@@ -459,7 +459,8 @@ public class DeFramerTest {
   private DeFramer createDeFramer(
       final Peer expectedPeer, final Optional<DiscoveryPeer> peerInPeerTable) {
     final PeerTable peerTable = new PeerTable(localNode.getPeerInfo().getNodeId());
-    PeerLookup peerLookup = (peerId) -> peerTable.get(peerId).map(p -> p);
+    PeerLookup peerLookup = new PeerLookup();
+    peerLookup.set(peer -> peerTable.get(peer).map(p -> p));
     peerInPeerTable.ifPresent(peerTable::tryAdd);
     return new DeFramer(
         framer,

@@ -552,11 +552,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
-      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
+      final PeerLookup peerLookup = new PeerLookup();
       rlpxAgent =
-          rlpxAgent == null
-              ? createRlpxAgent(localNode, peerPrivileges, peerDiscoveryAgent)
-              : rlpxAgent;
+          rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges, peerLookup) : rlpxAgent;
+      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
+      peerLookup.set(peerDiscoveryAgent::getPeer);
 
       return new DefaultP2PNetwork(
           localNode,
