@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -61,7 +61,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private final FramerProvider framerProvider;
   private final boolean inboundInitiated;
-  private final PeerTable peerTable;
+  private final PeerLookup peerLookup;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
@@ -73,7 +73,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
       final boolean inboundInitiated,
-      final PeerTable peerTable) {
+      final PeerLookup peerLookup) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
@@ -83,7 +83,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     this.handshaker = handshakerProvider.buildInstance();
     this.framerProvider = framerProvider;
     this.inboundInitiated = inboundInitiated;
-    this.peerTable = peerTable;
+    this.peerLookup = peerLookup;
   }
 
   /**
@@ -126,7 +126,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
               connectionFuture,
               metricsSystem,
               inboundInitiated,
-              peerTable);
+              peerLookup);
 
       ctx.channel()
           .pipeline()

@@ -35,20 +35,21 @@ public final class BlockAccessListEncoder {
               acct.storageChanges(),
               (sc, scOut) -> {
                 scOut.startList();
-                scOut.writeBytes(sc.slot().getSlotKey().get());
+                scOut.writeUInt256Scalar(sc.slot().getSlotKey().get());
                 scOut.writeList(
                     sc.changes(),
                     (chg, chgOut) -> {
                       chgOut.startList();
                       chgOut.writeUInt64Scalar(UInt64.valueOf(chg.txIndex()));
-                      chgOut.writeBytes(chg.newValue());
+                      chgOut.writeUInt256Scalar(chg.newValue());
                       chgOut.endList();
                     });
                 scOut.endList();
               });
 
           acctOut.writeList(
-              acct.storageReads(), (sr, srOut) -> srOut.writeBytes(sr.slot().getSlotKey().get()));
+              acct.storageReads(),
+              (sr, srOut) -> srOut.writeUInt256Scalar(sr.slot().getSlotKey().get()));
 
           acctOut.writeList(
               acct.balanceChanges(),

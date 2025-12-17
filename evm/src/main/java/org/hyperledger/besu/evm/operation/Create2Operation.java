@@ -41,7 +41,7 @@ public class Create2Operation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public Create2Operation(final GasCalculator gasCalculator) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0);
+    super(0xF5, "CREATE2", 4, 1, gasCalculator);
   }
 
   @Override
@@ -71,6 +71,6 @@ public class Create2Operation extends AbstractCreateOperation {
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
-    return evm.wrapCode(inputData);
+    return new Code(inputData);
   }
 }

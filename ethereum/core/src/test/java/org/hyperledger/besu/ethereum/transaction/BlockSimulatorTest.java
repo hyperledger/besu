@@ -41,8 +41,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -55,6 +57,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -137,7 +140,6 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldStopWhenTransactionSimulationIsInvalid() {
-
     when(worldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)))
         .thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.updater()).thenReturn(updater);
@@ -149,7 +151,10 @@ public class BlockSimulatorTest {
     when(transactionSimulatorResult.isInvalid()).thenReturn(true);
     when(transactionSimulatorResult.getInvalidReason())
         .thenReturn(Optional.of("Invalid Transaction"));
-
+    when(transactionSimulatorResult.getValidationResult())
+        .thenReturn(
+            ValidationResult.invalid(
+                TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE, "Invalid Transaction"));
     when(transactionSimulator.processWithWorldUpdater(
             any(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any(), any(), any(),
             any()))
@@ -162,7 +167,8 @@ public class BlockSimulatorTest {
                 blockSimulator.process(
                     blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals("Transaction simulator result is invalid", exception.getMessage());
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.UPFRONT_COST_EXCEEDS_BALANCE);
+    assertEquals("Invalid Transaction", exception.getMessage());
   }
 
   @Test
@@ -187,7 +193,7 @@ public class BlockSimulatorTest {
                 blockSimulator.process(
                     blockHeader, createSimulationParameter(blockStateCall), mutableWorldState));
 
-    assertEquals("Transaction simulator result is empty", exception.getMessage());
+    assertEquals("Transaction simulation returned no result", exception.getMessage());
   }
 
   @Test
@@ -261,9 +267,60 @@ public class BlockSimulatorTest {
     assertEquals(expectedExtraData, result.getExtraData());
   }
 
+  @Test
+  public void shouldDetectInvalidPrecompile() {
+    var stateOverrideMap = new StateOverrideMap();
+    var targetAddress = Address.fromHexString("0x3");
+    var precompileAddress = Address.fromHexString("0x1");
+
+    var stateOverride =
+        new StateOverride.Builder().withMovePrecompileToAddress(targetAddress).build();
+
+    stateOverrideMap.put(precompileAddress, stateOverride);
+
+    var validationResult = buildParameterWithOverrides(stateOverrideMap).validate(Set.of());
+
+    assertThat(validationResult).isPresent();
+    assertThat(validationResult.orElseThrow())
+        .isEqualTo(BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
+  }
+
+  @Test
+  public void shouldDetectDuplicatedPrecompileTargetAddresses() {
+    var stateOverrideMap = new StateOverrideMap();
+    var targetAddress = Address.fromHexString("0x3");
+    var precompileAddress1 = Address.fromHexString("0x1");
+    var precompileAddress2 = Address.fromHexString("0x2");
+
+    var stateOverride =
+        new StateOverride.Builder().withMovePrecompileToAddress(targetAddress).build();
+
+    // Map two precompile addresses to the same target address
+    stateOverrideMap.put(precompileAddress1, stateOverride);
+    stateOverrideMap.put(precompileAddress2, stateOverride);
+
+    var validationResult =
+        buildParameterWithOverrides(stateOverrideMap)
+            .validate(Set.of(precompileAddress1, precompileAddress2));
+
+    assertThat(validationResult).isPresent();
+    assertThat(validationResult.orElseThrow())
+        .isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
+  }
+
   private BlockSimulationParameter createSimulationParameter(final BlockStateCall blockStateCall) {
     return new BlockSimulationParameter.BlockSimulationParameterBuilder()
         .blockStateCalls(List.of(blockStateCall))
         .build();
+  }
+
+  private BlockSimulationParameter buildParameterWithOverrides(
+      final StateOverrideMap stateOverrideMap) {
+    var blockStateCall = new BlockStateCall(List.of(), null, stateOverrideMap);
+    var parameter =
+        new BlockSimulationParameter.BlockSimulationParameterBuilder()
+            .blockStateCalls(List.of(blockStateCall))
+            .build();
+    return new BlockSimulationParameter(parameter.getBlockStateCalls(), false, false, false);
   }
 }

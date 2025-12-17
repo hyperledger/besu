@@ -24,13 +24,12 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -535,7 +535,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int maxPeers;
-    private PeerTable peerTable;
 
     public P2PNetwork build() {
       validate();
@@ -553,9 +552,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
-      peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
-      rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
+      final PeerLookup peerLookup = new PeerLookup();
+      rlpxAgent =
+          rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges, peerLookup) : rlpxAgent;
       peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
+      peerLookup.set(peerDiscoveryAgent::getPeer);
 
       return new DefaultP2PNetwork(
           localNode,
@@ -598,12 +599,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
           metricsSystem,
           storageProvider,
           forkIdManager,
-          rlpxAgent,
-          peerTable);
+          rlpxAgent);
     }
 
     private RlpxAgent createRlpxAgent(
-        final LocalNode localNode, final PeerPrivileges peerPrivileges) {
+        final LocalNode localNode,
+        final PeerPrivileges peerPrivileges,
+        final PeerLookup peerLookup) {
 
       return RlpxAgent.builder()
           .nodeKey(nodeKey)
@@ -615,7 +617,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .allConnectionsSupplier(allConnectionsSupplier)
           .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
           .maxPeers(maxPeers)
-          .peerTable(peerTable)
+          .peerLookup(peerLookup)
           .build();
     }
 

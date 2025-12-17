@@ -110,9 +110,6 @@ public class GeneralStateReferenceTestTools {
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
 
-    // EOF tests are written against an older version of the spec
-    params.ignore("/stEOF/");
-
     // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
 
