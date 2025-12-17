@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
@@ -33,8 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -105,9 +102,6 @@ import picocli.CommandLine.Option;
       BenchmarkSubCommand.class,
       B11rSubCommand.class,
       BlockchainTestSubCommand.class,
-      CodeValidateSubCommand.class,
-      EOFTestSubCommand.class,
-      PrettyPrintSubCommand.class,
       StateTestSubCommand.class,
       T8nSubCommand.class,
       T8nServerSubCommand.class
@@ -444,19 +438,7 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code = createTransaction ? evm.wrapCodeForCreation(codeBytes) : evm.wrapCode(codeBytes);
-      if (!code.isValid()) {
-        out.println(((CodeInvalid) code).getInvalidReason());
-        return;
-      } else if (code.getEofVersion() == 1
-          && createTransaction
-              != INITCODE.equals(((CodeV1) code).getEofLayout().containerMode().get())) {
-        out.println(
-            createTransaction
-                ? "--create requires EOF in INITCODE mode"
-                : "To evaluate INITCODE mode EOF code use the --create flag");
-        return;
-      }
+      Code code = new Code(codeBytes);
 
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;

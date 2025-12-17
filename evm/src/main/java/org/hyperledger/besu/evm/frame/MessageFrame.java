@@ -28,7 +28,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
-import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
@@ -44,9 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -209,10 +206,8 @@ public class MessageFrame {
   // Machine state fields.
   private long gasRemaining;
   private int pc;
-  private int section = 0;
   private final Memory memory = new Memory();
   private final OperandStack stack;
-  private final Supplier<ReturnStack> returnStack;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -280,8 +275,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.returnStack = Suppliers.memoize(ReturnStack::new);
-    this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
+    this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
     this.inputData = inputData;
@@ -313,24 +307,6 @@ public class MessageFrame {
    */
   public void setPC(final int pc) {
     this.pc = pc;
-  }
-
-  /**
-   * Set the code section index.
-   *
-   * @param section the code section index
-   */
-  public void setSection(final int section) {
-    this.section = section;
-  }
-
-  /**
-   * Return the current code section. Always zero for legacy code.
-   *
-   * @return the current code section
-   */
-  public int getSection() {
-    return section;
   }
 
   /** Deducts the remaining gas. */
@@ -497,33 +473,6 @@ public class MessageFrame {
    */
   public int stackSize() {
     return stack.size();
-  }
-
-  /**
-   * Return the current return stack size.
-   *
-   * @return The current return stack size
-   */
-  public int returnStackSize() {
-    return returnStack.get().size();
-  }
-
-  /**
-   * The top item of the return stack
-   *
-   * @return The top item of the return stack, or null if the stack is empty
-   */
-  public ReturnStack.ReturnStackItem peekReturnStack() {
-    return returnStack.get().peek();
-  }
-
-  /**
-   * Pushes a new return stack item onto the return stack
-   *
-   * @param returnStackItem item to be pushed
-   */
-  public void pushReturnStackItem(final ReturnStack.ReturnStackItem returnStackItem) {
-    returnStack.get().push(returnStackItem);
   }
 
   /**
@@ -1142,15 +1091,6 @@ public class MessageFrame {
    */
   public Deque<MessageFrame> getMessageFrameStack() {
     return txValues.messageFrameStack();
-  }
-
-  /**
-   * The return stack used for EOF code sections.
-   *
-   * @return the return stack
-   */
-  public ReturnStack getReturnStack() {
-    return returnStack.get();
   }
 
   /**

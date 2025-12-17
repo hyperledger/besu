@@ -55,80 +55,6 @@ application {
   ]
 }
 
-def corpusDir = "${buildDir}/generated/corpus"
-
-tasks.register("runFuzzer", JavaExec) {
-  doNotTrackState("Produces no artifacts")
-  classpath = sourceSets.main.runtimeClasspath
-  mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
-
-  args = [
-    "eof-container",
-    "--tests-dir=${projectDir}/../ethereum/referencetests/src/reference-test/external-resources/EOFTests",
-    "--corpus-dir=${corpusDir}"
-  ]
-  doFirst {
-    mkdir corpusDir
-  }
-}
-
-// Adds guidance to the fuzzer but with a 90% performance drop.
-tasks.register("fuzzGuided") {
-  doLast {
-    runFuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
-    runFuzzer.args += "--new-corpus-dir=${corpusDir}/.."
-  }
-  finalizedBy("runFuzzer")
-}
-
-// This fuzzes besu as an external client.  Besu fuzzing as a local client is enabled by default.
-tasks.register("fuzzBesu") {
-  dependsOn(":installDist")
-  doLast {
-    runFuzzer.args += "--client=besu=../build/install/besu/bin/evmtool code-validate"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzEvmone") {
-  doLast {
-    runFuzzer.args += "--client=evm1=evmone-eofparse"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzEthereumJS") {
-  doLast {
-    runFuzzer.args += "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzGeth") {
-  doLast {
-    runFuzzer.args += "--client=geth=eofdump eofparser"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzNethermind") {
-  doLast {
-    runFuzzer.args += "--client=neth=netheofparse -x"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzReth") {
-  doLast {
-    runFuzzer.args += "--client=revm=revme bytecode --eof-runtime"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzAll") {
-  dependsOn fuzzEvmone, fuzzEthereumJS, fuzzGeth, fuzzNethermind, fuzzReth
-}
-
 // P256 signature verification fuzzer tasks
 def p256CorpusDir = "${buildDir}/generated/p256-corpus"
 
@@ -170,7 +96,6 @@ tasks.register("generateP256Corpus", JavaExec) {
 
 jacoco {
   applyTo run
-  applyTo runFuzzer
   applyTo runP256Fuzzer
 }
 

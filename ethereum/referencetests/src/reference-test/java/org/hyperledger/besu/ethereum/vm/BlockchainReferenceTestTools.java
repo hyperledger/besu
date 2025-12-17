@@ -116,9 +116,6 @@ public class BlockchainReferenceTestTools {
         params.ignore(
                 "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
-        // EOF tests don't have Prague stuff like deposits right now
-        params.ignore("/stEOF/");
-
         // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
         params.ignore("/stEIP2537/");
     }
