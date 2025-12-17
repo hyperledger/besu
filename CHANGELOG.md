@@ -14,6 +14,7 @@
     - Fast Sync
   
 ### Additions and Improvements
+- add optional persistent preimage storage, add default limited in-memory preimage storage for bonsai [#7800](https://github.com/hyperledger/besu/pull/7800)
 
 ##  25.12.0
 
@@ -667,6 +668,11 @@ This is a hotfix to address publishing besu maven artifacts.  There are no issue
     | jvm_memory_pool_bytes_init      | jvm_memory_pool_init_bytes      |
     | jvm_memory_pool_bytes_max       | jvm_memory_pool_max_bytes       |
     | jvm_memory_pool_bytes_used      | jvm_memory_pool_used_bytes      |
+- Removed deprecated experimental feature names 
+  - `--Xsnapsync-synchronizer-flat-db-healing-enabled` in favor of `--Xbonsai-full-flat-db-enabled` 
+  - `--Xbonsai-limit-trie-logs-enabled` and `--Xbonsai-trie-log-pruning-enabled` in favor of `--bonsai-limit-trie-logs-enabled`
+  - `--Xbonsai-trie-logs-pruning-window-size` in favor of `--bonsai-trie-logs-pruning-window-size` 
+
 
 ### Upcoming Breaking Changes
 - Plugin API will be deprecating the BesuContext interface to be replaced with the ServiceManager interface.
