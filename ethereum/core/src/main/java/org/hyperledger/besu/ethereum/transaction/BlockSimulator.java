@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -359,11 +360,15 @@ public class BlockSimulator {
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
-              () -> new BlockStateCallException("Transaction simulator result is empty"));
+              () ->
+                  new BlockStateCallException(
+                      "Transaction simulation returned no result",
+                      BlockStateCallError.EMPTY_SIMULATION_RESULT));
 
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
-            "Transaction simulator result is invalid", transactionSimulationResult);
+            transactionSimulationResult.getValidationResult().getErrorMessage(),
+            transactionSimulationResult.getValidationResult().getInvalidReason());
       }
 
       transactionSimulationResult

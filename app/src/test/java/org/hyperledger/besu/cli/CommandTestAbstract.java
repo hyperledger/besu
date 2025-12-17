@@ -642,13 +642,12 @@ public abstract class CommandTestAbstract {
       return vertx;
     }
 
-    @Override
-    public GenesisConfigOptions getGenesisConfigOptions() {
-      return super.getGenesisConfigOptions();
-    }
-
     public CommandSpec getSpec() {
       return spec;
+    }
+
+    public Supplier<GenesisConfigOptions> getGenesisConfigOptionsSupplier() {
+      return genesisConfigOptionsSupplier;
     }
 
     public NetworkingOptions getNetworkingOptions() {

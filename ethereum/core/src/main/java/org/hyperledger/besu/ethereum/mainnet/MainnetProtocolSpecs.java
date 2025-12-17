@@ -24,7 +24,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO4;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO5;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN_EOF;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
@@ -81,14 +80,12 @@ import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoo
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -873,29 +870,6 @@ public abstract class MainnetProtocolSpecs {
         .hardforkId(CANCUN);
   }
 
-  static ProtocolSpecBuilder cancunEOFDefinition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-
-    ProtocolSpecBuilder protocolSpecBuilder =
-        cancunDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).hardforkId(CANCUN_EOF);
-  }
-
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1190,29 +1164,6 @@ public abstract class MainnetProtocolSpecs {
     return builder.hardforkId(hardforkId);
   }
 
-  private static ProtocolSpecBuilder addEOF(
-      final Optional<BigInteger> chainId,
-      final EvmConfiguration evmConfiguration,
-      final ProtocolSpecBuilder protocolSpecBuilder) {
-    return protocolSpecBuilder
-        // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(EOFGasCalculator::new)
-        // EIP-7692 EOF v1 EVM and opcodes
-        .evmBuilder(
-            (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.futureEips(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        // EIP-7698 EOF v1 creation transaction
-        .contractCreationProcessorBuilder(
-            evm ->
-                new ContractCreationProcessor(
-                    evm,
-                    true,
-                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
-  }
-
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1222,20 +1173,17 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
-    ProtocolSpecBuilder protocolSpecBuilder =
-        amsterdamDefinition(
-                chainId,
-                enableRevertReason,
-                genesisConfigOptions,
-                evmConfiguration,
-                miningConfiguration,
-                isParallelTxProcessingEnabled,
-                balConfiguration,
-                metricsSystem)
-            .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .hardforkId(FUTURE_EIPS);
-
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
+    return amsterdamDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem)
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
+        .hardforkId(FUTURE_EIPS);
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(

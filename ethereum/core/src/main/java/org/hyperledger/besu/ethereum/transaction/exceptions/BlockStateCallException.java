@@ -14,43 +14,64 @@
  */
 package org.hyperledger.besu.ethereum.transaction.exceptions;
 
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.GAS_PRICE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.UNKNOWN;
+import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.UPFRONT_COST_EXCEEDS_BALANCE;
 
-import java.util.Optional;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-/** Exception thrown when a block state call fails. */
+/** Exception thrown when a block state call validation fails. */
 public class BlockStateCallException extends RuntimeException {
 
-  /** The result of the block state call. */
-  private final TransactionSimulatorResult result;
+  /** The block state call error. */
+  private final BlockStateCallError error;
 
   /**
-   * Constructs a new BlockStateCallException with the given message.
+   * Constructs an exception with a message and an error descriptor.
    *
    * @param message the message
+   * @param error the block state call error
    */
-  public BlockStateCallException(final String message) {
+  public BlockStateCallException(final String message, final BlockStateCallError error) {
     super(message);
-    this.result = null;
+    this.error = error;
   }
 
   /**
-   * Constructs a new BlockStateCallException with the given message and result.
+   * Returns the block state call error, if present.
    *
-   * @param message the message
-   * @param result the result
+   * @return optional error descriptor
    */
-  public BlockStateCallException(final String message, final TransactionSimulatorResult result) {
-    super(message);
-    this.result = result;
+  public BlockStateCallError getError() {
+    return error;
   }
 
   /**
-   * Gets the result of the block state call.
+   * Constructs an exception with a message and an error descriptor.
    *
-   * @return the result
+   * @param message the message
+   * @param invalidReason the invalidReason
    */
-  public Optional<TransactionSimulatorResult> getResult() {
-    return Optional.ofNullable(result);
+  public BlockStateCallException(
+      final String message, final TransactionInvalidReason invalidReason) {
+    super(message);
+    this.error = fromTransactionInvalidReason(invalidReason);
+  }
+
+  /**
+   * Returns the error message.
+   *
+   * @param transactionInvalidReason The transaction invalid reason.
+   * @return The error message.
+   */
+  private static BlockStateCallError fromTransactionInvalidReason(
+      final TransactionInvalidReason transactionInvalidReason) {
+    return switch (transactionInvalidReason) {
+      case UPFRONT_COST_EXCEEDS_BALANCE -> UPFRONT_COST_EXCEEDS_BALANCE;
+      case GAS_PRICE_TOO_LOW -> GAS_PRICE_TOO_LOW;
+      case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT -> INTRINSIC_GAS_EXCEEDS_GAS_LIMIT;
+      default -> UNKNOWN;
+    };
   }
 }
