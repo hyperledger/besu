@@ -141,12 +141,12 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
-      return selfDestructOperationBaseGasCost();
+      return selfDestructOperationStaticGasCost();
     }
   }
 
   @Override
-  public long selfDestructOperationBaseGasCost() {
+  public long selfDestructOperationStaticGasCost() {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
