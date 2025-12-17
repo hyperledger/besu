@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -66,7 +67,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(evm.wrapCode(jumpBytes))
+            .code(new Code(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -81,7 +82,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(evm.wrapCode(jumpBytes))
+            .code(new Code(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -96,7 +97,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(evm.wrapCode(jumpBytes))
+            .code(new Code(jumpBytes))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -106,7 +107,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(evm.wrapCode(badJump))
+            .code(new Code(badJump))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -124,7 +125,7 @@ class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(evm.wrapCode(longCode))
+            .code(new Code(longCode))
             .build();
     longContract.setPC(255);
 
