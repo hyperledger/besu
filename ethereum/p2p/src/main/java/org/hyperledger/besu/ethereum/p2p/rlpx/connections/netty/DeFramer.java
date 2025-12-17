@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerChannelClosedException;
