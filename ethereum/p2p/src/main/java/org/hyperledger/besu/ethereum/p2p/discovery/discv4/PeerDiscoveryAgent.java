@@ -442,4 +442,8 @@ public abstract class PeerDiscoveryAgent {
   public Optional<DiscoveryPeer> getLocalNode() {
     return localNode;
   }
+
+  public Optional<Peer> getPeer(final PeerId peerId) {
+    return peerTable.get(peerId).map(peer -> peer);
+  }
 }

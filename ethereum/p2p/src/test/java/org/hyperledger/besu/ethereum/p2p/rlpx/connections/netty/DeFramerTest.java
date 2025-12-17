@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.testhelpers.NettyMocks;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramingException;
@@ -458,6 +459,8 @@ public class DeFramerTest {
   private DeFramer createDeFramer(
       final Peer expectedPeer, final Optional<DiscoveryPeer> peerInPeerTable) {
     final PeerTable peerTable = new PeerTable(localNode.getPeerInfo().getNodeId());
+    PeerLookup peerLookup = new PeerLookup();
+    peerLookup.set(peer -> peerTable.get(peer).map(p -> p));
     peerInPeerTable.ifPresent(peerTable::tryAdd);
     return new DeFramer(
         framer,
@@ -468,6 +471,6 @@ public class DeFramerTest {
         connectFuture,
         new NoOpMetricsSystem(),
         true,
-        peerTable);
+        peerLookup);
   }
 }

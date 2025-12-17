@@ -120,9 +120,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
-      final RlpxAgent rlpxAgent,
-      final PeerTable peerTable) {
+      final RlpxAgent rlpxAgent) {
     PacketPackage packetPackage = DaggerPacketPackage.create();
+    PeerTable peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
     return new VertxPeerDiscoveryAgent(
         vertx,
         nodeKey,
