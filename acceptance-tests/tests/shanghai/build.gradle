@@ -1,7 +1,17 @@
-
 plugins {
   id 'org.web3j' version '4.14.0'
   id 'org.web3j.solidity' version '0.6.0'
+}
+
+// Force all web3j dependencies to use same version as declared in version catalog
+configurations.configureEach {
+  resolutionStrategy {
+    eachDependency { DependencyResolveDetails details ->
+      if (details.requested.group == 'org.web3j') {
+        details.useVersion libs.versions.web3j.get()
+      }
+    }
+  }
 }
 
 jar { enabled = true }
