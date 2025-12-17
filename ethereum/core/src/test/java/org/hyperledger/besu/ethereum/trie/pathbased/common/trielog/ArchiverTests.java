@@ -172,7 +172,7 @@ public class ArchiverTests {
                   }
                 });
 
-    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
+    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.FULL);
 
     // If we had previously archived up to block 100...
     final AtomicLong archivedBlocks = new AtomicLong(100L);
@@ -228,7 +228,7 @@ public class ArchiverTests {
                   }
                 });
 
-    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
+    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.FULL);
 
     // If we had previously archived up to block 100...
     final AtomicLong archivedBlocks = new AtomicLong(100L);
@@ -350,7 +350,7 @@ public class ArchiverTests {
                   }
                 });
 
-    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
+    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.FULL);
 
     // If we had previously archived up to block 100...
     final AtomicLong archivedBlocks = new AtomicLong(100L);
@@ -496,7 +496,7 @@ public class ArchiverTests {
                   }
                 });
 
-    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
+    when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.FULL);
 
     // If we had previously archived up to block 100...
     final AtomicLong archivedBlocks = new AtomicLong(100L);
@@ -669,7 +669,7 @@ public class ArchiverTests {
     final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
-    assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
     // (SHORT_TEST_CHAIN_HEIGHT)
@@ -909,7 +909,7 @@ public class ArchiverTests {
     final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
-    assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
     // (SHORT_TEST_CHAIN_HEIGHT)

@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -63,9 +65,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
             this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
-    loadHeadWorldState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
+    loadHeadWorldState(createWorldState(worldStateKeyValueStorage));
   }
 
   @VisibleForTesting
@@ -82,10 +82,26 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
+    this.codeCache = codeCache;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
-    loadHeadWorldState(
-        new BonsaiWorldState(
-            this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
+    loadHeadWorldState(createWorldState(worldStateKeyValueStorage));
+  }
+
+  public PathBasedWorldState createWorldState(
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
+    return new BonsaiWorldState(
+        this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
+  }
+
+  @Override
+  public PathBasedWorldState createWorldState(
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final EvmConfiguration evmConfiguration,
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache) {
+    return new BonsaiWorldState(
+        archive, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache);
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

@@ -24,6 +24,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
@@ -58,6 +61,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected PathBasedWorldState headWorldState;
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
+  protected CodeCache codeCache;
   // Configuration that will be shared by all instances of world state at their creation
   protected final WorldStateConfig worldStateConfig;
 
@@ -365,7 +369,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     try (PathBasedWorldState ws =
         (PathBasedWorldState)
             getWorldState(withBlockHeaderAndNoUpdateNodeHead(blockHeader)).orElse(null)) {
-      if (ws != null) {
+      if (ws != null && !ws.isTrieDisabled()) {
         final WorldStateProofProvider worldStateProofProvider =
             new WorldStateProofProvider(
                 new WorldStateStorageCoordinator(ws.getWorldStateStorage()));
@@ -392,4 +396,11 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
       // no op
     }
   }
+
+  public abstract PathBasedWorldState createWorldState(
+      final BonsaiWorldStateProvider archive,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final EvmConfiguration evmConfiguration,
+      final WorldStateConfig worldStateConfig,
+      final CodeCache codeCache);
 }

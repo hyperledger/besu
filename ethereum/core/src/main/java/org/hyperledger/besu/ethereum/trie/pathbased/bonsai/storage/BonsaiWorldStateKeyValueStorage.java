@@ -105,10 +105,13 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      return getFlatDbStrategy()
+          .getFlatAccountTrieNode(
+              this::getWorldStateRootHash,
+              this::getAccountStateTrieNode,
+              location,
+              nodeHash,
+              composedWorldStateStorage);
     }
   }
 
@@ -117,15 +120,24 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+      return getFlatDbStrategy()
+          .getFlatStorageTrieNode(
+              this::getWorldStateRootHash,
+              this::getAccountStateTrieNode,
+              accountHash,
+              location,
+              nodeHash,
+              composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
+    return getFlatDbStrategy()
+        .getFlatTrieNodeUnsafe(
+            this::getWorldStateRootHash,
+            this::getAccountStateTrieNode,
+            key,
+            composedWorldStateStorage);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
@@ -266,13 +278,14 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         // Don't save empty nodes
         return this;
       }
-      composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+      flatDbStrategy.putFlatAccountTrieNode(
+          worldStorage, composedWorldStateTransaction, location, nodeHash, node);
       return this;
     }
 
     public Updater removeAccountStateTrieNode(final Bytes location) {
-      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
+      flatDbStrategy.removeFlatAccountStateTrieNode(
+          worldStorage, composedWorldStateTransaction, location);
       return this;
     }
 
@@ -282,10 +295,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         // Don't save empty nodes
         return this;
       }
-      composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE,
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
-          node.toArrayUnsafe());
+      flatDbStrategy.putFlatStorageTrieNode(
+          worldStorage, composedWorldStateTransaction, accountHash, location, nodeHash, node);
       return this;
     }
 
