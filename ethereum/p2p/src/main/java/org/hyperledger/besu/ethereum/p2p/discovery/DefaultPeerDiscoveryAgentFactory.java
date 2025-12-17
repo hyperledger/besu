@@ -33,27 +33,28 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
   PeerDiscoveryAgentFactory peerDiscoveryAgentFactory;
 
   public DefaultPeerDiscoveryAgentFactory(
-    final Vertx vertx,
-    final NodeKey nodeKey,
-    final NetworkingConfiguration config,
-    final PeerPermissions peerPermissions,
-    final NatService natService,
-    final MetricsSystem metricsSystem,
-    final StorageProvider storageProvider,
-    final Blockchain blockchain,
-    final List<Long> blockNumberForks,
-    final List<Long> timestampForks) {
-    this.peerDiscoveryAgentFactory = new PeerDiscoveryAgentFactoryDiscv4(
-      vertx,
-      nodeKey,
-      config,
-      peerPermissions,
-      natService,
-      metricsSystem,
-      storageProvider,
-      blockchain,
-      blockNumberForks,
-      timestampForks);
+      final Vertx vertx,
+      final NodeKey nodeKey,
+      final NetworkingConfiguration config,
+      final PeerPermissions peerPermissions,
+      final NatService natService,
+      final MetricsSystem metricsSystem,
+      final StorageProvider storageProvider,
+      final Blockchain blockchain,
+      final List<Long> blockNumberForks,
+      final List<Long> timestampForks) {
+    this.peerDiscoveryAgentFactory =
+        new PeerDiscoveryAgentFactoryDiscv4(
+            vertx,
+            nodeKey,
+            config,
+            peerPermissions,
+            natService,
+            metricsSystem,
+            storageProvider,
+            blockchain,
+            blockNumberForks,
+            timestampForks);
   }
 
   @Override

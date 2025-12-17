@@ -384,7 +384,7 @@ public final class DefaultP2PNetworkTest {
 
     return DefaultP2PNetwork.builder()
         .config(config)
-        .discoveryAgentFactory((rlpxAgent) -> discoveryAgent)
+        .peerDiscoveryAgentFactory((rlpxAgent) -> discoveryAgent)
         .rlpxAgentFactory((localNode, peerPrivileges, peerLookup) -> rlpxAgent)
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)

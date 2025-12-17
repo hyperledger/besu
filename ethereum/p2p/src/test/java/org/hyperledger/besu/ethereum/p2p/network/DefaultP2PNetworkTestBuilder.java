@@ -86,7 +86,7 @@ public final class DefaultP2PNetworkTestBuilder {
         .config(config)
         .metricsSystem(noopMetricsSystem)
         .rlpxAgentFactory(defaultRlpxFactory)
-        .discoveryAgentFactory(discv4DiscoveryFactory)
+        .peerDiscoveryAgentFactory(discv4DiscoveryFactory)
         .supportedCapabilities(supportedCapabilities);
   }
 }

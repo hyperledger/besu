@@ -80,7 +80,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFact
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryDiscv4;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner.NetworkBuilder;
@@ -734,7 +733,7 @@ public class RunnerBuilder {
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
                 .natService(natService)
-                .discoveryAgentFactory(peerDiscoveryAgentFactory)
+                .peerDiscoveryAgentFactory(peerDiscoveryAgentFactory)
                 .rlpxAgentFactory(rlpxAgentFactory)
                 .build();
 

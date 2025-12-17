@@ -109,6 +109,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
         "vertx_eventloop_pending_tasks",
         "The number of pending tasks in the Vertx event loop",
         pendingTaskCounter(vertx.nettyEventLoopGroup()));
+    addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= rlpxAgent.getMaxPeers());
   }
 
   public static VertxPeerDiscoveryAgent create(
@@ -123,22 +124,19 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
       final RlpxAgent rlpxAgent) {
     PacketPackage packetPackage = DaggerPacketPackage.create();
     PeerTable peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
-    VertxPeerDiscoveryAgent agent =
-        new VertxPeerDiscoveryAgent(
-            vertx,
-            nodeKey,
-            config,
-            peerPermissions,
-            natService,
-            metricsSystem,
-            storageProvider,
-            forkIdManager,
-            rlpxAgent,
-            peerTable,
-            packetPackage.packetSerializer(),
-            packetPackage.packetDeserializer());
-    agent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= rlpxAgent.getMaxPeers());
-    return agent;
+    return new VertxPeerDiscoveryAgent(
+        vertx,
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        metricsSystem,
+        storageProvider,
+        forkIdManager,
+        rlpxAgent,
+        peerTable,
+        packetPackage.packetSerializer(),
+        packetPackage.packetDeserializer());
   }
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {

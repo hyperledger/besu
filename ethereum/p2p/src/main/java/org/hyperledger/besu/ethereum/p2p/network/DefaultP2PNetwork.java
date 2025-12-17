@@ -619,7 +619,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder discoveryAgentFactory(final PeerDiscoveryAgentFactory factory) {
+    public Builder peerDiscoveryAgentFactory(final PeerDiscoveryAgentFactory factory) {
       this.peerDiscoveryAgentFactory = factory;
       return this;
     }
