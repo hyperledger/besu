@@ -22,6 +22,8 @@ import java.util.Map;
 import com.google.common.base.Stopwatch;
 
 public class BlockCreationTiming {
+  private long txsSelectionHighScore = 0;
+
   private final Map<String, Duration> timing = new LinkedHashMap<>();
   private final Stopwatch stopwatch;
   private final Instant startedAt = Instant.now();
@@ -36,6 +38,10 @@ public class BlockCreationTiming {
     empty.timing.put("empty-block-created", Duration.ZERO);
     empty.stopwatch.stop();
     return empty;
+  }
+
+  public void setHighScoreSelectionTime(final long ms) {
+    this.txsSelectionHighScore = ms;
   }
 
   public void register(final String step) {
@@ -69,6 +75,9 @@ public class BlockCreationTiming {
           .append(entry.getValue().minus(prevDuration).toMillis())
           .append("ms, ");
       prevDuration = entry.getValue();
+      if (entry.getKey().equals("txsSelection") && txsSelectionHighScore > 0) {
+        sb.append("txsSelectionHighScore=").append(txsSelectionHighScore).append("ms, ");
+      }
     }
     sb.delete(sb.length() - 2, sb.length());
 

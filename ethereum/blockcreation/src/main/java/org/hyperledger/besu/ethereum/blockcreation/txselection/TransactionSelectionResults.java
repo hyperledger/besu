@@ -49,6 +49,7 @@ public class TransactionSelectionResults {
       new ConcurrentHashMap<>();
 
   private long cumulativeGasUsed = 0;
+  private long highScoreSelectionTime = 0;
 
   void updateSelected(
       final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
@@ -69,6 +70,14 @@ public class TransactionSelectionResults {
   public void updateNotSelected(
       final Transaction transaction, final TransactionSelectionResult res) {
     notSelectedTransactions.put(transaction, res);
+  }
+
+  public void setHighScoreSelectionTime(final long ms) {
+    this.highScoreSelectionTime = ms;
+  }
+
+  public long getHighScoreSelectionTime() {
+    return highScoreSelectionTime;
   }
 
   public List<Transaction> getSelectedTransactions() {

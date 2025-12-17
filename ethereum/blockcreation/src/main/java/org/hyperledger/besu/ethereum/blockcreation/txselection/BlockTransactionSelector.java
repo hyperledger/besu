@@ -252,7 +252,11 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                   .addArgument(() -> nanosToMillis(remainingSelectionTime))
                   .addArgument(blockSelectionContext.transactionPool()::logStats)
                   .log();
+              final long highScoreStart = System.nanoTime();
               blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+              final long highScoreEnd = System.nanoTime();
+              transactionSelectionResults.setHighScoreSelectionTime(
+                  TimeUnit.NANOSECONDS.toMillis(highScoreEnd - highScoreStart));
             },
             null);
     ethScheduler.scheduleBlockCreationTask(
@@ -367,11 +371,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   }
 
   private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
+
     final long txRemainingTime;
     if (currTxEvaluationContext != null) {
       final long txElapsedTime =
           currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
-      // adding a grace time so we are sure it take strictly more than the block selection max time
+      // adding a grace time so we are sure it take strictly more than the block
+      // selection max time
       txRemainingTime =
           (blockTxsSelectionMaxTimeNanos - txElapsedTime) + CANCELLATION_GRACE_TIME_NANOS;
 
@@ -654,7 +660,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         transaction.getGasLimit() - processingResult.getGasRemaining();
 
     // queue the creation of the receipt and the update of the final results
-    // these actions will be performed on commit if the pending tx is definitely selected
+    // these actions will be performed on commit if the pending tx is definitely
+    // selected
     selectedTxPendingActions.add(
         () -> {
           final long cumulativeGasUsed =
@@ -682,10 +689,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         });
 
     if (isTimeout.get()) {
-      // even if this tx passed all the checks, it is too late to include it in this block,
+      // even if this tx passed all the checks, it is too late to include it in this
+      // block,
       // so we need to treat it as not selected
 
-      // do not rely on the presence of this result, since by the time it is added, the code
+      // do not rely on the presence of this result, since by the time it is added,
+      // the code
       // reading it could have been already executed by another thread
       return handleTransactionNotSelected(evaluationContext, BLOCK_SELECTION_TIMEOUT);
     }
@@ -715,8 +724,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
-    // check if this tx took too much to evaluate, and in case it was invalid remove it from the
-    // pool, otherwise penalize it. Not synchronized since there is no state change here.
+    // check if this tx took too much to evaluate, and in case it was invalid remove
+    // it from the
+    // pool, otherwise penalize it. Not synchronized since there is no state change
+    // here.
     final TransactionSelectionResult actualResult =
         isTimeout.get()
             ? rewriteSelectionResultForTimeout(evaluationContext, selectionResult)
