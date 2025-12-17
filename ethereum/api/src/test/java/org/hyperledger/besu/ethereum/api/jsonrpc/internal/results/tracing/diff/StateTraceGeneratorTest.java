@@ -23,17 +23,22 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -95,21 +100,18 @@ public class StateTraceGeneratorTest {
 
   @Test
   void shouldIncludeUnchangedAccounts_whenPreState() {
-    Address A = Address.fromHexString("0xabc1");
+    Address address = Address.fromHexString("0xabc1");
+    // Both pre and post states are the same, but we are generating pre-state trace so it should be
+    // included
+    MutableAccount account = mockAccount(address, 10, 1, Map.of(UInt256.ZERO, UInt256.ONE));
+    TransactionTrace txTrace = mockFrameWithUpdater(address, account, account);
 
-    Account pre = mockAccount(A, 10, 1, Map.of());
-    MutableAccount post = mockAccount(A, 10, 1, Map.of());
-
-    WorldUpdater prev = mock(WorldUpdater.class);
-    when(prev.get(A)).thenReturn(pre);
-
-    WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
-    TraceFrame f = mockFrame(mockWorldUpdater(tx));
-
-    StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
-
-    assertThat(diff).containsKey(A.toHexString());
-    assertThat(diff.get(A.toHexString()).getBalance().getFrom()).contains("0xa");
+    StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
+    assertThat(diff).containsKey(address.toHexString());
+    AccountDiff a = diff.get(address.toHexString());
+    assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
+    assertThat(a.getStorage().get(UInt256.ZERO.toHexString()).getFrom().orElseThrow())
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
   }
 
   @Test
@@ -135,18 +137,11 @@ public class StateTraceGeneratorTest {
   @Test
   void shouldIncludeAllSlots_whenPreStateMode() {
     Address A = Address.fromHexString("0xdead");
-
-    MutableAccount post =
+    // Pre and post both have non-zero and zero slots, all should be included in pre-state
+    MutableAccount account =
         mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
-
-    WorldUpdater prev = mock(WorldUpdater.class);
-    when(prev.get(A)).thenReturn(null);
-
-    WorldUpdater tx = mockTxUpdaterWith(prev, List.of(post), List.of());
-    TraceFrame f = mockFrame(mockWorldUpdater(tx));
-
-    StateDiffTrace diff = generator.generatePreState(trace(f)).findFirst().orElseThrow();
-
+    TransactionTrace txTrace = mockFrameWithUpdater(A, account, account);
+    StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
     assertThat(diff.get(A.toHexString()).getStorage())
         .containsKeys(UInt256.ZERO.toHexString(), UInt256.ONE.toHexString());
   }
@@ -168,6 +163,21 @@ public class StateTraceGeneratorTest {
     AccountDiff a = diff.get(A.toHexString());
     assertThat(a.getBalance().getFrom()).contains("0x64");
     assertThat(a.getBalance().getTo()).isEmpty();
+  }
+
+  @Test
+  void shouldThrowIfEmptyTouchedAccountsInPreStateMode() {
+    Address A = Address.fromHexString("0xdead");
+    MutableAccount account =
+        mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
+    TransactionTrace txTrace = mockFrameWithUpdater(A, account, account);
+    when(txTrace.getTouchedAccounts()).thenReturn(Optional.empty());
+
+    Exception exception =
+        Assertions.assertThrows(
+            IllegalArgumentException.class, () -> generator.generatePreState(txTrace));
+    assertThat(exception.getMessage())
+        .isEqualTo("Touched accounts must be present in pre-state mode");
   }
 
   private TraceFrame mockFrame(final WorldUpdater updater) {
@@ -215,5 +225,36 @@ public class StateTraceGeneratorTest {
     when(mid.parentUpdater()).thenReturn(Optional.of(root));
     when(root.parentUpdater()).thenReturn(Optional.of(leaf));
     return mid;
+  }
+
+  private TransactionTrace mockFrameWithUpdater(
+      final Address address, final MutableAccount preState, final MutableAccount postState) {
+    WorldUpdater original = mock(WorldUpdater.class);
+    when(original.get(address)).thenReturn(preState);
+    WorldUpdater previous = mock(WorldUpdater.class);
+    when(previous.parentUpdater()).thenReturn(Optional.of(original));
+    WorldUpdater txUpdater = mockWorldUpdater(previous);
+    when(txUpdater.get(postState.getAddress())).thenReturn(postState);
+    TraceFrame f = mockFrame(txUpdater);
+
+    TransactionTrace txTrace = mock(TransactionTrace.class);
+    when(txTrace.getTraceFrames()).thenReturn(List.of(f));
+    Set<UInt256> slots = new java.util.HashSet<>();
+    slots.addAll(preState.getUpdatedStorage().keySet());
+    slots.addAll(postState.getUpdatedStorage().keySet());
+    Collection<AccessLocationTracker.AccountAccessList> touchedAccounts =
+        Collections.singleton(mockAccountAccessListEntry(address, slots));
+
+    when(txTrace.getTouchedAccounts()).thenReturn(Optional.of(touchedAccounts));
+    return txTrace;
+  }
+
+  private AccessLocationTracker.AccountAccessList mockAccountAccessListEntry(
+      final Address address, final Set<UInt256> slots) {
+    AccessLocationTracker.AccountAccessList entry =
+        mock(AccessLocationTracker.AccountAccessList.class);
+    when(entry.getAddress()).thenReturn(address);
+    when(entry.getSlots()).thenReturn(slots);
+    return entry;
   }
 }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +58,10 @@ public class AccessLocationTracker implements Eip7928AccessList {
   public void addSlotAccessForAccount(final Address address, final UInt256 slotKey) {
     addTouchedAccount(address);
     touchedAccounts.get(address).addSlotAccess(slotKey);
+  }
+
+  public Collection<AccountAccessList> getTouchedAccounts() {
+    return touchedAccounts.values();
   }
 
   public static final class AccountAccessList {

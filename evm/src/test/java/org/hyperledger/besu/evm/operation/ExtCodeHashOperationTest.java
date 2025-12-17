@@ -24,7 +24,6 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
@@ -44,11 +43,9 @@ class ExtCodeHashOperationTest {
   private final WorldUpdater worldStateUpdater = toyWorld.updater();
 
   private final ExtCodeHashOperation operation =
-      new ExtCodeHashOperation(new ConstantinopleGasCalculator(), false);
+      new ExtCodeHashOperation(new ConstantinopleGasCalculator());
   private final ExtCodeHashOperation operationIstanbul =
-      new ExtCodeHashOperation(new IstanbulGasCalculator(), false);
-  private final ExtCodeHashOperation operationEOF =
-      new ExtCodeHashOperation(new PragueGasCalculator(), true);
+      new ExtCodeHashOperation(new IstanbulGasCalculator());
 
   @Test
   void shouldCharge400Gas() {
@@ -116,7 +113,7 @@ class ExtCodeHashOperationTest {
   }
 
   @Test
-  void shouldGetNonEOFHash() {
+  void shouldGetHash() {
     final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
@@ -131,32 +128,6 @@ class ExtCodeHashOperationTest {
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
     assertThat(frameIstanbul.getStackItem(0)).isEqualTo(Hash.hash(code));
-
-    final MessageFrame frameEOF = createMessageFrame(value);
-    operationEOF.execute(frameEOF, null);
-    assertThat(frameEOF.getStackItem(0)).isEqualTo(Hash.hash(code));
-  }
-
-  @Test
-  void shouldGetEOFHash() {
-    final Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    account.setCode(code);
-    final UInt256 value =
-        UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
-            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
-
-    final MessageFrame frame = createMessageFrame(value);
-    operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
-
-    final MessageFrame frameIstanbul = createMessageFrame(value);
-    operationIstanbul.execute(frameIstanbul, null);
-    assertThat(frameIstanbul.getStackItem(0)).isEqualTo(Hash.hash(code));
-
-    final MessageFrame frameEOF = createMessageFrame(value);
-    operationEOF.execute(frameEOF, null);
-    assertThat(frameEOF.getStackItem(0)).isEqualTo(Hash.hash(Bytes.fromHexString("0xef00")));
   }
 
   private Bytes executeOperation(final Address requestedAddress) {

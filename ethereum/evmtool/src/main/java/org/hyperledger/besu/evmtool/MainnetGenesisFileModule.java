@@ -150,13 +150,6 @@ class MainnetGenesisFileModule extends GenesisFileModule {
             createSchedule(
                 new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a).chainId(chainId))),
         Map.entry(
-            "cancuneof",
-            createSchedule(
-                new StubGenesisConfigOptions()
-                    .cancunEOFTime(0)
-                    .baseFeePerGas(0x0a)
-                    .chainId(chainId))),
-        Map.entry(
             "prague",
             createSchedule(
                 new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a).chainId(chainId))),
