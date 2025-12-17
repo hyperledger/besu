@@ -66,7 +66,7 @@ import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
+public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
   private static final Logger LOG = LoggerFactory.getLogger(VertxPeerDiscoveryAgent.class);
 
   private final Vertx vertx;
@@ -123,19 +123,22 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final RlpxAgent rlpxAgent) {
     PacketPackage packetPackage = DaggerPacketPackage.create();
     PeerTable peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
-    return new VertxPeerDiscoveryAgent(
-        vertx,
-        nodeKey,
-        config,
-        peerPermissions,
-        natService,
-        metricsSystem,
-        storageProvider,
-        forkIdManager,
-        rlpxAgent,
-        peerTable,
-        packetPackage.packetSerializer(),
-        packetPackage.packetDeserializer());
+    VertxPeerDiscoveryAgent agent =
+        new VertxPeerDiscoveryAgent(
+            vertx,
+            nodeKey,
+            config,
+            peerPermissions,
+            natService,
+            metricsSystem,
+            storageProvider,
+            forkIdManager,
+            rlpxAgent,
+            peerTable,
+            packetPackage.packetSerializer(),
+            packetPackage.packetDeserializer());
+    agent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= rlpxAgent.getMaxPeers());
+    return agent;
   }
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {

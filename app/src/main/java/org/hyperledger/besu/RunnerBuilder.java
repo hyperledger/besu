@@ -76,6 +76,11 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryDiscv4;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner.NetworkBuilder;
@@ -697,25 +702,41 @@ public class RunnerBuilder {
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
 
+    PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
+        new DefaultPeerDiscoveryAgentFactory(
+            vertx,
+            nodeKey,
+            networkingConfiguration,
+            peerPermissions,
+            natService,
+            metricsSystem,
+            storageProvider,
+            context.getBlockchain(),
+            besuController.getGenesisConfigOptions().getForkBlockNumbers(),
+            besuController.getGenesisConfigOptions().getForkBlockTimestamps());
+
+    RlpxAgentFactory rlpxAgentFactory =
+        new DefaultRlpxAgentFactory(
+            nodeKey,
+            networkingConfiguration,
+            peerPermissions,
+            metricsSystem,
+            ethPeers::streamAllConnections,
+            ethPeers::streamAllActiveConnections);
+
     final NetworkBuilder activeNetwork =
-        caps -> {
-          return DefaultP2PNetwork.builder()
-              .vertx(vertx)
-              .nodeKey(nodeKey)
-              .config(networkingConfiguration)
-              .peerPermissions(peerPermissions)
-              .metricsSystem(metricsSystem)
-              .supportedCapabilities(caps)
-              .natService(natService)
-              .storageProvider(storageProvider)
-              .blockchain(context.getBlockchain())
-              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-              .allConnectionsSupplier(ethPeers::streamAllConnections)
-              .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
-              .maxPeers(ethPeers.getMaxPeers())
-              .build();
-        };
+        caps ->
+            DefaultP2PNetwork.builder()
+                .vertx(vertx)
+                .nodeKey(nodeKey)
+                .config(networkingConfiguration)
+                .peerPermissions(peerPermissions)
+                .metricsSystem(metricsSystem)
+                .supportedCapabilities(caps)
+                .natService(natService)
+                .discoveryAgentFactory(peerDiscoveryAgentFactory)
+                .rlpxAgentFactory(rlpxAgentFactory)
+                .build();
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()

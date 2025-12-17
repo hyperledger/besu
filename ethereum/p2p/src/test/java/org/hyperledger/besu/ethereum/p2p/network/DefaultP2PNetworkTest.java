@@ -28,14 +28,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentDiscv4;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -76,7 +74,7 @@ public final class DefaultP2PNetworkTest {
       SECP256K1.SecretKey.fromBytes(
           Bytes32.fromHexString(
               "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
-  @Mock PeerDiscoveryAgent discoveryAgent;
+  @Mock PeerDiscoveryAgentDiscv4 discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
   @Captor private ArgumentCaptor<DiscoveryPeer> peerCaptor;
@@ -386,16 +384,11 @@ public final class DefaultP2PNetworkTest {
 
     return DefaultP2PNetwork.builder()
         .config(config)
-        .peerDiscoveryAgent(discoveryAgent)
-        .rlpxAgent(rlpxAgent)
+        .discoveryAgentFactory((rlpxAgent) -> discoveryAgent)
+        .rlpxAgentFactory((localNode, peerPrivileges, peerLookup) -> rlpxAgent)
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(EthProtocolHelper.LATEST)
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .blockNumberForks(Collections.emptyList())
-        .timestampForks(Collections.emptyList())
-        .allConnectionsSupplier(Stream::empty)
-        .allActiveConnectionsSupplier(Stream::empty);
+        .supportedCapabilities(EthProtocolHelper.LATEST);
   }
 }

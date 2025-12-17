@@ -18,21 +18,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.MutableLocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -48,7 +45,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
@@ -73,7 +69,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -193,9 +188,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
     this.vertx = vertx;
 
-    final int maxPeers = rlpxAgent.getMaxPeers();
-    LOG.debug("setting maxPeers {}", maxPeers);
-    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
     subscribeDisconnect(reputationManager);
   }
 
@@ -379,7 +371,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         peers.add(peer);
       }
       if (!peers.isEmpty()) {
-        peers.stream().forEach(peerDiscoveryAgent::bond);
+        peers.forEach(peerDiscoveryAgent::bond);
       }
     };
   }
@@ -419,7 +411,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public int getPeerCount() {
-    return getRlpxAgent().getConnectionCount();
+    return rlpxAgent.getConnectionCount();
   }
 
   @Override
@@ -516,8 +508,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public static class Builder {
 
     private Vertx vertx;
-    private PeerDiscoveryAgent peerDiscoveryAgent;
-    private RlpxAgent rlpxAgent;
 
     private NetworkingConfiguration config = NetworkingConfiguration.create();
     private List<Capability> supportedCapabilities;
@@ -528,13 +518,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
-    private StorageProvider storageProvider;
-    private Blockchain blockchain;
-    private List<Long> blockNumberForks;
-    private List<Long> timestampForks;
-    private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
-    private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
-    private int maxPeers;
+
+    private PeerDiscoveryAgentFactory peerDiscoveryAgentFactory;
+    private RlpxAgentFactory rlpxAgentFactory;
 
     public P2PNetwork build() {
       validate();
@@ -553,11 +539,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
       final PeerLookup peerLookup = new PeerLookup();
-      rlpxAgent =
-          rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges, peerLookup) : rlpxAgent;
-      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
+      RlpxAgent rlpxAgent = rlpxAgentFactory.create(localNode, peerPrivileges, peerLookup);
+      PeerDiscoveryAgent peerDiscoveryAgent = peerDiscoveryAgentFactory.create(rlpxAgent);
       peerLookup.set(peerDiscoveryAgent::getPeer);
-
       return new DefaultP2PNetwork(
           localNode,
           peerDiscoveryAgent,
@@ -575,62 +559,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(nodeKey != null, "NodeKey must be set.");
       checkState(config != null, "NetworkingConfiguration must be set.");
       checkState(
-          supportedCapabilities != null && supportedCapabilities.size() > 0,
+          supportedCapabilities != null && !supportedCapabilities.isEmpty(),
           "Supported capabilities must be set and non-empty.");
       checkState(metricsSystem != null, "MetricsSystem must be set.");
-      checkState(storageProvider != null, "StorageProvider must be set.");
-      checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
-      checkState(blockNumberForks != null, "BlockNumberForks must be set.");
-      checkState(timestampForks != null, "TimestampForks must be set.");
-      checkState(allConnectionsSupplier != null, "Supplier must be set.");
-      checkState(allActiveConnectionsSupplier != null, "Supplier must be set.");
-    }
-
-    private PeerDiscoveryAgent createDiscoveryAgent() {
-      final ForkIdManager forkIdManager =
-          new ForkIdManager(blockchain, blockNumberForks, timestampForks);
-
-      return VertxPeerDiscoveryAgent.create(
-          vertx,
-          nodeKey,
-          config.getDiscovery(),
-          peerPermissions,
-          natService,
-          metricsSystem,
-          storageProvider,
-          forkIdManager,
-          rlpxAgent);
-    }
-
-    private RlpxAgent createRlpxAgent(
-        final LocalNode localNode,
-        final PeerPrivileges peerPrivileges,
-        final PeerLookup peerLookup) {
-
-      return RlpxAgent.builder()
-          .nodeKey(nodeKey)
-          .config(config.getRlpx())
-          .peerPermissions(peerPermissions)
-          .peerPrivileges(peerPrivileges)
-          .localNode(localNode)
-          .metricsSystem(metricsSystem)
-          .allConnectionsSupplier(allConnectionsSupplier)
-          .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
-          .maxPeers(maxPeers)
-          .peerLookup(peerLookup)
-          .build();
-    }
-
-    public Builder peerDiscoveryAgent(final PeerDiscoveryAgent peerDiscoveryAgent) {
-      checkNotNull(peerDiscoveryAgent);
-      this.peerDiscoveryAgent = peerDiscoveryAgent;
-      return this;
-    }
-
-    public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
-      checkNotNull(rlpxAgent);
-      this.rlpxAgent = rlpxAgent;
-      return this;
+      checkState(rlpxAgentFactory != null, "RlpxAgentFactory must be set.");
+      checkState(peerDiscoveryAgentFactory != null, "DiscoveryAgentFactory must be set.");
     }
 
     public Builder vertx(final Vertx vertx) {
@@ -686,44 +619,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder storageProvider(final StorageProvider storageProvider) {
-      checkNotNull(storageProvider);
-      this.storageProvider = storageProvider;
+    public Builder discoveryAgentFactory(final PeerDiscoveryAgentFactory factory) {
+      this.peerDiscoveryAgentFactory = factory;
       return this;
     }
 
-    public Builder blockchain(final MutableBlockchain blockchain) {
-      checkNotNull(blockchain);
-      this.blockchain = blockchain;
-      return this;
-    }
-
-    public Builder blockNumberForks(final List<Long> forks) {
-      checkNotNull(forks);
-      this.blockNumberForks = forks;
-      return this;
-    }
-
-    public Builder timestampForks(final List<Long> forks) {
-      checkNotNull(forks);
-      this.timestampForks = forks;
-      return this;
-    }
-
-    public Builder allConnectionsSupplier(
-        final Supplier<Stream<PeerConnection>> allConnectionsSupplier) {
-      this.allConnectionsSupplier = allConnectionsSupplier;
-      return this;
-    }
-
-    public Builder allActiveConnectionsSupplier(
-        final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
-      this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
-      return this;
-    }
-
-    public Builder maxPeers(final int maxPeers) {
-      this.maxPeers = maxPeers;
+    public Builder rlpxAgentFactory(final RlpxAgentFactory factory) {
+      this.rlpxAgentFactory = factory;
       return this;
     }
   }
