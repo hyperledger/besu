@@ -407,15 +407,15 @@ public interface GasCalculator {
    * @return the cost for executing the self destruct operation
    */
   default long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
-    return selfDestructOperationBaseGasCost();
+    return selfDestructOperationStaticGasCost();
   }
 
   /**
-   * Returns the base cost for executing a {@link SelfDestructOperation}.
+   * Returns the static cost for executing a {@link SelfDestructOperation}.
    *
    * @return the base cost for executing a {@link SelfDestructOperation}
    */
-  default long selfDestructOperationBaseGasCost() {
+  default long selfDestructOperationStaticGasCost() {
     return 0L;
   }
 
