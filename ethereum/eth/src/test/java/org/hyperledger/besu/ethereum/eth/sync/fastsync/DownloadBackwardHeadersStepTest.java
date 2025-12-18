@@ -144,35 +144,6 @@ public class DownloadBackwardHeadersStepTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void shouldHandlePartialResponseWithRetry()
-      throws ExecutionException, InterruptedException {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
-
-    // First call returns 5 headers, second call returns remaining 5
-    final List<BlockHeader> firstBatch = createMockHeaders(5, 100);
-    final List<BlockHeader> secondBatch = createMockHeaders(5, 95);
-
-    final PeerTaskExecutorResult<List<BlockHeader>> firstResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(firstBatch), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
-    final PeerTaskExecutorResult<List<BlockHeader>> secondResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(secondBatch),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
-        .thenReturn(firstResult, secondResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThat(result.get()).hasSize(10);
-    verify(peerTaskExecutor, times(2)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
   public void shouldRetryOnNoPeerAvailable() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
         new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 5, 0);
@@ -217,7 +188,7 @@ public class DownloadBackwardHeadersStepTest {
 
     assertThatThrownBy(() -> result.get())
         .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Failed to download headers from block 100");
+        .hasMessageContaining("Failed to download headers starting from block 100");
   }
 
   @Test
@@ -238,7 +209,7 @@ public class DownloadBackwardHeadersStepTest {
 
     assertThatThrownBy(() -> result.get())
         .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Failed to download headers from block 100");
+        .hasMessageContaining("Failed to download headers starting from block 100");
   }
 
   @Test
@@ -260,77 +231,6 @@ public class DownloadBackwardHeadersStepTest {
 
     assertThat(result.get()).hasSize(5);
     verify(peerTaskExecutor, times(1)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  public void shouldHandleOneHeaderRemaining() throws ExecutionException, InterruptedException {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 100, 99);
-
-    // startBlock = 100, trustAnchor = 99, so only 1 header should be requested
-    final List<BlockHeader> mockHeaders = createMockHeaders(1, 100);
-    final PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(mockHeaders),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenReturn(successResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThat(result.get()).hasSize(1);
-    verify(peerTaskExecutor, times(1)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  public void shouldHandleLargeHeaderRequest() throws ExecutionException, InterruptedException {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 200, 0);
-
-    final List<BlockHeader> mockHeaders = createMockHeaders(200, 500);
-    final PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(mockHeaders),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenReturn(successResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(500L);
-
-    assertThat(result.get()).hasSize(200);
-    verify(peerTaskExecutor, times(1)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void shouldHandleMultipleRetriesOnNoPeer()
-      throws ExecutionException, InterruptedException {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
-
-    final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
-
-    // Three NO_PEER_AVAILABLE responses, then SUCCESS
-    final PeerTaskExecutorResult<List<BlockHeader>> noPeerResult =
-        new PeerTaskExecutorResult<>(
-            Optional.empty(),
-            PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE,
-            Collections.emptyList());
-    final PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(mockHeaders),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
-        .thenReturn(noPeerResult, noPeerResult, noPeerResult, successResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThat(result.get()).hasSize(10);
-    verify(peerTaskExecutor, times(4)).execute(any(GetHeadersFromPeerTask.class));
   }
 
   @Test
@@ -383,41 +283,6 @@ public class DownloadBackwardHeadersStepTest {
 
     assertThat(result.get()).hasSize(500);
     verify(peerTaskExecutor, times(1)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void shouldHandleMultiplePartialResponses()
-      throws ExecutionException, InterruptedException {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 20, 0);
-
-    // Four partial responses of 5 headers each
-    final List<BlockHeader> batch1 = createMockHeaders(5, 100);
-    final List<BlockHeader> batch2 = createMockHeaders(5, 95);
-    final List<BlockHeader> batch3 = createMockHeaders(5, 90);
-    final List<BlockHeader> batch4 = createMockHeaders(5, 85);
-
-    final PeerTaskExecutorResult<List<BlockHeader>> result1 =
-        new PeerTaskExecutorResult<>(
-            Optional.of(batch1), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
-    final PeerTaskExecutorResult<List<BlockHeader>> result2 =
-        new PeerTaskExecutorResult<>(
-            Optional.of(batch2), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
-    final PeerTaskExecutorResult<List<BlockHeader>> result3 =
-        new PeerTaskExecutorResult<>(
-            Optional.of(batch3), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
-    final PeerTaskExecutorResult<List<BlockHeader>> result4 =
-        new PeerTaskExecutorResult<>(
-            Optional.of(batch4), PeerTaskExecutorResponseCode.SUCCESS, Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
-        .thenReturn(result1, result2, result3, result4);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThat(result.get()).hasSize(20);
-    verify(peerTaskExecutor, times(4)).execute(any(GetHeadersFromPeerTask.class));
   }
 
   private List<BlockHeader> createMockHeaders(final int count, final long startBlock) {

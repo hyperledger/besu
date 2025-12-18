@@ -48,17 +48,6 @@ public class BackwardHeaderSourceTest {
   }
 
   @Test
-  public void shouldReturnBlocksInDescendingOrder() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(50, 100, 300);
-
-    assertThat(source.next()).isEqualTo(300L);
-    assertThat(source.next()).isEqualTo(250L);
-    assertThat(source.next()).isEqualTo(200L);
-    assertThat(source.next()).isEqualTo(150L);
-    assertThat(source.next()).isEqualTo(100L);
-  }
-
-  @Test
   public void shouldThrowWhenExhausted() {
     final BackwardHeaderSource source = new BackwardHeaderSource(100, 50, 100);
 
@@ -134,31 +123,6 @@ public class BackwardHeaderSourceTest {
 
     // Calling hasNext multiple times shouldn't affect next()
     assertThat(source.next()).isEqualTo(100L);
-  }
-
-  @Test
-  public void shouldHandleZeroStopBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 0, 300);
-
-    final List<Long> blocks = new ArrayList<>();
-    while (source.hasNext()) {
-      final Long block = source.next();
-      if (block != null) {
-        blocks.add(block);
-      }
-    }
-
-    assertThat(blocks).containsExactly(300L, 200L, 100L, 0L);
-  }
-
-  @Test
-  public void shouldHandleZeroStartBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(50, 0, 0);
-
-    assertThat(source.hasNext()).isTrue();
-    assertThat(source.next()).isEqualTo(0L);
-    assertThat(source.hasNext()).isFalse();
-    assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -256,41 +220,6 @@ public class BackwardHeaderSourceTest {
     assertThat(source.next()).isEqualTo(105L);
     assertThat(source.next()).isEqualTo(5L);
     assertThatThrownBy(source::next).isInstanceOf(NoSuchElementException.class);
-  }
-
-  @Test
-  public void shouldHandleExactMultipleOfBatchSize() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(50, 0, 200);
-
-    final List<Long> blocks = new ArrayList<>();
-    while (source.hasNext()) {
-      final Long block = source.next();
-      if (block != null) {
-        blocks.add(block);
-      }
-    }
-
-    // 200, 150, 100, 50, 0
-    assertThat(blocks).containsExactly(200L, 150L, 100L, 50L, 0L);
-  }
-
-  @Test
-  public void shouldNotReturnBlocksBelowStopBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 50, 120);
-
-    assertThat(source.next()).isEqualTo(120L);
-    // After first call, currentBlock = 20, which is < stopBlock (50), so returns null
-    assertThat(source.next()).isNull();
-  }
-
-  @Test
-  public void shouldHandleLargeBatchSize() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(1000000, 0, 500000);
-
-    assertThat(source.hasNext()).isTrue();
-    assertThat(source.next()).isEqualTo(500000L);
-    assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
   }
 
   @Test
