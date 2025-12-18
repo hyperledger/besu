@@ -101,10 +101,8 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
    * Create a snapshot at current version.
    */
   public BonsaiSnapshotWorldStateKeyValueStorage createSnapshot() {
-    final BonsaiSnapshotWorldStateKeyValueStorage snapshot = new BonsaiSnapshotWorldStateKeyValueStorage(
-            parent);
     return new BonsaiSnapshotCachedWorldStateStorage(
-            snapshot,
+            parent,
             caches,
         GLOBAL_VERSION.get());
   }
