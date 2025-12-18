@@ -1795,7 +1795,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   private boolean hasKzgFork(final GenesisConfigOptions genesisConfigOptions) {
     return genesisConfigOptions.getCancunTime().isPresent()
-        || genesisConfigOptions.getCancunEOFTime().isPresent()
         || genesisConfigOptions.getPragueTime().isPresent()
         || genesisConfigOptions.getOsakaTime().isPresent()
         || genesisConfigOptions.getBpo1Time().isPresent()
