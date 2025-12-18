@@ -1,0 +1,128 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x13",
+      {
+        "tracer": "prestateTracer",
+        "tracerConfig": {
+          "diffMode": false
+        }
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x1309b6d2187aa8b0dfe78fcf0a96d4a3e861bfbc381959d253ede57624a37f9b",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2d60905c9"
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffe298e67",
+            "nonce": 4
+          }
+        }
+      },
+      {
+        "txHash": "0x6b9b967cfbeedeb7f0f4956b8103075ddfcea26c01d6d5dc3f9e2ed2ec9c42c0",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2d6cd4bad"
+          },
+          "0x00a0000000000000000000000000000000000000": {
+            "balance": "0x0",
+            "code": "0x608b60045360ff60016004a1",
+            "codeHash": "0x1f753d487172d62c63f7b7579dbe2aac061f14bf11aab7fef1fe4a3c5dfe9ded"
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffd647565",
+            "nonce": 5
+          },
+          "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f": {
+            "balance": "0x0",
+            "code": "0x600035ff",
+            "codeHash": "0x6683da45ab3091784059d05578df094f721c512a6f4cc870bc73beaf9ef51ed4",
+            "nonce": 1
+          }
+        }
+      },
+      {
+        "txHash": "0xf12fd37f0836bd51f21bc15aa6bf5bea4b62fbbd39e1ee06725f91ac13ebc904",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2d7b866b7"
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffc785d78",
+            "nonce": 6
+          }
+        }
+      },
+      {
+        "txHash": "0x4c253746668dca6ac3f7b9bc18248b558a95b5fc881d140872c2dff984d344a7",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2d87cac9b"
+          },
+          "0x00a0000000000000000000000000000000000000": {
+            "balance": "0x0",
+            "code": "0x608b60045360ff60016004a1",
+            "codeHash": "0x1f753d487172d62c63f7b7579dbe2aac061f14bf11aab7fef1fe4a3c5dfe9ded"
+          },
+          "0x2c2b9c9a4a25e24b174f26114e8926a9f2128fe4": {
+            "balance": "0x0",
+            "code": "0x600035ff",
+            "codeHash": "0x6683da45ab3091784059d05578df094f721c512a6f4cc870bc73beaf9ef51ed4",
+            "nonce": 1
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffbb34476",
+            "nonce": 7
+          }
+        }
+      },
+      {
+        "txHash": "0x821ca63d171c5a3c60d32a738803092a52562056db3727a175f659cf49aae283",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2d967c7a5"
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffac72c89",
+            "nonce": 8
+          }
+        }
+      },
+      {
+        "txHash": "0xb795475e8f1820b683b60eb1a366bdc23e29f9cdf9639f7768c6644d20e3bbd1",
+        "result": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": "0x2da2c0d89"
+          },
+          "0x00a0000000000000000000000000000000000000": {
+            "balance": "0x0",
+            "code": "0x608b60045360ff60016004a1",
+            "codeHash": "0x1f753d487172d62c63f7b7579dbe2aac061f14bf11aab7fef1fe4a3c5dfe9ded"
+          },
+          "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
+            "balance": "0xefffffffffffffffffa021387",
+            "nonce": 9
+          },
+          "0xfb88de099e13c3ed21f80a7a1e49f8caecf10df6": {
+            "balance": "0x0",
+            "code": "0x600035ff",
+            "codeHash": "0x6683da45ab3091784059d05578df094f721c512a6f4cc870bc73beaf9ef51ed4",
+            "nonce": 1
+          }
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}
