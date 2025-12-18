@@ -259,13 +259,6 @@ public interface GenesisConfigOptions {
   OptionalLong getCancunTime();
 
   /**
-   * Gets cancun EOF time.
-   *
-   * @return the cancun EOF time
-   */
-  OptionalLong getCancunEOFTime();
-
-  /**
    * Gets prague time.
    *
    * @return the prague time
