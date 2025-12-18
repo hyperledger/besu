@@ -1300,6 +1300,44 @@ tasks.register('generateArtifactsCatalog') {
   }
 }
 
+tasks.register('prepareDetachedTestPlugins') {
+  group = 'build setup'
+  description = 'Publishes required Besu artifacts to mavenLocal and build detached-test-plugins project'
+  dependsOn subprojects.findAll { it.plugins.hasPlugin('maven-publish') }.collect { it.tasks.named('publishToMavenLocal') }
+}
+
+// Skip javadoc and sources tasks when preparing detached test plugins to save time
+gradle.taskGraph.whenReady { graph ->
+  if (graph.hasTask(':prepareDetachedTestPlugins')) {
+    allprojects {
+      tasks.matching { it.name == 'javadoc' || it.name == 'javadocJar' || it.name == 'sourcesJar' }.configureEach {
+        enabled = false
+      }
+    }
+  }
+}
+
+tasks.register('buildDetachedTestPlugins', GradleBuild) {
+  group = 'build'
+  dependsOn 'prepareDetachedTestPlugins'
+
+  dir = file('acceptance-tests/detached-test-plugins')
+  tasks = [
+    'clean',
+    'build',
+    'installDist'
+  ]
+
+  startParameter.projectProperties = [
+    'besuVersion': calculateVersion()
+  ]
+
+  doFirst {
+    println "Building detached-test-plugins project with besuVersion=" + calculateVersion()
+  }
+}
+
+
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
