@@ -93,7 +93,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
             peerResult -> {
               LOG.trace(
                   "Got {} block headers by hash {} from peer {} has result {}",
-                  count,
+                  peerResult.getResult().size(),
                   referenceHash,
                   currentPeer,
                   peerResult.getResult());
