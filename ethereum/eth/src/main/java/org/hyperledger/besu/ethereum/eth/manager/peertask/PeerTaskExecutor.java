@@ -212,7 +212,7 @@ public class PeerTaskExecutor {
                 PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
                 List.of(peer));
       }
-      LOG.info(
+      LOG.debug(
           "Executed peer task against {}, response code {}, retries remaining {}",
           peer.getLoggableId(),
           executorResult.responseCode(),
