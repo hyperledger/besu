@@ -166,15 +166,14 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), location);
+    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
     return cached != null ? cached : parent.getAccountStateTrieNode(location, nodeHash);
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    final Bytes key = Bytes.concatenate(accountHash, location);
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), key);
+    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
     return cached != null ? cached : parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
   }
 
@@ -203,32 +202,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         parent.getTrieLogStorage().startTransaction(),
         getFlatDbStrategy(),
         parent.getComposedWorldStateStorage());
-  }
-
-  /**
-   * Get cache statistics.
-   */
-  public String getCacheStats() {
-    final StringBuilder sb = new StringBuilder();
-    for (Map.Entry<String, Cache<Bytes, VersionedValue>> entry : caches.entrySet()) {
-      final com.github.benmanes.caffeine.cache.stats.CacheStats stats = entry.getValue().stats();
-      sb.append(String.format(
-          "%s: hits=%d, misses=%d, hitRate=%.2f%%, evictions=%d, size=%d\n",
-          entry.getKey(),
-          stats.hitCount(),
-          stats.missCount(),
-          stats.hitRate() * 100,
-          stats.evictionCount(),
-          entry.getValue().estimatedSize()));
-    }
-    return sb.toString();
-  }
-
-  /**
-   * Clear all caches.
-   */
-  public void clearCache() {
-    caches.values().forEach(Cache::invalidateAll);
   }
 
   /**
@@ -295,21 +268,19 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE.getName(), location, node);
+      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
       return super.putAccountStateTrieNode(location, nodeHash, node);
     }
 
     @Override
     public Updater removeAccountStateTrieNode(final Bytes location) {
-      stageRemoval(TRIE_BRANCH_STORAGE.getName(), location);
       return super.removeAccountStateTrieNode(location);
     }
 
     @Override
     public synchronized Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      final Bytes key = Bytes.concatenate(accountHash, location);
-      stagePut(TRIE_BRANCH_STORAGE.getName(), key, node);
+      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
       return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
