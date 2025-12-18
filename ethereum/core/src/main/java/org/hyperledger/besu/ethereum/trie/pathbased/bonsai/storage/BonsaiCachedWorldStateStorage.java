@@ -221,7 +221,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     private final Map<String, Map<Bytes, Bytes>> pending = new HashMap<>();
     private final Map<String, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
-    private final long updateVersion;
 
     public CachedUpdater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
@@ -229,7 +228,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
         final SegmentedKeyValueStorage worldStorage) {
       super(composedWorldStateTransaction, trieLogStorageTransaction, flatDbStrategy, worldStorage);
-      this.updateVersion = GLOBAL_VERSION.get()+1;
     }
 
     @Override
@@ -306,7 +304,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public void commit() {
       // Apply all pending updates to caches
-      GLOBAL_VERSION.incrementAndGet();
+      final long updateVersion = GLOBAL_VERSION.incrementAndGet();
       for (Map.Entry<String, Map<Bytes, Bytes>> entry : pending.entrySet()) {
         final String segment = entry.getKey();
         for (Map.Entry<Bytes, Bytes> update : entry.getValue().entrySet()) {
@@ -321,7 +319,8 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
           removeFromCache(segment, key, updateVersion);
         }
       }
-
+      pending.clear();
+      pendingRemovals.clear();
       // Commit to underlying storage
       super.commit();
     }

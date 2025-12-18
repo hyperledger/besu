@@ -43,9 +43,6 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
  * Uses separate Caffeine caches per segment with version tracking.
  */
 public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldStateKeyValueStorage {
-
-  private static final AtomicLong GLOBAL_VERSION = new AtomicLong(0);
-
   private final BonsaiWorldStateKeyValueStorage parent;
   private final Map<String, Cache<Bytes, VersionedValue>> caches;
   private final long snapshotVersion;
@@ -106,28 +103,6 @@ public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldSt
     return null; // Not in cache or version too new
   }
 
-  private void putInCache(final String segment, final Bytes key, final Bytes value, final long version) {
-    final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-    if (cache != null) {
-      final VersionedValue existing = cache.getIfPresent(key);
-      // Only update if this version is newer
-      if (existing == null || version > existing.version) {
-        cache.put(key, new VersionedValue(value, version, false));
-      }
-    }
-  }
-
-  private void removeFromCache(final String segment, final Bytes key, final long version) {
-    final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-    if (cache != null) {
-      final VersionedValue existing = cache.getIfPresent(key);
-      // Only update if this version is newer
-      if (existing == null || version > existing.version) {
-        cache.put(key, new VersionedValue(null, version, true));
-      }
-    }
-  }
-
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     final Optional<Bytes> cached = getFromCache(ACCOUNT_INFO_STATE.getName(), accountHash);
@@ -172,134 +147,5 @@ public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldSt
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
     final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
     return cached != null ? cached : parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
-  }
-
-  @Override
-  public Updater updater() {
-    return new CachedUpdater(
-        parent.getComposedWorldStateStorage().startTransaction(),
-        parent.getTrieLogStorage().startTransaction(),
-        getFlatDbStrategy(),
-        parent.getComposedWorldStateStorage());
-  }
-
-  /**
-   * Updater that stages changes and commits them to cache with a version.
-   */
-  public class CachedUpdater extends Updater {
-
-    private final Map<String, Map<Bytes, Bytes>> pending = new HashMap<>();
-    private final Map<String, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
-    private final long updateVersion;
-
-    public CachedUpdater(
-        final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction,
-        final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
-        final SegmentedKeyValueStorage worldStorage) {
-      super(composedWorldStateTransaction, trieLogStorageTransaction, flatDbStrategy, worldStorage);
-      this.updateVersion = GLOBAL_VERSION.get()+1;
-    }
-
-    @Override
-    public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      if (!code.isEmpty()) {
-        stagePut(CODE_STORAGE.getName(), accountHash, code);
-      }
-      return super.putCode(accountHash, codeHash, code);
-    }
-
-    @Override
-    public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      stageRemoval(CODE_STORAGE.getName(), accountHash);
-      return super.removeCode(accountHash, codeHash);
-    }
-
-    @Override
-    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (!accountValue.isEmpty()) {
-        stagePut(ACCOUNT_INFO_STATE.getName(), accountHash, accountValue);
-      }
-      return super.putAccountInfoState(accountHash, accountValue);
-    }
-
-    @Override
-    public Updater removeAccountInfoState(final Hash accountHash) {
-      stageRemoval(ACCOUNT_INFO_STATE.getName(), accountHash);
-      return super.removeAccountInfoState(accountHash);
-    }
-
-    @Override
-    public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
-      return super.putAccountStateTrieNode(location, nodeHash, node);
-    }
-
-    @Override
-    public Updater removeAccountStateTrieNode(final Bytes location) {
-      return super.removeAccountStateTrieNode(location);
-    }
-
-    @Override
-    public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
-      return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
-    }
-
-    @Override
-    public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
-      final Bytes key = Bytes.concatenate(accountHash, slotHash);
-      stagePut(ACCOUNT_STORAGE_STORAGE.getName(), key, storageValue);
-      return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
-    }
-
-    @Override
-    public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
-      final Bytes key = Bytes.concatenate(accountHash, slotHash);
-      stageRemoval(ACCOUNT_STORAGE_STORAGE.getName(), key);
-      super.removeStorageValueBySlotHash(accountHash, slotHash);
-    }
-
-    private void stagePut(final String segment, final Bytes key, final Bytes value) {
-      pending.computeIfAbsent(segment, k -> new HashMap<>()).put(key, value);
-    }
-
-    private void stageRemoval(final String segment, final Bytes key) {
-      pendingRemovals.computeIfAbsent(segment, k -> new HashMap<>()).put(key, true);
-    }
-
-    @Override
-    public void commit() {
-      // Apply all pending updates to caches
-      GLOBAL_VERSION.incrementAndGet();
-      for (Map.Entry<String, Map<Bytes, Bytes>> entry : pending.entrySet()) {
-        final String segment = entry.getKey();
-        for (Map.Entry<Bytes, Bytes> update : entry.getValue().entrySet()) {
-          putInCache(segment, update.getKey(), update.getValue(), updateVersion);
-        }
-      }
-
-      // Apply all pending removals to caches
-      for (Map.Entry<String, Map<Bytes, Boolean>> entry : pendingRemovals.entrySet()) {
-        final String segment = entry.getKey();
-        for (Bytes key : entry.getValue().keySet()) {
-          removeFromCache(segment, key, updateVersion);
-        }
-      }
-
-      // Commit to underlying storage
-      super.commit();
-    }
-
-    @Override
-    public void rollback() {
-      pending.clear();
-      pendingRemovals.clear();
-      super.rollback();
-    }
   }
 }
