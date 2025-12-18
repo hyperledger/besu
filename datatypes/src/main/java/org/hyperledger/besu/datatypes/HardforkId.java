@@ -79,8 +79,6 @@ public interface HardforkId {
     SHANGHAI(true, "Shanghai"),
     /** Cancun fork. */
     CANCUN(true, "Cancun"),
-    /** Cancun + EOF fork. */
-    CANCUN_EOF(false, "Cancun + EOF"),
     /** Prague fork. */
     PRAGUE(true, "Prague"),
     /** Osaka fork. */

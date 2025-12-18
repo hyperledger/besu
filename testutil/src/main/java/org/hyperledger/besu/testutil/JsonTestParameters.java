@@ -42,7 +42,6 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Utility class for generating JUnit test parameters from json files. Each set of test parameters
@@ -87,31 +86,6 @@ public class JsonTestParameters<S, T> {
         final String name, final String fullPath, final S value, final boolean runTest) {
       testParameters.add(
           new Object[] {name, value, runTest && includes(name) && includes(fullPath)});
-    }
-
-    /**
-     * Add EOF test.
-     *
-     * @param name the name
-     * @param fullPath the full path of the test
-     * @param fork the fork to be tested
-     * @param code the code to be tested
-     * @param containerKind the containerKind, if specified
-     * @param value the value
-     * @param runTest the run test
-     */
-    public void add(
-        final String name,
-        final String fullPath,
-        final String fork,
-        final Bytes code,
-        final String containerKind,
-        final S value,
-        final boolean runTest) {
-      testParameters.add(
-          new Object[] {
-            name, fork, code, containerKind, value, runTest && includes(name) && includes(fullPath)
-          });
     }
 
     private boolean includes(final String name) {

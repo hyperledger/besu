@@ -57,7 +57,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "00000000000000000000000000000000000000000000000000000000000000000123456789abcdef"),
-            false,
             2609L
           },
           {
@@ -68,7 +67,6 @@ class ExtCodeCopyOperationTest {
             16,
             Bytes.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -80,7 +78,6 @@ class ExtCodeCopyOperationTest {
             16,
             Bytes.fromHexString(
                 "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef000000000000000000000000000000000000000000000000"),
-            false,
             2612L
           },
           {
@@ -92,7 +89,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x000000000123456789abcdef0000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -104,7 +100,6 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x445566778899aabb000000000000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
@@ -116,47 +111,24 @@ class ExtCodeCopyOperationTest {
             8,
             Bytes.fromHexString(
                 "0x00000000445566778899aabb0000000000000000000000000000000000000000"),
-            false,
             2606L
           },
           {
-            "EOF-reserved pre-eof",
+            "Code starting with 0xEF00",
             Bytes.fromHexString("0xEF009f918bf09f9fa9"),
             0,
             0,
             9,
             Bytes.fromHexString("0xEF009f918bf09f9fa9"),
-            false,
             2606L
           },
           {
-            "EOF-reserved post-epf",
-            Bytes.fromHexString("0xEF009f918bf09f9fa9"),
-            0,
-            0,
-            9,
-            Bytes.fromHexString("0xEF000000000000000000"),
-            true,
-            2606L
-          },
-          {
-            "EF-reserved pre-epf",
+            "Code starting with 0xEFF0",
             Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
             0,
             0,
             9,
             Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            false,
-            2606L
-          },
-          {
-            "EOF-reserved post-eof",
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            0,
-            0,
-            9,
-            Bytes.fromHexString("0xEFF09f918bf09f9fa9"),
-            true,
             2606L
           }
         });
@@ -172,12 +144,11 @@ class ExtCodeCopyOperationTest {
       final long src,
       final long len,
       final Bytes expected,
-      final boolean eof,
       final long gasCost) {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
 
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), eof);
+    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator());
     MessageFrame frame =
         new TestMessageFrameBuilder()
             .worldUpdater(worldStateUpdater)
@@ -200,7 +171,7 @@ class ExtCodeCopyOperationTest {
     Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
     account.setCode(code);
 
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), false);
+    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator());
     MessageFrame frame =
         new TestMessageFrameBuilder()
             .worldUpdater(worldStateUpdater)
@@ -216,30 +187,5 @@ class ExtCodeCopyOperationTest {
     assertThat(frame.readMemory(0, 9)).isEqualTo(code);
     assertThat(frame.memoryWordSize()).isEqualTo(1);
     assertThat(result.getGasCost()).isEqualTo(106);
-  }
-
-  @Test
-  void testExtCodeEOFDirtyMemory() {
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
-    account.setCode(code);
-
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator(), true);
-    MessageFrame frame =
-        new TestMessageFrameBuilder()
-            .worldUpdater(worldStateUpdater)
-            .pushStackItem(Bytes.ofUnsignedLong(9))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(REQUESTED_ADDRESS)
-            .build();
-    frame.writeMemory(0, 15, Bytes.fromHexString("0x112233445566778899aabbccddeeff"));
-
-    Operation.OperationResult result = subject.execute(frame, evm);
-
-    assertThat(frame.readMemory(0, 16))
-        .isEqualTo(Bytes.fromHexString("0xEF0000000000000000aabbccddeeff00"));
-    assertThat(frame.memoryWordSize()).isEqualTo(1);
-    assertThat(result.getGasCost()).isEqualTo(2603);
   }
 }
