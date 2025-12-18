@@ -154,7 +154,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       // no op as failing to get worldstate
       return null;
     } finally {
-      ws.close();
+      if (ws != null) ws.close();
     }
   }
 
