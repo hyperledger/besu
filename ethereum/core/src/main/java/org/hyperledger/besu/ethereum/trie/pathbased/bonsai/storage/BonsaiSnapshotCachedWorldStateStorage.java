@@ -14,24 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage.VersionedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,14 +33,19 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+
 /**
  * Cached world state storage with versioning support.
  * Uses separate Caffeine caches per segment with version tracking.
  */
-public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStorage {
+public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldStateKeyValueStorage {
 
   private static final AtomicLong GLOBAL_VERSION = new AtomicLong(0);
-  
+
   private final BonsaiWorldStateKeyValueStorage parent;
   private final Map<String, Cache<Bytes, VersionedValue>> caches;
   private final long snapshotVersion;
@@ -54,16 +53,14 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   /**
    * Create a new cached storage (not a snapshot).
    */
-  public BonsaiCachedWorldStateStorage(
+  public BonsaiSnapshotCachedWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parent,
       final long accountCacheSize,
       final long codeCacheSize,
       final long storageCacheSize,
       final long trieCacheSize) {
     super(
-        parent.flatDbStrategyProvider,
-        parent.getComposedWorldStateStorage(),
-        parent.getTrieLogStorage());
+        parent);
     this.parent = parent;
     this.caches = new HashMap<>();
     this.snapshotVersion = Long.MAX_VALUE;
@@ -76,14 +73,11 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   }
 
 
-  public BonsaiCachedWorldStateStorage(
-          final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
-          final SegmentedKeyValueStorage composedWorldStateStorage,
-          final KeyValueStorage trieLogStorage,
+  public BonsaiSnapshotCachedWorldStateStorage(
           final BonsaiWorldStateKeyValueStorage parent,
           final Map<String, Cache<Bytes, VersionedValue>> caches,
           final long snapshotVersion) {
-    super(flatDbStrategyProvider, composedWorldStateStorage, trieLogStorage);
+    super(parent);
       this.parent = parent;
       this.caches = caches;
       this.snapshotVersion = snapshotVersion;
@@ -95,18 +89,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         .maximumSize(maxSize)
         .recordStats()
         .build();
-  }
-
-  /**
-   * Create a snapshot at current version.
-   */
-  public BonsaiSnapshotWorldStateKeyValueStorage createSnapshot() {
-    final BonsaiSnapshotWorldStateKeyValueStorage snapshot = new BonsaiSnapshotWorldStateKeyValueStorage(
-            parent);
-    return new BonsaiSnapshotCachedWorldStateStorage(
-            snapshot,
-            caches,
-        GLOBAL_VERSION.get());
   }
 
   private Optional<Bytes> getFromCache(final String segment, final Bytes key) {
@@ -202,24 +184,9 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   }
 
   /**
-   * Versioned value stored in cache.
-   */
-  public static class VersionedValue {
-    final Bytes value;
-    final long version;
-    final boolean isRemoval;
-
-    VersionedValue(final Bytes value, final long version, final boolean isRemoval) {
-      this.value = value;
-      this.version = version;
-      this.isRemoval = isRemoval;
-    }
-  }
-
-  /**
    * Updater that stages changes and commits them to cache with a version.
    */
-  public class CachedUpdater extends BonsaiWorldStateKeyValueStorage.Updater {
+  public class CachedUpdater extends Updater {
 
     private final Map<String, Map<Bytes, Bytes>> pending = new HashMap<>();
     private final Map<String, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
