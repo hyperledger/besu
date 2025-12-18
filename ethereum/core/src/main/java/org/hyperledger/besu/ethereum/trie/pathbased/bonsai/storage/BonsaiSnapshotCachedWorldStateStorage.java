@@ -75,7 +75,7 @@ public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldSt
     final VersionedValue versionedValue = cache.getIfPresent(key);
 
     // Only return cached values that existed at or before snapshot time
-    if (versionedValue != null && versionedValue.version < snapshotVersion) {
+    if (versionedValue != null && versionedValue.version <= snapshotVersion) {
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
 
