@@ -21,10 +21,8 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -41,113 +39,113 @@ import java.util.function.Supplier;
 
 /**
  * Cached world state storage with versioning support.
- * Uses separate Caffeine caches per segment with version tracking.
+ *
+ * Version semantics:
+ * - Version 0: Initial state (values read from parent but never modified)
+ * - Version 1+: Each commit increments the version for all modified values
+ *
+ * Snapshots capture the state at a specific version and only see values with version <= snapshotVersion.
  */
 public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStorage {
 
+  // Global version counter - incremented ONLY on commit
   private static final AtomicLong GLOBAL_VERSION = new AtomicLong(0);
-  
-  private final BonsaiWorldStateKeyValueStorage parent;
-  private final Map<String, Cache<Bytes, VersionedValue>> caches;
-  private final long snapshotVersion;
 
-  /**
-   * Create a new cached storage (not a snapshot).
-   */
+  private final BonsaiWorldStateKeyValueStorage parent;
+  private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
+
   public BonsaiCachedWorldStateStorage(
-      final BonsaiWorldStateKeyValueStorage parent,
-      final long accountCacheSize,
-      final long codeCacheSize,
-      final long storageCacheSize,
-      final long trieCacheSize) {
+          final BonsaiWorldStateKeyValueStorage parent,
+          final long accountCacheSize,
+          final long codeCacheSize,
+          final long storageCacheSize,
+          final long trieCacheSize) {
     super(
-        parent.flatDbStrategyProvider,
-        parent.getComposedWorldStateStorage(),
-        parent.getTrieLogStorage());
+            parent.flatDbStrategyProvider,
+            parent.getComposedWorldStateStorage(),
+            parent.getTrieLogStorage());
     this.parent = parent;
     this.caches = new HashMap<>();
-    this.snapshotVersion = Long.MAX_VALUE;
 
-    // Create separate cache per segment
-    caches.put(ACCOUNT_INFO_STATE.getName(), createCache(accountCacheSize));
-    caches.put(CODE_STORAGE.getName(), createCache(codeCacheSize));
-    caches.put(ACCOUNT_STORAGE_STORAGE.getName(), createCache(storageCacheSize));
-    caches.put(TRIE_BRANCH_STORAGE.getName(), createCache(trieCacheSize));
+    caches.put(ACCOUNT_INFO_STATE, createCache(accountCacheSize));
+    caches.put(CODE_STORAGE, createCache(codeCacheSize));
+    caches.put(ACCOUNT_STORAGE_STORAGE, createCache(storageCacheSize));
+    caches.put(TRIE_BRANCH_STORAGE, createCache(trieCacheSize));
   }
-
-
-  public BonsaiCachedWorldStateStorage(
-          final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
-          final SegmentedKeyValueStorage composedWorldStateStorage,
-          final KeyValueStorage trieLogStorage,
-          final BonsaiWorldStateKeyValueStorage parent,
-          final Map<String, Cache<Bytes, VersionedValue>> caches,
-          final long snapshotVersion) {
-    super(flatDbStrategyProvider, composedWorldStateStorage, trieLogStorage);
-      this.parent = parent;
-      this.caches = caches;
-      this.snapshotVersion = snapshotVersion;
-  }
-
 
   private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
     return Caffeine.newBuilder()
-        .maximumSize(maxSize)
-        .recordStats()
-        .build();
+            .maximumSize(maxSize)
+            .recordStats()
+            .build();
   }
 
   /**
    * Create a snapshot at current version.
+   * IMPORTANT: Does NOT increment the version - snapshot captures current state.
    */
   public BonsaiSnapshotWorldStateKeyValueStorage createSnapshot() {
     return new BonsaiSnapshotCachedWorldStateStorage(
             parent,
             caches,
-        GLOBAL_VERSION.get());
+            GLOBAL_VERSION.get());  // Use current version, don't increment
   }
 
-  private Optional<Bytes> getFromCache(final String segment, final Bytes key) {
+  public static long getCurrentVersion() {
+    return GLOBAL_VERSION.get();
+  }
+
+  /**
+   * Get from cache or parent.
+   * Read-through values are cached with version 0 (READ_THROUGH_VERSION).
+   */
+  private Optional<Bytes> getFromCacheOrParent(
+          final SegmentIdentifier segment,
+          final Bytes key,
+          final Supplier<Optional<Bytes>> parentGetter) {
+
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache == null) {
-      return null; // Not in cache
+      return parentGetter.get();
     }
 
     final VersionedValue versionedValue = cache.getIfPresent(key);
-    if (versionedValue != null && versionedValue.version < snapshotVersion) {
-      // Found and version is valid for this snapshot
+
+    // If in cache, return it
+    if (versionedValue != null) {
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
-    
-    return null; // Not in cache or version too new
+
+    final Optional<Bytes> result = parentGetter.get();
+    if (result.isPresent()) {
+      cache.put(key, new VersionedValue(result.get(), GLOBAL_VERSION.get(), false));
+    } else {
+      cache.put(key, new VersionedValue(null, GLOBAL_VERSION.get(), true));
+    }
+
+    return result;
   }
 
-  private void putInCache(final String segment, final Bytes key, final Bytes value, final long version) {
+  private void putInCache(final SegmentIdentifier segment, final Bytes key, final Bytes value, final long version) {
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
-      final VersionedValue existing = cache.getIfPresent(key);
-      // Only update if this version is newer
-      if (existing == null || version > existing.version) {
-        cache.put(key, new VersionedValue(value, version, false));
-      }
+      cache.put(key, new VersionedValue(value, version, false));
     }
   }
 
-  private void removeFromCache(final String segment, final Bytes key, final long version) {
+  private void removeFromCache(final SegmentIdentifier segment, final Bytes key, final long version) {
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
-      final VersionedValue existing = cache.getIfPresent(key);
-      // Only update if this version is newer
-      if (existing == null || version > existing.version) {
-        cache.put(key, new VersionedValue(null, version, true));
-      }
+      cache.put(key, new VersionedValue(null, version, true));
     }
   }
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_INFO_STATE.getName(), accountHash);
-    return cached != null ? cached : parent.getAccount(accountHash);
+    return getFromCacheOrParent(
+            ACCOUNT_INFO_STATE,
+            accountHash,
+            () -> parent.getAccount(accountHash));
   }
 
   @Override
@@ -155,53 +153,60 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    final Optional<Bytes> cached = getFromCache(CODE_STORAGE.getName(), accountHash);
-    return cached != null ? cached : parent.getCode(codeHash, accountHash);
+    return getFromCacheOrParent(
+            CODE_STORAGE,
+            accountHash,
+            () -> parent.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStateTrieNode(location, nodeHash);
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE,
+            nodeHash,
+            () -> parent.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
+          final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE,
+            nodeHash,
+            () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+          final Hash accountHash, final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE,
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
+          final Supplier<Optional<Hash>> storageRootSupplier,
+          final Hash accountHash,
+          final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE,
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey));
   }
 
   @Override
   public Updater updater() {
     return new CachedUpdater(
-        parent.getComposedWorldStateStorage().startTransaction(),
-        parent.getTrieLogStorage().startTransaction(),
-        getFlatDbStrategy(),
-        parent.getComposedWorldStateStorage());
+            parent.getComposedWorldStateStorage().startTransaction(),
+            parent.getTrieLogStorage().startTransaction(),
+            getFlatDbStrategy(),
+            parent.getComposedWorldStateStorage());
   }
 
-  /**
-   * Versioned value stored in cache.
-   */
   public static class VersionedValue {
     final Bytes value;
     final long version;
@@ -214,54 +219,51 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     }
   }
 
-  /**
-   * Updater that stages changes and commits them to cache with a version.
-   */
   public class CachedUpdater extends BonsaiWorldStateKeyValueStorage.Updater {
 
-    private final Map<String, Map<Bytes, Bytes>> pending = new HashMap<>();
-    private final Map<String, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
+    private final Map<SegmentIdentifier, Map<Bytes, Bytes>> pending = new HashMap<>();
+    private final Map<SegmentIdentifier, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
 
     public CachedUpdater(
-        final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction,
-        final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
-        final SegmentedKeyValueStorage worldStorage) {
+            final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
+            final KeyValueStorageTransaction trieLogStorageTransaction,
+            final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
+            final SegmentedKeyValueStorage worldStorage) {
       super(composedWorldStateTransaction, trieLogStorageTransaction, flatDbStrategy, worldStorage);
     }
 
     @Override
     public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
       if (!code.isEmpty()) {
-        stagePut(CODE_STORAGE.getName(), accountHash, code);
+        stagePut(CODE_STORAGE, accountHash, code);
       }
       return super.putCode(accountHash, codeHash, code);
     }
 
     @Override
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      stageRemoval(CODE_STORAGE.getName(), accountHash);
+      stageRemoval(CODE_STORAGE, accountHash);
       return super.removeCode(accountHash, codeHash);
     }
 
     @Override
     public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
       if (!accountValue.isEmpty()) {
-        stagePut(ACCOUNT_INFO_STATE.getName(), accountHash, accountValue);
+        stagePut(ACCOUNT_INFO_STATE, accountHash, accountValue);
       }
       return super.putAccountInfoState(accountHash, accountValue);
     }
 
     @Override
     public Updater removeAccountInfoState(final Hash accountHash) {
-      stageRemoval(ACCOUNT_INFO_STATE.getName(), accountHash);
+      stageRemoval(ACCOUNT_INFO_STATE, accountHash);
       return super.removeAccountInfoState(accountHash);
     }
 
     @Override
     public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
+            final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStateTrieNode(location, nodeHash, node);
     }
 
@@ -272,57 +274,77 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
+            final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
     @Override
     public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
+            final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
       final Bytes key = Bytes.concatenate(accountHash, slotHash);
-      stagePut(ACCOUNT_STORAGE_STORAGE.getName(), key, storageValue);
+      stagePut(ACCOUNT_STORAGE_STORAGE, key, storageValue);
       return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
     }
 
     @Override
     public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
+            final Hash accountHash, final Hash slotHash) {
       final Bytes key = Bytes.concatenate(accountHash, slotHash);
-      stageRemoval(ACCOUNT_STORAGE_STORAGE.getName(), key);
+      stageRemoval(ACCOUNT_STORAGE_STORAGE, key);
       super.removeStorageValueBySlotHash(accountHash, slotHash);
     }
 
-    private void stagePut(final String segment, final Bytes key, final Bytes value) {
+    private void stagePut(final SegmentIdentifier segment, final Bytes key, final Bytes value) {
       pending.computeIfAbsent(segment, k -> new HashMap<>()).put(key, value);
     }
 
-    private void stageRemoval(final String segment, final Bytes key) {
+    private void stageRemoval(final SegmentIdentifier segment, final Bytes key) {
       pendingRemovals.computeIfAbsent(segment, k -> new HashMap<>()).put(key, true);
     }
 
-    @Override
-    public void commit() {
-      // Apply all pending updates to caches
+    private void updateCache(){
+      // Increment version for this commit
       final long updateVersion = GLOBAL_VERSION.incrementAndGet();
-      for (Map.Entry<String, Map<Bytes, Bytes>> entry : pending.entrySet()) {
-        final String segment = entry.getKey();
+
+      // Apply all pending updates with the new version
+      for (Map.Entry<SegmentIdentifier, Map<Bytes, Bytes>> entry : pending.entrySet()) {
+        final SegmentIdentifier segment = entry.getKey();
         for (Map.Entry<Bytes, Bytes> update : entry.getValue().entrySet()) {
           putInCache(segment, update.getKey(), update.getValue(), updateVersion);
         }
       }
 
-      // Apply all pending removals to caches
-      for (Map.Entry<String, Map<Bytes, Boolean>> entry : pendingRemovals.entrySet()) {
-        final String segment = entry.getKey();
+      // Apply all pending removals with the new version
+      for (Map.Entry<SegmentIdentifier, Map<Bytes, Boolean>> entry : pendingRemovals.entrySet()) {
+        final SegmentIdentifier segment = entry.getKey();
         for (Bytes key : entry.getValue().keySet()) {
           removeFromCache(segment, key, updateVersion);
         }
       }
+
       pending.clear();
       pendingRemovals.clear();
+    }
+    @Override
+    public void commit() {
+
+      updateCache();
       // Commit to underlying storage
       super.commit();
+    }
+
+    @Override
+    public void commitTrieLogOnly() {
+      pending.clear();
+      pendingRemovals.clear();
+      super.commitTrieLogOnly();
+    }
+
+    @Override
+    public void commitComposedOnly() {
+      updateCache();
+      super.commitComposedOnly();
     }
 
     @Override
@@ -332,4 +354,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       super.rollback();
     }
   }
+
+
 }

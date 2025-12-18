@@ -15,22 +15,15 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage.VersionedValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
@@ -39,74 +32,64 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 /**
- * Cached world state storage with versioning support.
- * Uses separate Caffeine caches per segment with version tracking.
+ * IMMUTABLE snapshot of cached world state storage at a specific version.
+ * This provides a consistent view of the state as it existed when the snapshot was created.
+ *
+ * Key differences from BonsaiCachedWorldStateStorage:
+ * - It's IMMUTABLE (no updater, extends BonsaiSnapshotWorldStateKeyValueStorage)
+ * - It only sees cached values with version <= snapshotVersion
+ * - It does NOT cache new reads (to avoid polluting the shared cache with snapshot-specific data)
  */
 public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldStateKeyValueStorage {
+
   private final BonsaiWorldStateKeyValueStorage parent;
-  private final Map<String, Cache<Bytes, VersionedValue>> caches;
+  // Shared reference to the live cache's caches
+  private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
+  // The version at which this snapshot was created
   private final long snapshotVersion;
-
-  /**
-   * Create a new cached storage (not a snapshot).
-   */
-  public BonsaiSnapshotCachedWorldStateStorage(
-      final BonsaiWorldStateKeyValueStorage parent,
-      final long accountCacheSize,
-      final long codeCacheSize,
-      final long storageCacheSize,
-      final long trieCacheSize) {
-    super(
-        parent);
-    this.parent = parent;
-    this.caches = new HashMap<>();
-    this.snapshotVersion = Long.MAX_VALUE;
-
-    // Create separate cache per segment
-    caches.put(ACCOUNT_INFO_STATE.getName(), createCache(accountCacheSize));
-    caches.put(CODE_STORAGE.getName(), createCache(codeCacheSize));
-    caches.put(ACCOUNT_STORAGE_STORAGE.getName(), createCache(storageCacheSize));
-    caches.put(TRIE_BRANCH_STORAGE.getName(), createCache(trieCacheSize));
-  }
-
 
   public BonsaiSnapshotCachedWorldStateStorage(
           final BonsaiWorldStateKeyValueStorage parent,
-          final Map<String, Cache<Bytes, VersionedValue>> caches,
+          final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches,
           final long snapshotVersion) {
     super(parent);
-      this.parent = parent;
-      this.caches = caches;
-      this.snapshotVersion = snapshotVersion;
+    this.parent = parent;
+    this.caches = caches;
+    this.snapshotVersion = snapshotVersion;
   }
 
+  /**
+   * Get from cache if version <= snapshotVersion, otherwise get from parent.
+   * Does NOT cache the result (snapshots don't modify the cache).
+   */
+  private Optional<Bytes> getFromCacheOrParent(
+          final SegmentIdentifier segment,
+          final Bytes key,
+          final Supplier<Optional<Bytes>> parentGetter) {
 
-  private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
-    return Caffeine.newBuilder()
-        .maximumSize(maxSize)
-        .recordStats()
-        .build();
-  }
-
-  private Optional<Bytes> getFromCache(final String segment, final Bytes key) {
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache == null) {
-      return null; // Not in cache
+      return parentGetter.get();
     }
 
     final VersionedValue versionedValue = cache.getIfPresent(key);
+
+    // Only return cached values that existed at or before snapshot time
     if (versionedValue != null && versionedValue.version < snapshotVersion) {
-      // Found and version is valid for this snapshot
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
-    
-    return null; // Not in cache or version too new
+
+    // Not in cache at our version, get from parent
+    // Do NOT cache the result - snapshots are read-only views
+    return parentGetter.get();
   }
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_INFO_STATE.getName(), accountHash);
-    return cached != null ? cached : parent.getAccount(accountHash);
+    return getFromCacheOrParent(
+            ACCOUNT_INFO_STATE,
+            accountHash,
+            () -> parent.getAccount(accountHash));
   }
 
   @Override
@@ -114,38 +97,48 @@ public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldSt
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    final Optional<Bytes> cached = getFromCache(CODE_STORAGE.getName(), accountHash);
-    return cached != null ? cached : parent.getCode(codeHash, accountHash);
+    return getFromCacheOrParent(
+            CODE_STORAGE,
+            accountHash,
+            () -> parent.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStateTrieNode(location, nodeHash);
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE,
+            nodeHash,
+            () -> parent.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
+          final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE,
+            nodeHash,
+            () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+          final Hash accountHash, final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE,
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
+          final Supplier<Optional<Hash>> storageRootSupplier,
+          final Hash accountHash,
+          final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE,
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey));
   }
 }
