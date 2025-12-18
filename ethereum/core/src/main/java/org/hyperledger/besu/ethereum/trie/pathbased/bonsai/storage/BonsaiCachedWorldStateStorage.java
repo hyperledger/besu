@@ -42,11 +42,12 @@ import java.util.function.Supplier;
 /**
  * Cached world state storage with versioning support.
  * Uses separate Caffeine caches per segment with version tracking.
+ * Automatically populates cache on reads (read-through cache).
  */
 public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStorage {
 
   private static final AtomicLong GLOBAL_VERSION = new AtomicLong(0);
-  
+
   private final BonsaiWorldStateKeyValueStorage parent;
   private final Map<String, Cache<Bytes, VersionedValue>> caches;
   private final long snapshotVersion;
@@ -55,15 +56,15 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
    * Create a new cached storage (not a snapshot).
    */
   public BonsaiCachedWorldStateStorage(
-      final BonsaiWorldStateKeyValueStorage parent,
-      final long accountCacheSize,
-      final long codeCacheSize,
-      final long storageCacheSize,
-      final long trieCacheSize) {
+          final BonsaiWorldStateKeyValueStorage parent,
+          final long accountCacheSize,
+          final long codeCacheSize,
+          final long storageCacheSize,
+          final long trieCacheSize) {
     super(
-        parent.flatDbStrategyProvider,
-        parent.getComposedWorldStateStorage(),
-        parent.getTrieLogStorage());
+            parent.flatDbStrategyProvider,
+            parent.getComposedWorldStateStorage(),
+            parent.getTrieLogStorage());
     this.parent = parent;
     this.caches = new HashMap<>();
     this.snapshotVersion = Long.MAX_VALUE;
@@ -75,7 +76,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     caches.put(TRIE_BRANCH_STORAGE.getName(), createCache(trieCacheSize));
   }
 
-
   public BonsaiCachedWorldStateStorage(
           final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
           final SegmentedKeyValueStorage composedWorldStateStorage,
@@ -84,17 +84,16 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
           final Map<String, Cache<Bytes, VersionedValue>> caches,
           final long snapshotVersion) {
     super(flatDbStrategyProvider, composedWorldStateStorage, trieLogStorage);
-      this.parent = parent;
-      this.caches = caches;
-      this.snapshotVersion = snapshotVersion;
+    this.parent = parent;
+    this.caches = caches;
+    this.snapshotVersion = snapshotVersion;
   }
-
 
   private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
     return Caffeine.newBuilder()
-        .maximumSize(maxSize)
-        .recordStats()
-        .build();
+            .maximumSize(maxSize)
+            .recordStats()
+            .build();
   }
 
   /**
@@ -104,22 +103,42 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     return new BonsaiSnapshotCachedWorldStateStorage(
             parent,
             caches,
-        GLOBAL_VERSION.get());
+            GLOBAL_VERSION.get());
   }
 
-  private Optional<Bytes> getFromCache(final String segment, final Bytes key) {
+  /**
+   * Get from cache or parent, and populate cache on miss (read-through).
+   */
+  private Optional<Bytes> getFromCacheOrParent(
+          final String segment,
+          final Bytes key,
+          final Supplier<Optional<Bytes>> parentSupplier) {
+
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache == null) {
-      return null; // Not in cache
+      return parentSupplier.get();
     }
 
+    // Check cache first
     final VersionedValue versionedValue = cache.getIfPresent(key);
     if (versionedValue != null && versionedValue.version < snapshotVersion) {
-      // Found and version is valid for this snapshot
+      // Cache hit with valid version
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
-    
-    return null; // Not in cache or version too new
+
+    // Cache miss or version too new - read from parent
+    final Optional<Bytes> result = parentSupplier.get();
+
+    // Populate cache with the value we just read (if not a snapshot or if version allows)
+    if (snapshotVersion == Long.MAX_VALUE) {
+      // Only populate cache if this is not a snapshot (snapshots are read-only)
+      final long currentVersion = GLOBAL_VERSION.get();
+      result.ifPresentOrElse(
+              value -> cache.put(key, new VersionedValue(value, currentVersion, false)),
+              () -> cache.put(key, new VersionedValue(null, currentVersion, true)));
+    }
+
+    return result;
   }
 
   private void putInCache(final String segment, final Bytes key, final Bytes value, final long version) {
@@ -146,8 +165,10 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_INFO_STATE.getName(), accountHash);
-    return cached != null ? cached : parent.getAccount(accountHash);
+    return getFromCacheOrParent(
+            ACCOUNT_INFO_STATE.getName(),
+            accountHash,
+            () -> parent.getAccount(accountHash));
   }
 
   @Override
@@ -155,48 +176,84 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    final Optional<Bytes> cached = getFromCache(CODE_STORAGE.getName(), accountHash);
-    return cached != null ? cached : parent.getCode(codeHash, accountHash);
+    return getFromCacheOrParent(
+            CODE_STORAGE.getName(),
+            accountHash,
+            () -> parent.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStateTrieNode(location, nodeHash);
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE.getName(),
+            nodeHash,
+            () -> parent.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached = getFromCache(TRIE_BRANCH_STORAGE.getName(), nodeHash);
-    return cached != null ? cached : parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
+          final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    return getFromCacheOrParent(
+            TRIE_BRANCH_STORAGE.getName(),
+            nodeHash,
+            () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+          final Hash accountHash, final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE.getName(),
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
+          final Supplier<Optional<Hash>> storageRootSupplier,
+          final Hash accountHash,
+          final StorageSlotKey storageSlotKey) {
     final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
-    final Optional<Bytes> cached = getFromCache(ACCOUNT_STORAGE_STORAGE.getName(), key);
-    return cached != null ? cached : parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
+    return getFromCacheOrParent(
+            ACCOUNT_STORAGE_STORAGE.getName(),
+            key,
+            () -> parent.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey));
   }
 
   @Override
   public Updater updater() {
     return new CachedUpdater(
-        parent.getComposedWorldStateStorage().startTransaction(),
-        parent.getTrieLogStorage().startTransaction(),
-        getFlatDbStrategy(),
-        parent.getComposedWorldStateStorage());
+            parent.getComposedWorldStateStorage().startTransaction(),
+            parent.getTrieLogStorage().startTransaction(),
+            getFlatDbStrategy(),
+            parent.getComposedWorldStateStorage());
+  }
+
+  /**
+   * Get cache statistics.
+   */
+  public String getCacheStats() {
+    final StringBuilder sb = new StringBuilder();
+    for (Map.Entry<String, Cache<Bytes, VersionedValue>> entry : caches.entrySet()) {
+      final com.github.benmanes.caffeine.cache.stats.CacheStats stats = entry.getValue().stats();
+      sb.append(String.format(
+              "%s: hits=%d, misses=%d, hitRate=%.2f%%, evictions=%d, size=%d\n",
+              entry.getKey(),
+              stats.hitCount(),
+              stats.missCount(),
+              stats.hitRate() * 100,
+              stats.evictionCount(),
+              entry.getValue().estimatedSize()));
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Clear all caches.
+   */
+  public void clearCache() {
+    caches.values().forEach(Cache::invalidateAll);
   }
 
   /**
@@ -224,10 +281,10 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     private final long updateVersion;
 
     public CachedUpdater(
-        final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction,
-        final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
-        final SegmentedKeyValueStorage worldStorage) {
+            final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
+            final KeyValueStorageTransaction trieLogStorageTransaction,
+            final org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy flatDbStrategy,
+            final SegmentedKeyValueStorage worldStorage) {
       super(composedWorldStateTransaction, trieLogStorageTransaction, flatDbStrategy, worldStorage);
       this.updateVersion = GLOBAL_VERSION.get()+1;
     }
@@ -262,7 +319,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+            final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
       return super.putAccountStateTrieNode(location, nodeHash, node);
     }
@@ -274,14 +331,14 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+            final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       stagePut(TRIE_BRANCH_STORAGE.getName(), nodeHash, node);
       return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
     @Override
     public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
+            final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
       final Bytes key = Bytes.concatenate(accountHash, slotHash);
       stagePut(ACCOUNT_STORAGE_STORAGE.getName(), key, storageValue);
       return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
@@ -289,7 +346,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
+            final Hash accountHash, final Hash slotHash) {
       final Bytes key = Bytes.concatenate(accountHash, slotHash);
       stageRemoval(ACCOUNT_STORAGE_STORAGE.getName(), key);
       super.removeStorageValueBySlotHash(accountHash, slotHash);
@@ -305,8 +362,10 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public void commit() {
-      // Apply all pending updates to caches
+      // Increment global version
       GLOBAL_VERSION.incrementAndGet();
+
+      // Apply all pending updates to caches
       for (Map.Entry<String, Map<Bytes, Bytes>> entry : pending.entrySet()) {
         final String segment = entry.getKey();
         for (Map.Entry<Bytes, Bytes> update : entry.getValue().entrySet()) {
