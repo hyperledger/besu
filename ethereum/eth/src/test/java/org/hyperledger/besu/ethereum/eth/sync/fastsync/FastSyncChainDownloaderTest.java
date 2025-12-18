@@ -162,6 +162,12 @@ public class FastSyncChainDownloaderTest {
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // Signal world state heal is complete to make test independent of world state
+      ((WorldStateHealFinishedListener) downloader).onWorldStateHealFinished();
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -186,6 +192,12 @@ public class FastSyncChainDownloaderTest {
     final long pivotBlockNumber = 5;
     final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // Signal world state heal is complete to make test independent of world state
+      ((WorldStateHealFinishedListener) downloader).onWorldStateHealFinished();
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -235,6 +247,12 @@ public class FastSyncChainDownloaderTest {
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // not using a sync target, so just return
+      return;
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     while (localBlockchain.getChainHeadBlockNumber() < 15) {

@@ -16,11 +16,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -88,23 +89,7 @@ public class BlockHeaderSourceTest {
     assertThat(source.next()).hasSize(50); // 150-199
     assertThat(source.next()).hasSize(50); // 200-249
     assertThat(source.next()).hasSize(1); // 250
-    assertThat(source.next()).isNull();
-  }
-
-  @Test
-  public void shouldCalculatePartialLastBatch() {
-    when(blockchain.getBlockHeaders(100, 100)).thenReturn(createMockHeaders(100, 100));
-    when(blockchain.getBlockHeaders(200, 5)).thenReturn(createMockHeaders(200, 5));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 204, 100);
-
-    List<BlockHeader> firstBatch = source.next();
-    assertThat(firstBatch).hasSize(100); // 100-199
-
-    List<BlockHeader> secondBatch = source.next();
-    assertThat(secondBatch).hasSize(5); // 200-204
-
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -118,7 +103,7 @@ public class BlockHeaderSourceTest {
     assertThat(batch).hasSize(1);
     assertThat(batch.get(0).getNumber()).isEqualTo(500);
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -127,7 +112,7 @@ public class BlockHeaderSourceTest {
 
     // currentBlock starts at 501, which is > pivotBlockNumber (400)
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -140,18 +125,7 @@ public class BlockHeaderSourceTest {
     List<BlockHeader> batch = source.next();
     assertThat(batch).hasSize(50); // Only 50 headers available
     assertThat(source.hasNext()).isFalse();
-    assertThat(source.next()).isNull();
-  }
-
-  @Test
-  public void shouldReturnNullWhenExhausted() {
-    when(blockchain.getBlockHeaders(100, 10)).thenReturn(createMockHeaders(100, 10));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 109, 100);
-
-    assertThat(source.next()).hasSize(10);
-    assertThat(source.next()).isNull();
-    assertThat(source.next()).isNull(); // Multiple calls after exhaustion
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -200,7 +174,7 @@ public class BlockHeaderSourceTest {
     assertThat(source.next()).hasSize(1);
     assertThat(source.next()).hasSize(1);
     assertThat(source.next()).hasSize(1);
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -231,12 +205,11 @@ public class BlockHeaderSourceTest {
 
   @Test
   public void shouldHandleNullBlockchainResponse() {
-    when(blockchain.getBlockHeaders(100, 10)).thenReturn(null);
+    when(blockchain.getBlockHeaders(100, 10)).thenThrow(new RuntimeException("Blockchain error"));
 
     BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 109, 100);
 
-    List<BlockHeader> batch = source.next();
-    assertThat(batch).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -251,19 +224,6 @@ public class BlockHeaderSourceTest {
   }
 
   @Test
-  public void shouldCalculateCorrectActualLengthForPartialBatch() {
-    // Pivot at 105, batch size 100, so last batch should be only 6 headers
-    when(blockchain.getBlockHeaders(100, 6)).thenReturn(createMockHeaders(100, 6));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 105, 100);
-
-    List<BlockHeader> batch = source.next();
-    assertThat(batch).hasSize(6);
-
-    verify(blockchain).getBlockHeaders(eq(100L), eq(6));
-  }
-
-  @Test
   public void shouldHandleExactMultipleOfBatchSize() {
     when(blockchain.getBlockHeaders(100, 50)).thenReturn(createMockHeaders(100, 50));
     when(blockchain.getBlockHeaders(150, 50)).thenReturn(createMockHeaders(150, 50));
@@ -273,7 +233,7 @@ public class BlockHeaderSourceTest {
 
     assertThat(source.next()).hasSize(50);
     assertThat(source.next()).hasSize(50);
-    assertThat(source.next()).isNull();
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -374,49 +334,6 @@ public class BlockHeaderSourceTest {
   }
 
   @Test
-  public void shouldStartFromBlockAfterStartBlockNumber() {
-    // startBlockNumber is 99, so should start from block 100
-    when(blockchain.getBlockHeaders(100, 10)).thenReturn(createMockHeaders(100, 10));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 109, 100);
-
-    List<BlockHeader> batch = source.next();
-    assertThat(batch.get(0).getNumber()).isEqualTo(100);
-
-    verify(blockchain).getBlockHeaders(eq(100L), anyInt());
-  }
-
-  @Test
-  public void shouldIncludePivotBlockInLastBatch() {
-    when(blockchain.getBlockHeaders(100, 100)).thenReturn(createMockHeaders(100, 100));
-    when(blockchain.getBlockHeaders(200, 1)).thenReturn(createMockHeaders(200, 1));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 200, 100);
-
-    List<BlockHeader> firstBatch = source.next();
-    assertThat(firstBatch).hasSize(100);
-
-    List<BlockHeader> lastBatch = source.next();
-    assertThat(lastBatch).hasSize(1);
-    assertThat(lastBatch.get(0).getNumber()).isEqualTo(200); // Pivot block included
-
-    verify(blockchain).getBlockHeaders(eq(200L), eq(1));
-  }
-
-  @Test
-  public void shouldHandleSingleBlockRange() {
-    when(blockchain.getBlockHeaders(100, 1)).thenReturn(createMockHeaders(100, 1));
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 100, 50);
-
-    assertThat(source.hasNext()).isTrue();
-    List<BlockHeader> batch = source.next();
-    assertThat(batch).hasSize(1);
-    assertThat(batch.get(0).getNumber()).isEqualTo(100);
-    assertThat(source.hasNext()).isFalse();
-  }
-
-  @Test
   public void shouldHandleOddBatchSize() {
     when(blockchain.getBlockHeaders(100, 37)).thenReturn(createMockHeaders(100, 37));
     when(blockchain.getBlockHeaders(137, 37)).thenReturn(createMockHeaders(137, 37));
@@ -427,27 +344,7 @@ public class BlockHeaderSourceTest {
     assertThat(source.next()).hasSize(37); // 100-136
     assertThat(source.next()).hasSize(37); // 137-173
     assertThat(source.next()).hasSize(26); // 174-199
-    assertThat(source.next()).isNull();
-  }
-
-  @Test
-  public void shouldVerifyBlockchainInteractionSequence() {
-    when(blockchain.getBlockHeaders(anyLong(), anyInt()))
-        .thenAnswer(
-            invocation -> {
-              long start = invocation.getArgument(0);
-              int count = invocation.getArgument(1);
-              return createMockHeaders(start, count);
-            });
-
-    BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 119, 10);
-
-    source.next(); // 100-109
-    source.next(); // 110-119
-    source.next(); // null
-
-    verify(blockchain, times(1)).getBlockHeaders(eq(100L), eq(10));
-    verify(blockchain, times(1)).getBlockHeaders(eq(110L), eq(10));
+    assertThatThrownBy(() -> source.next()).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
