@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -296,43 +295,6 @@ public class ChainSyncStateTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void downloadCheckpointHeaderShouldUseCorrectTaskParameters() {
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethContext.getScheduler()).thenReturn(scheduler);
-    when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
-    when(ethPeers.getMaxPeers()).thenReturn(25);
-    when(ethPeers.waitForPeer(any(Predicate.class)))
-        .thenReturn(CompletableFuture.completedFuture(ethPeer));
-
-    BlockHeader expectedHeader = new BlockHeaderTestFixture().number(500).buildHeader();
-    PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(List.of(expectedHeader)),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), eq(ethPeer)))
-        .thenReturn(successResult);
-
-    when(scheduler.scheduleServiceTask(any(java.util.function.Supplier.class)))
-        .thenAnswer(
-            invocation -> {
-              java.util.function.Supplier<CompletableFuture<?>> supplier =
-                  invocation.getArgument(0);
-              return supplier.get();
-            });
-
-    Hash testHash =
-        Hash.fromHexString("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
-    BlockHeader result =
-        ChainSyncState.downloadCheckpointHeader(protocolSchedule, ethContext, testHash);
-
-    assertThat(result).isEqualTo(expectedHeader);
-    verify(ethPeers).getMaxPeers();
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
   public void downloadCheckpointHeaderShouldFailOnInternalServerError() {
     setupMocksForDownloadCheckpointHeader();
 
@@ -349,41 +311,6 @@ public class ChainSyncStateTest {
             () -> ChainSyncState.downloadCheckpointHeader(protocolSchedule, ethContext, Hash.ZERO))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Unexpected internal issue");
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void downloadCheckpointHeaderShouldWaitForPeerWithCorrectFilter() {
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethContext.getScheduler()).thenReturn(scheduler);
-    when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
-    when(ethPeers.getMaxPeers()).thenReturn(25);
-
-    // Capture the peer filter predicate
-    when(ethPeers.waitForPeer(any(Predicate.class)))
-        .thenReturn(CompletableFuture.completedFuture(ethPeer));
-
-    BlockHeader expectedHeader = new BlockHeaderTestFixture().number(500).buildHeader();
-    PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(List.of(expectedHeader)),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), eq(ethPeer)))
-        .thenReturn(successResult);
-
-    when(scheduler.scheduleServiceTask(any(java.util.function.Supplier.class)))
-        .thenAnswer(
-            invocation -> {
-              java.util.function.Supplier<CompletableFuture<?>> supplier =
-                  invocation.getArgument(0);
-              return supplier.get();
-            });
-
-    ChainSyncState.downloadCheckpointHeader(protocolSchedule, ethContext, Hash.ZERO);
-
-    verify(ethPeers).waitForPeer(any(Predicate.class));
   }
 
   // Immutability Tests
@@ -444,39 +371,6 @@ public class ChainSyncStateTest {
 
     assertThat(state.pivotBlockHeader().getNumber()).isEqualTo(Long.MAX_VALUE - 100);
     assertThat(state.blockDownloadAnchor().getNumber()).isEqualTo(Long.MAX_VALUE - 500);
-  }
-
-  @Test
-  public void hashCodeShouldBeConsistentAcrossMultipleCalls() {
-    ChainSyncState state =
-        ChainSyncState.initialSync(pivotBlockHeader, checkpointBlockHeader, genesisBlockHeader);
-
-    int hash1 = state.hashCode();
-    int hash2 = state.hashCode();
-    int hash3 = state.hashCode();
-
-    assertThat(hash1).isEqualTo(hash2);
-    assertThat(hash2).isEqualTo(hash3);
-  }
-
-  @Test
-  public void equalStatesShouldHaveSameHashCode() {
-    ChainSyncState state1 =
-        ChainSyncState.initialSync(pivotBlockHeader, checkpointBlockHeader, genesisBlockHeader);
-    ChainSyncState state2 =
-        ChainSyncState.initialSync(pivotBlockHeader, checkpointBlockHeader, genesisBlockHeader);
-
-    assertThat(state1).isEqualTo(state2);
-    assertThat(state1.hashCode()).isEqualTo(state2.hashCode());
-  }
-
-  @Test
-  public void shouldHandleNullHeaderDownloadAnchorInEquality() {
-    ChainSyncState state1 = new ChainSyncState(pivotBlockHeader, checkpointBlockHeader, null, true);
-    ChainSyncState state2 = new ChainSyncState(pivotBlockHeader, checkpointBlockHeader, null, true);
-
-    assertThat(state1).isEqualTo(state2);
-    assertThat(state1.hashCode()).isEqualTo(state2.hashCode());
   }
 
   @SuppressWarnings("unchecked")

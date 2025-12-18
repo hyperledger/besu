@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.lenient;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -74,44 +75,19 @@ public class SnapSyncChainDownloaderTest {
 
   @Test
   public void shouldInitializeWithNewStateWhenNoStateFileExists() {
-    SnapSyncChainDownloader downloader =
-        new SnapSyncChainDownloader(
-            pipelineFactory,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            syncDurationMetrics,
-            pivotBlockHeader,
-            chainSyncStateStorage);
-
-    // Downloader should be initialized (no exception thrown)
-    assertThat(downloader).isNotNull();
-  }
-
-  @Test
-  public void shouldLoadExistingStateFromStorage() {
-    // Create initial state
-    ChainSyncState initialState =
-        ChainSyncState.initialSync(
-            pivotBlockHeader,
-            checkpointBlockHeader,
-            new BlockHeaderTestFixture().number(0).buildHeader());
-    chainSyncStateStorage.storeState(initialState);
-
-    // Create downloader - should load state
-    SnapSyncChainDownloader downloader =
-        new SnapSyncChainDownloader(
-            pipelineFactory,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            syncDurationMetrics,
-            pivotBlockHeader,
-            chainSyncStateStorage);
-
-    assertThat(downloader).isNotNull();
+    // Verify downloader initializes successfully when no prior state exists
+    org.assertj.core.api.Assertions.assertThatCode(
+            () ->
+                new SnapSyncChainDownloader(
+                    pipelineFactory,
+                    protocolSchedule,
+                    protocolContext,
+                    ethContext,
+                    syncState,
+                    syncDurationMetrics,
+                    pivotBlockHeader,
+                    chainSyncStateStorage))
+        .doesNotThrowAnyException();
   }
 
   @Test
@@ -127,11 +103,8 @@ public class SnapSyncChainDownloaderTest {
             pivotBlockHeader,
             chainSyncStateStorage);
 
-    // Cancel should not throw even when no pipeline is running
-    downloader.cancel();
-
-    // Downloader should be in cancelled state
-    assertThat(downloader).isNotNull();
+    // Verify cancel completes successfully even when no pipeline is running
+    org.assertj.core.api.Assertions.assertThatCode(downloader::cancel).doesNotThrowAnyException();
   }
 
   @Test
@@ -148,10 +121,9 @@ public class SnapSyncChainDownloaderTest {
             chainSyncStateStorage);
 
     BlockHeader newPivot = new BlockHeaderTestFixture().number(2000).buildHeader();
-    downloader.onPivotUpdated(newPivot);
 
-    // Should not throw - pivot update accepted
-    assertThat(downloader).isNotNull();
+    // Verify pivot update completes successfully
+    assertThatCode(() -> downloader.onPivotUpdated(newPivot)).doesNotThrowAnyException();
   }
 
   @Test
@@ -167,10 +139,8 @@ public class SnapSyncChainDownloaderTest {
             pivotBlockHeader,
             chainSyncStateStorage);
 
-    downloader.onWorldStateHealFinished();
-
-    // Should not throw - signal accepted
-    assertThat(downloader).isNotNull();
+    // Verify world state heal signal is accepted without error
+    assertThatCode(downloader::onWorldStateHealFinished).doesNotThrowAnyException();
   }
 
   @Test

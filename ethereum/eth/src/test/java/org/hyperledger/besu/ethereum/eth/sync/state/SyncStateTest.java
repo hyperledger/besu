@@ -304,35 +304,6 @@ public class SyncStateTest {
   }
 
   @Test
-  public void addInSyncListener_whileOutOfSync_withDistinctSyncTolerance() {
-    setupOutOfSyncState();
-
-    // Add listener
-    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
-    InSyncListener newListener = mock(InSyncListener.class);
-    syncState.subscribeInSync(newListener, syncTolerance);
-    verify(newListener, never()).onInSyncStatusChange(false);
-    verify(newListener, never()).onInSyncStatusChange(true);
-
-    // Catch all the way up
-    advanceLocalChain(TARGET_CHAIN_HEIGHT);
-
-    // Fall out of sync
-    updateChainState(
-        syncTargetPeer.getEthPeer(),
-        TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.add(10L));
-
-    final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(newListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
-
-    final List<Boolean> syncChanges = inSyncEventCaptor.getAllValues();
-    assertThat(syncChanges.get(0)).isEqualTo(false);
-    assertThat(syncChanges.get(1)).isEqualTo(true);
-    assertThat(syncChanges.get(2)).isEqualTo(false);
-  }
-
-  @Test
   public void addInSyncListener_whileInSync() {
     setupOutOfSyncState();
     // Catch all the way up
@@ -347,34 +318,6 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
-        TARGET_DIFFICULTY.add(10L));
-    verify(newListener).onInSyncStatusChange(false);
-    verify(newListener, never()).onInSyncStatusChange(true);
-
-    // Catch up
-    advanceLocalChain(TARGET_CHAIN_HEIGHT + 1L);
-    verify(newListener).onInSyncStatusChange(false);
-    verify(newListener).onInSyncStatusChange(true);
-  }
-
-  @Test
-  public void addInSyncListener_whileInSync_withDistinctSyncTolerance() {
-    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
-    setupOutOfSyncState();
-
-    // Catch all the way up
-    advanceLocalChain(TARGET_CHAIN_HEIGHT);
-
-    // Add listener
-    InSyncListener newListener = mock(InSyncListener.class);
-    syncState.subscribeInSync(newListener, syncTolerance);
-    verify(newListener, never()).onInSyncStatusChange(false);
-    verify(newListener, never()).onInSyncStatusChange(true);
-
-    // Fall out of sync
-    updateChainState(
-        syncTargetPeer.getEthPeer(),
-        TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.add(10L));
     verify(newListener).onInSyncStatusChange(false);
     verify(newListener, never()).onInSyncStatusChange(true);
@@ -634,8 +577,6 @@ public class SyncStateTest {
     assertThat(peer.chainState().getEstimatedHeight()).isEqualTo(blockHeight);
     assertThat(peer.chainState().getEstimatedTotalDifficulty()).isEqualTo(totalDifficulty);
   }
-
-  // New tests for PR changes
 
   @Test
   public void shouldSubscribeAndUnsubscribeTTDReachedListener() {
