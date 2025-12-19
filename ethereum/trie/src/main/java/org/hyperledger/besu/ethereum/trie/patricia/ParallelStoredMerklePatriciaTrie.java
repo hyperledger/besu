@@ -428,35 +428,45 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleLeafNode(
-      final LeafNode<V> leaf,
-      final Bytes location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+          final LeafNode<V> leaf,
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache) {
+    // Check if parallel processing would be beneficial
+    if (updates.size() >= NCPU) {
+      // Build a branch incorporating the leaf, then process updates
+      final BranchNode<V> branch = buildBranchFromLeaf(leaf);
+      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    }
 
-    final BranchNode<V> branch = buildBranchFromLeaf(leaf);
-    return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    // Sequential processing for small update sets or non-diverging updates
+    return applyUpdatesSequentially(leaf, location, updates, maybeCommitCache);
   }
-
   /**
    * Handles updates for a null node (empty position). If there are enough updates that diverge,
    * builds a branch structure directly, then processes in parallel.
-   *
-   * @param location the location of the node
-   * @param depth the current depth in the trie
-   * @param updates the updates to apply
+   * @param location         the location of the node
+   * @param depth            the current depth in the trie
+   * @param updates          the updates to apply
    * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleNullNode(
-      final Bytes location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache) {
 
-    // Build an empty branch, then process updates
-    final BranchNode<V> branch = buildEmptyBranch();
-    return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    // Check if parallel processing would be beneficial
+    if (updates.size() >= NCPU) {
+      // Build an empty branch, then process updates
+      final BranchNode<V> branch = buildEmptyBranch();
+      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    }
+
+    // Sequential processing for small update sets or non-diverging updates
+    return applyUpdatesSequentially(NullNode.instance(), location, updates, maybeCommitCache);
   }
 
   /**
