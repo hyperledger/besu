@@ -338,8 +338,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Handles updates for an extension node. Attempts to parallelize by temporarily expanding the
-   * extension into branches, processing updates, then reconstructing if beneficial.
+   * Handles updates for an extension node.
    *
    * @param extensionNode the extension node to update
    * @param location the location of the extension node
@@ -349,49 +348,28 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated extension or restructured node
    */
   private Node<V> handleExtension(
-      final ExtensionNode<V> extensionNode,
-      final Bytes location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+          final ExtensionNode<V> extensionNode,
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache) {
 
-    final Bytes extensionPath = extensionNode.getPath();
-    final int pathDepth = location.size();
-
-    // Check if all updates pass through this extension
-    if (allUpdatesMatchExtension(updates, pathDepth, extensionPath)) {
-      // All updates continue past extension: simply process child node
-      final Bytes newLocation = Bytes.concatenate(location, extensionPath);
-      final Node<V> childNode = extensionNode.getChild();
-
-      final Node<V> newChild =
-          processNode(
-              childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
-
-      // Create new extension with updated child
-      final Node<V> newExtension = extensionNode.replaceChild(newChild);
-      commitOrHashNode(newExtension, location, maybeCommitCache);
-      return newExtension;
-    }
-
-    // Updates diverge: check if parallelization is worth it
+    // Multiple updates: expand to enable parallelization
     if (updates.size() > 1) {
-      // Expand extension into branch structure, process in parallel, then optimize
+      final Bytes extensionPath = extensionNode.getPath();
+      final int pathDepth = location.size();
+      // Find where updates diverge
+      int divergenceIndex = findDivergencePoint(updates, pathDepth, extensionPath);
       return expandExtensionToDivergencePoint(
-          extensionNode, extensionPath, location, depth, updates, maybeCommitCache);
+              extensionNode, extensionPath, location, depth, updates, maybeCommitCache, divergenceIndex);
     }
 
-    // Single update or not worth parallelizing: use sequential processing
+    // Single update: use sequential visitor
     return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
   }
 
   /**
-   * Expands an extension node into a branch structure to enable parallel processing. After
-   * processing, the structure is automatically optimized (may recreate extensions).
-   *
-   * <p>Strategy: 1. Create branches for each nibble in the extension path 2. Place the extension's
-   * child at the end of this chain 3. Process all updates through this expanded structure 4. Let
-   * the trie's natural optimization (maybeFlatten) recreate extensions if needed
+   * Expands extension into branches up to divergence point.
    *
    * @param extensionNode the extension to expand
    * @param extensionPath the path of the extension
@@ -399,45 +377,46 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param depth the current depth
    * @param updates the updates to apply
    * @param maybeCommitCache optional commit cache
-   * @return the processed and optimized node structure
+   * @param divergenceIndex the index where updates diverge (already computed)
+   * @return the processed node structure
    */
   private Node<V> expandExtensionToDivergencePoint(
-      final ExtensionNode<V> extensionNode,
-      final Bytes extensionPath,
-      final Bytes location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+          final ExtensionNode<V> extensionNode,
+          final Bytes extensionPath,
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache,
+          final int divergenceIndex) {
 
-    final int pathDepth = location.size();
+    // Handle no-divergence
+    if (divergenceIndex == extensionPath.size()) {
+      // All updates continue past extension - just update child
+      final Bytes newLocation = Bytes.concatenate(location, extensionPath);
+      final Node<V> newChild = processNode(
+              extensionNode.getChild(),
+              newLocation,
+              depth + extensionPath.size(),
+              updates,
+              maybeCommitCache);
 
-    // Find the first position within the extension where updates diverge
-    int divergenceIndex = findDivergencePoint(updates, pathDepth, extensionPath);
+      final Node<V> newExtension = extensionNode.replaceChild(newChild);
+      commitOrHashNode(newExtension, location, maybeCommitCache);
+      return newExtension;
+    }
 
-    // Split extension at divergence point
-    // Example: Extension[3,5,7,9], divergence at index 2 (position 7)
-    //   commonPrefix = [3,5]
-    //   divergingNibble = 7 (from extension)
-    //   remainingSuffix = [9]
-
+    // Handle divergence
+    // Split: [0..divergenceIndex) = common, [divergenceIndex..end) = remaining
     final Bytes commonPrefix = extensionPath.slice(0, divergenceIndex);
-    final byte divergingNibble = extensionPath.get(divergenceIndex);
-    final Bytes remainingSuffix = extensionPath.slice(divergenceIndex + 1);
+    final Bytes remainingExtension = extensionPath.slice(divergenceIndex);
 
+    // Load and build continuation
     Node<V> originalChild = loadNode(extensionNode.getChild());
-
-    // Create continuation: Extension[D,E] → originalChild (or just originalChild if empty)
-    Node<V> continuation =
-        remainingSuffix.isEmpty()
+    Node<V> currentNode = remainingExtension.isEmpty()
             ? originalChild
-            : nodeFactory.createExtension(remainingSuffix, originalChild);
+            : nodeFactory.createExtension(remainingExtension, originalChild);
 
-    // Create branch at divergence point with continuation as one child
-    final List<Node<V>> branchChildren =
-        new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
-    branchChildren.set(divergingNibble, continuation);
-    Node<V> currentNode = nodeFactory.createBranch(branchChildren, Optional.empty());
-
+    // Build branch chain for common prefix
     for (int i = commonPrefix.size() - 1; i >= 0; i--) {
       final byte nibble = commonPrefix.get(i);
       final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
@@ -445,13 +424,21 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       currentNode = nodeFactory.createBranch(children, Optional.empty());
     }
 
-    // Now process all updates through this structure
-    // The branch will naturally handle grouping and parallelization
     return processNode(currentNode, location, depth, updates, maybeCommitCache);
   }
 
+  /**
+   * Finds the first position within the extension path where ANY update diverges.
+   *
+   * @param updates the updates to check
+   * @param baseDepth the base depth (location.size())
+   * @param extensionPath the extension path
+   * @return the index in extensionPath where first divergence occurs, or extensionPath.size() if none
+   */
   private int findDivergencePoint(
-      final List<UpdateEntry<V>> updates, final int baseDepth, final Bytes extensionPath) {
+          final List<UpdateEntry<V>> updates,
+          final int baseDepth,
+          final Bytes extensionPath) {
 
     for (int i = 0; i < extensionPath.size(); i++) {
       final int absolutePosition = baseDepth + i;
@@ -561,30 +548,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   private BranchNode<V> buildEmptyBranch() {
     final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
     return (BranchNode<V>) nodeFactory.createBranch(children, Optional.empty());
-  }
-
-  /**
-   * Checks if all updates in the list match the given extension path.
-   *
-   * @param updates the updates to check
-   * @param depth the current depth in the trie
-   * @param extensionPath the extension path to match against
-   * @return true if all updates match, false otherwise
-   */
-  private boolean allUpdatesMatchExtension(
-      final List<UpdateEntry<V>> updates, final int depth, final Bytes extensionPath) {
-    final int extSize = extensionPath.size();
-    for (UpdateEntry<V> entry : updates) {
-      if (entry.path.size() < depth + extSize) {
-        return false;
-      }
-      for (int i = 0; i < extSize; i++) {
-        if (entry.path.get(depth + i) != extensionPath.get(i)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   /**
