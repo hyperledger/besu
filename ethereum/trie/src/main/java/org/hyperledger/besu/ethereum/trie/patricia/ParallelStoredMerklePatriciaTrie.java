@@ -52,7 +52,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <K> the key type, must extend Bytes
  * @param <V> the value type
  */
-@SuppressWarnings({"rawtypes", "ThreadPriorityCheck"})
+@SuppressWarnings({"rawtypes", "ThreadPriorityCheck", "unused"})
 public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     extends StoredMerklePatriciaTrie<K, V> {
 
@@ -189,15 +189,15 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
       // Convert pending updates to UpdateEntry objects with nibble paths
       final List<UpdateEntry<V>> entries =
-              pendingUpdates.entrySet().stream()
-                      .map(e -> new UpdateEntry<>(bytesToPath(e.getKey()), e.getValue()))
-                      .toList();
-
+          pendingUpdates.entrySet().stream()
+              .map(e -> new UpdateEntry<>(bytesToPath(e.getKey()), e.getValue()))
+              .toList();
 
       final CommitCache commitCache = new CommitCache();
       final boolean shouldCommit = maybeNodeUpdater.isPresent();
 
-      this.root = processNode(
+      this.root =
+          processNode(
               root,
               Bytes.EMPTY,
               0,
@@ -238,15 +238,16 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final Node<V> loadedNode = loadNode(node);
 
     // Dispatch based on node type
-      return switch (loadedNode) {
-          case BranchNode<V> branch -> handleBranchNode(branch, location, depth, updates, maybeCommitCache);
-          case ExtensionNode<V> ext -> handleExtension(ext, location, depth, updates, maybeCommitCache);
-          case LeafNode<V> leaf -> handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
-          case NullNode<V> ignored -> handleNullNode(location, depth, updates, maybeCommitCache);
-          case null, default ->
-              // Unknown node type: fallback to sequential processing
-                  applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
-      };
+    return switch (loadedNode) {
+      case BranchNode<V> branch ->
+          handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+      case ExtensionNode<V> ext -> handleExtension(ext, location, depth, updates, maybeCommitCache);
+      case LeafNode<V> leaf -> handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
+      case NullNode<V> ignored -> handleNullNode(location, depth, updates, maybeCommitCache);
+      case null, default ->
+          // Unknown node type: fallback to sequential processing
+          applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
+    };
   }
 
   /**
@@ -338,8 +339,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Handles updates for an extension node. Attempts to parallelize by temporarily expanding
-   * the extension into branches, processing updates, then reconstructing if beneficial.
+   * Handles updates for an extension node. Attempts to parallelize by temporarily expanding the
+   * extension into branches, processing updates, then reconstructing if beneficial.
    *
    * @param extensionNode the extension node to update
    * @param location the location of the extension node
@@ -349,11 +350,11 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated extension or restructured node
    */
   private Node<V> handleExtension(
-          final ExtensionNode<V> extensionNode,
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache) {
+      final ExtensionNode<V> extensionNode,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
 
     final Bytes extensionPath = extensionNode.getPath();
     final int pathDepth = location.size();
@@ -365,8 +366,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final Node<V> childNode = extensionNode.getChild();
 
       final Node<V> newChild =
-              processNode(
-                      childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
+          processNode(
+              childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
 
       // Create new extension with updated child
       final Node<V> newExtension = extensionNode.replaceChild(newChild);
@@ -374,26 +375,17 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       return newExtension;
     }
 
-    // Updates diverge: check if parallelization is worth it
-    if (updates.size() > 1) {
-      // Expand extension into branch structure, process in parallel, then optimize
-      return expandExtensionAndProcess(
-              extensionNode, extensionPath, location, depth, updates, maybeCommitCache);
-    }
-
     // Single update or not worth parallelizing: use sequential processing
     return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
   }
 
   /**
-   * Expands an extension node into a branch structure to enable parallel processing.
-   * After processing, the structure is automatically optimized (may recreate extensions).
+   * Expands an extension node into a branch structure to enable parallel processing. After
+   * processing, the structure is automatically optimized (may recreate extensions).
    *
-   * Strategy:
-   * 1. Create branches for each nibble in the extension path
-   * 2. Place the extension's child at the end of this chain
-   * 3. Process all updates through this expanded structure
-   * 4. Let the trie's natural optimization (maybeFlatten) recreate extensions if needed
+   * <p>Strategy: 1. Create branches for each nibble in the extension path 2. Place the extension's
+   * child at the end of this chain 3. Process all updates through this expanded structure 4. Let
+   * the trie's natural optimization (maybeFlatten) recreate extensions if needed
    *
    * @param extensionNode the extension to expand
    * @param extensionPath the path of the extension
@@ -404,12 +396,12 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the processed and optimized node structure
    */
   private Node<V> expandExtensionAndProcess(
-          final ExtensionNode<V> extensionNode,
-          final Bytes extensionPath,
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache) {
+      final ExtensionNode<V> extensionNode,
+      final Bytes extensionPath,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
 
     // Build a chain of branches representing the extension path
     // Example: extension path [3,5,7] becomes:
@@ -425,7 +417,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       currentNode = nodeFactory.createBranch(children, Optional.empty());
     }
 
-      // The processNode call and subsequent replaceAllChildren will automatically
+    // The processNode call and subsequent replaceAllChildren will automatically
     // call maybeFlatten, which will recreate extensions where beneficial
     return processNode(currentNode, location, depth, updates, maybeCommitCache);
   }
@@ -442,11 +434,11 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleLeafNode(
-          final LeafNode<V> leaf,
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache) {
+      final LeafNode<V> leaf,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
     // Check if parallel processing would be beneficial
     if (updates.size() > 1) {
       // Build a branch incorporating the leaf, then process updates
@@ -457,20 +449,22 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     // Sequential processing for small update sets or non-diverging updates
     return applyUpdatesSequentially(leaf, location, updates, maybeCommitCache);
   }
+
   /**
    * Handles updates for a null node (empty position). If there are enough updates that diverge,
    * builds a branch structure directly, then processes in parallel.
-   * @param location         the location of the node
-   * @param depth            the current depth in the trie
-   * @param updates          the updates to apply
+   *
+   * @param location the location of the node
+   * @param depth the current depth in the trie
+   * @param updates the updates to apply
    * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleNullNode(
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache) {
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
 
     // Check if parallel processing would be beneficial
     if (updates.size() > 1) {
