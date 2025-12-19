@@ -374,9 +374,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Handles updates for an extension node. If all updates match the extension path, recurse into
-   * the child. Otherwise, fall back to sequential processing (the extension may need
-   * restructuring).
+   * Handles updates for an extension node. Attempts to parallelize by temporarily expanding
+   * the extension into branches, processing updates, then reconstructing if beneficial.
    *
    * @param extensionNode the extension node to update
    * @param location the location of the extension node
@@ -386,34 +385,85 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated extension or restructured node
    */
   private Node<V> handleExtension(
-      final ExtensionNode<V> extensionNode,
-      final Bytes location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+          final ExtensionNode<V> extensionNode,
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache) {
 
     final Bytes extensionPath = extensionNode.getPath();
     final int pathDepth = location.size();
 
     // Check if all updates pass through this extension
-    if (!allUpdatesMatchExtension(updates, pathDepth, extensionPath)) {
-      // Updates diverge: must restructure, use sequential processing
-      return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
+    if (allUpdatesMatchExtension(updates, pathDepth, extensionPath)) {
+      // All updates continue past extension: simply process child node
+      final Bytes newLocation = Bytes.concatenate(location, extensionPath);
+      final Node<V> childNode = extensionNode.getChild();
+
+      final Node<V> newChild =
+              processNode(
+                      childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
+
+      // Create new extension with updated child
+      final Node<V> newExtension = extensionNode.replaceChild(newChild);
+      commitOrHashNode(newExtension, location, maybeCommitCache);
+      return newExtension;
     }
 
-    // All updates continue past extension: process child node
-    final Bytes newLocation = Bytes.concatenate(location, extensionPath);
-    final Node<V> childNode = extensionNode.getChild();
+    // Updates diverge: check if parallelization is worth it
+    if (updates.size() > 1) {
+      // Expand extension into branch structure, process in parallel, then optimize
+      return expandExtensionAndProcess(
+              extensionNode, extensionPath, location, depth, updates, maybeCommitCache);
+    }
 
-    final Node<V> newChild =
-        processNode(
-            childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
+    // Single update or not worth parallelizing: use sequential processing
+    return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
+  }
 
-    // Create new extension with updated child
-    final Node<V> newExtension = extensionNode.replaceChild(newChild);
-    commitOrHashNode(newExtension, location, maybeCommitCache);
+  /**
+   * Expands an extension node into a branch structure to enable parallel processing.
+   * After processing, the structure is automatically optimized (may recreate extensions).
+   *
+   * Strategy:
+   * 1. Create branches for each nibble in the extension path
+   * 2. Place the extension's child at the end of this chain
+   * 3. Process all updates through this expanded structure
+   * 4. Let the trie's natural optimization (maybeFlatten) recreate extensions if needed
+   *
+   * @param extensionNode the extension to expand
+   * @param extensionPath the path of the extension
+   * @param location the current location
+   * @param depth the current depth
+   * @param updates the updates to apply
+   * @param maybeCommitCache optional commit cache
+   * @return the processed and optimized node structure
+   */
+  private Node<V> expandExtensionAndProcess(
+          final ExtensionNode<V> extensionNode,
+          final Bytes extensionPath,
+          final Bytes location,
+          final int depth,
+          final List<UpdateEntry<V>> updates,
+          final Optional<CommitCache> maybeCommitCache) {
 
-    return newExtension;
+    // Build a chain of branches representing the extension path
+    // Example: extension path [3,5,7] becomes:
+    //   Branch (only child 3) -> Branch (only child 5) -> Branch (only child 7) -> original child
+
+    Node<V> currentNode = extensionNode.getChild();
+
+    // Build from the end backwards
+    for (int i = extensionPath.size() - 1; i >= 0; i--) {
+      final byte nibble = extensionPath.get(i);
+      final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+      children.set(nibble, currentNode);
+      currentNode = nodeFactory.createBranch(children, Optional.empty());
+    }
+
+      // The processNode call and subsequent replaceAllChildren will automatically
+    // call maybeFlatten, which will recreate extensions where beneficial
+    return processNode(currentNode, location, depth, updates, maybeCommitCache);
   }
 
   /**
