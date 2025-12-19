@@ -64,22 +64,19 @@ public class JsonRpcHttpOptions {
   @CommandLine.Option(
       names = {"--rpc-http-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})")
   private String rpcHttpHost = DEFAULT_JSON_RPC_HOST;
 
   @CommandLine.Option(
       names = {"--rpc-http-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
   @CommandLine.Option(
       names = {"--rpc-http-max-active-connections"},
       description =
-          "Maximum number of HTTP connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
-      arity = "1")
+          "Maximum number of HTTP connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.")
   private final Integer rpcHttpMaxConnections = DefaultCommandValues.DEFAULT_HTTP_MAX_CONNECTIONS;
 
   // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
@@ -118,23 +115,20 @@ public class JsonRpcHttpOptions {
       names = {"--rpc-http-authentication-credentials-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})")
   private String rpcHttpAuthenticationCredentialsFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-http-authentication-jwt-public-key-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-      description = "JWT public key file for JSON-RPC HTTP authentication",
-      arity = "1")
+      description = "JWT public key file for JSON-RPC HTTP authentication")
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-http-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
-              + " (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + " (default: ${DEFAULT-VALUE})")
   private final JwtAlgorithm rpcHttpAuthenticationAlgorithm =
       DefaultCommandValues.DEFAULT_JWT_ALGORITHM;
 
@@ -179,15 +173,13 @@ public class JsonRpcHttpOptions {
   @CommandLine.Option(
       names = {"--rpc-http-tls-truststore-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to the truststore file for the JSON-RPC HTTP service.",
-      arity = "1")
+      description = "Path to the truststore file for the JSON-RPC HTTP service.")
   private final Path rpcHttpTlsTruststoreFile = null;
 
   @CommandLine.Option(
       names = {"--rpc-http-tls-truststore-password-file"},
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to the file containing the password for the truststore.",
-      arity = "1")
+      description = "Path to the file containing the password for the truststore.")
   private final Path rpcHttpTlsTruststorePasswordFile = null;
 
   @CommandLine.Option(

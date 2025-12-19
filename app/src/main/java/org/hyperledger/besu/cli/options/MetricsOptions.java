@@ -113,15 +113,13 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
   @CommandLine.Option(
       names = {"--metrics-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})")
   private String metricsHost = MetricsConfiguration.DEFAULT_METRICS_HOST;
 
   @CommandLine.Option(
       names = {"--metrics-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})")
   private Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @CommandLine.Option(
@@ -143,30 +141,26 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
   @CommandLine.Option(
       names = {"--metrics-push-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})")
   private String metricsPushHost = MetricsConfiguration.DEFAULT_METRICS_PUSH_HOST;
 
   @CommandLine.Option(
       names = {"--metrics-push-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})")
   private Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
 
   @CommandLine.Option(
       names = {"--metrics-push-interval"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
+          "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})")
   private Integer metricsPushInterval = 15;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--metrics-push-prometheus-job"},
-      description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})")
   private String metricsPrometheusJob = "besu-client";
 
   /**
@@ -320,8 +314,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
         hidden = true,
         names = {IDLE_TIMEOUT_FLAG},
         paramLabel = "<INTEGER>",
-        description = "Timeout for metrics TCP connections, in seconds (default: ${DEFAULT-VALUE})",
-        arity = "1")
+        description = "Timeout for metrics TCP connections, in seconds (default: ${DEFAULT-VALUE})")
     private int idleTimeout = MetricsConfiguration.DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
   }
 }

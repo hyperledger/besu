@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
-import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INVALID_OPERATION;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -25,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -34,7 +34,6 @@ import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
-import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -67,8 +66,6 @@ class CreateOperationTest {
               + "6000" // PUSH1 0x00
               + "F3" // RETURN
           );
-  public static final Bytes SIMPLE_EOF =
-      Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
   private static final int SHANGHAI_CREATE_GAS = 41240;
@@ -216,38 +213,12 @@ class CreateOperationTest {
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
-  @Test
-  void eofV1CannotCall() {
-    final EVM pragueEvm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(pragueEvm.wrapCode(SIMPLE_EOF))
-            .pushStackItem(memoryLength)
-            .pushStackItem(memoryOffset)
-            .pushStackItem(Bytes.EMPTY)
-            .worldUpdater(worldUpdater)
-            .build();
-    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
-
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-
-    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
-  }
-
   @NotNull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
       final UInt256 memoryLength,
       final UInt256 value,
       final int depth) {
-    final EVM evm = MainnetEVMs.futureEips(EvmConfiguration.DEFAULT);
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -256,7 +227,7 @@ class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(evm.wrapCode(SIMPLE_CREATE))
+            .code(new Code(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup((__, ___) -> Hash.ZERO)

@@ -24,15 +24,13 @@ public class RPCOptions {
   @CommandLine.Option(
       hidden = true,
       names = {"--Xhttp-timeout-seconds"},
-      description = "HTTP timeout in seconds (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "HTTP timeout in seconds (default: ${DEFAULT-VALUE})")
   private final Long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   @CommandLine.Option(
       hidden = true,
       names = {"--Xws-timeout-seconds"},
-      description = "Web socket timeout in seconds (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Web socket timeout in seconds (default: ${DEFAULT-VALUE})")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
   /** Default Constructor. */

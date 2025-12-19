@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -51,7 +50,7 @@ public class MessageFrameTestFixture {
   private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
