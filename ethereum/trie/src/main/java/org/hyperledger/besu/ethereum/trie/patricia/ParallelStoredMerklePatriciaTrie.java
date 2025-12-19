@@ -434,17 +434,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
 
-    final int pathDepth = location.size();
-
-    // Check if parallel processing would be beneficial
-    if (updates.size() >= NCPU && shouldBuildBranchStructure(updates, pathDepth)) {
-      // Build a branch incorporating the leaf, then process updates
-      final BranchNode<V> branch = buildBranchFromLeaf(leaf);
-      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
-    }
-
-    // Sequential processing for small update sets or non-diverging updates
-    return applyUpdatesSequentially(leaf, location, updates, maybeCommitCache);
+    final BranchNode<V> branch = buildBranchFromLeaf(leaf);
+    return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
   }
 
   /**
@@ -463,17 +454,9 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
 
-    final int pathDepth = location.size();
-
-    // Check if parallel processing would be beneficial
-    if (updates.size() >= NCPU && shouldBuildBranchStructure(updates, pathDepth)) {
-      // Build an empty branch, then process updates
-      final BranchNode<V> branch = buildEmptyBranch();
-      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
-    }
-
-    // Sequential processing for small update sets or non-diverging updates
-    return applyUpdatesSequentially(NullNode.instance(), location, updates, maybeCommitCache);
+    // Build an empty branch, then process updates
+    final BranchNode<V> branch = buildEmptyBranch();
+    return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
   }
 
   /**
