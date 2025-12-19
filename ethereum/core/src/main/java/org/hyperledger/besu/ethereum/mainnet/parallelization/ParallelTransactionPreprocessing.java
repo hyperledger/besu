@@ -19,11 +19,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingContext;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor.ParallelizedPreProcessingContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
@@ -35,11 +35,15 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final Executor executor;
+  private final BalConfiguration balConfiguration;
 
   public ParallelTransactionPreprocessing(
-      final MainnetTransactionProcessor transactionProcessor, final Executor executor) {
+      final MainnetTransactionProcessor transactionProcessor,
+      final Executor executor,
+      final BalConfiguration balConfiguration) {
     this.transactionProcessor = transactionProcessor;
     this.executor = executor;
+    this.balConfiguration = balConfiguration;
   }
 
   @Override
@@ -50,24 +54,32 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-    if ((protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
-      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
-          new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
-      // runAsyncBlock, if activated, facilitates the non-blocking parallel execution
-      // of transactions in the background through an optimistic strategy.
-      parallelizedConcurrentTransactionProcessor.runAsyncBlock(
-          protocolContext,
-          blockHeader,
-          transactions,
-          miningBeneficiary,
-          blockHashLookup,
-          blobGasPrice,
-          executor,
-          blockAccessListBuilder);
-      return Optional.of(
-          new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final Optional<BlockAccessList> maybeBlockBal) {
+    if (!(protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
+      return Optional.empty();
     }
-    return Optional.empty();
+
+    final ParallelBlockTransactionProcessor parallelProcessor;
+
+    if (balConfiguration.isPerfectParallelizationEnabled() && maybeBlockBal.isPresent()) {
+      parallelProcessor =
+          new BalConcurrentTransactionProcessor(
+              transactionProcessor, maybeBlockBal.get(), balConfiguration);
+    } else {
+      parallelProcessor = new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
+    }
+
+    parallelProcessor.runAsyncBlock(
+        protocolContext,
+        blockHeader,
+        transactions,
+        miningBeneficiary,
+        blockHashLookup,
+        blobGasPrice,
+        executor,
+        blockAccessListBuilder);
+
+    return Optional.of(new PreprocessingContext(parallelProcessor));
   }
 }
