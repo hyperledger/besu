@@ -192,7 +192,7 @@ public class SnapSyncChainDownloadPipelineFactory {
     return PipelineBuilder.createPipelineFrom(
             "forwardHeaderSource",
             headerSource,
-            downloaderParallelism * 4,
+            downloaderParallelism * 3,
             metricsSystem.createLabelledCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "forward_bodies_receipts_pipeline_processed_total",
@@ -204,7 +204,7 @@ public class SnapSyncChainDownloadPipelineFactory {
         .thenProcessAsyncOrdered(
             "downloadAndStoreBodiesAndReceipts",
             downloadAndStoreBodiesAndReceiptsStep,
-            downloaderParallelism * 4)
+            downloaderParallelism * 3)
         .andFinishWith("storeTTDAndSetChainHead", storeTTDAndSetChainHead);
   }
 }
