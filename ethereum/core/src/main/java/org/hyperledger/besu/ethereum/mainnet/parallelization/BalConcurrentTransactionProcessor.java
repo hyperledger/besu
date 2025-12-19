@@ -30,13 +30,14 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -179,49 +180,103 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final BlockAccessList blockAccessList,
       final int balIndex,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
+    for (var accountChanges : blockAccessList.accountChanges()) {
+      final Address address = accountChanges.address();
+      MutableAccount account = null;
 
-    blockAccessList
-        .accountChanges()
-        .forEach(
-            accountChanges -> {
-              final Address address = accountChanges.address();
+      final var latestBalance = findLatestBalanceChange(accountChanges.balanceChanges(), balIndex);
+      if (latestBalance != null) {
+        if (account == null) {
+          account = worldStateUpdater.getOrCreate(address);
+        }
+        account.setBalance(latestBalance.postBalance());
+      }
 
-              accountChanges.balanceChanges().stream()
-                  .filter(change -> change.txIndex() < balIndex)
-                  .max(Comparator.comparingInt(BlockAccessList.BalanceChange::txIndex))
-                  .ifPresent(
-                      change ->
-                          worldStateUpdater.getOrCreate(address).setBalance(change.postBalance()));
+      final var latestNonce = findLatestNonceChange(accountChanges.nonceChanges(), balIndex);
+      if (latestNonce != null) {
+        if (account == null) {
+          account = worldStateUpdater.getOrCreate(address);
+        }
+        account.setNonce(latestNonce.newNonce());
+      }
 
-              accountChanges.nonceChanges().stream()
-                  .filter(change -> change.txIndex() < balIndex)
-                  .max(Comparator.comparingInt(BlockAccessList.NonceChange::txIndex))
-                  .ifPresent(
-                      change -> worldStateUpdater.getOrCreate(address).setNonce(change.newNonce()));
+      final var latestCode = findLatestCodeChange(accountChanges.codeChanges(), balIndex);
+      if (latestCode != null) {
+        if (account == null) {
+          account = worldStateUpdater.getOrCreate(address);
+        }
+        account.setCode(latestCode.newCode());
+      }
 
-              accountChanges.codeChanges().stream()
-                  .filter(change -> change.txIndex() < balIndex)
-                  .max(Comparator.comparingInt(BlockAccessList.CodeChange::txIndex))
-                  .ifPresent(
-                      change -> worldStateUpdater.getOrCreate(address).setCode(change.newCode()));
+      for (var slotChanges : accountChanges.storageChanges()) {
+        final UInt256 slotKey = slotChanges.slot().getSlotKey().orElseThrow();
 
-              accountChanges
-                  .storageChanges()
-                  .forEach(
-                      slotChanges -> {
-                        final UInt256 slotKey = slotChanges.slot().getSlotKey().orElseThrow();
-                        slotChanges.changes().stream()
-                            .filter(change -> change.txIndex() < balIndex)
-                            .max(Comparator.comparingInt(BlockAccessList.StorageChange::txIndex))
-                            .ifPresent(
-                                change ->
-                                    worldStateUpdater
-                                        .getOrCreate(address)
-                                        .setStorageValue(
-                                            slotKey,
-                                            Optional.ofNullable(change.newValue())
-                                                .orElse(UInt256.ZERO)));
-                      });
-            });
+        final var latestStorage = findLatestStorageChange(slotChanges.changes(), balIndex);
+
+        if (latestStorage != null) {
+          if (account == null) {
+            account = worldStateUpdater.getOrCreate(address);
+          }
+          account.setStorageValue(
+              slotKey, latestStorage.newValue() != null ? latestStorage.newValue() : UInt256.ZERO);
+        }
+      }
+    }
+  }
+
+  private BlockAccessList.BalanceChange findLatestBalanceChange(
+      final Collection<BlockAccessList.BalanceChange> changes, final int maxIndex) {
+    BlockAccessList.BalanceChange latest = null;
+    int latestIndex = -1;
+    for (var change : changes) {
+      final int txIndex = change.txIndex();
+      if (txIndex < maxIndex && txIndex > latestIndex) {
+        latest = change;
+        latestIndex = txIndex;
+      }
+    }
+    return latest;
+  }
+
+  private BlockAccessList.NonceChange findLatestNonceChange(
+      final Collection<BlockAccessList.NonceChange> changes, final int maxIndex) {
+    BlockAccessList.NonceChange latest = null;
+    int latestIndex = -1;
+    for (var change : changes) {
+      final int txIndex = change.txIndex();
+      if (txIndex < maxIndex && txIndex > latestIndex) {
+        latest = change;
+        latestIndex = txIndex;
+      }
+    }
+    return latest;
+  }
+
+  private BlockAccessList.CodeChange findLatestCodeChange(
+      final Collection<BlockAccessList.CodeChange> changes, final int maxIndex) {
+    BlockAccessList.CodeChange latest = null;
+    int latestIndex = -1;
+    for (var change : changes) {
+      final int txIndex = change.txIndex();
+      if (txIndex < maxIndex && txIndex > latestIndex) {
+        latest = change;
+        latestIndex = txIndex;
+      }
+    }
+    return latest;
+  }
+
+  private BlockAccessList.StorageChange findLatestStorageChange(
+      final Collection<BlockAccessList.StorageChange> changes, final int maxIndex) {
+    BlockAccessList.StorageChange latest = null;
+    int latestIndex = -1;
+    for (var change : changes) {
+      final int txIndex = change.txIndex();
+      if (txIndex < maxIndex && txIndex > latestIndex) {
+        latest = change;
+        latestIndex = txIndex;
+      }
+    }
+    return latest;
   }
 }
