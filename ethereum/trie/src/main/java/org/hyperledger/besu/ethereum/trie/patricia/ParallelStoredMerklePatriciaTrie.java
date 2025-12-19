@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie.patricia;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.ethereum.trie.CommitVisitor;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
@@ -232,21 +233,14 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
             .map(e -> new UpdateEntry<>(bytesToPath(e.getKey()), e.getValue()))
             .toList();
 
-    // Group updates by first nibble to process each branch child independently
-    final Map<Byte, List<UpdateEntry<V>>> groupedUpdates = groupUpdatesByNibble(entries, 0);
-
-    // Wrap the root branch to allow concurrent child updates
-    final BranchWrapper rootWrapper = new BranchWrapper((BranchNode<V>) root);
-
-    // Process all branch children, potentially in parallel
-    processGroupsAtBranch(
-        rootWrapper,
-        Bytes.EMPTY,
-        groupedUpdates,
-        shouldCommit ? Optional.of(commitCache) : Optional.empty());
-
-    // Apply all child updates to create the new root
-    this.root = rootWrapper.applyUpdates();
+    // Process the root branch and get the new root
+    this.root =
+        processNode(
+            root,
+            Bytes.EMPTY,
+            0,
+            entries,
+            shouldCommit ? Optional.of(commitCache) : Optional.empty());
 
     // Persist all nodes to storage if committing
     if (maybeNodeUpdater.isPresent()) {
@@ -256,25 +250,66 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Processes update groups at a branch node, parallelizing large groups.
+   * Processes a node with a list of updates. This is the unified entry point for both root-level
+   * and recursive processing. Dispatches based on node type.
    *
-   * <p>Strategy:
-   *
-   * <ul>
-   *   <li>Groups with >= NCPU updates: process in parallel (if multiple groups exist)
-   *   <li>Groups with < NCPU updates: process sequentially in the calling thread
-   * </ul>
-   *
-   * @param wrapper the branch wrapper to update
-   * @param location the current location in the trie
-   * @param groupedUpdates map of nibble -> list of updates for that branch child
+   * @param node the node to update
+   * @param location the location of the node
+   * @param depth the current depth in the trie
+   * @param updates the updates to apply
    * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated node
    */
-  private void processGroupsAtBranch(
-      final BranchWrapper wrapper,
+  private Node<V> processNode(
+      final Node<V> node,
       final Bytes location,
-      final Map<Byte, List<UpdateEntry<V>>> groupedUpdates,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
+
+    // Load the node if it's a lazy reference
+    final Node<V> loadedNode = loadNode(node);
+
+    // Dispatch based on node type
+    if (loadedNode instanceof BranchNode<V> branch) {
+      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    } else if (loadedNode instanceof ExtensionNode<V> ext) {
+      return handleExtension(ext, location, depth, updates, maybeCommitCache);
+    } else if (loadedNode instanceof LeafNode<V> leaf) {
+      return handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
+    } else if (loadedNode instanceof NullNode<V>) {
+      return handleNullNode(location, depth, updates, maybeCommitCache);
+    } else {
+      // Unknown node type: fallback to sequential processing
+      return applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
+    }
+  }
+
+  /**
+   * Handles updates for a branch node by recursively processing its children. This is the key
+   * recursion point for parallel processing.
+   *
+   * @param branchNode the branch node to update
+   * @param location the location of the branch node
+   * @param depth the current depth in the trie
+   * @param updates the updates to apply
+   * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated branch node
+   */
+  private Node<V> handleBranchNode(
+      final BranchNode<V> branchNode,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
+
+    final int pathDepth = location.size();
+
+    // Group updates by next nibble to distribute across branch children
+    final Map<Byte, List<UpdateEntry<V>>> groupedUpdates = groupUpdatesByNibble(updates, pathDepth);
+
+    // Wrap the branch to allow concurrent child updates
+    final BranchWrapper branchWrapper = new BranchWrapper(branchNode);
 
     // Partition groups into large (parallel) and small (sequential)
     final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
@@ -288,73 +323,54 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);
 
     // Submit large groups to thread pool
-    final List<Future<?>> largeGroupFutures = new ArrayList<>();
+    final List<Future<?>> futures = new ArrayList<>();
     if (!largeGroups.isEmpty()) {
       for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : largeGroups.entrySet()) {
+        final byte nibble = entry.getKey();
+        final List<UpdateEntry<V>> childUpdates = entry.getValue();
+        final Bytes childLocation = Bytes.concatenate(location, Bytes.of(nibble));
+
         Future<?> future =
             FORK_JOIN_POOL.submit(
-                () ->
-                    processGroup(
-                        wrapper,
-                        entry.getKey(),
-                        Bytes.concatenate(location, Bytes.of(entry.getKey())),
-                        entry.getValue(),
-                        maybeCommitCache));
-        largeGroupFutures.add(future);
+                () -> {
+                  final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
+                  final Node<V> updatedChild =
+                      processNode(
+                          currentChild, childLocation, depth, childUpdates, maybeCommitCache);
+                  branchWrapper.setChild(nibble, updatedChild);
+                });
+        futures.add(future);
       }
     }
 
     // Process small groups sequentially in current thread
     for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : smallGroups.entrySet()) {
       final byte nibble = entry.getKey();
-      final List<UpdateEntry<V>> updates = entry.getValue();
+      final List<UpdateEntry<V>> childUpdates = entry.getValue();
       final Bytes childLocation = Bytes.concatenate(location, Bytes.of(nibble));
-      processGroup(wrapper, nibble, childLocation, updates, maybeCommitCache);
+
+      final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
+      final Node<V> updatedChild =
+          processNode(currentChild, childLocation, depth, childUpdates, maybeCommitCache);
+      branchWrapper.setChild(nibble, updatedChild);
     }
 
     // Wait for all parallel tasks to complete
-    for (final Future<?> future : largeGroupFutures) {
+    for (final Future<?> future : futures) {
       try {
         future.get();
       } catch (InterruptedException | ExecutionException e) {
-        // Cancel all remaining tasks on failure
-        largeGroupFutures.forEach(f -> f.cancel(true));
+        futures.forEach(f -> f.cancel(true));
         Thread.currentThread().interrupt();
-        throw new RuntimeException("Error processing large groups in parallel", e);
+        throw new RuntimeException("Error processing branch children in parallel", e);
       }
     }
-  }
 
-  /**
-   * Processes a single group of updates for a specific branch child. Dispatches to appropriate
-   * handler based on node type.
-   *
-   * @param parentWrapper the parent branch wrapper
-   * @param nibbleIndex the child index (0-15)
-   * @param location the location of the child node
-   * @param updates the updates to apply to this child
-   * @param maybeCommitCache optional commit cache for storing nodes
-   */
-  private void processGroup(
-      final BranchWrapper parentWrapper,
-      final byte nibbleIndex,
-      final Bytes location,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+    // Apply all child updates
+    final Node<V> newBranch = branchWrapper.applyUpdates();
+    commitOrHashNode(newBranch, location, maybeCommitCache);
 
-    // Load the current child node (may be lazy-loaded)
-    final Node<V> currentNode = loadNode(parentWrapper.getPendingChildren().get(nibbleIndex));
-
-    // Dispatch based on node type
-    if (currentNode instanceof ExtensionNode<V> ext) {
-      handleExtension(parentWrapper, nibbleIndex, ext, location, updates, maybeCommitCache);
-    } else if (currentNode instanceof BranchNode<V> branch) {
-      final Node<V> newBranch = handleBranch(branch, location, updates, maybeCommitCache);
-      parentWrapper.setChild(nibbleIndex, newBranch);
-    } else {
-      // LeafNode or NullNode: process sequentially
-      handleOtherNode(parentWrapper, nibbleIndex, currentNode, location, updates, maybeCommitCache);
-    }
+    return newBranch;
   }
 
   /**
@@ -362,139 +378,171 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * the child. Otherwise, fall back to sequential processing (the extension may need
    * restructuring).
    *
-   * @param parentWrapper the parent branch wrapper
-   * @param nibbleIndex the child index in the parent
    * @param extensionNode the extension node to update
    * @param location the location of the extension node
+   * @param depth the current depth in the trie
    * @param updates the updates to apply
    * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated extension or restructured node
    */
-  private void handleExtension(
-      final BranchWrapper parentWrapper,
-      final byte nibbleIndex,
+  private Node<V> handleExtension(
       final ExtensionNode<V> extensionNode,
       final Bytes location,
+      final int depth,
       final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
 
     final Bytes extensionPath = extensionNode.getPath();
-    final int depth = location.size();
+    final int pathDepth = location.size();
 
     // Check if all updates pass through this extension
-    if (!allUpdatesMatchExtension(updates, depth, extensionPath)) {
+    if (!allUpdatesMatchExtension(updates, pathDepth, extensionPath)) {
       // Updates diverge: must restructure, use sequential processing
-      handleOtherNode(
-          parentWrapper, nibbleIndex, extensionNode, location, updates, maybeCommitCache);
-      return;
+      return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
     }
 
     // All updates continue past extension: process child node
     final Bytes newLocation = Bytes.concatenate(location, extensionPath);
-    final Node<V> childNode = loadNode(extensionNode.getChild());
+    final Node<V> childNode = extensionNode.getChild();
 
-    final Node<V> newChild;
-    if (childNode instanceof BranchNode<V> branch) {
-      // Child is branch: continue parallel processing
-      newChild = handleBranch(branch, newLocation, updates, maybeCommitCache);
-    } else {
-      // Child is leaf/null: process sequentially
-      newChild = applyUpdatesSequentially(childNode, newLocation, updates, maybeCommitCache);
-    }
+    final Node<V> newChild =
+        processNode(
+            childNode, newLocation, depth + extensionPath.size(), updates, maybeCommitCache);
 
     // Create new extension with updated child
     final Node<V> newExtension = extensionNode.replaceChild(newChild);
     commitOrHashNode(newExtension, location, maybeCommitCache);
-    parentWrapper.setChild(nibbleIndex, newExtension);
+
+    return newExtension;
   }
 
   /**
-   * Handles updates for a branch node by recursively processing its children. This is the key
-   * recursion point for parallel processing.
+   * Handles updates for a leaf node. If there are enough updates that diverge, builds a branch
+   * structure incorporating the existing leaf, then processes in parallel.
    *
-   * @param branchNode the branch node to update
-   * @param location the location of the branch node
-   * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
-   * @return the updated branch node
-   */
-  private Node<V> handleBranch(
-      final BranchNode<V> branchNode,
-      final Bytes location,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
-
-    final int depth = location.size();
-
-    // Group updates by next nibble to distribute across branch children
-    final Map<Byte, List<UpdateEntry<V>>> childGroups = groupUpdatesByNibble(updates, depth);
-    final BranchWrapper branchWrapper = new BranchWrapper(branchNode);
-
-    // Recursively process child groups (potentially in parallel)
-    processGroupsAtBranch(branchWrapper, location, childGroups, maybeCommitCache);
-
-    // Apply all child updates
-    final Node<V> newBranch = branchWrapper.applyUpdates();
-    commitOrHashNode(newBranch, location, maybeCommitCache);
-    return newBranch;
-  }
-
-  /**
-   * Handles updates for leaf or null nodes using sequential processing. These nodes cannot be
-   * parallelized further.
-   *
-   * @param wrapper the parent branch wrapper
-   * @param nibbleIndex the child index in the parent
-   * @param node the node to update
+   * @param leaf the leaf node to update
    * @param location the location of the node
+   * @param depth the current depth in the trie
    * @param updates the updates to apply
    * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated node (may be a branch if expanded)
    */
-  private void handleOtherNode(
-      final BranchWrapper wrapper,
-      final byte nibbleIndex,
-      final Node<V> node,
+  private Node<V> handleLeafNode(
+      final LeafNode<V> leaf,
       final Bytes location,
+      final int depth,
       final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
 
-    final Node<V> updatedNode = applyUpdatesSequentially(node, location, updates, maybeCommitCache);
-    wrapper.setChild(nibbleIndex, updatedNode);
-  }
+    final int pathDepth = location.size();
 
-  /**
-   * Applies updates sequentially using the visitor pattern. This is the fallback for cases where
-   * parallel processing isn't beneficial.
-   *
-   * @param node the starting node
-   * @param location the location of the node
-   * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
-   * @return the updated node
-   */
-  private Node<V> applyUpdatesSequentially(
-      final Node<V> node,
-      final Bytes location,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
-
-    final int pathOffset = location.size();
-    Node<V> updatedNode = node;
-
-    // Apply each update using the visitor pattern
-    for (UpdateEntry<V> entry : updates) {
-      final Bytes remainingPath = entry.path.slice(pathOffset);
-      final PathNodeVisitor<V> visitor =
-          entry.value.isPresent() ? getPutVisitor(entry.value.get()) : getRemoveVisitor();
-      updatedNode = updatedNode.accept(visitor, remainingPath);
+    // Check if parallel processing would be beneficial
+    if (updates.size() >= NCPU && shouldBuildBranchStructure(updates, pathDepth)) {
+      // Build a branch incorporating the leaf, then process updates
+      final BranchNode<V> branch = buildBranchFromLeaf(leaf);
+      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
     }
 
-    commitOrHashNode(updatedNode, location, maybeCommitCache);
-    return updatedNode;
+    // Sequential processing for small update sets or non-diverging updates
+    return applyUpdatesSequentially(leaf, location, updates, maybeCommitCache);
   }
 
   /**
-   * Checks if all updates in the list match the given extension path. An update matches if its path
-   * at the given depth starts with the extension path.
+   * Handles updates for a null node (empty position). If there are enough updates that diverge,
+   * builds a branch structure directly, then processes in parallel.
+   *
+   * @param location the location of the node
+   * @param depth the current depth in the trie
+   * @param updates the updates to apply
+   * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated node (may be a branch if expanded)
+   */
+  private Node<V> handleNullNode(
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
+
+    final int pathDepth = location.size();
+
+    // Check if parallel processing would be beneficial
+    if (updates.size() >= NCPU && shouldBuildBranchStructure(updates, pathDepth)) {
+      // Build an empty branch, then process updates
+      final BranchNode<V> branch = buildEmptyBranch();
+      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+    }
+
+    // Sequential processing for small update sets or non-diverging updates
+    return applyUpdatesSequentially(NullNode.instance(), location, updates, maybeCommitCache);
+  }
+
+  /**
+   * Determines if updates should be processed by building a branch structure. Returns true if
+   * updates diverge at the current depth (have different nibbles).
+   *
+   * @param updates the updates to check
+   * @param depth the current depth
+   * @return true if a branch structure would be beneficial
+   */
+  private boolean shouldBuildBranchStructure(final List<UpdateEntry<V>> updates, final int depth) {
+    return countDistinctNibbles(updates, depth) > 1;
+  }
+
+  /**
+   * Counts the number of distinct nibbles at the specified depth across all updates.
+   *
+   * @param updates the updates to analyze
+   * @param depth the depth at which to examine nibbles
+   * @return the count of distinct nibbles
+   */
+  private long countDistinctNibbles(final List<UpdateEntry<V>> updates, final int depth) {
+    return updates.stream()
+        .filter(entry -> entry.path.size() > depth)
+        .map(entry -> entry.getNibble(depth))
+        .distinct()
+        .count();
+  }
+
+  /**
+   * Builds a branch structure from a leaf node, incorporating it into the appropriate child.
+   *
+   * @param leaf the existing leaf node to incorporate
+   * @return a new branch node with the leaf incorporated
+   */
+  private BranchNode<V> buildBranchFromLeaf(final LeafNode<V> leaf) {
+    final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+    Optional<V> branchValue = Optional.empty();
+
+    final Bytes leafPath = leaf.getPath();
+
+    if (leafPath.get(0) == CompactEncoding.LEAF_TERMINATOR) {
+      // Leaf represents a value at this exact location
+      branchValue = leaf.getValue();
+    } else {
+      // Leaf continues deeper: place it in appropriate child
+      final byte leafNibble = leafPath.get(0);
+      final Bytes remainingPath = leafPath.slice(1);
+
+      // Create a new leaf with the remaining path
+      children.set(
+          leafNibble, nodeFactory.createLeaf(remainingPath, leaf.getValue().orElseThrow()));
+    }
+
+    return (BranchNode<V>) nodeFactory.createBranch(children, branchValue);
+  }
+
+  /**
+   * Builds an empty branch structure (16 null children, no value).
+   *
+   * @return a new empty branch node
+   */
+  private BranchNode<V> buildEmptyBranch() {
+    final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+    return (BranchNode<V>) nodeFactory.createBranch(children, Optional.empty());
+  }
+
+  /**
+   * Checks if all updates in the list match the given extension path.
    *
    * @param updates the updates to check
    * @param depth the current depth in the trie
@@ -518,8 +566,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Groups updates by their nibble at the specified depth. Returns a map where keys are nibbles
-   * (0-15) and values are lists of updates.
+   * Groups updates by their nibble at the specified depth.
    *
    * @param updates the updates to group
    * @param depth the depth at which to extract the nibble
@@ -531,9 +578,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Commits or hashes a node depending on whether we're committing to storage. If committing,
-   * stores the node in the commit cache for later persistence. If not committing, just computes the
-   * hash.
+   * Commits or hashes a node depending on whether we're committing to.
    *
    * @param node the node to commit or hash
    * @param location the storage location of the node
@@ -542,20 +587,46 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   private void commitOrHashNode(
       final Node<V> node, final Bytes location, final Optional<CommitCache> maybeCommitCache) {
     if (maybeCommitCache.isPresent()) {
-      // Store in commit cache for later persistence
       node.accept(
           location,
           new CommitVisitor<>(
               (loc, hash, value) -> maybeCommitCache.get().store(loc, hash, value)));
     } else {
-      // Just compute hash (triggers lazy computation if needed)
       Objects.requireNonNull(node.getHash());
     }
   }
 
   /**
-   * Stores the root node and resets it to a lazy-loaded reference. This saves memory by not keeping
-   * the full tree structure in memory.
+   * Applies updates sequentially using the visitor pattern.
+   *
+   * @param node the starting node
+   * @param location the location of the node
+   * @param updates the updates to apply
+   * @param maybeCommitCache optional commit cache for storing nodes
+   * @return the updated node
+   */
+  private Node<V> applyUpdatesSequentially(
+      final Node<V> node,
+      final Bytes location,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
+
+    final int pathOffset = location.size();
+    Node<V> updatedNode = node;
+
+    for (UpdateEntry<V> entry : updates) {
+      final Bytes remainingPath = entry.path.slice(pathOffset);
+      final PathNodeVisitor<V> visitor =
+          entry.value.isPresent() ? getPutVisitor(entry.value.get()) : getRemoveVisitor();
+      updatedNode = updatedNode.accept(visitor, remainingPath);
+    }
+
+    commitOrHashNode(updatedNode, location, maybeCommitCache);
+    return updatedNode;
+  }
+
+  /**
+   * Stores the root node and resets it to a lazy-loaded reference.
    *
    * @param nodeUpdater the updater to persist the root node
    */
@@ -563,7 +634,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final Bytes32 rootHash = root.getHash();
     nodeUpdater.store(Bytes.EMPTY, rootHash, root.getEncodedBytes());
 
-    // Reset root to lazy-loaded reference (or null if empty)
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
@@ -577,29 +647,32 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the loaded node
    */
   private Node<V> loadNode(final Node<V> node) {
-    return node.accept(
-        new PathNodeVisitor<V>() {
-          @Override
-          public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
-            return extensionNode;
-          }
+    if (node instanceof StoredNode) {
+      return node.accept(
+          new PathNodeVisitor<V>() {
+            @Override
+            public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+              return extensionNode;
+            }
 
-          @Override
-          public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
-            return branchNode;
-          }
+            @Override
+            public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
+              return branchNode;
+            }
 
-          @Override
-          public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
-            return leafNode;
-          }
+            @Override
+            public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+              return leafNode;
+            }
 
-          @Override
-          public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
-            return nullNode;
-          }
-        },
-        Bytes.EMPTY);
+            @Override
+            public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
+              return nullNode;
+            }
+          },
+          Bytes.EMPTY);
+    }
+    return node;
   }
 
   /**
@@ -607,102 +680,50 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    *
    * @param path the full nibble path to the key
    * @param value optional value (empty for removes, present for puts)
-   * @param <V> the value type
    */
   private record UpdateEntry<V>(Bytes path, Optional<V> value) {
-    /**
-     * Gets the nibble at the specified index, or 0 if index is out of bounds.
-     *
-     * @param index the nibble index
-     * @return the nibble value (0-15)
-     */
     byte getNibble(final int index) {
       return index >= path.size() ? 0 : path.get(index);
     }
   }
 
-  /**
-   * Thread-safe wrapper for a BranchNode that allows concurrent child updates. Maintains a
-   * synchronized list of pending child nodes.
-   */
+  /** Thread-safe wrapper for a BranchNode that allows concurrent child updates. */
   private class BranchWrapper {
     private final BranchNode<V> originalBranch;
     private final List<Node<V>> pendingChildren;
 
-    /**
-     * Creates a wrapper for the given branch node.
-     *
-     * @param branch the branch node to wrap
-     */
     BranchWrapper(final BranchNode<V> branch) {
       this.originalBranch = branch;
       this.pendingChildren = Collections.synchronizedList(new ArrayList<>(branch.getChildren()));
     }
 
-    /**
-     * Gets the list of pending child nodes.
-     *
-     * @return the synchronized list of children
-     */
     List<Node<V>> getPendingChildren() {
       return pendingChildren;
     }
 
-    /**
-     * Sets a child node at the specified index. Thread-safe due to synchronized list.
-     *
-     * @param index the child index (0-15)
-     * @param child the new child node
-     */
     void setChild(final byte index, final Node<V> child) {
       pendingChildren.set(index, child);
     }
 
-    /**
-     * Applies all pending child updates to create a new branch node.
-     *
-     * @return the new branch node with updated children
-     */
     Node<V> applyUpdates() {
       return originalBranch.replaceAllChildren(pendingChildren, true);
     }
   }
 
-  /**
-   * Thread-safe cache for node data during parallel commit operations. Accumulates all node updates
-   * and flushes them to storage atomically.
-   */
+  /** Thread-safe cache for node data during parallel commit operations. */
   private static class CommitCache {
     private final Map<Bytes, NodeData> cache = new ConcurrentHashMap<>();
 
-    /**
-     * Stores node data in the cache.
-     *
-     * @param location the storage location
-     * @param hash the node hash
-     * @param encodedBytes the encoded node bytes
-     */
     void store(final Bytes location, final Bytes32 hash, final Bytes encodedBytes) {
       cache.put(location, new NodeData(hash, encodedBytes));
     }
 
-    /**
-     * Flushes all cached node data to the provided node updater.
-     *
-     * @param nodeUpdater the updater to persist nodes to storage
-     */
     void flushTo(final NodeUpdater nodeUpdater) {
       cache.forEach(
           (location, nodeData) ->
               nodeUpdater.store(location, nodeData.hash, nodeData.encodedBytes));
     }
 
-    /**
-     * Simple data holder for node information.
-     *
-     * @param hash the node hash
-     * @param encodedBytes the encoded node bytes
-     */
     private record NodeData(Bytes32 hash, Bytes encodedBytes) {}
   }
 }
