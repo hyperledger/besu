@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -280,9 +281,14 @@ class ParallelBlockTransactionProcessorTest {
                 Optional.empty(),
                 Optional.empty());
 
-    assertTrue(
-        maybeResult.isEmpty(),
-        "Expected empty result so the block processor re-executes the transaction");
+    if (variant == ProcessorVariant.BAL) {
+      assertFalse(maybeResult.isEmpty(), "Expected non-empty result for the BAL variant");
+      assertTrue(maybeResult.get().getStatus() == TransactionProcessingResult.Status.FAILED);
+    } else {
+      assertTrue(
+          maybeResult.isEmpty(),
+          "Expected empty result so the block processor re-executes the transaction");
+    }
   }
 
   @Test
