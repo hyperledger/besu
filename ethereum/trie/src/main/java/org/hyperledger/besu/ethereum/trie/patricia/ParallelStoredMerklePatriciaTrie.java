@@ -434,7 +434,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
           final List<UpdateEntry<V>> updates,
           final Optional<CommitCache> maybeCommitCache) {
     // Check if parallel processing would be beneficial
-    if (updates.size() >= NCPU) {
+    if (!updates.isEmpty()) {
       // Build a branch incorporating the leaf, then process updates
       final BranchNode<V> branch = buildBranchFromLeaf(leaf);
       return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
@@ -459,7 +459,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
           final Optional<CommitCache> maybeCommitCache) {
 
     // Check if parallel processing would be beneficial
-    if (updates.size() >= NCPU) {
+    if (!updates.isEmpty()) {
       // Build an empty branch, then process updates
       final BranchNode<V> branch = buildEmptyBranch();
       return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
