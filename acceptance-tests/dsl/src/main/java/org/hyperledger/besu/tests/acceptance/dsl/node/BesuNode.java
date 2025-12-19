@@ -50,6 +50,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins.PluginsRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.io.File;
@@ -452,7 +453,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
               new TxPoolRequestFactory(web3jService),
               new DebugRequestFactory(web3jService),
               websocketService,
-              loginRequestFactory());
+              loginRequestFactory(),
+              new PluginsRequestFactory(web3jService));
     }
 
     return nodeRequests;
