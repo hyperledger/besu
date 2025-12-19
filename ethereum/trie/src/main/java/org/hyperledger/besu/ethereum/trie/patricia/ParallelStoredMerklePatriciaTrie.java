@@ -187,65 +187,32 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       // Ensure root is fully loaded (not a lazy StoredNode reference)
       this.root = loadNode(root);
 
-      if (root instanceof BranchNode<V>) {
-        // Root is a branch node: parallel processing is possible
-        processInParallel(maybeNodeUpdater);
-      } else {
-        // Root is leaf, extension, or null: process sequentially
-        processSequentially(maybeNodeUpdater);
+      // Convert pending updates to UpdateEntry objects with nibble paths
+      final List<UpdateEntry<V>> entries =
+              pendingUpdates.entrySet().stream()
+                      .map(e -> new UpdateEntry<>(bytesToPath(e.getKey()), e.getValue()))
+                      .toList();
+
+
+      final CommitCache commitCache = new CommitCache();
+      final boolean shouldCommit = maybeNodeUpdater.isPresent();
+
+      this.root = processNode(
+              root,
+              Bytes.EMPTY,
+              0,
+              entries,
+              shouldCommit ? Optional.of(commitCache) : Optional.empty());
+
+      // Persist all nodes to storage if committing
+      if (maybeNodeUpdater.isPresent()) {
+        commitCache.flushTo(maybeNodeUpdater.get());
+        storeAndResetRoot(maybeNodeUpdater.get());
       }
+
     } finally {
       // Always clear pending updates after processing
       pendingUpdates.clear();
-    }
-  }
-
-  /**
-   * Processes updates sequentially using the parent class's implementation.
-   *
-   * @param maybeNodeUpdater optional node updater for persisting changes
-   */
-  private void processSequentially(final Optional<NodeUpdater> maybeNodeUpdater) {
-    pendingUpdates.forEach(
-        (key, value) -> {
-          if (value.isPresent()) {
-            super.put(key, value.get());
-          } else {
-            super.remove(key);
-          }
-        });
-    maybeNodeUpdater.ifPresent(super::commit);
-  }
-
-  /**
-   * Processes updates in parallel by distributing work across branch children. Creates a commit
-   * cache for thread-safe storage updates when committing.
-   *
-   * @param maybeNodeUpdater optional node updater for persisting changes
-   */
-  private void processInParallel(final Optional<NodeUpdater> maybeNodeUpdater) {
-    final CommitCache commitCache = new CommitCache();
-    final boolean shouldCommit = maybeNodeUpdater.isPresent();
-
-    // Convert pending updates to UpdateEntry objects with nibble paths
-    final List<UpdateEntry<V>> entries =
-        pendingUpdates.entrySet().stream()
-            .map(e -> new UpdateEntry<>(bytesToPath(e.getKey()), e.getValue()))
-            .toList();
-
-    // Process the root branch and get the new root
-    this.root =
-        processNode(
-            root,
-            Bytes.EMPTY,
-            0,
-            entries,
-            shouldCommit ? Optional.of(commitCache) : Optional.empty());
-
-    // Persist all nodes to storage if committing
-    if (maybeNodeUpdater.isPresent()) {
-      commitCache.flushTo(maybeNodeUpdater.get());
-      storeAndResetRoot(maybeNodeUpdater.get());
     }
   }
 
@@ -271,18 +238,15 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final Node<V> loadedNode = loadNode(node);
 
     // Dispatch based on node type
-    if (loadedNode instanceof BranchNode<V> branch) {
-      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
-    } else if (loadedNode instanceof ExtensionNode<V> ext) {
-      return handleExtension(ext, location, depth, updates, maybeCommitCache);
-    } else if (loadedNode instanceof LeafNode<V> leaf) {
-      return handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
-    } else if (loadedNode instanceof NullNode<V>) {
-      return handleNullNode(location, depth, updates, maybeCommitCache);
-    } else {
-      // Unknown node type: fallback to sequential processing
-      return applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
-    }
+      return switch (loadedNode) {
+          case BranchNode<V> branch -> handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+          case ExtensionNode<V> ext -> handleExtension(ext, location, depth, updates, maybeCommitCache);
+          case LeafNode<V> leaf -> handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
+          case NullNode<V> ignored -> handleNullNode(location, depth, updates, maybeCommitCache);
+          case null, default ->
+              // Unknown node type: fallback to sequential processing
+                  applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
+      };
   }
 
   /**
