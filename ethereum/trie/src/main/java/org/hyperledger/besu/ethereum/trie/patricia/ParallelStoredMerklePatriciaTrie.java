@@ -460,21 +460,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Counts the number of distinct nibbles at the specified depth across all updates.
-   *
-   * @param updates the updates to analyze
-   * @param depth the depth at which to examine nibbles
-   * @return the count of distinct nibbles
-   */
-  private long countDistinctNibbles(final List<UpdateEntry<V>> updates, final int depth) {
-    return updates.stream()
-        .filter(entry -> entry.path.size() > depth)
-        .map(entry -> entry.getNibble(depth))
-        .distinct()
-        .count();
-  }
-
-  /**
    * Builds a branch structure from a leaf node, incorporating it into the appropriate child.
    *
    * @param leaf the existing leaf node to incorporate
