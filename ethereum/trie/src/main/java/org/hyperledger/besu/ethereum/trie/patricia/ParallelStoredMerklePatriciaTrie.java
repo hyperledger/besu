@@ -59,7 +59,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
 
   /** Shared executor service using ForkJoinPool with 2x cores for I/O-bound operations */
-  private static final ExecutorService FORK_JOIN_POOL = new ForkJoinPool(NCPU * 2);
+  private static final ExecutorService FORK_JOIN_POOL = new ForkJoinPool((int) (NCPU * 0.7 * 11));
 
   /** Pending updates accumulated between commits */
   private final Map<K, Optional<V>> pendingUpdates = new ConcurrentHashMap<>();
@@ -316,7 +316,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
         groupedUpdates.entrySet().stream()
             .collect(
                 Collectors.partitioningBy(
-                    entry -> entry.getValue().size() >= NCPU && groupedUpdates.size() > 1,
+                    entry -> entry.getValue().size() > 1 && groupedUpdates.size() > 1,
                     Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
     final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
