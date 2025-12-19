@@ -52,7 +52,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <K> the key type, must extend Bytes
  * @param <V> the value type
  */
-@SuppressWarnings({"rawtypes", "ThreadPriorityCheck", "unused"})
+@SuppressWarnings({"rawtypes", "ThreadPriorityCheck"})
 public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     extends StoredMerklePatriciaTrie<K, V> {
 
@@ -236,7 +236,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
     // Load the node if it's a lazy reference
     final Node<V> loadedNode = loadNode(node);
-
     // Dispatch based on node type
     return switch (loadedNode) {
       case BranchNode<V> branch ->
@@ -375,6 +374,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       return newExtension;
     }
 
+    // Updates diverge: check if parallelization is worth it
+    if (updates.size() > 1) {
+      // Expand extension into branch structure, process in parallel, then optimize
+      return expandExtensionToDivergencePoint(
+          extensionNode, extensionPath, location, depth, updates, maybeCommitCache);
+    }
+
     // Single update or not worth parallelizing: use sequential processing
     return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
   }
@@ -395,7 +401,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param maybeCommitCache optional commit cache
    * @return the processed and optimized node structure
    */
-  private Node<V> expandExtensionAndProcess(
+  private Node<V> expandExtensionToDivergencePoint(
       final ExtensionNode<V> extensionNode,
       final Bytes extensionPath,
       final Bytes location,
@@ -403,23 +409,65 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final List<UpdateEntry<V>> updates,
       final Optional<CommitCache> maybeCommitCache) {
 
-    // Build a chain of branches representing the extension path
-    // Example: extension path [3,5,7] becomes:
-    //   Branch (only child 3) -> Branch (only child 5) -> Branch (only child 7) -> original child
+    final int pathDepth = location.size();
 
-    Node<V> currentNode = extensionNode.getChild();
+    // Find the first position within the extension where updates diverge
+    int divergenceIndex = findDivergencePoint(updates, pathDepth, extensionPath);
 
-    // Build from the end backwards
-    for (int i = extensionPath.size() - 1; i >= 0; i--) {
-      final byte nibble = extensionPath.get(i);
+    // Split extension at divergence point
+    // Example: Extension[3,5,7,9], divergence at index 2 (position 7)
+    //   commonPrefix = [3,5]
+    //   divergingNibble = 7 (from extension)
+    //   remainingSuffix = [9]
+
+    final Bytes commonPrefix = extensionPath.slice(0, divergenceIndex);
+    final byte divergingNibble = extensionPath.get(divergenceIndex);
+    final Bytes remainingSuffix = extensionPath.slice(divergenceIndex + 1);
+
+    Node<V> originalChild = loadNode(extensionNode.getChild());
+
+    // Create continuation: Extension[D,E] → originalChild (or just originalChild if empty)
+    Node<V> continuation =
+        remainingSuffix.isEmpty()
+            ? originalChild
+            : nodeFactory.createExtension(remainingSuffix, originalChild);
+
+    // Create branch at divergence point with continuation as one child
+    final List<Node<V>> branchChildren =
+        new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+    branchChildren.set(divergingNibble, continuation);
+    Node<V> currentNode = nodeFactory.createBranch(branchChildren, Optional.empty());
+
+    for (int i = commonPrefix.size() - 1; i >= 0; i--) {
+      final byte nibble = commonPrefix.get(i);
       final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
       children.set(nibble, currentNode);
       currentNode = nodeFactory.createBranch(children, Optional.empty());
     }
 
-    // The processNode call and subsequent replaceAllChildren will automatically
-    // call maybeFlatten, which will recreate extensions where beneficial
+    // Now process all updates through this structure
+    // The branch will naturally handle grouping and parallelization
     return processNode(currentNode, location, depth, updates, maybeCommitCache);
+  }
+
+  private int findDivergencePoint(
+      final List<UpdateEntry<V>> updates, final int baseDepth, final Bytes extensionPath) {
+
+    for (int i = 0; i < extensionPath.size(); i++) {
+      final int absolutePosition = baseDepth + i;
+      final byte extensionNibble = extensionPath.get(i);
+
+      for (UpdateEntry<V> update : updates) {
+        if (update.path.size() <= absolutePosition) {
+          return i;
+        }
+        if (update.getNibble(absolutePosition) != extensionNibble) {
+          return i;
+        }
+      }
+    }
+
+    return extensionPath.size();
   }
 
   /**
