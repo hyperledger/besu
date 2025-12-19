@@ -182,7 +182,8 @@ public class SnapSyncChainDownloadPipelineFactory {
             protocolSchedule,
             ethContext,
             blockchain,
-            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled(),
+            metricsSystem);
 
     final StoreTTDAndSetChainHeadStep storeTTDAndSetChainHead =
         new StoreTTDAndSetChainHeadStep(

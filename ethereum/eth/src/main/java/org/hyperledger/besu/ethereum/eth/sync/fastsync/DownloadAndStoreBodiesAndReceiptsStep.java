@@ -17,18 +17,16 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -45,16 +43,19 @@ public class DownloadAndStoreBodiesAndReceiptsStep
   private final EthContext ethContext;
   private final MutableBlockchain blockchain;
   private final Boolean transactionIndexingEnabled;
+  private final MetricsSystem metricsSystem;
 
   public DownloadAndStoreBodiesAndReceiptsStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MutableBlockchain blockchain,
-      final Boolean transactionIndexingEnabled) {
+      final Boolean transactionIndexingEnabled,
+      final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.blockchain = blockchain;
     this.transactionIndexingEnabled = transactionIndexingEnabled;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -90,41 +91,8 @@ public class DownloadAndStoreBodiesAndReceiptsStep
   }
 
   private void getAndStoreReceipts(final List<BlockHeader> headers) {
-    final ArrayList<BlockHeader> originalBlockHeaders = new ArrayList<>(headers);
-    Map<BlockHeader, List<TransactionReceipt>> getReceipts = HashMap.newHashMap(headers.size());
-    do {
-      GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
-      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
-          ethContext.getPeerTaskExecutor().execute(task);
-      if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-          && getReceiptsResult.result().isPresent()) {
-        Map<BlockHeader, List<TransactionReceipt>> taskResult = getReceiptsResult.result().get();
-        taskResult
-            .keySet()
-            .forEach(
-                (blockHeader) ->
-                    getReceipts.merge(
-                        blockHeader,
-                        taskResult.get(blockHeader),
-                        (initialReceipts, newReceipts) -> {
-                          throw new IllegalStateException(
-                              "Unexpectedly got receipts for block header already populated!");
-                        }));
-        // remove all the headers we found receipts for
-        headers.removeAll(getReceipts.keySet());
-      }
-      // repeat until all headers have receipts
-    } while (!headers.isEmpty());
-    if (LOG.isTraceEnabled()) {
-      for (BlockHeader blockHeader : originalBlockHeaders) {
-        final List<TransactionReceipt> transactionReceipts = getReceipts.get(blockHeader);
-        LOG.atTrace()
-            .setMessage("{} receipts received for header {}")
-            .addArgument(transactionReceipts == null ? 0 : transactionReceipts.size())
-            .addArgument(blockHeader.getBlockHash())
-            .log();
-      }
-    }
-    blockchain.unsafeImportReceipts(getReceipts);
+    GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
+        .run()
+        .thenAccept(blockchain::unsafeImportReceipts);
   }
 }
