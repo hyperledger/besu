@@ -21,14 +21,13 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BackwardHeaderSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BlockHeaderSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadAndStoreBodiesAndReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadBackwardHeadersStep;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportHeadersStep;
@@ -178,25 +177,21 @@ public class SnapSyncChainDownloadPipelineFactory {
     final BlockHeaderSource headerSource =
         new BlockHeaderSource(blockchain, startBlock, pivotHeaderNumber, headerRequestSize);
 
-    final DownloadSyncBodiesStep downloadBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
-
-    final DownloadSyncReceiptsStep downloadReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
-
-    final ImportSnapSyncBlocksStep importBlocksStep =
-        new ImportSnapSyncBlocksStep(
-            protocolContext,
+    final DownloadAndStoreBodiesAndReceiptsStep downloadAndStoreBodiesAndReceiptsStep =
+        new DownloadAndStoreBodiesAndReceiptsStep(
+            protocolSchedule,
             ethContext,
-            syncState,
-            startBlock,
-            pivotHeader,
+            blockchain,
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
+
+    final StoreTTDAndSetChainHeadStep storeTTDAndSetChainHead =
+        new StoreTTDAndSetChainHeadStep(
+            protocolContext, ethContext, syncState, startBlock, pivotHeader);
 
     return PipelineBuilder.createPipelineFrom(
             "forwardHeaderSource",
             headerSource,
-            downloaderParallelism,
+            downloaderParallelism * 2,
             metricsSystem.createLabelledCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "forward_bodies_receipts_pipeline_processed_total",
@@ -205,8 +200,10 @@ public class SnapSyncChainDownloadPipelineFactory {
                 "action"),
             true,
             "forwardBodiesReceipts")
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlocks", importBlocksStep);
+        .thenProcessAsyncOrdered(
+            "downloadAndStoreBodiesAndReceipts",
+            downloadAndStoreBodiesAndReceiptsStep,
+            downloaderParallelism * 2)
+        .andFinishWith("storeTTDAndSetChainHead", storeTTDAndSetChainHead);
   }
 }

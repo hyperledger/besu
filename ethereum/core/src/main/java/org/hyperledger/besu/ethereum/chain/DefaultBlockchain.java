@@ -719,6 +719,46 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void unsafeImportSyncBodies(
+      final List<SyncBlock> blocks, final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final SyncBlock block : blocks) {
+      final BlockHeader header = block.getHeader();
+      final Hash blockHash = header.getHash();
+      final SyncBlockBody body = block.getBody();
+      updater.putBlockHash(header.getNumber(), blockHash);
+      updater.putSyncBlockBody(blockHash, body);
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+      }
+    }
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeImportReceipts(final Map<BlockHeader, List<TransactionReceipt>> receipts) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    receipts.forEach(
+        (header, receiptsForBlock) ->
+            updater.putTransactionReceipts(header.getBlockHash(), receiptsForBlock));
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeCalculateTTDAndSetChainHead(final List<BlockHeader> headers) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final BlockHeader header : headers) {
+      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
+      updater.putTotalDifficulty(header.getBlockHash(), totalDifficulty);
+    }
+    this.chainHeader = headers.getLast();
+    updater.setChainHead(chainHeader.getBlockHash());
+    updater.commit();
+  }
+
+  @Override
   public synchronized void unsafeSetChainHead(
       final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();

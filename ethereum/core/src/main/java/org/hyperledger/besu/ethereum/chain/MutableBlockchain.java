@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface MutableBlockchain extends Blockchain {
@@ -129,6 +130,23 @@ public interface MutableBlockchain extends Blockchain {
    */
   void unsafeImportSyncBodiesAndReceipts(
       List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
+
+  /**
+   * Import blocks during syncing.
+   *
+   * @param blocks The blocks to import
+   * @param indexTransactions Boolean whether to index transactions
+   */
+  void unsafeImportSyncBodies(List<SyncBlock> blocks, boolean indexTransactions);
+
+  /**
+   * Import receipts during syncing.
+   *
+   * @param receipts The receipts to import
+   */
+  void unsafeImportReceipts(Map<BlockHeader, List<TransactionReceipt>> receipts);
+
+  void unsafeCalculateTTDAndSetChainHead(List<BlockHeader> headers);
 
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
