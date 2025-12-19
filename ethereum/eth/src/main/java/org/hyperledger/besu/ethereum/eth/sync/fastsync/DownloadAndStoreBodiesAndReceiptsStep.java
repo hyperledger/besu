@@ -36,9 +36,6 @@ import org.slf4j.LoggerFactory;
 public class DownloadAndStoreBodiesAndReceiptsStep
     implements Function<List<BlockHeader>, CompletableFuture<List<BlockHeader>>> {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(DownloadAndStoreBodiesAndReceiptsStep.class);
-
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MutableBlockchain blockchain;
