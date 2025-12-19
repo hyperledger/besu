@@ -460,18 +460,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Determines if updates should be processed by building a branch structure. Returns true if
-   * updates diverge at the current depth (have different nibbles).
-   *
-   * @param updates the updates to check
-   * @param depth the current depth
-   * @return true if a branch structure would be beneficial
-   */
-  private boolean shouldBuildBranchStructure(final List<UpdateEntry<V>> updates, final int depth) {
-    return countDistinctNibbles(updates, depth) > 1;
-  }
-
-  /**
    * Counts the number of distinct nibbles at the specified depth across all updates.
    *
    * @param updates the updates to analyze
