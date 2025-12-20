@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 // ignore `signer` field used in execution-spec-tests
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
+class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -70,12 +70,13 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
   }
 
   /**
-   * Create code delegation.
+   * Create code delegation. Supports both "v" (legacy) and "yParity" (EIP-7702 spec) field names.
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
    * @param nonce the nonce
-   * @param v the recovery id
+   * @param v the recovery id (legacy field name)
+   * @param yParity the recovery id (EIP-7702 spec field name)
    * @param r the r value of the signature
    * @param s the s value of the signature
    * @return CodeDelegation
@@ -87,11 +88,12 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final String nonce,
       @JsonProperty("v") final String v,
-      @JsonProperty("yParity") final String yParity, // ← Add this parameter
+      @JsonProperty("yParity") final String yParity,
       @JsonProperty("r") final String r,
       @JsonProperty("s") final String s) {
 
-    // Support both "v" and "yParity" - prefer yParity if both provided
+    // Support both "v" and "yParity" field names for the recovery id
+    // Prefer yParity (EIP-7702 spec) over v (legacy) if both are provided
     final String recoveryId = (yParity != null) ? yParity : v;
 
     if (recoveryId == null) {
@@ -108,7 +110,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
             .createCodeDelegationSignature(
                 Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
                 Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(recoveryId).get(0))); // ← Use recoveryId instead of v
+                Bytes.fromHexStringLenient(recoveryId).get(0)));
   }
 
   @JsonProperty("chainId")
