@@ -959,8 +959,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            subStorageConfiguration.getMaxLayersToLoad(),
-            subStorageConfiguration.getTrieLogPruningWindowSize(),
+            subStorageConfiguration.getTrieLogRetentionLimit(),
+            subStorageConfiguration.getTrieLogPruningBatchSize(),
             isProofOfStake,
             metricsSystem);
     trieLogPruner.initialize();
