@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -139,6 +139,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(3L)
                     .build())
             .build();
 
@@ -180,6 +181,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(2L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(2L)
                     .build())
             .build();
 
@@ -203,6 +205,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(10L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(10L)
                     .build())
             .build();
 
@@ -226,6 +229,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(2L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(2L)
                     .build())
             .build();
 
@@ -250,6 +254,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(6L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(6L)
                     .build())
             .build();
 
@@ -275,6 +280,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(3L)
                     .build())
             .build();
 
@@ -285,7 +291,7 @@ class TrieLogHelperTest {
 
     final BonsaiWorldStateKeyValueStorage inMemoryWorldStateSpy = spy(inMemoryWorldState);
     // force a different value the second time the trie log count is called
-    when(inMemoryWorldStateSpy.streamTrieLogKeys(3L + DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE))
+    when(inMemoryWorldStateSpy.streamTrieLogKeys(3L + DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE))
         .thenCallRealMethod()
         .thenReturn(Stream.empty());
     assertThatThrownBy(
@@ -307,6 +313,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(511L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(511L)
                     .build())
             .build();
 
@@ -315,11 +322,11 @@ class TrieLogHelperTest {
             () ->
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("--bonsai-historical-block-limit minimum value is 512");
+        .hasMessage("retention limit minimum value is 512");
   }
 
   @Test
-  public void trieLogPruningWindowSizeShouldBePositive() {
+  public void trieLogPruningBatchSizeShouldBePositive() {
 
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
@@ -328,7 +335,8 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(512L)
                     .limitTrieLogsEnabled(true)
-                    .trieLogPruningWindowSize(0)
+                    .trieLogRetentionLimit(512L)
+                    .trieLogPruningBatchSize(0)
                     .build())
             .build();
 
@@ -337,11 +345,11 @@ class TrieLogHelperTest {
             () ->
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("--bonsai-trie-logs-pruning-window-size=0 must be greater than 0");
+        .hasMessage("--bonsai-trie-logs-pruning-batch-size=0 must be greater than 0");
   }
 
   @Test
-  public void trieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+  public void trieLogPruningBatchSizeShouldBeAboveRetentionLimit() {
     DataStorageConfiguration dataStorageConfiguration =
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
@@ -349,7 +357,8 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(512L)
                     .limitTrieLogsEnabled(true)
-                    .trieLogPruningWindowSize(512)
+                    .trieLogRetentionLimit(512L)
+                    .trieLogPruningBatchSize(512)
                     .build())
             .build();
 
@@ -359,7 +368,7 @@ class TrieLogHelperTest {
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
+            "--bonsai-trie-logs-pruning-batch-size=512 must be greater than retention limit=512");
   }
 
   @Test
@@ -372,6 +381,7 @@ class TrieLogHelperTest {
                 ImmutablePathBasedExtraStorageConfiguration.builder()
                     .maxLayersToLoad(3L)
                     .limitTrieLogsEnabled(true)
+                    .trieLogRetentionLimit(3L)
                     .build())
             .build();
 
