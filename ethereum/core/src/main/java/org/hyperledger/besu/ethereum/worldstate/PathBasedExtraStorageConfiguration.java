@@ -33,7 +33,8 @@ public interface PathBasedExtraStorageConfiguration {
   long DEFAULT_MAX_LAYERS_TO_LOAD = 512;
   boolean DEFAULT_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_TRIE_LOG_RETENTION_LIMIT = DEFAULT_MAX_LAYERS_TO_LOAD;
-  int DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
+  long DEFAULT_TRIE_LOG_RETENTION_LIMIT = 14_400; // 2 days at 12s block time
+  int DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE = 5_000;
   boolean DEFAULT_PARALLEL_TX_PROCESSING = true;
 
   @Value.Default
@@ -47,8 +48,13 @@ public interface PathBasedExtraStorageConfiguration {
   }
 
   @Value.Default
-  default int getTrieLogPruningWindowSize() {
-    return DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  default long getTrieLogRetentionLimit() {
+    return DEFAULT_TRIE_LOG_RETENTION_LIMIT;
+  }
+
+  @Value.Default
+  default int getTrieLogPruningBatchSize() {
+    return DEFAULT_TRIE_LOG_PRUNING_BATCH_SIZE;
   }
 
   @Value.Default
