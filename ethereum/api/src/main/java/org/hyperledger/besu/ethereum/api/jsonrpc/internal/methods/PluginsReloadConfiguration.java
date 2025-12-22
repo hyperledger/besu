@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,16 +17,18 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,22 +52,41 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
     try {
       final var maybePluginName = requestContext.getOptionalParameter(0, String.class);
 
-      final Collection<BesuPlugin> reloadPlugins;
+      final Map<String, BesuPlugin> reloadPluginsByName;
       if (maybePluginName.isPresent()) {
         final var pluginName = maybePluginName.get();
         if (!namedPlugins.containsKey(pluginName)) {
           LOG.error(
-              "Plugin cannot be reloaded because no plugin has been registered with specified name: {}.",
+              "Plugin cannot be reloaded because no plugin has been registered with specified name: {}",
               pluginName);
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), RpcErrorType.PLUGIN_NOT_FOUND);
         }
-        reloadPlugins = Collections.singleton(namedPlugins.get(pluginName));
+        reloadPluginsByName = Collections.singletonMap(pluginName, namedPlugins.get(pluginName));
       } else {
-        reloadPlugins = namedPlugins.values();
+        reloadPluginsByName = namedPlugins;
       }
 
-      reloadPlugins.forEach(this::reloadPluginConfig);
+      final var asyncReloads =
+          reloadPluginsByName.entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey, e -> asyncReloadPluginConfig(e.getKey(), e.getValue())));
+
+      try {
+        CompletableFuture.allOf(
+                asyncReloads.values().toArray(new CompletableFuture<?>[asyncReloads.size()]))
+            .get();
+      } catch (InterruptedException | ExecutionException e) {
+        // fill a detailed error message with the result of each plugin
+        final String errMsg =
+            asyncReloads.entrySet().stream()
+                .map(this::resultToString)
+                .collect(Collectors.joining(","));
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), new JsonRpcError(-32000, errMsg, null));
+      }
+
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (JsonRpcParameterException e) {
       return new JsonRpcErrorResponse(
@@ -73,17 +94,34 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
     }
   }
 
-  private void reloadPluginConfig(final BesuPlugin plugin) {
-    final String name = plugin.getName().orElseThrow();
-    LOG.info("Reloading plugin configuration: {}.", name);
-    final CompletableFuture<Void> future = plugin.reloadConfiguration();
-    future.whenComplete(
-        (unused, throwable) -> {
-          if (throwable != null) {
-            LOG.error("Failed to reload plugin {}", name, throwable);
-          } else {
-            LOG.info("Plugin {} has been reloaded.", name);
-          }
-        });
+  private CompletableFuture<Void> asyncReloadPluginConfig(
+      final String pluginName, final BesuPlugin plugin) {
+    LOG.info("Reloading plugin configuration: {}", pluginName);
+    return plugin
+        .reloadConfiguration()
+        .whenComplete(
+            (unused, throwable) -> {
+              if (throwable != null) {
+                LOG.error("Failed to reload plugin {}", pluginName, throwable);
+              } else {
+                LOG.info("Plugin {} has been reloaded successfully", pluginName);
+              }
+            });
+  }
+
+  private String resultToString(final Map.Entry<String, CompletableFuture<Void>> entry) {
+    final var pluginName = entry.getKey();
+    final var result = entry.getValue();
+    if (result.isCompletedExceptionally()) {
+      try {
+        result.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return pluginName + ":failure(interrupted)";
+      } catch (ExecutionException e) {
+        return pluginName + ":failure(" + e.getCause().getMessage() + ")";
+      }
+    }
+    return pluginName + ":success";
   }
 }

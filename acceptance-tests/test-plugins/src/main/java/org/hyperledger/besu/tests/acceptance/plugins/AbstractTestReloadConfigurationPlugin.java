@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,14 +33,27 @@ public abstract class AbstractTestReloadConfigurationPlugin implements BesuPlugi
   @Override
   public void register(final ServiceManager serviceManager) {
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
+
+    serviceManager
+        .getService(PicoCLIOptions.class)
+        .orElseThrow()
+        .addPicoCLIOptions("reload-conf" + pluginNum, this);
   }
+
+  protected abstract boolean shouldFail();
 
   @Override
   public void start() {}
 
   @Override
   public CompletableFuture<Void> reloadConfiguration() {
-    return CompletableFuture.runAsync(this::notifyConfigurationReloaded);
+    return CompletableFuture.runAsync(this::notifyConfigurationReloaded)
+        .thenAccept(
+            unused -> {
+              if (shouldFail()) {
+                throw new RuntimeException("Failed to reload configuration");
+              }
+            });
   }
 
   @Override

@@ -42,7 +42,9 @@ public class ReloadPluginConfig implements Transaction<String> {
       final Response<String> resp =
           node.plugins().reloadConfiguration(Optional.ofNullable(pluginName)).send();
       assertThat(resp).isNotNull();
-      assertThat(resp.hasError()).isFalse();
+      if (resp.hasError()) {
+        throw new RuntimeException(resp.getError().getMessage());
+      }
       return resp.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);

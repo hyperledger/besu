@@ -17,11 +17,20 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import com.google.auto.service.AutoService;
+import picocli.CommandLine;
 
 @AutoService(BesuPlugin.class)
 public class TestReloadConfigurationPlugin1 extends AbstractTestReloadConfigurationPlugin {
 
+  @CommandLine.Option(names = "--plugin-reload-conf1-fail")
+  boolean fail = false;
+
   public TestReloadConfigurationPlugin1() {
     super(1);
+  }
+
+  @Override
+  protected boolean shouldFail() {
+    return fail;
   }
 }
