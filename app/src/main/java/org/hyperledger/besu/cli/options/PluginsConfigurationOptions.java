@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME;
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME;
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
+import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
+import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_EXTERNAL_PLUGINS_ENABLED;
+import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_REQUESTED_PLUGINS_INFO;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 
@@ -30,38 +31,38 @@ import picocli.CommandLine;
 /** The Plugins options. */
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
 
-  @CommandLine.Option(
-      names = {DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
-      description = "Enables external plugins (default: ${DEFAULT-VALUE})",
-      hidden = true,
-      defaultValue = "true",
-      arity = "1")
-  private Boolean externalPluginsEnabled = true;
+  private static final String PLUGINS_OPTION_NAME = "--plugins";
+  private static final String CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME = "--plugin-continue-on-error";
+  private static final String PLUGINS_EXTERNAL_ENABLED_OPTION_NAME = "--Xplugins-external-enabled";
 
   @CommandLine.Option(
-      names = {DEFAULT_PLUGINS_OPTION_NAME},
+      names = {PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
+      description = "Enables external plugins (default: ${DEFAULT-VALUE})",
+      hidden = true)
+  private boolean externalPluginsEnabled = DEFAULT_EXTERNAL_PLUGINS_ENABLED;
+
+  @CommandLine.Option(
+      names = {PLUGINS_OPTION_NAME},
       description = "Comma-separated list of plugin names to load",
       split = ",",
       converter = PluginInfoConverter.class,
       arity = "1")
-  private List<PluginInfo> plugins;
+  private List<PluginInfo> plugins = DEFAULT_REQUESTED_PLUGINS_INFO;
 
   @CommandLine.Option(
-      names = {DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME},
+      names = {CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME},
       description =
-          "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})",
-      defaultValue = "false",
-      arity = "1")
-  private final Boolean continueOnPluginError = false;
+          "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})")
+  private boolean continueOnPluginError = DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
 
   /** Default Constructor. */
   public PluginsConfigurationOptions() {}
 
   @Override
   public PluginConfiguration toDomainObject() {
-    return new PluginConfiguration.Builder()
+    return ImmutablePluginConfiguration.builder()
         .externalPluginsEnabled(externalPluginsEnabled)
-        .requestedPlugins(plugins)
+        .requestedPluginsInfo(plugins)
         .continueOnPluginError(continueOnPluginError)
         .build();
   }
@@ -75,14 +76,14 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
     String errorMessage =
         String.format(
             "%s and %s option can only be used when %s is true",
-            DEFAULT_PLUGINS_OPTION_NAME,
-            DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
-            DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
+            PLUGINS_OPTION_NAME,
+            CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
+            PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         errorMessage,
         externalPluginsEnabled,
-        List.of(DEFAULT_PLUGINS_OPTION_NAME, DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME));
+        List.of(PLUGINS_OPTION_NAME, CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME));
   }
 
   @Override
@@ -99,18 +100,18 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   public static PluginConfiguration fromCommandLine(final CommandLine commandLine) {
     List<PluginInfo> plugins =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
+            commandLine, PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
     boolean externalPluginsEnabled =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
+            commandLine, PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
 
     boolean continueOnPluginError =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
+            commandLine, CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
 
-    return new PluginConfiguration.Builder()
-        .requestedPlugins(plugins)
+    return ImmutablePluginConfiguration.builder()
+        .requestedPluginsInfo(plugins)
         .externalPluginsEnabled(externalPluginsEnabled)
         .continueOnPluginError(continueOnPluginError)
         .build();

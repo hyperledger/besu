@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.BLOCK_NUMBERS_NOT_ASCENDING;
+import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET;
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.INVALID_NONCES;
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.INVALID_PRECOMPILE_ADDRESS;
 import static org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError.TIMESTAMPS_NOT_ASCENDING;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,14 +187,20 @@ public class BlockSimulationParameter {
 
   private Optional<BlockStateCallError> validateStateOverrides(
       final Set<Address> validPrecompileAddresses) {
+    Set<Address> targetAddresses = new HashSet<>();
     for (BlockStateCall call : blockStateCalls) {
       if (call.getStateOverrideMap().isPresent()) {
         var stateOverrideMap = call.getStateOverrideMap().get();
         for (Address stateOverride : stateOverrideMap.keySet()) {
           final StateOverride override = stateOverrideMap.get(stateOverride);
-          if (override.getMovePrecompileToAddress().isPresent()
-              && !validPrecompileAddresses.contains(stateOverride)) {
-            return Optional.of(INVALID_PRECOMPILE_ADDRESS);
+          if (override.getMovePrecompileToAddress().isPresent()) {
+            if (!validPrecompileAddresses.contains(stateOverride)) {
+              return Optional.of(INVALID_PRECOMPILE_ADDRESS);
+            }
+            Address target = override.getMovePrecompileToAddress().get();
+            if (!targetAddresses.add(target)) {
+              return Optional.of(DUPLICATED_PRECOMPILE_TARGET);
+            }
           }
         }
       }

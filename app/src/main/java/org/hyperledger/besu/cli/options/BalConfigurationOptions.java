@@ -33,6 +33,13 @@ public class BalConfigurationOptions {
   boolean balOptimizationEnabled = true;
 
   @CommandLine.Option(
+      names = {"--Xbal-perfect-parallelization-enabled"},
+      hidden = true,
+      description =
+          "Allows disabling BAL-based perfect parallelization even when BALs are present.")
+  boolean balPerfectParallelizationEnabled = true;
+
+  @CommandLine.Option(
       names = {"--Xbal-lenient-on-state-root-mismatch"},
       hidden = true,
       description =
@@ -65,6 +72,13 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for the BAL-computed state root.")
   private long balStateRootTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  @CommandLine.Option(
+      names = {"--Xbal-processing-timeout"},
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description = "Timeout in milliseconds when waiting for BAL transaction processing results.")
+  private long balProcessingTimeoutMs = Duration.ofSeconds(1).toMillis();
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -74,10 +88,12 @@ public class BalConfigurationOptions {
     return ImmutableBalConfiguration.builder()
         .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
+        .isPerfectParallelizationEnabled(balPerfectParallelizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
+        .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();
   }
 }
