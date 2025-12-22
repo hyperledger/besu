@@ -23,9 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -33,11 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.account.AccountState;
-import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
@@ -65,7 +58,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
-import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -234,16 +226,6 @@ public class BlockchainTestSubCommand implements Runnable {
     parentCommand.out.println("Considering " + test);
 
     final ProtocolContext context = spec.buildProtocolContext();
-
-    final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
-    final MutableWorldState worldState =
-        context
-            .getWorldStateArchive()
-            .getWorldState(
-                WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(
-                    genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
-            .orElseThrow();
-
     final ProtocolSchedule schedule =
         ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
             .getByName(spec.getNetwork());
@@ -298,8 +280,6 @@ public class BlockchainTestSubCommand implements Runnable {
 
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-
-        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
 
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
@@ -385,23 +365,6 @@ public class BlockchainTestSubCommand implements Runnable {
       results.recordFailure(test, failureReason);
     } else {
       results.recordPass();
-    }
-  }
-
-  void verifyJournaledEVMAccountCompatability(
-      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
-    EVM evm = protocolSpec.getEvm();
-    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-      if (worldState
-          .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-          .anyMatch(AccountState::isEmpty)) {
-        parentCommand.out.println("Journaled account configured and empty account detected");
-      }
-
-      if (EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0) {
-        parentCommand.out.println(
-            "Journaled account configured and fork prior to the merge specified");
-      }
     }
   }
 

@@ -99,6 +99,27 @@ public class UndoSet<V> implements Set<V>, Undoable {
     return delegate.contains(key);
   }
 
+  /**
+   * Check whether the set contains the specified element at a specific mark without modifying the
+   * set.
+   *
+   * @param key the element whose presence is to be tested
+   * @param mark the mark to evaluate against
+   * @return {@code true} if the element was present at the provided mark
+   */
+  public boolean contains(final Object key, final long mark) {
+    boolean present = delegate.contains(key);
+    for (int i = undoLog.size() - 1; i >= 0; i--) {
+      final UndoEntry<V> entry = undoLog.get(i);
+      if (entry.level > mark && key.equals(entry.value())) {
+        present = !entry.add;
+      } else if (entry.level <= mark) {
+        break;
+      }
+    }
+    return present;
+  }
+
   @Override
   public boolean add(final V key) {
     final boolean added = delegate.add(key);
