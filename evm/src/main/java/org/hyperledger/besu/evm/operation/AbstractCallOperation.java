@@ -187,7 +187,44 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
-    long cost = cost(frame, accountIsWarm);
+    final long stipend = gas(frame);
+    final long inputDataOffset = inputDataOffset(frame);
+    final long inputDataLength = inputDataLength(frame);
+    final long outputDataOffset = outputDataOffset(frame);
+    final long outputDataLength = outputDataLength(frame);
+    final Wei transferValue = value(frame);
+    final Address recipientAddress = address(frame);
+
+    final long staticCost =
+        gasCalculator()
+            .callOperationStaticGasCost(
+                frame,
+                stipend,
+                inputDataOffset,
+                inputDataLength,
+                outputDataOffset,
+                outputDataLength,
+                transferValue,
+                recipientAddress,
+                accountIsWarm);
+
+    if (frame.getRemainingGas() < staticCost) {
+      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    long cost =
+        gasCalculator()
+            .callOperationGasCost(
+                frame,
+                staticCost,
+                stipend,
+                inputDataOffset,
+                inputDataLength,
+                outputDataOffset,
+                outputDataLength,
+                transferValue,
+                recipientAddress,
+                accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -253,34 +290,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
-  }
-
-  /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
-   * @param accountIsWarm whether the contract being called is "warm" as per EIP-2929.
-   * @return the long
-   */
-  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
-    final long stipend = gas(frame);
-    final long inputDataOffset = inputDataOffset(frame);
-    final long inputDataLength = inputDataLength(frame);
-    final long outputDataOffset = outputDataOffset(frame);
-    final long outputDataLength = outputDataLength(frame);
-    final Address recipientAddress = address(frame);
-    GasCalculator gasCalculator = gasCalculator();
-
-    return gasCalculator.callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        value(frame),
-        recipientAddress,
-        accountIsWarm);
   }
 
   /**

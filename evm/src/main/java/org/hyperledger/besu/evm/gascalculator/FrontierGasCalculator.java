@@ -285,7 +285,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -307,6 +307,23 @@ public class FrontierGasCalculator implements GasCalculator {
     if (!transferValue.isZero()) {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
+
+    return cost;
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long staticCallCost,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm) {
+    long cost = staticCallCost;
 
     final Account recipient = frame.getWorldUpdater().get(recipientAddress);
     if (recipient == null) {
