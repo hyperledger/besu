@@ -56,7 +56,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.commit();
 
     final byte[] expectedKey =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(0)).toArrayUnsafe();
     final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
 
     assertThat(storedValue).isPresent();
@@ -76,14 +76,14 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.commit();
 
     final byte[] expectedKey =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(1)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(1)).toArrayUnsafe();
     final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
 
     assertThat(storedValue).isPresent();
     assertThat(Bytes.wrap(storedValue.get())).isEqualTo(accountValue);
 
     final byte[] genesisKey =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(0)).toArrayUnsafe();
     assertThat(storage.get(ACCOUNT_INFO_STATE, genesisKey)).isEmpty();
   }
 
@@ -100,7 +100,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.commit();
 
     final byte[] expectedKey =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(2)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(2)).toArrayUnsafe();
     final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
 
     assertThat(storedValue).isPresent();
@@ -125,9 +125,9 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.commit();
 
     final byte[] genesisKey =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(0)).toArrayUnsafe();
     final byte[] block1Key =
-        Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(1)).toArrayUnsafe();
+        Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(1)).toArrayUnsafe();
 
     final Optional<byte[]> genesisValue = storage.get(ACCOUNT_INFO_STATE, genesisKey);
     final Optional<byte[]> block1Value = storage.get(ACCOUNT_INFO_STATE, block1Key);
@@ -175,7 +175,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
 
     for (long blockNum = 0; blockNum <= 3; blockNum++) {
       final byte[] key =
-          Bytes.concatenate(accountHash, Bytes.ofUnsignedLong(blockNum)).toArrayUnsafe();
+          Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(blockNum)).toArrayUnsafe();
       final Optional<byte[]> value = storage.get(ACCOUNT_INFO_STATE, key);
       assertThat(value).as("Block " + blockNum + " should have stored value").isPresent();
       assertThat(Bytes.wrap(value.get())).isEqualTo(expectedValues[(int) blockNum]);

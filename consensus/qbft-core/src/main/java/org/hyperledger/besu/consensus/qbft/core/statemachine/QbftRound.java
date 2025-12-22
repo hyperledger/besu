@@ -43,6 +43,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -379,7 +380,7 @@ public class QbftRound {
   private SECPSignature createCommitSeal(final QbftBlock block) {
     final QbftBlock commitBlock = createCommitBlock(block);
     final Hash commitHash = commitBlock.getHash();
-    return nodeKey.sign(commitHash);
+    return nodeKey.sign(Bytes32.wrap(commitHash.getBytes()));
   }
 
   private QbftBlock createCommitBlock(final QbftBlock block) {

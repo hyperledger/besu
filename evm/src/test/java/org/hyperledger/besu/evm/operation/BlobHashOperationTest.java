@@ -52,7 +52,7 @@ class BlobHashOperationTest {
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
     assertThat(r.getHaltReason()).isNull();
-    verify(frame).pushStackItem(version0Hash.toBytes());
+    verify(frame).pushStackItem(version0Hash.getBytes());
   }
 
   @Test

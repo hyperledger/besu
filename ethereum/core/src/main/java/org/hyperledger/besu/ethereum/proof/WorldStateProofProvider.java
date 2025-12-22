@@ -63,12 +63,14 @@ public class WorldStateProofProvider {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
 
-    if (!worldStateStorageCoordinator.isWorldStateAvailable(worldStateRoot, null)) {
+    if (!worldStateStorageCoordinator.isWorldStateAvailable(
+        Bytes32.wrap(worldStateRoot.getBytes()), null)) {
       return Optional.empty();
     } else {
       final Hash accountHash = accountAddress.addressHash();
       final Proof<Bytes> accountProof =
-          newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+          newAccountStateTrie(Bytes32.wrap(worldStateRoot.getBytes()))
+              .getValueWithProof(accountHash.getBytes());
 
       return accountProof
           .getValue()
@@ -89,11 +91,13 @@ public class WorldStateProofProvider {
       final PmtStateTrieAccountValue account,
       final List<UInt256> accountStorageKeys) {
     final MerkleTrie<Bytes32, Bytes> storageTrie =
-        newAccountStorageTrie(accountHash, account.getStorageRoot());
+        newAccountStorageTrie(accountHash, Bytes32.wrap(account.getStorageRoot().getBytes()));
     final NavigableMap<UInt256, Proof<Bytes>> storageProofs =
         new TreeMap<>(Comparator.comparing(Bytes32::toHexString));
     accountStorageKeys.forEach(
-        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
+        key ->
+            storageProofs.put(
+                key, storageTrie.getValueWithProof(Bytes32.wrap(Hash.hash(key).getBytes()))));
     return storageProofs;
   }
 
@@ -107,7 +111,7 @@ public class WorldStateProofProvider {
   public List<Bytes> getAccountProofRelatedNodes(
       final Hash worldStateRoot, final Bytes32 accountHash) {
     final Proof<Bytes> accountProof =
-        newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+        newAccountStateTrie(Bytes32.wrap(worldStateRoot.getBytes())).getValueWithProof(accountHash);
     return accountProof.getProofRelatedNodes();
   }
 
@@ -184,7 +188,7 @@ public class WorldStateProofProvider {
     // reconstruct a part of the trie with the proof
     final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
     for (Bytes proof : proofs) {
-      proofsEntries.put(Hash.hash(proof), proof);
+      proofsEntries.put(Bytes32.wrap(Hash.hash(proof).getBytes()), proof);
     }
 
     if (keys.isEmpty()) {

@@ -31,6 +31,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class FutureRoundTest {
@@ -106,7 +107,10 @@ public class FutureRoundTest {
         localNodeMessageFactory.createCommit(
             futureRoundId,
             futureBlock.getHash(),
-            context.getLocalNodeParams().getNodeKey().sign(futureBlock.getHash()));
+            context
+                .getLocalNodeParams()
+                .getNodeKey()
+                .sign(Bytes32.wrap(futureBlock.getHash().getBytes())));
     peers.verifyMessagesReceived(expectedCommit);
 
     // requires 1 more commit and the blockchain will progress

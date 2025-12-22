@@ -66,7 +66,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       if (account == null || account.isEmpty()) {
         frame.pushStackItem(Bytes.EMPTY);
       } else {
-        frame.pushStackItem(account.getCodeHash());
+        frame.pushStackItem(account.getCodeHash().getBytes());
       }
       return new OperationResult(cost, null);
 

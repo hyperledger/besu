@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
@@ -36,7 +35,7 @@ public final class StorageRangeMessageTest {
 
     final ArrayDeque<NavigableMap<Bytes32, Bytes>> keys = new ArrayDeque<>();
     final TreeMap<Bytes32, Bytes> storage = new TreeMap<>();
-    storage.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), Bytes32.random());
+    storage.put(Bytes32.leftPad(Bytes.of(1)), Bytes32.random());
     keys.add(storage);
 
     final List<Bytes> proofs = new ArrayList<>();

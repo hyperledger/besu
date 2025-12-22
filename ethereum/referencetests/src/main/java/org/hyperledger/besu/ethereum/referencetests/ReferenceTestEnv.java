@@ -172,10 +172,10 @@ public class ReferenceTestEnv extends BlockHeader {
       if (currentBeaconRoot == null) {
         this.beaconRoot = null;
       } else {
-        this.beaconRoot = Hash.fromHexString(currentBeaconRoot);
+        this.beaconRoot = Bytes32.wrap(Hash.fromHexString(currentBeaconRoot).getBytes());
       }
     } else {
-      this.beaconRoot = Hash.fromHexString(beaconRoot);
+      this.beaconRoot = Bytes32.wrap(Hash.fromHexString(beaconRoot).getBytes());
     }
     this.isStateTest = Boolean.parseBoolean(isStateTest);
   }

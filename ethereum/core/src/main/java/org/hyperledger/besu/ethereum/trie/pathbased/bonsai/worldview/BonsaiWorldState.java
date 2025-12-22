@@ -154,7 +154,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
             (location, hash) ->
                 bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
                     getWorldStateStorage(), location, hash),
-            worldStateRootHash);
+            Bytes32.wrap(worldStateRootHash.getBytes()));
 
     // for manicured tries and composting, collect branches here (not implemented)
     updateTheAccounts(maybeStateUpdater, worldStateUpdater, accountTrie);
@@ -181,13 +181,13 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final MerkleTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, PathBasedValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
-      final Bytes accountKey = accountUpdate.getKey();
+      final Bytes accountKey = accountUpdate.getKey().getBytes();
       final PathBasedValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
           final Hash addressHash = hashAndSavePreImage(accountKey);
-          accountTrie.remove(addressHash);
+          accountTrie.remove(addressHash.getBytes());
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
         } else {
@@ -196,7 +196,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
           maybeStateUpdater.ifPresent(
               bonsaiUpdater ->
                   bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
-          accountTrie.put(addressHash, accountValue);
+          accountTrie.put(addressHash.getBytes(), accountValue);
         }
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
@@ -260,7 +260,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
               (location, key) ->
                   bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
                       getWorldStateStorage(), updatedAddressHash, location, key),
-              storageRoot);
+              Bytes32.wrap(storageRoot.getBytes()));
 
       // for manicured tries and composting, collect branches here (not implemented)
       for (final Map.Entry<StorageSlotKey, PathBasedValue<UInt256>> storageUpdate :
@@ -272,21 +272,18 @@ public class BonsaiWorldState extends PathBasedWorldState {
             maybeStateUpdater.ifPresent(
                 bonsaiUpdater ->
                     bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
-            storageTrie.remove(slotHash);
+            storageTrie.remove(slotHash.getBytes());
           } else {
             maybeStateUpdater.ifPresent(
                 bonsaiUpdater ->
                     bonsaiUpdater.putStorageValueBySlotHash(
                         updatedAddressHash, slotHash, updatedStorage));
-            storageTrie.put(slotHash, encodeTrieValue(updatedStorage));
+            storageTrie.put(slotHash.getBytes(), encodeTrieValue(updatedStorage));
           }
         } catch (MerkleTrieException e) {
           // need to throw to trigger the heal
           throw new MerkleTrieException(
-              e.getMessage(),
-              Optional.of(Address.wrap(updatedAddress)),
-              e.getHash(),
-              e.getLocation());
+              e.getMessage(), Optional.of(updatedAddress), e.getHash(), e.getLocation());
         }
       }
 
@@ -329,7 +326,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) -> getStorageTrieNode(addressHash, location, key),
-              oldAccount.getStorageRoot());
+              Bytes32.wrap(oldAccount.getStorageRoot().getBytes()));
       try {
         StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageToDelete = null;
         Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
@@ -369,7 +366,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
         throw new MerkleTrieException(
-            e.getMessage(), Optional.of(Address.wrap(address)), e.getHash(), e.getLocation());
+            e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
       }
     }
   }
@@ -452,7 +449,8 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final MerkleTrie<Bytes, Bytes> storageTrie =
         createTrie(
-            (location, key) -> getStorageTrieNode(address.addressHash(), location, key), rootHash);
+            (location, key) -> getStorageTrieNode(address.addressHash(), location, key),
+            Bytes32.wrap(rootHash.getBytes()));
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
   }
 

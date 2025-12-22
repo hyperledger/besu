@@ -122,7 +122,8 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final Map<String, String> fromFilter = new HashMap<>();
     fromFilter.put(
-        "eq", listTrx.stream().findAny().get().getTransaction().getSender().toHexString());
+        "eq",
+        listTrx.stream().findAny().get().getTransaction().getSender().getBytes().toHexString());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -152,7 +153,8 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final Map<String, String> fromFilter = new HashMap<>();
     fromFilter.put(
-        "eq", listTrx.stream().findAny().get().getTransaction().getSender().toHexString());
+        "eq",
+        listTrx.stream().findAny().get().getTransaction().getSender().getBytes().toHexString());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

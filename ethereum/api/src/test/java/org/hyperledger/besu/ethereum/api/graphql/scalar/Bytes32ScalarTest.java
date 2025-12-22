@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
 import java.util.Locale;
@@ -31,6 +29,7 @@ import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,13 +43,22 @@ public class Bytes32ScalarTest {
   private final StringValue strValue = StringValue.newStringValue(str).build();
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
 
-  private final VersionedHash versionedHash = new VersionedHash((byte) 1, Hash.hash(value));
-
   @Test
-  public void pareValueTest() {
+  public void parseValueTest() {
     final var result =
         scalar.getCoercing().parseValue(str, GraphQLContext.newContext().build(), Locale.ENGLISH);
     assertThat(result).isEqualTo(value);
+  }
+
+  @Test
+  public void parseValueTestInvalidString() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(
+                        "not_hexadecimal", GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Test
@@ -64,13 +72,38 @@ public class Bytes32ScalarTest {
   }
 
   @Test
-  public void serializeTest() {
+  public void serializeBytes32Test() {
     final String result =
         (String)
             scalar
                 .getCoercing()
                 .serialize(value, GraphQLContext.newContext().build(), Locale.ENGLISH);
     assertThat(result).isEqualTo(str);
+  }
+
+  @Test
+  public void serializeBytesTest() {
+    assertThat(
+            scalar
+                .getCoercing()
+                .serialize(
+                    Bytes.fromHexString("0x01"),
+                    GraphQLContext.newContext().build(),
+                    Locale.ENGLISH))
+        .isEqualTo(Bytes32.leftPad(Bytes.fromHexString("0x01")).toString());
+  }
+
+  @Test
+  public void serializeBytesTestTooBig() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .serialize(
+                        Bytes.concatenate(value, Bytes.fromHexString("0x01")),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
+        .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
@@ -123,15 +156,6 @@ public class Bytes32ScalarTest {
                         GraphQLContext.newContext().build(),
                         Locale.ENGLISH))
         .isInstanceOf(CoercingParseLiteralException.class);
-  }
-
-  @Test
-  public void parseVersionedHash() {
-    assertThat(
-            scalar
-                .getCoercing()
-                .serialize(versionedHash, GraphQLContext.newContext().build(), Locale.ENGLISH))
-        .isEqualTo(versionedHash.toString());
   }
 
   @BeforeEach
