@@ -90,6 +90,13 @@ public class CheckpointConfigOptions {
 
   @Override
   public String toString() {
-    return "CheckpointConfigOptions{" + "checkpointConfigRoot=" + checkpointConfigRoot + '}';
+    return "CheckpointConfigOptions{"
+        + "totaldifficulty="
+        + getTotalDifficulty().orElse("empty")
+        + ", number="
+        + (getNumber().isPresent() ? getNumber().getAsLong() : "empty")
+        + ", hash="
+        + getHash().orElse("empty")
+        + '}';
   }
 }
