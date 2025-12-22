@@ -240,4 +240,13 @@ public class ForkIdManager {
     }
     return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
   }
+
+  public ForkId getForkIdByBlockNumber(final long blockNumber) {
+    for (final ForkId forkId : blockNumbersForkIds) {
+      if (blockNumber < forkId.getNext()) {
+        return forkId;
+      }
+    }
+    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
+  }
 }

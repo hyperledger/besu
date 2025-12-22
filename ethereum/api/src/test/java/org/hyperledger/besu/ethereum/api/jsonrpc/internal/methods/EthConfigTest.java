@@ -65,5 +65,6 @@ class EthConfigTest {
     for (JsonNode forkObj : result.get("all")) {
       assertThat(forkObj.get("chainId").asText()).isEqualTo("0x" + BigInteger.ONE.toString(16));
     }
+    System.out.println(result);
   }
 }

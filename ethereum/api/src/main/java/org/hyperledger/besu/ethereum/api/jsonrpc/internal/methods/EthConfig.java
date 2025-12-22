@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -51,6 +52,8 @@ public class EthConfig implements JsonRpcMethod {
   private final BlockchainQueries blockchain;
   private final ProtocolSchedule protocolSchedule;
   private final ForkIdManager forkIdManager;
+  private final Long firstTimestampMilestone;
+  private final Long firstBlobsMilestone;
 
   public EthConfig(
       final BlockchainQueries blockchain,
@@ -64,6 +67,10 @@ public class EthConfig implements JsonRpcMethod {
             blockchain.getBlockchain(),
             genesisConfigOptions.getForkBlockNumbers(),
             genesisConfigOptions.getForkBlockTimestamps());
+    firstTimestampMilestone =
+        protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.SHANGHAI).orElse(0L);
+    firstBlobsMilestone =
+        protocolSchedule.milestoneFor(HardforkId.MainnetHardforkId.CANCUN).orElse(0L);
   }
 
   @Override
@@ -120,8 +127,12 @@ public class EthConfig implements JsonRpcMethod {
     }
   }
 
-  private String getForkIdAsHexString(final long currentTime) {
-    return forkIdManager.getForkIdByTimestamp(currentTime).getHash().toHexString();
+  private String getForkIdAsHexString(final long milestone) {
+    if (milestone >= firstTimestampMilestone) {
+      return forkIdManager.getForkIdByTimestamp(milestone).getHash().toHexString();
+    } else {
+      return forkIdManager.getForkIdByBlockNumber(milestone).getHash().toHexString();
+    }
   }
 
   void generateConfig(final ObjectNode result, final ScheduledProtocolSpec scheduledSpec) {
@@ -133,13 +144,19 @@ public class EthConfig implements JsonRpcMethod {
   }
 
   void generateConfig(final ObjectNode result, final Hardfork forkId, final ProtocolSpec spec) {
-    result.put("activationTime", forkId.milestone());
+    if (forkId.milestone() < firstTimestampMilestone) {
+      result.put("activationBlock", forkId.milestone());
+    } else {
+      result.put("activationTime", forkId.milestone());
+    }
 
-    ObjectNode blobs = result.putObject("blobSchedule");
-    blobs.put(
-        "baseFeeUpdateFraction", spec.getFeeMarket().getBaseFeeUpdateFraction().longValueExact());
-    blobs.put("max", spec.getGasLimitCalculator().currentBlobGasLimit() / (128 * 1024));
-    blobs.put("target", spec.getGasLimitCalculator().getTargetBlobGasPerBlock() / (128 * 1024));
+    if (forkId.milestone() >= firstBlobsMilestone) {
+      ObjectNode blobs = result.putObject("blobSchedule");
+      blobs.put(
+          "baseFeeUpdateFraction", spec.getFeeMarket().getBaseFeeUpdateFraction().longValueExact());
+      blobs.put("max", spec.getGasLimitCalculator().currentBlobGasLimit() / (128 * 1024));
+      blobs.put("target", spec.getGasLimitCalculator().getTargetBlobGasPerBlock() / (128 * 1024));
+    }
 
     result.put(
         "chainId", protocolSchedule.getChainId().map(c -> "0x" + c.toString(16)).orElse(null));
