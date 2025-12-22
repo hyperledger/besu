@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,15 +30,15 @@ import java.util.SortedMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class WorldStateProof {
+public class WorldStateProofImpl implements WorldStateProof {
 
-  private final Optional<PmtStateTrieAccountValue> stateTrieAccountValue;
+  private final Optional<AccountValue> stateTrieAccountValue;
 
   private final Proof<Bytes> accountProof;
 
   private final Map<UInt256, Proof<Bytes>> storageProofs;
 
-  public WorldStateProof(
+  public WorldStateProofImpl(
       final PmtStateTrieAccountValue stateTrieAccountValue,
       final Proof<Bytes> accountProof,
       final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
@@ -45,24 +47,28 @@ public class WorldStateProof {
     this.storageProofs = storageProofs;
   }
 
-  public WorldStateProof(final Proof<Bytes> accountProof) {
+  public WorldStateProofImpl(final Proof<Bytes> accountProof) {
     this.stateTrieAccountValue = Optional.empty();
     this.accountProof = accountProof;
     this.storageProofs = new HashMap<>();
   }
 
-  public Optional<PmtStateTrieAccountValue> getStateTrieAccountValue() {
+  @Override
+  public Optional<AccountValue> getStateTrieAccountValue() {
     return stateTrieAccountValue;
   }
 
+  @Override
   public List<Bytes> getAccountProof() {
     return accountProof.getProofRelatedNodes();
   }
 
+  @Override
   public List<UInt256> getStorageKeys() {
     return new ArrayList<>(storageProofs.keySet());
   }
 
+  @Override
   public UInt256 getStorageValue(final UInt256 key) {
     Optional<Bytes> value = storageProofs.get(key).getValue();
     if (value.isEmpty()) {
@@ -72,6 +78,7 @@ public class WorldStateProof {
     }
   }
 
+  @Override
   public List<Bytes> getStorageProof(final UInt256 key) {
     return storageProofs.get(key).getProofRelatedNodes();
   }

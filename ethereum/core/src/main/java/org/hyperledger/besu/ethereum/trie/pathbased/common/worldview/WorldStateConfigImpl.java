@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
 
+import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+
 /** WorldStateConfig encapsulates the shared configuration parameters for the world state. */
-public class WorldStateConfig {
+public class WorldStateConfigImpl implements WorldStateConfig {
 
   /**
    * Indicates whether the trie is disabled for the world state. When the trie is disabled, the
@@ -27,23 +29,27 @@ public class WorldStateConfig {
   /** Indicates whether the mode is stateful. Default is true. */
   private boolean isStateful;
 
-  private WorldStateConfig(final Builder builder) {
+  private WorldStateConfigImpl(final Builder builder) {
     this.isTrieDisabled = builder.isTrieDisabled;
     this.isStateful = builder.isStateful;
   }
 
+  @Override
   public boolean isTrieDisabled() {
     return isTrieDisabled;
   }
 
+  @Override
   public boolean isStateful() {
     return isStateful;
   }
 
+  @Override
   public void setTrieDisabled(final boolean trieDisabled) {
     isTrieDisabled = trieDisabled;
   }
 
+  @Override
   public void setStateful(final boolean stateful) {
     isStateful = stateful;
   }
@@ -54,7 +60,7 @@ public class WorldStateConfig {
    * @param other the other WorldStateConfig to merge with
    * @return a new WorldStateConfig instance with merged values
    */
-  public WorldStateConfig apply(final WorldStateConfig other) {
+  public WorldStateConfigImpl apply(final WorldStateConfigImpl other) {
     return new Builder(this).trieDisabled(other.isTrieDisabled).stateful(other.isStateful).build();
   }
 
@@ -62,11 +68,11 @@ public class WorldStateConfig {
     return new Builder();
   }
 
-  public static Builder newBuilder(final WorldStateConfig worldStateConfig) {
+  public static Builder newBuilder(final WorldStateConfigImpl worldStateConfig) {
     return new Builder(worldStateConfig);
   }
 
-  public static WorldStateConfig createStatefulConfigWithTrie() {
+  public static WorldStateConfigImpl createStatefulConfigWithTrie() {
     return newBuilder().stateful(true).trieDisabled(false).build();
   }
 
@@ -76,7 +82,7 @@ public class WorldStateConfig {
 
     public Builder() {}
 
-    public Builder(final WorldStateConfig spec) {
+    public Builder(final WorldStateConfigImpl spec) {
       this.isTrieDisabled = spec.isTrieDisabled();
       this.isStateful = spec.isStateful();
     }
@@ -91,8 +97,8 @@ public class WorldStateConfig {
       return this;
     }
 
-    public WorldStateConfig build() {
-      return new WorldStateConfig(this);
+    public WorldStateConfigImpl build() {
+      return new WorldStateConfigImpl(this);
     }
   }
 }

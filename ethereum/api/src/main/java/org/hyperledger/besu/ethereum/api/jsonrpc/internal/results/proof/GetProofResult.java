@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +65,7 @@ public class GetProofResult {
 
   public static GetProofResult build(final Address address, final WorldStateProof worldStateProof) {
 
-    final Optional<PmtStateTrieAccountValue> maybeStateTrieAccountValue =
+    final Optional<AccountValue> maybeStateTrieAccountValue =
         worldStateProof.getStateTrieAccountValue();
     return maybeStateTrieAccountValue
         .map(

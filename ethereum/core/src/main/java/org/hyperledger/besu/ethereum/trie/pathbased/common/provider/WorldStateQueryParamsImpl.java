@@ -15,13 +15,14 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.provider;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
 
 import java.util.Objects;
 import java.util.Optional;
 
 /** Parameters for querying the world state. */
-public class WorldStateQueryParams {
+public class WorldStateQueryParamsImpl implements WorldStateQueryParams {
   private final BlockHeader blockHeader;
   private final boolean shouldWorldStateUpdateHead;
   private final Hash blockHash;
@@ -32,7 +33,7 @@ public class WorldStateQueryParams {
    *
    * @param builder the builder to create an instance of WorldStateQueryParams
    */
-  private WorldStateQueryParams(final Builder builder) {
+  private WorldStateQueryParamsImpl(final Builder builder) {
     this.blockHeader = builder.blockHeader;
     this.shouldWorldStateUpdateHead = builder.shouldWorldStateUpdateHead;
     this.blockHash = builder.blockHash;
@@ -44,6 +45,7 @@ public class WorldStateQueryParams {
    *
    * @return the block header
    */
+  @Override
   public BlockHeader getBlockHeader() {
     return blockHeader;
   }
@@ -53,6 +55,7 @@ public class WorldStateQueryParams {
    *
    * @return true if the world state should update the node head, false otherwise
    */
+  @Override
   public boolean shouldWorldStateUpdateHead() {
     return shouldWorldStateUpdateHead;
   }
@@ -62,6 +65,7 @@ public class WorldStateQueryParams {
    *
    * @return the block hash
    */
+  @Override
   public Hash getBlockHash() {
     return blockHash;
   }
@@ -71,6 +75,7 @@ public class WorldStateQueryParams {
    *
    * @return the state root
    */
+  @Override
   public Optional<Hash> getStateRoot() {
     return stateRoot;
   }
@@ -90,7 +95,7 @@ public class WorldStateQueryParams {
    * @param blockHeader the block header
    * @return an instance of WorldStateQueryParams
    */
-  public static WorldStateQueryParams withBlockHeaderAndUpdateNodeHead(
+  public static WorldStateQueryParamsImpl withBlockHeaderAndUpdateNodeHead(
       final BlockHeader blockHeader) {
     return newBuilder().withBlockHeader(blockHeader).withShouldWorldStateUpdateHead(true).build();
   }
@@ -101,7 +106,7 @@ public class WorldStateQueryParams {
    * @param blockHeader the block header
    * @return an instance of WorldStateQueryParams
    */
-  public static WorldStateQueryParams withBlockHeaderAndNoUpdateNodeHead(
+  public static WorldStateQueryParamsImpl withBlockHeaderAndNoUpdateNodeHead(
       final BlockHeader blockHeader) {
     return newBuilder().withBlockHeader(blockHeader).withShouldWorldStateUpdateHead(false).build();
   }
@@ -114,7 +119,7 @@ public class WorldStateQueryParams {
    * @param blockHash the block hash
    * @return an instance of WorldStateQueryParams
    */
-  public static WorldStateQueryParams withStateRootAndBlockHashAndUpdateNodeHead(
+  public static WorldStateQueryParamsImpl withStateRootAndBlockHashAndUpdateNodeHead(
       final Hash stateRoot, final Hash blockHash) {
     return newBuilder()
         .withStateRoot(stateRoot)
@@ -129,7 +134,7 @@ public class WorldStateQueryParams {
    * @param stateRoot the state root
    * @return an instance of WorldStateQueryParams
    */
-  public static WorldStateQueryParams withStateRootAndUpdateNodeHead(final Hash stateRoot) {
+  public static WorldStateQueryParamsImpl withStateRootAndUpdateNodeHead(final Hash stateRoot) {
     return newBuilder().withStateRoot(stateRoot).withShouldWorldStateUpdateHead(true).build();
   }
 
@@ -140,7 +145,7 @@ public class WorldStateQueryParams {
    * @param blockHash the block hash
    * @return an instance of WorldStateQueryParams
    */
-  public static WorldStateQueryParams withStateRootAndBlockHashAndNoUpdateNodeHead(
+  public static WorldStateQueryParamsImpl withStateRootAndBlockHashAndNoUpdateNodeHead(
       final Hash stateRoot, final Hash blockHash) {
     return newBuilder()
         .withStateRoot(stateRoot)
@@ -152,7 +157,7 @@ public class WorldStateQueryParams {
   @Override
   public boolean equals(final Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    WorldStateQueryParams that = (WorldStateQueryParams) o;
+    WorldStateQueryParamsImpl that = (WorldStateQueryParamsImpl) o;
     return shouldWorldStateUpdateHead == that.shouldWorldStateUpdateHead
         && Objects.equals(blockHeader, that.blockHeader)
         && Objects.equals(blockHash, that.blockHash)
@@ -224,14 +229,14 @@ public class WorldStateQueryParams {
      *
      * @return an instance of WorldStateQueryParams
      */
-    public WorldStateQueryParams build() {
+    public WorldStateQueryParamsImpl build() {
 
       if (blockHash == null && stateRoot.isEmpty() && blockHeader == null) {
         throw new IllegalArgumentException(
             "Either blockHash, stateRoot, or blockHeader must be provided");
       }
 
-      return new WorldStateQueryParams(this);
+      return new WorldStateQueryParamsImpl(this);
     }
   }
 }

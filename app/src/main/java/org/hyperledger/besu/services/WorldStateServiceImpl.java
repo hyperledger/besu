@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.services;
 
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.WorldStateService;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
 
 import java.util.Optional;
 

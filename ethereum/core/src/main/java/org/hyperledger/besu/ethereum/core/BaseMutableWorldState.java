@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,27 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterImplSync;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 
-import java.util.Collection;
+public abstract class BaseMutableWorldState implements MutableWorldState {
 
-import org.apache.tuweni.bytes.Bytes32;
-
-public interface WorldStateKeyValueStorage {
-
-  DataStorageFormat getDataStorageFormat();
-
-  Updater updater();
-
-  void clear();
-
-  interface NodesAddedListener {
-    void onNodesAdded(Collection<Bytes32> nodeHash);
-  }
-
-  interface Updater {
-    void commit();
+  @Override
+  public void persist(final BlockHeader blockHeader) {
+    persist(blockHeader, new StateRootCommitterImplSync());
   }
 }

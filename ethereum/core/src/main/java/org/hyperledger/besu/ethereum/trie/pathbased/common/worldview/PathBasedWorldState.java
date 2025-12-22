@@ -22,9 +22,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBa
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
+import org.hyperledger.besu.ethereum.core.BaseMutableWorldState;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
@@ -33,12 +31,16 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnap
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.StateRootCommitter;
+import org.hyperledger.besu.plugin.services.storage.WorldStateConfig;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -50,8 +52,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class PathBasedWorldState
-    implements MutableWorldState, PathBasedWorldView, StorageSubscriber {
+public abstract class PathBasedWorldState extends BaseMutableWorldState
+    implements PathBasedWorldView, StorageSubscriber {
 
   private static final Logger LOG = LoggerFactory.getLogger(PathBasedWorldState.class);
 
@@ -64,7 +66,7 @@ public abstract class PathBasedWorldState
   protected Hash worldStateBlockHash;
 
   // configuration parameters for the world state.
-  protected WorldStateConfig worldStateConfig;
+  protected WorldStateConfigImpl worldStateConfig;
 
   /*
    * Indicates whether the world state is in "frozen" mode.
@@ -80,7 +82,7 @@ public abstract class PathBasedWorldState
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
-      final WorldStateConfig worldStateConfig) {
+      final WorldStateConfigImpl worldStateConfig) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -238,8 +240,11 @@ public abstract class PathBasedWorldState
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
-        worldStateBlockHash = blockHeader.getHash();
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_HASH_KEY,
+                blockHeader.getBlockHash().toArrayUnsafe());
+        worldStateBlockHash = blockHeader.getBlockHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;

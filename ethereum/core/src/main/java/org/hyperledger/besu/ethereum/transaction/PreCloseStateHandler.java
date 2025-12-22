@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
 
 import java.util.Optional;
 import java.util.function.BiFunction;

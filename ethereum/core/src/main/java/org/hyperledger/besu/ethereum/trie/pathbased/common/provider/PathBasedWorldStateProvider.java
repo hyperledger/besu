@@ -14,27 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.common.provider;
 
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParamsImpl.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.cache.PathBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfigImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.storage.MutableWorldState;
+import org.hyperledger.besu.plugin.services.storage.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.storage.WorldStateProof;
+import org.hyperledger.besu.plugin.services.storage.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   protected final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
-  protected final WorldStateConfig worldStateConfig;
+  protected final WorldStateConfigImpl worldStateConfig;
 
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -84,7 +85,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateConfig = WorldStateConfig.newBuilder().build();
+    this.worldStateConfig = WorldStateConfigImpl.newBuilder().build();
     ;
   }
 
@@ -227,10 +228,15 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
       return Optional.empty();
     }
     return cachedWorldStorageManager
-        .getWorldState(blockHeader.getHash())
+        .getWorldState(blockHeader.getBlockHash())
         .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-        .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
-        .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getHash()))
+        .or(
+            () ->
+                cachedWorldStorageManager.getHeadWorldState(
+                    blockHeaderHash ->
+                        blockchain.getBlockHeader(blockHeaderHash).map((header) -> header)))
+        .flatMap(
+            worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getBlockHash()))
         .map(MutableWorldState::freezeStorage);
   }
 
@@ -332,7 +338,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     }
   }
 
-  public WorldStateConfig getWorldStateSharedSpec() {
+  public WorldStateConfigImpl getWorldStateSharedSpec() {
     return worldStateConfig;
   }
 
