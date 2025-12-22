@@ -23,6 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class StoredNode<V> implements Node<V> {
+
   private final NodeFactory<V> nodeFactory;
   private final Bytes location;
   private final Bytes32 hash;
