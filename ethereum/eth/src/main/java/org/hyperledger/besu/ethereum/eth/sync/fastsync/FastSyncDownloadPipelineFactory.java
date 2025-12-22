@@ -45,6 +45,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.util.concurrent.CompletionStage;
 
@@ -147,7 +148,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             protocolContext,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get(),
+            syncState,
+            BlockHeader.GENESIS_BLOCK_NUMBER,
+            fastSyncState
+                .getPivotBlockHeader()
+                .orElseThrow(
+                    () -> new InvalidConfigurationException("Pivot block header not available.")),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(

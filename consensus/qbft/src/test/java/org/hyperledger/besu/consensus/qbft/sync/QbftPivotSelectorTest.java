@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.sync;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -30,13 +29,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,8 +76,12 @@ public class QbftPivotSelectorTest {
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
-    assertThat(pivotState.isEmpty()).isTrue();
+    try {
+      pivotSelector.selectNewPivotBlock().get();
+      fail("Expected CompletableFuture to be failed but it completed successfully");
+    } catch (Exception e) {
+      // Expected - the future should fail when no peers are available
+    }
   }
 
   @Test
@@ -99,7 +100,7 @@ public class QbftPivotSelectorTest {
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
     try {
-      Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
+      pivotSelector.selectNewPivotBlock();
       fail("Expected NoSyncRequiredException but none thrown");
     } catch (NoSyncRequiredException e) {
       // Ignore - just make sure we get here
@@ -114,8 +115,12 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
-    assertThat(pivotState.isEmpty()).isTrue();
+    try {
+      pivotSelector.selectNewPivotBlock().get();
+      fail("Expected CompletableFuture to be failed but it completed successfully");
+    } catch (Exception e) {
+      // Expected - the future should fail when no best peer is available
+    }
   }
 
   @Test
@@ -127,7 +132,11 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
-    assertThat(pivotState.isEmpty()).isTrue();
+    try {
+      pivotSelector.selectNewPivotBlock().get();
+      fail("Expected CompletableFuture to be failed but it completed successfully");
+    } catch (Exception e) {
+      // Expected - the future should fail when no best peer is available
+    }
   }
 }
