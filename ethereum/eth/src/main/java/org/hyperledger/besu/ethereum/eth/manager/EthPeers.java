@@ -501,7 +501,7 @@ public class EthPeers implements PeerSelector {
         .filter(filter)
         .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
         .filter(EthPeerImmutableAttributes::isFullyValidated)
-        .min(LEAST_TO_MOST_BUSY)
+        .max(getBestPeerComparator())
         .map(EthPeerImmutableAttributes::ethPeer);
   }
 
