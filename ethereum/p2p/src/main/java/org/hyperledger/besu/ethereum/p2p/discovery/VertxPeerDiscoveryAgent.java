@@ -58,6 +58,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramPacket;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
+import org.apache.tuweni.rlp.EndOfRLPException;
 import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -342,7 +343,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException
-                || event.cause() instanceof DecodeException) {
+                || event.cause() instanceof DecodeException
+                || event.cause() instanceof EndOfRLPException) {
               LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),
