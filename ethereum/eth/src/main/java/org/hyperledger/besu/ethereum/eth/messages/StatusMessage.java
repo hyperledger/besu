@@ -115,7 +115,7 @@ public final class StatusMessage extends AbstractMessageData {
    * @return The hash of the genesis block of the network the associated node is participating in.
    */
   public Bytes32 genesisHash() {
-    return status().genesisHash;
+    return Bytes32.wrap(status().genesisHash.getBytes());
   }
 
   /**
@@ -269,15 +269,15 @@ public final class StatusMessage extends AbstractMessageData {
       // if total Difficulty is not null, then this is a pre 69 message
       if (totalDifficulty != null) {
         out.writeUInt256Scalar(totalDifficulty);
-        out.writeBytes(bestHash);
-        out.writeBytes(genesisHash);
+        out.writeBytes(bestHash.getBytes());
+        out.writeBytes(genesisHash.getBytes());
         forkId.writeTo(out);
       } else {
-        out.writeBytes(genesisHash);
+        out.writeBytes(genesisHash.getBytes());
         forkId.writeTo(out);
         out.writeLongScalar(blockRange.earliestBlock());
         out.writeLongScalar(blockRange.latestBlock());
-        out.writeBytes(bestHash);
+        out.writeBytes(bestHash.getBytes());
       }
       out.endList();
     }

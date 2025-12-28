@@ -105,6 +105,6 @@ class TrieLogManagerTests {
     trieLogManager.saveTrieLog(bonsaiUpdater, Hash.ZERO, blockHeader, bonsaiWorldState);
 
     verify(mockedTrieLogTransaction, times(1))
-        .put(eq(blockHeader.getBlockHash().toArrayUnsafe()), any());
+        .put(eq(blockHeader.getBlockHash().getBytes().toArrayUnsafe()), any());
   }
 }

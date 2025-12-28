@@ -206,7 +206,7 @@ public class SnapWorldDownloadStateTest {
             result ->
                 assertThat(
                         worldStateStorageCoordinator.getAccountStateTrieNode(
-                            Bytes.EMPTY, ROOT_NODE_HASH))
+                            Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(header);
@@ -231,7 +231,9 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
@@ -249,7 +251,9 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
 
@@ -260,7 +264,9 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
@@ -278,7 +284,9 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
@@ -297,7 +305,9 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
@@ -376,7 +386,9 @@ public class SnapWorldDownloadStateTest {
     verify(snapSyncState, atLeastOnce()).setHealTrieStatus(true);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
@@ -492,7 +504,9 @@ public class SnapWorldDownloadStateTest {
 
     assertThat(future).isNotDone();
     verify(snapSyncState).setHealFlatDatabaseInProgress(true);
-    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+    assertThat(
+            worldStateStorageCoordinator.getAccountStateTrieNode(
+                Bytes.EMPTY, Bytes32.wrap(ROOT_NODE_HASH.getBytes())))
         .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }

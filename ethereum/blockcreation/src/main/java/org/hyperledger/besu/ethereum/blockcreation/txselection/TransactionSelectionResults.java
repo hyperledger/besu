@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -141,7 +140,7 @@ public class TransactionSelectionResults {
         + ", selectedTransactions="
         + selectedTransactions.stream()
             .map(Transaction::getHash)
-            .map(Hash::toHexString)
+            .map(hash -> hash.getBytes().toHexString())
             .collect(Collectors.joining(", "))
         + ", notSelectedTransactions="
         + notSelectedTransactions.entrySet().stream()

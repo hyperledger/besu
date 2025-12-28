@@ -35,6 +35,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
 public class ValidatorPeer extends DefaultValidatorPeer {
 
@@ -62,7 +64,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final SECPSignature commitSeal = nodeKey.sign(digest);
+    final SECPSignature commitSeal = nodeKey.sign(Bytes32.wrap(digest.getBytes()));
 
     return injectCommit(rId, digest, commitSeal);
   }

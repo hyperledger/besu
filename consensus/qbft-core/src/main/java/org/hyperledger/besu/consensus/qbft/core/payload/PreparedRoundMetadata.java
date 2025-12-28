@@ -75,7 +75,7 @@ public class PreparedRoundMetadata {
    */
   public void writeTo(final RLPOutput out) {
     out.writeIntScalar(preparedRound);
-    out.writeBytes(preparedBlockHash);
+    out.writeBytes(preparedBlockHash.getBytes());
   }
 
   @Override

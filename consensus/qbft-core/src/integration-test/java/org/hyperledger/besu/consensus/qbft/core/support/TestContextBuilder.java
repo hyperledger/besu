@@ -437,7 +437,7 @@ public class TestContextBuilder {
         useValidatorContract
             ? Map.of(
                 JsonQbftConfigOptions.VALIDATOR_CONTRACT_ADDRESS,
-                VALIDATOR_CONTRACT_ADDRESS.toHexString())
+                VALIDATOR_CONTRACT_ADDRESS.getBytes().toHexString())
             : Collections.emptyMap();
     final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
@@ -621,7 +621,7 @@ public class TestContextBuilder {
     qbftConfigOptions.setBlockPeriodSeconds(BLOCK_TIMER_SEC);
     if (useValidatorContract) {
       qbftConfigOptions.setValidatorContractAddress(
-          Optional.of(VALIDATOR_CONTRACT_ADDRESS.toHexString()));
+          Optional.of(VALIDATOR_CONTRACT_ADDRESS.getBytes().toHexString()));
     }
     return qbftConfigOptions;
   }

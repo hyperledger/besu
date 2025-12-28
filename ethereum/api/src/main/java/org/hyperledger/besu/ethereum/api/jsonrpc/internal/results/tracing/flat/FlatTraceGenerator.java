@@ -51,7 +51,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FlatTraceGenerator {
 
-  private static final String ZERO_ADDRESS_STRING = Address.ZERO.toHexString();
+  private static final String ZERO_ADDRESS_STRING = Address.ZERO.getBytes().toHexString();
 
   private static final int EIP_150_DIVISOR = 64;
 
@@ -80,7 +80,7 @@ public class FlatTraceGenerator {
         tx.getInit().map(__ -> transactionTrace.getResult().getOutput().toString());
     final Optional<String> smartContractAddress =
         smartContractCode.map(
-            __ -> Address.contractAddress(tx.getSender(), tx.getNonce()).toHexString());
+            __ -> Address.contractAddress(tx.getSender(), tx.getNonce()).getBytes().toHexString());
     final Optional<Bytes> revertReason = transactionTrace.getResult().getRevertReason();
 
     // set code field in result node
@@ -95,7 +95,7 @@ public class FlatTraceGenerator {
       final Bytes payload = tx.getPayload();
       firstFlatTraceBuilder
           .getActionBuilder()
-          .to(tx.getTo().map(Bytes::toHexString).orElse(null))
+          .to(tx.getTo().map(a -> a.getBytes().toHexString()).orElse(null))
           .callType("call")
           .input(payload == null ? "0x" : payload.toHexString());
 
@@ -400,7 +400,7 @@ public class FlatTraceGenerator {
 
     final Action.Builder callingAction = tracesContexts.peekLast().getBuilder().getActionBuilder();
     final String actionAddress =
-        getActionAddress(callingAction, traceFrame.getRecipient().toHexString());
+        getActionAddress(callingAction, traceFrame.getRecipient().getBytes().toHexString());
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .address(actionAddress)
@@ -472,7 +472,12 @@ public class FlatTraceGenerator {
     currentContext
         .getBuilder()
         .getResultBuilder()
-        .address(nextTraceFrame.map(TraceFrame::getRecipient).orElse(Address.ZERO).toHexString());
+        .address(
+            nextTraceFrame
+                .map(TraceFrame::getRecipient)
+                .orElse(Address.ZERO)
+                .getBytes()
+                .toHexString());
     currentContext.setCreateOp(true);
     currentContext.decGasUsed(cumulativeGasCost);
     tracesContexts.addLast(currentContext);
@@ -638,12 +643,14 @@ public class FlatTraceGenerator {
   protected static void addAdditionalTransactionInformationToFlatTrace(
       final FlatTrace.Builder builder, final TransactionTrace transactionTrace, final Block block) {
     // add block information (hash and number)
-    builder.blockHash(block.getHash().toHexString()).blockNumber(block.getHeader().getNumber());
+    builder
+        .blockHash(block.getHash().getBytes().toHexString())
+        .blockNumber(block.getHeader().getNumber());
     // add transaction information (position and hash)
     builder
         .transactionPosition(
             block.getBody().getTransactions().indexOf(transactionTrace.getTransaction()))
-        .transactionHash(transactionTrace.getTransaction().getHash().toHexString());
+        .transactionHash(transactionTrace.getTransaction().getHash().getBytes().toHexString());
 
     addContractCreationMethodToTrace(transactionTrace, builder);
   }

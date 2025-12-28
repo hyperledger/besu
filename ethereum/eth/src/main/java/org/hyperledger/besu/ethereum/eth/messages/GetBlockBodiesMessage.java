@@ -43,7 +43,7 @@ public final class GetBlockBodiesMessage extends AbstractMessageData {
   public static GetBlockBodiesMessage create(final Iterable<Hash> hashes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    hashes.forEach(tmp::writeBytes);
+    hashes.forEach(hash -> tmp.writeBytes(hash.getBytes()));
     tmp.endList();
     return new GetBlockBodiesMessage(tmp.encoded());
   }

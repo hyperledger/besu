@@ -154,7 +154,8 @@ public class CliqueHelpers {
             // assignment.
             .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, cliqueContext))
             // 4. Then choose the block with the lowest hash.
-            .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
+            .thenComparing(
+                Comparator.comparing((BlockHeader h) -> h.getHash().getBytes()).reversed()));
   }
 
   /**

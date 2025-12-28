@@ -68,7 +68,7 @@ public final class EthHashTest {
 
     assertThat(solution.getSolution().toHexString())
         .isEqualTo("0xd3539235ee2e6f8db665c0a72169f55b7f6c605712330b778ec3944f0eb5a557");
-    assertThat(solution.getMixHash().toHexString())
+    assertThat(solution.getMixHash().getBytes().toHexString())
         .isEqualTo("0xe4073cffaef931d37117cefd9afd27ea0f1cad6a981dd2605c4a1ac97c519800");
   }
 

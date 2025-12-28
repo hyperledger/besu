@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
@@ -28,6 +27,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "blockHash",
@@ -84,7 +84,7 @@ public class TransactionPendingResult implements TransactionResult {
   private final String s;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<VersionedHash> versionedHashes;
+  private final List<String> versionedHashes;
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
@@ -105,7 +105,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.raw =
         TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION)
             .toString();
-    this.to = transaction.getTo().map(Address::toHexString).orElse(null);
+    this.to = transaction.getTo().map(a -> a.getBytes().toHexString()).orElse(null);
     if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);
       this.yParity = null;
@@ -124,7 +124,13 @@ public class TransactionPendingResult implements TransactionResult {
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
-    this.versionedHashes = transaction.getVersionedHashes().orElse(null);
+    this.versionedHashes =
+        transaction
+            .getVersionedHashes()
+            .map(
+                hashes ->
+                    hashes.stream().map(BytesHolder::getBytes).map(Bytes::toHexString).toList())
+            .orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -245,7 +251,7 @@ public class TransactionPendingResult implements TransactionResult {
   }
 
   @JsonGetter(value = "blobVersionedHashes")
-  public List<VersionedHash> getVersionedHashes() {
+  public List<String> getVersionedHashes() {
     return versionedHashes;
   }
 }
