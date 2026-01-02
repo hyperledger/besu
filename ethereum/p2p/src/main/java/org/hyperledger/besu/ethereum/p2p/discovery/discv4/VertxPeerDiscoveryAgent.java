@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
@@ -76,28 +77,26 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   private final PacketSerializer packetSerializer;
   private final PacketDeserializer packetDeserializer;
 
-  VertxPeerDiscoveryAgent(
+  private VertxPeerDiscoveryAgent(
       final Vertx vertx,
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final NatService natService,
       final MetricsSystem metricsSystem,
-      final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
       final RlpxAgent rlpxAgent,
       final PeerTable peerTable,
       final PacketSerializer packetSerializer,
-      final PacketDeserializer packetDeserializer) {
+      final PacketDeserializer packetDeserializer,
+      final NodeRecordManager nodeRecordManager) {
     super(
         nodeKey,
         config,
         peerPermissions,
-        natService,
         metricsSystem,
-        storageProvider,
         forkIdManager,
         rlpxAgent,
+        nodeRecordManager,
         peerTable);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
@@ -123,19 +122,20 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final RlpxAgent rlpxAgent) {
     PacketPackage packetPackage = DaggerPacketPackage.create();
     PeerTable peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
+    NodeRecordManager nodeRecordManager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
     return new VertxPeerDiscoveryAgent(
         vertx,
         nodeKey,
         config,
         peerPermissions,
-        natService,
         metricsSystem,
-        storageProvider,
         forkIdManager,
         rlpxAgent,
         peerTable,
         packetPackage.packetSerializer(),
-        packetPackage.packetDeserializer());
+        packetPackage.packetDeserializer(),
+        nodeRecordManager);
   }
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
