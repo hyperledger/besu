@@ -59,8 +59,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
-  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -144,9 +142,13 @@ public abstract class PeerDiscoveryAgent {
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
                 final int discoveryPort = localAddress.getPort();
-                nodeRecordManager.initializeLocalNode(config.getAdvertisedHost(), discoveryPort, tcpPort);
-                startController(nodeRecordManager.getLocalNode()
-                  .orElseThrow(() -> new IllegalStateException("Local node not initialized")));
+                nodeRecordManager.initializeLocalNode(
+                    config.getAdvertisedHost(), discoveryPort, tcpPort);
+                startController(
+                    nodeRecordManager
+                        .getLocalNode()
+                        .orElseThrow(
+                            () -> new IllegalStateException("Local node not initialized")));
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
                 this.isEnabled = true;
                 return discoveryPort;
