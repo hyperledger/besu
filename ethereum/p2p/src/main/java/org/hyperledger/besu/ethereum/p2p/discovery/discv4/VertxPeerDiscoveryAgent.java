@@ -84,19 +84,19 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final ForkIdManager forkIdManager,
+      final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
       final PeerTable peerTable,
       final PacketSerializer packetSerializer,
-      final PacketDeserializer packetDeserializer,
-      final NodeRecordManager nodeRecordManager) {
+      final PacketDeserializer packetDeserializer) {
     super(
         nodeKey,
         config,
         peerPermissions,
         metricsSystem,
         forkIdManager,
-        rlpxAgent,
         nodeRecordManager,
+        rlpxAgent,
         peerTable);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
@@ -131,11 +131,11 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         peerPermissions,
         metricsSystem,
         forkIdManager,
+        nodeRecordManager,
         rlpxAgent,
         peerTable,
         packetPackage.packetSerializer(),
-        packetPackage.packetDeserializer(),
-        nodeRecordManager);
+        packetPackage.packetDeserializer());
   }
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {

@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -47,7 +45,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -92,8 +89,8 @@ public abstract class PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final ForkIdManager forkIdManager,
-      final RlpxAgent rlpxAgent,
       final NodeRecordManager nodeRecordManager,
+      final RlpxAgent rlpxAgent,
       final PeerTable peerTable) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
