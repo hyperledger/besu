@@ -326,6 +326,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                       node.getMiningParameters().getMinTransactionGasPrice().intValue()));
             });
 
+    if (node.getMiningParameters().getTargetGasLimit().isPresent()) {
+      params.add("--target-gas-limit");
+      params.add(Long.toString(node.getMiningParameters().getTargetGasLimit().getAsLong()));
+    }
+
     if (!node.isP2pEnabled()) {
       params.add("--p2p-enabled");
       params.add("false");

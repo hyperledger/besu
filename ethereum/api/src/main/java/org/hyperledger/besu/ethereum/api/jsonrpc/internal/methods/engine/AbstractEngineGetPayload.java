@@ -138,7 +138,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
             withdrawalsInfo,
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            blockCreationTiming.end("log").toMillis() / 1000.0,
+            blockCreationTiming.end("awaitingRetrieval").toMillis() / 1000.0,
             blockCreationTiming,
             payloadIdentifier.toHexString()));
   }

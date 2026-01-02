@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -36,12 +35,8 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -52,16 +47,11 @@ import com.google.common.annotations.VisibleForTesting;
  * results to the world state.
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class ParallelizedConcurrentTransactionProcessor {
+public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTransactionProcessor {
 
   private final MainnetTransactionProcessor transactionProcessor;
 
   private final TransactionCollisionDetector transactionCollisionDetector;
-
-  private final Map<Integer, ParallelizedTransactionContext>
-      parallelizedTransactionContextByLocation = new ConcurrentHashMap<>();
-
-  private CompletableFuture<Void>[] completableFuturesForBackgroundTransactions;
 
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
@@ -83,56 +73,9 @@ public class ParallelizedConcurrentTransactionProcessor {
     this.transactionCollisionDetector = transactionCollisionDetector;
   }
 
-  /**
-   * Initiates the parallel and optimistic execution of transactions within a block by creating a
-   * copy of the world state for each transaction. This method processes transactions in a
-   * non-blocking manner. Transactions are executed against their respective copies of the world
-   * state, ensuring that the original world state passed as a parameter remains unmodified during
-   * this process.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockHeader Header of the current block containing the transactions.
-   * @param transactions List of transactions to be processed.
-   * @param miningBeneficiary Address of the beneficiary to receive mining rewards.
-   * @param blockHashLookup Function for block hash lookup.
-   * @param blobGasPrice Gas price for blob transactions.
-   * @param executor The executor to use for asynchronous execution.
-   * @param blockAccessListBuilder BAL builder.
-   */
-  public void runAsyncBlock(
-      final ProtocolContext protocolContext,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
-      final Wei blobGasPrice,
-      final Executor executor,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-
-    completableFuturesForBackgroundTransactions = new CompletableFuture[transactions.size()];
-    for (int i = 0; i < transactions.size(); i++) {
-      final Transaction transaction = transactions.get(i);
-      final int transactionLocation = i;
-      /*
-       * All transactions are executed in the background by copying the world state of the block on which the transactions need to be executed, ensuring that each one has its own accumulator.
-       */
-      CompletableFuture.runAsync(
-          () ->
-              runTransaction(
-                  protocolContext,
-                  blockHeader,
-                  transactionLocation,
-                  transaction,
-                  miningBeneficiary,
-                  blockHashLookup,
-                  blobGasPrice,
-                  blockAccessListBuilder),
-          executor);
-    }
-  }
-
+  @Override
   @VisibleForTesting
-  public void runTransaction(
+  protected ParallelizedTransactionContext runTransaction(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final int transactionLocation,
@@ -141,83 +84,77 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-    final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-    if (chainHeadHeader.getHash().equals(blockHeader.getParentHash())) {
-      try (BonsaiWorldState ws =
-          (BonsaiWorldState)
-              protocolContext
-                  .getWorldStateArchive()
-                  .getWorldState(
-                      WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(chainHeadHeader))
-                  .orElse(null)) {
-        if (ws != null) {
-          ws.disableCacheMerkleTrieLoader();
-          final ParallelizedTransactionContext.Builder contextBuilder =
-              new ParallelizedTransactionContext.Builder();
-          final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
-              (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
-          final WorldUpdater transactionUpdater = roundWorldStateUpdater.updater();
-          final Optional<AccessLocationTracker> transactionLocationTracker =
-              blockAccessListBuilder.map(
-                  b ->
-                      BlockAccessListBuilder.createTransactionAccessLocationTracker(
-                          transactionLocation));
-          final TransactionProcessingResult result =
-              transactionProcessor.processTransaction(
-                  transactionUpdater,
-                  blockHeader,
-                  transaction.detachedCopy(),
-                  miningBeneficiary,
-                  new OperationTracer() {
-                    @Override
-                    public void traceBeforeRewardTransaction(
-                        final WorldView worldView,
-                        final org.hyperledger.besu.datatypes.Transaction tx,
-                        final Wei miningReward) {
-                      /*
-                       * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
-                       * Indeed, if the transaction has interacted with the address to read or modify it,
-                       * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
-                       * If this is not the case, we can ignore this address during conflict detection.
-                       */
-                      if (transactionCollisionDetector
-                          .getAddressesTouchedByTransaction(
-                              transaction, Optional.of(roundWorldStateUpdater))
-                          .contains(miningBeneficiary)) {
-                        contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
-                      }
-                      contextBuilder.miningBeneficiaryReward(miningReward);
-                    }
-                  },
-                  blockHashLookup,
-                  TransactionValidationParams.processingBlock(),
-                  blobGasPrice,
-                  transactionLocationTracker);
 
-          // commit the accumulator in order to apply all the modifications
-          transactionUpdater.commit();
-          roundWorldStateUpdater.commit();
+    final BonsaiWorldState ws = getWorldState(protocolContext, blockHeader);
+    if (ws == null) return null;
 
-          contextBuilder
-              .transactionAccumulator(ws.getAccumulator())
-              .transactionProcessingResult(result);
+    try {
+      ws.disableCacheMerkleTrieLoader();
+      final ParallelizedTransactionContext.Builder contextBuilder =
+          new ParallelizedTransactionContext.Builder();
+      final PathBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
+          (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+      final WorldUpdater transactionUpdater = roundWorldStateUpdater.updater();
+      final Optional<AccessLocationTracker> transactionLocationTracker =
+          blockAccessListBuilder.map(
+              b ->
+                  BlockAccessListBuilder.createTransactionAccessLocationTracker(
+                      transactionLocation));
+      final TransactionProcessingResult result =
+          transactionProcessor.processTransaction(
+              transactionUpdater,
+              blockHeader,
+              transaction.detachedCopy(),
+              miningBeneficiary,
+              new OperationTracer() {
+                @Override
+                public void traceBeforeRewardTransaction(
+                    final WorldView worldView,
+                    final org.hyperledger.besu.datatypes.Transaction tx,
+                    final Wei miningReward) {
+                  /*
+                   * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
+                   * Indeed, if the transaction has interacted with the address to read or modify it,
+                   * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
+                   * If this is not the case, we can ignore this address during conflict detection.
+                   */
+                  if (transactionCollisionDetector
+                      .getAddressesTouchedByTransaction(
+                          transaction, Optional.of(roundWorldStateUpdater))
+                      .contains(miningBeneficiary)) {
+                    contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
+                  }
+                  contextBuilder.miningBeneficiaryReward(miningReward);
+                }
+              },
+              blockHashLookup,
+              TransactionValidationParams.processingBlock(),
+              blobGasPrice,
+              transactionLocationTracker);
 
-          final ParallelizedTransactionContext parallelizedTransactionContext =
-              contextBuilder.build();
-          if (!parallelizedTransactionContext.isMiningBeneficiaryTouchedPreRewardByTransaction()) {
-            /*
-             * If the address of the mining beneficiary has been touched only for adding rewards,
-             * we remove it from the accumulator to avoid a false positive collision.
-             * The balance will be increased during the sequential processing.
-             */
-            roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
-          }
-          parallelizedTransactionContextByLocation.put(
-              transactionLocation, parallelizedTransactionContext);
-        }
-      } catch (Exception ex) {
-        // no op as failing to get worldstate
+      // commit the accumulator in order to apply all the modifications
+      transactionUpdater.commit();
+      roundWorldStateUpdater.commit();
+
+      contextBuilder
+          .transactionAccumulator(ws.getAccumulator())
+          .transactionProcessingResult(result);
+
+      final ParallelizedTransactionContext parallelizedTransactionContext = contextBuilder.build();
+      if (!parallelizedTransactionContext.isMiningBeneficiaryTouchedPreRewardByTransaction()) {
+        /*
+         * If the address of the mining beneficiary has been touched only for adding rewards,
+         * we remove it from the accumulator to avoid a false positive collision.
+         * The balance will be increased during the sequential processing.
+         */
+        roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
       }
+      return parallelizedTransactionContext;
+    } catch (Exception ex) {
+      // no op as failing to get worldstate
+      return null;
+    } finally {
+      if (ws != null) ws.close();
     }
   }
 
@@ -244,22 +181,26 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @return Optional containing the transaction processing result if applied, or empty if the
    *     transaction needs to be replayed due to a conflict.
    */
-  public Optional<TransactionProcessingResult> applyParallelizedTransactionResult(
+  @Override
+  public Optional<TransactionProcessingResult> getProcessingResult(
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
       final int transactionLocation,
       final Optional<Counter> confirmedParallelizedTransactionCounter,
       final Optional<Counter> conflictingButCachedTransactionCounter) {
-    final PathBasedWorldState pathBasedWorldState = (PathBasedWorldState) worldState;
-    final PathBasedWorldStateUpdateAccumulator blockAccumulator =
-        (PathBasedWorldStateUpdateAccumulator) pathBasedWorldState.updater();
-    final ParallelizedTransactionContext parallelizedTransactionContext =
-        parallelizedTransactionContextByLocation.remove(transactionLocation);
-    /*
-     * If `parallelizedTransactionContext` is not null, it means that the transaction had time to complete in the background.
-     */
-    if (parallelizedTransactionContext != null) {
+
+    final CompletableFuture<ParallelizedTransactionContext> future = futures[transactionLocation];
+
+    if (future != null && future.isDone()) {
+      final ParallelizedTransactionContext parallelizedTransactionContext = future.resultNow();
+      if (parallelizedTransactionContext == null) {
+        return Optional.empty();
+      }
+
+      final PathBasedWorldState pathBasedWorldState = (PathBasedWorldState) worldState;
+      final PathBasedWorldStateUpdateAccumulator blockAccumulator =
+          (PathBasedWorldStateUpdateAccumulator) pathBasedWorldState.updater();
       final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
           parallelizedTransactionContext.transactionAccumulator();
       final TransactionProcessingResult transactionProcessingResult =
@@ -304,13 +245,9 @@ public class ParallelizedConcurrentTransactionProcessor {
         // re-execute the transaction.
         return Optional.empty();
       }
-    } else {
-      // stop background processing for this transaction as useless
-      final CompletableFuture<Void> completableFuturesForBackgroundTransaction =
-          completableFuturesForBackgroundTransactions[transactionLocation];
-      if (completableFuturesForBackgroundTransaction != null) {
-        completableFuturesForBackgroundTransaction.cancel(true);
-      }
+    }
+    if (future != null) {
+      future.cancel(true);
     }
     return Optional.empty();
   }
