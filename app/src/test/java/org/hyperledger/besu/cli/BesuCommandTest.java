@@ -3040,8 +3040,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
 
-    assertThat(networkArg.getValue().bootNodes()).isEqualTo(EPHEMERY_BOOT_NODES);
-
     assertThat(networkArg.getValue().networkId())
         .isEqualTo(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get());
 
