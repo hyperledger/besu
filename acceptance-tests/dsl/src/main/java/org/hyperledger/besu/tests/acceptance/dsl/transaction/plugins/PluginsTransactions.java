@@ -12,16 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins;
 
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.AddOperationOptimized;
-import org.hyperledger.besu.evm.operation.Operation;
+public class PluginsTransactions {
 
-public class AddOperationBenchmark extends BinaryOperationBenchmark {
+  public ReloadPluginConfig reloadConfiguration(final String pluginName) {
+    return new ReloadPluginConfig(pluginName);
+  }
 
-  @Override
-  protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return AddOperationOptimized.staticOperation(frame);
+  public ReloadPluginConfig reloadConfiguration() {
+    return new ReloadPluginConfig();
   }
 }
