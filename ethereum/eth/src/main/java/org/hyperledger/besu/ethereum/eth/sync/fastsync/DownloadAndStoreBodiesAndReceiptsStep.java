@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class DownloadAndStoreBodiesAndReceiptsStep
     implements Function<List<BlockHeader>, CompletableFuture<List<BlockHeader>>> {
 
