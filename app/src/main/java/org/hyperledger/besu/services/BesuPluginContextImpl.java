@@ -394,6 +394,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       throws IOException {
 
     final var pluginsArtifactData = getPluginsArtifactData(pluginClassLoader, plugins);
+    LOG.debug("Loaded pluginsArtifactData: {}", pluginsArtifactData);
 
     final var catalogLessArtifacts =
         pluginsArtifactData.stream()
@@ -651,7 +652,23 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     return summary;
   }
 
-  record ArtifactInfo(String name, List<BesuPlugin> plugins, ArtifactCatalog catalog) {}
+  record ArtifactInfo(String name, List<BesuPlugin> plugins, ArtifactCatalog catalog) {
+    @Override
+    public String toString() {
+      return "ArtifactInfo{"
+          + "name='"
+          + name
+          + '\''
+          + ", plugins="
+          + plugins.stream()
+              .map(BesuPlugin::getName)
+              .map(o -> o.orElse("_unnamed_"))
+              .collect(Collectors.joining(", "))
+          + ", catalog="
+          + catalog
+          + '}';
+    }
+  }
 
   record ArtifactCatalog(String besuVersion, List<ArtifactDependency> dependencies) {
     static final ArtifactCatalog NO_CATALOG = new ArtifactCatalog(null, List.of());
@@ -674,7 +691,8 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     }
   }
 
-  record ArtifactDependency(String name, String group, String version, String classifier, String filename) {
+  record ArtifactDependency(
+      String name, String group, String version, String classifier, String filename) {
     boolean equalsByNameAndGroup(final ArtifactDependency other) {
       return Objects.equals(name, other.name) && Objects.equals(group, other.group);
     }
