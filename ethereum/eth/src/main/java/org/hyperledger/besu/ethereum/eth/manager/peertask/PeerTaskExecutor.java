@@ -159,9 +159,9 @@ public class PeerTaskExecutor {
         } else {
           LOG.debug(
               "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
-          if (validationResponse.recordUselessResponse()) {
-            peer.recordUselessResponse(taskClassName);
-          }
+//          if (validationResponse.recordUselessResponse()) {
+//            peer.recordUselessResponse(taskClassName);
+//          }
           validationResponse.getDisconnectReason().ifPresent(peer::disconnect);
           executorResult =
               new PeerTaskExecutorResult<>(
