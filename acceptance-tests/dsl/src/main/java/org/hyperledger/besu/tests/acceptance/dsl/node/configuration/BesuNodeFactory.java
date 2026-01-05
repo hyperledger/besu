@@ -814,17 +814,10 @@ public class BesuNodeFactory {
 
   private DataStorageConfiguration getDefaultStorageConfiguration(
       final DataStorageFormat storageFormat) {
-    switch (storageFormat) {
-      case FOREST:
-        return DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
-      case BONSAI:
-        return DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
-      case X_BONSAI_ARCHIVE:
-        return DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG;
-      case X_BONSAI_ARCHIVE_PROOFS:
-        return DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG;
-      default:
-        throw new IllegalArgumentException();
-    }
-  }
+  return switch (storageFormat) {
+        case FOREST -> DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
+        case BONSAI -> DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
+        case X_BONSAI_ARCHIVE -> DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG;
+        case X_BONSAI_ARCHIVE_PROOFS -> DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG;
+    };
 }
