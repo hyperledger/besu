@@ -305,10 +305,12 @@ public class ParallelizedConcurrentTransactionProcessor {
       }
     } else {
       // stop background processing for this transaction as useless
-      final CompletableFuture<Void> completableFuturesForBackgroundTransaction =
-          completableFuturesForBackgroundTransactions[transactionLocation];
-      if (completableFuturesForBackgroundTransaction != null) {
-        completableFuturesForBackgroundTransaction.cancel(true);
+      if(transactionLocation>0) {
+        final CompletableFuture<Void> completableFuturesForBackgroundTransaction =
+                completableFuturesForBackgroundTransactions[transactionLocation - 1];
+        if (completableFuturesForBackgroundTransaction != null) {
+          completableFuturesForBackgroundTransaction.cancel(true);
+        }
       }
     }
     return Optional.empty();
