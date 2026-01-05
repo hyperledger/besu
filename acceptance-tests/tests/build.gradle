@@ -88,12 +88,13 @@ test.enabled = false
 sourceSets {
   test {
     resources {
-      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/install/test-plugins"
+      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/libs"
+      srcDirs "${rootDir}/acceptance-tests/catalogless-test-plugins/build/libs"
     }
   }
 }
 
-processTestResources.dependsOn(':buildDetachedTestPlugins')
+processTestResources.dependsOn(':buildDetachedTestPlugins', ':acceptance-tests:catalogless-test-plugins:jar')
 
 compileTestJava.dependsOn ':buildDetachedTestPlugins'
 

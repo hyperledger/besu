@@ -21,6 +21,7 @@ import org.hyperledger.besu.cli.options.NetworkingOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.storage.DataStorageOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -36,6 +37,7 @@ import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -132,8 +135,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     if (node.getRunCommand().isEmpty()) {
-      waitForFile(dataDir, "besu.ports");
-      waitForFile(dataDir, "besu.networks");
+      waitForFileOrExit(dataDir, "besu.ports");
+      waitForFileOrExit(dataDir, "besu.networks");
     }
     MDC.remove("node");
   }
@@ -385,6 +388,24 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
           "--plugins=" + node.getRequestedPlugins().stream().collect(Collectors.joining(",")));
     }
 
+    if (node.getPluginConfiguration() != null) {
+      final PluginConfiguration pluginConfig = node.getPluginConfiguration();
+
+      if (!pluginConfig.isExternalPluginsEnabled()) {
+        params.add("--plugin-external-enabled=false");
+      }
+
+      if (pluginConfig.isContinueOnPluginError()) {
+        params.add("--continue-on-plugin-error");
+      }
+
+      if (pluginConfig.getPluginsVerificationMode()
+          != PluginConfiguration.DEFAULT_PLUGINS_VERIFICATION_MODE) {
+        params.add(
+            "--plugins-verification-mode=" + pluginConfig.getPluginsVerificationMode().name());
+      }
+    }
+
     params.addAll(node.getRunCommand());
     return params;
   }
@@ -435,6 +456,23 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   private String apiList(final Collection<String> rpcApis) {
     return String.join(",", rpcApis);
+  }
+
+  private void waitForFileOrExit(final Path dataDir, final String fileName) {
+    final File file = new File(dataDir.toFile(), fileName);
+    Awaitility.waitAtMost(60, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              if (besuProcesses.values().stream().noneMatch(Process::isAlive)) {
+                return true;
+              }
+
+              try (final Stream<String> s = Files.lines(file.toPath())) {
+                return s.count() > 0;
+              } catch (NoSuchFileException __) {
+                return false;
+              }
+            });
   }
 
   @Override

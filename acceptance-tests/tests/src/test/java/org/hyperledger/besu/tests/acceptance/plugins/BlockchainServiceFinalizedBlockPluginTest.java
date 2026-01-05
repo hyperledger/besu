@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
@@ -53,7 +54,11 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
                     GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
         besu.createQbftPluginsNode(
-            "node1", List.of("testPlugins"), List.of("--rpc-http-api=UPDATER"), "DEBUG");
+            "node1",
+            List.of("testPlugins"),
+            PluginConfiguration.DEFAULT,
+            List.of("--rpc-http-api=UPDATER"),
+            "DEBUG");
     cluster.start(minerNode, pluginNode);
     client = new OkHttpClient();
   }

@@ -514,7 +514,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
                     leb.log(
                         "Plugin artifact {} is built against Besu version {} while current running Besu version is {}",
                         artifactInfo.name(),
-                        pluginBuildBesuVersion,
+                        pluginBuildBesuVersion == null ? "unknown" : pluginBuildBesuVersion,
                         besuRunningVersion);
                     return true;
                   }

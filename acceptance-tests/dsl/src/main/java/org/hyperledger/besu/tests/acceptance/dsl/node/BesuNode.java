@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -137,6 +138,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Map<String, String> environment;
   private SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<KeyValueStorageFactory> storageFactory;
+  private final PluginConfiguration pluginConfiguration;
 
   public BesuNode(
       final String name,
@@ -173,7 +175,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<KeyPair> keyPair,
       final boolean isStrictTxReplayProtectionEnabled,
       final Map<String, String> environment,
-      final Optional<KeyValueStorageFactory> maybeStorageFactory)
+      final Optional<KeyValueStorageFactory> maybeStorageFactory,
+      final PluginConfiguration pluginConfiguration)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -235,6 +238,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.isDnsEnabled = isDnsEnabled;
     this.environment = environment;
     this.synchronizerConfiguration = SynchronizerConfiguration.builder().build(); // Default config
+    this.pluginConfiguration = pluginConfiguration;
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -548,7 +552,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void start(final BesuNodeRunner runner) {
     runner.startNode(this);
-    if (runCommand.isEmpty()) {
+    if (runCommand.isEmpty() && exitCode.isEmpty()) {
       loadPortsFile();
     }
   }
@@ -860,5 +864,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public Optional<KeyValueStorageFactory> getStorageFactory() {
     return storageFactory;
+  }
+
+  public PluginConfiguration getPluginConfiguration() {
+    return pluginConfiguration;
   }
 }

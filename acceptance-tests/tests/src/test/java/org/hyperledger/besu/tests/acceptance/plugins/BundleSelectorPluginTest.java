@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -35,6 +36,7 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of("--plugin-bundle-test-enabled=true", "--plugin-bundle-size=2"));
     cluster.start(node);
 
@@ -47,6 +49,7 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=2",
@@ -64,6 +67,7 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=2",
@@ -81,6 +85,7 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=3",

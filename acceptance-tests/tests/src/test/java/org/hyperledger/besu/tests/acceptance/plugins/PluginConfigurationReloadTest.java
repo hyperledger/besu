@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -36,6 +37,7 @@ public class PluginConfigurationReloadTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "pluginNode",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             Collections.emptyList(),
             "PLUGINS");
 

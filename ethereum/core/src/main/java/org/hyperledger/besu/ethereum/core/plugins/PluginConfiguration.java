@@ -29,6 +29,8 @@ public interface PluginConfiguration {
   boolean DEFAULT_CONTINUE_ON_PLUGIN_ERROR = false;
   PluginsVerificationMode DEFAULT_PLUGINS_VERIFICATION_MODE = PluginsVerificationMode.NONE;
 
+  PluginConfiguration DEFAULT = ImmutablePluginConfiguration.builder().build();
+
   @Value.Default
   default List<PluginInfo> getRequestedPluginsInfo() {
     return DEFAULT_REQUESTED_PLUGINS_INFO;
