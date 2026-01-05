@@ -15,7 +15,8 @@
 
 ### Locally, you can run these tests to catch failures early:
 
-- [ ] spotless: `./gradlew spotlessApply`
+- [ ] spotless: `./gradlew --write-verification-metadata sha256 spotlessApply`
+- [ ] lockfile: `./gradlew dependencies --write-locks`
 - [ ] unit tests: `./gradlew build`
 - [ ] acceptance tests: `./gradlew acceptanceTest`
 - [ ] integration tests: `./gradlew integrationTest`
