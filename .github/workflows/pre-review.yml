@@ -55,10 +55,31 @@ jobs:
           cache-disabled: true
       - name: run spotless
         run: ./gradlew spotlessCheck
+  lockfile:
+    name: "Gradle Lockfile Verification"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      - name: Set up Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+      - name: Verify lockfile is up-to-date
+        run: |
+          ./gradlew dependencies --write-locks
+          git diff --exit-code gradle.lockfile
   compile:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    needs: [spotless, gradle-wrapper, repolint]
+    needs: [spotless, gradle-wrapper, repolint, lockfile]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -79,7 +100,7 @@ jobs:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
-    needs: [spotless, gradle-wrapper, repolint]
+    needs: [spotless, gradle-wrapper, repolint, lockfile]
     permissions:
       checks: write
       statuses: write
