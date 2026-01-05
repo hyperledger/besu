@@ -42,6 +42,12 @@ public interface BalConfiguration {
     return false;
   }
 
+  /** Returns whether BAL perfect parallelization is enabled. */
+  @Value.Default
+  default boolean isPerfectParallelizationEnabled() {
+    return true;
+  }
+
   /**
    * Returns whether mismatches between BAL and synchronously computed state roots should only log
    * an error instead of throwing an exception.
@@ -60,6 +66,12 @@ public interface BalConfiguration {
   /** Returns the timeout to use when waiting for the BAL-computed state root. */
   @Value.Default
   default Duration getBalStateRootTimeout() {
+    return Duration.ofSeconds(1);
+  }
+
+  /** Returns the timeout to use when waiting for BAL transaction processing results. */
+  @Value.Default
+  default Duration getBalProcessingTimeout() {
     return Duration.ofSeconds(1);
   }
 }
