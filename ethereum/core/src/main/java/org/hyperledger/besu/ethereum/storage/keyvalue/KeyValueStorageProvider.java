@@ -83,7 +83,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   public WorldStateKeyValueStorage createWorldStateStorage(
       final DataStorageConfiguration dataStorageConfiguration) {
     if (dataStorageConfiguration.getDataStorageFormat().isBonsaiFormat()) {
-      return new BonsaiCachedWorldStateStorage(new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration), 1000, 0,5000,0);
+      return new BonsaiCachedWorldStateStorage(new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration), 5000, 0,15000,0);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
