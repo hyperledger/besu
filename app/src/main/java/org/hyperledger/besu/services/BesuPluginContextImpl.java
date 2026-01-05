@@ -209,7 +209,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   private boolean registerPlugin(final BesuPlugin plugin) {
     try {
       plugin.register(this);
-      pluginVersions.put(plugin.getName().orElse("<Unnamed Plugin>"), plugin.getVersion());
+      pluginVersions.put(plugin.getName(), plugin.getVersion());
       LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
     } catch (final Exception e) {
       if (config.isContinueOnPluginError()) {
@@ -393,6 +393,8 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       final List<BesuPlugin> plugins)
       throws IOException {
 
+    verifyNamesAreUnique(plugins);
+
     final var pluginsArtifactData = getPluginsArtifactData(pluginClassLoader, plugins);
     LOG.debug("Loaded pluginsArtifactData: {}", pluginsArtifactData);
 
@@ -409,7 +411,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
               leb.log(
                   "Artifact {} containing plugins {} is without a catalog",
                   ad.name(),
-                  ad.plugins().stream().map(BesuPlugin::getName).map(Optional::get).toList()));
+                  ad.plugins().stream().map(BesuPlugin::getName).toList()));
 
       if (pluginsVerificationMode.failOnCatalogLess()) {
         throw new IllegalStateException(
@@ -418,6 +420,23 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     }
 
     verifyCatalogs(pluginClassLoader, pluginsVerificationMode, pluginsArtifactData);
+  }
+
+  private void verifyNamesAreUnique(final List<BesuPlugin> loadedPlugins) {
+    final var pluginNameCounts =
+        loadedPlugins.stream()
+            .collect(Collectors.groupingBy(BesuPlugin::getName, Collectors.counting()));
+
+    final var duplicateNames =
+        pluginNameCounts.entrySet().stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Map.Entry::getKey)
+            .toList();
+
+    if (!duplicateNames.isEmpty()) {
+      throw new IllegalStateException(
+          "Plugins with same name detected: " + String.join(", ", duplicateNames));
+    }
   }
 
   private List<ArtifactInfo> getPluginsArtifactData(
@@ -600,14 +619,13 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   }
 
   /**
-   * Gets named plugins.
+   * Gets plugins by name.
    *
-   * @return the named plugins
+   * @return the plugins by name
    */
-  public Map<String, BesuPlugin> getNamedPlugins() {
+  public Map<String, BesuPlugin> getPluginsByName() {
     return registeredPlugins.stream()
-        .filter(plugin -> plugin.getName().isPresent())
-        .collect(Collectors.toMap(plugin -> plugin.getName().get(), plugin -> plugin, (a, b) -> b));
+        .collect(Collectors.toMap(plugin -> plugin.getName(), plugin -> plugin));
   }
 
   /**
@@ -660,10 +678,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
           + name
           + '\''
           + ", plugins="
-          + plugins.stream()
-              .map(BesuPlugin::getName)
-              .map(o -> o.orElse("_unnamed_"))
-              .collect(Collectors.joining(", "))
+          + plugins.stream().map(BesuPlugin::getName).collect(Collectors.joining(", "))
           + ", catalog="
           + catalog
           + '}';
