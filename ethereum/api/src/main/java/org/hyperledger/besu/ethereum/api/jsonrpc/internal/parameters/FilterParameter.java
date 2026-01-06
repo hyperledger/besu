@@ -182,21 +182,6 @@ public class FilterParameter {
   }
 
   /**
-   * Validates that fromBlock <= toBlock for already resolved block numbers.
-   *
-   * @param fromBlockNumber the resolved from block number
-   * @param toBlockNumber the resolved to block number
-   * @throws InvalidJsonRpcParameters if fromBlock > toBlock
-   */
-  public static void validateBlockRange(final long fromBlockNumber, final long toBlockNumber) {
-    if (fromBlockNumber > toBlockNumber) {
-      throw new InvalidJsonRpcParameters(
-          "fromBlock (" + fromBlockNumber + ") is greater than toBlock (" + toBlockNumber + ")",
-          RpcErrorType.INVALID_PARAMS);
-    }
-  }
-
-  /**
    * Validates that fromBlock <= toBlock and toBlock <= latestBlock for already resolved block
    * numbers.
    *
