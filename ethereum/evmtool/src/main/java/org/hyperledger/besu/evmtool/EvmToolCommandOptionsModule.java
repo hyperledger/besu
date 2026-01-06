@@ -76,8 +76,7 @@ public class EvmToolCommandOptionsModule {
   @Option(
       names = {"--key-value-storage"},
       description =
-          "Identity for the key-value storage to be used (default: 'memory' alternate: 'rocksdb')",
-      arity = "1")
+          "Identity for the key-value storage to be used (default: 'memory' alternate: 'rocksdb')")
   private String keyValueStorageName = "memory";
 
   @Provides
@@ -104,8 +103,7 @@ public class EvmToolCommandOptionsModule {
   @Option(
       names = {"--block-number"},
       description =
-          "Block number to evaluate against (default: 'PENDING', or 'EARLIEST', 'LATEST', or a number)",
-      arity = "1")
+          "Block number to evaluate against (default: 'PENDING', or 'EARLIEST', 'LATEST', or a number)")
   private final BlockParameter blockParameter = BlockParameter.PENDING;
 
   @Provides
@@ -122,8 +120,7 @@ public class EvmToolCommandOptionsModule {
               + "of valid jump destinations to grow to before evicting the least recently used entry",
       fallbackValue = "32000",
       defaultValue = "32000",
-      hidden = true,
-      arity = "1")
+      hidden = true)
   private Long jumpDestCacheWeightKilobytes =
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
@@ -132,8 +129,7 @@ public class EvmToolCommandOptionsModule {
       description = "How to handle worldstate updates within a transaction",
       fallbackValue = "STACKED",
       defaultValue = "STACKED",
-      hidden = true,
-      arity = "1")
+      hidden = true)
   private EvmConfiguration.WorldUpdaterMode worldstateUpdateMode =
       EvmConfiguration.WorldUpdaterMode
           .STACKED; // Stacked Updater.  Years of battle tested correctness.
