@@ -130,7 +130,8 @@ class AbstractBlockProcessorIntegrationTest {
             coinbaseReward,
             BlockHeader::getCoinbase,
             skipRewards,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     final BlockProcessor parallelBlockProcessor =
         new MainnetParallelBlockProcessor(
@@ -140,6 +141,7 @@ class AbstractBlockProcessorIntegrationTest {
             BlockHeader::getCoinbase,
             skipRewards,
             protocolSchedule,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     return Stream.of(
@@ -326,7 +328,8 @@ class AbstractBlockProcessorIntegrationTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule);
+            protocolSchedule,
+            BalConfiguration.DEFAULT);
 
     BlockProcessingResult parallelResult =
         blockProcessor.processBlock(
@@ -334,7 +337,8 @@ class AbstractBlockProcessorIntegrationTest {
             blockchain,
             worldStateParallel,
             block,
-            new ParallelTransactionPreprocessing(transactionProcessor, Runnable::run));
+            new ParallelTransactionPreprocessing(
+                transactionProcessor, Runnable::run, BalConfiguration.DEFAULT));
 
     BlockProcessingResult sequentialResult =
         blockProcessor.processBlock(protocolContext, blockchain, worldStateSequential, block);
@@ -1257,9 +1261,10 @@ class AbstractBlockProcessorIntegrationTest {
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
     final Hash computedRoot =
-        BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
+        BlockAccessListStateRootHashCalculator.computeAsync(
                 protocolContext, block.getHeader(), blockAccessList)
-            .join();
+            .join()
+            .root();
 
     assertThat(computedRoot).isEqualTo(expectedRoot);
   }

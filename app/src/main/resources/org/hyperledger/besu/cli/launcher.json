@@ -140,20 +140,6 @@
           "available-options": "org.hyperledger.besu.nat.NatMethod"
         }
       ]
-    },
-    {
-      "prompt-type": "CONFIRM",
-      "question": "Do you want to enable mining ?",
-      "default-option": "no",
-      "config-key": "miner-enabled",
-      "sub-questions": [
-        {
-          "prompt-type": "INPUT",
-          "question": "What is the account to which mining rewards are paid ?",
-          "config-key": "miner-coinbase",
-          "regex": "^0x[0-9a-fA-F]{40}$"
-        }
-      ]
     }
   ]
 }

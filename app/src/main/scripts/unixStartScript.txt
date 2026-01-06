@@ -43,9 +43,6 @@ cd "\$SAVED" >/dev/null
 APP_NAME="${applicationName}"
 APP_BASE_NAME=`basename "\$0"`
 
-# Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
-DEFAULT_JVM_OPTS=${defaultJvmOpts}
-
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD="maximum"
 
@@ -103,6 +100,23 @@ else
 
 Please set the JAVA_HOME variable in your environment to match the
 location of your Java installation."
+fi
+
+# Detect Java version
+JAVA_VERSION=\$("\$JAVACMD" -version 2>&1 | awk -F '"' '/version/ {print \$2}' | sed 's/^1\\.//' | cut -d'.' -f1)
+
+# Validate it's a number
+if ! [ "\$JAVA_VERSION" -eq "\$JAVA_VERSION" ] 2>/dev/null; then
+    die "Unable to determine Java version"
+fi
+
+# Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
+if [ "\$JAVA_VERSION" -ge 25 ]; then
+    DEFAULT_JVM_OPTS=@DEFAULT_JVM_OPTS_25@
+elif [ "\$JAVA_VERSION" -ge 21 ]; then
+    DEFAULT_JVM_OPTS=${defaultJvmOpts}
+else
+    die "Java version must be at least 21 (detected: \$JAVA_VERSION)"
 fi
 
 # Increase the maximum file descriptors if we can.

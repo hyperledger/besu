@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -51,7 +52,8 @@ public class TransactionsMessageSenderTest {
   private final PeerTransactionTracker transactionTracker =
       new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
   private final TransactionsMessageSender messageSender =
-      new TransactionsMessageSender(transactionTracker);
+      new TransactionsMessageSender(
+          transactionTracker, EthProtocolConfiguration.DEFAULT.getMaxTransactionsMessageSize());
 
   @Test
   public void shouldSendTransactionsToEachPeer() throws Exception {
@@ -59,7 +61,8 @@ public class TransactionsMessageSenderTest {
     transactionTracker.addToPeerSendQueue(peer1, transaction2);
     transactionTracker.addToPeerSendQueue(peer2, transaction3);
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionsToPeer(peer1);
+    messageSender.sendTransactionsToPeer(peer2);
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
@@ -72,7 +75,8 @@ public class TransactionsMessageSenderTest {
 
     transactions.forEach(transaction -> transactionTracker.addToPeerSendQueue(peer1, transaction));
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionsToPeer(peer1);
+
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
         ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(messageDataArgumentCaptor.capture());

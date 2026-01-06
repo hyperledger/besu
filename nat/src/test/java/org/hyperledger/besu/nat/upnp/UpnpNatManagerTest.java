@@ -28,7 +28,6 @@ import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URL;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -166,7 +165,7 @@ public final class UpnpNatManagerTest {
             new RemoteDeviceIdentity(
                 UDN.valueOf(UpnpNatManager.SERVICE_TYPE_WAN_IP_CONNECTION),
                 3600,
-                new URL("http://127.63.31.15/"),
+                new URI("http://127.63.31.15/").toURL(),
                 null,
                 InetAddress.getByName("127.63.31.15")),
             new UDADeviceType("WANConnectionDevice"),

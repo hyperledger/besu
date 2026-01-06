@@ -86,7 +86,7 @@ public class PivotBlockConfirmerTest {
             .setEthScheduler(new DeterministicEthScheduler(timeout::get))
             .setWorldStateArchive(blockchainSetupUtil.getWorldArchive())
             .setTransactionPool(transactionPool)
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
   }

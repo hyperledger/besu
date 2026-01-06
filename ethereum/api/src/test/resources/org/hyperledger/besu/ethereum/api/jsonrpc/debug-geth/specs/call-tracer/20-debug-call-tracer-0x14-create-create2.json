@@ -1,0 +1,68 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x14",
+      {
+        "tracer": "callTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0xd32c538fd1b3ef854c04ae39925dc9e849b568b92ea388f778b794851ab37f7c",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xfffff2",
+          "gasUsed": "0x1d430",
+          "to": "0x0130000000000000000000000000000000000000",
+          "input": "0x",
+          "calls": [
+            {
+              "from": "0x0130000000000000000000000000000000000000",
+              "gas": "0xfb3410",
+              "gasUsed": "0xaeba",
+              "to": "0xaac0627078c038eb3d06e04b57d020fe212be97d",
+              "input": "0x600160015560015460025561ffff6000526002601ef3",
+              "output": "0xffff",
+              "value": "0x0",
+              "type": "CREATE"
+            }
+          ],
+          "value": "0x0",
+          "type": "CALL"
+        }
+      },
+      {
+        "txHash": "0xaf151fc10eb21e76efb0bc74da179a674083e420280fb2985f76b0326682864a",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xfffff2",
+          "gasUsed": "0x1d371",
+          "to": "0x0140000000000000000000000000000000000000",
+          "input": "0x",
+          "calls": [
+            {
+              "from": "0x0140000000000000000000000000000000000000",
+              "gas": "0xfb3407",
+              "gasUsed": "0xadf2",
+              "to": "0x0deea5bd06fb86553643c1e94a2f5aac632b9ec9",
+              "input": "0x600160015560015460025560ff60005360016000f3",
+              "output": "0xff",
+              "value": "0x0",
+              "type": "CREATE2"
+            }
+          ],
+          "value": "0x0",
+          "type": "CALL"
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

@@ -144,6 +144,24 @@ public final class PartialBlockAccessView {
     public List<SlotChange> getStorageChanges() {
       return storageChanges;
     }
+
+    @Override
+    public String toString() {
+      return "AccountChanges{"
+          + "address="
+          + address
+          + ", storageChanges="
+          + storageChanges
+          + ", storageReads="
+          + storageReads
+          + ", postBalance="
+          + postBalance
+          + ", postBalance="
+          + postBalance
+          + ", newCode="
+          + newCode
+          + '}';
+    }
   }
 
   /** Builder for PartialBlockAccessView. */

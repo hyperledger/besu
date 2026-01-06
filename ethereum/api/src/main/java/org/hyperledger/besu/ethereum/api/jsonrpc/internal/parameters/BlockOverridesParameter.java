@@ -61,7 +61,8 @@ public class BlockOverridesParameter extends BlockOverrides {
       @JsonProperty("stateRoot") final Optional<Hash> stateRoot,
       @JsonProperty("difficulty") final Optional<BigInteger> difficulty,
       @JsonProperty("extraData") final Optional<Bytes> extraData,
-      @JsonProperty("mixHash") final Optional<String> mixHash) {
+      @JsonProperty("mixHash") final Optional<String> mixHash,
+      @JsonProperty("parentBeaconBlockRoot") final Optional<String> parentBeaconBlockRoot) {
     super(
         timestamp,
         blockNumber,
@@ -73,7 +74,8 @@ public class BlockOverridesParameter extends BlockOverrides {
         stateRoot,
         difficulty,
         extraData,
-        mixHash.isPresent() ? mixHash : prevRandao);
+        mixHash.isPresent() ? mixHash : prevRandao,
+        parentBeaconBlockRoot);
   }
 
   @Override

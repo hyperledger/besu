@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.C
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalRootComputation;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -98,7 +99,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isEqualTo(accumulatorRoot);
   }
@@ -130,7 +131,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isEqualTo(accumulatorRoot);
   }
@@ -175,7 +176,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isEqualTo(accumulatorRoot);
   }
@@ -203,7 +204,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isNotEqualTo(accumulatorRoot);
   }
@@ -234,7 +235,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isNotEqualTo(accumulatorRoot);
   }
@@ -271,7 +272,7 @@ class BlockAccessListStateRootHashCalculatorTest {
             });
 
     final Hash balRoot =
-        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        computeRootFromBalAsync(bal).get(FUTURE_TIMEOUT.toSeconds(), TimeUnit.SECONDS).root();
 
     assertThat(balRoot).isEqualTo(expectedRoot);
   }
@@ -296,14 +297,13 @@ class BlockAccessListStateRootHashCalculatorTest {
     }
   }
 
-  private CompletableFuture<Hash> computeRootFromBalAsync(final BlockAccessList bal) {
+  private CompletableFuture<BalRootComputation> computeRootFromBalAsync(final BlockAccessList bal) {
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture()
             .parentHash(chainHeadHeader.getHash())
             .number(chainHeadHeader.getNumber() + 1L)
             .buildHeader();
 
-    return BlockAccessListStateRootHashCalculator.computeStateRootFromBlockAccessListAsync(
-        protocolContext, blockHeader, bal);
+    return BlockAccessListStateRootHashCalculator.computeAsync(protocolContext, blockHeader, bal);
   }
 }

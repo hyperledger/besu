@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -140,7 +140,7 @@ public class JsonRpcHttpServiceTestBase {
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
                 mock(MiningConfiguration.class),
-                mock(PoWMiningCoordinator.class),
+                new NoopMiningCoordinator(),
                 new NoOpMetricsSystem(),
                 supportedCapabilities,
                 Optional.of(mock(AccountLocalConfigPermissioningController.class)),

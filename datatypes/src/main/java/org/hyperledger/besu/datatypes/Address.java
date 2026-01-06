@@ -270,4 +270,10 @@ public class Address extends DelegatingBytes {
     Address other = (Address) obj;
     return Arrays.equals(this.toArrayUnsafe(), other.toArrayUnsafe());
   }
+
+  @Override
+  public int hashCode() {
+    // Delegate to parent's hashCode implementation which uses delegate.hashCode()
+    return super.hashCode();
+  }
 }

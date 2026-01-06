@@ -44,6 +44,7 @@ dependencies {
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
   implementation 'org.jacoco:org.jacoco.core'
+  implementation 'org.mockito:mockito-core'
 }
 
 application {
@@ -54,83 +55,48 @@ application {
   ]
 }
 
-def corpusDir = "${buildDir}/generated/corpus"
+// P256 signature verification fuzzer tasks
+def p256CorpusDir = "${buildDir}/generated/p256-corpus"
 
-tasks.register("runFuzzer", JavaExec) {
+tasks.register("runP256Fuzzer", JavaExec) {
   doNotTrackState("Produces no artifacts")
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
 
   args = [
-    "eof-container",
-    "--tests-dir=${projectDir}/../ethereum/referencetests/src/reference-test/external-resources/EOFTests",
-    "--corpus-dir=${corpusDir}"
+    "p256verify",
+    "--corpus-dir=${p256CorpusDir}"
   ]
+
   doFirst {
-    mkdir corpusDir
+    mkdir p256CorpusDir
   }
 }
 
-// Adds guidance to the fuzzer but with a 90% performance drop.
-tasks.register("fuzzGuided") {
+// Standard P256 fuzzing task
+tasks.register("fuzzP256Verify") {
+  dependsOn "generateP256Corpus"
   doLast {
-    runFuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
-    runFuzzer.args += "--new-corpus-dir=${corpusDir}/.."
+    runP256Fuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
+    runP256Fuzzer.args += "--new-corpus-dir=${p256CorpusDir}/new"
   }
-  finalizedBy("runFuzzer")
+  finalizedBy("runP256Fuzzer")
 }
 
-// This fuzzes besu as an external client.  Besu fuzzing as a local client is enabled by default.
-tasks.register("fuzzBesu") {
-  dependsOn(":installDist")
-  doLast {
-    runFuzzer.args += "--client=besu=../build/install/besu/bin/evmtool code-validate"
-  }
-  finalizedBy("runFuzzer")
-}
+// Task to generate initial P256 corpus
+tasks.register("generateP256Corpus", JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.testfuzz.P256VerifyCorpusGenerator'
+  args = [p256CorpusDir]
 
-tasks.register("fuzzEvmone") {
-  doLast {
-    runFuzzer.args += "--client=evm1=evmone-eofparse"
+  doFirst {
+    mkdir p256CorpusDir
   }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzEthereumJS") {
-  doLast {
-    runFuzzer.args += "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzGeth") {
-  doLast {
-    runFuzzer.args += "--client=geth=eofdump eofparser"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzNethermind") {
-  doLast {
-    runFuzzer.args += "--client=neth=netheofparse -x"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzReth") {
-  doLast {
-    runFuzzer.args += "--client=revm=revme bytecode --eof-runtime"
-  }
-  finalizedBy("runFuzzer")
-}
-
-tasks.register("fuzzAll") {
-  dependsOn fuzzEvmone, fuzzEthereumJS, fuzzGeth, fuzzNethermind, fuzzReth
 }
 
 jacoco {
   applyTo run
-  applyTo runFuzzer
+  applyTo runP256Fuzzer
 }
 
 // Copies jacoco into the lib directory

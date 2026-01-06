@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.ConsensusContextFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -58,7 +57,6 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
-import java.io.IOException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -117,9 +115,6 @@ public class BlockchainReferenceTestTools {
         // Perfectly valid test pre-merge.
         params.ignore(
                 "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
-
-        // EOF tests don't have Prague stuff like deposits right now
-        params.ignore("/stEOF/");
 
         // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
         params.ignore("/stEIP2537/");
@@ -298,6 +293,7 @@ public class BlockchainReferenceTestTools {
               metricsSystem,
               syncState,
               TransactionPoolConfiguration.DEFAULT,
+              EthProtocolConfiguration.DEFAULT,
               new BlobCache(),
               MiningConfiguration.newDefault());
 

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.chainexport;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -67,7 +67,7 @@ public class Era1BlockExporterTest {
     era1BlockExporter =
         new Era1BlockExporter(
             blockchain,
-            NetworkName.MAINNET,
+            NetworkDefinition.MAINNET,
             era1FileWriterFactory,
             era1AccumulatorFactory,
             era1BlockIndexConverter,

@@ -957,6 +957,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     final Optional<TransactionSimulatorResult> result =
         uncappedTransactionSimulator.process(
             callParameter,
+            Optional.empty(),
             TransactionValidationParams.transactionSimulator(),
             OperationTracer.NO_TRACING,
             blockHeader);

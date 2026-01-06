@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -55,6 +56,7 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration,
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration) {
 
@@ -63,7 +65,8 @@ public class TransactionPoolFactory {
     final PeerTransactionTracker transactionTracker =
         new PeerTransactionTracker(transactionPoolConfiguration, ethContext.getEthPeers());
     final TransactionsMessageSender transactionsMessageSender =
-        new TransactionsMessageSender(transactionTracker);
+        new TransactionsMessageSender(
+            transactionTracker, ethProtocolConfiguration.getMaxTransactionsMessageSize());
 
     final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
         new NewPooledTransactionHashesMessageSender(transactionTracker);

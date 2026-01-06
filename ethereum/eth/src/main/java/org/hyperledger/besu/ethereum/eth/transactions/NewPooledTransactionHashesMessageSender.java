@@ -46,13 +46,12 @@ class NewPooledTransactionHashesMessageSender {
     for (final List<Transaction> txBatch :
         Iterables.partition(
             transactionTracker.claimTransactionHashesToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
+      final List<Hash> txHashes = toHashList(txBatch);
       try {
-        final List<Hash> txHashes = toHashList(txBatch);
+
         LOG.atTrace()
-            .setMessage(
-                "Sending transaction hashes to peer {}, transaction hashes count {}, list {}")
+            .setMessage("Sending transaction hashes to peer={}, hashes={}")
             .addArgument(peer)
-            .addArgument(txHashes::size)
             .addArgument(txHashes)
             .log();
 
@@ -60,6 +59,12 @@ class NewPooledTransactionHashesMessageSender {
             NewPooledTransactionHashesMessage.create(txBatch, capability);
         peer.send(message);
       } catch (final PeerNotConnected unused) {
+        LOG.atTrace()
+            .setMessage(
+                "Peer no more connected while sending transaction hashes: peer={}, message hashes={}")
+            .addArgument(peer)
+            .addArgument(txHashes)
+            .log();
         break;
       }
     }

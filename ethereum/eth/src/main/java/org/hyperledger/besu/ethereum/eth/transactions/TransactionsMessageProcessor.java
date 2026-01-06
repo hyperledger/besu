@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +52,22 @@ class TransactionsMessageProcessor {
   void processTransactionsMessage(
       final EthPeer peer,
       final TransactionsMessage transactionsMessage,
-      final Instant startedAt,
+      final Instant queueAt,
       final Duration keepAlive) {
     // Check if message is not expired.
-    if (startedAt.plus(keepAlive).isAfter(now())) {
+    final var latency = Duration.between(queueAt, now());
+    if (latency.compareTo(keepAlive) < 0) {
       this.processTransactionsMessage(peer, transactionsMessage);
     } else {
+      LOG.atTrace()
+          .setMessage(
+              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, hashes={}")
+          .addArgument(peer)
+          .addArgument(latency)
+          .addArgument(queueAt)
+          .addArgument(keepAlive)
+          .addArgument(() -> toHashList(transactionsMessage.transactions()))
+          .log();
       metrics.incrementExpiredMessages(METRIC_LABEL);
     }
   }
@@ -74,13 +83,9 @@ class TransactionsMessageProcessor {
       metrics.incrementAlreadySeenTransactions(
           METRIC_LABEL, incomingTransactions.size() - freshTransactions.size());
       LOG.atTrace()
-          .setMessage(
-              "Received transactions message from {}, incoming transactions {}, incoming list {}"
-                  + ", fresh transactions {}, fresh list {}")
+          .setMessage("Received transactions message: peer={} incoming hashes={}, fresh hashes={}")
           .addArgument(peer)
-          .addArgument(incomingTransactions::size)
           .addArgument(() -> toHashList(incomingTransactions))
-          .addArgument(freshTransactions::size)
           .addArgument(() -> toHashList(freshTransactions))
           .log();
 
@@ -100,6 +105,6 @@ class TransactionsMessageProcessor {
   private Collection<Transaction> skipSeenTransactions(final List<Transaction> inTransactions) {
     return inTransactions.stream()
         .filter(tx -> !transactionTracker.hasSeenTransaction(tx.getHash()))
-        .collect(Collectors.toUnmodifiableList());
+        .toList();
   }
 }

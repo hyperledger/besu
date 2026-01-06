@@ -44,13 +44,17 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class EthServer {
+  private static final Logger LOG = LoggerFactory.getLogger(EthServer.class);
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final TransactionPool transactionPool;
@@ -76,7 +80,7 @@ class EthServer {
 
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_BLOCK_HEADERS,
-        (messageData, capability) ->
+        (peer, messageData, capability) ->
             constructGetHeadersResponse(
                 blockchain,
                 messageData,
@@ -84,7 +88,7 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_BLOCK_BODIES,
-        (messageData, capability) ->
+        (peer, messageData, capability) ->
             constructGetBodiesResponse(
                 blockchain,
                 messageData,
@@ -92,7 +96,7 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_RECEIPTS,
-        (messageData, capability) ->
+        (peer, messageData, capability) ->
             constructGetReceiptsResponse(
                 blockchain,
                 messageData,
@@ -101,7 +105,7 @@ class EthServer {
                 capability));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_NODE_DATA,
-        (messageData, capability) ->
+        (peer, messageData, capability) ->
             constructGetNodeDataResponse(
                 worldStateArchive,
                 messageData,
@@ -109,9 +113,10 @@ class EthServer {
                 maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthProtocolMessages.GET_POOLED_TRANSACTIONS,
-        (messageData, capability) ->
+        (peer, messageData, capability) ->
             constructGetPooledTransactionsResponse(
                 transactionPool,
+                peer,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetPooledTransactions(),
                 maxMessageSize));
@@ -262,12 +267,17 @@ class EthServer {
 
   static MessageData constructGetPooledTransactionsResponse(
       final TransactionPool transactionPool,
+      final EthPeer peer,
       final MessageData message,
       final int requestLimit,
       final int maxMessageSize) {
     final GetPooledTransactionsMessage getPooledTransactions =
         GetPooledTransactionsMessage.readFrom(message);
-    final Iterable<Hash> hashes = getPooledTransactions.pooledTransactions();
+    final List<Hash> hashes = getPooledTransactions.pooledTransactions();
+
+    LOG.trace("Requested pooled transactions: peer={}, requested hashes={}", peer, hashes);
+
+    final List<Hash> returnedHashes = new ArrayList<>(hashes.size());
 
     int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
     final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
@@ -292,8 +302,16 @@ class EthServer {
 
       responseSizeEstimate += encodedSize;
       rlp.writeRaw(txRlp.encoded());
+      returnedHashes.add(hash);
     }
     rlp.endList();
+
+    LOG.atTrace()
+        .setMessage("Sending pooled transactions: peer={}, returned hashes={}, notFoundCount={}")
+        .addArgument(peer)
+        .addArgument(returnedHashes)
+        .addArgument(() -> hashes.size() - returnedHashes.size())
+        .log();
 
     return PooledTransactionsMessage.createUnsafe(rlp.encoded());
   }

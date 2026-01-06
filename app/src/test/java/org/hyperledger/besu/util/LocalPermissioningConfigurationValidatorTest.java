@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
@@ -53,7 +53,8 @@ public class LocalPermissioningConfigurationValidatorTest {
   public void sepoliaWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
       throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
+    EthNetworkConfig ethNetworkConfig =
+        EthNetworkConfig.getNetworkConfig(NetworkDefinition.SEPOLIA);
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES);
     final Path toml = Files.createTempFile("toml", "");
@@ -75,7 +76,8 @@ public class LocalPermissioningConfigurationValidatorTest {
   @Test
   public void nodesAllowlistOptionWhichDoesNotIncludeBootnodesMustError() throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
+    EthNetworkConfig ethNetworkConfig =
+        EthNetworkConfig.getNetworkConfig(NetworkDefinition.SEPOLIA);
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");

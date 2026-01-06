@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -45,7 +45,7 @@ public class Benchmarks {
           .sender(Address.ZERO)
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
-          .code(CodeV0.EMPTY_CODE)
+          .code(Code.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
           .blockHashLookup((__, ___) -> null)

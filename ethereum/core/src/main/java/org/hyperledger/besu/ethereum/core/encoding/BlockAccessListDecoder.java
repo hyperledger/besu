@@ -83,7 +83,7 @@ public final class BlockAccessListDecoder {
               ncIn -> {
                 ncIn.enterList();
                 int txIndex = ncIn.readIntScalar();
-                long newNonce = ncIn.readUInt64Scalar().toLong();
+                long newNonce = ncIn.readLongScalar();
                 ncIn.leaveList();
                 return new NonceChange(txIndex, newNonce);
               });

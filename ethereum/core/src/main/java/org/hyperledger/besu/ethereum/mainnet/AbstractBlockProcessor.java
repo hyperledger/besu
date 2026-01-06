@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.PreprocessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
@@ -85,6 +86,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
+  protected final BalConfiguration balConfiguration;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -95,13 +97,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.balConfiguration = balConfiguration;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -229,7 +233,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               miningBeneficiary,
               blockHashLookup,
               blobGasPrice,
-              blockAccessListBuilder);
+              blockAccessListBuilder,
+              maybeBlockBal);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -410,6 +415,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                       "Block access list hash mismatch, calculated: %s header: %s",
                       expectedHash.toHexString(), headerBalHash.get().toHexString());
               LOG.error(errorMessage);
+
+              if (balConfiguration.shouldLogBalsOnMismatch()) {
+                final String constructedBalStr = bal.toString();
+                final String blockBalStr =
+                    blockBody
+                        .getBlockAccessList()
+                        .map(Object::toString)
+                        .orElse("<no BAL present in block body>");
+                LOG.error(
+                    "--- BAL constructed during execution ---\n{}\n"
+                        + "--- BAL from block body ---\n{}",
+                    constructedBalStr,
+                    blockBalStr);
+              }
+
               if (worldState instanceof BonsaiWorldState) {
                 ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
               }
@@ -540,8 +560,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards);
 
-  public interface PreprocessingContext {}
-
   public interface PreprocessingFunction {
     Optional<PreprocessingContext> run(
         final ProtocolContext protocolContext,
@@ -550,7 +568,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final Address miningBeneficiary,
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
-        final Optional<BlockAccessListBuilder> blockAccessListBuilder);
+        final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+        final Optional<BlockAccessList> maybeBlockBal);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -562,7 +581,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final Address miningBeneficiary,
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
-          final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+          final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+          final Optional<BlockAccessList> maybeBlockBal) {
         return Optional.empty();
       }
     }

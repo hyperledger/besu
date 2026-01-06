@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({"payloadBodies"})
 public class EngineGetPayloadBodiesResultV1 {
@@ -56,7 +56,7 @@ public class EngineGetPayloadBodiesResultV1 {
               .map(
                   transaction ->
                       TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
-              .map(Bytes::toHexString)
+              .map(b -> HexUtils.toFastHex(b, true))
               .collect(Collectors.toList());
       this.withdrawals =
           blockBody

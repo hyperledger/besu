@@ -82,7 +82,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_PAYLOAD_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid payload id params"),
   INVALID_PENDING_TRANSACTIONS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid pending transactions params"),
-  INVAlID_PLUGIN_NAME_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid plug in name params"),
+  INVALID_PLUGIN_NAME_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid plug in name params"),
   INVALID_POSITION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid position params"),
   INVALID_POW_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid pow hash params"),
   INVALID_PRIVATE_FROM_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private from params"),
@@ -164,7 +164,7 @@ public enum RpcErrorType implements RpcMethodError {
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(
-      -32000,
+      3,
       "Execution reverted",
       data -> JsonRpcErrorResponse.decodeRevertReason(Bytes.fromHexString(data))),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),

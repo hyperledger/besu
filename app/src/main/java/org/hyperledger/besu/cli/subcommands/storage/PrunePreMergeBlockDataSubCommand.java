@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.cli.subcommands.storage;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
@@ -41,8 +41,8 @@ import picocli.CommandLine;
 public class PrunePreMergeBlockDataSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(PrunePreMergeBlockDataSubCommand.class);
 
-  private static final List<NetworkName> SUPPORTED_NETWORKS =
-      List.of(NetworkName.MAINNET, NetworkName.SEPOLIA);
+  private static final List<NetworkDefinition> SUPPORTED_NETWORKS =
+      List.of(NetworkDefinition.MAINNET, NetworkDefinition.SEPOLIA);
   private static final long MAINNET_FIRST_POS_BLOCK_NUMBER = 15_537_394;
   private static final long SEPOLIA_FIRST_POS_BLOCK_NUMBER = 1_450_409;
 
@@ -73,7 +73,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final NetworkName network = storageSubCommand.besuCommand.getNetwork();
+    final NetworkDefinition network = storageSubCommand.besuCommand.getNetwork();
     final Path dataPath = storageSubCommand.besuCommand.dataDir();
     if (!SUPPORTED_NETWORKS.contains(network)) {
       LOG.error(
@@ -119,7 +119,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
     LOG.info("Pruning pre-merge blocks and transaction receipts completed");
   }
 
-  private static long getMergeBlockNumber(final NetworkName network) {
+  private static long getMergeBlockNumber(final NetworkDefinition network) {
     return switch (network) {
       case MAINNET -> MAINNET_FIRST_POS_BLOCK_NUMBER;
       case SEPOLIA -> SEPOLIA_FIRST_POS_BLOCK_NUMBER;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
@@ -85,6 +86,11 @@ public interface TransactionTraceParams {
     return Collections.emptySet();
   }
 
+  @JsonProperty("stateOverrides")
+  @Nullable
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  StateOverrideMap stateOverrides();
+
   /**
    * Convert JSON-RPC parameters to a {@link TraceOptions} object.
    *
@@ -105,6 +111,6 @@ public interface TransactionTraceParams {
             ? TracerType.fromString(tracer())
             : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
 
-    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig());
+    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(), stateOverrides());
   }
 }

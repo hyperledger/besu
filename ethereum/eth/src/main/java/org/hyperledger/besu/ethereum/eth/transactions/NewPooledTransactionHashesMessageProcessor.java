@@ -67,27 +67,34 @@ public class NewPooledTransactionHashesMessageProcessor {
   void processNewPooledTransactionHashesMessage(
       final EthPeer peer,
       final NewPooledTransactionHashesMessage transactionsMessage,
-      final Instant startedAt,
+      final Instant queueAt,
       final Duration keepAlive) {
     // Check if message is not expired.
-    if (startedAt.plus(keepAlive).isAfter(now())) {
+    final var latency = Duration.between(queueAt, now());
+    if (latency.compareTo(keepAlive) < 0) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
+      LOG.atTrace()
+          .setMessage(
+              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, hashes={}")
+          .addArgument(peer)
+          .addArgument(latency)
+          .addArgument(queueAt)
+          .addArgument(keepAlive)
+          .addArgument(transactionsMessage::pendingTransactionHashes)
+          .log();
       metrics.incrementExpiredMessages(METRIC_LABEL);
     }
   }
 
-  @SuppressWarnings("UnstableApiUsage")
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
       final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
 
       LOG.atTrace()
-          .setMessage(
-              "Received pooled transaction hashes message from {} incoming hashes {}, incoming list {}")
-          .addArgument(() -> peer == null ? null : peer.getLoggableId())
-          .addArgument(incomingTransactionHashes::size)
+          .setMessage("Received pooled transaction hashes message: peer={}, incoming hashes={}")
+          .addArgument(peer)
           .addArgument(incomingTransactionHashes)
           .log();
 

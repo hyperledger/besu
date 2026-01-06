@@ -17,8 +17,8 @@ package org.hyperledger.besu.chainimport;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -68,9 +68,9 @@ public class Era1BlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(MiningConfiguration.newDefault())

@@ -144,7 +144,8 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                protocolSchedule) ->
+                protocolSchedule,
+                balConfig) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
@@ -152,7 +153,8 @@ public class ClassicProtocolSpecs {
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
                     genesisConfigOptions.getEcip1017EraRounds(),
-                    protocolSchedule))
+                    protocolSchedule,
+                    balConfig))
         .hardforkId(GOTHAM);
   }
 

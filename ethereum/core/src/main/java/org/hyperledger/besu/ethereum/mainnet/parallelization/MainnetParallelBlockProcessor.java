@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -63,6 +64,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     super(
         transactionProcessor,
@@ -70,7 +72,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        protocolSchedule);
+        protocolSchedule,
+        balConfiguration);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -97,39 +100,29 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final int location,
       final BlockHashLookup blockHashLookup,
       final Optional<AccessLocationTracker> accessLocationTracker) {
-
-    TransactionProcessingResult transactionProcessingResult = null;
-
-    if (preProcessingContext.isPresent()) {
-      final ParallelizedPreProcessingContext parallelizedPreProcessingContext =
-          (ParallelizedPreProcessingContext) preProcessingContext.get();
-      transactionProcessingResult =
-          parallelizedPreProcessingContext
-              .parallelizedConcurrentTransactionProcessor()
-              .applyParallelizedTransactionResult(
-                  blockProcessingContext.getWorldState(),
-                  miningBeneficiary,
-                  transaction,
-                  location,
-                  confirmedParallelizedTransactionCounter,
-                  conflictingButCachedTransactionCounter)
-              .orElse(null);
-    }
-
-    if (transactionProcessingResult == null) {
-      return super.getTransactionProcessingResult(
-          preProcessingContext,
-          blockProcessingContext,
-          transactionUpdater,
-          blobGasPrice,
-          miningBeneficiary,
-          transaction,
-          location,
-          blockHashLookup,
-          accessLocationTracker);
-    } else {
-      return transactionProcessingResult;
-    }
+    return preProcessingContext
+        .flatMap(
+            ctx ->
+                ctx.processor()
+                    .getProcessingResult(
+                        blockProcessingContext.getWorldState(),
+                        miningBeneficiary,
+                        transaction,
+                        location,
+                        confirmedParallelizedTransactionCounter,
+                        conflictingButCachedTransactionCounter))
+        .orElseGet(
+            () ->
+                super.getTransactionProcessingResult(
+                    preProcessingContext,
+                    blockProcessingContext,
+                    transactionUpdater,
+                    blobGasPrice,
+                    miningBeneficiary,
+                    transaction,
+                    location,
+                    blockHashLookup,
+                    accessLocationTracker));
   }
 
   @Override
@@ -144,7 +137,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
             blockchain,
             worldState,
             block,
-            new ParallelTransactionPreprocessing(transactionProcessor, executor));
+            new ParallelTransactionPreprocessing(transactionProcessor, executor, balConfiguration));
 
     if (blockProcessingResult.isFailed()) {
       // Fallback to non-parallel processing if there is a block processing exception .
@@ -159,10 +152,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
     }
     return blockProcessingResult;
   }
-
-  record ParallelizedPreProcessingContext(
-      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor)
-      implements PreprocessingContext {}
 
   public static class ParallelBlockProcessorBuilder
       implements ProtocolSpecBuilder.BlockProcessorBuilder {
@@ -180,7 +169,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final ProtocolSchedule protocolSchedule) {
+        final ProtocolSchedule protocolSchedule,
+        final BalConfiguration balConfiguration) {
       return new MainnetParallelBlockProcessor(
           transactionProcessor,
           transactionReceiptFactory,
@@ -188,6 +178,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
           protocolSchedule,
+          balConfiguration,
           metricsSystem);
     }
   }

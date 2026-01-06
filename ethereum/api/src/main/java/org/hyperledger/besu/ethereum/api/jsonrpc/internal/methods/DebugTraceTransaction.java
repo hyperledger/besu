@@ -105,7 +105,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
             mutableWorldState ->
                 transactionTracer
                     .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
-                    .map(DebugTraceTransactionStepFactory.create(traceOptions.tracerType())))
+                    .map(DebugTraceTransactionStepFactory.create(traceOptions)))
         .orElse(null);
   }
 }
