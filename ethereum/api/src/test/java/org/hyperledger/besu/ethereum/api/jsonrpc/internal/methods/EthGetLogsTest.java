@@ -87,7 +87,7 @@ public class EthGetLogsTest {
 
     when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getNumber()).thenReturn(blockNumber);
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -95,7 +95,7 @@ public class EthGetLogsTest {
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -126,7 +126,7 @@ public class EthGetLogsTest {
 
     when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getNumber()).thenReturn(blockNumber);
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -135,7 +135,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
   }
 
   @Test
@@ -144,7 +144,7 @@ public class EthGetLogsTest {
     final long toBlock = 10L;
     final JsonRpcRequestContext request = buildRequest(fromBlock, toBlock);
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -154,7 +154,7 @@ public class EthGetLogsTest {
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
 
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -164,7 +164,7 @@ public class EthGetLogsTest {
     final long latestBlock = 50L;
     final JsonRpcRequestContext request = buildRequest("earliest", latestBlock);
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -183,7 +183,7 @@ public class EthGetLogsTest {
     final JsonRpcRequestContext request =
         buildRequest(String.valueOf(fromBlock), String.valueOf(toBlock));
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(150L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(150L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -192,7 +192,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -202,7 +202,7 @@ public class EthGetLogsTest {
     final long toBlock = 100L;
     final JsonRpcRequestContext request = buildRequest(String.valueOf(fromBlock), toBlock);
 
-    when(blockchainQueries.headBlockNumber()).thenReturn(150L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(150L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -211,7 +211,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -258,7 +258,7 @@ public class EthGetLogsTest {
         .matchingLogs(eq(safeBlockNumber), eq(finalizedBlockNumber), any(), any());
     verify(blockchainQueries, times(1)).finalizedBlockHeader();
     verify(blockchainQueries, times(1)).safeBlockHeader();
-    verify(blockchainQueries, times(1)).headBlockNumber(); // Now called for validation
+    verify(blockchainQueries, times(1)).headBlockNumber();
   }
 
   @Test
@@ -286,7 +286,7 @@ public class EthGetLogsTest {
     final JsonRpcRequestContext request = buildRequest(0, 50);
     maxLogRange = 20L;
     method = new EthGetLogs(blockchainQueries, maxLogRange);
-    when(blockchainQueries.headBlockNumber()).thenReturn(100L); // Mock for validation
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
