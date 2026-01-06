@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -275,9 +276,11 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     // Wrap the branch to allow concurrent child updates
     final BranchWrapper branchWrapper = new BranchWrapper(branchNode);
 
+
     // Partition groups into large (parallel) and small (sequential)
     final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
         groupedUpdates.entrySet().stream()
+                .peek(e -> branchWrapper.loadChild(e.getKey()))
             .collect(
                 Collectors.partitioningBy(
                     entry -> entry.getValue().size() > 1 && groupedUpdates.size() > 1,
@@ -680,6 +683,10 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     BranchWrapper(final BranchNode<V> branch) {
       this.originalBranch = branch;
       this.pendingChildren = Collections.synchronizedList(new ArrayList<>(branch.getChildren()));
+    }
+
+    void loadChild(final byte index){
+      pendingChildren.set(index,loadNode(pendingChildren.get(index)));
     }
 
     List<Node<V>> getPendingChildren() {
