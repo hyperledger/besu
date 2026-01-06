@@ -34,6 +34,7 @@ public interface PathBasedExtraStorageConfiguration {
   boolean DEFAULT_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_TRIE_LOG_RETENTION_LIMIT = DEFAULT_MAX_LAYERS_TO_LOAD;
   int DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
+  long DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL = 1_000;
   boolean DEFAULT_PARALLEL_TX_PROCESSING = true;
 
   @Value.Default
@@ -89,6 +90,11 @@ public interface PathBasedExtraStorageConfiguration {
     @Value.Default
     default boolean getCodeStoredByCodeHashEnabled() {
       return DEFAULT_CODE_USING_CODE_HASH_ENABLED;
+    }
+
+    @Value.Default
+    default Long getArchiveTrieNodeCheckpointInterval() {
+      return DEFAULT_ARCHIVE_CHECKPOINT_INTERVAL;
     }
   }
 }

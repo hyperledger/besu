@@ -53,6 +53,20 @@ public interface SegmentedKeyValueStorage extends Closeable {
       throws StorageException;
 
   /**
+   * Finds the key and corresponding value that is "nearest before" the specified key. "Nearest
+   * before" is defined as the closest key that is either exactly matching the supplied key or
+   * lexicographically before it.
+   *
+   * @param segmentIdentifier The segment to scan for the nearest key.
+   * @param key The key for which we are searching for the nearest match before it.
+   * @return An Optional of NearestKeyValue, wrapping the matched key and its corresponding value,
+   *     if found.
+   * @throws StorageException If an error occurs during the retrieval process.
+   */
+  Optional<NearestKeyValue> getNearestBeforeMatchLength(
+      final SegmentIdentifier segmentIdentifier, Bytes key) throws StorageException;
+
+  /**
    * Finds the key and corresponding value that is "nearest after" the specified key. "Nearest
    * after" is defined as the closest key that is either exactly matching the supplied key or
    * lexicographically after it.

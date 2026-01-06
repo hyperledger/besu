@@ -73,7 +73,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   public static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
-  private Optional<BonsaiContext> getStateArchiveContextForWrite(
+  protected Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for writing archive entries.
     // If WORLD_BLOCK_NUMBER_KEY doesn't exist, this is genesis (block 0), use suffix 0.
@@ -96,7 +96,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     }
   }
 
-  private Optional<BonsaiContext> getStateArchiveContextForRead(
+  protected Optional<BonsaiContext> getStateArchiveContextForRead(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for reading archive entries
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
@@ -142,14 +142,12 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
           storage
               .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
               .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size());
-
       if (accountFound.isPresent()) {
         getAccountFromArchiveCounter.inc();
       } else {
         getAccountNotFoundInFlatDatabaseCounter.inc();
       }
     } else {
-
       accountFound = nearestAccount;
       getAccountFoundInFlatDatabaseCounter.inc();
     }
