@@ -65,11 +65,11 @@ public class SelfDestructOperation extends AbstractOperation {
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
     final long beneficiaryAccessCost =
         beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost();
-    final long baseCost =
-        gasCalculator().selfDestructOperationBaseGasCost() + beneficiaryAccessCost;
+    final long staticCost =
+        gasCalculator().selfDestructOperationStaticGasCost() + beneficiaryAccessCost;
 
-    if (frame.getRemainingGas() < baseCost) {
-      return new OperationResult(baseCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    if (frame.getRemainingGas() < staticCost) {
+      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
