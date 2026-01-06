@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeV0;
 
 import java.util.NavigableMap;
 
@@ -79,13 +78,13 @@ public interface AccountState {
   /**
    * The EVM bytecode associated with this account, wrapped in a {@link Code} object.
    *
-   * <p>This is the default implementation that returns a {@link CodeV0} object wrapping the {@link
+   * <p>This is the default implementation that returns a {@link Code} object wrapping the {@link
    * #getCode()} result. It can be overridden to provide a different implementation of {@link Code}.
    *
    * @return the account code wrapped in a {@link Code} object.
    */
   default Code getOrCreateCachedCode() {
-    return new CodeV0(this.getCode());
+    return new Code(this.getCode());
   }
 
   /**
