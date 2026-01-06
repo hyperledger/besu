@@ -32,6 +32,7 @@ public class BlobScheduleOptions {
   private static final String BPO3_KEY = "bpo3";
   private static final String BPO4_KEY = "bpo4";
   private static final String BPO5_KEY = "bpo5";
+  private static final String AMSTERDAM_KEY = "amsterdam";
 
   /**
    * Instantiates a new Blob Schedule config options.
@@ -106,6 +107,15 @@ public class BlobScheduleOptions {
   }
 
   /**
+   * Gets amsterdam blob schedule.
+   *
+   * @return the amsterdam blob schedule
+   */
+  public Optional<BlobSchedule> getAmsterdam() {
+    return getBlobSchedule(AMSTERDAM_KEY);
+  }
+
+  /**
    * Gets blob schedule by key.
    *
    * @param key the key for the blob schedule
@@ -129,6 +139,7 @@ public class BlobScheduleOptions {
     getBpo3().ifPresent(bs -> builder.put(BPO3_KEY, bs.asMap()));
     getBpo4().ifPresent(bs -> builder.put(BPO4_KEY, bs.asMap()));
     getBpo5().ifPresent(bs -> builder.put(BPO5_KEY, bs.asMap()));
+    getAmsterdam().ifPresent(bs -> builder.put(AMSTERDAM_KEY, bs.asMap()));
     return builder.build();
   }
 }

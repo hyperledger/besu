@@ -44,6 +44,7 @@ public class BlobScheduleOptionsTest {
     assertParsed(options::getBpo3, 31, 32, 5007716);
     assertParsed(options::getBpo4, 41, 42, 5007716);
     assertParsed(options::getBpo5, 51, 52, 5007716);
+    assertParsed(options::getAmsterdam, 8, 11, 6000000);
   }
 
   @Test
