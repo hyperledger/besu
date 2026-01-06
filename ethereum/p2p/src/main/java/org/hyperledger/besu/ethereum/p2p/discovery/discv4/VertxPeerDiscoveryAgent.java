@@ -354,8 +354,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
                   event.cause());
               // TODO remove later
               if (event.cause() instanceof org.apache.tuweni.rlp.EndOfRLPException) {
-                LOG.info(
-                    "STEFAN: EndOfRLPException invalid packet:Rlp: {}", datagram.data());
+                LOG.info("STEFAN: EndOfRLPException invalid packet:Rlp: {}", datagram.data());
               }
             } else {
               LOG.error("Encountered error while handling packet", event.cause());
