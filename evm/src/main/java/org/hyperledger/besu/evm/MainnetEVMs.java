@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AddOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.AndOperationOptimized;
@@ -194,12 +195,12 @@ public class MainnetEVMs {
     for (int i = 0; i < 255; i++) {
       registry.put(new InvalidOperation(i, gasCalculator));
     }
-    registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
     registry.put(new DivOperation(gasCalculator));
     registry.put(new SDivOperation(gasCalculator));
     if (evmConfiguration.enableOptimizedOpcodes()) {
+      registry.put(new AddOperationOptimized(gasCalculator));
       registry.put(new ModOperationOptimized(gasCalculator));
       registry.put(new SModOperationOptimized(gasCalculator));
       registry.put(new AddModOperationOptimized(gasCalculator));
@@ -209,6 +210,7 @@ public class MainnetEVMs {
       registry.put(new OrOperationOptimized(gasCalculator));
       registry.put(new NotOperationOptimized(gasCalculator));
     } else {
+      registry.put(new AddOperation(gasCalculator));
       registry.put(new ModOperation(gasCalculator));
       registry.put(new SModOperation(gasCalculator));
       registry.put(new AddModOperation(gasCalculator));

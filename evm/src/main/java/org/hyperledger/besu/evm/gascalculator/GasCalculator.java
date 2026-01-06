@@ -167,9 +167,10 @@ public interface GasCalculator {
   long newAccountGasCost();
 
   /**
-   * Returns the gas cost for one of the various CALL operations.
+   * Returns the total call cost given a pre-computed static call cost.
    *
    * @param frame The current frame
+   * @param staticCallCost The static call cost
    * @param stipend The gas stipend being provided by the CALL caller
    * @param inputDataOffset The offset in memory to retrieve the CALL input data
    * @param inputDataLength The CALL input data length
@@ -181,15 +182,44 @@ public interface GasCalculator {
    * @return The gas cost for the CALL operation
    */
   long callOperationGasCost(
-      MessageFrame frame,
-      long stipend,
-      long inputDataOffset,
-      long inputDataLength,
-      long outputDataOffset,
-      long outputDataLength,
-      Wei transferValue,
-      Address recipientAddress,
-      boolean accountIsWarm);
+      final MessageFrame frame,
+      final long staticCallCost,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm);
+
+  /**
+   * Returns the static gas cost to execute a call operation.
+   *
+   * <p>This method <strong>must not</strong> access or mutate world state and it must not mutate
+   * {@code frame.getEip7928AccessList()}.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param recipientAddress The CALL recipient (may be null if self destructed or new) address
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The static gas cost for the CALL operation
+   */
+  long callOperationStaticGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm);
 
   /**
    * Gets additional call stipend.
@@ -377,15 +407,15 @@ public interface GasCalculator {
    * @return the cost for executing the self destruct operation
    */
   default long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
-    return selfDestructOperationBaseGasCost();
+    return selfDestructOperationStaticGasCost();
   }
 
   /**
-   * Returns the base cost for executing a {@link SelfDestructOperation}.
+   * Returns the static cost for executing a {@link SelfDestructOperation}.
    *
    * @return the base cost for executing a {@link SelfDestructOperation}
    */
-  default long selfDestructOperationBaseGasCost() {
+  default long selfDestructOperationStaticGasCost() {
     return 0L;
   }
 
