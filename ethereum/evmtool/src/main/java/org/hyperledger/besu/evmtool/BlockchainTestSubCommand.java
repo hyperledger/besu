@@ -222,18 +222,28 @@ public class BlockchainTestSubCommand implements Runnable {
   private void executeBlockchainTest(
       final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
       final TestResults results) {
-    blockchainTests.forEach((testName, spec) -> traceTestSpecs(testName, spec, results));
+    int repeatCount = Math.max(1, parentCommand.getRepeatCount());
+    for (int i = 0; i < repeatCount; i++) {
+      boolean isLastIteration = (i == repeatCount - 1);
+      parentCommand.out.println("Running iteration " + i);
+      blockchainTests.forEach(
+          (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
+    }
   }
 
   private void traceTestSpecs(
-      final String test, final BlockchainReferenceTestCaseSpec spec, final TestResults results) {
+      final String test,
+      final BlockchainReferenceTestCaseSpec spec,
+      final TestResults results,
+      final boolean isLastIteration) {
     if (testName != null && !testName.equals(test)) {
       parentCommand.out.println("Skipping test: " + test);
       return;
     }
     parentCommand.out.println("Considering " + test);
 
-    final ProtocolContext context = spec.buildProtocolContext();
+    final MutableBlockchain blockchain = spec.buildBlockchain();
+    final ProtocolContext context = spec.buildProtocolContext(blockchain);
 
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
@@ -248,8 +258,6 @@ public class BlockchainTestSubCommand implements Runnable {
         ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
             .getByName(spec.getNetwork());
 
-    final MutableBlockchain blockchain = spec.getBlockchain();
-
     BlockTestTracerManager tracerManager = null;
     PrintStream traceWriter;
     long totalGasUsed = 0;
@@ -260,7 +268,7 @@ public class BlockchainTestSubCommand implements Runnable {
     boolean testPassed = true;
     String failureReason = "";
 
-    if (parentCommand.showJsonResults) {
+    if (parentCommand.showJsonResults && isLastIteration) {
       try {
         final boolean isFileOutput = traceOutput != null;
         if (isFileOutput) {
@@ -313,6 +321,10 @@ public class BlockchainTestSubCommand implements Runnable {
 
         timer.stop();
 
+        if (!isLastIteration) {
+          continue;
+        }
+
         if (parentCommand.showJsonResults) {
           totalGasUsed += block.getHeader().getGasUsed();
           totalTxCount += block.getBody().getTransactions().size();
@@ -354,6 +366,10 @@ public class BlockchainTestSubCommand implements Runnable {
           parentCommand.out.println(failureReason);
         }
       }
+    }
+
+    if (!isLastIteration) {
+      return;
     }
 
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
