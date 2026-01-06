@@ -346,11 +346,17 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException
-                || event.cause() instanceof DecodeException) {
+                || event.cause() instanceof DecodeException
+                || event.cause() instanceof org.apache.tuweni.rlp.EndOfRLPException) {
               LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),
                   event.cause());
+              // TODO remove later
+              if (event.cause() instanceof org.apache.tuweni.rlp.EndOfRLPException) {
+                LOG.info(
+                    "STEFAN: EndOfRLPException invalid packet:Rlp: {}", event.cause().getMessage());
+              }
             } else {
               LOG.error("Encountered error while handling packet", event.cause());
             }
