@@ -30,9 +30,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -60,6 +63,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   private static final Bytes BLOCK_HASH_PREFIX = Bytes.of(5);
   private static final Bytes TOTAL_DIFFICULTY_PREFIX = Bytes.of(6);
   private static final Bytes TRANSACTION_LOCATION_PREFIX = Bytes.of(7);
+  private static final Bytes BLOCK_ACCESS_LIST_PREFIX = Bytes.of(8);
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
   final BlockHeaderFunctions blockHeaderFunctions;
@@ -110,6 +114,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   @Override
+  public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
+    return get(BLOCK_ACCESS_LIST_PREFIX, blockHash).map(this::rlpDecodeBlockAccessList);
+  }
+
+  @Override
   public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
     return get(TRANSACTION_RECEIPTS_PREFIX, blockHash).map(this::rlpDecodeTransactionReceipts);
   }
@@ -138,6 +147,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
     return RLP.input(bytes).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
+  }
+
+  private BlockAccessList rlpDecodeBlockAccessList(final Bytes bytes) {
+    return BlockAccessListDecoder.decode(RLP.input(bytes));
   }
 
   private Hash bytesToHash(final Bytes bytes) {
@@ -288,6 +301,12 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
+    public void putBlockAccessList(
+        final Hash blockHash, final BlockAccessList blockAccessList) {
+      set(BLOCK_ACCESS_LIST_PREFIX, blockHash, rlpEncode(blockAccessList));
+    }
+
+    @Override
     public void putTransactionLocation(
         final Hash transactionHash, final TransactionLocation transactionLocation) {
       set(TRANSACTION_LOCATION_PREFIX, transactionHash, RLP.encode(transactionLocation::writeTo));
@@ -345,6 +364,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
+    public void removeBlockAccessList(final Hash blockHash) {
+      remove(BLOCK_ACCESS_LIST_PREFIX, blockHash);
+    }
+
+    @Override
     public void removeTransactionReceipts(final Hash blockHash) {
       remove(TRANSACTION_RECEIPTS_PREFIX, blockHash);
     }
@@ -392,6 +416,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
                             : TransactionReceiptEncodingConfiguration.STORAGE_WITHOUT_COMPACTION;
                     TransactionReceiptEncoder.writeTo(r, rlpOutput, options);
                   }));
+    }
+
+    private Bytes rlpEncode(final BlockAccessList blockAccessList) {
+      return RLP.encode(o -> BlockAccessListEncoder.encode(blockAccessList, o));
     }
 
     private void removeVariables() {

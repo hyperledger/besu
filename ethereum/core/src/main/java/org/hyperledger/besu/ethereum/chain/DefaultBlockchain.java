@@ -435,10 +435,17 @@ public class DefaultBlockchain implements MutableBlockchain {
                     .or(
                         () ->
                             blockchainStorage
-                                .getBlockBody(blockHash)
-                                .flatMap(BlockBody::getBlockAccessList)))
+                                .getBlockAccessList(blockHash)
+                                .or(
+                                    () ->
+                                        blockchainStorage
+                                            .getBlockBody(blockHash)
+                                            .flatMap(BlockBody::getBlockAccessList))))
         .orElseGet(
-            () -> blockchainStorage.getBlockBody(blockHash).flatMap(BlockBody::getBlockAccessList));
+            () ->
+                blockchainStorage
+                    .getBlockAccessList(blockHash)
+                    .or(() -> blockchainStorage.getBlockBody(blockHash).flatMap(BlockBody::getBlockAccessList)));
   }
 
   @Override
@@ -583,6 +590,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
+    block.getBody().getBlockAccessList().ifPresent(bal -> updater.putBlockAccessList(hash, bal));
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
