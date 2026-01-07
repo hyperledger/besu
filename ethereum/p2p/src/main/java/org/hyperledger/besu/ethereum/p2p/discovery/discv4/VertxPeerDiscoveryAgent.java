@@ -62,6 +62,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramPacket;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
+import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -354,7 +355,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
                   event.cause());
               // TODO remove later
               if (event.cause() instanceof org.apache.tuweni.rlp.EndOfRLPException) {
-                LOG.info("STEFAN: EndOfRLPException invalid packet:Rlp: {}", datagram.data());
+                LOG.info(
+                    "STEFAN: EndOfRLPException invalid packet:Rlp: {}",
+                    Bytes.wrap(datagram.data().getBytes()).toHexString());
               }
             } else {
               LOG.error("Encountered error while handling packet", event.cause());
