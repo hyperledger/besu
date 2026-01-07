@@ -74,7 +74,7 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
   }
 
   private void reloadPluginConfig(final BesuPlugin plugin) {
-    final String name = plugin.getName().orElseThrow();
+    final String name = plugin.getName();
     LOG.info("Reloading plugin configuration: {}.", name);
     final CompletableFuture<Void> future = plugin.reloadConfiguration();
     future.whenComplete(
