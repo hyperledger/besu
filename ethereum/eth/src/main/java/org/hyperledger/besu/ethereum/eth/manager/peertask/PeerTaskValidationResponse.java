@@ -20,7 +20,7 @@ import java.util.Optional;
 
 public enum PeerTaskValidationResponse {
   NO_RESULTS_RETURNED(null, true),
-  TOO_MANY_RESULTS_RETURNED(null, false),
+  TOO_MANY_RESULTS_RETURNED(null, true),
   RESULTS_DO_NOT_MATCH_QUERY(null, true),
   NON_SEQUENTIAL_HEADERS_RETURNED(
       DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS, true),
