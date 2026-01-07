@@ -145,7 +145,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Redefined costs from EIP-2929
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -156,7 +156,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Address recipientAddress,
       final boolean accountIsWarm) {
     final long baseCost =
-        super.callOperationGasCost(
+        super.callOperationStaticGasCost(
             frame,
             stipend,
             inputDataOffset,

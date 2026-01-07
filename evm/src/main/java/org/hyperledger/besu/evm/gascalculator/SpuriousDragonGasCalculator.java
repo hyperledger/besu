@@ -30,7 +30,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
   public SpuriousDragonGasCalculator() {}
 
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -49,16 +49,34 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
     long cost = clampedAdd(callOperationBaseGasCost(), memoryExpansionCost);
 
-    final boolean isTransferValueZero = transferValue.isZero();
-
-    if (!isTransferValueZero) {
+    if (!transferValue.isZero()) {
       cost = clampedAdd(cost, callValueTransferGasCost());
+    }
 
-      final Account recipient = frame.getWorldUpdater().get(recipientAddress);
-      frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipientAddress));
-      if (recipient == null || recipient.isEmpty()) {
-        cost = clampedAdd(cost, newAccountGasCost());
-      }
+    return cost;
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long staticCallCost,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm) {
+    if (transferValue.isZero()) {
+      return staticCallCost;
+    }
+
+    long cost = staticCallCost;
+    final Account recipient = frame.getWorldUpdater().get(recipientAddress);
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipientAddress));
+    if (recipient == null || recipient.isEmpty()) {
+      cost = clampedAdd(cost, newAccountGasCost());
     }
 
     return cost;
@@ -74,7 +92,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
-      return selfDestructOperationBaseGasCost();
+      return selfDestructOperationStaticGasCost();
     }
   }
 }

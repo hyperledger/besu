@@ -16,15 +16,12 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerRequirement;
@@ -37,31 +34,20 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
-import org.ethereum.beacon.discovery.schema.EnrField;
-import org.ethereum.beacon.discovery.schema.IdentitySchema;
-import org.ethereum.beacon.discovery.schema.NodeRecord;
-import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +57,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentDiscv4.class);
-  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -80,7 +64,6 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
-  private final NatService natService;
   private final MetricsSystem metricsSystem;
   private final RlpxAgent rlpxAgent;
   private final ForkIdManager forkIdManager;
@@ -95,27 +78,19 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   private final Bytes id;
   protected final DiscoveryConfiguration config;
 
-  /* This is the {@link org.hyperledger.besu.ethereum.p2p.Peer} object representing our local node.
-   * This value is empty on construction, and is set after the discovery agent is started.
-   */
-  private Optional<DiscoveryPeer> localNode = Optional.empty();
-
   /* Is discovery enabled? */
   private boolean isEnabled = false;
   protected boolean isStopped = false;
 
-  private final VariablesStorage variablesStorage;
-  private final Supplier<List<Bytes>> forkIdSupplier;
-  private String advertisedAddress;
+  private final NodeRecordManager nodeRecordManager;
 
   protected PeerDiscoveryAgentDiscv4(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final NatService natService,
       final MetricsSystem metricsSystem,
-      final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
+      final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
       final PeerTable peerTable) {
     this.metricsSystem = metricsSystem;
@@ -125,7 +100,6 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
     validateConfiguration(config);
 
     this.peerPermissions = peerPermissions;
-    this.natService = natService;
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
@@ -134,11 +108,10 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
 
     this.id = nodeKey.getPublicKey().getEncodedBytes();
 
-    this.variablesStorage = storageProvider.createVariablesStorage();
     this.forkIdManager = forkIdManager;
-    this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
     this.peerTable = peerTable;
+    this.nodeRecordManager = nodeRecordManager;
   }
 
   protected abstract TimerUtil createTimer();
@@ -161,27 +134,20 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
           port,
           NetworkUtility.isIPv6Available() ? "available" : "not available");
 
-      // override advertised host if we detect an external IP address via NAT manager
-      this.advertisedAddress = natService.queryExternalIPAddress(config.getAdvertisedHost());
-
       return listenForConnections()
           .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
                 final int discoveryPort = localAddress.getPort();
-                final DiscoveryPeer ourNode =
-                    DiscoveryPeer.fromEnode(
-                        EnodeURLImpl.builder()
-                            .nodeId(id)
-                            .ipAddress(advertisedAddress)
-                            .listeningPort(tcpPort)
-                            .discoveryPort(discoveryPort)
-                            .build());
-                this.localNode = Optional.of(ourNode);
-                this.isEnabled = true;
+                nodeRecordManager.initializeLocalNode(
+                    config.getAdvertisedHost(), discoveryPort, tcpPort);
+                startController(
+                    nodeRecordManager
+                        .getLocalNode()
+                        .orElseThrow(
+                            () -> new IllegalStateException("Local node not initialized")));
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
-                updateNodeRecord();
-                startController(ourNode);
+                this.isEnabled = true;
                 return discoveryPort;
               });
     } else {
@@ -195,60 +161,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
     if (!config.isEnabled()) {
       return;
     }
-
-    final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
-    final Optional<NodeRecord> existingNodeRecord =
-        variablesStorage.getLocalEnrSeqno().map(nodeRecordFactory::fromBytes);
-
-    final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
-    final Optional<EnodeURL> maybeEnodeURL = localNode.map(DiscoveryPeer::getEnodeURL);
-    final Integer discoveryPort = maybeEnodeURL.flatMap(EnodeURL::getDiscoveryPort).orElse(0);
-    final Integer listeningPort = maybeEnodeURL.flatMap(EnodeURL::getListeningPort).orElse(0);
-    final String forkIdEnrField = "eth";
-    final NodeRecord newNodeRecord =
-        existingNodeRecord
-            .filter(
-                nodeRecord ->
-                    id.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
-                        && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
-                        && discoveryPort.equals(nodeRecord.get(EnrField.UDP))
-                        && listeningPort.equals(nodeRecord.get(EnrField.TCP))
-                        && forkIdSupplier.get().equals(nodeRecord.get(forkIdEnrField)))
-            .orElseGet(
-                () -> {
-                  final UInt64 sequenceNumber =
-                      existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
-                  final NodeRecord nodeRecord =
-                      nodeRecordFactory.createFromValues(
-                          sequenceNumber,
-                          new EnrField(EnrField.ID, IdentitySchema.V4),
-                          new EnrField(
-                              SIGNATURE_ALGORITHM.get().getCurveName(),
-                              SIGNATURE_ALGORITHM
-                                  .get()
-                                  .compressPublicKey(
-                                      SIGNATURE_ALGORITHM.get().createPublicKey(id))),
-                          new EnrField(EnrField.IP_V4, addressBytes),
-                          new EnrField(EnrField.TCP, listeningPort),
-                          new EnrField(EnrField.UDP, discoveryPort),
-                          new EnrField(
-                              forkIdEnrField, Collections.singletonList(forkIdSupplier.get())));
-                  nodeRecord.setSignature(
-                      nodeKey
-                          .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
-                          .encodedBytes()
-                          .slice(0, 64));
-
-                  LOG.info("Writing node record to disk. {}", nodeRecord);
-                  final var variablesUpdater = variablesStorage.updater();
-                  variablesUpdater.setLocalEnrSeqno(nodeRecord.serialize());
-                  variablesUpdater.commit();
-
-                  return nodeRecord;
-                });
-    localNode
-        .orElseThrow(() -> new IllegalStateException("Local node should be set here"))
-        .setNodeRecord(newNodeRecord);
+    nodeRecordManager.updateNodeRecord();
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {
@@ -388,10 +301,12 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
     controller.ifPresent(c -> c.dropPeer(peer));
   }
 
+  @VisibleForTesting
   public Optional<DiscoveryPeer> getAdvertisedPeer() {
-    return localNode;
+    return nodeRecordManager.getLocalNode();
   }
 
+  @VisibleForTesting
   public Bytes getId() {
     return id;
   }
@@ -447,7 +362,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
 
   @VisibleForTesting
   public Optional<DiscoveryPeer> getLocalNode() {
-    return localNode;
+    return nodeRecordManager.getLocalNode();
   }
 
   @Override

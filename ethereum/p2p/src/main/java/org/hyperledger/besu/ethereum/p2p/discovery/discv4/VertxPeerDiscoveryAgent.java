@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
@@ -76,15 +77,14 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
   private final PacketSerializer packetSerializer;
   private final PacketDeserializer packetDeserializer;
 
-  VertxPeerDiscoveryAgent(
+  private VertxPeerDiscoveryAgent(
       final Vertx vertx,
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final NatService natService,
       final MetricsSystem metricsSystem,
-      final StorageProvider storageProvider,
       final ForkIdManager forkIdManager,
+      final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
       final PeerTable peerTable,
       final PacketSerializer packetSerializer,
@@ -93,10 +93,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
         nodeKey,
         config,
         peerPermissions,
-        natService,
         metricsSystem,
-        storageProvider,
         forkIdManager,
+        nodeRecordManager,
         rlpxAgent,
         peerTable);
     checkArgument(vertx != null, "vertx instance cannot be null");
@@ -124,15 +123,16 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
       final RlpxAgent rlpxAgent) {
     PacketPackage packetPackage = DaggerPacketPackage.create();
     PeerTable peerTable = new PeerTable(nodeKey.getPublicKey().getEncodedBytes());
+    NodeRecordManager nodeRecordManager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
     return new VertxPeerDiscoveryAgent(
         vertx,
         nodeKey,
         config,
         peerPermissions,
-        natService,
         metricsSystem,
-        storageProvider,
         forkIdManager,
+        nodeRecordManager,
         rlpxAgent,
         peerTable,
         packetPackage.packetSerializer(),
