@@ -116,7 +116,25 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     ClassLoader pluginLoader =
         pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
     ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
-    return StreamSupport.stream(serviceLoader.spliterator(), false).toList();
+    final var loadedPlugins = StreamSupport.stream(serviceLoader.spliterator(), false).toList();
+
+    // Check for duplicate plugin names
+    final var pluginNameCounts =
+        loadedPlugins.stream()
+            .collect(Collectors.groupingBy(BesuPlugin::getName, Collectors.counting()));
+
+    final var duplicateNames =
+        pluginNameCounts.entrySet().stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Map.Entry::getKey)
+            .toList();
+
+    if (!duplicateNames.isEmpty()) {
+      throw new IllegalStateException(
+          "Plugins duplicate name detected: " + String.join(", ", duplicateNames));
+    }
+
+    return loadedPlugins;
   }
 
   /**
@@ -206,7 +224,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   private boolean registerPlugin(final BesuPlugin plugin) {
     try {
       plugin.register(this);
-      pluginVersions.put(plugin.getName().orElse("<Unnamed Plugin>"), plugin.getVersion());
+      pluginVersions.put(plugin.getName(), plugin.getVersion());
       LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
     } catch (final Exception e) {
       if (config.isContinueOnPluginError()) {
@@ -393,14 +411,13 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   }
 
   /**
-   * Gets named plugins.
+   * Gets plugins by name.
    *
-   * @return the named plugins
+   * @return the plugins by name
    */
-  public Map<String, BesuPlugin> getNamedPlugins() {
+  public Map<String, BesuPlugin> getPluginsByName() {
     return registeredPlugins.stream()
-        .filter(plugin -> plugin.getName().isPresent())
-        .collect(Collectors.toMap(plugin -> plugin.getName().get(), plugin -> plugin, (a, b) -> b));
+        .collect(Collectors.toMap(plugin -> plugin.getName(), plugin -> plugin));
   }
 
   /**

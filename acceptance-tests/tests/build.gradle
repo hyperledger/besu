@@ -34,7 +34,7 @@ dependencies {
   implementation project(':ethereum:eth')
 
   testImplementation project(':acceptance-tests:dsl')
-  testImplementation project(':acceptance-tests:test-plugins')
+  testImplementation files("${rootProject.projectDir}/acceptance-tests/detached-test-plugins/build/libs/testPlugins.jar")
   testImplementation project(':app')
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
@@ -88,12 +88,14 @@ test.enabled = false
 sourceSets {
   test {
     resources {
-      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
+      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/install/test-plugins"
     }
   }
 }
 
-processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar',':acceptance-tests:test-plugins:jar')
+processTestResources.dependsOn(':buildDetachedTestPlugins')
+
+compileTestJava.dependsOn ':buildDetachedTestPlugins'
 
 // FKA acceptanceTestNotPrivacy
 task acceptanceTest(type: Test) {
