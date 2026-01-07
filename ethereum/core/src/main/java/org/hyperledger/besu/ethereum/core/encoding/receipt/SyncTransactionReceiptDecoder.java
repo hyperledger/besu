@@ -71,7 +71,8 @@ public class SyncTransactionReceiptDecoder {
     // used. This is because compacted legacy receipts also lack a bloom filter.
     // The first element can be either the transaction type (eth/69) or stateRootOrStatus (eth/68)
     final Bytes firstElement = rlpInput.readBytes();
-    // The second element can be either the state root or status (eth/68) or stateRootOrStatus (eth/69)
+    // The second element can be either the state root or status (eth/68) or stateRootOrStatus
+    // (eth/69)
     final Bytes secondElement = rlpInput.readBytes();
     final boolean isCompacted = isNextNotBloomFilter(rlpInput);
     Bytes bloomFilter = null;

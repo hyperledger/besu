@@ -82,78 +82,77 @@ public class SyncTransactionReceiptDecoderTest {
   }
 
   @Test
-    public void testDecodeEth69Receipt() {
-      final Hash stateRoot = Hash.fromHexStringLenient("01");
-      final long cumulativeGasUsed = 2;
-      final List<Log> logs =
-              List.of(
-                      new Log(
-                              Address.fromHexString("03"),
-                              Bytes.fromHexStringLenient("04"),
-                              List.of(LogTopic.fromHexString("05"))));
-      TransactionReceipt transactionReceipt =
-              new TransactionReceipt(stateRoot, cumulativeGasUsed, logs, Optional.empty());
+  public void testDecodeEth69Receipt() {
+    final Hash stateRoot = Hash.fromHexStringLenient("01");
+    final long cumulativeGasUsed = 2;
+    final List<Log> logs =
+        List.of(
+            new Log(
+                Address.fromHexString("03"),
+                Bytes.fromHexStringLenient("04"),
+                List.of(LogTopic.fromHexString("05"))));
+    TransactionReceipt transactionReceipt =
+        new TransactionReceipt(stateRoot, cumulativeGasUsed, logs, Optional.empty());
 
-      Bytes encodedReceipt =
-              RLP.encode(
-                      (rlpOut) ->
-                              TransactionReceiptEncoder.writeTo(
-                                      transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
+    Bytes encodedReceipt =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt,
+                    rlpOut,
+                    TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
 
-      SyncTransactionReceipt syncTransactionReceipt =
-              syncTransactionReceiptDecoder.decode(encodedReceipt);
+    SyncTransactionReceipt syncTransactionReceipt =
+        syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-      Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
-      Assertions.assertEquals(
-              Bytes.of(TransactionType.FRONTIER.getEthSerializedType()),
-              syncTransactionReceipt.transactionTypeCode());
-      Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
-      Assertions.assertEquals(
-              Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
-      Assertions.assertEquals(1, syncTransactionReceipt.logs().size());
-      Assertions.assertEquals(3, syncTransactionReceipt.logs().getFirst().size());
-      String expectedBloomFilterHex = "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000010800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020";
-      Assertions.assertEquals(expectedBloomFilterHex, syncTransactionReceipt.bloomFilter().toHexString());
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
+    Assertions.assertEquals(
+        Bytes.of(TransactionType.FRONTIER.getEthSerializedType()),
+        syncTransactionReceipt.transactionTypeCode());
+    Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
+    Assertions.assertEquals(
+        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
+    Assertions.assertEquals(1, syncTransactionReceipt.logs().size());
+    Assertions.assertEquals(3, syncTransactionReceipt.logs().getFirst().size());
+    String expectedBloomFilterHex =
+        "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000010800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020";
+    Assertions.assertEquals(
+        expectedBloomFilterHex, syncTransactionReceipt.bloomFilter().toHexString());
   }
 
   @Test
-    public void testDecodeTypedReceipt() {
-      final TransactionType transactionType = TransactionType.EIP1559;
-      final Hash stateRoot = Hash.fromHexStringLenient("01");
-      final long cumulativeGasUsed = 2;
-      final List<Log> logs =
-              List.of(
-                      new Log(
-                              Address.fromHexString("03"),
-                              Bytes.fromHexStringLenient("04"),
-                              List.of(LogTopic.fromHexString("05"))));
-      final LogsBloomFilter bloomFilter = LogsBloomFilter.fromHexString("0x" + "deadbeef".repeat(64));
-      final Optional<Bytes> revertReason = Optional.of(Bytes.fromHexString("06"));
-      TransactionReceipt transactionReceipt =
-              new TransactionReceipt(
-                      transactionType,
-                      stateRoot,
-                      cumulativeGasUsed,
-                      logs,
-                      bloomFilter,
-                      revertReason);
+  public void testDecodeTypedReceipt() {
+    final TransactionType transactionType = TransactionType.EIP1559;
+    final Hash stateRoot = Hash.fromHexStringLenient("01");
+    final long cumulativeGasUsed = 2;
+    final List<Log> logs =
+        List.of(
+            new Log(
+                Address.fromHexString("03"),
+                Bytes.fromHexStringLenient("04"),
+                List.of(LogTopic.fromHexString("05"))));
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.fromHexString("0x" + "deadbeef".repeat(64));
+    final Optional<Bytes> revertReason = Optional.of(Bytes.fromHexString("06"));
+    TransactionReceipt transactionReceipt =
+        new TransactionReceipt(
+            transactionType, stateRoot, cumulativeGasUsed, logs, bloomFilter, revertReason);
 
-      Bytes encodedReceipt =
-              RLP.encode(
-                      (rlpOut) ->
-                              TransactionReceiptEncoder.writeTo(
-                                      transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT));
+    Bytes encodedReceipt =
+        RLP.encode(
+            (rlpOut) ->
+                TransactionReceiptEncoder.writeTo(
+                    transactionReceipt, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT));
 
-      SyncTransactionReceipt syncTransactionReceipt =
-              syncTransactionReceiptDecoder.decode(encodedReceipt);
+    SyncTransactionReceipt syncTransactionReceipt =
+        syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-      Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
-      Assertions.assertEquals(
-              Bytes.of(transactionType.getSerializedType()),
-              syncTransactionReceipt.transactionTypeCode());
-      Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
-      Assertions.assertEquals(
-              Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
-      Assertions.assertEquals(bloomFilter, syncTransactionReceipt.bloomFilter());
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
+    Assertions.assertEquals(
+        Bytes.of(transactionType.getSerializedType()),
+        syncTransactionReceipt.transactionTypeCode());
+    Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
+    Assertions.assertEquals(
+        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
+    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.bloomFilter());
   }
 }
