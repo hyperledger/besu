@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import static org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory.NB_CHILD;
 
 import org.hyperledger.besu.ethereum.trie.CommitVisitor;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -46,9 +46,9 @@ import org.apache.tuweni.bytes.Bytes32;
 /**
  * A parallel implementation of StoredMerklePatriciaTrie that processes updates in parallel.
  *
- * <p>This implementation batches updates and processes them concurrently when the root is a
- * BranchNode and there are sufficient updates to warrant parallel processing. The parallelization
- * strategy recursively descends the trie structure, processing independent branches concurrently.
+ * <p>This implementation batches updates and processes them concurrently when it's possible and
+ * there are sufficient updates to warrant parallel processing. The parallelization strategy
+ * recursively descends the trie structure, processing independent nodes concurrently.
  *
  * @param <K> the key type, must extend Bytes
  * @param <V> the value type
@@ -276,11 +276,10 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     // Wrap the branch to allow concurrent child updates
     final BranchWrapper branchWrapper = new BranchWrapper(branchNode);
 
-
     // Partition groups into large (parallel) and small (sequential)
     final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
         groupedUpdates.entrySet().stream()
-                .peek(e -> branchWrapper.loadChild(e.getKey()))
+            .peek(e -> branchWrapper.loadChild(e.getKey())) // force load lazy nodes
             .collect(
                 Collectors.partitioningBy(
                     entry -> entry.getValue().size() > 1 && groupedUpdates.size() > 1,
@@ -352,22 +351,23 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the updated extension or restructured node
    */
   private Node<V> handleExtension(
-          final ExtensionNode<V> extensionNode,
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache) {
+      final ExtensionNode<V> extensionNode,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache) {
 
     final Bytes extensionPath = extensionNode.getPath();
     final int pathDepth = location.size();
 
-    // Find where updates diverge (if at all)
+    // Find where updates diverge
     int divergenceIndex = findDivergencePoint(updates, pathDepth, extensionPath);
 
     // No divergence: all updates continue past extension
     if (divergenceIndex == extensionPath.size()) {
       final Bytes newLocation = Bytes.concatenate(location, extensionPath);
-      final Node<V> newChild = processNode(
+      final Node<V> newChild =
+          processNode(
               extensionNode.getChild(),
               newLocation,
               depth + extensionPath.size(),
@@ -382,7 +382,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     // Divergence within extension: only expand if we have multiple updates
     if (updates.size() > 1) {
       return expandExtensionToDivergencePoint(
-              extensionNode, extensionPath, location, depth, updates, maybeCommitCache, divergenceIndex);
+          extensionNode,
+          extensionPath,
+          location,
+          depth,
+          updates,
+          maybeCommitCache,
+          divergenceIndex);
     }
 
     // Single update: let visitor handle restructuring (avoids unnecessary expansion)
@@ -390,9 +396,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Expands extension into branches up to divergence point.
-   * Key: continuation keeps remaining extension, but updates are filtered
-   * so continuation won't be re-expanded unnecessarily.
+   * Expands extension into branches up to divergence point. Key: continuation keeps remaining
+   * extension, but updates are filtered so continuation won't be re-expanded unnecessarily.
    *
    * @param extensionNode the extension to expand
    * @param extensionPath the path of the extension
@@ -404,13 +409,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @return the processed and optimized node structure
    */
   private Node<V> expandExtensionToDivergencePoint(
-          final ExtensionNode<V> extensionNode,
-          final Bytes extensionPath,
-          final Bytes location,
-          final int depth,
-          final List<UpdateEntry<V>> updates,
-          final Optional<CommitCache> maybeCommitCache,
-          final int divergenceIndex) {
+      final ExtensionNode<V> extensionNode,
+      final Bytes extensionPath,
+      final Bytes location,
+      final int depth,
+      final List<UpdateEntry<V>> updates,
+      final Optional<CommitCache> maybeCommitCache,
+      final int divergenceIndex) {
 
     final Bytes commonPrefix = extensionPath.slice(0, divergenceIndex);
     final byte divergingNibble = extensionPath.get(divergenceIndex);
@@ -419,20 +424,22 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     Node<V> originalChild = loadNode(extensionNode.getChild());
 
     // Create continuation for remaining suffix
-    Node<V> continuation = remainingSuffix.isEmpty()
+    Node<V> continuation =
+        remainingSuffix.isEmpty()
             ? originalChild
             : nodeFactory.createExtension(remainingSuffix, originalChild);
 
     // Create branch at divergence point
     final List<Node<V>> branchChildren =
-            new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+        new ArrayList<>(Collections.nCopies(NB_CHILD, NullNode.instance()));
     branchChildren.set(divergingNibble, continuation);
     Node<V> currentNode = nodeFactory.createBranch(branchChildren, Optional.empty());
 
     // Build branches for common prefix
     for (int i = commonPrefix.size() - 1; i >= 0; i--) {
       final byte nibble = commonPrefix.get(i);
-      final List<Node<V>> children = new ArrayList<>(Collections.nCopies(16, NullNode.instance()));
+      final List<Node<V>> children =
+          new ArrayList<>(Collections.nCopies(NB_CHILD, NullNode.instance()));
       children.set(nibble, currentNode);
       currentNode = nodeFactory.createBranch(children, Optional.empty());
     }
@@ -675,7 +682,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     }
   }
 
-  /** Thread-safe wrapper for a BranchNode that allows concurrent child updates. */
   private class BranchWrapper {
     private final BranchNode<V> originalBranch;
     private final List<Node<V>> pendingChildren;
@@ -685,8 +691,9 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       this.pendingChildren = Collections.synchronizedList(new ArrayList<>(branch.getChildren()));
     }
 
-    void loadChild(final byte index){
-      pendingChildren.set(index,loadNode(pendingChildren.get(index)));
+    void loadChild(final byte index) {
+      System.out.println(index);
+      pendingChildren.set(index, loadNode(pendingChildren.get(index)));
     }
 
     List<Node<V>> getPendingChildren() {
@@ -702,7 +709,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     }
   }
 
-  /** Thread-safe cache for node data during parallel commit operations. */
   private static class CommitCache {
     private final Map<Bytes, NodeData> cache = new ConcurrentHashMap<>();
 

@@ -130,11 +130,18 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
     clearStorage(maybeStateUpdater, worldStateUpdater);
 
-    worldStateUpdater.getStorageToUpdate()
-            .entrySet()
-            .parallelStream()
-            .forEach(entry ->
-                    updateAccountStorageState(maybeStateUpdater, worldStateUpdater, entry));
+    // This must be done before updating the accounts so
+    // that we can get the storage state hash
+    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>>
+        storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
+    if (maybeStateUpdater.isEmpty()) {
+      storageStream =
+          storageStream
+              .parallel(); // if we are not updating the state updater we can use parallel stream
+    }
+    storageStream.forEach(
+        addressMapEntry ->
+            updateAccountStorageState(maybeStateUpdater, worldStateUpdater, addressMapEntry));
 
     // Third update the code.  This has the side effect of ensuring a code hash is calculated.
     updateCode(maybeStateUpdater, worldStateUpdater);
