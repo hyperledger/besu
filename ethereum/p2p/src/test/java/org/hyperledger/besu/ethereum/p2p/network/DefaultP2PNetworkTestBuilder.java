@@ -24,10 +24,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryDiscv4;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -63,8 +63,8 @@ public final class DefaultP2PNetworkTestBuilder {
     when(mockGenesisBlock.getHash()).thenReturn(Hash.ZERO);
     when(mockBlockchain.getGenesisBlock()).thenReturn(mockGenesisBlock);
 
-    final PeerDiscoveryAgentFactory discv4DiscoveryFactory =
-        new PeerDiscoveryAgentFactoryDiscv4(
+    final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
+        new DefaultPeerDiscoveryAgentFactory(
             vertx,
             nodeKey,
             config,
@@ -86,7 +86,7 @@ public final class DefaultP2PNetworkTestBuilder {
         .config(config)
         .metricsSystem(noopMetricsSystem)
         .rlpxAgentFactory(defaultRlpxFactory)
-        .peerDiscoveryAgentFactory(discv4DiscoveryFactory)
+        .peerDiscoveryAgentFactory(peerDiscoveryAgentFactory)
         .supportedCapabilities(supportedCapabilities);
   }
 }
