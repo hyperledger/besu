@@ -19,19 +19,27 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import java.util.Optional;
 
 public enum PeerTaskValidationResponse {
-  NO_RESULTS_RETURNED(null),
-  TOO_MANY_RESULTS_RETURNED(null),
-  RESULTS_DO_NOT_MATCH_QUERY(null),
+  NO_RESULTS_RETURNED(null, true),
+  TOO_MANY_RESULTS_RETURNED(null, true),
+  RESULTS_DO_NOT_MATCH_QUERY(null, true),
   NON_SEQUENTIAL_HEADERS_RETURNED(
-      DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS),
-  RESULTS_VALID_AND_GOOD(null);
+      DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS, true),
+  RESULTS_VALID_AND_GOOD(null, false);
   private final Optional<DisconnectMessage.DisconnectReason> disconnectReason;
+  private final boolean recordUselessResponse;
 
-  PeerTaskValidationResponse(final DisconnectMessage.DisconnectReason disconnectReason) {
+  PeerTaskValidationResponse(
+      final DisconnectMessage.DisconnectReason disconnectReason,
+      final boolean recordUselessResponse) {
     this.disconnectReason = Optional.ofNullable(disconnectReason);
+    this.recordUselessResponse = recordUselessResponse;
   }
 
   public Optional<DisconnectMessage.DisconnectReason> getDisconnectReason() {
     return disconnectReason;
+  }
+
+  public boolean recordUselessResponse() {
+    return recordUselessResponse;
   }
 }
