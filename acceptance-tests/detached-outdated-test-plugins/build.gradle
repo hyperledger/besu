@@ -3,7 +3,6 @@ plugins {
 }
 
 group = 'org.hyperledger.besu.tests'
-version = besuVersion
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -11,7 +10,7 @@ java {
 }
 
 jar {
-    archiveFileName = 'testPlugins.jar'
+    archiveFileName = 'outdatedTestPlugins.jar'
     manifest {
         attributes(
                 'Specification-Title': archiveBaseName,

@@ -89,14 +89,17 @@ sourceSets {
   test {
     resources {
       srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/libs"
+      srcDirs "${rootDir}/acceptance-tests/detached-outdated-test-plugins/build/libs"
       srcDirs "${rootDir}/acceptance-tests/catalogless-test-plugins/build/libs"
     }
   }
 }
 
-processTestResources.dependsOn(':buildDetachedTestPlugins', ':acceptance-tests:catalogless-test-plugins:jar')
-
-compileTestJava.dependsOn ':buildDetachedTestPlugins'
+processTestResources.dependsOn(
+        ':buildDetachedTestPlugins',
+        ':buildDetachedOutdatedTestPlugins',
+        ':acceptance-tests:catalogless-test-plugins:jar'
+)
 
 // FKA acceptanceTestNotPrivacy
 task acceptanceTest(type: Test) {

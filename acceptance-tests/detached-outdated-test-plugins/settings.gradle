@@ -7,4 +7,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'test-plugins'
+rootProject.name = 'outdated-test-plugins'

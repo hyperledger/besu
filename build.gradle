@@ -1337,6 +1337,22 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   }
 }
 
+tasks.register('buildDetachedOutdatedTestPlugins', GradleBuild) {
+  group = 'build'
+  dependsOn 'prepareDetachedTestPlugins'
+
+  dir = file('acceptance-tests/detached-outdated-test-plugins')
+  tasks = [
+          'clean',
+          'build',
+          'installDist'
+  ]
+
+  doFirst {
+    println "Building detached-outdated-test-plugins project"
+  }
+}
+
 
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions

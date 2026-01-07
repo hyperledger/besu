@@ -15,22 +15,28 @@
 package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import com.google.auto.service.AutoService;
-import picocli.CommandLine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @AutoService(BesuPlugin.class)
-public class TestReloadConfigurationPlugin2 extends AbstractTestReloadConfigurationPlugin {
+public class TestOutdatedPlugin implements BesuPlugin {
+  private static final Logger LOG = LoggerFactory.getLogger(TestOutdatedPlugin.class);
 
-  @CommandLine.Option(names = "--plugin-reload-conf2-fail")
-  boolean fail = false;
-
-  public TestReloadConfigurationPlugin2() {
-    super(2);
+  @Override
+  public void register(final ServiceManager serviceManager) {
+    LOG.info("Registering TestOutdatedPlugin");
   }
 
   @Override
-  protected boolean shouldFail() {
-    return fail;
+  public void start() {
+    LOG.info("Starting TestOutdatedPlugin");
+  }
+
+  @Override
+  public void stop() {
+    LOG.info("Stopping TestOutdatedPlugin");
   }
 }

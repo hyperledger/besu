@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginsVerificationMode;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -29,15 +30,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-public class CataloglessPluginTest extends AcceptanceTestBase {
+public class OutdatedPluginTest extends AcceptanceTestBase {
   private BesuNode pluginNode;
 
   @Test
-  public void warnOnCataloglessPluginByDefault() throws IOException {
+  public void warnOnOutdatedPluginByDefault() throws IOException {
     pluginNode =
         besu.createQbftPluginsNode(
             "pluginNode",
-            List.of("cataloglessTestPlugins"),
+            List.of("outdatedTestPlugins"),
             PluginConfiguration.DEFAULT,
             Collections.emptyList(),
             "DEBUG");
@@ -52,16 +53,20 @@ public class CataloglessPluginTest extends AcceptanceTestBase {
             .getConsoleContents()
             .lines()
             .filter(line -> line.contains("WARN"))
-            .filter(line -> line.contains("cataloglessTestPlugins.jar"))
-            .anyMatch(line -> line.contains("is without a catalog")));
+            .filter(line -> line.contains("outdatedTestPlugins.jar"))
+            .anyMatch(
+                line ->
+                    line.contains(
+                        "is built against Besu version 25.12.0 while current running Besu version is "
+                            + BesuVersionUtils.shortVersion())));
   }
 
   @Test
-  public void failsToStartOnCataloglessPluginIfToldSo() throws IOException {
+  public void failsToStartOnOutdatedPluginIfToldSo() throws IOException {
     pluginNode =
         besu.createQbftPluginsNode(
             "pluginNode",
-            List.of("cataloglessTestPlugins"),
+            List.of("outdatedTestPlugins"),
             ImmutablePluginConfiguration.builder()
                 .pluginsVerificationMode(PluginsVerificationMode.FULL)
                 .build(),
@@ -82,7 +87,11 @@ public class CataloglessPluginTest extends AcceptanceTestBase {
             .getConsoleContents()
             .lines()
             .filter(line -> line.contains("ERROR"))
-            .filter(line -> line.contains("cataloglessTestPlugins.jar"))
-            .anyMatch(line -> line.contains("is without a catalog")));
+            .filter(line -> line.contains("outdatedTestPlugins.jar"))
+            .anyMatch(
+                line ->
+                    line.contains(
+                        "is built against Besu version 25.12.0 while current running Besu version is "
+                            + BesuVersionUtils.shortVersion())));
   }
 }
