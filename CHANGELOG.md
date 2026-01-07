@@ -16,6 +16,8 @@
 ### Additions and Improvements
 - Performance: Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
 - Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
+- Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
+- Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)  
 
 ##  25.12.0
 
