@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -222,11 +223,24 @@ public class BlockchainTestSubCommand implements Runnable {
   private void executeBlockchainTest(
       final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
       final TestResults results) {
+    final Map<String, BlockchainReferenceTestCaseSpec> filteredTests =
+        blockchainTests.entrySet().stream()
+            .filter(
+                entry -> {
+                  final String test = entry.getKey();
+                  if (testName != null && !testName.equals(test)) {
+                    parentCommand.out.println("Skipping test: " + test);
+                    return false;
+                  }
+                  parentCommand.out.println("Considering " + test);
+                  return true;
+                })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     int repeatCount = Math.max(1, parentCommand.getRepeatCount());
     for (int i = 0; i < repeatCount; i++) {
       boolean isLastIteration = (i == repeatCount - 1);
       parentCommand.out.println("Running iteration " + i);
-      blockchainTests.forEach(
+      filteredTests.forEach(
           (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
     }
   }
@@ -236,12 +250,9 @@ public class BlockchainTestSubCommand implements Runnable {
       final BlockchainReferenceTestCaseSpec spec,
       final TestResults results,
       final boolean isLastIteration) {
-    if (testName != null && !testName.equals(test)) {
-      parentCommand.out.println("Skipping test: " + test);
-      return;
+    if (isLastIteration) {
+      parentCommand.out.println("Running " + test);
     }
-    parentCommand.out.println("Considering " + test);
-
     final MutableBlockchain blockchain = spec.buildBlockchain();
     final ProtocolContext context = spec.buildProtocolContext(blockchain);
 
@@ -379,10 +390,10 @@ public class BlockchainTestSubCommand implements Runnable {
               "Chain header mismatch, have %s want %s",
               blockchain.getChainHeadHash(), spec.getLastBlockHash());
       parentCommand.out.printf(
-          "Chain header mismatch, have %s want %s - %s%n",
-          blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
+          "Chain header mismatch, have %s want %s%n",
+          blockchain.getChainHeadHash(), spec.getLastBlockHash());
     } else {
-      parentCommand.out.println("Chain import successful - " + test);
+      parentCommand.out.println("Chain import successful");
     }
 
     if (parentCommand.showJsonResults) {
