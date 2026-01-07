@@ -19,84 +19,40 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-public class PluginConfiguration {
-  private final List<PluginInfo> requestedPlugins;
-  private final Path pluginsDir;
-  private final boolean externalPluginsEnabled;
-  private final boolean continueOnPluginError;
+import org.immutables.value.Value;
 
-  public PluginConfiguration(
-      final List<PluginInfo> requestedPlugins,
-      final Path pluginsDir,
-      final boolean externalPluginsEnabled,
-      final boolean continueOnPluginError) {
-    this.requestedPlugins = requestedPlugins;
-    this.pluginsDir = pluginsDir;
-    this.externalPluginsEnabled = externalPluginsEnabled;
-    this.continueOnPluginError = continueOnPluginError;
+@Value.Immutable
+@Value.Style(get = {"get*", "is*"})
+public interface PluginConfiguration {
+  List<PluginInfo> DEFAULT_REQUESTED_PLUGINS_INFO = Collections.emptyList();
+  boolean DEFAULT_EXTERNAL_PLUGINS_ENABLED = true;
+  boolean DEFAULT_CONTINUE_ON_PLUGIN_ERROR = false;
+
+  @Value.Default
+  default List<PluginInfo> getRequestedPluginsInfo() {
+    return DEFAULT_REQUESTED_PLUGINS_INFO;
   }
 
-  public List<String> getRequestedPlugins() {
-    return requestedPlugins == null
-        ? Collections.emptyList()
-        : requestedPlugins.stream().map(PluginInfo::name).toList();
+  @Value.Derived
+  default List<String> getRequestedPlugins() {
+    return getRequestedPluginsInfo().stream().map(PluginInfo::name).toList();
   }
 
-  public Path getPluginsDir() {
-    return pluginsDir;
-  }
-
-  public boolean isExternalPluginsEnabled() {
-    return externalPluginsEnabled;
-  }
-
-  public boolean isContinueOnPluginError() {
-    return continueOnPluginError;
-  }
-
-  public static Path defaultPluginsDir() {
+  @Value.Default
+  default Path getPluginsDir() {
     String pluginsDirProperty = System.getProperty("besu.plugins.dir");
     return pluginsDirProperty == null
         ? Paths.get(System.getProperty("besu.home", "."), "plugins")
         : Paths.get(pluginsDirProperty);
   }
 
-  public static Builder builder() {
-    return new Builder();
+  @Value.Default
+  default boolean isExternalPluginsEnabled() {
+    return DEFAULT_EXTERNAL_PLUGINS_ENABLED;
   }
 
-  public static class Builder {
-    private List<PluginInfo> requestedPlugins;
-    private Path pluginsDir;
-    private boolean externalPluginsEnabled = true;
-    private boolean continueOnPluginError = false;
-
-    public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
-      this.requestedPlugins = requestedPlugins;
-      return this;
-    }
-
-    public Builder pluginsDir(final Path pluginsDir) {
-      this.pluginsDir = pluginsDir;
-      return this;
-    }
-
-    public Builder externalPluginsEnabled(final boolean externalPluginsEnabled) {
-      this.externalPluginsEnabled = externalPluginsEnabled;
-      return this;
-    }
-
-    public Builder continueOnPluginError(final boolean continueOnPluginError) {
-      this.continueOnPluginError = continueOnPluginError;
-      return this;
-    }
-
-    public PluginConfiguration build() {
-      if (pluginsDir == null) {
-        pluginsDir = PluginConfiguration.defaultPluginsDir();
-      }
-      return new PluginConfiguration(
-          requestedPlugins, pluginsDir, externalPluginsEnabled, continueOnPluginError);
-    }
+  @Value.Default
+  default boolean isContinueOnPluginError() {
+    return DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
   }
 }

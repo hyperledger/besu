@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -57,7 +57,7 @@ class Push0OperationTest {
     when(frame.getRemainingGas()).thenReturn(initialGas);
     final BlockValues blockValues = new FakeBlockValues(baseFee);
     when(frame.getBlockValues()).thenReturn(blockValues);
-    when(frame.getCode()).thenReturn(CodeV0.EMPTY_CODE);
+    when(frame.getCode()).thenReturn(Code.EMPTY_CODE);
     return frame;
   }
 }
