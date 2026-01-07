@@ -26,15 +26,18 @@ class OrderStatisticsTest {
 
   @Test
   void throwsOnEmpty() {
-    assertThrows(IllegalArgumentException.class, () -> OrderStatistics.selectKthInPlace(new Integer[0], 0));
+    assertThrows(
+        IllegalArgumentException.class, () -> OrderStatistics.selectKthInPlace(new Integer[0], 0));
   }
 
   @Test
   void throwsOnOutOfRangeK() {
     assertThrows(
-        IllegalArgumentException.class, () -> OrderStatistics.selectKthInPlace(new Integer[] {1, 2, 3}, -1));
+        IllegalArgumentException.class,
+        () -> OrderStatistics.selectKthInPlace(new Integer[] {1, 2, 3}, -1));
     assertThrows(
-        IllegalArgumentException.class, () -> OrderStatistics.selectKthInPlace(new Integer[] {1, 2, 3}, 3));
+        IllegalArgumentException.class,
+        () -> OrderStatistics.selectKthInPlace(new Integer[] {1, 2, 3}, 3));
   }
 
   @Test
@@ -95,4 +98,3 @@ class OrderStatisticsTest {
     assertEquals(expected, got);
   }
 }
-

@@ -94,11 +94,7 @@ public class OrderStatistics {
   }
 
   private static <T> int medianOfThree(
-      final T[] a,
-      final int i,
-      final int j,
-      final int k,
-      final Comparator<? super T> comparator) {
+      final T[] a, final int i, final int j, final int k, final Comparator<? super T> comparator) {
     final T ai = a[i];
     final T aj = a[j];
     final T ak = a[k];
@@ -155,4 +151,3 @@ public class OrderStatistics {
 
   private record Partition(int lt, int gt) {}
 }
-
