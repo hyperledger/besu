@@ -69,7 +69,7 @@ public class SyncTransactionReceiptDecoder {
     // Flat receipts can be either legacy or eth/69 receipts.
     // To determine the type, we need to examine the logs' position, as the bloom filter cannot be
     // used. This is because compacted legacy receipts also lack a bloom filter.
-    // The first element can be either the transaction type (eth/69 or stateRootOrStatus (eth/68
+    // The first element can be either the transaction type (eth/69) or stateRootOrStatus (eth/68)
     final Bytes firstElement = rlpInput.readBytes();
     // The second element can be either the state root or status (eth/68) or cumulative gas (eth/69)
     final Bytes secondElement = rlpInput.readBytes();
