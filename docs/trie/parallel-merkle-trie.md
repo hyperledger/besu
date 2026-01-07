@@ -40,8 +40,8 @@ When processing a branch node with multiple updates:
 
 2. **Decide which groups to parallelize**
     - Large groups (multiple updates) → process in thread pool
-    - Small groups (single update) → process in current thread
-    - Reason: Avoid thread creation overhead for tiny tasks
+    - Small groups (single update) → process in current task
+    - Reason: Avoid task creation overhead for tiny tasks
 
 3. **Process each group recursively**
     - Each child node gets processed with only its relevant updates
@@ -50,7 +50,7 @@ When processing a branch node with multiple updates:
 
 4. **Wait for all parallel tasks to complete**
     - Use futures to track parallel work
-    - Block until all children are updated
+    - Block until all children are updated at each level
 
 5. **Reconstruct the branch with new children**
     - Create new branch node (immutable pattern)
@@ -66,10 +66,10 @@ Root Branch:
 ├─ Child[A]: 3 updates [AB01, AB02, AE03] → PARALLEL TASK 1
 │   └─ Branch at [A]:
 │       ├─ Child[B]: 2 updates [AB01, AB02] → PARALLEL TASK 1.1
-│       └─ Child[E]: 1 update [AE03] → SEQUENTIAL (in task 1)
+│       └─ Child[E]: 1 update [AE03] → SEQUENTIAL TASK 1
 └─ Child[F]: 1 update [F123] → SEQUENTIAL 
 
-Result: 3 threads working simultaneously
+Result: multiple threads working simultaneously
 ```
 
 ### Why This Works
@@ -98,12 +98,12 @@ When updates diverge within an extension's path:
 
 1. **Find the divergence point**
     - Extension path: `[A, B, C, D]`
-    - Updates at: `[A, B, C, X]` and `[A, B, C, Y]`
+    - Addition at: `[A, B, C, E]` and `[A, B, C, F]`
     - Divergence at index 3 (position D)
 
 2. **Build branch structure up to divergence**
     - Create branches for `[A]`, then `[B]`, then `[C]`
-    - At `[C]`, create branch with children at `[D]`, `[X]`, `[Y]`
+    - At `[C]`, create branch with children at `[D]`, `[E]`, `[F]`
 
 3. **Process the expanded structure in parallel**
     - Now it's a branch tree → normal parallel processing
@@ -120,20 +120,20 @@ When updates diverge within an extension's path:
 
 Leaf represents a single value at some path.
 
-**If multiple updates affect this area:**
+**If multiple addition affect this area:**
 1. Convert leaf to a branch
 2. Place the existing leaf value in appropriate child slot
-3. Process updates in parallel on the new branch
+3. Process addition in parallel on the new branch
 
 **If single update:**
 - Let sequential visitor handle it (might just update the value, or split the leaf)
 
 ### Null Nodes: Building from Scratch
 
-Empty position getting multiple updates:
+Empty position getting multiple addition:
 1. Create empty branch (16 null children)
-2. Process updates in parallel
-3. Children get created as updates are applied
+2. Process addition in parallel
+3. Children get created as addition are applied
 
 ## Thread Safety Mechanisms
 
@@ -153,7 +153,7 @@ Problem: Many threads computing node hashes, but storage writes should be batche
 
 Solution:
 - Thread-safe map collects all nodes to persist
-- Each parallel task adds its nodes to cache
+- Each parallel task adds its nodes to that map
 - Single flush at the end writes everything to storage
 - Reduces I/O contention and transaction overhead
 
