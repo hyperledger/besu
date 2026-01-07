@@ -131,7 +131,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
 
     if (!duplicateNames.isEmpty()) {
       throw new IllegalStateException(
-          "Plugins with same name detected: " + String.join(", ", duplicateNames));
+          "Plugins duplicate name detected: " + String.join(", ", duplicateNames));
     }
 
     return loadedPlugins;
