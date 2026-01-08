@@ -98,10 +98,10 @@ sourceSets {
 }
 
 processTestResources.dependsOn(
-        ':buildDetachedTestPlugins',
-        ':buildDetachedOutdatedTestPlugins',
-        ':acceptance-tests:catalogless-test-plugins:jar'
-)
+  ':buildDetachedTestPlugins',
+  ':buildDetachedOutdatedTestPlugins',
+  ':acceptance-tests:catalogless-test-plugins:jar'
+  )
 
 compileTestJava.dependsOn ':buildDetachedTestPlugins'
 

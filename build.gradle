@@ -1343,9 +1343,9 @@ tasks.register('buildDetachedOutdatedTestPlugins', GradleBuild) {
 
   dir = file('acceptance-tests/detached-outdated-test-plugins')
   tasks = [
-          'clean',
-          'build',
-          'installDist'
+    'clean',
+    'build',
+    'installDist'
   ]
 
   doFirst {
