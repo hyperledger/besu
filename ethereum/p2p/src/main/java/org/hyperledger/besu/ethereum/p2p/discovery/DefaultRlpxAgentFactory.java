@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -36,14 +37,13 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
 
-  public DefaultRlpxAgentFactory(
+  private DefaultRlpxAgentFactory(
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
       final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
-
     this.nodeKey = nodeKey;
     this.config = config;
     this.peerPermissions = peerPermissions;
@@ -67,5 +67,74 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
         .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
         .peerLookup(peerLookup)
         .build();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+
+    private NodeKey nodeKey;
+    private NetworkingConfiguration config;
+    private PeerPermissions peerPermissions;
+    private MetricsSystem metricsSystem;
+    private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
+    private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+
+    private Builder() {}
+
+    public Builder nodeKey(final NodeKey nodeKey) {
+      this.nodeKey = nodeKey;
+      return this;
+    }
+
+    public Builder config(final NetworkingConfiguration config) {
+      this.config = config;
+      return this;
+    }
+
+    public Builder peerPermissions(final PeerPermissions peerPermissions) {
+      this.peerPermissions = peerPermissions;
+      return this;
+    }
+
+    public Builder metricsSystem(final MetricsSystem metricsSystem) {
+      this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder allConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allConnectionsSupplier) {
+      this.allConnectionsSupplier = allConnectionsSupplier;
+      return this;
+    }
+
+    public Builder allActiveConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+      return this;
+    }
+
+    public DefaultRlpxAgentFactory build() {
+      validate();
+      return new DefaultRlpxAgentFactory(
+          nodeKey,
+          config,
+          peerPermissions,
+          metricsSystem,
+          allConnectionsSupplier,
+          allActiveConnectionsSupplier);
+    }
+
+    private void validate() {
+      Objects.requireNonNull(nodeKey, "nodeKey must be set");
+      Objects.requireNonNull(config, "config must be set");
+      Objects.requireNonNull(peerPermissions, "peerPermissions must be set");
+      Objects.requireNonNull(metricsSystem, "metricsSystem must be set");
+      Objects.requireNonNull(allConnectionsSupplier, "allConnectionsSupplier must be set");
+      Objects.requireNonNull(
+          allActiveConnectionsSupplier, "allActiveConnectionsSupplier must be set");
+    }
   }
 }

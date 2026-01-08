@@ -702,26 +702,28 @@ public class RunnerBuilder {
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
 
     PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
-        new DefaultPeerDiscoveryAgentFactory(
-            vertx,
-            nodeKey,
-            networkingConfiguration,
-            peerPermissions,
-            natService,
-            metricsSystem,
-            storageProvider,
-            context.getBlockchain(),
-            besuController.getGenesisConfigOptions().getForkBlockNumbers(),
-            besuController.getGenesisConfigOptions().getForkBlockTimestamps());
+        DefaultPeerDiscoveryAgentFactory.builder()
+            .vertx(vertx)
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(peerPermissions)
+            .natService(natService)
+            .metricsSystem(metricsSystem)
+            .storageProvider(storageProvider)
+            .blockchain(context.getBlockchain())
+            .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
+            .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+            .build();
 
     RlpxAgentFactory rlpxAgentFactory =
-        new DefaultRlpxAgentFactory(
-            nodeKey,
-            networkingConfiguration,
-            peerPermissions,
-            metricsSystem,
-            ethPeers::streamAllConnections,
-            ethPeers::streamAllActiveConnections);
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(peerPermissions)
+            .metricsSystem(metricsSystem)
+            .allConnectionsSupplier(ethPeers::streamAllConnections)
+            .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
+            .build();
 
     final NetworkBuilder activeNetwork =
         caps ->

@@ -31,12 +31,10 @@ import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
@@ -64,21 +62,27 @@ public final class DefaultP2PNetworkTestBuilder {
     when(mockBlockchain.getGenesisBlock()).thenReturn(mockGenesisBlock);
 
     final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
-        new DefaultPeerDiscoveryAgentFactory(
-            vertx,
-            nodeKey,
-            config,
-            peerPermissions,
-            new NatService(Optional.empty()),
-            noopMetricsSystem,
-            new InMemoryKeyValueStorageProvider(),
-            mockBlockchain,
-            Collections.emptyList(),
-            Collections.emptyList());
+        DefaultPeerDiscoveryAgentFactory.builder()
+            .vertx(vertx)
+            .nodeKey(nodeKey)
+            .config(config)
+            .peerPermissions(peerPermissions)
+            .metricsSystem(noopMetricsSystem)
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .blockchain(mockBlockchain)
+            .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
+            .build();
 
     final RlpxAgentFactory defaultRlpxFactory =
-        new DefaultRlpxAgentFactory(
-            nodeKey, config, peerPermissions, noopMetricsSystem, Stream::empty, Stream::empty);
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(config)
+            .peerPermissions(peerPermissions)
+            .metricsSystem(noopMetricsSystem)
+            .allConnectionsSupplier(Stream::empty)
+            .allActiveConnectionsSupplier(Stream::empty)
+            .build();
 
     return DefaultP2PNetwork.builder()
         .vertx(vertx)

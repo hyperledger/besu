@@ -293,26 +293,27 @@ public class JsonRpcHttpServiceRpcApisTest {
 
     NodeKey nodeKey = NodeKeyUtils.generate();
     final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
-        new DefaultPeerDiscoveryAgentFactory(
-            vertx,
-            nodeKey,
-            config,
-            PeerPermissions.noop(),
-            new NatService(Optional.empty()),
-            new NoOpMetricsSystem(),
-            new InMemoryKeyValueStorageProvider(),
-            blockchain,
-            Collections.emptyList(),
-            Collections.emptyList());
+        DefaultPeerDiscoveryAgentFactory.builder()
+            .vertx(vertx)
+            .nodeKey(nodeKey)
+            .config(config)
+            .peerPermissions(PeerPermissions.noop())
+            .metricsSystem(new NoOpMetricsSystem())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .blockchain(blockchain)
+            .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
+            .build();
 
     final RlpxAgentFactory defaultRlpxFactory =
-        new DefaultRlpxAgentFactory(
-            nodeKey,
-            config,
-            PeerPermissions.noop(),
-            new NoOpMetricsSystem(),
-            Stream::empty,
-            Stream::empty);
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(config)
+            .peerPermissions(PeerPermissions.noop())
+            .metricsSystem(new NoOpMetricsSystem())
+            .allConnectionsSupplier(Stream::empty)
+            .allActiveConnectionsSupplier(Stream::empty)
+            .build();
 
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
