@@ -68,7 +68,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config).config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -83,7 +83,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config).config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -98,7 +98,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config).config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -139,13 +139,13 @@ public class NetworkingServiceLifecycleTest {
     assumingThat(
         System.getProperty("user.language").startsWith("en"),
         () -> {
-          try (final P2PNetwork service1 = getP2PNetworkBuilder(config).config(config).build()) {
+          try (final P2PNetwork service1 = getP2PNetworkBuilder(config).build()) {
             service1.start();
             final NetworkingConfiguration config = configWithRandomPorts();
             final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
             assertThat(usedPort).isNotZero();
             config.getDiscovery().setBindPort(usedPort);
-            try (final P2PNetwork service2 = getP2PNetworkBuilder(config).config(config).build()) {
+            try (final P2PNetwork service2 = getP2PNetworkBuilder(config).build()) {
               try {
                 service2.start();
               } catch (final Exception e) {
