@@ -155,7 +155,11 @@ public class TestContext {
       final Address proposer,
       final int roundNumber) {
     final QbftBlock block =
-        finalState.getBlockCreatorFactory().create(roundNumber).createBlock(timestamp, parent);
+        finalState
+            .getBlockCreatorFactory()
+            .create(roundNumber)
+            .createBlock(timestamp, parent)
+            .getBlock();
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(AdaptorUtil.toBesuBlockHeader(block.getHeader()));

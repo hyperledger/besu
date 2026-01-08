@@ -146,7 +146,7 @@ public class IbftRoundTest {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
     lenient()
-        .when(blockImporter.importBlock(any(), any(), any()))
+        .when(blockImporter.importBlock(any(), any(), any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
 
     subscribers.subscribe(minedBlockObserver);
@@ -212,7 +212,7 @@ public class IbftRoundTest {
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, times(1))
-        .multicastProposal(roundIdentifier, proposedBlock, Optional.empty());
+        .multicastProposal(roundIdentifier, proposedBlock, Optional.empty(), Optional.empty());
     verify(transmitter, never()).multicastPrepare(any(), any());
     verify(transmitter, never()).multicastCommit(any(), any(), any());
   }
@@ -235,10 +235,10 @@ public class IbftRoundTest {
             parentHeader);
     round.createAndSendProposalMessage(15);
     verify(transmitter, times(1))
-        .multicastProposal(roundIdentifier, proposedBlock, Optional.empty());
+        .multicastProposal(roundIdentifier, proposedBlock, Optional.empty(), Optional.empty());
     verify(transmitter, never()).multicastPrepare(any(), any());
     verify(transmitter, times(1)).multicastCommit(any(), any(), any());
-    verify(blockImporter, times(1)).importBlock(any(), any(), any());
+    verify(blockImporter, times(1)).importBlock(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -269,7 +269,7 @@ public class IbftRoundTest {
     verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
     verify(transmitter, times(1))
         .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
-    verify(blockImporter, never()).importBlock(any(), any(), any());
+    verify(blockImporter, never()).importBlock(any(), any(), any(), any(), any());
 
     // Receive Commit Message
 
@@ -278,7 +278,8 @@ public class IbftRoundTest {
 
     // Should import block when both commit seals are available.
     final ArgumentCaptor<Block> capturedBlock = ArgumentCaptor.forClass(Block.class);
-    verify(blockImporter, times(1)).importBlock(any(), capturedBlock.capture(), any());
+    verify(blockImporter, times(1))
+        .importBlock(any(), capturedBlock.capture(), any(), any(), any());
 
     // Ensure imported block contains both commit seals.
     final BftExtraData importedExtraData =
@@ -313,18 +314,18 @@ public class IbftRoundTest {
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, never()).multicastCommit(any(), any(), any());
-    verify(blockImporter, never()).importBlock(any(), any(), any());
+    verify(blockImporter, never()).importBlock(any(), any(), any(), any(), any());
 
     round.handlePrepareMessage(
         messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
 
     verify(transmitter, times(1))
         .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
-    verify(blockImporter, never()).importBlock(any(), any(), any());
+    verify(blockImporter, never()).importBlock(any(), any(), any(), any(), any());
 
     round.handleCommitMessage(
         messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
-    verify(blockImporter, times(1)).importBlock(any(), any(), any());
+    verify(blockImporter, times(1)).importBlock(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -346,9 +347,10 @@ public class IbftRoundTest {
 
     final RoundChangeCertificate roundChangeCertificate = new RoundChangeCertificate(emptyList());
 
-    round.startRoundWith(new RoundChangeArtifacts(empty(), emptyList()), 15);
+    round.startRoundWith(new RoundChangeArtifacts(empty(), empty(), emptyList()), 15);
     verify(transmitter, times(1))
-        .multicastProposal(eq(roundIdentifier), any(), eq(Optional.of(roundChangeCertificate)));
+        .multicastProposal(
+            eq(roundIdentifier), any(), any(), eq(Optional.of(roundChangeCertificate)));
   }
 
   @Test
@@ -387,6 +389,7 @@ public class IbftRoundTest {
         .multicastProposal(
             eq(roundIdentifier),
             blockCaptor.capture(),
+            any(),
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
     final BftExtraData proposedExtraData =
@@ -426,6 +429,7 @@ public class IbftRoundTest {
         .multicastProposal(
             eq(roundIdentifier),
             blockCaptor.capture(),
+            any(),
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
@@ -483,7 +487,7 @@ public class IbftRoundTest {
     round.handleProposalMessage(
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
 
-    verify(blockImporter, times(1)).importBlock(any(), any(), any());
+    verify(blockImporter, times(1)).importBlock(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -510,7 +514,7 @@ public class IbftRoundTest {
     round.handleProposalMessage(
         messageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
 
-    verify(blockImporter, times(1)).importBlock(any(), any(), any());
+    verify(blockImporter, times(1)).importBlock(any(), any(), any(), any(), any());
   }
 
   @Test

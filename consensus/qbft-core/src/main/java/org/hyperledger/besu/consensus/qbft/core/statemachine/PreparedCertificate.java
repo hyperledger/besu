@@ -17,8 +17,10 @@ package org.hyperledger.besu.consensus.qbft.core.statemachine;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.core.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
+import java.util.Optional;
 
 /** The Prepared certificate. */
 public class PreparedCertificate {
@@ -26,6 +28,7 @@ public class PreparedCertificate {
   private final QbftBlock block;
   private final List<SignedData<PreparePayload>> prepares;
   private final int round;
+  private final Optional<BlockAccessList> blockAccessList;
 
   /**
    * Instantiates a new Prepared certificate.
@@ -35,10 +38,19 @@ public class PreparedCertificate {
    * @param round the round
    */
   public PreparedCertificate(
-      final QbftBlock block, final List<SignedData<PreparePayload>> prepares, final int round) {
+      final QbftBlock block,
+      final List<SignedData<PreparePayload>> prepares,
+      final int round,
+      final Optional<BlockAccessList> blockAccessList) {
     this.block = block;
     this.prepares = prepares;
     this.round = round;
+    this.blockAccessList = blockAccessList;
+  }
+
+  public PreparedCertificate(
+      final QbftBlock block, final List<SignedData<PreparePayload>> prepares, final int round) {
+    this(block, prepares, round, Optional.empty());
   }
 
   /**
@@ -57,6 +69,15 @@ public class PreparedCertificate {
    */
   public QbftBlock getBlock() {
     return block;
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
   }
 
   /**

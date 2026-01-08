@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
@@ -57,7 +58,9 @@ class QbftBlockCreatorAdaptorTest {
 
     QbftBlockCreatorAdaptor qbftBlockCreator =
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
-    QbftBlock qbftBlock = qbftBlockCreator.createBlock(10, parentHeader);
+    QbftBlockCreator.BlockCreationResult qbftBlockCreationResult =
+        qbftBlockCreator.createBlock(10, parentHeader);
+    QbftBlock qbftBlock = qbftBlockCreationResult.getBlock();
     assertThat(((QbftBlockAdaptor) qbftBlock).getBesuBlock()).isEqualTo(besuBlock);
   }
 

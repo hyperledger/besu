@@ -269,7 +269,8 @@ public class IbftBlockHeightManagerTest {
             messageFactory);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, times(1)).multicastProposal(eq(roundIdentifier), any(), any());
+    verify(messageTransmitter, times(1))
+        .multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
   }
@@ -344,7 +345,8 @@ public class IbftBlockHeightManagerTest {
     manager.handleRoundChangePayload(roundChange);
 
     verify(messageTransmitter, times(1))
-        .multicastProposal(eq(futureRoundIdentifier), any(), eq(Optional.of(roundChangCert)));
+        .multicastProposal(
+            eq(futureRoundIdentifier), any(), any(), eq(Optional.of(roundChangCert)));
   }
 
   @Test

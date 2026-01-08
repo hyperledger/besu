@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +55,29 @@ public class MessageFactory {
    *
    * @param roundIdentifier the round identifier
    * @param block the block
+   * @param blockAccessList the block access list
+   * @param roundChanges the round changes
+   * @param prepares the prepares
+   * @return the proposal
+   */
+  public Proposal createProposal(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final QbftBlock block,
+      final Optional<BlockAccessList> blockAccessList,
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares) {
+
+    final ProposalPayload payload =
+        new ProposalPayload(roundIdentifier, block, blockEncoder, blockAccessList);
+
+    return new Proposal(createSignedMessage(payload), roundChanges, prepares);
+  }
+
+  /**
+   * Create proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
    * @param roundChanges the round changes
    * @param prepares the prepares
    * @return the proposal
@@ -63,10 +87,7 @@ public class MessageFactory {
       final QbftBlock block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
-
-    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block, blockEncoder);
-
-    return new Proposal(createSignedMessage(payload), roundChanges, prepares);
+    return createProposal(roundIdentifier, block, Optional.empty(), roundChanges, prepares);
   }
 
   /**
@@ -122,13 +143,18 @@ public class MessageFactory {
       return new RoundChange(
           createSignedMessage(payload),
           Optional.of(preparedBlock),
+          preparedRoundData.get().getBlockAccessList(),
           blockEncoder,
           preparedRoundData.get().getPrepares());
 
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());
       return new RoundChange(
-          createSignedMessage(payload), Optional.empty(), blockEncoder, Collections.emptyList());
+          createSignedMessage(payload),
+          Optional.empty(),
+          Optional.empty(),
+          blockEncoder,
+          Collections.emptyList());
     }
   }
 
