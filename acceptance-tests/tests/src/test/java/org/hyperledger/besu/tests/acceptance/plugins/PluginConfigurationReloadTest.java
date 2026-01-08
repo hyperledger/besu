@@ -15,28 +15,27 @@
 package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PluginConfigurationReloadTest extends AcceptanceTestBase {
   private BesuNode pluginNode;
 
-  @BeforeEach
-  public void setUp() throws Exception {
+  private void setupNode(final int... failingIds) throws IOException {
     pluginNode =
         besu.createQbftPluginsNode(
             "pluginNode",
             Collections.singletonList("testPlugins"),
-            Collections.emptyList(),
+            Arrays.stream(failingIds).mapToObj("--plugin-reload-conf%d-fail"::formatted).toList(),
             "PLUGINS");
 
     cluster.start(pluginNode);
@@ -45,7 +44,8 @@ public class PluginConfigurationReloadTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void reloadSinglePluginConfiguration() {
+  public void reloadSinglePluginConfigurationSuccessful() throws IOException {
+    setupNode();
 
     final var reloadConfTx =
         plugins.reloadConfiguration(TestReloadConfigurationPlugin1.class.getName());
@@ -53,41 +53,76 @@ public class PluginConfigurationReloadTest extends AcceptanceTestBase {
     final var response = pluginNode.execute(reloadConfTx);
 
     assertThat(response).isEqualTo("Success");
-    assertConfigReloadForPlugins(1);
+    assertConfigReloadCalledForPlugins(1);
   }
 
   @Test
-  public void reloadAllPluginConfigurations() {
+  public void reloadSinglePluginConfigurationFailure() throws IOException {
+    setupNode(1);
+
+    final var reloadConfTx =
+        plugins.reloadConfiguration(TestReloadConfigurationPlugin1.class.getName());
+
+    assertThatThrownBy(() -> pluginNode.execute(reloadConfTx))
+        .hasMessage(
+            "org.hyperledger.besu.tests.acceptance.plugins.TestReloadConfigurationPlugin1:failure(Failed to reload configuration)");
+
+    assertConfigReloadCalledForPlugins(1);
+  }
+
+  @Test
+  public void reloadAllPluginConfigurationsSuccessful() throws IOException {
+    setupNode();
 
     final var reloadConfTx = plugins.reloadConfiguration();
 
     final var response = pluginNode.execute(reloadConfTx);
 
     assertThat(response).isEqualTo("Success");
-    assertConfigReloadForPlugins(1, 2);
+    assertConfigReloadCalledForPlugins(1, 2);
   }
 
-  public void assertConfigReloadForPlugins(final int... pluginIds) {
-    // use await since the reload is done asynchronously and the file could take more that than the
-    // first check to appear
-    await()
-        .ignoreExceptions() // consider assertion failures as return false
-        .until(
-            () -> {
-              final var reloadConfFiles =
-                  pluginNode
-                      .homeDirectory()
-                      .resolve("plugins")
-                      .toFile()
-                      .listFiles((dir, name) -> name.startsWith("reloadConfiguration."));
+  @Test
+  public void reloadAllPluginConfigurationsOneFails() throws IOException {
+    setupNode(1);
 
-              assertThat(reloadConfFiles).hasSize(pluginIds.length);
+    final var reloadConfTx = plugins.reloadConfiguration();
 
-              final var foundFilenames = Arrays.stream(reloadConfFiles).map(File::getName).toList();
-              assertThat(foundFilenames)
-                  .containsExactlyInAnyOrderElementsOf(
-                      Arrays.stream(pluginIds).mapToObj(i -> "reloadConfiguration." + i).toList());
-              return true;
-            });
+    assertThatThrownBy(() -> pluginNode.execute(reloadConfTx))
+        .hasMessageContainingAll(
+            "org.hyperledger.besu.tests.acceptance.plugins.TestReloadConfigurationPlugin1:failure(Failed to reload configuration)",
+            "org.hyperledger.besu.tests.acceptance.plugins.TestReloadConfigurationPlugin2:success");
+
+    assertConfigReloadCalledForPlugins(1, 2);
+  }
+
+  @Test
+  public void reloadAllPluginConfigurationsAllFail() throws IOException {
+    setupNode(1, 2);
+
+    final var reloadConfTx = plugins.reloadConfiguration();
+
+    assertThatThrownBy(() -> pluginNode.execute(reloadConfTx))
+        .hasMessageContainingAll(
+            "org.hyperledger.besu.tests.acceptance.plugins.TestReloadConfigurationPlugin1:failure(Failed to reload configuration)",
+            "org.hyperledger.besu.tests.acceptance.plugins.TestReloadConfigurationPlugin2:failure(Failed to reload configuration)");
+
+    assertConfigReloadCalledForPlugins(1, 2);
+  }
+
+  private void assertConfigReloadCalledForPlugins(final int... pluginIds) {
+    final var reloadConfFiles =
+        pluginNode
+            .homeDirectory()
+            .resolve("plugins")
+            .toFile()
+            .listFiles((dir, name) -> name.startsWith("reloadConfiguration."));
+
+    assertThat(reloadConfFiles).isNotNull().hasSize(pluginIds.length);
+
+    final var foundFilenames = Arrays.stream(reloadConfFiles).map(File::getName).toList();
+    assertThat(foundFilenames)
+        .containsExactlyInAnyOrderElementsOf(
+            Arrays.stream(pluginIds).mapToObj(i -> "reloadConfiguration." + i).toList());
   }
 }
