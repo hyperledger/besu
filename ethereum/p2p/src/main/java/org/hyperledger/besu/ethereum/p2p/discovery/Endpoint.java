@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Encapsulates the network coordinates of a {@link DiscoveryPeer} as well as serialization logic
+ * Encapsulates the network coordinates of a {@link DiscoveryPeerV4} as well as serialization logic
  * used in various Discovery messages.
  */
 public class Endpoint {

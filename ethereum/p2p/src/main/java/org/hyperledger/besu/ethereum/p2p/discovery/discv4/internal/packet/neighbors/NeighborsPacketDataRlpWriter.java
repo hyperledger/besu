@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import javax.inject.Inject;
@@ -26,7 +26,7 @@ public class NeighborsPacketDataRlpWriter {
 
   public void writeTo(final NeighborsPacketData neighborsPacketData, final RLPOutput out) {
     out.startList();
-    out.writeList(neighborsPacketData.getNodes(), DiscoveryPeer::writeTo);
+    out.writeList(neighborsPacketData.getNodes(), DiscoveryPeerV4::writeTo);
     out.writeLongScalar(neighborsPacketData.getExpiration());
     out.endList();
   }

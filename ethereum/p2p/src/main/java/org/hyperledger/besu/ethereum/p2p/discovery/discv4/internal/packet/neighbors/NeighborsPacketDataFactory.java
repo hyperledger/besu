@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.PacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.DiscoveryPeersValidator;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.ExpiryValidator;
@@ -39,13 +39,13 @@ public class NeighborsPacketDataFactory {
     this.clock = clock;
   }
 
-  public NeighborsPacketData create(final List<DiscoveryPeer> peers, final long expiration) {
+  public NeighborsPacketData create(final List<DiscoveryPeerV4> peers, final long expiration) {
     discoveryPeersValidator.validate(peers);
     expiryValidator.validate(expiration);
     return new NeighborsPacketData(peers, expiration);
   }
 
-  public NeighborsPacketData create(final List<DiscoveryPeer> peers) {
+  public NeighborsPacketData create(final List<DiscoveryPeerV4> peers) {
     discoveryPeersValidator.validate(peers);
     return new NeighborsPacketData(peers, getDefaultExpirationTime());
   }

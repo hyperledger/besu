@@ -18,7 +18,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.PacketData;
@@ -44,7 +43,8 @@ import org.apache.tuweni.units.bigints.UInt64;
 class MockPacketDataFactory {
   private static final PacketPackage PACKET_PACKAGE = DaggerPacketPackage.create();
 
-  static Packet mockNeighborsPacket(final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
+  static Packet mockNeighborsPacket(
+      final DiscoveryPeerV4 from, final DiscoveryPeerV4... neighbors) {
     final Packet packet = mock(Packet.class);
 
     final NeighborsPacketData packetData =
@@ -59,7 +59,7 @@ class MockPacketDataFactory {
     return packet;
   }
 
-  static Packet mockPongPacket(final DiscoveryPeer from, final Bytes pingHash) {
+  static Packet mockPongPacket(final DiscoveryPeerV4 from, final Bytes pingHash) {
     final Packet packet = mock(Packet.class);
 
     final PongPacketData pongPacketData =

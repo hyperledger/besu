@@ -55,7 +55,7 @@ public interface PeerDiscoveryAgent {
    *
    * @return A stream of discovered peers.
    */
-  Stream<DiscoveryPeer> streamDiscoveredPeers();
+  Stream<? extends DiscoveryPeer> streamDiscoveredPeers();
 
   /**
    * Drops the specified peer from the discovery service.

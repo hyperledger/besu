@@ -59,7 +59,7 @@ public class NetworkingServiceLifecycleTest {
       assertThat(enode.getIpAsString()).isEqualTo(config.getDiscovery().getAdvertisedHost());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
-      assertThat(service.streamDiscoveredPeers()).hasSize(0);
+      assertThat(service.streamAvailableDiscoveredPeers()).hasSize(0);
     }
   }
 
@@ -167,7 +167,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_NoActivePeers() throws IOException {
     try (final P2PNetwork agent = getP2PNetworkBuilder(config).build()) {
-      assertThat(agent.streamDiscoveredPeers().collect(toList())).isEmpty();
+      assertThat(agent.streamAvailableDiscoveredPeers().collect(toList())).isEmpty();
       assertThat(agent.getPeers()).isEmpty();
     }
   }
