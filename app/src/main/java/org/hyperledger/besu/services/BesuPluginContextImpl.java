@@ -18,17 +18,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
-import org.hyperledger.besu.ethereum.core.plugins.PluginsVerificationMode;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuService;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
-import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -36,13 +32,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -50,13 +44,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.spi.LoggingEventBuilder;
 
 /** The Besu plugin context implementation. */
 public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProvider {
@@ -96,6 +86,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
 
   private final Map<String, String> pluginVersions = new LinkedHashMap<>();
   private PluginConfiguration config;
+  private URLClassLoader pluginClassLoader;
 
   /** Instantiates a new Besu plugin context. */
   public BesuPluginContextImpl() {}
@@ -345,6 +336,16 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       }
     }
 
+    // Close the plugin classloader to release file handles
+    if (pluginClassLoader != null) {
+      try {
+        pluginClassLoader.close();
+        LOG.debug("Closed plugin classloader");
+      } catch (final IOException e) {
+        LOG.debug("Error closing plugin classloader", e);
+      }
+    }
+
     LOG.debug("Plugin shutdown complete.");
     state = Lifecycle.STOPPED;
   }
@@ -368,11 +369,16 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
                 .filter(p -> p.getFileName().toString().endsWith(".jar"))
                 .map(BesuPluginContextImpl::pathToURIOrNull)
                 .toArray(URL[]::new);
-        final var pluginClassLoader = new URLClassLoader(pluginJarURLs);
+        // The URLClassLoader must remain open for the entire application lifecycle
+        // as plugins may load classes lazily during their operation. The classloader
+        // will be closed in stopPlugins() during shutdown.
+        this.pluginClassLoader =
+            new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader());
         ServiceLoader<BesuPlugin> serviceLoader =
-            ServiceLoader.load(BesuPlugin.class, pluginClassLoader);
+            ServiceLoader.load(BesuPlugin.class, this.pluginClassLoader);
         final var foundPlugins = StreamSupport.stream(serviceLoader.spliterator(), false).toList();
-        verifyPlugins(config.getPluginsVerificationMode(), pluginClassLoader, foundPlugins);
+        PluginVerifier.verify(
+            config.getPluginsVerificationMode(), this.pluginClassLoader, foundPlugins);
 
         return foundPlugins;
       } catch (final MalformedURLException e) {
@@ -385,222 +391,6 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     }
 
     return List.of();
-  }
-
-  private void verifyPlugins(
-      final PluginsVerificationMode pluginsVerificationMode,
-      final URLClassLoader pluginClassLoader,
-      final List<BesuPlugin> plugins)
-      throws IOException {
-
-    verifyNamesAreUnique(plugins);
-
-    final var pluginsArtifactData = getPluginsArtifactData(pluginClassLoader, plugins);
-    LOG.debug("Loaded pluginsArtifactData: {}", pluginsArtifactData);
-
-    final var catalogLessArtifacts =
-        pluginsArtifactData.stream()
-            .filter(ad -> ad.catalog().equals(ArtifactCatalog.NO_CATALOG))
-            .toList();
-
-    if (!catalogLessArtifacts.isEmpty()) {
-      final LoggingEventBuilder leb =
-          pluginsVerificationMode.failOnCatalogLess() ? LOG.atError() : LOG.atWarn();
-      catalogLessArtifacts.forEach(
-          ad ->
-              leb.log(
-                  "Artifact {} containing plugins {} is without a catalog",
-                  ad.name(),
-                  ad.plugins().stream().map(BesuPlugin::getName).toList()));
-
-      if (pluginsVerificationMode.failOnCatalogLess()) {
-        throw new IllegalStateException(
-            "Plugins verification failed, see previous logs for more details.");
-      }
-    }
-
-    verifyCatalogs(pluginClassLoader, pluginsVerificationMode, pluginsArtifactData);
-  }
-
-  private void verifyNamesAreUnique(final List<BesuPlugin> loadedPlugins) {
-    final var pluginNameCounts =
-        loadedPlugins.stream()
-            .collect(Collectors.groupingBy(BesuPlugin::getName, Collectors.counting()));
-
-    final var duplicateNames =
-        pluginNameCounts.entrySet().stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Map.Entry::getKey)
-            .toList();
-
-    if (!duplicateNames.isEmpty()) {
-      throw new IllegalStateException(
-          "Plugins with same name detected: " + String.join(", ", duplicateNames));
-    }
-  }
-
-  private List<ArtifactInfo> getPluginsArtifactData(
-      final URLClassLoader pluginClassLoader, final List<BesuPlugin> plugins) throws IOException {
-    final var pluginsByArtifact =
-        plugins.stream()
-            .collect(
-                Collectors.groupingBy(
-                    plugin -> {
-                      try {
-                        return plugin
-                            .getClass()
-                            .getProtectionDomain()
-                            .getCodeSource()
-                            .getLocation()
-                            .toURI()
-                            .getSchemeSpecificPart();
-                      } catch (URISyntaxException e) {
-                        throw new RuntimeException(
-                            "Error getting artifact URL for plugin " + plugin.getName(), e);
-                      }
-                    }));
-
-    final var allCatalogs =
-        Collections.list(pluginClassLoader.getResources("META-INF/plugin-artifacts-catalog.json"));
-
-    final var artifactsWithCatalogs =
-        allCatalogs.stream()
-            .collect(
-                Collectors.toMap(
-                    url -> {
-                      try {
-                        return StringUtils.substringBefore(new URI(url.getPath()).getPath(), '!');
-                      } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                      }
-                    },
-                    ArtifactCatalog::load));
-
-    return pluginsByArtifact.entrySet().stream()
-        .map(
-            entry ->
-                new ArtifactInfo(
-                    entry.getKey(),
-                    entry.getValue(),
-                    artifactsWithCatalogs.getOrDefault(entry.getKey(), ArtifactCatalog.NO_CATALOG)))
-        .toList();
-  }
-
-  private void verifyCatalogs(
-      final URLClassLoader pluginClassLoader,
-      final PluginsVerificationMode pluginsVerificationMode,
-      final List<ArtifactInfo> pluginsArtifactData)
-      throws IOException {
-    verifyBesuVersions(pluginsVerificationMode, pluginsArtifactData);
-    verifyBesuPluginsDependencyConflicts(
-        pluginClassLoader, pluginsVerificationMode, pluginsArtifactData);
-    verifyPluginsDependencyConflicts(pluginsVerificationMode, pluginsArtifactData);
-  }
-
-  private void verifyBesuVersions(
-      final PluginsVerificationMode pluginsVerificationMode,
-      final List<ArtifactInfo> pluginsArtifactData) {
-    final var besuRunningVersion = BesuVersionUtils.shortVersion();
-    final var besuVersionConflictFound =
-        pluginsArtifactData.stream()
-            .anyMatch(
-                artifactInfo -> {
-                  final var pluginBuildBesuVersion = artifactInfo.catalog().besuVersion();
-                  if (!besuRunningVersion.equals(pluginBuildBesuVersion)) {
-                    final LoggingEventBuilder leb =
-                        pluginsVerificationMode.failOnBesuVersionConflict()
-                            ? LOG.atError()
-                            : LOG.atWarn();
-                    leb.log(
-                        "Plugin artifact {} is built against Besu version {} while current running Besu version is {}",
-                        artifactInfo.name(),
-                        pluginBuildBesuVersion == null ? "unknown" : pluginBuildBesuVersion,
-                        besuRunningVersion);
-                    return true;
-                  }
-                  return false;
-                });
-
-    if (besuVersionConflictFound && pluginsVerificationMode.failOnBesuVersionConflict()) {
-      throw new IllegalStateException(
-          "Plugins verification failed, see previous logs for more details.");
-    }
-  }
-
-  private void verifyPluginsDependencyConflicts(
-      final PluginsVerificationMode pluginsVerificationMode,
-      final List<ArtifactInfo> pluginsArtifactInfo) {
-    final var alreadyChecked = HashSet.<ArtifactInfo>newHashSet(pluginsArtifactInfo.size());
-
-    boolean verificationFailed = false;
-
-    for (final var artifactInfo : pluginsArtifactInfo) {
-      alreadyChecked.add(artifactInfo);
-      for (final var dep : artifactInfo.catalog().dependencies()) {
-        for (final var otherArtifactInfo : pluginsArtifactInfo) {
-          if (!alreadyChecked.contains(otherArtifactInfo)) {
-            final var otherCatalog = otherArtifactInfo.catalog();
-            final var maybeOtherDep = otherCatalog.getByNameAndGroup(dep);
-            if (maybeOtherDep.isPresent()) {
-              final var otherDep = maybeOtherDep.get();
-              if (!dep.version().equals(otherDep.version())) {
-                verificationFailed = pluginsVerificationMode.failOnPluginDependencyConflict();
-                final LoggingEventBuilder leb = verificationFailed ? LOG.atError() : LOG.atWarn();
-                leb.log(
-                    "Plugin artifacts {} and {} bring the same dependency {}:{} but with different versions: {} and {}",
-                    artifactInfo.name(),
-                    otherArtifactInfo.name(),
-                    dep.group(),
-                    dep.name(),
-                    dep.version(),
-                    otherDep.version());
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (verificationFailed) {
-      throw new IllegalStateException(
-          "Plugins verification failed, see previous logs for more details.");
-    }
-  }
-
-  private void verifyBesuPluginsDependencyConflicts(
-      final URLClassLoader pluginClassLoader,
-      final PluginsVerificationMode pluginsVerificationMode,
-      final List<ArtifactInfo> pluginsArtifactData)
-      throws IOException {
-    final var besuArtifactsCatalog =
-        Collections.list(pluginClassLoader.getResources("META-INF/besu-artifacts-catalog.json"));
-
-    final var besuDependencies = ArtifactDependency.loadList(besuArtifactsCatalog.get(0));
-
-    besuDependencies.forEach(
-        besuDependency -> {
-          final var conflicts =
-              pluginsArtifactData.stream()
-                  .filter(pad -> pad.catalog().containsByNameAndGroup(besuDependency))
-                  .toList();
-          if (!conflicts.isEmpty()) {
-            final LoggingEventBuilder leb =
-                pluginsVerificationMode.failOnBesuDependencyConflict()
-                    ? LOG.atError()
-                    : LOG.atWarn();
-            conflicts.forEach(
-                ai -> {
-                  leb.log(
-                      "Plugin artifact {} brings the dependency {} that is already provided by Besu",
-                      ai.name(),
-                      besuDependency.group() + ":" + besuDependency.name());
-                });
-            if (pluginsVerificationMode.failOnBesuDependencyConflict()) {
-              throw new IllegalStateException(
-                  "Plugins verification failed, see previous logs for more details.");
-            }
-          }
-        });
   }
 
   @Override
@@ -668,57 +458,5 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
             registeredPlugins.size(), detectedPlugins.size()));
 
     return summary;
-  }
-
-  record ArtifactInfo(String name, List<BesuPlugin> plugins, ArtifactCatalog catalog) {
-    @Override
-    public String toString() {
-      return "ArtifactInfo{"
-          + "name='"
-          + name
-          + '\''
-          + ", plugins="
-          + plugins.stream().map(BesuPlugin::getName).collect(Collectors.joining(", "))
-          + ", catalog="
-          + catalog
-          + '}';
-    }
-  }
-
-  record ArtifactCatalog(String besuVersion, List<ArtifactDependency> dependencies) {
-    static final ArtifactCatalog NO_CATALOG = new ArtifactCatalog(null, List.of());
-
-    static ArtifactCatalog load(final URL url) {
-      final var objectMapper = new ObjectMapper();
-      try {
-        return objectMapper.readValue(url, ArtifactCatalog.class);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public boolean containsByNameAndGroup(final ArtifactDependency other) {
-      return dependencies.stream().anyMatch(other::equalsByNameAndGroup);
-    }
-
-    public Optional<ArtifactDependency> getByNameAndGroup(final ArtifactDependency other) {
-      return dependencies.stream().filter(other::equalsByNameAndGroup).findFirst();
-    }
-  }
-
-  record ArtifactDependency(
-      String name, String group, String version, String classifier, String filename) {
-    boolean equalsByNameAndGroup(final ArtifactDependency other) {
-      return Objects.equals(name, other.name) && Objects.equals(group, other.group);
-    }
-
-    static List<ArtifactDependency> loadList(final URL url) {
-      final var objectMapper = new ObjectMapper();
-      try {
-        return objectMapper.readValue(url, new TypeReference<>() {});
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
   }
 }
