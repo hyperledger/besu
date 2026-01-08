@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -287,8 +287,8 @@ public class RlpxAgent {
 
   private CompletableFuture<PeerConnection> initiateOutboundConnection(final Peer peer) {
     LOG.trace("Initiating connection to peer: {}", peer.getEnodeURL());
-    if (peer instanceof DiscoveryPeerV4) {
-      ((DiscoveryPeerV4) peer).setLastAttemptedConnection(System.currentTimeMillis());
+    if (peer instanceof DiscoveryPeer) {
+      ((DiscoveryPeer) peer).setLastAttemptedConnection(System.currentTimeMillis());
     }
 
     return connectionInitializer

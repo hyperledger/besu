@@ -264,7 +264,7 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void attemptPeerConnections_bondedPeers() {
     final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
-    discoPeer.bound();
+    discoPeer.setBonded();
     final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 
@@ -292,7 +292,7 @@ public final class DefaultP2PNetworkTest {
     discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
     discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
     discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
-    discoPeers.forEach(DiscoveryPeerV4::bound);
+    discoPeers.forEach(DiscoveryPeerV4::setBonded);
     discoPeers.get(0).setLastAttemptedConnection(10);
     discoPeers.get(2).setLastAttemptedConnection(15);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(discoPeers.stream());

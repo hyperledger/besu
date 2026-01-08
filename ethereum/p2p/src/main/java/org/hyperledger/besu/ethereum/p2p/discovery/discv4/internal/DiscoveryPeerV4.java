@@ -92,7 +92,7 @@ public class DiscoveryPeerV4 extends DiscoveryPeer {
     return status == PeerDiscoveryStatus.BONDED;
   }
 
-  public void bound() {
+  public void setBonded() {
     status = PeerDiscoveryStatus.BONDED;
   }
 

@@ -59,7 +59,7 @@ public class NetworkingServiceLifecycleTest {
       assertThat(enode.getIpAsString()).isEqualTo(config.getDiscovery().getAdvertisedHost());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
-      assertThat(service.streamAvailableDiscoveredPeers()).hasSize(0);
+      assertThat(service.streamDiscoveredPeers()).hasSize(0);
     }
   }
 

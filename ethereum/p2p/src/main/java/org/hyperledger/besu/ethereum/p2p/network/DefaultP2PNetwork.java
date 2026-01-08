@@ -397,7 +397,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   void attemptPeerConnections() {
     LOG.trace("Initiating connections to discovered peers.");
     final Stream<DiscoveryPeer> toTry =
-        streamAvailableDiscoveredPeers()
+        streamDiscoveredPeers()
             .filter(DiscoveryPeer::isReady)
             .filter(peerDiscoveryAgent::checkForkId)
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
@@ -415,7 +415,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Stream<DiscoveryPeer> streamAvailableDiscoveredPeers() {
+  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     return peerDiscoveryAgent.streamDiscoveredPeers().map(p -> p);
   }
 
