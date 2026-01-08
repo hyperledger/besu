@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentDiscv4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
@@ -74,8 +73,7 @@ public final class DefaultP2PNetworkTest {
       SECP256K1.SecretKey.fromBytes(
           Bytes32.fromHexString(
               "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
-  @Mock
-  PeerDiscoveryAgentDiscv4 discoveryAgent;
+  @Mock PeerDiscoveryAgentDiscv4 discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
   @Captor private ArgumentCaptor<DiscoveryPeerV4> peerCaptor;
