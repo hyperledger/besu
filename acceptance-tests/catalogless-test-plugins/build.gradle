@@ -2,19 +2,8 @@
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':acceptance-tests:dsl')
-  implementation project(':app')
-  implementation project(':crypto:algorithms')
-  implementation project(':datatypes')
-  implementation project(':ethereum:api')
-  implementation project(':ethereum:core')
-  implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  implementation project(':ethereum:eth')
-  implementation project(':ethereum:rlp')
-  implementation project(':evm')
   implementation project(':plugin-api')
   implementation 'com.google.auto.service:auto-service'
-  implementation 'info.picocli:picocli'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'

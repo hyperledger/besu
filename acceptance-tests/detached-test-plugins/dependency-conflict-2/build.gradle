@@ -10,8 +10,15 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
+dependencies {
+    // this is just to force that dependency to be present in the plugin distribution
+    // so we can create an ad-hoc conflict with the other plugin.
+    // Be sure that the version is not the same as the other plugin.
+    runtimeOnly 'org.junit.jupiter:junit-jupiter-api:5.14.1'
+}
+
 jar {
-    archiveFileName = 'testPlugins.jar'
+    archiveFileName = 'dependencyConflict2.jar'
     manifest {
         attributes(
                 'Specification-Title': archiveBaseName,
@@ -24,5 +31,5 @@ jar {
 
 tasks.withType(AbstractArchiveTask).configureEach {
     archiveVersion = ''
-    archiveBaseName = 'testPlugins'
+    archiveBaseName = 'dependencyConflictPlugin1'
 }

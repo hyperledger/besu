@@ -56,7 +56,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolReques
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -69,6 +71,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
@@ -223,11 +227,21 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         pluginName -> {
           try {
             homeDirectory.resolve("plugins").toFile().mkdirs();
-            copyResource(
-                pluginName + ".jar", homeDirectory.resolve("plugins/" + pluginName + ".jar"));
-            BesuNode.this.plugins.add(pluginName);
-          } catch (final IOException e) {
-            LOG.error("Could not find plugin \"{}\" in resources", pluginName);
+            try {
+              copyResource(
+                  pluginName + ".jar", homeDirectory.resolve("plugins/" + pluginName + ".jar"));
+              BesuNode.this.plugins.add(pluginName);
+            } catch (final IllegalArgumentException jarException) {
+              // JAR not found, try ZIP
+              try {
+                unzipPlugin(pluginName + ".zip", homeDirectory.resolve("plugins"));
+                BesuNode.this.plugins.add(pluginName);
+              } catch (final IOException zipException) {
+                LOG.error("Could not find plugin \"{}\" as JAR or ZIP in resources", pluginName);
+              }
+            }
+          } catch (final Exception e) {
+            LOG.error("Error loading plugin \"{}\"", pluginName, e);
           }
         });
     this.requestedPlugins = requestedPlugins;
@@ -247,6 +261,34 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       return Files.createTempDirectory("acctest");
     } catch (final IOException e) {
       throw new RuntimeException("Unable to create temporary data directory", e);
+    }
+  }
+
+  private void unzipPlugin(final String zipResourceName, final Path targetDirectory)
+      throws IOException {
+    try (final InputStream zipInputStream =
+        getClass().getClassLoader().getResourceAsStream(zipResourceName)) {
+      if (zipInputStream == null) {
+        throw new IOException("Resource not found: " + zipResourceName);
+      }
+      try (final ZipInputStream zis = new ZipInputStream(zipInputStream)) {
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+          if (!entry.isDirectory()) {
+            // Extract only the file name without any directory path
+            final String fileName = new File(entry.getName()).getName();
+            final Path targetPath = targetDirectory.resolve(fileName);
+            try (final FileOutputStream fos = new FileOutputStream(targetPath.toFile())) {
+              final byte[] buffer = new byte[8192];
+              int len;
+              while ((len = zis.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+              }
+            }
+          }
+          zis.closeEntry();
+        }
+      }
     }
   }
 

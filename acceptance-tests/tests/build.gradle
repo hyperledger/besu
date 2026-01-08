@@ -88,8 +88,10 @@ test.enabled = false
 sourceSets {
   test {
     resources {
-      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/libs"
-      srcDirs "${rootDir}/acceptance-tests/detached-outdated-test-plugins/build/libs"
+      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/distributions"
+      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-1/build/distributions"
+      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-2/build/distributions"
+      srcDirs "${rootDir}/acceptance-tests/detached-outdated-test-plugins/build/distributions"
       srcDirs "${rootDir}/acceptance-tests/catalogless-test-plugins/build/libs"
     }
   }
