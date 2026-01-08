@@ -21,6 +21,10 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -34,7 +38,6 @@ import java.util.function.Supplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -55,12 +58,20 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   private final BonsaiWorldStateKeyValueStorage parent;
   private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
 
+  private final LabelledMetric<Counter> cacheRequestCounter;
+  private final LabelledMetric<Counter> cacheHitCounter;
+  private final LabelledMetric<Counter> cacheMissCounter;
+  private final LabelledMetric<Counter> cacheReadThroughCounter;
+  private final LabelledMetric<Counter> cacheInsertCounter;
+  private final LabelledMetric<Counter> cacheRemovalCounter;
+
   public BonsaiCachedWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parent,
       final long accountCacheSize,
       final long codeCacheSize,
       final long storageCacheSize,
-      final long trieCacheSize) {
+      final long trieCacheSize,
+      final MetricsSystem metricsSystem) {
     super(
         parent.flatDbStrategyProvider,
         parent.getComposedWorldStateStorage(),
@@ -72,6 +83,48 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     caches.put(CODE_STORAGE, createCache(codeCacheSize));
     caches.put(ACCOUNT_STORAGE_STORAGE, createCache(storageCacheSize));
     caches.put(TRIE_BRANCH_STORAGE, createCache(trieCacheSize));
+
+    this.cacheRequestCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_requests_total",
+            "Total number of cache requests",
+            "segment");
+
+    this.cacheHitCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_hits_total",
+            "Total number of cache hits",
+            "segment");
+
+    this.cacheMissCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_misses_total",
+            "Total number of cache misses",
+            "segment");
+
+    this.cacheReadThroughCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_read_through_total",
+            "Total number of cache read-through operations",
+            "segment");
+
+    this.cacheInsertCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_inserts_total",
+            "Total number of cache insertions",
+            "segment");
+
+    this.cacheRemovalCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_removals_total",
+            "Total number of cache removals",
+            "segment");
   }
 
   private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
@@ -99,23 +152,38 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final Bytes key,
       final Supplier<Optional<Bytes>> parentGetter) {
 
+    final String segmentName = segment.getName();
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
+
+    // Record cache request
+    cacheRequestCounter.labels(segmentName).inc();
+
     if (cache == null) {
+      // No cache for this segment, go directly to parent
+      cacheMissCounter.labels(segmentName).inc();
       return parentGetter.get();
     }
 
     final VersionedValue versionedValue = cache.getIfPresent(key);
 
-    // If in cache, return it
+    // If in cache, return it (cache hit)
     if (versionedValue != null) {
+      cacheHitCounter.labels(segmentName).inc();
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
+
+    // Cache miss - read from parent and cache the result
+    cacheMissCounter.labels(segmentName).inc();
+    cacheReadThroughCounter.labels(segmentName).inc();
 
     final Optional<Bytes> result = parentGetter.get();
     if (result.isPresent()) {
       cache.put(key, new VersionedValue(result.get(), globalVersion.get(), false));
+      cacheInsertCounter.labels(segmentName).inc();
     } else {
+      // Cache the fact that the key doesn't exist (negative caching)
       cache.put(key, new VersionedValue(null, globalVersion.get(), true));
+      cacheInsertCounter.labels(segmentName).inc();
     }
 
     return result;
@@ -126,6 +194,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
       cache.put(key, new VersionedValue(value, version, false));
+      cacheInsertCounter.labels(segment.getName()).inc();
     }
   }
 
@@ -134,6 +203,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
       cache.put(key, new VersionedValue(null, version, true));
+      cacheRemovalCounter.labels(segment.getName()).inc();
     }
   }
 
@@ -323,7 +393,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public void commit() {
-
       updateCache();
       // Commit to underlying storage
       super.commit();
@@ -353,11 +422,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   public long getCacheSize(final SegmentIdentifier segment) {
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     return cache != null ? cache.estimatedSize() : 0;
-  }
-
-  public CacheStats getCacheStats(final SegmentIdentifier segment) {
-    final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-    return cache != null ? cache.stats() : null;
   }
 
   public boolean isCached(final SegmentIdentifier segment, final Bytes key) {

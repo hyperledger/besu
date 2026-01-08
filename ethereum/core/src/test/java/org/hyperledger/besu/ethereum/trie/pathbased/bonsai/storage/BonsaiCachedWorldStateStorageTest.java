@@ -64,7 +64,7 @@ public class BonsaiCachedWorldStateStorageTest {
 
     cachedStorage =
         new BonsaiCachedWorldStateStorage(
-            parentStorage, CACHE_SIZE, CACHE_SIZE, CACHE_SIZE, CACHE_SIZE);
+            parentStorage, CACHE_SIZE, CACHE_SIZE, CACHE_SIZE, CACHE_SIZE, new NoOpMetricsSystem());
   }
 
   @Test

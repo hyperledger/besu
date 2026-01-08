@@ -88,7 +88,8 @@ public class KeyValueStorageProvider implements StorageProvider {
           5000,
           0,
           15000,
-          0);
+          0,
+          metricsSystem);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

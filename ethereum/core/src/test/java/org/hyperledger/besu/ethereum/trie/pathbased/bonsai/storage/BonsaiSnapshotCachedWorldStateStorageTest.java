@@ -60,7 +60,9 @@ public class BonsaiSnapshotCachedWorldStateStorageTest {
                         .build())
                 .build());
 
-    liveStorage = new BonsaiCachedWorldStateStorage(parentStorage, 1000, 1000, 1000, 1000);
+    liveStorage =
+        new BonsaiCachedWorldStateStorage(
+            parentStorage, 1000, 1000, 1000, 1000, new NoOpMetricsSystem());
   }
 
   @Test
