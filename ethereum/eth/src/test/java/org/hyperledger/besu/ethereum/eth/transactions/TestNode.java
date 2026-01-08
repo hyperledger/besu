@@ -90,7 +90,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -224,7 +223,12 @@ public class TestNode implements Closeable {
             .network(
                 capabilities ->
                     createP2PNetwork(
-                        networkingConfiguration, vertx, nodeKey, blockchain, capabilities))
+                        networkingConfiguration,
+                        vertx,
+                        nodeKey,
+                        blockchain,
+                        capabilities,
+                        ethPeers))
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
@@ -243,7 +247,8 @@ public class TestNode implements Closeable {
       final Vertx vertx,
       final NodeKey nodeKey,
       final Blockchain blockchain,
-      final List<Capability> capabilities) {
+      final List<Capability> capabilities,
+      final EthPeers ethPeers) {
     final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
         DefaultPeerDiscoveryAgentFactory.builder()
             .vertx(vertx)
@@ -263,8 +268,8 @@ public class TestNode implements Closeable {
             .config(networkingConfiguration)
             .peerPermissions(PeerPermissions.noop())
             .metricsSystem(new NoOpMetricsSystem())
-            .allConnectionsSupplier(Stream::empty)
-            .allActiveConnectionsSupplier(Stream::empty)
+            .allConnectionsSupplier(ethPeers::streamAllConnections)
+            .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
             .build();
 
     return DefaultP2PNetwork.builder()
