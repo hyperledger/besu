@@ -34,6 +34,14 @@ plugins {
   id 'de.undercouch.download' version '5.6.0'
 }
 
+// Enable dependency locking for SBOM generation (Trivy scans gradle.lockfile)
+// Run `./gradlew dependencies --write-locks` to generate/update lockfiles
+allprojects {
+  dependencyLocking {
+    lockAllConfigurations()
+  }
+}
+
 sonarqube {
   properties {
     property "sonar.projectKey", "$System.env.SONAR_PROJECT_KEY"
