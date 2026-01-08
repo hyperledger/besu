@@ -66,7 +66,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class PeerDiscoveryAgentTest {
+public class PeerDiscoveryAgentDiscv4Test {
 
   private static final int BROADCAST_TCP_PORT = 30303;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -916,15 +916,15 @@ public class PeerDiscoveryAgentTest {
             .getMock();
 
     // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
     // assert a pingpacketdata with empty ipv6 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
     // assert a pingpacketdata from address of 127.0.0.1 reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
     // assert that 255.255.255.255 reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
     // assert that a well-formed routable address in the ping packet data is used
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
+    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
   }
 
   @Test

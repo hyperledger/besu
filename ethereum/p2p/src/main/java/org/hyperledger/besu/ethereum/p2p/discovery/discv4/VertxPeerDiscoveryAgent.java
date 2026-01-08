@@ -67,7 +67,7 @@ import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
+public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
   private static final Logger LOG = LoggerFactory.getLogger(VertxPeerDiscoveryAgent.class);
 
   private final Vertx vertx;
@@ -108,6 +108,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         "vertx_eventloop_pending_tasks",
         "The number of pending tasks in the Vertx event loop",
         pendingTaskCounter(vertx.nettyEventLoopGroup()));
+    addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= rlpxAgent.getMaxPeers());
   }
 
   public static VertxPeerDiscoveryAgent create(

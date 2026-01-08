@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
@@ -54,8 +55,8 @@ import org.slf4j.LoggerFactory;
  * The peer discovery agent is the network component that sends and receives peer discovery messages
  * via UDP.
  */
-public abstract class PeerDiscoveryAgent {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
+public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentDiscv4.class);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -83,7 +84,7 @@ public abstract class PeerDiscoveryAgent {
 
   private final NodeRecordManager nodeRecordManager;
 
-  protected PeerDiscoveryAgent(
+  protected PeerDiscoveryAgentDiscv4(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
@@ -122,8 +123,7 @@ public abstract class PeerDiscoveryAgent {
   protected abstract CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer peer, final Packet packet);
 
-  public abstract CompletableFuture<?> stop();
-
+  @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
     if (config.isEnabled()) {
       final String host = config.getBindHost();
@@ -156,6 +156,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
+  @Override
   public void updateNodeRecord() {
     if (!config.isEnabled()) {
       return;
@@ -167,6 +168,7 @@ public abstract class PeerDiscoveryAgent {
     this.peerRequirements.add(peerRequirement);
   }
 
+  @Override
   public boolean checkForkId(final DiscoveryPeer peer) {
     return peer.getForkId().map(forkIdManager::peerCheck).orElse(true);
   }
@@ -289,10 +291,12 @@ public abstract class PeerDiscoveryAgent {
   protected abstract void handleOutgoingPacketError(
       final Throwable err, final DiscoveryPeer peer, final Packet packet);
 
+  @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     return controller.map(PeerDiscoveryController::streamDiscoveredPeers).orElse(Stream.empty());
   }
 
+  @Override
   public void dropPeer(final PeerId peer) {
     controller.ifPresent(c -> c.dropPeer(peer));
   }
@@ -328,8 +332,9 @@ public abstract class PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentDiscv4} is active on this node, false, otherwise.
    */
+  @Override
   public boolean isEnabled() {
     return isEnabled;
   }
@@ -340,12 +345,14 @@ public abstract class PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentDiscv4} is active on this node, false, otherwise.
    */
+  @Override
   public boolean isStopped() {
     return isStopped;
   }
 
+  @Override
   public void bond(final Peer peer) {
     controller.ifPresent(
         c -> {
@@ -358,6 +365,7 @@ public abstract class PeerDiscoveryAgent {
     return nodeRecordManager.getLocalNode();
   }
 
+  @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
     return peerTable.get(peerId).map(peer -> peer);
   }
