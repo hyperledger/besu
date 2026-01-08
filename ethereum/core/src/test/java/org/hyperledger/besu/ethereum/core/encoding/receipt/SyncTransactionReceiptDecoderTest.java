@@ -43,7 +43,7 @@ public class SyncTransactionReceiptDecoderTest {
 
   @Test
   public void testDecodeLegacyReceipt() {
-    final Hash stateRoot = Hash.fromHexStringLenient("01");
+    final Hash stateRoot = Hash.hash(Bytes.random(32));
     final long cumulativeGasUsed = 2;
     final List<Log> logs =
         List.of(
@@ -83,7 +83,7 @@ public class SyncTransactionReceiptDecoderTest {
 
   @Test
   public void testDecodeEth69Receipt() {
-    final Hash stateRoot = Hash.fromHexStringLenient("01");
+    final Hash stateRoot = Hash.hash(Bytes.random(32));
     final long cumulativeGasUsed = 2;
     final List<Log> logs =
         List.of(
@@ -123,7 +123,7 @@ public class SyncTransactionReceiptDecoderTest {
   @Test
   public void testDecodeTypedReceipt() {
     final TransactionType transactionType = TransactionType.EIP1559;
-    final Hash stateRoot = Hash.fromHexStringLenient("01");
+    final Hash stateRoot = Hash.hash(Bytes.random(32));
     final long cumulativeGasUsed = 2;
     final List<Log> logs =
         List.of(
