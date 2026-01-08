@@ -162,7 +162,10 @@ public class IbftBlockHeightManagerTest {
         .when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
-                createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
+                createdBlock,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     lenient()
         .when(futureRoundProposalMessageValidator.validateProposalMessage(any()))

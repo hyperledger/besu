@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -289,12 +290,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 parentHeader)
             .getBlock();
 
-    BlockProcessingResult result = validateProposedBlock(emptyBlock);
+    BlockProcessingResult result = validateProposedBlock(emptyBlock, Optional.empty());
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
+              Optional.empty(),
               result.getRequests(),
               BlockCreationTiming.EMPTY));
       LOG.info(
@@ -539,13 +541,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final long startedAt) {
     final var bestBlock = blockCreationResult.getBlock();
-    final var resultBest = validateProposedBlock(bestBlock);
+    final var resultBest =
+        validateProposedBlock(bestBlock, blockCreationResult.getBlockAccessList());
     if (resultBest.isSuccessful()) {
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
+              blockCreationResult.getBlockAccessList(),
               resultBest.getRequests(),
               blockCreationResult.getBlockCreationTimings()));
       LOG.atDebug()
@@ -635,6 +639,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult validateBlock(final Block block) {
+    return validateBlock(block, Optional.empty());
+  }
+
+  public BlockProcessingResult validateBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -644,12 +653,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false);
 
     return validationResult;
   }
 
-  private BlockProcessingResult validateProposedBlock(final Block block) {
+  private BlockProcessingResult validateProposedBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -659,6 +670,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false,
                 false);
 
@@ -667,9 +679,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult rememberBlock(final Block block) {
+    return rememberBlock(block, Optional.empty());
+  }
+
+  @Override
+  public BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     LOG.atDebug().setMessage("Remember block {}").addArgument(block::toLogString).log();
     final var chain = protocolContext.getBlockchain();
-    final var validationResult = validateBlock(block);
+    final var validationResult = validateBlock(block, blockAccessList);
     validationResult
         .getYield()
         .ifPresentOrElse(

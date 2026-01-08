@@ -53,7 +53,7 @@ class QbftBlockCreatorAdaptorTest {
     QbftBlockHeader parentHeader = new QbftBlockHeaderAdaptor(besuParentHeader);
 
     when(blockCreator.createBlock(10, besuParentHeader))
-        .thenReturn(new BlockCreator.BlockCreationResult(besuBlock, null, null));
+        .thenReturn(new BlockCreator.BlockCreationResult(besuBlock, null, null, Optional.empty()));
 
     QbftBlockCreatorAdaptor qbftBlockCreator =
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);

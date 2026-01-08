@@ -18,8 +18,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The BlockValidator interface defines the methods for validating and processing blocks in the
@@ -63,6 +65,26 @@ public interface BlockValidator {
 
   /**
    * Validates and processes a block with the given context, block, header validation mode, ommer
+   * validation mode, persistence flag, and optional block access list.
+   *
+   * @param context the protocol context
+   * @param block the block to validate and process
+   * @param headerValidationMode the header validation mode
+   * @param ommerValidationMode the ommer validation mode
+   * @param blockAccessList optional block access list for validation and processing
+   * @param shouldPersist flag indicating whether the block should be persisted
+   * @return the result of the block processing
+   */
+  BlockProcessingResult validateAndProcessBlock(
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
+      final boolean shouldPersist);
+
+  /**
+   * Validates and processes a block with the given context, block, header validation mode, ommer
    * validation mode, persistence flag, and bad block recording flag.
    *
    * @param context the protocol context
@@ -78,6 +100,7 @@ public interface BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
       final boolean shouldPersist,
       final boolean shouldRecordBadBlock);
 

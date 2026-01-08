@@ -94,7 +94,10 @@ class CliqueBlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -150,7 +153,10 @@ class CliqueBlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);

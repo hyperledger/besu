@@ -65,7 +65,10 @@ public class BlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -106,7 +109,10 @@ public class BlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -152,7 +158,10 @@ public class BlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
