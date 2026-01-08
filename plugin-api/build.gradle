@@ -18,6 +18,10 @@ apply plugin: 'java-library'
 java {
   withJavadocJar()
 }
+
+javadocJar {
+  archiveBaseName = calculateArtifactId(project)
+}
 jar {
   archiveBaseName = calculateArtifactId(project)
   manifest {
