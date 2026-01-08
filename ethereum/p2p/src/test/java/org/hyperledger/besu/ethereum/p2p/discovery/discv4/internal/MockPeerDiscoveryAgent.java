@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
@@ -66,10 +67,10 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         nodeKey,
         config,
         peerPermissions,
-        natService,
         new NoOpMetricsSystem(),
-        new InMemoryKeyValueStorageProvider(),
         forkIdManager,
+        new NodeRecordManager(
+            new InMemoryKeyValueStorageProvider(), nodeKey, forkIdManager, natService),
         rlpxAgent,
         new PeerTable(nodeKey.getPublicKey().getEncodedBytes()));
     this.agentNetwork = agentNetwork;
