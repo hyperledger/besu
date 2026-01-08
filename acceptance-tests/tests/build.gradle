@@ -103,6 +103,8 @@ processTestResources.dependsOn(
         ':acceptance-tests:catalogless-test-plugins:jar'
 )
 
+compileTestJava.dependsOn ':buildDetachedTestPlugins'
+
 // FKA acceptanceTestNotPrivacy
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
