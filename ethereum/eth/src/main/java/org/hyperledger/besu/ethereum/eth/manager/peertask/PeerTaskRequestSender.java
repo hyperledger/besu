@@ -44,13 +44,15 @@ public class PeerTaskRequestSender {
           ExecutionException,
           InterruptedException,
           TimeoutException {
-    ResponseStream responseStream =
+    final ResponseStream responseStream =
         ethPeer.send(requestMessageData, subProtocol.getName(), ethPeer.getConnection());
     final CompletableFuture<MessageData> responseMessageDataFuture = new CompletableFuture<>();
     responseStream.then(
         (boolean streamClosed, MessageData message, EthPeer peer) -> {
           responseMessageDataFuture.complete(message);
         });
-    return responseMessageDataFuture.get(timeoutMs, TimeUnit.MILLISECONDS);
+    return responseMessageDataFuture
+        .whenComplete((unused1, unused2) -> responseStream.close())
+        .get(timeoutMs, TimeUnit.MILLISECONDS);
   }
 }
