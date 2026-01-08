@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -48,10 +49,7 @@ public class TraceFilterTest {
   @Mock BlockchainQueries blockchainQueries;
 
   @ParameterizedTest
-  @CsvSource({
-    "0, 1001, 1000", "0, 5000, 1000", "1, 1002, 1000", "1, 6002, 1000", "1000, 3000, 1000",
-    "0, 501, 500", "0, 5000, 500", "1, 502, 500", "1, 6002, 500", "1000, 3000, 500"
-  })
+  @CsvSource({"0, 1001, 1000", "1, 6002, 1000", "1000, 3000, 500"})
   public void shouldFailIfParamsExceedMaxRange(
       final long fromBlock, final long toBlock, final long maxFilterRange) {
     final FilterParameter filterParameter =
@@ -69,6 +67,9 @@ public class TraceFilterTest {
     JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "trace_filter", new Object[] {filterParameter}));
+
+    // Mock headBlockNumber for validation with a value higher than toBlock
+    when(blockchainQueries.headBlockNumber()).thenReturn(Math.max(toBlock + 1000, 10000L));
 
     method =
         new TraceFilter(

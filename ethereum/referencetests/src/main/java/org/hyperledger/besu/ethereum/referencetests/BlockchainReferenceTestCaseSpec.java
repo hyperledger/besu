@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -71,10 +72,10 @@ public class BlockchainReferenceTestCaseSpec {
   private final Map<String, ReferenceTestWorldState.AccountMock> accounts;
   private final Hash lastBlockHash;
 
-  private final MutableBlockchain blockchain;
   private final String sealEngine;
 
-  public WorldStateArchive buildWorldStateArchive(final long cacheSize) {
+  private WorldStateArchive buildWorldStateArchive(
+      final long cacheSize, final Blockchain blockchain) {
 
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
@@ -114,7 +115,7 @@ public class BlockchainReferenceTestCaseSpec {
     return worldStateArchive;
   }
 
-  private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
+  public MutableBlockchain buildBlockchain() {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
     return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
@@ -133,7 +134,6 @@ public class BlockchainReferenceTestCaseSpec {
     this.genesisBlockHeader = genesisBlockHeader;
     this.accounts = accounts;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
-    this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
   }
 
@@ -149,16 +149,13 @@ public class BlockchainReferenceTestCaseSpec {
     return genesisBlockHeader;
   }
 
-  public MutableBlockchain getBlockchain() {
-    return blockchain;
-  }
-
-  public ProtocolContext buildProtocolContext() {
+  public ProtocolContext buildProtocolContext(final MutableBlockchain blockchain) {
     return new ProtocolContext.Builder()
         .withBlockchain(blockchain)
         .withWorldStateArchive(
             buildWorldStateArchive(
-                Stream.of(candidateBlocks).filter(CandidateBlock::isExecutable).count()))
+                Stream.of(candidateBlocks).filter(CandidateBlock::isExecutable).count(),
+                blockchain))
         .withConsensusContext(new ConsensusContextFixture())
         .build();
   }
