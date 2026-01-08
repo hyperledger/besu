@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.ReferenceTestMergeBlockCreator;
 import org.hyperledger.besu.datatypes.Wei;
@@ -25,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -49,12 +47,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.account.AccountState;
-import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.time.Clock;
@@ -65,7 +57,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -130,16 +121,8 @@ public class BlockchainReferenceTestTools {
 
     @SuppressWarnings("java:S5960") // this is actually test code
     public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
-        final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
         final ProtocolContext protocolContext = spec.buildProtocolContext();
-        final WorldStateArchive worldStateArchive = protocolContext.getWorldStateArchive();
-        final MutableWorldState worldState =
-                worldStateArchive
-                        .getWorldState(WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(genesisBlockHeader))
-                        .orElseThrow();
-
         final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
-
         final MutableBlockchain blockchain = spec.getBlockchain();
 
         try (BlockCreationFixture blockCreation =
@@ -154,8 +137,6 @@ public class BlockchainReferenceTestTools {
                     final Block blockFromReference = candidateBlock.getBlock();
 
                     final ProtocolSpec protocolSpec = schedule.getByBlockHeader(blockFromReference.getHeader());
-
-                    verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
 
                     final boolean supportsBlockBuilding =
                             ReferenceTestProtocolSchedules.supportsBlockBuilding(spec.getNetwork());
@@ -229,19 +210,6 @@ public class BlockchainReferenceTestTools {
         blockFromReference.getHeader().getTimestamp(),
         withdrawals,
         blockFromReference.getHeader().getParentBeaconBlockRoot());
-  }
-
-  static void verifyJournaledEVMAccountCompatability(
-          final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
-    EVM evm = protocolSpec.getEvm();
-    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-      assumeFalse(
-              worldState
-                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE).anyMatch(AccountState::isEmpty),
-              "Journaled account configured and empty account detected");
-      assumeFalse(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0,
-              "Journaled account configured and fork prior to the merge specified");
-    }
   }
 
   private static final class BlockCreationFixture implements AutoCloseable {
