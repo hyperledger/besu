@@ -18,7 +18,7 @@ import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
