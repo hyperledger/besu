@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.util.OrderStatistics;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -1084,7 +1085,6 @@ public class BlockchainQueries {
             .flatMap(Collection::stream)
             .filter(t -> t.getGasPrice().isPresent())
             .map(t -> t.getGasPrice().get())
-            .sorted()
             .toArray(Wei[]::new);
 
     return gasCollection.length == 0
@@ -1093,10 +1093,11 @@ public class BlockchainQueries {
             gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket),
             UInt256s.min(
                 apiConfig.getGasPriceMax(),
-                gasCollection[
+                OrderStatistics.selectKthInPlace(
+                    gasCollection,
                     Math.min(
                         gasCollection.length - 1,
-                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
+                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction())))));
   }
 
   /**
@@ -1148,17 +1149,17 @@ public class BlockchainQueries {
             .flatMap(Collection::stream)
             .filter(t -> t.getMaxPriorityFeePerGas().isPresent())
             .map(t -> t.getMaxPriorityFeePerGas().get())
-            .sorted()
             .toArray(Wei[]::new);
 
     return gasCollection.length == 0
         ? miningConfiguration.getMinPriorityFeePerGas()
         : UInt256s.max(
             miningConfiguration.getMinPriorityFeePerGas(),
-            gasCollection[
+            OrderStatistics.selectKthInPlace(
+                gasCollection,
                 Math.min(
                     gasCollection.length - 1,
-                    (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]);
+                    (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))));
   }
 
   /**
