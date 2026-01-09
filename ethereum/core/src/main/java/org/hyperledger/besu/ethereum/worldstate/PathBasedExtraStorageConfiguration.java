@@ -28,6 +28,7 @@ public interface PathBasedExtraStorageConfiguration {
           .limitTrieLogsEnabled(false)
           .unstable(PathBasedUnstable.DISABLED)
           .parallelTxProcessingEnabled(false)
+          .parallelStateRootComputationEnabled(false)
           .build();
 
   long DEFAULT_MAX_LAYERS_TO_LOAD = 512;
@@ -35,6 +36,7 @@ public interface PathBasedExtraStorageConfiguration {
   long MINIMUM_TRIE_LOG_RETENTION_LIMIT = DEFAULT_MAX_LAYERS_TO_LOAD;
   int DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
   boolean DEFAULT_PARALLEL_TX_PROCESSING = true;
+  boolean DEFAULT_PARALLEL_STATE_ROOT_COMPUTATION = true;
 
   @Value.Default
   default Long getMaxLayersToLoad() {
@@ -54,6 +56,11 @@ public interface PathBasedExtraStorageConfiguration {
   @Value.Default
   default boolean getParallelTxProcessingEnabled() {
     return DEFAULT_PARALLEL_TX_PROCESSING;
+  }
+
+  @Value.Default
+  default boolean getParallelStateRootComputationEnabled() {
+    return DEFAULT_PARALLEL_STATE_ROOT_COMPUTATION;
   }
 
   @Value.Default
