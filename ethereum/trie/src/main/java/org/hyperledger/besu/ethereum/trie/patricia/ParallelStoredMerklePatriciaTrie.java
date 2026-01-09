@@ -282,7 +282,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
             .peek(e -> branchWrapper.loadChild(e.getKey())) // force load lazy nodes
             .collect(
                 Collectors.partitioningBy(
-                    entry -> groupedUpdates.size() > 1,
+                    entry -> entry.getValue().size() > 1 && groupedUpdates.size() > 1,
                     Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
     final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);

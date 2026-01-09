@@ -133,7 +133,14 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
     // This must be done before updating the accounts so
     // that we can get the storage state hash
-    worldStateUpdater.getStorageToUpdate().entrySet().forEach(
+    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>>>>
+        storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
+    if (maybeStateUpdater.isEmpty()) {
+      storageStream =
+          storageStream
+              .parallel(); // if we are not updating the state updater we can use parallel stream
+    }
+    storageStream.forEach(
         addressMapEntry ->
             updateAccountStorageState(maybeStateUpdater, worldStateUpdater, addressMapEntry));
 
