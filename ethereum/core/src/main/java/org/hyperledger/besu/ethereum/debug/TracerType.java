@@ -31,7 +31,10 @@ public enum TracerType {
   FLAT_CALL_TRACER("flatCallTracer", "Flat Call Tracer"),
 
   /** Prestate tracer that captures account states before transaction execution */
-  PRESTATE_TRACER("prestateTracer", "Prestate Tracer");
+  PRESTATE_TRACER("prestateTracer", "Prestate Tracer"),
+
+  /** 4byte tracer that collects function selectors and call data sizes */
+  FOUR_BYTE_TRACER("4byteTracer", "4byte Tracer");
 
   private final String value;
   private final String displayName;

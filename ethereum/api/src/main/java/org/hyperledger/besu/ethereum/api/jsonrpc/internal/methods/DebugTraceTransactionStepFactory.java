@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResultConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResultConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateTraceGenerator;
@@ -88,6 +89,15 @@ public class DebugTraceTransactionStepFactory {
                     .orElseGet(StateDiffTrace::new);
             return new DebugTraceTransactionResult(
                 transactionTrace, new StateTraceResult(trace, diffMode));
+          };
+      case FOUR_BYTE_TRACER ->
+          transactionTrace -> {
+            if (enableExtraTracers) {
+              var result = FourByteTracerResultConverter.convert(transactionTrace);
+              return new DebugTraceTransactionResult(transactionTrace, result);
+            }
+            return new DebugTraceTransactionResult(
+                transactionTrace, new UnimplementedTracerResult());
           };
     };
   }
