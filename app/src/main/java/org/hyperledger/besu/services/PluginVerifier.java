@@ -57,6 +57,9 @@ public class PluginVerifier {
   private static final String PLUGIN_CATALOG_PATH = "META-INF/plugin-artifacts-catalog.json";
   private static final String BESU_CATALOG_PATH = "META-INF/besu-artifacts-catalog.json";
 
+  /** I am here to make javadoc happy */
+  private PluginVerifier() {}
+
   /**
    * Performs comprehensive verification of loaded plugins.
    *

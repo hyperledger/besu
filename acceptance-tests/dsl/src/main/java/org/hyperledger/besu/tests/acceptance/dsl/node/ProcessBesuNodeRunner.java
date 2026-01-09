@@ -89,9 +89,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (!node.getPlugins().isEmpty()) {
       processBuilder
           .environment()
-          .put(
-              "BESU_OPTS",
-              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+          .put("BESU_OPTS", "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath());
     }
     // Use non-blocking randomness for acceptance tests
     processBuilder
@@ -135,8 +133,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     if (node.getRunCommand().isEmpty()) {
-      waitForFileOrExit(dataDir, "besu.ports");
-      waitForFileOrExit(dataDir, "besu.networks");
+      waitForFileOrExit(node, "besu.ports");
+      waitForFileOrExit(node, "besu.networks");
     }
     MDC.remove("node");
   }
@@ -458,17 +456,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     return String.join(",", rpcApis);
   }
 
-  private void waitForFileOrExit(final Path dataDir, final String fileName) {
-    final File file = new File(dataDir.toFile(), fileName);
+  private void waitForFileOrExit(final BesuNode node, final String fileName) {
+    final File file = new File(node.homeDirectory().toFile(), fileName);
     Awaitility.waitAtMost(60, TimeUnit.SECONDS)
         .until(
             () -> {
-              if (besuProcesses.values().stream().noneMatch(Process::isAlive)) {
+              if (!besuProcesses.get(node.getName()).isAlive()) {
                 return true;
               }
 
               try (final Stream<String> s = Files.lines(file.toPath())) {
-                return s.count() > 0;
+                return s.findAny().isPresent();
               } catch (NoSuchFileException __) {
                 return false;
               }

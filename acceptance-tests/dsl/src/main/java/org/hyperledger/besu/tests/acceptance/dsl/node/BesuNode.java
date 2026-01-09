@@ -593,7 +593,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public void start(final BesuNodeRunner runner) {
+    exitCode = Optional.empty();
     runner.startNode(this);
+    // an empty exit code means the process is still running
     if (runCommand.isEmpty() && exitCode.isEmpty()) {
       loadPortsFile();
     }
