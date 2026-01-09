@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * <p>This component is responsible for:
  *
  * <ul>
- *   <li>Initializing the local {@link DiscoveryPeer} representation
+ *   <li>Initializing the local {@link DiscoveryPeerV4} representation
  *   <li>Creating, updating, and signing the local {@link NodeRecord}
  *   <li>Persisting the ENR sequence number and contents to disk
  *   <li>Ensuring the ENR remains consistent with the advertised address, ports, and fork ID
@@ -68,7 +69,7 @@ public class NodeRecordManager {
   private final Supplier<List<Bytes>> forkIdSupplier;
   private final NatService natService;
 
-  private Optional<DiscoveryPeer> localNode = Optional.empty();
+  private Optional<DiscoveryPeerV4> localNode = Optional.empty();
   private String advertisedAddress;
 
   /**
@@ -101,10 +102,10 @@ public class NodeRecordManager {
    * <p>The local node is only available after {@link #initializeLocalNode(String, int, int)} has
    * been invoked.
    *
-   * @return an {@link Optional} containing the local {@link DiscoveryPeer}, or empty if
+   * @return an {@link Optional} containing the local {@link DiscoveryPeerV4}, or empty if
    *     uninitialized
    */
-  public Optional<DiscoveryPeer> getLocalNode() {
+  public Optional<DiscoveryPeerV4> getLocalNode() {
     return localNode;
   }
 
@@ -125,8 +126,8 @@ public class NodeRecordManager {
 
     this.advertisedAddress = natService.queryExternalIPAddress(advertisedHost);
 
-    final DiscoveryPeer self =
-        DiscoveryPeer.fromEnode(
+    final DiscoveryPeerV4 self =
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(nodeId)
                 .ipAddress(advertisedAddress)
@@ -159,7 +160,7 @@ public class NodeRecordManager {
 
     final EnodeURL enode =
         localNode
-            .map(DiscoveryPeer::getEnodeURL)
+            .map(DiscoveryPeerV4::getEnodeURL)
             .orElseThrow(() -> new IllegalStateException("Local node must be initialized"));
 
     final int discoveryPort = enode.getDiscoveryPort().orElse(0);

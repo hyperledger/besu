@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class DiscoveryPeersValidatorTest {
+public class DiscoveryPeersValidatorTestV4 {
   private DiscoveryPeersValidator discoveryPeersValidator;
 
   @BeforeEach
@@ -34,7 +34,7 @@ public class DiscoveryPeersValidatorTest {
   @Test
   public void testValidateWithValidPeers() {
     Assertions.assertDoesNotThrow(
-        () -> discoveryPeersValidator.validate(List.of(Mockito.mock(DiscoveryPeer.class))));
+        () -> discoveryPeersValidator.validate(List.of(Mockito.mock(DiscoveryPeerV4.class))));
   }
 
   @Test
