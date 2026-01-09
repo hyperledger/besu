@@ -15,8 +15,6 @@
 package org.hyperledger.besu.evm;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,7 +30,7 @@ public final class UInt256 {
   // UInt256 represents a big-endian 256-bits integer.
   // As opposed to Java int, operations are by default unsigned,
   // and signed version are interpreted in two-complements as usual.
-  // Length is used to optimise algorithms, skipping leading zeroes.
+  // offset is used to optimise algorithms, skipping leading zeroes.
   // Nonetheless, 256bits are always allocated and initialised to zeroes.
 
   /** Fixed size in bytes. */
@@ -217,19 +215,6 @@ public final class UInt256 {
    *
    * @return Big-endian ordered bytes for this UInt256 value.
    */
-  public byte[] toBytesBEOld() {
-    ByteBuffer buf = ByteBuffer.allocate(BYTESIZE).order(ByteOrder.BIG_ENDIAN);
-    for (int i = 0; i < N_LIMBS; i++) {
-      buf.putInt(limbs[i]);
-    }
-    return buf.array();
-  }
-
-  /**
-   * Convert to BigEndian byte array.
-   *
-   * @return Big-endian ordered bytes for this UInt256 value.
-   */
   public byte[] toBytesBE() {
     byte[] result = new byte[BYTESIZE];
     for (int i = this.limbs.length - N_LIMBS, j = 0; i < this.limbs.length; i++, j += 4) {
@@ -359,7 +344,8 @@ public final class UInt256 {
    */
   public UInt256 addMod(final UInt256 other, final UInt256 modulus) {
     if (modulus.isZero()) return ZERO;
-    int[] sum = addImpl(this.limbs, other.limbs);
+    int[] sum = new int[N_LIMBS + 1];
+    sum[0] = addImpl(sum, this.limbs, other.limbs);
     int[] rem = knuthRemainder(sum, modulus.limbs);
     return new UInt256(rem, rem.length - modulus.limbs.length + modulus.offset);
   }
@@ -478,33 +464,20 @@ public final class UInt256 {
     return (offset != -1 || offset != x.length) ? x.length - offset : 0;
   }
 
-  // private static int numberOfLeadingZeroLimbs(final int[] x) {
-  //   // Unchecked : x.length <= N_LIMBS
-  //   int offset = Arrays.mismatch(x, ZERO.limbs);
-  //   return (offset == -1) ? x.length : offset;
-  // }
-
-  // private static int numberOfLeadingZeroBits(final int[] x, final int offset, final int length) {
-  //   // Unchecked : xLen <= x.length, xLen <= N_LIMBS
-  //   int i = Arrays.mismatch(x, offset, length, ZERO.limbs, 0, N_LIMBS);
-  //   return N_BITS_PER_LIMB * i + Integer.numberOfLeadingZeros(x[offset + i]);
-  // }
-
   // Comparing two int subarrays as big-endian multi-precision integers.
   private static int compareLimbs(final int[] a, final int[] b) {
-    if (a.length >= b.length) {
-      int diffLen = a.length - b.length;
-      int cmp = Arrays.mismatch(a, 0, diffLen, ZERO_INTS, 0, diffLen);
-      if (cmp != -1) return 1;
-      int i = Arrays.mismatch(a, diffLen, a.length, b, 0, b.length);
-      return (i == -1) ? 0 : Integer.compareUnsigned(a[i + diffLen], b[i]);
-    } else {
-      int diffLen = b.length - a.length;
-      int cmp = Arrays.mismatch(b, 0, diffLen, ZERO_INTS, 0, diffLen);
-      if (cmp != -1) return -1;
-      int i = Arrays.mismatch(a, 0, a.length, b, diffLen, b.length);
-      return (i == -1) ? 0 : Integer.compareUnsigned(a[i], b[i + diffLen]);
-    }
+    return (a.length >= b.length) ? compareLimbsSorted(a, b) : -compareLimbsSorted(b, a);
+  }
+
+  // Comparing two int subarrays as big-endian multi-precision integers,
+  // where a is known to be longer than b.
+  private static int compareLimbsSorted(final int[] a, final int[] b) {
+    int diffLen = a.length - b.length;
+    int cmp = Arrays.mismatch(a, 0, diffLen, ZERO_INTS, 0, diffLen);
+    int i = Arrays.mismatch(a, diffLen, a.length, b, 0, b.length);
+    if (cmp != -1 || cmp >= diffLen) return 1;
+    else if (i == -1 || i >= b.length) return 0;
+    else return Integer.compareUnsigned(a[i + diffLen], b[i]);
   }
 
   // Does two-complements represent a negative number: i.e. is leading bit set ?
@@ -527,6 +500,7 @@ public final class UInt256 {
     if (isNeg(x)) negate(x);
   }
 
+  // result <- x << shift
   private static int shiftLeftInto(
       final int[] result, final int[] x, final int xOffset, final int shift) {
     // Unchecked: result should be initialised with zeroes
@@ -547,6 +521,7 @@ public final class UInt256 {
     return carry;
   }
 
+  // result <- x >>> shift
   private static int shiftRightInto(
       final int[] result, final int[] x, final int xOffset, final int shift) {
     // Unchecked: result length should be at least x.length
@@ -566,33 +541,34 @@ public final class UInt256 {
     return carry;
   }
 
-  private static int[] addImpl(final int[] x, final int[] y) {
-    // Unchecked: result.length > N_LIMBS
-    // Unchecked: x.length == y.length == N_LIMBS
-    // Unchecked: N_LIMBS == 8
-    int[] sum = new int[9];
-    long carry = 0;
-    carry = adc(sum, x[7], y[7], carry, 8);
-    carry = adc(sum, x[6], y[6], carry, 7);
-    carry = adc(sum, x[5], y[5], carry, 6);
-    carry = adc(sum, x[4], y[4], carry, 5);
-    carry = adc(sum, x[3], y[3], carry, 4);
-    carry = adc(sum, x[2], y[2], carry, 3);
-    carry = adc(sum, x[1], y[1], carry, 2);
-    carry = adc(sum, x[0], y[0], carry, 1);
-    sum[0] = (int) carry;
-    return sum;
+  // sum <- a + b, return left over carry
+  private static int addImpl(final int[] sum, final int[] a, final int[] b) {
+    // Unchecked both length 8
+    int carry = 0;
+    int i = sum.length - 1;
+    carry = adc(a[7], b[7], carry, sum, i--);
+    carry = adc(a[6], b[6], carry, sum, i--);
+    carry = adc(a[5], b[5], carry, sum, i--);
+    carry = adc(a[4], b[4], carry, sum, i--);
+    carry = adc(a[3], b[3], carry, sum, i--);
+    carry = adc(a[2], b[2], carry, sum, i--);
+    carry = adc(a[1], b[1], carry, sum, i--);
+    carry = adc(a[0], b[0], carry, sum, i--);
+    return carry;
   }
 
-  private static long adc(
-      final int[] sum, final int a, final int b, final long carry, final int index) {
-    long aL = a & MASK_L;
-    long bL = b & MASK_L;
-    long s = aL + bL + carry;
-    sum[index] = (int) s;
-    return s >>> N_BITS_PER_LIMB;
+  // Strategy: check for overflow for carry
+  private static int adc(
+      final int a, final int b, final int carryIn, final int[] sum, final int index) {
+    int s = a + b;
+    int carryOut = Integer.compareUnsigned(s, a) < 0 ? 1 : 0;
+    s += carryIn;
+    carryOut |= (s == 0 && carryIn == 1) ? 1 : 0;
+    sum[index] = s;
+    return carryOut;
   }
 
+  // return a * b, taking into account offsets
   private static int[] addMul(final int[] a, final int aOffset, final int[] b, final int bOffset) {
     // Shortest in outer loop, swap if needed
     int[] x;
@@ -637,6 +613,7 @@ public final class UInt256 {
     return lhs;
   }
 
+  // Knuth Division algorithm for remainder only, return dividend % modulus
   private static int[] knuthRemainder(final int[] dividend, final int[] modulus) {
     // Unchecked: modulus is non Zero and non One.
     int[] result = new int[N_LIMBS];
