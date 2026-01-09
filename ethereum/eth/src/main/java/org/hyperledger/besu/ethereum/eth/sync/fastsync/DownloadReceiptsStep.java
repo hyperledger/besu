@@ -21,26 +21,42 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class DownloadReceiptsStep extends AbstractDownloadReceiptsStep<Block, BlockWithReceipts> {
+public class DownloadReceiptsStep
+    extends AbstractDownloadReceiptsStep<Block, TransactionReceipt, BlockWithReceipts> {
+  private final ProtocolSchedule protocolSchedule;
+  private final EthContext ethContext;
 
   public DownloadReceiptsStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, synchronizerConfiguration, metricsSystem);
+      final ProtocolSchedule protocolSchedule, final EthContext ethContext) {
+    super(ethContext.getScheduler());
+    this.protocolSchedule = protocolSchedule;
+    this.ethContext = ethContext;
   }
 
   @Override
   protected BlockHeader getBlockHeader(final Block block) {
     return block.getHeader();
+  }
+
+  @Override
+  Map<BlockHeader, List<TransactionReceipt>> getReceipts(final List<BlockHeader> headers) {
+    GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
+    PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
+        ethContext.getPeerTaskExecutor().execute(task);
+    if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+        && getReceiptsResult.result().isPresent()) {
+      return getReceiptsResult.result().get();
+    }
+    return Collections.emptyMap();
   }
 
   @Override
