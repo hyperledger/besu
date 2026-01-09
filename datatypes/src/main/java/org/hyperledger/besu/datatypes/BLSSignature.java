@@ -21,10 +21,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A BLS Signature * */
-public class BLSSignature extends DelegatingBytes {
+public class BLSSignature extends BytesHolder {
 
   /** The constant SIZE. */
   public static final int SIZE = 96;

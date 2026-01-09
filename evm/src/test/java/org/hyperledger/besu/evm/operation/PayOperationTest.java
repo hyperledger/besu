@@ -58,7 +58,7 @@ public class PayOperationTest {
             99,
             100,
             ExceptionalHaltReason.INSUFFICIENT_GAS,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             true),
         Arguments.of(
             "enough gas",
@@ -118,7 +118,7 @@ public class PayOperationTest {
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Wei.ZERO)
-            .pushStackItem(recipientAddress)
+            .pushStackItem(recipientAddress.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     if (warmAddress) {
@@ -147,7 +147,7 @@ public class PayOperationTest {
             5000,
             9100,
             ExceptionalHaltReason.INSUFFICIENT_GAS,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.of(1000),
             Wei.of(2000),
             Wei.of(2000),
@@ -265,7 +265,7 @@ public class PayOperationTest {
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(valueSent)
-            .pushStackItem(recipientAddress)
+            .pushStackItem(recipientAddress.getBytes())
             .worldUpdater(worldUpdater)
             .build();
     if (warmAddress) {
@@ -298,7 +298,7 @@ public class PayOperationTest {
             101,
             0,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.of(0),
             Wei.of(2000),
             Wei.of(2000),
@@ -310,7 +310,7 @@ public class PayOperationTest {
             10000,
             0,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.of(1000),
             Wei.of(2000),
             Wei.of(2000),
@@ -322,7 +322,7 @@ public class PayOperationTest {
             9200,
             0,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.of(1000),
             Wei.of(2000),
             Wei.of(2000),
@@ -334,7 +334,7 @@ public class PayOperationTest {
             9200,
             0,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.ZERO,
             Wei.of(2000),
             Wei.of(2000),
@@ -346,7 +346,7 @@ public class PayOperationTest {
             9000,
             0,
             ExceptionalHaltReason.ILLEGAL_STATE_CHANGE,
-            RECIPIENT_ADDRESS,
+            RECIPIENT_ADDRESS.getBytes(),
             Wei.of(1),
             Wei.of(2000),
             Wei.of(2000),
@@ -378,7 +378,7 @@ public class PayOperationTest {
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(valueSent)
-            .pushStackItem(RECIPIENT_ADDRESS)
+            .pushStackItem(RECIPIENT_ADDRESS.getBytes())
             .worldUpdater(worldUpdater)
             .isStatic(true)
             .build();

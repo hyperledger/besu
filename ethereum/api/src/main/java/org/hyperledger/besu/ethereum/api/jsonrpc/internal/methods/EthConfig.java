@@ -122,7 +122,7 @@ public class EthConfig implements JsonRpcMethod {
     PrecompileContractRegistry registry = spec.getPrecompileContractRegistry();
     ObjectNode precompiles = result.putObject("precompiles");
     registry.getPrecompileAddresses().stream()
-        .map(a -> Map.entry(registry.get(a).getName(), a.toHexString()))
+        .map(a -> Map.entry(registry.get(a).getName(), a.getBytes().toHexString()))
         .sorted(Entry.comparingByKey())
         .forEach(e -> precompiles.put(e.getKey(), e.getValue()));
 
@@ -133,10 +133,10 @@ public class EthConfig implements JsonRpcMethod {
                 .orElse(Map.of()));
     spec.getPreExecutionProcessor()
         .getHistoryContract()
-        .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.toHexString()));
+        .ifPresent(a -> systemContracts.put("HISTORY_STORAGE_ADDRESS", a.getBytes().toHexString()));
     spec.getPreExecutionProcessor()
         .getBeaconRootsContract()
-        .ifPresent(a -> systemContracts.put("BEACON_ROOTS_ADDRESS", a.toHexString()));
+        .ifPresent(a -> systemContracts.put("BEACON_ROOTS_ADDRESS", a.getBytes().toHexString()));
     if (!systemContracts.isEmpty()) {
       ObjectNode jsonContracts = result.putObject("systemContracts");
       systemContracts.forEach(jsonContracts::put);

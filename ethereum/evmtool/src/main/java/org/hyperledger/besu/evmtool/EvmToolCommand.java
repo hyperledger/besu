@@ -561,7 +561,7 @@ public class EvmToolCommand implements Runnable {
           final long evmGas = txGas - initialMessageFrame.getRemainingGas();
           final JsonObject resultLine = new JsonObject();
           resultLine
-              .put("stateRoot", worldState.rootHash().toHexString())
+              .put("stateRoot", worldState.rootHash().getBytes().toHexString())
               .put("output", initialMessageFrame.getOutputData().toHexString())
               .put("gasUsed", "0x" + Long.toHexString(evmGas))
               .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
@@ -594,11 +594,12 @@ public class EvmToolCommand implements Runnable {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).toHexString()))
+        .sorted(
+            Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).getBytes().toHexString()))
         .forEach(
             a -> {
               var account = worldState.get(a.getAddress().get());
-              out.println(" \"" + account.getAddress().toHexString() + "\": {");
+              out.println(" \"" + account.getAddress().getBytes().toHexString() + "\": {");
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }

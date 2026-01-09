@@ -75,6 +75,7 @@ public class EntriesFromIntegrationTest {
       final UInt256 key,
       final UInt256 value) {
     account.setStorageValue(key, value);
-    expectedValues.put(Hash.hash(key), AccountStorageEntry.forKeyAndValue(key, value));
+    expectedValues.put(
+        Bytes32.wrap(Hash.hash(key).getBytes()), AccountStorageEntry.forKeyAndValue(key, value));
   }
 }

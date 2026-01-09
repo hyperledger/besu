@@ -112,7 +112,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
-    return trieLogStorage.get(blockHash.toArrayUnsafe());
+    return trieLogStorage.get(blockHash.getBytes().toArrayUnsafe());
   }
 
   public Stream<byte[]> streamTrieLogKeys(final long limit) {
@@ -173,7 +173,10 @@ public abstract class PathBasedWorldStateKeyValueStorage
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
         .map(Bytes32::wrap)
-        .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
+        .map(
+            hash ->
+                hash.equals(rootHash)
+                    || trieLogStorage.containsKey(blockHash.getBytes().toArrayUnsafe()))
         .orElse(false);
   }
 
@@ -205,7 +208,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
 
   public boolean pruneTrieLog(final Hash blockHash) {
     try {
-      return trieLogStorage.tryDelete(blockHash.toArrayUnsafe());
+      return trieLogStorage.tryDelete(blockHash.getBytes().toArrayUnsafe());
     } catch (Exception e) {
       LOG.error("Error pruning trie log for block hash {}", blockHash, e);
       return false;
@@ -233,7 +236,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
-                    previousContext, accountHash.toArrayUnsafe()));
+                    previousContext, accountHash.getBytes().toArrayUnsafe()));
 
         Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
 
@@ -244,8 +247,8 @@ public abstract class PathBasedWorldStateKeyValueStorage
                     .filter(
                         found ->
                             found.value().isPresent()
-                                && accountHash.commonPrefixLength(found.key())
-                                    >= accountHash.size()))
+                                && accountHash.getBytes().commonPrefixLength(found.key())
+                                    >= accountHash.getBytes().size()))
             .isPresent()) {
           nextMatch.stream()
               .forEach(

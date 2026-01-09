@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Sha256Hash;
@@ -478,7 +479,8 @@ public class Transaction
                 () ->
                     new IllegalStateException(
                         "Cannot recover public key from signature for " + this));
-    final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+    final Address calculatedSender =
+        Address.extract(Bytes32.wrap(Hash.hash(publicKey.getEncodedBytes()).getBytes()));
     senderCache.put(getHash(), calculatedSender);
     return calculatedSender;
   }
@@ -917,7 +919,7 @@ public class Transaction
           rlpOutput.writeLongScalar(nonce);
           rlpOutput.writeUInt256Scalar(gasPrice);
           rlpOutput.writeLongScalar(gasLimit);
-          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+          rlpOutput.writeBytes(to.map(BytesHolder::getBytes).map(Bytes::copy).orElse(Bytes.EMPTY));
           rlpOutput.writeUInt256Scalar(value);
           rlpOutput.writeBytes(payload);
           if (chainId.isPresent()) {
@@ -975,7 +977,7 @@ public class Transaction
     rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
     rlpOutput.writeUInt256Scalar(maxFeePerGas);
     rlpOutput.writeLongScalar(gasLimit);
-    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeBytes(to.map(BytesHolder::getBytes).map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
     AccessListTransactionEncoder.writeAccessList(rlpOutput, accessList);
@@ -1205,14 +1207,17 @@ public class Transaction
    * @return a copy of the transaction
    */
   public Transaction detachedCopy() {
-    final Optional<Address> detachedTo = to.map(address -> Address.wrap(address.copy()));
+    final Optional<Address> detachedTo = to.map(address -> Address.wrap(address.getBytes().copy()));
     final Optional<List<AccessListEntry>> detachedAccessList =
         maybeAccessList.map(
             accessListEntries ->
                 accessListEntries.stream().map(this::accessListDetachedCopy).toList());
     final Optional<List<VersionedHash>> detachedVersionedHashes =
         versionedHashes.map(
-            hashes -> hashes.stream().map(vh -> new VersionedHash(vh.toBytes().copy())).toList());
+            hashes ->
+                hashes.stream()
+                    .map(vh -> new VersionedHash(Bytes32.wrap(vh.getBytes().copy())))
+                    .toList());
     final Optional<BlobsWithCommitments> detachedBlobsWithCommitments =
         blobsWithCommitments.map(
             withCommitments ->
@@ -1255,13 +1260,13 @@ public class Transaction
   }
 
   private AccessListEntry accessListDetachedCopy(final AccessListEntry accessListEntry) {
-    final Address detachedAddress = Address.wrap(accessListEntry.address().copy());
+    final Address detachedAddress = Address.wrap(accessListEntry.address().getBytes().copy());
     final var detachedStorage = accessListEntry.storageKeys().stream().map(Bytes32::copy).toList();
     return new AccessListEntry(detachedAddress, detachedStorage);
   }
 
   private CodeDelegation codeDelegationDetachedCopy(final CodeDelegation codeDelegation) {
-    final Address detachedAddress = Address.wrap(codeDelegation.address().copy());
+    final Address detachedAddress = Address.wrap(codeDelegation.address().getBytes().copy());
     return new org.hyperledger.besu.ethereum.core.CodeDelegation(
         codeDelegation.chainId(),
         detachedAddress,
@@ -1503,7 +1508,9 @@ public class Transaction
       checkState(
           signature == null, "The transaction signature has already been provided to this builder");
       signature(computeSignature(keys));
-      sender(Address.extract(Hash.hash(keys.getPublicKey().getEncodedBytes())));
+      sender(
+          Address.extract(
+              Bytes32.wrap(Hash.hash(keys.getPublicKey().getEncodedBytes()).getBytes())));
       return build();
     }
 

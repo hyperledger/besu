@@ -64,7 +64,7 @@ public class StackTrie {
       final int nbSegments,
       final int maxSegments,
       final Bytes32 startKeyHash) {
-    this.rootHash = rootHash;
+    this.rootHash = Bytes32.wrap(rootHash.getBytes());
     this.nbSegments = new AtomicInteger(nbSegments);
     this.maxSegments = maxSegments;
     this.startKeyHash = startKeyHash;
@@ -120,7 +120,7 @@ public class StackTrie {
 
       final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {
-        proofsEntries.put(Hash.hash(proof), proof);
+        proofsEntries.put(Bytes32.wrap(Hash.hash(proof).getBytes()), proof);
       }
 
       if (!keys.isEmpty()) {

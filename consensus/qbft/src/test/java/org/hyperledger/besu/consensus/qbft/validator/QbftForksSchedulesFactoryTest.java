@@ -120,7 +120,7 @@ public class QbftForksSchedulesFactoryTest
     List<Address> validators = List.of(AddressHelpers.ofValue(1));
     final List<TextNode> jsonValidators =
         validators.stream()
-            .map(v -> TextNode.valueOf(v.toHexString()))
+            .map(v -> TextNode.valueOf(v.getBytes().toHexString()))
             .collect(Collectors.toList());
 
     final ObjectNode fork =

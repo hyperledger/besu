@@ -51,7 +51,7 @@ public class EnginePayloadStatusResult {
 
   @JsonGetter(value = "latestValidHash")
   public String getLatestValidHashAsString() {
-    return latestValidHash.map(Hash::toHexString).orElse(null);
+    return latestValidHash.map(h -> h.getBytes().toHexString()).orElse(null);
   }
 
   public Optional<Hash> getLatestValidHash() {

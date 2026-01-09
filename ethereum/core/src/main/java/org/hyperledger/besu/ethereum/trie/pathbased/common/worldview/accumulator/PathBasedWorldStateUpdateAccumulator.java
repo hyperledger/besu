@@ -517,7 +517,10 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       final Optional<Bytes> code = wrappedWorldView().getCode(address, codeHash);
       if (code.isEmpty() && !codeHash.equals(Hash.EMPTY)) {
         throw new MerkleTrieException(
-            "invalid account code", Optional.of(address), codeHash, Bytes.EMPTY);
+            "invalid account code",
+            Optional.of(address),
+            Bytes32.wrap(codeHash.getBytes()),
+            Bytes.EMPTY);
       }
       return code;
     } else {
@@ -600,7 +603,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (pathBasedValueStorage != null) {
       // hash the key to match the implied storage interface of hashed slotKey
       pathBasedValueStorage.forEach(
-          (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
+          (key, value) ->
+              results.put(Bytes32.wrap(key.getSlotHash().getBytes()), value.getUpdated()));
     }
     return results;
   }
@@ -917,7 +921,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
 
   protected Hash hashAndSaveAccountPreImage(final Address address) {
     // no need to save account preimage by default
-    return Hash.hash(address);
+    return Hash.hash(address.getBytes());
   }
 
   protected Hash hashAndSaveSlotPreImage(final UInt256 slotKey) {

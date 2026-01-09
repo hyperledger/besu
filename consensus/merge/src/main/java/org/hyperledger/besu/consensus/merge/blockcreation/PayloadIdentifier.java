@@ -75,9 +75,9 @@ public class PayloadIdentifier implements Quantity {
 
     return new PayloadIdentifier(
         timestamp
-            ^ ((long) parentHash.toHexString().hashCode()) << 8
+            ^ ((long) parentHash.getBytes().toHexString().hashCode()) << 8
             ^ ((long) prevRandao.toHexString().hashCode()) << 16
-            ^ ((long) feeRecipient.toHexString().hashCode()) << 24
+            ^ ((long) feeRecipient.getBytes().toHexString().hashCode()) << 24
             ^ (long)
                 withdrawals
                     .map(

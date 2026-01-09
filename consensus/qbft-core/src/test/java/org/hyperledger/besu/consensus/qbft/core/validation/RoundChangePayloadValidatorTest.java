@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -149,7 +150,8 @@ public class RoundChangePayloadValidatorTest {
 
   private SignedData<RoundChangePayload> createSignedPayload(
       final RoundChangePayload payload, final NodeKey nodeKey) {
-    final SECPSignature signature = nodeKey.sign(payload.hashForSignature());
+    final SECPSignature signature =
+        nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes()));
     return SignedData.create(payload, signature);
   }
 }

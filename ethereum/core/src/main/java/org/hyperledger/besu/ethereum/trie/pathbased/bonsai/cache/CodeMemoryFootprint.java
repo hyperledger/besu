@@ -37,6 +37,6 @@ class CodeMemoryFootprint {
 
     // 3. + key.size():
     //    - Adds the memory used by the hash key (usually 32 bytes)
-    return ((code.getSize() * 9 + 7) / 8) + key.size();
+    return ((code.getSize() * 9 + 7) / 8) + key.getBytes().size();
   }
 }

@@ -28,6 +28,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockInterface;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 public class IntegrationTestHelpers {
 
   public static SignedData<CommitPayload> createSignedCommitPayload(
@@ -38,7 +40,7 @@ public class IntegrationTestHelpers {
 
     final QbftBlock commitBlock =
         createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
-    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
+    final SECPSignature commitSeal = nodeKey.sign(Bytes32.wrap(commitBlock.getHash().getBytes()));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey, blockEncoder);
 
