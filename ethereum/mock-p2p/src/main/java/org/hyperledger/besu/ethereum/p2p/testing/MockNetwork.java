@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.testing;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
@@ -138,7 +138,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+    public Stream<DiscoveryPeerV4> streamDiscoveredPeers() {
       return Stream.empty();
     }
 

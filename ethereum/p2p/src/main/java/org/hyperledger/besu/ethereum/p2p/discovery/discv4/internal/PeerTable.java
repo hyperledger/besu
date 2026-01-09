@@ -18,9 +18,7 @@ import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
@@ -87,7 +85,7 @@ public class PeerTable {
    * @param peer The peer to query.
    * @return The stored representation.
    */
-  public Optional<DiscoveryPeer> get(final PeerId peer) {
+  public Optional<DiscoveryPeerV4> get(final PeerId peer) {
     final Bytes peerId = peer.getId();
     if (!idBloom.mightContain(peerId)) {
       return Optional.empty();
@@ -114,7 +112,7 @@ public class PeerTable {
    * @return An object indicating the outcome of the operation.
    * @see AddOutcome
    */
-  public AddResult tryAdd(final DiscoveryPeer peer) {
+  public AddResult tryAdd(final DiscoveryPeerV4 peer) {
     if (isIpAddressInvalid(peer.getEndpoint())) {
       return AddResult.invalid();
     }
@@ -133,7 +131,7 @@ public class PeerTable {
     // and an eviction
     // candidate is proposed. The Bucket#add method will raise an exception if the peer already
     // existed.
-    final Optional<DiscoveryPeer> res;
+    final Optional<DiscoveryPeerV4> res;
     try {
       res = bucket.add(peer);
     } catch (final IllegalArgumentException ex) {
@@ -200,7 +198,7 @@ public class PeerTable {
    * @param limit The amount of results to return.
    * @return The <code>limit</code> closest peers, at most.
    */
-  public List<DiscoveryPeer> nearestBondedPeers(final Bytes target, final int limit) {
+  public List<DiscoveryPeerV4> nearestBondedPeers(final Bytes target, final int limit) {
     final Bytes keccak256 = Hash.keccak256(target);
     return streamAllPeers()
         .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
@@ -210,7 +208,7 @@ public class PeerTable {
         .collect(toList());
   }
 
-  public Stream<DiscoveryPeer> streamAllPeers() {
+  public Stream<DiscoveryPeerV4> streamAllPeers() {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
@@ -230,7 +228,7 @@ public class PeerTable {
 
   /**
    * Calculates the XOR distance between the keccak-256 hashes of our node ID and the provided
-   * {@link DiscoveryPeer}.
+   * {@link DiscoveryPeerV4}.
    *
    * @param peer The target peer.
    * @return The distance.
