@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -54,6 +55,7 @@ public class ImportSyncBlocksStepTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private BlockImporter blockImporter;
   @Mock private BlockHeader pivotHeader;
+  @Mock private SyncState syncState;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
   private ImportSyncBlocksStep importSyncBlocksStep;
@@ -64,7 +66,8 @@ public class ImportSyncBlocksStepTest {
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
     importSyncBlocksStep =
-        new ImportSyncBlocksStep(protocolSchedule, protocolContext, null, pivotHeader, false);
+        new ImportSyncBlocksStep(
+            protocolSchedule, protocolContext, null, syncState, 0, pivotHeader, false);
   }
 
   @Test
