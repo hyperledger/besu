@@ -84,11 +84,11 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   public void validate(final CommandLine commandLine) {
     String errorMessage =
         String.format(
-            "%s, %s and %s option can only be used when %s is true",
+            "%s, %s and %s options can only be used when %s is true",
             PLUGINS_OPTION_NAME,
             CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
-            PLUGINS_EXTERNAL_ENABLED_OPTION_NAME,
-            PLUGINS_VERIFICATION_MODE_OPTION_NAME);
+            PLUGINS_VERIFICATION_MODE_OPTION_NAME,
+            PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         errorMessage,
