@@ -36,10 +36,12 @@ public class DataStorageOptionsTest
             assertThat(
                     dataStorageConfiguration
                         .getPathBasedExtraStorageConfiguration()
-                        .getTrieLogPruningWindowSize())
+                        .getTrieLogPruningBatchSize())
                 .isEqualTo(600),
+        "--data-storage-format",
+        "BONSAI",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-batch-size",
         "600");
   }
 
@@ -56,20 +58,26 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void pathbasedTrieLogPruningWindowSizeShouldBePositive() {
+  public void pathbasedTrieLogPruningBatchSizeShouldBePositive() {
     internalTestFailure(
-        "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
+        "--bonsai-trie-logs-pruning-batch-size=0 must be greater than 0",
+        "--data-storage-format",
+        "BONSAI",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-batch-size",
         "0");
   }
 
   @Test
-  public void pathbasedTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
+  public void pathbasedTrieLogPruningBatchSizeShouldBeAboveRetentionLimit() {
     internalTestFailure(
-        "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
+        "--bonsai-trie-logs-pruning-batch-size=512 must be greater than retention limit=512",
+        "--data-storage-format",
+        "BONSAI",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-retention-limit",
+        "512",
+        "--bonsai-trie-logs-pruning-batch-size",
         "512");
   }
 
@@ -80,10 +88,12 @@ public class DataStorageOptionsTest
             assertThat(
                     dataStorageConfiguration
                         .getPathBasedExtraStorageConfiguration()
-                        .getMaxLayersToLoad())
+                        .getTrieLogRetentionLimit())
                 .isEqualTo(MINIMUM_TRIE_LOG_RETENTION_LIMIT + 1),
+        "--data-storage-format",
+        "BONSAI",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-historical-block-limit",
+        "--bonsai-trie-logs-retention-limit",
         "513");
   }
 
@@ -94,10 +104,12 @@ public class DataStorageOptionsTest
             assertThat(
                     dataStorageConfiguration
                         .getPathBasedExtraStorageConfiguration()
-                        .getMaxLayersToLoad())
+                        .getTrieLogRetentionLimit())
                 .isEqualTo(MINIMUM_TRIE_LOG_RETENTION_LIMIT),
+        "--data-storage-format",
+        "BONSAI",
         "--bonsai-limit-trie-logs-enabled",
-        "--bonsai-historical-block-limit",
+        "--bonsai-trie-logs-retention-limit",
         "512");
   }
 
@@ -175,7 +187,8 @@ public class DataStorageOptionsTest
             ImmutablePathBasedExtraStorageConfiguration.builder()
                 .maxLayersToLoad(513L)
                 .limitTrieLogsEnabled(true)
-                .trieLogPruningWindowSize(514)
+                .trieLogRetentionLimit(14400L) // Different from maxLayersToLoad to test explicit setting
+                .trieLogPruningBatchSize(514)
                 .build())
         .build();
   }
@@ -189,5 +202,11 @@ public class DataStorageOptionsTest
   @Override
   protected DataStorageOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getDataStorageOptions();
+  }
+
+  @Override
+  protected String[] getFieldsWithComputedDefaults() {
+    // trieLogRetentionLimit is computed from maxLayersToLoad if not explicitly set
+    return new String[] {"trieLogRetentionLimit"};
   }
 }
