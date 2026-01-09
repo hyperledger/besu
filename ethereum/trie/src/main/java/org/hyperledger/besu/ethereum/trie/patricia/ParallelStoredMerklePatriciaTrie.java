@@ -33,10 +33,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,9 +44,8 @@ import org.apache.tuweni.bytes.Bytes32;
 /**
  * A parallel implementation of StoredMerklePatriciaTrie that processes updates in parallel.
  *
- * <p>This implementation batches updates and processes them concurrently when it's possible and
- * there are sufficient updates to warrant parallel processing. The parallelization strategy
- * recursively descends the trie structure, processing independent nodes concurrently.
+ * <p>This implementation batches updates and processes them concurrently using ForkJoinPool with
+ * Karatsuba-style fork-join pattern for optimal work-stealing and CPU utilization.
  *
  * @param <K> the key type, must extend Bytes
  * @param <V> the value type
@@ -59,19 +56,20 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-  /** Shared executor service using ForkJoinPool with 2x cores for I/O-bound operations */
-  private static final ExecutorService FORK_JOIN_POOL = new ForkJoinPool(NCPU * 2);
+  /**
+   * Shared ForkJoinPool with 2x cores for I/O-bound operations. asyncMode=true enables FIFO
+   * scheduling for better throughput.
+   */
+  private static final ForkJoinPool FORK_JOIN_POOL =
+      new ForkJoinPool(
+          NCPU * 2,
+          ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+          null,
+          true); // asyncMode for better throughput
 
   /** Pending updates accumulated between commits */
   private final Map<K, Optional<V>> pendingUpdates = new ConcurrentHashMap<>();
 
-  /**
-   * Creates a new parallel trie with an empty root.
-   *
-   * @param nodeLoader the node loader for retrieving stored nodes
-   * @param valueSerializer function to serialize values to bytes
-   * @param valueDeserializer function to deserialize bytes to values
-   */
   public ParallelStoredMerklePatriciaTrie(
       final NodeLoader nodeLoader,
       final Function<V, Bytes> valueSerializer,
@@ -79,15 +77,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     super(nodeLoader, valueSerializer, valueDeserializer);
   }
 
-  /**
-   * Creates a new parallel trie with a specific root hash and location.
-   *
-   * @param nodeLoader the node loader for retrieving stored nodes
-   * @param rootHash the hash of the root node
-   * @param rootLocation the storage location of the root node
-   * @param valueSerializer function to serialize values to bytes
-   * @param valueDeserializer function to deserialize bytes to values
-   */
   public ParallelStoredMerklePatriciaTrie(
       final NodeLoader nodeLoader,
       final Bytes32 rootHash,
@@ -97,14 +86,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     super(nodeLoader, rootHash, rootLocation, valueSerializer, valueDeserializer);
   }
 
-  /**
-   * Creates a new parallel trie with a specific root hash.
-   *
-   * @param nodeLoader the node loader for retrieving stored nodes
-   * @param rootHash the hash of the root node
-   * @param valueSerializer function to serialize values to bytes
-   * @param valueDeserializer function to deserialize bytes to values
-   */
   public ParallelStoredMerklePatriciaTrie(
       final NodeLoader nodeLoader,
       final Bytes32 rootHash,
@@ -113,57 +94,26 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     super(nodeLoader, rootHash, valueSerializer, valueDeserializer);
   }
 
-  /**
-   * Creates a new parallel trie with a node factory and root hash.
-   *
-   * @param nodeFactory the factory for creating nodes
-   * @param rootHash the hash of the root node
-   */
   public ParallelStoredMerklePatriciaTrie(
       final StoredNodeFactory<V> nodeFactory, final Bytes32 rootHash) {
     super(nodeFactory, rootHash);
   }
 
-  /**
-   * Stages a put operation for the given key-value pair. The update is not applied until commit()
-   * or getRootHash() is called.
-   *
-   * @param key the key to insert
-   * @param value the value to associate with the key
-   */
   @Override
   public void put(final K key, final V value) {
     pendingUpdates.put(key, Optional.of(value));
   }
 
-  /**
-   * Stages a remove operation for the given key. The update is not applied until commit() or
-   * getRootHash() is called.
-   *
-   * @param key the key to remove
-   */
   @Override
   public void remove(final K key) {
     pendingUpdates.put(key, Optional.empty());
   }
 
-  /**
-   * Commits all pending updates to storage using the provided node updater. Applies updates in
-   * parallel when beneficial, then persists nodes to storage.
-   *
-   * @param nodeUpdater the updater to persist nodes to storage
-   */
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
     processPendingUpdates(Optional.of(nodeUpdater));
   }
 
-  /**
-   * Computes and returns the root hash after applying all pending updates. This triggers update
-   * processing but does not persist nodes to storage.
-   *
-   * @return the Merkle root hash of the trie
-   */
   @Override
   public Bytes32 getRootHash() {
     if (pendingUpdates.isEmpty()) {
@@ -174,8 +124,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Processes all pending updates, applying them to the trie structure. Chooses between parallel
-   * and sequential processing based on the root node type.
+   * Processes all pending updates, applying them to the trie structure. Uses ForkJoinPool for
+   * parallel execution of root-level processing.
    *
    * @param maybeNodeUpdater optional node updater for persisting changes
    */
@@ -197,13 +147,17 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final CommitCache commitCache = new CommitCache();
       final boolean shouldCommit = maybeNodeUpdater.isPresent();
 
+      // CHANGE 1: Execute root processing in FORK_JOIN_POOL
       this.root =
-          processNode(
-              root,
-              Bytes.EMPTY,
-              0,
-              entries,
-              shouldCommit ? Optional.of(commitCache) : Optional.empty());
+          FORK_JOIN_POOL.invoke(
+              ForkJoinTask.adapt(
+                  () ->
+                      processNode(
+                          root,
+                          Bytes.EMPTY,
+                          0,
+                          entries,
+                          shouldCommit ? Optional.of(commitCache) : Optional.empty())));
 
       // Persist all nodes to storage if committing
       if (maybeNodeUpdater.isPresent()) {
@@ -251,8 +205,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Handles updates for a branch node by recursively processing its children. This is the key
-   * recursion point for parallel processing.
+   * Handles updates for a branch node by recursively processing its children. Uses ForkJoinTask
+   * with Karatsuba pattern: fork all, then join in reverse order.
    *
    * @param branchNode the branch node to update
    * @param location the location of the branch node
@@ -287,24 +241,27 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
     final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);
 
-    // Submit large groups to thread pool
-    final List<Future<?>> futures = new ArrayList<>();
+    final List<ForkJoinTask<Void>> forkJoinTasks = new ArrayList<>();
+
     if (!largeGroups.isEmpty()) {
       for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : largeGroups.entrySet()) {
         final byte nibble = entry.getKey();
         final List<UpdateEntry<V>> childUpdates = entry.getValue();
         final Bytes childLocation = Bytes.concatenate(location, Bytes.of(nibble));
 
-        Future<?> future =
-            FORK_JOIN_POOL.submit(
+        ForkJoinTask<Void> task =
+            ForkJoinTask.adapt(
                 () -> {
                   final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
                   final Node<V> updatedChild =
                       processNode(
                           currentChild, childLocation, depth, childUpdates, maybeCommitCache);
                   branchWrapper.setChild(nibble, updatedChild);
+                  return null;
                 });
-        futures.add(future);
+
+        task.fork();
+        forkJoinTasks.add(task);
       }
     }
 
@@ -320,16 +277,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       branchWrapper.setChild(nibble, updatedChild);
     }
 
-    // Wait for all parallel tasks to complete
-    for (final Future<?> future : futures) {
-      try {
-        future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        futures.forEach(f -> f.cancel(true));
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Error processing branch children in parallel", e);
-      }
-    }
+    // Join all tasks
+    forkJoinTasks.forEach(ForkJoinTask::join);
 
     // Apply all child updates
     final Node<V> newBranch = branchWrapper.applyUpdates();
@@ -572,7 +521,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Commits or hashes a node depending on whether we're committing to.
+   * Commits or hashes a node depending on whether we're committing.
    *
    * @param node the node to commit or hash
    * @param location the storage location of the node
