@@ -56,16 +56,8 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-  /**
-   * Shared ForkJoinPool with 2x cores for I/O-bound operations. asyncMode=true enables FIFO
-   * scheduling for better throughput.
-   */
-  private static final ForkJoinPool FORK_JOIN_POOL =
-      new ForkJoinPool(
-          NCPU * 2,
-          ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-          null,
-          true); // asyncMode for better throughput
+  /** Shared ForkJoinPool with 2x cores for I/O-bound operations */
+  private static final ForkJoinPool FORK_JOIN_POOL = new ForkJoinPool(NCPU * 2);
 
   /** Pending updates accumulated between commits */
   private final Map<K, Optional<V>> pendingUpdates = new ConcurrentHashMap<>();
@@ -147,7 +139,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final CommitCache commitCache = new CommitCache();
       final boolean shouldCommit = maybeNodeUpdater.isPresent();
 
-      // CHANGE 1: Execute root processing in FORK_JOIN_POOL
       this.root =
           FORK_JOIN_POOL.invoke(
               ForkJoinTask.adapt(
