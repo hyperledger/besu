@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.ping;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.EndpointValidator;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.ExpiryValidator;
 

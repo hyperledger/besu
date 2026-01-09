@@ -19,8 +19,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent.IncomingPacket;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PacketType;
@@ -69,7 +68,7 @@ public class PeerDiscoveryBootstrappingTest {
   public void bootstrappingPingsSentMultipleBootstrapPeers() {
     // Use these peers as bootstrap peers.
     final List<MockPeerDiscoveryAgent> bootstrapAgents = helper.startDiscoveryAgents(3);
-    final List<DiscoveryPeer> bootstrapPeers =
+    final List<DiscoveryPeerV4> bootstrapPeers =
         bootstrapAgents.stream()
             .map(PeerDiscoveryAgentDiscv4::getAdvertisedPeer)
             .map(Optional::get)
@@ -132,8 +131,7 @@ public class PeerDiscoveryBootstrappingTest {
         .extracting(Peer::getId)
         .containsExactlyInAnyOrder(otherPeersIds);
 
-    assertThat(bootstrapAgent.streamDiscoveredPeers())
-        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+    assertThat(bootstrapAgent.streamDiscoveredPeers()).allMatch(DiscoveryPeerV4::isBonded);
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will bond with them, ultimately adding all 7 nodes in the network to its table.

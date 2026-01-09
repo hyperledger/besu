@@ -32,9 +32,8 @@ import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentDiscv4;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper;
@@ -77,7 +76,7 @@ public final class DefaultP2PNetworkTest {
   @Mock PeerDiscoveryAgentDiscv4 discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
-  @Captor private ArgumentCaptor<DiscoveryPeer> peerCaptor;
+  @Captor private ArgumentCaptor<DiscoveryPeerV4> peerCaptor;
 
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
@@ -264,9 +263,9 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void attemptPeerConnections_bondedPeers() {
-    final DiscoveryPeer discoPeer = DiscoveryPeer.fromEnode(PeerTestHelper.enode());
-    discoPeer.setStatus(PeerDiscoveryStatus.BONDED);
-    final Stream<DiscoveryPeer> peerStream = Stream.of(discoPeer);
+    final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
+    discoPeer.setBonded();
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 
     final DefaultP2PNetwork network = network();
@@ -278,9 +277,8 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void attemptPeerConnections_unbondedPeers() {
-    final DiscoveryPeer discoPeer = DiscoveryPeer.fromEnode(PeerTestHelper.enode());
-    discoPeer.setStatus(PeerDiscoveryStatus.KNOWN);
-    final Stream<DiscoveryPeer> peerStream = Stream.of(discoPeer);
+    final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 
     final DefaultP2PNetwork network = network();
@@ -290,11 +288,11 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void attemptPeerConnections_sortsPeersByLastContacted() {
-    final List<DiscoveryPeer> discoPeers = new ArrayList<>();
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.forEach(p -> p.setStatus(PeerDiscoveryStatus.BONDED));
+    final List<DiscoveryPeerV4> discoPeers = new ArrayList<>();
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.forEach(DiscoveryPeerV4::setBonded);
     discoPeers.get(0).setLastAttemptedConnection(10);
     discoPeers.get(2).setLastAttemptedConnection(15);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(discoPeers.stream());

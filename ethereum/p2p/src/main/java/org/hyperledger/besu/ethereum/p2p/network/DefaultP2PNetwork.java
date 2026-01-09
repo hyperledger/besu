@@ -21,9 +21,9 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
@@ -367,7 +367,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                 .discoveryPort(enr.udp())
                 .listeningPort(enr.tcp())
                 .build();
-        final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
+        final DiscoveryPeer peer = DiscoveryPeerFactory.fromEnode(enodeURL);
         peers.add(peer);
       }
       if (!peers.isEmpty()) {
@@ -398,7 +398,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.trace("Initiating connections to discovered peers.");
     final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
-            .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+            .filter(DiscoveryPeer::isReady)
             .filter(peerDiscoveryAgent::checkForkId)
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
     toTry.forEach(rlpxAgent::connect);
@@ -416,7 +416,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return peerDiscoveryAgent.streamDiscoveredPeers();
+    return peerDiscoveryAgent.streamDiscoveredPeers().map(p -> p);
   }
 
   @Override

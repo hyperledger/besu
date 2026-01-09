@@ -20,9 +20,9 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
@@ -61,7 +61,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-  protected final List<DiscoveryPeer> bootstrapPeers;
+  protected final List<DiscoveryPeerV4> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
   private final MetricsSystem metricsSystem;
@@ -101,7 +101,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
 
     this.peerPermissions = peerPermissions;
     this.bootstrapPeers =
-        config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
+        config.getBootnodes().stream().map(DiscoveryPeerV4::fromEnode).collect(Collectors.toList());
 
     this.config = config;
     this.nodeKey = nodeKey;
@@ -121,7 +121,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   protected abstract CompletableFuture<InetSocketAddress> listenForConnections();
 
   protected abstract CompletableFuture<Void> sendOutgoingPacket(
-      final DiscoveryPeer peer, final Packet packet);
+      final DiscoveryPeerV4 peer, final Packet packet);
 
   @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
@@ -173,13 +173,13 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
     return peer.getForkId().map(forkIdManager::peerCheck).orElse(true);
   }
 
-  private void startController(final DiscoveryPeer localNode) {
+  private void startController(final DiscoveryPeerV4 localNode) {
     final PeerDiscoveryController controller = createController(localNode);
     this.controller = Optional.of(controller);
     controller.start();
   }
 
-  private PeerDiscoveryController createController(final DiscoveryPeer localNode) {
+  private PeerDiscoveryController createController(final DiscoveryPeerV4 localNode) {
     return PeerDiscoveryController.builder()
         .nodeKey(nodeKey)
         .localPeer(localNode)
@@ -213,8 +213,8 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
     final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
-    final DiscoveryPeer peer =
-        DiscoveryPeer.fromEnode(
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
@@ -278,7 +278,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
    * @param peer the recipient
    * @param packet the packet to send
    */
-  protected void handleOutgoingPacket(final DiscoveryPeer peer, final Packet packet) {
+  protected void handleOutgoingPacket(final DiscoveryPeerV4 peer, final Packet packet) {
     sendOutgoingPacket(peer, packet)
         .whenComplete(
             (res, err) -> {
@@ -289,10 +289,10 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   }
 
   protected abstract void handleOutgoingPacketError(
-      final Throwable err, final DiscoveryPeer peer, final Packet packet);
+      final Throwable err, final DiscoveryPeerV4 peer, final Packet packet);
 
   @Override
-  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+  public Stream<DiscoveryPeerV4> streamDiscoveredPeers() {
     return controller.map(PeerDiscoveryController::streamDiscoveredPeers).orElse(Stream.empty());
   }
 
@@ -302,7 +302,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   }
 
   @VisibleForTesting
-  public Optional<DiscoveryPeer> getAdvertisedPeer() {
+  public Optional<DiscoveryPeerV4> getAdvertisedPeer() {
     return nodeRecordManager.getLocalNode();
   }
 
@@ -356,12 +356,12 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   public void bond(final Peer peer) {
     controller.ifPresent(
         c -> {
-          DiscoveryPeer.from(peer).ifPresent(c::handleBondingRequest);
+          DiscoveryPeerV4.from(peer).ifPresent(c::handleBondingRequest);
         });
   }
 
   @VisibleForTesting
-  public Optional<DiscoveryPeer> getLocalNode() {
+  public Optional<DiscoveryPeerV4> getLocalNode() {
     return nodeRecordManager.getLocalNode();
   }
 

@@ -20,7 +20,6 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentDiscv4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
@@ -110,7 +109,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
 
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
-      final DiscoveryPeer toPeer, final Packet packet) {
+      final DiscoveryPeerV4 toPeer, final Packet packet) {
     final CompletableFuture<Void> result = new CompletableFuture<>();
     if (!this.isRunning) {
       result.completeExceptionally(new Exception("Attempt to send message from an inactive agent"));
@@ -124,7 +123,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
       return result;
     }
 
-    final DiscoveryPeer agentPeer = toAgent.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 agentPeer = toAgent.getAdvertisedPeer().get();
     if (!toPeer.getEndpoint().getHost().equals(agentPeer.getEndpoint().getHost())) {
       LOG.warn(
           "Attempt to send packet to discovery peer using the wrong host address.  Sending to {}, but discovery peer is listening on {}",
@@ -162,7 +161,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
 
   @Override
   protected void handleOutgoingPacketError(
-      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+      final Throwable err, final DiscoveryPeerV4 peer, final Packet packet) {
     LOG.warn(
         "Sending to peer {} failed, packet: {}, stacktrace: {}",
         peer,

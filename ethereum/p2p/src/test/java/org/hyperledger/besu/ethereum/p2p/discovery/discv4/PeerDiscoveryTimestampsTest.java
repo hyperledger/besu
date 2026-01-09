@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
@@ -55,7 +55,7 @@ public class PeerDiscoveryTimestampsTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
-    DiscoveryPeer p = agent.streamDiscoveredPeers().iterator().next();
+    DiscoveryPeerV4 p = agent.streamDiscoveredPeers().iterator().next();
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
 
     firstDiscovered = p.getFirstDiscovered();

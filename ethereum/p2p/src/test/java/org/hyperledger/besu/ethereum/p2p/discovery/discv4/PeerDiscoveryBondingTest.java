@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent.IncomingPacket;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PacketType;
@@ -74,8 +74,7 @@ public class PeerDiscoveryBondingTest {
 
     // The agent considers the test peer BONDED.
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    assertThat(agent.streamDiscoveredPeers())
-        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+    assertThat(agent.streamDiscoveredPeers()).allMatch(DiscoveryPeerV4::isBonded);
   }
 
   @Test

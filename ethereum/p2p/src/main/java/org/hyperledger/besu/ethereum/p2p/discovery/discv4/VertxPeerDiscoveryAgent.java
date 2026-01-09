@@ -20,11 +20,10 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
@@ -208,7 +207,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
 
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
-      final DiscoveryPeer peer, final Packet packet) {
+      final DiscoveryPeerV4 peer, final Packet packet) {
     final CompletableFuture<Void> result = new CompletableFuture<>();
     if (socket == null) {
       result.completeExceptionally(
@@ -252,7 +251,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
 
   @Override
   protected void handleOutgoingPacketError(
-      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+      final Throwable err, final DiscoveryPeerV4 peer, final Packet packet) {
     if (err instanceof NativeIoException) {
       final var nativeErr = (NativeIoException) err;
       if (nativeErr.expectedErr() == Errors.ERROR_ENETUNREACH_NEGATIVE) {

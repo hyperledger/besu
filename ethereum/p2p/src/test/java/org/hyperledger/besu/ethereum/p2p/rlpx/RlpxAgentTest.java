@@ -33,7 +33,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.MutableLocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -173,7 +173,7 @@ public class RlpxAgentTest {
   public void connect_toDiscoveryPeerUpdatesStats() {
     startAgent();
 
-    final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enode());
+    final DiscoveryPeerV4 peer = DiscoveryPeerV4.fromEnode(enode());
     assertThat(peer.getLastAttemptedConnection()).isEqualTo(0);
     final CompletableFuture<PeerConnection> connection = agent.connect(peer);
 

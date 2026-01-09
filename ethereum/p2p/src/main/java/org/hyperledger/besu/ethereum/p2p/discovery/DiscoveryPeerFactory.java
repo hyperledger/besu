@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal;
+package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
-@FunctionalInterface
-public interface OutboundMessageHandler {
-  OutboundMessageHandler NOOP = (peer, packet) -> {};
-
-  void send(final DiscoveryPeerV4 toPeer, final Packet packet);
+public class DiscoveryPeerFactory {
+  public static DiscoveryPeer fromEnode(final EnodeURL enode) {
+    return DiscoveryPeerV4.fromEnode(enode);
+  }
 }
