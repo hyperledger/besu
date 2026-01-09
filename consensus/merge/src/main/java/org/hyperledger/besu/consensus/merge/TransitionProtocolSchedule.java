@@ -27,6 +27,7 @@ import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRul
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -251,5 +252,10 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public Optional<ScheduledProtocolSpec> getLatestProtocolSpec() {
     return getPostMergeSchedule().getLatestProtocolSpec();
+  }
+
+  @Override
+  public NavigableSet<ScheduledProtocolSpec> getProtocolSpecs() {
+    return getPostMergeSchedule().getProtocolSpecs();
   }
 }
