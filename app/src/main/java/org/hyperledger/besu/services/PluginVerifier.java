@@ -38,12 +38,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LoggingEventBuilder;
 
+/**
+ * Verifies plugin integrity and compatibility for Besu.
+ *
+ * <p>This class performs comprehensive verification of plugins including:
+ *
+ * <ul>
+ *   <li>Ensuring plugin names are unique
+ *   <li>Validating artifact catalogs are present
+ *   <li>Checking Besu version compatibility
+ *   <li>Detecting dependency conflicts between plugins
+ *   <li>Detecting dependency conflicts with Besu's own dependencies
+ * </ul>
+ */
 public class PluginVerifier {
   private static final Logger LOG = LoggerFactory.getLogger(PluginVerifier.class);
 
   private static final String PLUGIN_CATALOG_PATH = "META-INF/plugin-artifacts-catalog.json";
   private static final String BESU_CATALOG_PATH = "META-INF/besu-artifacts-catalog.json";
 
+  /**
+   * Performs comprehensive verification of loaded plugins.
+   *
+   * <p>This method validates plugin integrity by checking:
+   *
+   * <ul>
+   *   <li>Plugin names are unique
+   *   <li>Plugins have associated artifact catalogs
+   *   <li>Plugin versions are compatible with the running Besu version
+   *   <li>No dependency conflicts exist between plugins
+   *   <li>No dependency conflicts exist with Besu's dependencies
+   * </ul>
+   *
+   * @param pluginsVerificationMode the verification mode specifying which checks should fail
+   * @param pluginClassLoader the class loader used to load plugins
+   * @param plugins the list of loaded plugins to verify
+   * @throws IOException if an error occurs reading catalog files
+   * @throws PluginVerificationException if verification fails based on the verification mode
+   */
   static void verify(
       final PluginsVerificationMode pluginsVerificationMode,
       final URLClassLoader pluginClassLoader,
@@ -79,6 +111,12 @@ public class PluginVerifier {
     verifyCatalogs(pluginClassLoader, pluginsVerificationMode, pluginsArtifactData);
   }
 
+  /**
+   * Verifies that all plugin names are unique.
+   *
+   * @param loadedPlugins the list of loaded plugins to check
+   * @throws PluginVerificationException if duplicate plugin names are detected
+   */
   private static void verifyNamesAreUnique(final List<BesuPlugin> loadedPlugins) {
     final var pluginNameCounts =
         loadedPlugins.stream()
@@ -96,6 +134,18 @@ public class PluginVerifier {
     }
   }
 
+  /**
+   * Collects artifact information for all loaded plugins.
+   *
+   * <p>This method groups plugins by their source artifact (JAR file) and associates each artifact
+   * with its metadata catalog if available.
+   *
+   * @param pluginClassLoader the class loader used to load plugins
+   * @param plugins the list of loaded plugins
+   * @return a list of artifact information for all plugins
+   * @throws IOException if an error occurs reading catalog files
+   * @throws PluginVerificationException if an error occurs determining plugin artifact locations
+   */
   private static List<ArtifactInfo> getPluginsArtifactData(
       final URLClassLoader pluginClassLoader, final List<BesuPlugin> plugins) throws IOException {
     final var pluginsByArtifact =
@@ -143,6 +193,16 @@ public class PluginVerifier {
         .toList();
   }
 
+  /**
+   * Orchestrates all catalog-based verification checks.
+   *
+   * @param pluginClassLoader the class loader used to load plugins
+   * @param pluginsVerificationMode the verification mode specifying which checks should fail
+   * @param pluginsArtifactData the artifact information for all plugins
+   * @throws IOException if an error occurs reading catalog files
+   * @throws PluginVerificationException if any verification check fails based on the verification
+   *     mode
+   */
   private static void verifyCatalogs(
       final URLClassLoader pluginClassLoader,
       final PluginsVerificationMode pluginsVerificationMode,
@@ -154,6 +214,18 @@ public class PluginVerifier {
     verifyPluginsDependencyConflicts(pluginsVerificationMode, pluginsArtifactData);
   }
 
+  /**
+   * Verifies that plugins were built against a compatible Besu version.
+   *
+   * <p>Checks if plugins were built against the same Besu version as the currently running
+   * instance. Version mismatches may indicate compatibility issues.
+   *
+   * @param pluginsVerificationMode the verification mode specifying whether to fail on version
+   *     conflicts
+   * @param pluginsArtifactData the artifact information for all plugins
+   * @throws PluginVerificationException if version conflicts are found and the verification mode
+   *     requires failure
+   */
   private static void verifyBesuVersions(
       final PluginsVerificationMode pluginsVerificationMode,
       final List<ArtifactInfo> pluginsArtifactData) {
@@ -184,6 +256,18 @@ public class PluginVerifier {
     }
   }
 
+  /**
+   * Verifies that there are no dependency version conflicts between plugins.
+   *
+   * <p>Checks if multiple plugins bring the same dependency with different versions, which could
+   * lead to runtime conflicts or unexpected behavior.
+   *
+   * @param pluginsVerificationMode the verification mode specifying whether to fail on dependency
+   *     conflicts
+   * @param pluginsArtifactInfo the artifact information for all plugins
+   * @throws PluginVerificationException if dependency conflicts are found and the verification mode
+   *     requires failure
+   */
   private static void verifyPluginsDependencyConflicts(
       final PluginsVerificationMode pluginsVerificationMode,
       final List<ArtifactInfo> pluginsArtifactInfo) {
@@ -225,6 +309,19 @@ public class PluginVerifier {
     }
   }
 
+  /**
+   * Verifies that plugins do not bring dependencies already provided by Besu.
+   *
+   * <p>Checks if any plugin includes dependencies that are already part of Besu's classpath, which
+   * could lead to class loading issues or version conflicts.
+   *
+   * @param pluginClassLoader the class loader used to load plugins
+   * @param pluginsVerificationMode the verification mode specifying whether to fail on conflicts
+   * @param pluginsArtifactData the artifact information for all plugins
+   * @throws IOException if an error occurs reading the Besu catalog file
+   * @throws PluginVerificationException if the Besu catalog is not found or conflicts are found and
+   *     the verification mode requires failure
+   */
   private static void verifyBesuPluginsDependencyConflicts(
       final URLClassLoader pluginClassLoader,
       final PluginsVerificationMode pluginsVerificationMode,
@@ -266,6 +363,14 @@ public class PluginVerifier {
         });
   }
 
+  /**
+   * Holds information about a plugin artifact (JAR file) and its associated plugins.
+   *
+   * @param name the file path or name of the artifact
+   * @param plugins the list of plugins loaded from this artifact
+   * @param catalog the artifact's metadata catalog, or {@link ArtifactCatalog#NO_CATALOG} if none
+   *     exists
+   */
   private record ArtifactInfo(String name, List<BesuPlugin> plugins, ArtifactCatalog catalog) {
     @Override
     public String toString() {
@@ -281,9 +386,23 @@ public class PluginVerifier {
     }
   }
 
+  /**
+   * Represents metadata about a plugin artifact including its build version and dependencies.
+   *
+   * @param besuVersion the version of Besu this artifact was built against, or null if unknown
+   * @param dependencies the list of dependencies included in this artifact
+   */
   private record ArtifactCatalog(String besuVersion, List<ArtifactDependency> dependencies) {
+    /** Represents an artifact without a catalog. */
     static final ArtifactCatalog NO_CATALOG = new ArtifactCatalog(null, List.of());
 
+    /**
+     * Loads an artifact catalog from a URL.
+     *
+     * @param url the URL to load the catalog from
+     * @return the loaded artifact catalog
+     * @throws RuntimeException if an I/O error occurs
+     */
     static ArtifactCatalog load(final URL url) {
       final var objectMapper = new ObjectMapper();
       try {
@@ -293,21 +412,55 @@ public class PluginVerifier {
       }
     }
 
+    /**
+     * Checks if this catalog contains a dependency matching the given dependency's name and group.
+     *
+     * @param other the dependency to search for
+     * @return true if a matching dependency is found, false otherwise
+     */
     boolean containsByNameAndGroup(final ArtifactDependency other) {
       return dependencies.stream().anyMatch(other::equalsByNameAndGroup);
     }
 
+    /**
+     * Finds a dependency in this catalog matching the given dependency's name and group.
+     *
+     * @param other the dependency to search for
+     * @return an Optional containing the matching dependency, or empty if none found
+     */
     Optional<ArtifactDependency> getByNameAndGroup(final ArtifactDependency other) {
       return dependencies.stream().filter(other::equalsByNameAndGroup).findFirst();
     }
   }
 
+  /**
+   * Represents a Maven artifact dependency with its coordinates.
+   *
+   * @param name the artifact name (artifactId)
+   * @param group the group ID
+   * @param version the version string
+   * @param classifier the Maven classifier, or null if none
+   * @param filename the filename of the dependency
+   */
   private record ArtifactDependency(
       String name, String group, String version, String classifier, String filename) {
+    /**
+     * Checks if this dependency has the same name and group as another dependency.
+     *
+     * @param other the dependency to compare with
+     * @return true if name and group match, false otherwise
+     */
     boolean equalsByNameAndGroup(final ArtifactDependency other) {
       return Objects.equals(name, other.name) && Objects.equals(group, other.group);
     }
 
+    /**
+     * Loads a list of artifact dependencies from a URL.
+     *
+     * @param url the URL to load the dependencies from
+     * @return the list of loaded artifact dependencies
+     * @throws RuntimeException if an I/O error occurs
+     */
     static List<ArtifactDependency> loadList(final URL url) {
       final var objectMapper = new ObjectMapper();
       try {
@@ -318,11 +471,23 @@ public class PluginVerifier {
     }
   }
 
+  /** Exception thrown when plugin verification fails. */
   private static class PluginVerificationException extends RuntimeException {
+    /**
+     * Constructs a new plugin verification exception with the specified message.
+     *
+     * @param message the detail message
+     */
     PluginVerificationException(final String message) {
       super(message);
     }
 
+    /**
+     * Constructs a new plugin verification exception with the specified message and cause.
+     *
+     * @param message the detail message
+     * @param cause the cause of the exception
+     */
     PluginVerificationException(final String message, final Throwable cause) {
       super(message, cause);
     }
