@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes;
@@ -185,6 +186,21 @@ public class LogsBloomFilter extends DelegatingBytes {
     }
 
     /**
+     * Insert raw log.
+     *
+     * @param loggerAddress the address of the logger
+     * @param logTopics the log topics
+     * @return the builder
+     */
+    public Builder insertRawLog(final Bytes loggerAddress, final List<Bytes> logTopics) {
+      insertBytes(loggerAddress);
+      for (Bytes logTopic : logTopics) {
+        insertBytes(logTopic);
+      }
+      return this;
+    }
+
+    /**
      * Insert logs.
      *
      * @param logs the logs
@@ -192,6 +208,20 @@ public class LogsBloomFilter extends DelegatingBytes {
      */
     public Builder insertLogs(final Collection<Log> logs) {
       logs.forEach(this::insertLog);
+      return this;
+    }
+
+    /**
+     * Insert raw logs.
+     *
+     * @param logs the logs with each log separated into components, ordered like [logger
+     *     address][topics...][data]
+     * @return the builder
+     */
+    public Builder insertRawLogs(final Collection<List<Bytes>> logs) {
+      logs.forEach(
+          (bytesList) ->
+              insertRawLog(bytesList.getFirst(), bytesList.subList(1, bytesList.size() - 1)));
       return this;
     }
 
