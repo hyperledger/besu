@@ -246,13 +246,21 @@ public class MainnetTransactionProcessor {
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
-      final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
-      LOG.trace(
-          "Deducted sender {} upfront gas cost {} ({} -> {})",
-          senderAddress,
-          upfrontGasCost,
-          previousBalance,
-          sender.getBalance());
+      try {
+        final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
+        LOG.trace(
+            "Deducted sender {} upfront gas cost {} ({} -> {})",
+            senderAddress,
+            upfrontGasCost,
+            previousBalance,
+            sender.getBalance());
+      } catch (final IllegalStateException ise) {
+        if (transactionValidationParams.allowUnderpriced()) {
+          LOG.trace("Allowing account balance underflow as requested");
+        } else {
+          throw ise;
+        }
+      }
 
       long codeDelegationRefund = 0L;
       if (transaction.getType().equals(TransactionType.DELEGATE_CODE)) {
