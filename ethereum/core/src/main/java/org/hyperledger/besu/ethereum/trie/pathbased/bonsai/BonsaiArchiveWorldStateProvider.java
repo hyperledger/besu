@@ -107,7 +107,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
                 worldState ->
                     rollMutableArchiveStateToBlockHash( // This is a tiny action for archive
                         // state
-                        (PathBasedWorldState) worldState, queryParams.getBlockHeader().getHash()))
+                        (PathBasedWorldState) worldState,
+                        queryParams.getBlockHeader().getBlockHash()))
             .map(MutableWorldState::freezeStorage);
       }
       return super.getWorldState(queryParams);
