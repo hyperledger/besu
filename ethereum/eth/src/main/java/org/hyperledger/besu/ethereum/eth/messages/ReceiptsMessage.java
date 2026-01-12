@@ -117,7 +117,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<SyncTransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(syncTransactionReceiptDecoder.decode(input.readBytes()));
+        receiptSet.add(syncTransactionReceiptDecoder.decode(input.currentListAsBytes()));
       }
       input.leaveList();
       receiptsForBodies.add(receiptSet);
