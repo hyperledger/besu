@@ -64,7 +64,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class PeerDiscoveryAgentDiscv4Test {
+public class PeerDiscoveryAgentV4Test {
 
   private static final int BROADCAST_TCP_PORT = 30303;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -367,7 +367,7 @@ public class PeerDiscoveryAgentDiscv4Test {
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
     assertThat(agent.streamDiscoveredPeers()).isEmpty();
-    agent.bond(genericPeer);
+    agent.addPeer(genericPeer);
 
     // We should send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -404,7 +404,7 @@ public class PeerDiscoveryAgentDiscv4Test {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(remotePeer);
+    agent.addPeer(remotePeer);
 
     // We should send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -435,7 +435,7 @@ public class PeerDiscoveryAgentDiscv4Test {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(peerWithDisabledDiscovery);
+    agent.addPeer(peerWithDisabledDiscovery);
 
     // We should not send any messages to peer with discovery disabled
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -459,7 +459,7 @@ public class PeerDiscoveryAgentDiscv4Test {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(remotePeer);
+    agent.addPeer(remotePeer);
 
     // We should not send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -488,7 +488,7 @@ public class PeerDiscoveryAgentDiscv4Test {
         .thenReturn(true);
 
     // Bond
-    otherNode.bond(localNode);
+    otherNode.addPeer(localNode);
 
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
@@ -913,15 +913,15 @@ public class PeerDiscoveryAgentDiscv4Test {
             .getMock();
 
     // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
     // assert a pingpacketdata with empty ipv6 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
     // assert a pingpacketdata from address of 127.0.0.1 reverts to the udp source host
-    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
     // assert that 255.255.255.255 reverts to the udp source host
-    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
     // assert that a well-formed routable address in the ping packet data is used
-    assertThat(PeerDiscoveryAgentDiscv4.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
   }
 
   @Test
