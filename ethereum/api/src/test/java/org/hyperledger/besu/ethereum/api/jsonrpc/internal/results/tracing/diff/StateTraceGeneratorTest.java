@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,8 +109,8 @@ public class StateTraceGeneratorTest {
     StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
     assertThat(diff).containsKey(address.getBytes().toHexString());
     AccountDiff a = diff.get(address.getBytes().toHexString());
-    assertThat(a.getStorage()).containsKey(Bytes32.ZERO.toHexString());
-    assertThat(a.getStorage().get(Bytes32.ZERO.toHexString()).getFrom().orElseThrow())
+    assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
+    assertThat(a.getStorage().get(UInt256.ZERO.toHexString()).getFrom().orElseThrow())
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
   }
 
