@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -135,7 +137,8 @@ public class TransactionPoolStructuredLogUtils {
           .addArgument(
               () ->
                   configuration.getPrioritySenders().stream()
-                      .map(Address::toString)
+                      .map(Address::getBytes)
+                      .map(Bytes::toHexString)
                       .collect(Collectors.joining(",")))
           .log();
 
@@ -405,13 +408,13 @@ public class TransactionPoolStructuredLogUtils {
       final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
       final var strMaxConfirmedNonceBySender =
           maxConfirmedNonceBySender.entrySet().stream()
-              .map(e -> e.getKey().toString() + "," + e.getValue())
+              .map(e -> e.getKey().getBytes().toHexString() + "," + e.getValue())
               .collect(Collectors.joining(","));
       final var strReorgNonceRangeBySender =
           reorgNonceRangeBySender.entrySet().stream()
               .map(
                   e ->
-                      e.getKey().toString()
+                      e.getKey().getBytes().toHexString()
                           + ","
                           + e.getValue().getStart()
                           + ","

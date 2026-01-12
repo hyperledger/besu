@@ -119,7 +119,7 @@ public class RewardTraceGeneratorTest {
     final Action.Builder actionOmmerReward =
         Action.builder()
             .rewardType("uncle")
-            .author(ommerBeneficiary.getBytes().toString())
+            .author(ommerBeneficiary.getBytes().toHexString())
             .value(
                 blockProcessor
                     .getOmmerReward(
@@ -170,7 +170,7 @@ public class RewardTraceGeneratorTest {
                     .toShortHexString());
     final Trace blocReward =
         new RewardTrace.Builder()
-            .blockHash(block.getHash().getBytes().toString())
+            .blockHash(block.getHash().getBytes().toHexString())
             .blockNumber(block.getHeader().getNumber())
             .actionBuilder(actionBlockReward)
             .type("reward")

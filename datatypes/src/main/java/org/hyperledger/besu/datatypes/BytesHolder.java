@@ -17,6 +17,7 @@ package org.hyperledger.besu.datatypes;
 import java.util.Arrays;
 import java.util.Objects;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -43,7 +44,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    *
    * @return the bytes value held by this instance
    */
-  public Bytes getBytes() {
+  public final Bytes getBytes() {
     return value;
   }
 
@@ -53,6 +54,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @param value the bytes value to hold
    * @return a new BytesHolder instance
    */
+  @VisibleForTesting
   public static BytesHolder createDefaultHolder(final Bytes value) {
     return new BytesHolder(value);
   }
@@ -66,7 +68,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return {@code true} if the objects are equal, {@code false} otherwise
    */
   @Override
-  public boolean equals(final Object obj) {
+  public final boolean equals(final Object obj) {
     if (obj == this) {
       return true;
     }
@@ -82,7 +84,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return the hash code based on the underlying bytes value
    */
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return value.hashCode();
   }
 
@@ -92,7 +94,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return the string representation of the underlying bytes value
    */
   @Override
-  public String toString() {
+  public final String toString() {
     return value.toString();
   }
 
@@ -107,7 +109,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @throws NullPointerException if bytesHolder is null
    */
   @Override
-  public int compareTo(final BytesHolder bytesHolder) {
+  public final int compareTo(final BytesHolder bytesHolder) {
     Objects.requireNonNull(bytesHolder, "bytesHolder cannot be null");
     return value.compareTo(bytesHolder.value);
   }

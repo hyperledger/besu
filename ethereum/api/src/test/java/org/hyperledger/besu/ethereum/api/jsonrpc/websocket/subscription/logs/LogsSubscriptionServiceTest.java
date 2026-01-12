@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
@@ -311,7 +312,7 @@ public class LogsSubscriptionServiceTest {
     assertThat(result.getTopics())
         .isEqualTo(
             expectedLog.getTopics().stream()
-                .map(topic -> topic.toString())
+                .map(BytesHolder::toString)
                 .collect(Collectors.toList()));
     assertThat(result.isRemoved()).isEqualTo(isRemoved);
   }
