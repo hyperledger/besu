@@ -66,7 +66,7 @@ import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentDiscv4 {
+public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentV4 {
   private static final Logger LOG = LoggerFactory.getLogger(VertxPeerDiscoveryAgent.class);
 
   private final Vertx vertx;
