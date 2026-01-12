@@ -14,24 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.PacketData;
 
 import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
 
-  private final List<DiscoveryPeer> peers;
+  private final List<DiscoveryPeerV4> peers;
 
   /* In seconds after epoch. */
   private final long expiration;
 
-  NeighborsPacketData(final List<DiscoveryPeer> peers, final long expiration) {
+  NeighborsPacketData(final List<DiscoveryPeerV4> peers, final long expiration) {
     this.peers = peers;
     this.expiration = expiration;
   }
 
-  public List<DiscoveryPeer> getNodes() {
+  public List<DiscoveryPeerV4> getNodes() {
     return peers;
   }
 
