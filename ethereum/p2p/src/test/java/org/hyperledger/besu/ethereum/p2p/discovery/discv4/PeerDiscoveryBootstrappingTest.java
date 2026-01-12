@@ -44,7 +44,7 @@ public class PeerDiscoveryBootstrappingTest {
 
     // Start an agent.
     assertThat(testAgent.getAdvertisedPeer().isPresent()).isTrue();
-    final PeerDiscoveryAgentDiscv4 agent =
+    final PeerDiscoveryAgentV4 agent =
         helper.startDiscoveryAgent(testAgent.getAdvertisedPeer().get());
 
     final List<IncomingPacket> incomingPackets =
@@ -70,7 +70,7 @@ public class PeerDiscoveryBootstrappingTest {
     final List<MockPeerDiscoveryAgent> bootstrapAgents = helper.startDiscoveryAgents(3);
     final List<DiscoveryPeerV4> bootstrapPeers =
         bootstrapAgents.stream()
-            .map(PeerDiscoveryAgentDiscv4::getAdvertisedPeer)
+            .map(PeerDiscoveryAgentV4::getAdvertisedPeer)
             .map(Optional::get)
             .collect(toList());
 
@@ -88,7 +88,7 @@ public class PeerDiscoveryBootstrappingTest {
           packets.stream().map(Packet::getNodeId).distinct().collect(toList());
       final List<Bytes> agentIds =
           agents.stream()
-              .map(PeerDiscoveryAgentDiscv4::getAdvertisedPeer)
+              .map(PeerDiscoveryAgentV4::getAdvertisedPeer)
               .map(Optional::get)
               .map(Peer::getId)
               .distinct()
@@ -117,7 +117,7 @@ public class PeerDiscoveryBootstrappingTest {
   @Test
   public void bootstrappingPeersListUpdated() {
     // Start an agent.
-    final PeerDiscoveryAgentDiscv4 bootstrapAgent = helper.startDiscoveryAgent(emptyList());
+    final PeerDiscoveryAgentV4 bootstrapAgent = helper.startDiscoveryAgent(emptyList());
 
     // Start other five agents, pointing to the one above as a bootstrap peer.
     assertThat(bootstrapAgent.getAdvertisedPeer().isPresent()).isTrue();
@@ -125,7 +125,7 @@ public class PeerDiscoveryBootstrappingTest {
         helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer().get()));
 
     final Bytes[] otherPeersIds =
-        otherAgents.stream().map(PeerDiscoveryAgentDiscv4::getId).toArray(Bytes[]::new);
+        otherAgents.stream().map(PeerDiscoveryAgentV4::getId).toArray(Bytes[]::new);
 
     assertThat(bootstrapAgent.streamDiscoveredPeers())
         .extracting(Peer::getId)
@@ -135,7 +135,7 @@ public class PeerDiscoveryBootstrappingTest {
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
     // and will bond with them, ultimately adding all 7 nodes in the network to its table.
-    final PeerDiscoveryAgentDiscv4 newAgent =
+    final PeerDiscoveryAgentV4 newAgent =
         helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer().get());
     assertThat(newAgent.streamDiscoveredPeers()).hasSize(6);
   }
