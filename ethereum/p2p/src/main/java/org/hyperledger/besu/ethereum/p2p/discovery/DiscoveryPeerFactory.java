@@ -15,10 +15,32 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 public class DiscoveryPeerFactory {
+
+  private DiscoveryPeerFactory() {
+    // utility class
+  }
+
   public static DiscoveryPeer fromEnode(final EnodeURL enode) {
     return DiscoveryPeerV4.fromEnode(enode);
+  }
+
+  public static DiscoveryPeer fromEthereumNodeRecord(final EthereumNodeRecord enr) {
+    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr));
+    peer.setNodeRecord(enr.nodeRecord());
+    return peer;
+  }
+
+  private static EnodeURL buildEnodeUrl(final EthereumNodeRecord enr) {
+    return EnodeURLImpl.builder()
+        .ipAddress(enr.ip())
+        .nodeId(enr.publicKey())
+        .discoveryPort(enr.udp())
+        .listeningPort(enr.tcp())
+        .build();
   }
 }

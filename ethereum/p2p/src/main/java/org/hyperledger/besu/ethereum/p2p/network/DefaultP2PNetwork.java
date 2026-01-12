@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
-import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
@@ -55,7 +54,6 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -331,7 +329,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return false;
     }
     final boolean wasAdded = maintainedPeers.add(peer);
-    peerDiscoveryAgent.bond(peer);
+    peerDiscoveryAgent.addPeer(peer);
     rlpxAgent.connect(peer);
     return wasAdded;
   }
@@ -357,23 +355,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @VisibleForTesting
   DNSDaemonListener createDaemonListener() {
-    return (seq, records) -> {
-      final List<DiscoveryPeer> peers = new ArrayList<>();
-      for (final EthereumNodeRecord enr : records) {
-        final EnodeURL enodeURL =
-            EnodeURLImpl.builder()
-                .ipAddress(enr.ip())
-                .nodeId(enr.publicKey())
-                .discoveryPort(enr.udp())
-                .listeningPort(enr.tcp())
-                .build();
-        final DiscoveryPeer peer = DiscoveryPeerFactory.fromEnode(enodeURL);
-        peers.add(peer);
-      }
-      if (!peers.isEmpty()) {
-        peers.forEach(peerDiscoveryAgent::bond);
-      }
-    };
+    return (seq, records) ->
+        records.stream()
+            .map(DiscoveryPeerFactory::fromEthereumNodeRecord)
+            .forEach(peerDiscoveryAgent::addPeer);
   }
 
   @VisibleForTesting

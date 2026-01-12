@@ -55,8 +55,8 @@ import org.slf4j.LoggerFactory;
  * The peer discovery agent is the network component that sends and receives peer discovery messages
  * via UDP.
  */
-public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentDiscv4.class);
+public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentV4.class);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -84,7 +84,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
 
   private final NodeRecordManager nodeRecordManager;
 
-  protected PeerDiscoveryAgentDiscv4(
+  protected PeerDiscoveryAgentV4(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
@@ -332,7 +332,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgentDiscv4} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentV4} is active on this node, false, otherwise.
    */
   @Override
   public boolean isEnabled() {
@@ -345,7 +345,7 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgentDiscv4} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentV4} is active on this node, false, otherwise.
    */
   @Override
   public boolean isStopped() {
@@ -353,11 +353,8 @@ public abstract class PeerDiscoveryAgentDiscv4 implements PeerDiscoveryAgent {
   }
 
   @Override
-  public void bond(final Peer peer) {
-    controller.ifPresent(
-        c -> {
-          DiscoveryPeerV4.from(peer).ifPresent(c::handleBondingRequest);
-        });
+  public void addPeer(final Peer peer) {
+    controller.ifPresent(c -> DiscoveryPeerV4.from(peer).ifPresent(c::handleBondingRequest));
   }
 
   @VisibleForTesting
