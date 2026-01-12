@@ -30,7 +30,7 @@ import java.util.List;
 
 import io.vertx.core.Vertx;
 
-public class PeerDiscoveryAgentFactoryDiscv4 implements PeerDiscoveryAgentFactory {
+public class PeerDiscoveryAgentFactoryV4 implements PeerDiscoveryAgentFactory {
 
   private final Vertx vertx;
   private final NodeKey nodeKey;
@@ -43,7 +43,7 @@ public class PeerDiscoveryAgentFactoryDiscv4 implements PeerDiscoveryAgentFactor
   private final List<Long> blockNumberForks;
   private final List<Long> timestampForks;
 
-  public PeerDiscoveryAgentFactoryDiscv4(
+  public PeerDiscoveryAgentFactoryV4(
       final Vertx vertx,
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
