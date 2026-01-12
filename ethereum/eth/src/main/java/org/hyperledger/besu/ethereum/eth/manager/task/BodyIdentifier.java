@@ -70,7 +70,7 @@ public class BodyIdentifier {
             ? null
             : Bytes32.wrap(syncBody.getTransactionsRoot().getBytes()),
         syncBody.getOmmersHash() == null ? null : Bytes32.wrap(syncBody.getOmmersHash().getBytes()),
-        syncBody.getWithdrawalsRoot().map(Hash::getBytes).map(Bytes32::wrap).orElse(null));
+        syncBody.getWithdrawalsRoot() == null ? null : Bytes32.wrap(syncBody.getWithdrawalsRoot().getBytes()));
   }
 
   @Override
