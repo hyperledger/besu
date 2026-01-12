@@ -20,6 +20,7 @@
 - Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
+- Check for empty accounts in code delegation processor [#9585](https://github.com/hyperledger/besu/pull/9585)
 
 ##  25.12.0
 
