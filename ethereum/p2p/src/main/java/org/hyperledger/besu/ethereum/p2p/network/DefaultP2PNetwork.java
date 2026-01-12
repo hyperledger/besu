@@ -384,6 +384,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
             .filter(DiscoveryPeer::isReady)
+            .filter(DiscoveryPeer::isListening)
             .filter(peerDiscoveryAgent::checkForkId)
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
     toTry.forEach(rlpxAgent::connect);
