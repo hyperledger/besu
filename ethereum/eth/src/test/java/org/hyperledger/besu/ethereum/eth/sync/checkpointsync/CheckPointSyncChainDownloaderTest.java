@@ -103,7 +103,8 @@ public class CheckPointSyncChainDownloaderTest {
 
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  private final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder = new SyncTransactionReceiptDecoder();
+  private final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder =
+      new SyncTransactionReceiptDecoder();
 
   static class CheckPointSyncChainDownloaderTestArguments implements ArgumentsProvider {
     @Override
@@ -180,36 +181,36 @@ public class CheckPointSyncChainDownloaderTest {
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Collections.emptyList());
             });
-      when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
-              .thenAnswer(
-                      (invocationOnMock) -> {
-                          GetSyncReceiptsFromPeerTask task =
-                                  invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
-                          Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
-                                  new HashMap<>();
-                          task.getBlockHeaders()
-                                  .forEach(
-                                          (bh) ->
-                                                  getReceiptsFromPeerTaskResult.put(
-                                                          bh,
-                                                          otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
-                                                                  .map(
-                                                                          (tr) ->
-                                                                                  syncTransactionReceiptDecoder.decode(
-                                                                                          RLP.encode(
-                                                                                                  (rlpOut) ->
-                                                                                                          TransactionReceiptEncoder.writeTo(
-                                                                                                                  tr,
-                                                                                                                  rlpOut,
-                                                                                                                  TransactionReceiptEncodingConfiguration
-                                                                                                                          .DEFAULT))))
-                                                                  .toList()));
+    when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetSyncReceiptsFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
+              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
+                  new HashMap<>();
+              task.getBlockHeaders()
+                  .forEach(
+                      (bh) ->
+                          getReceiptsFromPeerTaskResult.put(
+                              bh,
+                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                                  .map(
+                                      (tr) ->
+                                          syncTransactionReceiptDecoder.decode(
+                                              RLP.encode(
+                                                  (rlpOut) ->
+                                                      TransactionReceiptEncoder.writeTo(
+                                                          tr,
+                                                          rlpOut,
+                                                          TransactionReceiptEncodingConfiguration
+                                                              .DEFAULT))))
+                                  .toList()));
 
-                          return new PeerTaskExecutorResult<>(
-                                  Optional.of(getReceiptsFromPeerTaskResult),
-                                  PeerTaskExecutorResponseCode.SUCCESS,
-                                  Collections.emptyList());
-                      });
+              return new PeerTaskExecutorResult<>(
+                  Optional.of(getReceiptsFromPeerTaskResult),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Collections.emptyList());
+            });
 
     final Answer<PeerTaskExecutorResult<List<BlockHeader>>> getHeadersAnswer =
         new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
