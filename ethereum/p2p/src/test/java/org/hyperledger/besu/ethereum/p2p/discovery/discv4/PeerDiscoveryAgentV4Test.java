@@ -30,10 +30,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryTestHelper.AgentBuilder;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent.IncomingPacket;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PacketType;
@@ -66,7 +64,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class PeerDiscoveryAgentTest {
+public class PeerDiscoveryAgentV4Test {
 
   private static final int BROADCAST_TCP_PORT = 30303;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -188,7 +186,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
 
     // Generate an out-of-band NEIGHBORS message.
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(5);
     final NeighborsPacketData data = packetPackage.neighborsPacketDataFactory().create(peers);
     final Packet packet =
         packetPackage.packetFactory().create(PacketType.NEIGHBORS, data, otherNode.getNodeKey());
@@ -202,7 +200,7 @@ public class PeerDiscoveryAgentTest {
     // Start 20 agents with no bootstrap peers.
     final List<MockPeerDiscoveryAgent> otherAgents =
         helper.startDiscoveryAgents(20, Collections.emptyList());
-    final List<DiscoveryPeer> otherPeers =
+    final List<DiscoveryPeerV4> otherPeers =
         otherAgents.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
             .map(Optional::get)
@@ -215,9 +213,8 @@ public class PeerDiscoveryAgentTest {
     // list.  By moving to a contains we make sure that all the peers are loaded with tolerance for
     // duplicates.  If we fix the duplication problem we should use containsExactlyInAnyOrder to
     // hedge against missing one and duplicating another.
-    assertThat(agent.streamDiscoveredPeers()).contains(otherPeers.toArray(new DiscoveryPeer[20]));
-    assertThat(agent.streamDiscoveredPeers())
-        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+    assertThat(agent.streamDiscoveredPeers()).contains(otherPeers.toArray(new DiscoveryPeerV4[20]));
+    assertThat(agent.streamDiscoveredPeers()).allMatch(DiscoveryPeerV4::isBonded);
 
     // Use additional agent to exchange messages with agent
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
@@ -298,7 +295,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();
     peerDiscoveryAgent1.start(BROADCAST_TCP_PORT).join();
     assertThat(peerDiscoveryAgent1.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer peer = peerDiscoveryAgent1.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 peer = peerDiscoveryAgent1.getAdvertisedPeer().get();
 
     final MockPeerDiscoveryAgent peerDiscoveryAgent2 =
         helper.startDiscoveryAgent(
@@ -317,7 +314,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -338,7 +335,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -358,7 +355,7 @@ public class PeerDiscoveryAgentTest {
   public void bond_supplyGenericPeer() {
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
     final Peer genericPeer = DefaultPeer.fromEnodeURL(remotePeer.getEnodeURL());
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
@@ -370,7 +367,7 @@ public class PeerDiscoveryAgentTest {
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
     assertThat(agent.streamDiscoveredPeers()).isEmpty();
-    agent.bond(genericPeer);
+    agent.addPeer(genericPeer);
 
     // We should send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -391,7 +388,7 @@ public class PeerDiscoveryAgentTest {
   public void bond_allowOutgoingBonding() {
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -407,7 +404,7 @@ public class PeerDiscoveryAgentTest {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(remotePeer);
+    agent.addPeer(remotePeer);
 
     // We should send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -422,7 +419,7 @@ public class PeerDiscoveryAgentTest {
     // Create a peer with discovery disabled
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
     final EnodeURL enodeWithDiscoveryDisabled =
         EnodeURLImpl.builder()
             .configureFromEnode(remotePeer.getEnodeURL())
@@ -438,7 +435,7 @@ public class PeerDiscoveryAgentTest {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(peerWithDisabledDiscovery);
+    agent.addPeer(peerWithDisabledDiscovery);
 
     // We should not send any messages to peer with discovery disabled
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -449,7 +446,7 @@ public class PeerDiscoveryAgentTest {
   public void bond_disallowOutgoingBonding() {
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -462,7 +459,7 @@ public class PeerDiscoveryAgentTest {
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
-    agent.bond(remotePeer);
+    agent.addPeer(remotePeer);
 
     // We should not send an outgoing ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
@@ -476,7 +473,7 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions);
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer localNode = agent.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 localNode = agent.getAdvertisedPeer().get();
 
     // Setup peer and permissions
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
@@ -491,7 +488,7 @@ public class PeerDiscoveryAgentTest {
         .thenReturn(true);
 
     // Bond
-    otherNode.bond(localNode);
+    otherNode.addPeer(localNode);
 
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
@@ -536,7 +533,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -568,7 +565,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -614,7 +611,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent();
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer agentPeer = agent.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 agentPeer = agent.getAdvertisedPeer().get();
 
     final NodeKey remoteKeyPair = NodeKeyUtils.generate();
     final String remoteIp = "1.2.3.4";
@@ -629,7 +626,7 @@ public class PeerDiscoveryAgentTest {
     agent.start(999);
     remoteAgent.start(888);
     assertThat(remoteAgent.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = remoteAgent.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = remoteAgent.getAdvertisedPeer().get();
 
     // Remote agent should have bonded with agent
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
@@ -649,7 +646,7 @@ public class PeerDiscoveryAgentTest {
                 .bootstrapPeers(agentPeer));
     updatedRemoteAgent.start(889);
     assertThat(updatedRemoteAgent.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer updatedRemotePeer = updatedRemoteAgent.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 updatedRemotePeer = updatedRemoteAgent.getAdvertisedPeer().get();
 
     // Sanity check
     assertThat(
@@ -670,14 +667,14 @@ public class PeerDiscoveryAgentTest {
     assertThat(pongCount).isGreaterThan(0);
 
     // Check that agent has an endpoint matching the restarted node
-    final List<DiscoveryPeer> matchingPeers =
+    final List<DiscoveryPeerV4> matchingPeers =
         agent
             .streamDiscoveredPeers()
             .filter(peer -> peer.getId().equals(updatedRemotePeer.getId()))
             .collect(toList());
     // We should have only one peer matching this id
     assertThat(matchingPeers.size()).isEqualTo(1);
-    final DiscoveryPeer discoveredPeer = matchingPeers.get(0);
+    final DiscoveryPeerV4 discoveredPeer = matchingPeers.get(0);
     assertThat(discoveredPeer.getEndpoint().getUdpPort())
         .isEqualTo(updatedRemotePeer.getEndpoint().getUdpPort());
     assertThat(discoveredPeer.getEndpoint().getHost())
@@ -696,7 +693,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -734,7 +731,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -766,7 +763,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -808,7 +805,7 @@ public class PeerDiscoveryAgentTest {
     // Setup peer
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
-    final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
+    final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
@@ -916,15 +913,15 @@ public class PeerDiscoveryAgentTest {
             .getMock();
 
     // assert a pingpacketdata with empty ipv4 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockEmptyIPv4)).isEqualTo(sourceHost);
     // assert a pingpacketdata with empty ipv6 address reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockEmptyIPv6)).isEqualTo(sourceHost);
     // assert a pingpacketdata from address of 127.0.0.1 reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockLocal)).isEqualTo(sourceHost);
     // assert that 255.255.255.255 reverts to the udp source host
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockBroadcast)).isEqualTo(sourceHost);
     // assert that a well-formed routable address in the ping packet data is used
-    assertThat(PeerDiscoveryAgent.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
+    assertThat(PeerDiscoveryAgentV4.deriveHost(source, mockWellFormed)).isEqualTo(routableHost);
   }
 
   @Test

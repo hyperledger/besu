@@ -12,16 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery;
+package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 
 import static org.hyperledger.besu.util.NetworkUtility.checkPort;
-import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.IllegalPortException;
+import org.hyperledger.besu.util.Preconditions;
 
 import java.net.InetAddress;
 import java.util.Objects;
@@ -33,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Encapsulates the network coordinates of a {@link DiscoveryPeer} as well as serialization logic
+ * Encapsulates the network coordinates of a {@link DiscoveryPeerV4} as well as serialization logic
  * used in various Discovery messages.
  */
 public class Endpoint {
@@ -168,7 +170,7 @@ public class Endpoint {
    * @return The decoded endpoint.
    */
   public static Endpoint decodeInline(final RLPInput in, final int fieldCount) {
-    checkGuard(
+    Preconditions.checkGuard(
         fieldCount == 2 || fieldCount == 3,
         PeerDiscoveryPacketDecodingException::new,
         "Invalid number of components in RLP representation of an endpoint: expected 2 or 3 elements but got %s",

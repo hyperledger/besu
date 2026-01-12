@@ -20,8 +20,9 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
@@ -54,13 +55,13 @@ import org.slf4j.LoggerFactory;
  * The peer discovery agent is the network component that sends and receives peer discovery messages
  * via UDP.
  */
-public abstract class PeerDiscoveryAgent {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
+public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentV4.class);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
   private static final int MAX_PACKET_SIZE_BYTES = 1600;
-  protected final List<DiscoveryPeer> bootstrapPeers;
+  protected final List<DiscoveryPeerV4> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
   private final MetricsSystem metricsSystem;
@@ -83,7 +84,7 @@ public abstract class PeerDiscoveryAgent {
 
   private final NodeRecordManager nodeRecordManager;
 
-  protected PeerDiscoveryAgent(
+  protected PeerDiscoveryAgentV4(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
@@ -100,7 +101,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.peerPermissions = peerPermissions;
     this.bootstrapPeers =
-        config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
+        config.getBootnodes().stream().map(DiscoveryPeerV4::fromEnode).collect(Collectors.toList());
 
     this.config = config;
     this.nodeKey = nodeKey;
@@ -120,10 +121,9 @@ public abstract class PeerDiscoveryAgent {
   protected abstract CompletableFuture<InetSocketAddress> listenForConnections();
 
   protected abstract CompletableFuture<Void> sendOutgoingPacket(
-      final DiscoveryPeer peer, final Packet packet);
+      final DiscoveryPeerV4 peer, final Packet packet);
 
-  public abstract CompletableFuture<?> stop();
-
+  @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
     if (config.isEnabled()) {
       final String host = config.getBindHost();
@@ -156,6 +156,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
+  @Override
   public void updateNodeRecord() {
     if (!config.isEnabled()) {
       return;
@@ -167,17 +168,18 @@ public abstract class PeerDiscoveryAgent {
     this.peerRequirements.add(peerRequirement);
   }
 
+  @Override
   public boolean checkForkId(final DiscoveryPeer peer) {
     return peer.getForkId().map(forkIdManager::peerCheck).orElse(true);
   }
 
-  private void startController(final DiscoveryPeer localNode) {
+  private void startController(final DiscoveryPeerV4 localNode) {
     final PeerDiscoveryController controller = createController(localNode);
     this.controller = Optional.of(controller);
     controller.start();
   }
 
-  private PeerDiscoveryController createController(final DiscoveryPeer localNode) {
+  private PeerDiscoveryController createController(final DiscoveryPeerV4 localNode) {
     return PeerDiscoveryController.builder()
         .nodeKey(nodeKey)
         .localPeer(localNode)
@@ -211,8 +213,8 @@ public abstract class PeerDiscoveryAgent {
     final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
-    final DiscoveryPeer peer =
-        DiscoveryPeer.fromEnode(
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
@@ -276,7 +278,7 @@ public abstract class PeerDiscoveryAgent {
    * @param peer the recipient
    * @param packet the packet to send
    */
-  protected void handleOutgoingPacket(final DiscoveryPeer peer, final Packet packet) {
+  protected void handleOutgoingPacket(final DiscoveryPeerV4 peer, final Packet packet) {
     sendOutgoingPacket(peer, packet)
         .whenComplete(
             (res, err) -> {
@@ -287,18 +289,20 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected abstract void handleOutgoingPacketError(
-      final Throwable err, final DiscoveryPeer peer, final Packet packet);
+      final Throwable err, final DiscoveryPeerV4 peer, final Packet packet);
 
-  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+  @Override
+  public Stream<DiscoveryPeerV4> streamDiscoveredPeers() {
     return controller.map(PeerDiscoveryController::streamDiscoveredPeers).orElse(Stream.empty());
   }
 
+  @Override
   public void dropPeer(final PeerId peer) {
     controller.ifPresent(c -> c.dropPeer(peer));
   }
 
   @VisibleForTesting
-  public Optional<DiscoveryPeer> getAdvertisedPeer() {
+  public Optional<DiscoveryPeerV4> getAdvertisedPeer() {
     return nodeRecordManager.getLocalNode();
   }
 
@@ -328,8 +332,9 @@ public abstract class PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentV4} is active on this node, false, otherwise.
    */
+  @Override
   public boolean isEnabled() {
     return isEnabled;
   }
@@ -340,24 +345,24 @@ public abstract class PeerDiscoveryAgent {
    * <p>If true, the node is actively listening for new connections. If false, discovery has been
    * turned off and the node is not listening for connections.
    *
-   * @return true, if the {@link PeerDiscoveryAgent} is active on this node, false, otherwise.
+   * @return true, if the {@link PeerDiscoveryAgentV4} is active on this node, false, otherwise.
    */
+  @Override
   public boolean isStopped() {
     return isStopped;
   }
 
-  public void bond(final Peer peer) {
-    controller.ifPresent(
-        c -> {
-          DiscoveryPeer.from(peer).ifPresent(c::handleBondingRequest);
-        });
+  @Override
+  public void addPeer(final Peer peer) {
+    controller.ifPresent(c -> DiscoveryPeerV4.from(peer).ifPresent(c::handleBondingRequest));
   }
 
   @VisibleForTesting
-  public Optional<DiscoveryPeer> getLocalNode() {
+  public Optional<DiscoveryPeerV4> getLocalNode() {
     return nodeRecordManager.getLocalNode();
   }
 
+  @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
     return peerTable.get(peerId).map(peer -> peer);
   }

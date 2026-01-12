@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.PacketDataDeserializer;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -34,7 +34,7 @@ public class NeighborsPacketDataRlpReader implements PacketDataDeserializer<Neig
   @Override
   public NeighborsPacketData readFrom(final RLPInput in) {
     in.enterList();
-    final List<DiscoveryPeer> peers = in.readList(DiscoveryPeer::readFrom);
+    final List<DiscoveryPeerV4> peers = in.readList(DiscoveryPeerV4::readFrom);
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
     return neighborsPacketDataFactory.create(peers, expiration);

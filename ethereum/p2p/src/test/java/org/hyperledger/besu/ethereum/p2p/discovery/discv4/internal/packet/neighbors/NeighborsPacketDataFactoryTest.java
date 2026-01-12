@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.DiscoveryPeersValidator;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation.ExpiryValidator;
 
@@ -46,7 +46,7 @@ public class NeighborsPacketDataFactoryTest {
 
   @Test
   public void testCreateWithExpiry() {
-    final List<DiscoveryPeer> peers = List.of(Mockito.mock(DiscoveryPeer.class));
+    final List<DiscoveryPeerV4> peers = List.of(Mockito.mock(DiscoveryPeerV4.class));
     final long expiration = 456;
 
     NeighborsPacketData neighborsPacketData = factory.create(peers, expiration);
@@ -60,7 +60,7 @@ public class NeighborsPacketDataFactoryTest {
 
   @Test
   public void testCreateWithExpiryAndInvalidPeers() {
-    final List<DiscoveryPeer> peers = List.of(Mockito.mock(DiscoveryPeer.class));
+    final List<DiscoveryPeerV4> peers = List.of(Mockito.mock(DiscoveryPeerV4.class));
     final long expiration = 456;
 
     Mockito.doThrow(new IllegalArgumentException()).when(discoveryPeersValidator).validate(peers);
@@ -74,7 +74,7 @@ public class NeighborsPacketDataFactoryTest {
 
   @Test
   public void testCreateWithInvalidExpiry() {
-    final List<DiscoveryPeer> peers = List.of(Mockito.mock(DiscoveryPeer.class));
+    final List<DiscoveryPeerV4> peers = List.of(Mockito.mock(DiscoveryPeerV4.class));
     final long expiration = 456;
 
     Mockito.doThrow(new IllegalArgumentException()).when(expiryValidator).validate(expiration);
@@ -88,7 +88,7 @@ public class NeighborsPacketDataFactoryTest {
 
   @Test
   public void testCreateWithoutExpiry() {
-    final List<DiscoveryPeer> peers = List.of(Mockito.mock(DiscoveryPeer.class));
+    final List<DiscoveryPeerV4> peers = List.of(Mockito.mock(DiscoveryPeerV4.class));
 
     NeighborsPacketData neighborsPacketData = factory.create(peers);
 
@@ -102,7 +102,7 @@ public class NeighborsPacketDataFactoryTest {
 
   @Test
   public void testCreateWithoutExpiryWithInvalidPeers() {
-    final List<DiscoveryPeer> peers = List.of(Mockito.mock(DiscoveryPeer.class));
+    final List<DiscoveryPeerV4> peers = List.of(Mockito.mock(DiscoveryPeerV4.class));
 
     Mockito.doThrow(new IllegalArgumentException()).when(discoveryPeersValidator).validate(peers);
 

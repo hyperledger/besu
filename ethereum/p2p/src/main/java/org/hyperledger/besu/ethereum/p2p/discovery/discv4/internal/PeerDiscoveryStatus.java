@@ -12,27 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery;
+package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal;
 
 import java.util.Locale;
 
-/** The status of a {@link DiscoveryPeer}, in relation to the peer discovery state machine. */
-public enum PeerDiscoveryStatus {
+/** The status of a {@link DiscoveryPeerV4}, in relation to the peer discovery state machine. */
+enum PeerDiscoveryStatus {
 
   /**
-   * Represents a newly discovered {@link DiscoveryPeer}, prior to commencing the bonding exchange.
+   * Represents a newly discovered {@link DiscoveryPeerV4}, prior to commencing the bonding
+   * exchange.
    */
   KNOWN,
 
   /**
    * Bonding with this peer is in progress. If we're unable to establish communication and/or
-   * complete the bonding exchange, the {@link DiscoveryPeer} remains in this state, until we
+   * complete the bonding exchange, the {@link DiscoveryPeerV4} remains in this state, until we
    * ultimately desist.
    */
   BONDING,
 
   /**
-   * We have successfully bonded with this {@link DiscoveryPeer}, and we are able to exchange
+   * We have successfully bonded with this {@link DiscoveryPeerV4}, and we are able to exchange
    * messages with them.
    */
   BONDED;
