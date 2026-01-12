@@ -83,14 +83,14 @@ public record EthereumNodeRecord(
    */
   static InetAddress initIPAddr(final Map<String, Object> fields) {
     final Object value = fields.get("ip");
-    if (!(value instanceof Bytes ipBytes)) {
-      return InetAddress.getLoopbackAddress();
+    if (value instanceof Bytes ipBytes) {
+      try {
+        return InetAddress.getByAddress(ipBytes.toArrayUnsafe());
+      } catch (final Exception e) {
+        throw new RuntimeException("Invalid IP address in ENR", e);
+      }
     }
-    try {
-      return InetAddress.getByAddress(ipBytes.toArrayUnsafe());
-    } catch (final Exception e) {
-      throw new RuntimeException("Invalid IP address in ENR", e);
-    }
+    return InetAddress.getLoopbackAddress();
   }
 
   /**
