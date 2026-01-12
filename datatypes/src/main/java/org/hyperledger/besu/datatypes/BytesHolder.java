@@ -36,6 +36,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @param value the bytes value to hold
    */
   protected BytesHolder(final Bytes value) {
+    Objects.requireNonNull(value, "value cannot be null");
     this.value = value;
   }
 
