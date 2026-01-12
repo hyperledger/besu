@@ -18,6 +18,8 @@ import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -177,5 +179,32 @@ public class FilterParameter {
 
   public boolean isValid() {
     return isValid;
+  }
+
+  /**
+   * Validates that fromBlock <= toBlock and toBlock <= latestBlock for already resolved block
+   * numbers.
+   *
+   * @param fromBlockNumber the resolved from block number
+   * @param toBlockNumber the resolved to block number
+   * @param latestBlockNumber the latest block number in the chain
+   * @throws InvalidJsonRpcParameters if fromBlock > toBlock or toBlock > latestBlock
+   */
+  public static void validateBlockRange(
+      final long fromBlockNumber, final long toBlockNumber, final long latestBlockNumber) {
+    if (fromBlockNumber > toBlockNumber) {
+      throw new InvalidJsonRpcParameters(
+          "fromBlock (" + fromBlockNumber + ") is greater than toBlock (" + toBlockNumber + ")",
+          RpcErrorType.INVALID_PARAMS);
+    }
+    if (toBlockNumber > latestBlockNumber) {
+      throw new InvalidJsonRpcParameters(
+          "toBlock ("
+              + toBlockNumber
+              + ") is greater than latest block ("
+              + latestBlockNumber
+              + ")",
+          RpcErrorType.INVALID_PARAMS);
+    }
   }
 }

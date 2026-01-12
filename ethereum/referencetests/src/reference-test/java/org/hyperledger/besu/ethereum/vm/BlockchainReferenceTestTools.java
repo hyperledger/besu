@@ -130,8 +130,9 @@ public class BlockchainReferenceTestTools {
 
     @SuppressWarnings("java:S5960") // this is actually test code
     public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
-        final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
-        final ProtocolContext protocolContext = spec.buildProtocolContext();
+      final MutableBlockchain blockchain = spec.buildBlockchain();
+      final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
+        final ProtocolContext protocolContext = spec.buildProtocolContext(blockchain);
         final WorldStateArchive worldStateArchive = protocolContext.getWorldStateArchive();
         final MutableWorldState worldState =
                 worldStateArchive
@@ -139,8 +140,6 @@ public class BlockchainReferenceTestTools {
                         .orElseThrow();
 
         final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
-
-        final MutableBlockchain blockchain = spec.getBlockchain();
 
         try (BlockCreationFixture blockCreation =
                      BlockCreationFixture.create(schedule, protocolContext, blockchain)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,13 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal;
+package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
+import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
+import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 
 @FunctionalInterface
-public interface OutboundMessageHandler {
-  OutboundMessageHandler NOOP = (peer, packet) -> {};
+public interface RlpxAgentFactory {
 
-  void send(final DiscoveryPeerV4 toPeer, final Packet packet);
+  RlpxAgent create(LocalNode localNode, PeerPrivileges peerPrivileges, PeerLookup peerLookup);
 }

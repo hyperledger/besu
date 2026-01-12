@@ -106,6 +106,9 @@ public class TraceFilter extends TraceBlock {
     final long toBlock = resolveBlockNumber(filterParameter.getToBlock());
     LOG.trace("Received RPC rpcName={} fromBlock={} toBlock={}", getName(), fromBlock, toBlock);
 
+    FilterParameter.validateBlockRange(
+        fromBlock, toBlock, getBlockchainQueries().headBlockNumber());
+
     if (maxRange > 0 && toBlock - fromBlock > maxRange) {
       LOG.atDebug()
           .setMessage("trace_filter request {} failed:")

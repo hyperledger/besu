@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
@@ -283,8 +283,8 @@ public class DeFramerTest {
     final Bytes nodeId = helloMessage.getPeerInfo().getNodeId();
     final String enodeURLString =
         "enode://" + nodeId.toString().substring(2) + "@" + "12.13.14.15:30303?discport=30301";
-    final Optional<DiscoveryPeer> discoveryPeer =
-        DiscoveryPeer.from(DefaultPeer.fromURI(enodeURLString));
+    final Optional<DiscoveryPeerV4> discoveryPeer =
+        DiscoveryPeerV4.from(DefaultPeer.fromURI(enodeURLString));
     final ForkId forkId = new ForkId(Bytes.fromHexString("0x190a55ad"), 4L);
     discoveryPeer.orElseThrow().setForkId(forkId);
     final DeFramer deFramer = createDeFramer(null, discoveryPeer);
@@ -457,7 +457,7 @@ public class DeFramerTest {
   }
 
   private DeFramer createDeFramer(
-      final Peer expectedPeer, final Optional<DiscoveryPeer> peerInPeerTable) {
+      final Peer expectedPeer, final Optional<DiscoveryPeerV4> peerInPeerTable) {
     final PeerTable peerTable = new PeerTable(localNode.getPeerInfo().getNodeId());
     PeerLookup peerLookup = new PeerLookup();
     peerLookup.set(peer -> peerTable.get(peer).map(p -> p));
