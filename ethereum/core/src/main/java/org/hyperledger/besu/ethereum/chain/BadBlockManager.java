@@ -69,13 +69,6 @@ public class BadBlockManager {
     badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock.getHeader(), cause));
   }
 
-  public void addBadBlock(
-      final Block badBlock,
-      final BadBlockCause cause,
-      final Optional<BlockAccessList> generatedBlockAccessList) {
-    addBadBlock(badBlock, cause, Optional.empty(), generatedBlockAccessList);
-  }
-
   public void reset() {
     this.badBlocks.invalidateAll();
     this.badHeaders.invalidateAll();

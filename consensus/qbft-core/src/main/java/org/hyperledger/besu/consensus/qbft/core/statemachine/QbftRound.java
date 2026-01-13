@@ -140,7 +140,7 @@ public class QbftRound {
    */
   public QbftBlock createBlock(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    return createBlockWithAccessList(headerTimeStampSeconds).getBlock();
+    return createBlockWithAccessList(headerTimeStampSeconds).block();
   }
 
   public BlockCreationResult createBlockWithAccessList(final long headerTimeStampSeconds) {
@@ -166,16 +166,16 @@ public class QbftRound {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       final BlockCreationResult blockCreationResult =
           blockCreator.createBlock(headerTimestamp, this.parentHeader);
-      blockToPublish = blockCreationResult.getBlock();
-      blockAccessList = blockCreationResult.getBlockAccessList();
+      blockToPublish = blockCreationResult.block();
+      blockAccessList = blockCreationResult.blockAccessList();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       QbftBlock preparedBlock = bestPreparedCertificate.get().getBlock();
-      blockAccessList = bestPreparedCertificate.get().getBlockAccessList();
       blockToPublish =
           blockInterface.replaceRoundAndProposerForProposalBlock(
               preparedBlock, roundState.getRoundIdentifier().getRoundNumber(), localAddress);
+      blockAccessList = bestPreparedCertificate.get().getBlockAccessList();
     }
 
     LOG.debug(" proposal - new/prepared block hash : {}", blockToPublish.getHash());
@@ -185,15 +185,6 @@ public class QbftRound {
         blockAccessList,
         roundChangeArtifacts.getRoundChanges(),
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
-  }
-
-  /**
-   * Update state with proposal and transmit.
-   *
-   * @param block the block
-   */
-  protected void updateStateWithProposalAndTransmit(final QbftBlock block) {
-    updateStateWithProposalAndTransmit(block, Optional.empty(), emptyList(), emptyList());
   }
 
   /**

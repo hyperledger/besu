@@ -60,7 +60,7 @@ class QbftBlockCreatorAdaptorTest {
         new QbftBlockCreatorAdaptor(blockCreator, qbftExtraDataCodec);
     QbftBlockCreator.BlockCreationResult qbftBlockCreationResult =
         qbftBlockCreator.createBlock(10, parentHeader);
-    QbftBlock qbftBlock = qbftBlockCreationResult.getBlock();
+    QbftBlock qbftBlock = qbftBlockCreationResult.block();
     assertThat(((QbftBlockAdaptor) qbftBlock).getBesuBlock()).isEqualTo(besuBlock);
   }
 

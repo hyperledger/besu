@@ -107,23 +107,6 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist) {
-    return validateAndProcessBlock(
-        context,
-        block,
-        headerValidationMode,
-        ommerValidationMode,
-        Optional.empty(),
-        shouldPersist,
-        true);
-  }
-
-  @Override
-  public BlockProcessingResult validateAndProcessBlock(
-      final ProtocolContext context,
-      final Block block,
-      final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode,
       final Optional<BlockAccessList> blockAccessList,
       final boolean shouldPersist) {
     return validateAndProcessBlock(
@@ -207,17 +190,23 @@ public class MainnetBlockValidator implements BlockValidator {
 
       final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
       final Optional<Hash> providedBalHash = blockAccessList.map(BodyValidation::balHash);
-      if (!headerBalHash.equals(providedBalHash) && providedBalHash.isPresent()) {
+
+      if (!headerBalHash.equals(providedBalHash)) {
         final String errorMessage;
-        if (headerBalHash.isPresent()) {
+        if (headerBalHash.isPresent() && providedBalHash.isPresent()) {
           errorMessage =
               String.format(
                   "Block access list hash mismatch, calculated: %s header: %s",
                   providedBalHash.get().toHexString(), headerBalHash.get().toHexString());
+        } else if (headerBalHash.isPresent()) {
+          errorMessage =
+              String.format(
+                  "Block access list hash present in header %s but block body has no access list",
+                  headerBalHash.get().toHexString());
         } else {
           errorMessage =
               String.format(
-                  "Block access list present with hash %s but header is missing balHash",
+                  "Block access list present in body with hash %s but header is missing balHash",
                   providedBalHash.get().toHexString());
         }
         var result = new BlockProcessingResult(errorMessage);
@@ -236,46 +225,6 @@ public class MainnetBlockValidator implements BlockValidator {
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
         Optional<BlockAccessList> processedBlockAccessList =
             result.getYield().flatMap(BlockProcessingOutputs::getBlockAccessList);
-        Optional<BlockAccessList> accessListForValidation =
-            blockAccessList.isPresent() ? blockAccessList : processedBlockAccessList;
-        Optional<Hash> expectedBalHash = accessListForValidation.map(BodyValidation::balHash);
-        if (!headerBalHash.equals(expectedBalHash)) {
-          final String errorMessage;
-          if (headerBalHash.isPresent() && expectedBalHash.isPresent()) {
-            errorMessage =
-                String.format(
-                    "Block access list hash mismatch, calculated: %s header: %s",
-                    expectedBalHash.get().toHexString(), headerBalHash.get().toHexString());
-          } else if (headerBalHash.isPresent()) {
-            errorMessage =
-                String.format(
-                    "Block access list hash present in header %s but block access list is missing",
-                    headerBalHash.get().toHexString());
-          } else {
-            errorMessage =
-                String.format(
-                    "Block access list present with hash %s but header is missing balHash",
-                    expectedBalHash.get().toHexString());
-          }
-          result = new BlockProcessingResult(errorMessage);
-          handleFailedBlockProcessing(
-              block, blockAccessList, result, shouldRecordBadBlock, context);
-          return result;
-        }
-
-        if (blockAccessList.isPresent()
-            && processedBlockAccessList.isPresent()
-            && !blockAccessList.get().equals(processedBlockAccessList.get())) {
-          final String errorMessage =
-              String.format(
-                  "Block access list mismatch, calculated: %s header: %s",
-                  BodyValidation.balHash(processedBlockAccessList.get()).toHexString(),
-                  headerBalHash.map(Hash::toHexString).orElse("<missing>"));
-          result = new BlockProcessingResult(errorMessage);
-          handleFailedBlockProcessing(
-              block, blockAccessList, result, shouldRecordBadBlock, context);
-          return result;
-        }
         if (!blockBodyValidator.validateBody(
             context,
             block,

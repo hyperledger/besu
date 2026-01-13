@@ -159,7 +159,7 @@ public class TestContext {
             .getBlockCreatorFactory()
             .create(roundNumber)
             .createBlock(timestamp, parent)
-            .getBlock();
+            .block();
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(AdaptorUtil.toBesuBlockHeader(block.getHeader()));

@@ -202,8 +202,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final QbftBlockCreator.BlockCreationResult blockCreationResult =
         qbftRound.createBlockWithAccessList(headerTimeStampSeconds);
-    final QbftBlock block = blockCreationResult.getBlock();
-    final Optional<BlockAccessList> blockAccessList = blockCreationResult.getBlockAccessList();
+    final QbftBlock block = blockCreationResult.block();
+    final Optional<BlockAccessList> blockAccessList = blockCreationResult.blockAccessList();
     if (!block.isEmpty()) {
       LOG.trace(
           "Block is not empty and this node is a proposer so it will send a proposal: "

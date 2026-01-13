@@ -210,6 +210,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<BlockAccessListFactory> maybeBalFactory =
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
+    if (maybeBalFactory.isPresent() && blockAccessList.isEmpty()) {
+      final String errorMessage =
+          MessageFormat.format(
+              "BALs enabled but BAL not provided for block {0}",
+              blockHeader.getHash().toHexString());
+      LOG.error(errorMessage);
+      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    }
+
     final StateRootCommitter stateRootCommitter =
         protocolSpec
             .getStateRootCommitterFactory()

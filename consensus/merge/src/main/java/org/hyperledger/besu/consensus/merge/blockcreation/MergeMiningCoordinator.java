@@ -74,10 +74,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param blockAccessList optional block access list
    * @return the block processing result
    */
-  default BlockProcessingResult rememberBlock(
-      final Block block, final Optional<BlockAccessList> blockAccessList) {
-    return rememberBlock(block);
-  }
+  BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList);
 
   /**
    * Validate block.

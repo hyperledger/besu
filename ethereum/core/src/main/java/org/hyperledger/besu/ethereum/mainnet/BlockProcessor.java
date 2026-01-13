@@ -78,14 +78,12 @@ public interface BlockProcessor {
    * @param blockAccessList the optional block access list
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
+  BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block,
-      final Optional<BlockAccessList> blockAccessList) {
-    return processBlock(protocolContext, blockchain, worldState, block);
-  }
+      final Optional<BlockAccessList> blockAccessList);
 
   /**
    * Processes the block.
@@ -114,15 +112,13 @@ public interface BlockProcessor {
    * @param preprocessingBlockFunction a preprocessing function for block execution
    * @return the block processing result
    */
-  default BlockProcessingResult processBlock(
+  BlockProcessingResult processBlock(
       final ProtocolContext protocolContext,
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
-      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
-    return processBlock(protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
-  }
+      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
 
   /**
    * Get ommer reward in ${@link Wei}

@@ -47,24 +47,6 @@ public interface BlockValidator {
 
   /**
    * Validates and processes a block with the given context, block, header validation mode, ommer
-   * validation mode, and persistence flag.
-   *
-   * @param context the protocol context
-   * @param block the block to validate and process
-   * @param headerValidationMode the header validation mode
-   * @param ommerValidationMode the ommer validation mode
-   * @param shouldPersist flag indicating whether the block should be persisted
-   * @return the result of the block processing
-   */
-  BlockProcessingResult validateAndProcessBlock(
-      final ProtocolContext context,
-      final Block block,
-      final HeaderValidationMode headerValidationMode,
-      final HeaderValidationMode ommerValidationMode,
-      final boolean shouldPersist);
-
-  /**
-   * Validates and processes a block with the given context, block, header validation mode, ommer
    * validation mode, persistence flag, and optional block access list.
    *
    * @param context the protocol context

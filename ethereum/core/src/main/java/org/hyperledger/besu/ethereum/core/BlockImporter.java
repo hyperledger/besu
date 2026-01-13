@@ -76,14 +76,12 @@ public interface BlockImporter {
    * @return {@code BlockImportResult}
    * @see BlockImportResult
    */
-  default BlockImportResult importBlock(
+  BlockImportResult importBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final Optional<BlockAccessList> blockAccessList) {
-    return importBlock(context, block, headerValidationMode, ommerValidationMode);
-  }
+      final Optional<BlockAccessList> blockAccessList);
 
   /**
    * Attempts to import the given block. Uses "fast" validation. Performs light validation using the

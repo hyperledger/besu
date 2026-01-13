@@ -29,14 +29,4 @@ public interface QbftBlockImporter {
    * @return true if the block was successfully imported, false otherwise
    */
   boolean importBlock(QbftBlock block, Optional<BlockAccessList> blockAccessList);
-
-  /**
-   * Import a block into the chain.
-   *
-   * @param block to import
-   * @return true if the block was successfully imported, false otherwise
-   */
-  default boolean importBlock(final QbftBlock block) {
-    return importBlock(block, Optional.empty());
-  }
 }

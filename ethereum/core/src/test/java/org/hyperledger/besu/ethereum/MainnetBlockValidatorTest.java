@@ -414,6 +414,7 @@ public class MainnetBlockValidatorTest {
             block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
+            Optional.empty(),
             false);
 
     assertThat(result.isFailed()).isTrue();

@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -317,9 +316,6 @@ public class BlockchainReferenceTestCaseSpec {
           input.isEndOfCurrentList()
               ? Optional.empty()
               : Optional.of(input.readList(Withdrawal::readFrom));
-      if (!input.isEndOfCurrentList()) {
-        BlockAccessListDecoder.decode(input);
-      }
       final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
       return new Block(header, body);
     }
