@@ -59,8 +59,7 @@ public class BonsaiArchiveProofsFlatDbStrategyTest {
     archiveProofsFlatDbStrategy.putFlatAccountTrieNode(storage, tx, location, nodeHash, nodeValue);
     tx.commit();
 
-    final byte[] expectedKey =
-        Bytes.concatenate(location, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
+    final byte[] expectedKey = Bytes.concatenate(location, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
     final Optional<byte[]> storedValue = storage.get(TRIE_BRANCH_STORAGE, expectedKey);
 
     assertThat(storedValue).isPresent();
@@ -81,8 +80,7 @@ public class BonsaiArchiveProofsFlatDbStrategyTest {
 
     // When world block number is 0, the trie context is calculated as:
     // ((0 + 1) / 256) * 256 = 0
-    final byte[] expectedKey =
-        Bytes.concatenate(location, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
+    final byte[] expectedKey = Bytes.concatenate(location, Bytes.ofUnsignedLong(0)).toArrayUnsafe();
     final Optional<byte[]> storedValue = storage.get(TRIE_BRANCH_STORAGE, expectedKey);
 
     assertThat(storedValue).isPresent();
