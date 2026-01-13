@@ -110,7 +110,7 @@ public class SyncTransactionReceiptDecoder {
       final Bytes rawRlp,
       final RLPInput input,
       final Bytes statusOrStateRoot,
-      final Bytes cumulativeGas,
+      final Bytes cumulativeGasUsed,
       final Bytes bloomFilter) {
     Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
     List<List<Bytes>> logs = parseLogs(input);
@@ -118,7 +118,7 @@ public class SyncTransactionReceiptDecoder {
         rawRlp,
         transactionTypeCode,
         statusOrStateRoot,
-        cumulativeGas,
+        cumulativeGasUsed,
         bloomFilter == null ? LogsBloomFilter.builder().insertRawLogs(logs).build() : bloomFilter,
         logs);
   }
