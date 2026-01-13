@@ -30,10 +30,10 @@ public interface BesuPlugin {
    * Returns the name of the plugin. This name is used to trigger specific actions on individual
    * plugins.
    *
-   * @return an {@link Optional} wrapping the unique name of the plugin.
+   * @return the name of the plugin.
    */
-  default Optional<String> getName() {
-    return Optional.of(this.getClass().getName());
+  default String getName() {
+    return this.getClass().getName();
   }
 
   /**

@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
@@ -34,14 +33,14 @@ public class PeerTest {
         fromHexString(
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
-        DiscoveryPeer.fromEnode(
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
     final Peer peer2 =
-        DiscoveryPeer.fromEnode(
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
@@ -56,14 +55,14 @@ public class PeerTest {
         fromHexString(
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
-        DiscoveryPeer.fromEnode(
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
     final Peer peer2 =
-        DiscoveryPeer.fromEnode(
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
@@ -74,14 +73,14 @@ public class PeerTest {
 
   @Test
   public void getStatus() {
-    final DiscoveryPeer peer =
-        DiscoveryPeer.fromEnode(
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
-    assertThat(peer.getStatus()).isEqualTo(PeerDiscoveryStatus.KNOWN);
+    assertThat(peer.isKnown()).isTrue();
   }
 
   @Test

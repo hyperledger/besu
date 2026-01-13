@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.valid
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

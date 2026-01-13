@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -48,8 +49,13 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
@@ -284,19 +290,40 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Block genesisBlock = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(genesisBlock);
     when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
-    final P2PNetwork p2pNetwork =
-        DefaultP2PNetwork.builder()
-            .supportedCapabilities(EthProtocol.LATEST)
-            .nodeKey(NodeKeyUtils.generate())
+
+    NodeKey nodeKey = NodeKeyUtils.generate();
+    final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
+        DefaultPeerDiscoveryAgentFactory.builder()
             .vertx(vertx)
+            .nodeKey(nodeKey)
             .config(config)
+            .peerPermissions(PeerPermissions.noop())
             .metricsSystem(new NoOpMetricsSystem())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .blockchain(blockchain)
             .blockNumberForks(Collections.emptyList())
             .timestampForks(Collections.emptyList())
+            .build();
+
+    final RlpxAgentFactory defaultRlpxFactory =
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(config)
+            .peerPermissions(PeerPermissions.noop())
+            .metricsSystem(new NoOpMetricsSystem())
             .allConnectionsSupplier(Stream::empty)
             .allActiveConnectionsSupplier(Stream::empty)
+            .build();
+
+    final P2PNetwork p2pNetwork =
+        DefaultP2PNetwork.builder()
+            .supportedCapabilities(EthProtocol.LATEST)
+            .nodeKey(nodeKey)
+            .vertx(vertx)
+            .config(config)
+            .metricsSystem(new NoOpMetricsSystem())
+            .rlpxAgentFactory(defaultRlpxFactory)
+            .peerDiscoveryAgentFactory(peerDiscoveryAgentFactory)
             .build();
 
     p2pNetwork.start();
