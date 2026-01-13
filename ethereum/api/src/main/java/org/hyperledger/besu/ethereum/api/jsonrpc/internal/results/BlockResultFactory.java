@@ -222,6 +222,9 @@ public class BlockResultFactory {
                 })
             .orElse(null);
 
+    final String slotNumber =
+        blockWithReceipts.getHeader().getOptionalSlotNumber().map(Quantity::create).orElse(null);
+
     return new EngineGetPayloadResultV6(
         blockWithReceipts.getHeader(),
         txs,
@@ -229,7 +232,8 @@ public class BlockResultFactory {
         requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV2,
-        blockAccessList);
+        blockAccessList,
+        slotNumber);
   }
 
   private static List<String> txsAsHex(final Block block) {

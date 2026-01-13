@@ -85,6 +85,9 @@ public class EngineNewPayloadV5 extends AbstractEngineNewPayload {
     } else if (maybeRequestsParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_EXECUTION_REQUESTS_PARAMS, "Missing execution requests field");
+    } else if (payloadParameter.getSlotNumber() == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_SLOT_NUMBER_PARAMS, "Missing slot number field");
     }
     return ValidationResult.valid();
   }
