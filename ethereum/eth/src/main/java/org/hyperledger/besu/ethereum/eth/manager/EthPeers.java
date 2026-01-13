@@ -253,7 +253,7 @@ public class EthPeers implements PeerSelector {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
-          LOG.atDebug().setMessage("Disconnected USEFUL peer {}").addArgument(peer).log();
+          LOG.atInfo().setMessage("Disconnected USEFUL peer {}").addArgument(peer).log();
         } else {
           LOG.atDebug()
               .setMessage("Disconnected EthPeer {}")

@@ -188,7 +188,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
       try {
         // send the disconnect message first, in case the dispatchDisconnect throws an exception
         doSend(null, DisconnectMessage.create(reason));
-        LOG.atDebug()
+        LOG.atInfo()
             .setMessage("Disconnecting connection {}, peer {} reason {}")
             .addArgument(this.hashCode())
             .addArgument(peer.getLoggableId())
