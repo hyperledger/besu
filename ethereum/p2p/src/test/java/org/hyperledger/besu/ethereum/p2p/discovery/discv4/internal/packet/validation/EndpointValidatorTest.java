@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.validation;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
