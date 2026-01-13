@@ -1324,7 +1324,7 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   dir = file('acceptance-tests/detached-test-plugins')
   tasks = [
     'clean',
-    'build',
+    'compileJava',
     'installDist'
   ]
 
@@ -1334,6 +1334,14 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
 
   doFirst {
     println "Building detached-test-plugins project with besuVersion=" + calculateVersion()
+  }
+}
+
+tasks.register('printVersion') {
+  group = 'help'
+  description = 'Prints the calculated version'
+  doLast {
+    println "Besu version: " + calculateVersion()
   }
 }
 
