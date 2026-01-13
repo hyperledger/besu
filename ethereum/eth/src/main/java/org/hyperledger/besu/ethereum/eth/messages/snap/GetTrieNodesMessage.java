@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
 public final class GetTrieNodesMessage extends AbstractSnapMessageData {
@@ -86,7 +85,7 @@ public final class GetTrieNodesMessage extends AbstractSnapMessageData {
     if (withRequestId) input.skipNext();
     final ImmutableTrieNodesPaths.Builder paths =
         ImmutableTrieNodesPaths.builder()
-            .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
+            .worldStateRootHash(Hash.wrap(input.readBytes32()))
             .paths(input.readList(rlpInput -> rlpInput.readList(RLPInput::readBytes)))
             .responseBytes(input.readBigIntegerScalar());
     input.leaveList();

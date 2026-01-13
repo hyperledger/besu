@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,7 +117,7 @@ public class BlockRangeBroadcasterTest {
   public void shouldSendCorrectBlockRangeToPeers() {
     final long expectedEarliestBlock = 10L;
     final long expectedLatestBlockNumber = 20L;
-    final Hash expectedBlockHash = Hash.wrap(Bytes32.fromHexString("0x0B"));
+    final Hash expectedBlockHash = Hash.wrap(Bytes.fromHexString("0x0B", 32));
 
     setupPeers(ethPeerWithoutSupport, ethPeerWithSupport);
     setupBlockchain(expectedEarliestBlock, expectedLatestBlockNumber, expectedBlockHash);

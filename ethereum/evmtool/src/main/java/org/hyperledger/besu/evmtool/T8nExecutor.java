@@ -281,7 +281,7 @@ public class T8nExecutor {
               List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
               for (JsonNode versionedHashNode : blobVersionedHashes) {
                 entries.add(
-                    new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
+                    new VersionedHash(Bytes.fromHexString(versionedHashNode.textValue(), 32)));
               }
               builder.versionedHashes(entries);
             }

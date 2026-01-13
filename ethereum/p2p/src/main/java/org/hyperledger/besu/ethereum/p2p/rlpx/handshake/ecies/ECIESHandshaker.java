@@ -101,7 +101,7 @@ public class ECIESHandshaker implements Handshaker {
     this.nodeKey = nodeKey;
     this.ephKeyPair = signatureAlgorithm.generateKeyPair();
     this.partyPubKey = theirPubKey;
-    this.initiatorNonce = Bytes32.wrap(random(32), 0);
+    this.initiatorNonce = Bytes32.random();
     LOG.trace(
         "Prepared ECIES handshake with node {}... under INITIATOR role",
         theirPubKey.getEncodedBytes().slice(0, 16));
@@ -117,7 +117,7 @@ public class ECIESHandshaker implements Handshaker {
     this.initiator = false;
     this.nodeKey = nodeKey;
     this.ephKeyPair = signatureAlgorithm.generateKeyPair();
-    this.responderNonce = Bytes32.wrap(random(32), 0);
+    this.responderNonce = Bytes32.random();
     LOG.trace("Prepared ECIES handshake under RESPONDER role");
   }
 

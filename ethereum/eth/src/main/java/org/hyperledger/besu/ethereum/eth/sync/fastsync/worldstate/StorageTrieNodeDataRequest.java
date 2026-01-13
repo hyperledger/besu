@@ -113,7 +113,6 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   private Hash getSlotHash(final Optional<Bytes> location, final Bytes path) {
     return Hash.wrap(
-        Bytes32.wrap(
-            CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path))));
+        CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path)));
   }
 }

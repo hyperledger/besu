@@ -126,10 +126,7 @@ public final class EthHash {
     }
 
     return new PoWSolution(
-        nonce,
-        Hash.wrap(Bytes32.wrap(Arrays.copyOf(result, 32))),
-        Bytes32.wrap(result, 32),
-        header);
+        nonce, Hash.wrap(Bytes.wrap(Arrays.copyOf(result, 32))), Bytes32.wrap(result, 32), header);
   }
 
   /**

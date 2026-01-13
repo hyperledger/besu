@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -38,14 +40,9 @@ public class VersionedHash extends BytesHolder {
    * @param hash The hash value being versioned.
    */
   public VersionedHash(final byte versionId, final Hash hash) {
-    super(
-        Bytes32.wrap(
-            Bytes.concatenate(
-                Bytes.of(SHA256_VERSION_ID),
-                hash.getBytes().slice(1, hash.getBytes().size() - 1))));
-    if (versionId != SHA256_VERSION_ID) {
-      throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
-    }
+    this(
+        Bytes.concatenate(
+            Bytes.of(versionId), hash.getBytes().slice(1, hash.getBytes().size() - 1)));
   }
 
   /**
@@ -53,10 +50,14 @@ public class VersionedHash extends BytesHolder {
    *
    * @param typedHash raw versioned hash bytes to parse.
    */
-  public VersionedHash(final Bytes32 typedHash) {
+  public VersionedHash(final Bytes typedHash) {
     super(typedHash);
-    byte versionId = getBytes().get(0);
-    if (versionId != SHA256_VERSION_ID) {
+    checkArgument(
+        getBytes().size() == Bytes32.SIZE,
+        "A versioned hash must be %s bytes long, got %s",
+        Bytes32.SIZE,
+        getBytes().size());
+    if (getBytes().get(0) != SHA256_VERSION_ID) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
   }
@@ -73,7 +74,7 @@ public class VersionedHash extends BytesHolder {
    */
   @JsonCreator
   public static VersionedHash fromHexString(final String str) {
-    return new VersionedHash(Bytes32.fromHexString(str));
+    return new VersionedHash(Bytes.fromHexString(str));
   }
 
   /**

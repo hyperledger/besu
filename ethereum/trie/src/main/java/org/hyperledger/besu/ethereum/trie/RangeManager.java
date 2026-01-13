@@ -37,11 +37,9 @@ import org.apache.tuweni.bytes.MutableBytes;
  */
 public class RangeManager {
 
-  public static final Bytes32 MIN_RANGE = Bytes32.wrap(Hash.wrap(Bytes32.ZERO).getBytes());
+  public static final Bytes32 MIN_RANGE = Bytes32.ZERO;
   public static final Bytes32 MAX_RANGE =
-      Bytes32.wrap(
-          Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
-              .getBytes());
+      Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   private RangeManager() {}
 

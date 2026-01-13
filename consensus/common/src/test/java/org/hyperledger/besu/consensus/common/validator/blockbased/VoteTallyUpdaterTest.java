@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class VoteTallyUpdaterTest {
@@ -47,8 +46,7 @@ public class VoteTallyUpdaterTest {
   private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Address proposerAddress =
-      Address.extract(
-          Bytes32.wrap(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()).getBytes()));
+      Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
   private final Address subject = Address.fromHexString("007f4a23ca00cd043d25c2888c1aa5688f81a344");
   private final Address validator1 =
       Address.fromHexString("00dae27b350bae20c5652124af5d8b5cba001ec1");

@@ -156,7 +156,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   private Hash bytesToHash(final Bytes bytes) {
-    return Hash.wrap(Bytes32.wrap(bytes, 0));
+    return Hash.wrap(bytes);
   }
 
   Optional<Bytes> get(final Bytes prefix, final Bytes key) {

@@ -91,12 +91,12 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    final Hash worldStateRootHash = Hash.wrap(Bytes32.wrap(input.readBytes32()));
+    final Hash worldStateRootHash = Hash.wrap(input.readBytes32());
     final ImmutableRange range =
         ImmutableRange.builder()
             .worldStateRootHash(getRootHash().orElse(worldStateRootHash))
-            .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
-            .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
+            .startKeyHash(Hash.wrap(input.readBytes32()))
+            .endKeyHash(Hash.wrap(input.readBytes32()))
             .responseBytes(input.readBigIntegerScalar())
             .build();
     input.leaveList();

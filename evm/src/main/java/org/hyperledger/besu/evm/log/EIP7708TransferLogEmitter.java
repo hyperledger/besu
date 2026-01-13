@@ -68,8 +68,8 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
    */
   public static Log createTransferLog(final Address from, final Address to, final Wei value) {
     // Zero-pad addresses to 32 bytes for topics
-    final LogTopic fromTopic = LogTopic.create(leftPad(from.getBytes()));
-    final LogTopic toTopic = LogTopic.create(leftPad(to.getBytes()));
+    final LogTopic fromTopic = LogTopic.wrap(leftPad(from.getBytes()));
+    final LogTopic toTopic = LogTopic.wrap(leftPad(to.getBytes()));
 
     // Value as big-endian uint256 (32 bytes, zero-padded)
     final Bytes32 data = leftPad(value);
@@ -77,7 +77,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
     return new Log(
         EIP7708_SYSTEM_ADDRESS,
         data,
-        ImmutableList.of(LogTopic.create(TRANSFER_TOPIC), fromTopic, toTopic));
+        ImmutableList.of(LogTopic.wrap(TRANSFER_TOPIC), fromTopic, toTopic));
   }
 
   @Override

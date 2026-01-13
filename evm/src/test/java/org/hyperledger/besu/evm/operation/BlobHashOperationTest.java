@@ -42,7 +42,7 @@ class BlobHashOperationTest {
 
   @Test
   void putsHashOnStack() {
-    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    VersionedHash version0Hash = new VersionedHash(Bytes.fromHexString(testVersionedHash, 32));
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
@@ -79,7 +79,7 @@ class BlobHashOperationTest {
 
   @Test
   void pushZeroOnVersionIndexOutOFBounds() {
-    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    VersionedHash version0Hash = new VersionedHash(Bytes.fromHexString(testVersionedHash, 32));
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
@@ -94,7 +94,7 @@ class BlobHashOperationTest {
 
   @Test
   public void pushZeroWhenPopsMissingUint256SizedIndex() {
-    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    VersionedHash version0Hash = new VersionedHash(Bytes.fromHexString(testVersionedHash, 32));
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);

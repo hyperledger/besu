@@ -66,7 +66,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -252,7 +251,7 @@ public class EthFeeHistoryTest {
     gasUsedAndFee.add(new Object[] {800, 7L}); // 100.0%
     Collections.shuffle(gasUsedAndFee);
 
-    when(block.getHash()).thenReturn(Hash.wrap(Bytes32.wrap(Bytes.random(32))));
+    when(block.getHash()).thenReturn(Hash.wrap(Bytes.random(32)));
     BlockBody body = mock(BlockBody.class);
     BlockHeader blockHeader = mock(BlockHeader.class);
     when(block.getHeader()).thenReturn(blockHeader);
