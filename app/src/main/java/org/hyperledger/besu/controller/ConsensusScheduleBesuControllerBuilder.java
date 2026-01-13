@@ -49,6 +49,8 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -61,10 +63,12 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -225,9 +229,39 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager,
       final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
-    return besuControllerBuilderSchedule
-        .get(besuControllerBuilderSchedule.keySet().stream().skip(1).findFirst().orElseThrow())
-        .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
+    // During consensus migration, we need BOTH wire protocols registered.
+    // This allows nodes to communicate before AND after the migration block.
+    // Previously used .skip(1) which was non-deterministic with HashMap ordering.
+    //
+    // We merge all sub-protocol configurations, which registers both:
+    // - IBF/1 (IBFT2) for pre-migration communication
+    // - istanbul/100 (QBFT) for post-migration communication
+    final SubProtocolConfiguration mergedConfig = new SubProtocolConfiguration();
+    final Set<String> addedProtocolNames = new HashSet<>();
+
+    // Add sub-protocols from each consensus builder (sorted by block number for determinism)
+    besuControllerBuilderSchedule.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(
+            entry -> {
+              final SubProtocolConfiguration builderConfig =
+                  entry
+                      .getValue()
+                      .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
+              final List<SubProtocol> subProtocols = builderConfig.getSubProtocols();
+              final List<ProtocolManager> protocolManagers = builderConfig.getProtocolManagers();
+              for (int i = 0; i < subProtocols.size(); i++) {
+                final SubProtocol subProtocol = subProtocols.get(i);
+                final ProtocolManager protocolManager = protocolManagers.get(i);
+                // Only add if not already present (avoid duplicates like EthProtocol)
+                if (!addedProtocolNames.contains(subProtocol.getName())) {
+                  mergedConfig.withSubProtocol(subProtocol, protocolManager);
+                  addedProtocolNames.add(subProtocol.getName());
+                }
+              }
+            });
+
+    return mergedConfig;
   }
 
   @Override

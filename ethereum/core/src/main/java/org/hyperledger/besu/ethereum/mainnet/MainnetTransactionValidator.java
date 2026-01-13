@@ -298,28 +298,30 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     final Wei upfrontCost =
         transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
-    if (upfrontCost.compareTo(senderBalance) > 0) {
+    if (!validationParams.allowUnderpriced() && upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
-              "transaction up-front cost %s exceeds transaction sender account balance %s",
-              upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
+              "transaction up-front cost %s exceeds transaction sender account balance %s for sender %s",
+              upfrontCost.toQuantityHexString(),
+              senderBalance.toQuantityHexString(),
+              transaction.getSender()));
     }
 
     if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
           String.format(
-              "transaction nonce %s below sender account nonce %s",
-              transaction.getNonce(), senderNonce));
+              "transaction nonce %s below sender account nonce %s for sender %s",
+              transaction.getNonce(), senderNonce, transaction.getSender()));
     }
 
     if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_HIGH,
           String.format(
-              "transaction nonce %s does not match sender account nonce %s.",
-              transaction.getNonce(), senderNonce));
+              "transaction nonce %s does not match sender account nonce %s for sender %s",
+              transaction.getNonce(), senderNonce, transaction.getSender()));
     }
 
     if (!validationParams.isAllowContractAddressAsSender()

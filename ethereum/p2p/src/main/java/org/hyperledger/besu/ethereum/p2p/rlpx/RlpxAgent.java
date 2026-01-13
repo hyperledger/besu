@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -372,7 +372,7 @@ public class RlpxAgent {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int maxPeers;
-    private PeerTable peerTable;
+    private PeerLookup peerLookup;
 
     private Builder() {}
 
@@ -386,7 +386,7 @@ public class RlpxAgent {
         LOG.debug("Using default NettyConnectionInitializer");
         connectionInitializer =
             new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
+                nodeKey, config, localNode, connectionEvents, metricsSystem, peerLookup);
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -476,8 +476,8 @@ public class RlpxAgent {
       return this;
     }
 
-    public Builder peerTable(final PeerTable peerTable) {
-      this.peerTable = peerTable;
+    public Builder peerLookup(final PeerLookup peerLookup) {
+      this.peerLookup = peerLookup;
       return this;
     }
   }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptanceqbft;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -37,7 +38,11 @@ public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
     final Account account = accounts.createAccount("account-one");
     final Amount balance = Amount.ether(20);
 
-    minerNode.execute(accountTransactions.createTransfer(account, balance));
+    final Hash transactionHash =
+        minerNode.execute(accountTransactions.createTransfer(account, balance));
+
+    // Wait for transaction to be mined before checking balance
+    minerNode.verify(eth.expectSuccessfulTransactionReceipt(transactionHash.toString()));
 
     cluster.verify(account.balanceEquals(balance));
   }

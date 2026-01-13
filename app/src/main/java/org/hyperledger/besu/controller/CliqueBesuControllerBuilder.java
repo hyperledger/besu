@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -173,41 +172,17 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public MiningConfiguration getMiningParameterOverrides(final MiningConfiguration fromCli) {
+  public void overrideMiningConfiguration(final MiningConfiguration fromCli) {
     // Clique ignores CLI mining options and enforces its own requirements:
     // - Mining is always enabled (actual block production depends on validator status)
     // - Coinbase is always the local validator address (not user-configurable)
     // All other CLI configuration values are preserved
+    fromCli.setMiningEnabled(true);
 
     final Address localValidatorAddress =
         nodeKey != null ? Util.publicKeyToAddress(nodeKey.getPublicKey()) : null;
-
-    // Build new configuration preserving CLI values but overriding mining-specific fields
-    final var mutableInitValuesBuilder =
-        ImmutableMiningConfiguration.MutableInitValues.builder()
-            .isMiningEnabled(true) // Override: always enabled for Clique
-            .extraData(fromCli.getExtraData()) // Preserve CLI configuration
-            .minTransactionGasPrice(fromCli.getMinTransactionGasPrice())
-            .minPriorityFeePerGas(fromCli.getMinPriorityFeePerGas())
-            .minBlockOccupancyRatio(fromCli.getMinBlockOccupancyRatio());
-
-    // Override coinbase with validator address if available
     if (localValidatorAddress != null) {
-      mutableInitValuesBuilder.coinbase(localValidatorAddress);
+      fromCli.setCoinbase(localValidatorAddress);
     }
-
-    // Preserve optional CLI values
-    fromCli.getTargetGasLimit().ifPresent(mutableInitValuesBuilder::targetGasLimit);
-    fromCli.getBlockPeriodSeconds().ifPresent(mutableInitValuesBuilder::blockPeriodSeconds);
-    fromCli.getNonceGenerator().ifPresent(mutableInitValuesBuilder::nonceGenerator);
-
-    return ImmutableMiningConfiguration.builder()
-        .mutableInitValues(mutableInitValuesBuilder.build())
-        .transactionSelectionService(fromCli.getTransactionSelectionService())
-        .nonPoaBlockTxsSelectionMaxTime(fromCli.getNonPoaBlockTxsSelectionMaxTime())
-        .poaBlockTxsSelectionMaxTime(fromCli.getPoaBlockTxsSelectionMaxTime())
-        .pluginBlockTxsSelectionMaxTime(fromCli.getPluginBlockTxsSelectionMaxTime())
-        .unstable(fromCli.getUnstable())
-        .build();
   }
 }

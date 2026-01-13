@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,6 +57,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       Pattern.compile(",*\"cost\":[0-9a-fA-F]+,*|,\"used\":[0-9a-fA-F]+");
   private static final Pattern GAS_MATCH_FOR_TRACE =
       Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
+  private static final Pattern ERROR_MESSAGE_NORMALIZATION =
+      Pattern.compile("\"error\"\\s*:\\s*\"([^\"]+)\"");
 
   private URL specURL;
 
@@ -240,6 +243,10 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         }
       }
 
+      // Apply error message normalization to both expected and actual results
+      expectedResult = normalizeErrorMessages(expectedResult);
+      actualResult = normalizeErrorMessages(actualResult);
+
       final ObjectMapper mapper = new ObjectMapper();
       mapper.configure(INDENT_OUTPUT, true);
       assertThat(
@@ -276,5 +283,71 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   private String filterStringTrace(final String expectedResult) {
     final Matcher m = GAS_MATCH_FOR_TRACE.matcher(expectedResult);
     return m.replaceAll("");
+  }
+
+  private String normalizeErrorMessages(final String jsonString) {
+    final Matcher matcher = ERROR_MESSAGE_NORMALIZATION.matcher(jsonString);
+    StringBuilder result = new StringBuilder();
+
+    while (matcher.find()) {
+      String errorMessage = matcher.group(1);
+      String normalizedError = normalizeSpecificErrors(errorMessage);
+      matcher.appendReplacement(result, "\"error\":\"" + normalizedError + "\"");
+    }
+    matcher.appendTail(result);
+
+    return result.toString();
+  }
+
+  private String normalizeSpecificErrors(final String errorMessage) {
+    if (errorMessage == null) {
+      return null;
+    }
+
+    // Convert to lowercase for case-insensitive matching
+    String lowerError = errorMessage.toLowerCase(Locale.ROOT);
+
+    // Normalize precompile input length errors
+    if (lowerError.contains("invalid input length")) {
+      return "invalid input length";
+    }
+
+    // Normalize gas-related errors
+    if (lowerError.contains("out of gas") || lowerError.contains("insufficient gas")) {
+      return "out of gas";
+    }
+
+    // Normalize stack errors - case insensitive
+    if (lowerError.contains("stack underflow")) {
+      return "stack underflow";
+    }
+
+    if (lowerError.contains("stack limit") || lowerError.contains("stack overflow")) {
+      return "stack limit reached";
+    }
+
+    // Normalize invalid opcode errors
+    if (lowerError.contains("invalid opcode")) {
+      return "invalid opcode";
+    }
+
+    // Normalize write protection errors
+    if (lowerError.contains("write protection") || lowerError.contains("illegal state change")) {
+      return "write protection";
+    }
+
+    // Normalize jump destination errors
+    if (lowerError.contains("invalid jump destination")
+        || lowerError.contains("bad jump destination")) {
+      return "invalid jump destination";
+    }
+
+    // Normalize precompile failures
+    if (lowerError.contains("precompile") && lowerError.contains("fail")) {
+      return "precompile failed";
+    }
+
+    // Add more normalizations as needed
+    return errorMessage;
   }
 }

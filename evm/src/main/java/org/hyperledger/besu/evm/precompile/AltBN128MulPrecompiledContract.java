@@ -54,7 +54,8 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
         PRECOMPILE_NAME,
         gasCalculator,
         LibGnarkEIP196.EIP196_MUL_OPERATION_RAW_VALUE,
-        PARAMETER_LENGTH);
+        PARAMETER_LENGTH,
+        LibGnarkEIP196.EIP196_PREALLOCATE_FOR_RESULT_BYTES);
     this.gasCost = gasCost;
   }
 
