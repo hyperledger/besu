@@ -53,6 +53,7 @@ import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.NotOperationOptimized;
+import org.hyperledger.besu.evm.operation.OpcodeExecutor;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
@@ -105,6 +106,9 @@ public class EVM {
 
   private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
 
+  // Pre-built opcode executor array for fast dispatch (avoids giant switch statement)
+  private final OpcodeExecutor[] executors = new OpcodeExecutor[256];
+
   /**
    * Instantiates a new Evm.
    *
@@ -127,6 +131,131 @@ public class EVM {
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
+
+    // Build the executor array once at construction time
+    buildExecutorArray();
+  }
+
+  /**
+   * Builds the opcode executor array once at EVM construction time. This converts the runtime
+   * switch statement dispatch into a pre-computed array of function references, eliminating branch
+   * prediction overhead for the giant switch.
+   */
+  @SuppressWarnings("MutablePublicArray")
+  private void buildExecutorArray() {
+    final boolean useOptimized = evmConfiguration.enableOptimizedOpcodes();
+    final Operation[] ops = operations.getOperations();
+
+    // Arithmetic operations (0x00 - 0x0b)
+    executors[0x00] = (f, c, p, e) -> StopOperation.staticOperation(f);
+    executors[0x01] =
+        useOptimized
+            ? (f, c, p, e) -> AddOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> AddOperation.staticOperation(f);
+    executors[0x02] = (f, c, p, e) -> MulOperation.staticOperation(f);
+    executors[0x03] = (f, c, p, e) -> SubOperation.staticOperation(f);
+    executors[0x04] = (f, c, p, e) -> DivOperation.staticOperation(f);
+    executors[0x05] = (f, c, p, e) -> SDivOperation.staticOperation(f);
+    executors[0x06] =
+        useOptimized
+            ? (f, c, p, e) -> ModOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> ModOperation.staticOperation(f);
+    executors[0x07] =
+        useOptimized
+            ? (f, c, p, e) -> SModOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> SModOperation.staticOperation(f);
+    executors[0x08] =
+        useOptimized
+            ? (f, c, p, e) -> AddModOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> AddModOperation.staticOperation(f);
+    executors[0x09] =
+        useOptimized
+            ? (f, c, p, e) -> MulModOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> MulModOperation.staticOperation(f);
+    executors[0x0a] = (f, c, p, e) -> ExpOperation.staticOperation(f, gasCalculator);
+    executors[0x0b] = (f, c, p, e) -> SignExtendOperation.staticOperation(f);
+
+    // Invalid opcodes 0x0c-0x0f
+    for (int i = 0x0c; i <= 0x0f; i++) {
+      final int opcode = i;
+      executors[i] = (f, c, p, e) -> InvalidOperation.invalidOperationResult(opcode);
+    }
+
+    // Comparison operations (0x10 - 0x1a)
+    executors[0x10] = (f, c, p, e) -> LtOperation.staticOperation(f);
+    executors[0x11] = (f, c, p, e) -> GtOperation.staticOperation(f);
+    executors[0x12] = (f, c, p, e) -> SLtOperation.staticOperation(f);
+    executors[0x13] = (f, c, p, e) -> SGtOperation.staticOperation(f);
+    // 0x14 EQ - use fallback
+    executors[0x15] = (f, c, p, e) -> IsZeroOperation.staticOperation(f);
+    executors[0x16] =
+        useOptimized
+            ? (f, c, p, e) -> AndOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> AndOperation.staticOperation(f);
+    executors[0x17] =
+        useOptimized
+            ? (f, c, p, e) -> OrOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> OrOperation.staticOperation(f);
+    executors[0x18] =
+        useOptimized
+            ? (f, c, p, e) -> XorOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> XorOperation.staticOperation(f);
+    executors[0x19] =
+        useOptimized
+            ? (f, c, p, e) -> NotOperationOptimized.staticOperation(f)
+            : (f, c, p, e) -> NotOperation.staticOperation(f);
+    executors[0x1a] = (f, c, p, e) -> ByteOperation.staticOperation(f);
+
+    // CLZ (EIP-7939, Osaka)
+    executors[0x1e] =
+        enableOsaka
+            ? (f, c, p, e) -> CountLeadingZerosOperation.staticOperation(f)
+            : (f, c, p, e) -> InvalidOperation.invalidOperationResult(0x1e);
+
+    // Stack operations
+    executors[0x50] = (f, c, p, e) -> PopOperation.staticOperation(f);
+
+    // Jump operations
+    executors[0x56] = (f, c, p, e) -> JumpOperation.staticOperation(f);
+    executors[0x57] = (f, c, p, e) -> JumpiOperation.staticOperation(f);
+    executors[0x5b] = (f, c, p, e) -> JumpDestOperation.JUMPDEST_SUCCESS;
+
+    // PUSH0 (EIP-3855, Shanghai)
+    executors[0x5f] =
+        enableShanghai
+            ? (f, c, p, e) -> Push0Operation.staticOperation(f)
+            : (f, c, p, e) -> InvalidOperation.invalidOperationResult(0x5f);
+
+    // PUSH1-32 (0x60-0x7f)
+    for (int i = 0x60; i <= 0x7f; i++) {
+      final int pushSize = i - PUSH_BASE;
+      executors[i] = (f, c, p, e) -> PushOperation.staticOperation(f, c, p, pushSize);
+    }
+
+    // DUP1-16 (0x80-0x8f)
+    for (int i = 0x80; i <= 0x8f; i++) {
+      final int dupIndex = i - DupOperation.DUP_BASE;
+      executors[i] = (f, c, p, e) -> DupOperation.staticOperation(f, dupIndex);
+    }
+
+    // SWAP1-16 (0x90-0x9f)
+    for (int i = 0x90; i <= 0x9f; i++) {
+      final int swapIndex = i - SWAP_BASE;
+      executors[i] = (f, c, p, e) -> SwapOperation.staticOperation(f, swapIndex);
+    }
+
+    // EIP-8024 operations (Amsterdam) - DUPN (0xe6), SWAPN (0xe7), EXCHANGE (0xe8)
+    // These will use the Operation instance fallback when the operations are registered,
+    // or return invalid opcode if not enabled for this fork.
+    // Static dispatch can be added once EIP-8024 operations are implemented.
+
+    // Fill remaining null slots with Operation instance fallback
+    for (int i = 0; i < 256; i++) {
+      if (executors[i] == null) {
+        final Operation op = ops[i];
+        executors[i] = (f, c, p, e) -> op.execute(f, e);
+      }
+    }
   }
 
   /**
@@ -198,6 +327,10 @@ public class EVM {
   // Note to maintainers: lots of Java idioms and OO principals are being set aside in the
   // name of performance. This is one of the hottest sections of code.
   //
+  // The giant switch statement has been replaced with a pre-built executor array
+  // that is populated once at EVM construction time. This eliminates branch prediction
+  // overhead and moves configuration checks (optimized opcodes, fork flags) out of the hot loop.
+  //
   // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer tracing) {
     evmSpecVersion.maybeWarnVersion();
@@ -205,6 +338,8 @@ public class EVM {
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
+    OpcodeExecutor[] exec = this.executors; // Local ref for speed
+
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
@@ -223,142 +358,8 @@ public class EVM {
 
       OperationResult result;
       try {
-        result =
-            switch (opcode) {
-              case 0x00 -> StopOperation.staticOperation(frame);
-              case 0x01 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? AddOperationOptimized.staticOperation(frame)
-                      : AddOperation.staticOperation(frame);
-              case 0x02 -> MulOperation.staticOperation(frame);
-              case 0x03 -> SubOperation.staticOperation(frame);
-              case 0x04 -> DivOperation.staticOperation(frame);
-              case 0x05 -> SDivOperation.staticOperation(frame);
-              case 0x06 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? ModOperationOptimized.staticOperation(frame)
-                      : ModOperation.staticOperation(frame);
-              case 0x07 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? SModOperationOptimized.staticOperation(frame)
-                      : SModOperation.staticOperation(frame);
-              case 0x08 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? AddModOperationOptimized.staticOperation(frame)
-                      : AddModOperation.staticOperation(frame);
-              case 0x09 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? MulModOperationOptimized.staticOperation(frame)
-                      : MulModOperation.staticOperation(frame);
-              case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
-              case 0x0b -> SignExtendOperation.staticOperation(frame);
-              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
-              case 0x10 -> LtOperation.staticOperation(frame);
-              case 0x11 -> GtOperation.staticOperation(frame);
-              case 0x12 -> SLtOperation.staticOperation(frame);
-              case 0x13 -> SGtOperation.staticOperation(frame);
-              case 0x15 -> IsZeroOperation.staticOperation(frame);
-              case 0x16 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? AndOperationOptimized.staticOperation(frame)
-                      : AndOperation.staticOperation(frame);
-              case 0x17 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? OrOperationOptimized.staticOperation(frame)
-                      : OrOperation.staticOperation(frame);
-              case 0x18 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? XorOperationOptimized.staticOperation(frame)
-                      : XorOperation.staticOperation(frame);
-              case 0x19 ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? NotOperationOptimized.staticOperation(frame)
-                      : NotOperation.staticOperation(frame);
-              case 0x1a -> ByteOperation.staticOperation(frame);
-              case 0x1e ->
-                  enableOsaka
-                      ? CountLeadingZerosOperation.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
-              case 0x50 -> PopOperation.staticOperation(frame);
-              case 0x56 -> JumpOperation.staticOperation(frame);
-              case 0x57 -> JumpiOperation.staticOperation(frame);
-              case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
-              case 0x5f ->
-                  enableShanghai
-                      ? Push0Operation.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
-              case 0x60, // PUSH1-32
-                  0x61,
-                  0x62,
-                  0x63,
-                  0x64,
-                  0x65,
-                  0x66,
-                  0x67,
-                  0x68,
-                  0x69,
-                  0x6a,
-                  0x6b,
-                  0x6c,
-                  0x6d,
-                  0x6e,
-                  0x6f,
-                  0x70,
-                  0x71,
-                  0x72,
-                  0x73,
-                  0x74,
-                  0x75,
-                  0x76,
-                  0x77,
-                  0x78,
-                  0x79,
-                  0x7a,
-                  0x7b,
-                  0x7c,
-                  0x7d,
-                  0x7e,
-                  0x7f ->
-                  PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
-              case 0x80, // DUP1-16
-                  0x81,
-                  0x82,
-                  0x83,
-                  0x84,
-                  0x85,
-                  0x86,
-                  0x87,
-                  0x88,
-                  0x89,
-                  0x8a,
-                  0x8b,
-                  0x8c,
-                  0x8d,
-                  0x8e,
-                  0x8f ->
-                  DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
-              case 0x90, // SWAP1-16
-                  0x91,
-                  0x92,
-                  0x93,
-                  0x94,
-                  0x95,
-                  0x96,
-                  0x97,
-                  0x98,
-                  0x99,
-                  0x9a,
-                  0x9b,
-                  0x9c,
-                  0x9d,
-                  0x9e,
-                  0x9f ->
-                  SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
-              default -> { // unoptimized operations
-                frame.setCurrentOperation(currentOperation);
-                yield currentOperation.execute(frame, this);
-              }
-            };
+        // Array dispatch replaces the giant switch statement
+        result = exec[opcode].execute(frame, code, pc, this);
       } catch (final OverflowException oe) {
         result = OVERFLOW_RESPONSE;
       } catch (final UnderflowException ue) {
