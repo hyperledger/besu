@@ -71,14 +71,14 @@ public class SyncTransactionReceiptDecoderTest {
     SyncTransactionReceipt syncTransactionReceipt =
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
     Assertions.assertEquals(
         Bytes.of(TransactionType.FRONTIER.getSerializedType()),
-        syncTransactionReceipt.transactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
+        syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
     Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.bloomFilter());
+        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
   }
 
   @Test
@@ -105,19 +105,19 @@ public class SyncTransactionReceiptDecoderTest {
     SyncTransactionReceipt syncTransactionReceipt =
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
     Assertions.assertEquals(
         Bytes.of(TransactionType.FRONTIER.getEthSerializedType()),
-        syncTransactionReceipt.transactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
+        syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
     Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
-    Assertions.assertEquals(1, syncTransactionReceipt.logs().size());
-    Assertions.assertEquals(3, syncTransactionReceipt.logs().getFirst().size());
+        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertEquals(1, syncTransactionReceipt.getLogs().size());
+    Assertions.assertEquals(3, syncTransactionReceipt.getLogs().getFirst().size());
     String expectedBloomFilterHex =
         "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000010800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020";
     Assertions.assertEquals(
-        expectedBloomFilterHex, syncTransactionReceipt.bloomFilter().toHexString());
+        expectedBloomFilterHex, syncTransactionReceipt.getBloomFilter().toHexString());
   }
 
   @Test
@@ -146,13 +146,13 @@ public class SyncTransactionReceiptDecoderTest {
     SyncTransactionReceipt syncTransactionReceipt =
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.rlpBytes());
+    Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
     Assertions.assertEquals(
         Bytes.of(transactionType.getSerializedType()),
-        syncTransactionReceipt.transactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.statusOrStateRoot());
+        syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
     Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.cumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.bloomFilter());
+        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
   }
 }

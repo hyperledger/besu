@@ -32,12 +32,12 @@ public class SyncTransactionReceipt {
   }
 
   public SyncTransactionReceipt(
-      Bytes rlpBytes,
-      Bytes transactionTypeCode,
-      Bytes statusOrStateRoot,
-      Bytes cumulativeGasUsed,
-      Bytes bloomFilter,
-      List<List<Bytes>> logs) {
+      final Bytes rlpBytes,
+      final Bytes transactionTypeCode,
+      final Bytes statusOrStateRoot,
+      final Bytes cumulativeGasUsed,
+      final Bytes bloomFilter,
+      final List<List<Bytes>> logs) {
     this.rlpBytes = rlpBytes;
     this.transactionTypeCode = transactionTypeCode;
     this.statusOrStateRoot = statusOrStateRoot;
