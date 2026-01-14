@@ -21,7 +21,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SyncTransactionReceipt {
 
   private final Bytes rlpBytes;
-    private Bytes transactionTypeCode;
+  private Bytes transactionTypeCode;
   private Bytes statusOrStateRoot;
   private Bytes cumulativeGasUsed;
   private Bytes bloomFilter;
@@ -46,29 +46,29 @@ public class SyncTransactionReceipt {
     this.logs = logs;
   }
 
-    public Bytes getRlpBytes() {
-        return rlpBytes;
-    }
+  public Bytes getRlpBytes() {
+    return rlpBytes;
+  }
 
-    public Bytes getTransactionTypeCode() {
-        return transactionTypeCode;
-    }
+  public Bytes getTransactionTypeCode() {
+    return transactionTypeCode;
+  }
 
-    public Bytes getStatusOrStateRoot() {
-        return statusOrStateRoot;
-    }
+  public Bytes getStatusOrStateRoot() {
+    return statusOrStateRoot;
+  }
 
-    public Bytes getCumulativeGasUsed() {
-        return cumulativeGasUsed;
-    }
+  public Bytes getCumulativeGasUsed() {
+    return cumulativeGasUsed;
+  }
 
-    public Bytes getBloomFilter() {
-        return bloomFilter;
-    }
+  public Bytes getBloomFilter() {
+    return bloomFilter;
+  }
 
-    public List<List<Bytes>> getLogs() {
-        return logs;
-    }
+  public List<List<Bytes>> getLogs() {
+    return logs;
+  }
 
   /**
    * Clears all variables except rlpBytes to allow garbage collection immediately instead of after
