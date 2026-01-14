@@ -746,6 +746,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     if (chainPrunerConfiguration.chainPruningEnabled()
+        || chainPrunerConfiguration.balPruningEnabled()
         || dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
@@ -1314,12 +1315,17 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
         syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L),
         chainPrunerConfiguration.chainPruningEnabled()
+                || chainPrunerConfiguration.balPruningEnabled()
             ? ChainDataPruner.Mode.CHAIN_PRUNING
             : (dataStorageConfiguration.getHistoryExpiryPruneEnabled()
                 ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
                 : null),
+        chainPrunerConfiguration.chainPruningEnabled(),
+        chainPrunerConfiguration.balPruningEnabled(),
         chainPrunerConfiguration.chainPruningBlocksRetained(),
+        chainPrunerConfiguration.balsRetained(),
         chainPrunerConfiguration.blocksFrequency(),
+        chainPrunerConfiguration.balsPruningFrequency(),
         chainPrunerConfiguration.preMergePruningBlocksQuantity(),
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",

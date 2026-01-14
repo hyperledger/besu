@@ -1645,7 +1645,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     Long chainDataPruningBlocksRetained =
         unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    final Long balsRetained = unstableChainPruningOptions.getBalsRetained();
+    if (balsRetained != null && balsRetained < 0) {
+      throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
+    }
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+      if (unstableChainPruningOptions.getChainBalPruningEnabled()
+          && balsRetained != null
+          && balsRetained > chainDataPruningBlocksRetained) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained");
+      }
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       if (chainDataPruningBlocksRetained
           < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
