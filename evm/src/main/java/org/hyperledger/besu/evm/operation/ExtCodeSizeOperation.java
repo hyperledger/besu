@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -59,14 +60,32 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       final long cost = cost(accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        final Account account = getAccount(address, frame);
+      }
 
-        Bytes codeSize = (account == null) ? Bytes.EMPTY : Words.intBytes(account.getCode().size());
-        frame.pushStackItem(codeSize);
-
+      final Account account = getAccount(address, frame);
+      if (account == null || account.isEmpty()) {
+        // Account does not exist, so code size is zero
+        frame.pushStackItem(Bytes.EMPTY);
         return new OperationResult(cost, null);
       }
+
+      final boolean accountHasCodeCache = account.getCodeCache() != null;
+
+      final Code code;
+      // Bonsai accounts may have a fully cached code, so we use that one
+      if (accountHasCodeCache) {
+        code = account.getOrCreateCachedCode();
+      }
+      // Any other account can only use the cached jump dest analysis if available
+      else {
+        code = evm.getOrCreateCachedJumpDest(account.getCodeHash(), account.getCode());
+      }
+
+      Bytes codeSize = Words.intBytes(code.getSize());
+      frame.pushStackItem(codeSize);
+
+      return new OperationResult(cost, null);
+
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
