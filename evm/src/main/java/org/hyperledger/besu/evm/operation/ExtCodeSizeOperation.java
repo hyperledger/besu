@@ -71,17 +71,16 @@ public class ExtCodeSizeOperation extends AbstractOperation {
 
       final boolean accountHasCodeCache = account.getCodeCache() != null;
 
-      final Code code;
+      final Bytes codeSize;
       // Bonsai accounts may have a fully cached code, so we use that one
       if (accountHasCodeCache) {
-        code = account.getOrCreateCachedCode();
+        codeSize = Words.intBytes(account.getOrCreateCachedCode().getSize());
       }
       // Any other account can only use the cached jump dest analysis if available
       else {
-        code = evm.getOrCreateCachedJumpDest(account.getCodeHash(), account.getCode());
+        codeSize = Words.intBytes(account.getCode().size());
       }
 
-      Bytes codeSize = Words.intBytes(code.getSize());
       frame.pushStackItem(codeSize);
 
       return new OperationResult(cost, null);
