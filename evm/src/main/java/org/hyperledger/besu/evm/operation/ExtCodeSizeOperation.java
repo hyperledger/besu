@@ -76,7 +76,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       if (accountHasCodeCache) {
         codeSize = Words.intBytes(account.getOrCreateCachedCode().getSize());
       }
-      // Any other account can only use the cached jump dest analysis if available
+      // Any other account can only use the code bytes directly
       else {
         codeSize = Words.intBytes(account.getCode().size());
       }
