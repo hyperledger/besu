@@ -33,11 +33,12 @@ public class SyncTransactionReceiptEncoder {
 
   public Bytes encodeForRootCalculation(final SyncTransactionReceipt receipt) {
     final boolean isFrontier =
-        !receipt.transactionTypeCode().isEmpty()
-            && receipt.transactionTypeCode().get(0) == TransactionType.FRONTIER.getSerializedType();
+        !receipt.getTransactionTypeCode().isEmpty()
+            && receipt.getTransactionTypeCode().get(0)
+                == TransactionType.FRONTIER.getSerializedType();
 
     List<Bytes> encodedLogs =
-        receipt.logs().stream()
+        receipt.getLogs().stream()
             .map(
                 (List<Bytes> log) -> {
                   Bytes encodedLogAddress = rlpEncoder.encode(log.getFirst());
@@ -56,14 +57,14 @@ public class SyncTransactionReceiptEncoder {
             .toList();
     List<Bytes> mainList =
         List.of(
-            rlpEncoder.encode(receipt.statusOrStateRoot()),
-            rlpEncoder.encode(receipt.cumulativeGasUsed()),
-            rlpEncoder.encode(receipt.bloomFilter()),
+            rlpEncoder.encode(receipt.getStatusOrStateRoot()),
+            rlpEncoder.encode(receipt.getCumulativeGasUsed()),
+            rlpEncoder.encode(receipt.getBloomFilter()),
             rlpEncoder.encodeList(encodedLogs));
 
     return !isFrontier
         ? Bytes.concatenate(
-            rlpEncoder.encode(receipt.transactionTypeCode()), rlpEncoder.encodeList(mainList))
+            rlpEncoder.encode(receipt.getTransactionTypeCode()), rlpEncoder.encodeList(mainList))
         : rlpEncoder.encodeList(mainList);
   }
 }
