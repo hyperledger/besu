@@ -137,7 +137,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
    */
   protected final <S> CompletableFuture<S> executeWorkerSubTask(
       final EthScheduler scheduler, final Supplier<CompletableFuture<S>> subTask) {
-    return executeSubTask(() -> scheduler.scheduleSyncWorkerTask(subTask));
+    return executeSubTask(() -> scheduler.scheduleServiceTask(subTask));
   }
 
   /** Execute core task logic. */

@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
 
   private static final int TARGET_BLOCK_HEIGHT = 70;
+  private static final int SYNC_TIMEOUT = 60;
 
   static Stream<Arguments> syncModeTestParameters() {
     return Stream.of(SyncMode.FULL, SyncMode.SNAP, SyncMode.CHECKPOINT)
@@ -60,10 +61,10 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     // Start first three validators
     cluster.start(validator1, validator2, validator3);
 
-    validator1.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, TARGET_BLOCK_HEIGHT));
+    validator1.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, SYNC_TIMEOUT));
     // Add validator4 to cluster and start
     cluster.addNode(validator4);
 
-    validator4.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, 60));
+    validator4.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, SYNC_TIMEOUT));
   }
 }

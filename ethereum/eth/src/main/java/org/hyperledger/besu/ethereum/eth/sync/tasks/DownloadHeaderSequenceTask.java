@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeer
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -68,7 +69,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   private final SynchronizerConfiguration synchronizerConfiguration;
 
   private final BlockHeader[] headers;
-  private final BlockHeader referenceHeader;
+  private final Optional<BlockHeader> referenceHeader;
+  private final Optional<Long> referenceBlockNumber;
   private final int segmentLength;
   private final long startingBlockNumber;
   private final ValidationPolicy validationPolicy;
@@ -81,7 +83,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final BlockHeader referenceHeader,
+      final Optional<BlockHeader> referenceHeader,
+      final Optional<Long> referenceBlockNumber,
       final int segmentLength,
       final int maxRetries,
       final ValidationPolicy validationPolicy,
@@ -92,14 +95,19 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     this.ethContext = ethContext;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.referenceHeader = referenceHeader;
+    this.referenceBlockNumber = referenceBlockNumber;
     this.segmentLength = segmentLength;
     this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
 
     checkArgument(segmentLength > 0, "Segment length must not be 0");
-    startingBlockNumber = referenceHeader.getNumber() - segmentLength;
+    startingBlockNumber = getReferenceBlockNumber() - segmentLength;
     headers = new BlockHeader[segmentLength];
     lastFilledHeaderIndex = segmentLength;
+  }
+
+  private long getReferenceBlockNumber() {
+    return referenceHeader.map(BlockHeader::getNumber).orElseGet(referenceBlockNumber::get);
   }
 
   public static DownloadHeaderSequenceTask endingAtHeader(
@@ -117,7 +125,8 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolContext,
         ethContext,
         synchronizerConfiguration,
-        referenceHeader,
+        Optional.of(referenceHeader),
+        Optional.empty(),
         segmentLength,
         maxRetries,
         validationPolicy,
@@ -138,7 +147,30 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         protocolContext,
         ethContext,
         synchronizerConfiguration,
-        referenceHeader,
+        Optional.of(referenceHeader),
+        Optional.empty(),
+        segmentLength,
+        DEFAULT_RETRIES,
+        validationPolicy,
+        metricsSystem);
+  }
+
+  public static DownloadHeaderSequenceTask endingAtBlockNumber(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SynchronizerConfiguration synchronizerConfiguration,
+      final long referenceBlockNumber,
+      final int segmentLength,
+      final ValidationPolicy validationPolicy,
+      final MetricsSystem metricsSystem) {
+    return new DownloadHeaderSequenceTask(
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        synchronizerConfiguration,
+        Optional.empty(),
+        Optional.of(referenceBlockNumber),
         segmentLength,
         DEFAULT_RETRIES,
         validationPolicy,
@@ -148,8 +180,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   @Override
   protected CompletableFuture<List<BlockHeader>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
-    LOG.debug(
-        "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
+    LOG.debug("Downloading headers from {} to {}.", startingBlockNumber, getReferenceBlockNumber());
     final CompletableFuture<List<BlockHeader>> headersFuture;
     if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
       headersFuture =
@@ -175,25 +206,47 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final Optional<EthPeer> assignedPeer) {
     // Figure out parameters for our headers request
     final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
-    final BlockHeader referenceHeaderForNextRequest =
-        partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
-    final Hash referenceHash = referenceHeaderForNextRequest.getHash();
-    final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
 
-    return executeSubTask(
-        () -> {
-          // Ask for count + 1 because we'll retrieve the previous header as well
-          final AbstractGetHeadersFromPeerTask headersTask =
-              GetHeadersFromPeerByHashTask.endingAtHash(
-                  protocolSchedule,
-                  ethContext,
-                  referenceHash,
-                  referenceHeaderForNextRequest.getNumber(),
-                  count + 1,
-                  metricsSystem);
-          assignedPeer.ifPresent(headersTask::assignPeer);
-          return headersTask.run();
-        });
+    if (referenceHeader.isPresent()) {
+      final BlockHeader referenceHeaderForNextRequest =
+          partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader.get();
+      final Hash referenceHash = referenceHeaderForNextRequest.getHash();
+      final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+
+      return executeSubTask(
+          () -> {
+            // Ask for count + 1 because we'll retrieve the previous header as well
+            final AbstractGetHeadersFromPeerTask headersTask =
+                GetHeadersFromPeerByHashTask.endingAtHash(
+                    protocolSchedule,
+                    ethContext,
+                    referenceHash,
+                    referenceHeaderForNextRequest.getNumber(),
+                    count + 1,
+                    metricsSystem);
+            assignedPeer.ifPresent(headersTask::assignPeer);
+            return headersTask.run();
+          });
+    } else {
+      final long referenceBlockNumberNextRequest =
+          partiallyFilled ? headers[lastFilledHeaderIndex].getNumber() : referenceBlockNumber.get();
+      final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+
+      return executeSubTask(
+          () -> {
+            // Ask for count + 1 because we'll retrieve the previous header as well
+            final AbstractGetHeadersFromPeerTask headersTask =
+                GetHeadersFromPeerByNumberTask.endingAtNumber(
+                    protocolSchedule,
+                    ethContext,
+                    referenceBlockNumberNextRequest,
+                    count + 1,
+                    0,
+                    metricsSystem);
+            assignedPeer.ifPresent(headersTask::assignPeer);
+            return headersTask.run();
+          });
+    }
   }
 
   private CompletableFuture<PeerTaskExecutorResult<List<BlockHeader>>>
@@ -204,35 +257,68 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
             () -> {
               // Figure out parameters for our headers request
               final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
-              final BlockHeader referenceHeaderForNextRequest =
-                  partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader;
-              final Hash referenceHash = referenceHeaderForNextRequest.getHash();
-              final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
 
-              GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      referenceHash,
-                      referenceHeaderForNextRequest.getNumber(),
-                      count + 1,
-                      0,
-                      GetHeadersFromPeerTask.Direction.REVERSE,
-                      protocolSchedule);
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult;
-              if (ethPeer.isPresent()) {
-                taskResult =
-                    ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
+              if (referenceHeader.isPresent()) {
+                final BlockHeader referenceHeaderForNextRequest =
+                    partiallyFilled ? headers[lastFilledHeaderIndex] : referenceHeader.get();
+                final Hash referenceHash = referenceHeaderForNextRequest.getHash();
+                final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
+
+                GetHeadersFromPeerTask task =
+                    new GetHeadersFromPeerTask(
+                        referenceHash,
+                        referenceHeaderForNextRequest.getNumber(),
+                        count + 1,
+                        0,
+                        GetHeadersFromPeerTask.Direction.REVERSE,
+                        protocolSchedule);
+                PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+                if (ethPeer.isPresent()) {
+                  taskResult =
+                      ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
+                } else {
+                  taskResult = ethContext.getPeerTaskExecutor().execute(task);
+                }
+
+                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  return CompletableFuture.failedFuture(
+                      new RuntimeException(
+                          "Failed to download headers. Response code was "
+                              + taskResult.responseCode()));
+                }
+                return CompletableFuture.completedFuture(taskResult);
               } else {
-                taskResult = ethContext.getPeerTaskExecutor().execute(task);
-              }
+                final long referenceBlockNumberForNextRequest =
+                    partiallyFilled
+                        ? headers[lastFilledHeaderIndex].getNumber()
+                        : referenceBlockNumber.get();
+                final int count = partiallyFilled ? lastFilledHeaderIndex : segmentLength;
 
-              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException(
-                        "Failed to download headers. Response code was "
-                            + taskResult.responseCode()));
+                GetHeadersFromPeerTask task =
+                    new GetHeadersFromPeerTask(
+                        referenceBlockNumberForNextRequest,
+                        count + 1,
+                        0,
+                        GetHeadersFromPeerTask.Direction.REVERSE,
+                        protocolSchedule);
+                PeerTaskExecutorResult<List<BlockHeader>> taskResult;
+                if (ethPeer.isPresent()) {
+                  taskResult =
+                      ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer.get());
+                } else {
+                  taskResult = ethContext.getPeerTaskExecutor().execute(task);
+                }
+
+                if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+                    || taskResult.result().isEmpty()) {
+                  return CompletableFuture.failedFuture(
+                      new RuntimeException(
+                          "Failed to download headers. Response code was "
+                              + taskResult.responseCode()));
+                }
+                return CompletableFuture.completedFuture(taskResult);
               }
-              return CompletableFuture.completedFuture(taskResult);
             });
   }
 
@@ -268,14 +354,25 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
     final int previousHeaderIndex = lastFilledHeaderIndex;
     for (final BlockHeader header : blockHeaders) {
       final int headerIndex =
-          Ints.checkedCast(segmentLength - (referenceHeader.getNumber() - header.getNumber()));
+          Ints.checkedCast(segmentLength - (getReferenceBlockNumber() - header.getNumber()));
       if (!firstSkipped) {
         // Skip over reference header
         firstSkipped = true;
         continue;
       }
       if (child == null) {
-        child = (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
+        if (referenceHeader.isPresent()) {
+          child =
+              (headerIndex == segmentLength - 1) ? referenceHeader.get() : headers[headerIndex + 1];
+        } else {
+          child =
+              (headerIndex == segmentLength - 1)
+                  ? blockHeaders.stream()
+                      .filter(h -> h.getNumber() == referenceBlockNumber.get())
+                      .findFirst()
+                      .orElse(null)
+                  : headers[headerIndex + 1];
+        }
       }
 
       final boolean foundChild = child != null;
