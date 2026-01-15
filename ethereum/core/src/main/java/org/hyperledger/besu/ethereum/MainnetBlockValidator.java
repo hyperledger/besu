@@ -188,30 +188,27 @@ public class MainnetBlockValidator implements BlockValidator {
         return retval;
       }
 
-      final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
-      final Optional<Hash> providedBalHash = blockAccessList.map(BodyValidation::balHash);
-
-      if (!headerBalHash.equals(providedBalHash)) {
-        final String errorMessage;
-        if (headerBalHash.isPresent() && providedBalHash.isPresent()) {
+      if (blockAccessList.isPresent()) {
+        final Hash providedBalHash = BodyValidation.balHash(blockAccessList.get());
+        final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
+        String errorMessage = null;
+        if (headerBalHash.isEmpty()) {
           errorMessage =
               String.format(
-                  "Block access list hash mismatch, calculated: %s header: %s",
-                  providedBalHash.get().toHexString(), headerBalHash.get().toHexString());
-        } else if (headerBalHash.isPresent()) {
+                  "Block access list provided with hash %s but header is missing balHash",
+                  providedBalHash.toHexString());
+        } else if (!headerBalHash.get().equals(providedBalHash)) {
           errorMessage =
               String.format(
-                  "Block access list hash present in header %s but block body has no access list",
-                  headerBalHash.get().toHexString());
-        } else {
-          errorMessage =
-              String.format(
-                  "Block access list present in body with hash %s but header is missing balHash",
-                  providedBalHash.get().toHexString());
+                  "Block access list hash mismatch, provided: %s header: %s",
+                  providedBalHash.toHexString(), headerBalHash.get().toHexString());
         }
-        var result = new BlockProcessingResult(errorMessage);
-        handleFailedBlockProcessing(block, blockAccessList, result, shouldRecordBadBlock, context);
-        return result;
+        if (errorMessage != null) {
+          var result = new BlockProcessingResult(errorMessage);
+          handleFailedBlockProcessing(
+              block, blockAccessList, result, shouldRecordBadBlock, context);
+          return result;
+        }
       }
 
       var result = processBlock(context, worldState, block, blockAccessList);
