@@ -74,8 +74,7 @@ import org.mockito.Mockito;
 public class BonsaiWorldStateKeyValueStorageTest {
 
   public static Collection<Object[]> flatDbMode() {
-    return Arrays.asList(
-        new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}, {FlatDbMode.ARCHIVE}});
+    return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}});
   }
 
   public static Stream<Arguments> flatDbModeAndKeyMapper() {
@@ -87,41 +86,59 @@ public class BonsaiWorldStateKeyValueStorageTest {
             org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
 
     return Stream.of(
-        Arguments.of(FlatDbMode.FULL, flatDBKey),
-        Arguments.of(FlatDbMode.PARTIAL, flatDBKey),
-        Arguments.of(FlatDbMode.ARCHIVE, flatDBArchiveKey));
+        Arguments.of(FlatDbMode.FULL, flatDBKey, DataStorageFormat.BONSAI),
+        Arguments.of(FlatDbMode.PARTIAL, flatDBKey, DataStorageFormat.BONSAI),
+        Arguments.of(FlatDbMode.FULL, flatDBArchiveKey, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS),
+        Arguments.of(
+            FlatDbMode.PARTIAL, flatDBArchiveKey, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS));
   }
 
   public static Collection<Object[]> flatDbModeAndCodeStorageMode() {
     return Arrays.asList(
         new Object[][] {
-          {FlatDbMode.FULL, false},
-          {FlatDbMode.PARTIAL, false},
-          {FlatDbMode.ARCHIVE, false},
-          {FlatDbMode.FULL, true},
-          {FlatDbMode.PARTIAL, true},
-          {FlatDbMode.ARCHIVE, true}
+          {FlatDbMode.FULL, false, DataStorageFormat.BONSAI},
+          {FlatDbMode.PARTIAL, false, DataStorageFormat.BONSAI},
+          {FlatDbMode.FULL, false, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS},
+          {FlatDbMode.PARTIAL, false, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS},
+          {FlatDbMode.FULL, true, DataStorageFormat.BONSAI},
+          {FlatDbMode.PARTIAL, true, DataStorageFormat.BONSAI},
+          {FlatDbMode.FULL, true, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS},
+          {FlatDbMode.PARTIAL, true, DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS}
         });
   }
 
   BonsaiWorldStateKeyValueStorage storage;
 
   public BonsaiWorldStateKeyValueStorage setUp(final FlatDbMode flatDbMode) {
-    return setUp(flatDbMode, false);
+    return setUp(flatDbMode, false, DataStorageFormat.BONSAI);
   }
 
   public BonsaiWorldStateKeyValueStorage setUp(
       final FlatDbMode flatDbMode, final boolean useCodeHashStorage) {
-    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
+    return setUp(flatDbMode, useCodeHashStorage, DataStorageFormat.BONSAI);
+  }
+
+  public BonsaiWorldStateKeyValueStorage setUp(
+      final FlatDbMode flatDbMode, final DataStorageFormat storageFormat) {
+    return setUp(flatDbMode, false, storageFormat);
+  }
+
+  public BonsaiWorldStateKeyValueStorage setUp(
+      final FlatDbMode flatDbMode,
+      final boolean useCodeHashStorage,
+      final DataStorageFormat storageFormat) {
+    if (storageFormat.equals(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS)) {
       storage = emptyArchiveStorage(useCodeHashStorage);
-      storage.upgradeToFullFlatDbMode();
-    } else if (flatDbMode.equals(FlatDbMode.FULL)) {
+    } else {
       storage = emptyStorage(useCodeHashStorage);
+    }
+
+    if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage.upgradeToFullFlatDbMode();
     } else if (flatDbMode.equals(FlatDbMode.PARTIAL)) {
-      storage = emptyStorage(useCodeHashStorage);
       storage.downgradeToPartialFlatDbMode();
     }
+
     return storage;
   }
 
@@ -153,8 +170,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetSpecialValues(
-      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
-    setUp(flatDbMode, accountHashCodeStorage);
+      final FlatDbMode flatDbMode,
+      final boolean accountHashCodeStorage,
+      final DataStorageFormat storageFormat) {
+    setUp(flatDbMode, accountHashCodeStorage, storageFormat);
     storage
         .updater()
         .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
@@ -168,8 +187,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbModeAndCodeStorageMode")
   void getCode_saveAndGetRegularValue(
-      final FlatDbMode flatDbMode, final boolean accountHashCodeStorage) {
-    setUp(flatDbMode, accountHashCodeStorage);
+      final FlatDbMode flatDbMode,
+      final boolean accountHashCodeStorage,
+      final DataStorageFormat storageFormat) {
+    setUp(flatDbMode, accountHashCodeStorage, storageFormat);
     final Bytes bytes = Bytes.fromHexString("0x123456");
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
@@ -433,8 +454,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbModeAndKeyMapper")
   void clear_putGetAccountFlatDbStrategy(
-      final FlatDbMode flatDbMode, final Function<byte[], byte[]> keyMapper) {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+      final FlatDbMode flatDbMode,
+      final Function<byte[], byte[]> keyMapper,
+      final DataStorageFormat storageFormat) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode, storageFormat));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -460,8 +483,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(storage.getAccount(account.addressHash())).isNotEmpty();
 
     // Get the raw key/value out of storage and check that as well. The key differs between flat DB
-    // and flat archive DB
-    // and we want to ensure keys put to the archive DB include the archive block context/suffix
+    // and flat archive DB and we want to ensure keys put to the archive DB include the archive
+    // block context/suffix
     byte[] lookupKey = keyMapper.apply(account.addressHash().toArrayUnsafe());
     assertThat(
             Bytes.wrap(
@@ -490,8 +513,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource({"flatDbModeAndKeyMapper"})
   void clear_streamFlatAccounts(
-      final FlatDbMode flatDbMode, final Function<byte[], byte[]> keyMapper) {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
+      final FlatDbMode flatDbMode,
+      final Function<byte[], byte[]> keyMapper,
+      final DataStorageFormat storageFormat) {
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode, storageFormat));
 
     // save world state root hash
     BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -840,12 +865,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @MethodSource("flatDbMode")
   void isWorldStateAvailable_defaultIsFalse(final FlatDbMode flatDbMode) {
     setUp(flatDbMode);
-    if (flatDbMode.equals(FlatDbMode.ARCHIVE)) {
-      assertThat(emptyArchiveStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY))
-          .isFalse();
-    } else {
-      assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
-    }
+    assertThat(emptyArchiveStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY))
+        .isFalse();
+    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
   }
 
   @ParameterizedTest
@@ -894,7 +916,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG);
+            DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG);
     updateStorageArchiveBlock(archiveStorage.getComposedWorldStateStorage(), 1);
     return archiveStorage;
   }
@@ -922,7 +944,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
             ImmutableDataStorageConfiguration.builder()
-                .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+                .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS)
                 .pathBasedExtraStorageConfiguration(
                     ImmutablePathBasedExtraStorageConfiguration.builder()
                         .maxLayersToLoad(3L)

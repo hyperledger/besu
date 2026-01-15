@@ -93,7 +93,10 @@ public class FastSyncDownloader<REQUEST> {
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     worldStateStorageCoordinator.applyOnMatchingStrategies(
-        List.of(DataStorageFormat.BONSAI, DataStorageFormat.X_BONSAI_ARCHIVE),
+        List.of(
+            DataStorageFormat.BONSAI,
+            DataStorageFormat.X_BONSAI_ARCHIVE,
+            DataStorageFormat.X_BONSAI_ARCHIVE_PROOFS),
         worldStateKeyValueStorage -> {
           BonsaiWorldStateKeyValueStorage onBonsai =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView.encodeTrieValue;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -43,8 +42,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
 import java.util.Objects;
@@ -165,12 +162,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
         bonsaiUpdater ->
             accountTrie.commit(
                 (location, hash, value) ->
-                    writeTrieNode(
-                        TRIE_BRANCH_STORAGE,
-                        bonsaiUpdater.getWorldStateTransaction(),
-                        location,
-                        value)));
-
+                    bonsaiUpdater.putAccountStateTrieNode(location, hash, value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -396,14 +388,6 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   protected Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return getWorldStateStorage().getAccountStateTrieNode(location, nodeHash);
-  }
-
-  private void writeTrieNode(
-      final SegmentIdentifier segmentId,
-      final SegmentedKeyValueStorageTransaction tx,
-      final Bytes location,
-      final Bytes value) {
-    tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
   protected Optional<Bytes> getStorageTrieNode(

@@ -495,10 +495,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
@@ -528,12 +525,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : storageFormat == DataStorageFormat.BONSAI
-                        ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-                        : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
@@ -588,10 +580,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .dataStorageConfiguration(
-                storageFormat == DataStorageFormat.FOREST
-                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .dataStorageConfiguration(getDefaultStorageConfiguration(storageFormat))
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftMigrationGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
@@ -822,5 +811,15 @@ public class BesuNodeFactory {
 
   public BesuNode runCommand(final String command) throws IOException {
     return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
+  }
+
+  private DataStorageConfiguration getDefaultStorageConfiguration(
+      final DataStorageFormat storageFormat) {
+    return switch (storageFormat) {
+      case FOREST -> DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
+      case BONSAI -> DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
+      case X_BONSAI_ARCHIVE -> DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG;
+      case X_BONSAI_ARCHIVE_PROOFS -> DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_PROOFS_CONFIG;
+    };
   }
 }

@@ -372,6 +372,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public synchronized Optional<BlockHeader> getBlockHeaderSafe(final long blockNumber) {
+    return blockchainStorage.getBlockHash(blockNumber).flatMap(this::getBlockHeader);
+  }
+
+  @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
     return blockHeadersCache
         .map(

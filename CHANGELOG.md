@@ -295,6 +295,7 @@ Affects users of eth_subscribe (WebSocket) eg SSV, and ethstats integration
   - SNAP sync will now download only headers for pre-checkpoint (pre-merge) blocks
   - `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` can be set to false to force SNAP sync to download pre-checkpoint (pre-merge) blocks
   - `--history-expiry-prune` can be used to enable online pruning of pre-checkpoint (pre-merge) blocks as well as modifying database garbage collection parameters to free up disk space from the pruned blocks
+- Experimental Bonsai Archive support enhanced to support `eth_proof` for historic blocks [#8918](https://github.com/hyperledger/besu/pull/8918)
 
 ### Performance
 - Increase mainnet gas limit to 45M [#8824](https://github.com/hyperledger/besu/pull/8824)
