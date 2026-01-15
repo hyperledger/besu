@@ -23,6 +23,12 @@ import java.util.Optional;
 /** Responsible for creating a block. */
 public interface QbftBlockCreator {
 
+  /**
+   * Block creation result.
+   *
+   * @param block the block
+   * @param blockAccessList optional block access list
+   */
   public record BlockCreationResult(QbftBlock block, Optional<BlockAccessList> blockAccessList) {}
 
   /**

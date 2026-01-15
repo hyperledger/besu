@@ -88,6 +88,9 @@ class AbstractBlockProcessorIntegrationTest {
 
   private static final Wei COINBASE_REWARD = Wei.of(2_000_000_000_000_000L);
 
+  private static final Optional<BlockAccessList> EMPTY_BAL =
+      Optional.of(BlockAccessList.builder().build());
+
   private ProtocolContext protocolContext;
   private WorldStateArchive worldStateArchive;
   private DefaultBlockchain blockchain;
@@ -219,7 +222,8 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
@@ -255,7 +259,8 @@ class AbstractBlockProcessorIntegrationTest {
             setSlot4Transaction);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
@@ -337,11 +342,13 @@ class AbstractBlockProcessorIntegrationTest {
             blockchain,
             worldStateParallel,
             block,
+            EMPTY_BAL,
             new ParallelTransactionPreprocessing(
                 transactionProcessor, Runnable::run, BalConfiguration.DEFAULT));
 
     BlockProcessingResult sequentialResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldStateSequential, block);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldStateSequential, block, EMPTY_BAL);
 
     assertTrue(sequentialResult.isSuccessful());
     assertTrue(parallelResult.isSuccessful());
@@ -409,7 +416,8 @@ class AbstractBlockProcessorIntegrationTest {
             transactionTransfer2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transactionTransfer1.getSender());
@@ -469,7 +477,8 @@ class AbstractBlockProcessorIntegrationTest {
             transferTransaction3);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     BonsaiAccount updatedSenderAccount =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -539,7 +548,8 @@ class AbstractBlockProcessorIntegrationTest {
             transferTransaction2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -615,7 +625,8 @@ class AbstractBlockProcessorIntegrationTest {
             transferTransaction2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -682,7 +693,8 @@ class AbstractBlockProcessorIntegrationTest {
 
     MutableWorldState worldState = worldStateArchive.getWorldState();
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -740,7 +752,8 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -805,7 +818,8 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -871,7 +885,8 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
     assertTrue(blockProcessingResult.isSuccessful());
 
     // Verify the state
@@ -936,7 +951,8 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -1003,7 +1019,8 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            protocolContext, blockchain, worldState, blockWithTransactions, EMPTY_BAL);
 
     assertTrue(blockProcessingResult.isSuccessful());
 

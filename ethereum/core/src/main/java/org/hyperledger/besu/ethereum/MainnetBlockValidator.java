@@ -262,6 +262,7 @@ public class MainnetBlockValidator implements BlockValidator {
    * Handles the processing of a block that has failed validation or processing.
    *
    * @param failedBlock the block that failed processing
+   * @param blockAccessList optional block access list
    * @param result the result of the block processing
    * @param shouldRecordBadBlock whether to record the block as a bad block
    * @param context the ProtocolContext
@@ -310,6 +311,7 @@ public class MainnetBlockValidator implements BlockValidator {
    * @param context the ProtocolContext
    * @param worldState the world state for the parent block state root hash
    * @param block the block to be processed
+   * @param blockAccessList optional block access list
    * @return the result of processing the block
    */
   protected BlockProcessingResult processBlock(

@@ -143,6 +143,12 @@ public class QbftRound {
     return createBlockWithAccessList(headerTimeStampSeconds).block();
   }
 
+  /**
+   * Create a block with additional data
+   *
+   * @param headerTimeStampSeconds of the block
+   * @return a block creation result
+   */
   public BlockCreationResult createBlockWithAccessList(final long headerTimeStampSeconds) {
     LOG.debug(
         "Creating proposed block (with access list). round={}", roundState.getRoundIdentifier());
@@ -191,6 +197,7 @@ public class QbftRound {
    * Update state with proposal and transmit.
    *
    * @param block the block
+   * @param blockAccessList optional block access list
    * @param roundChanges the round changes
    * @param prepares the prepares
    */

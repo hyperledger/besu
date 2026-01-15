@@ -56,6 +56,13 @@ public class ProposalPayload extends QbftPayload {
     this.blockAccessList = blockAccessList;
   }
 
+  /**
+   * Instantiates a new Proposal payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param proposedBlock the proposed block
+   * @param blockEncoder the qbft block encoder
+   */
   public ProposalPayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final QbftBlock proposedBlock,

@@ -36,6 +36,7 @@ public class PreparedCertificate {
    * @param block the block
    * @param prepares the prepares
    * @param round the round
+   * @param blockAccessList optional block access list
    */
   public PreparedCertificate(
       final QbftBlock block,
@@ -48,6 +49,13 @@ public class PreparedCertificate {
     this.blockAccessList = blockAccessList;
   }
 
+  /**
+   * Instantiates a new Prepared certificate.
+   *
+   * @param block the block
+   * @param prepares the prepares
+   * @param round the round
+   */
   public PreparedCertificate(
       final QbftBlock block, final List<SignedData<PreparePayload>> prepares, final int round) {
     this(block, prepares, round, Optional.empty());

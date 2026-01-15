@@ -73,6 +73,7 @@ public interface BlockValidator {
    * @param block the block to validate and process
    * @param headerValidationMode the header validation mode
    * @param ommerValidationMode the ommer validation mode
+   * @param blockAccessList optional block access list for validation and processing
    * @param shouldPersist flag indicating whether the block should be persisted
    * @param shouldRecordBadBlock flag indicating whether bad blocks should be recorded
    * @return the result of the block processing
