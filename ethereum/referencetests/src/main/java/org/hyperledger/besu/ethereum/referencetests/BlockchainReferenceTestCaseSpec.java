@@ -32,7 +32,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
@@ -87,10 +89,11 @@ public class BlockchainReferenceTestCaseSpec {
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
-              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+              public <T extends BesuService> void addService(
+                  final Class<T> serviceType, final T service) {}
 
               @Override
-              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+              public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
                 return Optional.empty();
               }
             },
@@ -318,6 +321,22 @@ public class BlockchainReferenceTestCaseSpec {
               : Optional.of(input.readList(Withdrawal::readFrom));
       final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
       return new Block(header, body);
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      final RLPInput input = new BytesValueRLPInput(rlp, false);
+      input.enterList();
+      final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+      BlockHeader.readFrom(input, blockHeaderFunctions);
+      input.readList(Transaction::readFrom);
+      input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions));
+      if (input.isEndOfCurrentList()) {
+        return Optional.empty();
+      }
+      input.readList(Withdrawal::readFrom);
+      return input.isEndOfCurrentList()
+          ? Optional.empty()
+          : Optional.of(BlockAccessListDecoder.decode(input));
     }
   }
 }
