@@ -290,6 +290,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
+            blockParam.getSlotNumber(),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash

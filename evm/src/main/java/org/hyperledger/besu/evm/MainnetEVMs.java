@@ -118,6 +118,7 @@ import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
 import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
+import org.hyperledger.besu.evm.operation.SlotNumOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -1127,6 +1128,9 @@ public class MainnetEVMs {
       final BigInteger chainID,
       final EvmConfiguration evmConfiguration) {
     registerOsakaOperations(registry, gasCalculator, chainID, evmConfiguration);
+
+    // EIP-7843 SLOTNUM opcode
+    registry.put(new SlotNumOperation(gasCalculator));
   }
 
   /**
