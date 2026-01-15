@@ -60,4 +60,8 @@ public abstract class DiscoveryPeer extends DefaultPeer {
   }
 
   public abstract boolean isReady();
+
+  public boolean isListening() {
+    return getEnodeURL().isListening();
+  }
 }
