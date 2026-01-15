@@ -14,53 +14,53 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.GetBlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
-public class EthGetBlockAccessListByNumber extends AbstractBlockParameterMethod {
+public class EthGetBlockAccessListByBlockHash implements JsonRpcMethod {
 
-  public EthGetBlockAccessListByNumber(final BlockchainQueries blockchainQueries) {
-    super(blockchainQueries);
+  private final BlockchainQueries blockchainQueries;
+
+  public EthGetBlockAccessListByBlockHash(final BlockchainQueries blockchainQueries) {
+    this.blockchainQueries = blockchainQueries;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_GET_BLOCK_ACCESS_LIST_BY_NUMBER.getMethodName();
+    return RpcMethod.ETH_GET_BLOCK_ACCESS_LIST_BY_BLOCK_HASH.getMethodName();
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Hash blockHash;
     try {
-      return requestContext.getRequiredParameter(0, BlockParameter.class);
+      blockHash = requestContext.getRequiredParameter(0, Hash.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
-  }
 
-  @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext requestContext, final long blockNumber) {
-    return getBlockchainQueries()
-        .getBlockHashByNumber(blockNumber)
-        .flatMap(
-            hash ->
-                getBlockchainQueries()
-                    .getBlockchain()
-                    .getBlockAccessList(hash)
-                    .map(
-                        bal ->
-                            new GetBlockAccessListResult(
-                                BodyValidation.balHash(bal).toString(),
-                                BlockAccessListResult.fromBlockAccessList(bal))))
-        .orElse(null);
+    final Object result =
+        blockchainQueries
+            .getBlockchain()
+            .getBlockAccessList(blockHash)
+            .map(
+                bal ->
+                    new GetBlockAccessListResult(
+                        BodyValidation.balHash(bal).toString(),
+                        BlockAccessListResult.fromBlockAccessList(bal)))
+            .orElse(null);
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 }
