@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -25,8 +24,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.List;
 
 import io.vertx.core.Vertx;
 
@@ -39,9 +36,7 @@ public class PeerDiscoveryAgentFactoryV4 implements PeerDiscoveryAgentFactory {
   private final NatService natService;
   private final MetricsSystem metricsSystem;
   private final StorageProvider storageProvider;
-  private final Blockchain blockchain;
-  private final List<Long> blockNumberForks;
-  private final List<Long> timestampForks;
+  private final ForkIdManager forkIdManager;
 
   public PeerDiscoveryAgentFactoryV4(
       final Vertx vertx,
@@ -51,10 +46,7 @@ public class PeerDiscoveryAgentFactoryV4 implements PeerDiscoveryAgentFactory {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final Blockchain blockchain,
-      final List<Long> blockNumberForks,
-      final List<Long> timestampForks) {
-
+      final ForkIdManager forkIdManager) {
     this.vertx = vertx;
     this.nodeKey = nodeKey;
     this.config = config;
@@ -62,16 +54,11 @@ public class PeerDiscoveryAgentFactoryV4 implements PeerDiscoveryAgentFactory {
     this.natService = natService;
     this.metricsSystem = metricsSystem;
     this.storageProvider = storageProvider;
-    this.blockchain = blockchain;
-    this.blockNumberForks = blockNumberForks;
-    this.timestampForks = timestampForks;
+    this.forkIdManager = forkIdManager;
   }
 
   @Override
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
-    final ForkIdManager forkIdManager =
-        new ForkIdManager(blockchain, blockNumberForks, timestampForks);
-
     return VertxPeerDiscoveryAgent.create(
         vertx,
         nodeKey,
