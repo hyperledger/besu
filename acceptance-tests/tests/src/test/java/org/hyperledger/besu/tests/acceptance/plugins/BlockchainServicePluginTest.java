@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -36,7 +37,8 @@ public class BlockchainServicePluginTest extends AcceptanceTestBase {
     pluginNode =
         besu.createQbftPluginsNode(
             "pluginNode",
-            Collections.singletonList("testPlugins"),
+            List.of("testPlugins"),
+            PluginConfiguration.DEFAULT,
             Collections.singletonList("--plugin-blockchain-service-test-enabled=true"),
             "DEBUG");
 

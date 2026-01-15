@@ -20,6 +20,7 @@ pluginManagement {
 }
 
 rootProject.name='besu'
+include 'acceptance-tests:catalogless-test-plugins'
 include 'acceptance-tests:dsl'
 include 'acceptance-tests:tests'
 include 'acceptance-tests:tests:shanghai'

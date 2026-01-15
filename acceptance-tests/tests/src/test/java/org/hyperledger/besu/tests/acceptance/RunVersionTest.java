@@ -48,7 +48,7 @@ public class RunVersionTest extends AcceptanceTestBase {
         BesuVersionUtils.version()
             + System.lineSeparator()
             + plugins.stream()
-                .map(bp -> bp.getName() + "/test-plugins/" + BesuVersionUtils.shortVersion())
+                .map(bp -> bp.getName() + "/testPlugins/" + BesuVersionUtils.shortVersion())
                 .collect(Collectors.joining(System.lineSeparator()));
 
     WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));

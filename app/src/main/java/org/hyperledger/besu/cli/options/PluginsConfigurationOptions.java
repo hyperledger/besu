@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
 import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_EXTERNAL_PLUGINS_ENABLED;
+import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_PLUGINS_VERIFICATION_MODE;
 import static org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration.DEFAULT_REQUESTED_PLUGINS_INFO;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
+import org.hyperledger.besu.ethereum.core.plugins.PluginsVerificationMode;
 
 import java.util.List;
 
@@ -34,6 +36,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   private static final String PLUGINS_OPTION_NAME = "--plugins";
   private static final String CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME = "--plugin-continue-on-error";
   private static final String PLUGINS_EXTERNAL_ENABLED_OPTION_NAME = "--Xplugins-external-enabled";
+  private static final String PLUGINS_VERIFICATION_MODE_OPTION_NAME = "--plugins-verification-mode";
 
   @CommandLine.Option(
       names = {PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
@@ -54,6 +57,12 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
           "Allow Besu startup even if any plugins fail to initialize correctly (default: ${DEFAULT-VALUE})")
   private boolean continueOnPluginError = DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
 
+  @CommandLine.Option(
+      names = {PLUGINS_VERIFICATION_MODE_OPTION_NAME},
+      description = "How to verify plugins during startup phase (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final PluginsVerificationMode pluginsVerificationMode = DEFAULT_PLUGINS_VERIFICATION_MODE;
+
   /** Default Constructor. */
   public PluginsConfigurationOptions() {}
 
@@ -63,6 +72,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         .externalPluginsEnabled(externalPluginsEnabled)
         .requestedPluginsInfo(plugins)
         .continueOnPluginError(continueOnPluginError)
+        .pluginsVerificationMode(pluginsVerificationMode)
         .build();
   }
 
@@ -74,15 +84,19 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   public void validate(final CommandLine commandLine) {
     String errorMessage =
         String.format(
-            "%s and %s option can only be used when %s is true",
+            "%s, %s and %s options can only be used when %s is true",
             PLUGINS_OPTION_NAME,
             CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
+            PLUGINS_VERIFICATION_MODE_OPTION_NAME,
             PLUGINS_EXTERNAL_ENABLED_OPTION_NAME);
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         errorMessage,
         externalPluginsEnabled,
-        List.of(PLUGINS_OPTION_NAME, CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME));
+        List.of(
+            PLUGINS_OPTION_NAME,
+            CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME,
+            PLUGINS_VERIFICATION_MODE_OPTION_NAME));
   }
 
   @Override
@@ -109,10 +123,17 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, CONTINUE_ON_PLUGIN_ERROR_OPTION_NAME, Boolean::parseBoolean);
 
+    PluginsVerificationMode pluginsVerificationMode =
+        CommandLineUtils.getOptionValueOrDefault(
+            commandLine,
+            PLUGINS_VERIFICATION_MODE_OPTION_NAME,
+            PluginsVerificationMode::valueOfIgnoreCase);
+
     return ImmutablePluginConfiguration.builder()
         .requestedPluginsInfo(plugins)
         .externalPluginsEnabled(externalPluginsEnabled)
         .continueOnPluginError(continueOnPluginError)
+        .pluginsVerificationMode(pluginsVerificationMode)
         .build();
   }
 }

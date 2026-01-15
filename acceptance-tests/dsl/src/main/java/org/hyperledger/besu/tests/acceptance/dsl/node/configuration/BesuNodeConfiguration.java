@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -74,6 +75,7 @@ public class BesuNodeConfiguration {
   private final Map<String, String> environment;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<KeyValueStorageFactory> storageFactory;
+  private final PluginConfiguration pluginConfiguration;
 
   BesuNodeConfiguration(
       final String name,
@@ -111,7 +113,8 @@ public class BesuNodeConfiguration {
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Optional<KeyValueStorageFactory> storageFactory) {
+      final Optional<KeyValueStorageFactory> storageFactory,
+      final PluginConfiguration pluginConfiguration) {
     this.name = name;
     this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -148,6 +151,7 @@ public class BesuNodeConfiguration {
     this.environment = environment;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.storageFactory = storageFactory;
+    this.pluginConfiguration = pluginConfiguration;
   }
 
   public String getName() {
@@ -292,5 +296,9 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyValueStorageFactory> storageImplementation() {
     return storageFactory;
+  }
+
+  public PluginConfiguration getPluginConfiguration() {
+    return pluginConfiguration;
   }
 }
