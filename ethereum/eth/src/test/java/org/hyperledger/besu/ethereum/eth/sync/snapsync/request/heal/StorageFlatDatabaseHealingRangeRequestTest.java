@@ -95,7 +95,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
     account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
-        trie.get(account0Hash)
+        trie.get(account0Hash.getBytes())
             .map(RLP::input)
             .map(PmtStateTrieAccountValue::readFrom)
             .map(PmtStateTrieAccountValue::getStorageRoot)
@@ -109,14 +109,14 @@ class StorageFlatDatabaseHealingRangeRequestTest {
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
-            account0StorageRoot,
+            Bytes32.wrap(account0StorageRoot.getBytes()),
             b -> b,
             b -> b);
 
     // Create a collector to gather slot entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -127,22 +127,22 @@ class StorageFlatDatabaseHealingRangeRequestTest {
             storageTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.firstKey());
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.firstKey());
     proofs.addAll(
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.lastKey()));
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.lastKey()));
 
     // Create a request for healing the flat database with a range from MIN_RANGE to MAX_RANGE
     final StorageFlatDatabaseHealingRangeRequest request =
         new StorageFlatDatabaseHealingRangeRequest(
             Hash.EMPTY,
-            account0Hash,
-            account0StorageRoot,
+            Bytes32.wrap(account0Hash.getBytes()),
+            Bytes32.wrap(account0StorageRoot.getBytes()),
             RangeManager.MIN_RANGE,
             RangeManager.MAX_RANGE);
     // Add local data to the request, including the proof provider, accounts TreeMap, and proofs as
@@ -168,14 +168,14 @@ class StorageFlatDatabaseHealingRangeRequestTest {
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
-            account0StorageRoot,
+            Bytes32.wrap(account0StorageRoot.getBytes()),
             b -> b,
             b -> b);
 
     // Create a collector to gather slot entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -186,12 +186,16 @@ class StorageFlatDatabaseHealingRangeRequestTest {
             storageTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Create a request for healing the flat database with no more slots
     final StorageFlatDatabaseHealingRangeRequest request =
         new StorageFlatDatabaseHealingRangeRequest(
-            Hash.EMPTY, account0Hash, account0StorageRoot, slots.lastKey(), RangeManager.MAX_RANGE);
+            Hash.EMPTY,
+            Bytes32.wrap(account0Hash.getBytes()),
+            Bytes32.wrap(account0StorageRoot.getBytes()),
+            slots.lastKey(),
+            RangeManager.MAX_RANGE);
 
     // Add local data to the request
     request.addLocalData(proofProvider, new TreeMap<>(), new ArrayDeque<>());
@@ -209,14 +213,14 @@ class StorageFlatDatabaseHealingRangeRequestTest {
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
-            account0StorageRoot,
+            Bytes32.wrap(account0StorageRoot.getBytes()),
             b -> b,
             b -> b);
 
     // Create a collector to gather slots entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -227,22 +231,22 @@ class StorageFlatDatabaseHealingRangeRequestTest {
             storageTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.firstKey());
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.firstKey());
     proofs.addAll(
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.lastKey()));
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.lastKey()));
 
     // Create a request for healing the flat database with a range from MIN_RANGE to MAX_RANGE
     final StorageFlatDatabaseHealingRangeRequest request =
         new StorageFlatDatabaseHealingRangeRequest(
             Hash.wrap(trie.getRootHash()),
-            account0Hash,
-            Hash.wrap(storageTrie.getRootHash()),
+            Bytes32.wrap(account0Hash.getBytes()),
+            storageTrie.getRootHash(),
             RangeManager.MIN_RANGE,
             RangeManager.MAX_RANGE);
 
@@ -266,14 +270,14 @@ class StorageFlatDatabaseHealingRangeRequestTest {
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
                 worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
-            account0StorageRoot,
+            Bytes32.wrap(account0StorageRoot.getBytes()),
             b -> b,
             b -> b);
 
     // Create a collector to gather slots entries within a specific range
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Hash.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            Bytes32.ZERO, RangeManager.MAX_RANGE, Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     // Create a visitor for the range collector
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
@@ -284,15 +288,15 @@ class StorageFlatDatabaseHealingRangeRequestTest {
             storageTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.ZERO));
 
     // Retrieve the proof related nodes for the account trie
     final List<Bytes> proofs =
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.firstKey());
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.firstKey());
     proofs.addAll(
         proofProvider.getStorageProofRelatedNodes(
-            Hash.wrap(storageTrie.getRootHash()), account0Hash, slots.lastKey()));
+            storageTrie.getRootHash(), Bytes32.wrap(account0Hash.getBytes()), slots.lastKey()));
 
     // Remove a slot in the middle of the range
     final Iterator<Map.Entry<Bytes32, Bytes>> iterator = slots.entrySet().iterator();
@@ -312,8 +316,8 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StorageFlatDatabaseHealingRangeRequest request =
         new StorageFlatDatabaseHealingRangeRequest(
             Hash.wrap(trie.getRootHash()),
-            account0Hash,
-            Hash.wrap(storageTrie.getRootHash()),
+            Bytes32.wrap(account0Hash.getBytes()),
+            storageTrie.getRootHash(),
             RangeManager.MIN_RANGE,
             RangeManager.MAX_RANGE);
     // Add local data to the request

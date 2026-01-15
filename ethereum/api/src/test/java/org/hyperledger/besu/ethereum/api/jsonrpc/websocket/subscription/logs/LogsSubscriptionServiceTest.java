@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
@@ -49,7 +50,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -311,7 +311,9 @@ public class LogsSubscriptionServiceTest {
     assertThat(result.getData()).isEqualTo(expectedLog.getData().toString());
     assertThat(result.getTopics())
         .isEqualTo(
-            expectedLog.getTopics().stream().map(Bytes::toString).collect(Collectors.toList()));
+            expectedLog.getTopics().stream()
+                .map(BytesHolder::toString)
+                .collect(Collectors.toList()));
     assertThat(result.isRemoved()).isEqualTo(isRemoved);
   }
 

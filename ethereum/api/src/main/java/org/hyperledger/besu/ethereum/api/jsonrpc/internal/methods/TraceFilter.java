@@ -142,7 +142,8 @@ public class TraceFilter extends TraceBlock {
     long currentBlockNumber = fromBlock;
     Optional<Block> block =
         blockchainQueriesSupplier.get().getBlockchain().getBlockByNumber(currentBlockNumber);
-    while ((block.isEmpty() || block.get().getHeader().getParentHash().equals(Bytes32.ZERO))
+    while ((block.isEmpty()
+            || block.get().getHeader().getParentHash().getBytes().equals(Bytes32.ZERO))
         && currentBlockNumber < toBlock) {
       currentBlockNumber++;
       block = blockchainQueriesSupplier.get().getBlockchain().getBlockByNumber(currentBlockNumber);

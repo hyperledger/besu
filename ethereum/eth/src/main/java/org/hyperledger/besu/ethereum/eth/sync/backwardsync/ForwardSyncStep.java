@@ -58,7 +58,7 @@ public class ForwardSyncStep {
           .addArgument(blockHeaders::size)
           .addArgument(() -> blockHeaders.getFirst().getNumber())
           .addArgument(() -> blockHeaders.getLast().getNumber())
-          .addArgument(() -> blockHeaders.getFirst().getHash().toHexString())
+          .addArgument(() -> blockHeaders.getFirst().getHash().getBytes().toHexString())
           .log();
       return requestBodies(blockHeaders)
           .thenApply(this::saveBlocks)

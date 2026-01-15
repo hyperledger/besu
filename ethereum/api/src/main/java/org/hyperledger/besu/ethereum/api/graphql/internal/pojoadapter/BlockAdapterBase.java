@@ -41,12 +41,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.Function;
 
 import com.google.common.primitives.Longs;
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -86,7 +84,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the hash of the block
    */
-  public Bytes32 getHash() {
+  public Hash getHash() {
     return header.getHash();
   }
 
@@ -106,7 +104,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the transactions root of the block
    */
-  public Bytes32 getTransactionsRoot() {
+  public Hash getTransactionsRoot() {
     return header.getTransactionsRoot();
   }
 
@@ -115,7 +113,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the state root of the block
    */
-  public Bytes32 getStateRoot() {
+  public Hash getStateRoot() {
     return header.getStateRoot();
   }
 
@@ -124,7 +122,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the receipts root of the block
    */
-  public Bytes32 getReceiptsRoot() {
+  public Hash getReceiptsRoot() {
     return header.getReceiptsRoot();
   }
 
@@ -200,7 +198,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @return the logs bloom of the block
    */
   public Bytes getLogsBloom() {
-    return header.getLogsBloom();
+    return header.getLogsBloom().getBytes();
   }
 
   /**
@@ -208,7 +206,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the mix hash of the block
    */
-  public Bytes32 getMixHash() {
+  public Hash getMixHash() {
     return header.getMixHash();
   }
 
@@ -226,7 +224,7 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return the ommer hash of the block
    */
-  public Bytes32 getOmmerHash() {
+  public Hash getOmmerHash() {
     return header.getOmmersHash();
   }
 
@@ -270,14 +268,14 @@ public class BlockAdapterBase extends AdapterBase {
     @SuppressWarnings("unchecked")
     final List<Address> addresses = (List<Address>) filter.get("addresses");
     @SuppressWarnings("unchecked")
-    final List<List<Bytes32>> topics = (List<List<Bytes32>>) filter.get("topics");
+    final List<List<LogTopic>> topics = (List<List<LogTopic>>) filter.get("topics");
 
     final List<List<LogTopic>> transformedTopics = new ArrayList<>();
-    for (final List<Bytes32> topic : topics) {
+    for (final List<LogTopic> topic : topics) {
       if (topic.isEmpty()) {
         transformedTopics.add(Collections.singletonList(null));
       } else {
-        transformedTopics.add(topic.stream().map(LogTopic::of).toList());
+        transformedTopics.add(topic);
       }
     }
     final LogsQuery query =
@@ -403,8 +401,8 @@ public class BlockAdapterBase extends AdapterBase {
    *
    * @return an Optional containing the withdrawals root if it exists, otherwise an empty Optional
    */
-  Optional<Bytes32> getWithdrawalsRoot() {
-    return header.getWithdrawalsRoot().map(Function.identity());
+  Optional<Hash> getWithdrawalsRoot() {
+    return header.getWithdrawalsRoot();
   }
 
   /**

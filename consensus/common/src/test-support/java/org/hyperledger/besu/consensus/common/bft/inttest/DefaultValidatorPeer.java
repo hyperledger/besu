@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public abstract class DefaultValidatorPeer {
@@ -63,7 +64,7 @@ public abstract class DefaultValidatorPeer {
   }
 
   public SECPSignature getBlockSignature(final Hash digest) {
-    return nodeKey.sign(digest);
+    return nodeKey.sign(Bytes32.wrap(digest.getBytes()));
   }
 
   public void handleReceivedMessage(final MessageData message) {

@@ -91,10 +91,10 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -132,9 +132,9 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
 
     // This is to verify that the decoding throws an exception when the round number is encoded in
@@ -162,7 +162,7 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode an empty vote
     encoder.writeEmptyList();
@@ -216,11 +216,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeNull();
     encoder.endList();
 
@@ -276,11 +276,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -359,11 +359,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -400,11 +400,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -435,11 +435,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -473,11 +473,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode vote
     encoder.startList();
-    encoder.writeBytes(voteRecipient);
+    encoder.writeBytes(voteRecipient.getBytes());
     encoder.writeByte(voteType);
     encoder.endList();
 

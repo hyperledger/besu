@@ -157,7 +157,9 @@ public class SynchronizationServiceImpl implements SynchronizationService {
             // keep root and block hash in the trie branch
             final PathBasedWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
             updater.saveWorldState(
-                worldStateBlockHash.get(), Bytes32.wrap(worldStateRootHash.get()), Bytes.EMPTY);
+                worldStateBlockHash.get().getBytes(),
+                Bytes32.wrap(worldStateRootHash.get()),
+                Bytes.EMPTY);
             updater.commit();
 
             // currently only bonsai needs an explicit upgrade to full flat db

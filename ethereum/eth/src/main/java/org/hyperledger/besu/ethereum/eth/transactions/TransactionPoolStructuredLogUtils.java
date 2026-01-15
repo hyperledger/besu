@@ -36,6 +36,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import kotlin.ranges.LongRange;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LoggingEventBuilder;
@@ -135,7 +136,8 @@ public class TransactionPoolStructuredLogUtils {
           .addArgument(
               () ->
                   configuration.getPrioritySenders().stream()
-                      .map(Address::toHexString)
+                      .map(Address::getBytes)
+                      .map(Bytes::toHexString)
                       .collect(Collectors.joining(",")))
           .log();
 
@@ -405,13 +407,13 @@ public class TransactionPoolStructuredLogUtils {
       final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
       final var strMaxConfirmedNonceBySender =
           maxConfirmedNonceBySender.entrySet().stream()
-              .map(e -> e.getKey().toHexString() + "," + e.getValue())
+              .map(e -> e.getKey().getBytes().toHexString() + "," + e.getValue())
               .collect(Collectors.joining(","));
       final var strReorgNonceRangeBySender =
           reorgNonceRangeBySender.entrySet().stream()
               .map(
                   e ->
-                      e.getKey().toHexString()
+                      e.getKey().getBytes().toHexString()
                           + ","
                           + e.getValue().getStart()
                           + ","

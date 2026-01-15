@@ -366,6 +366,6 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
                 transactionPool.count(),
                 block.getHeader().getGasUsed(),
                 (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                block.getHash().toHexString()));
+                block.getHash().getBytes().toHexString()));
   }
 }

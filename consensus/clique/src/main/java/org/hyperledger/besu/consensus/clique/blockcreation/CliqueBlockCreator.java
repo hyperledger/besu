@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 /** The Clique block creator. */
 public class CliqueBlockCreator extends AbstractBlockCreator {
 
@@ -140,7 +142,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         CliqueBlockHashing.calculateDataHashForProposerSeal(headerToSign, extraData);
     return new CliqueExtraData(
         extraData.getVanityData(),
-        nodeKey.sign(hashToSign),
+        nodeKey.sign(Bytes32.wrap(hashToSign.getBytes())),
         extraData.getValidators(),
         headerToSign);
   }

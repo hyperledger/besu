@@ -91,7 +91,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
           .ifPresent(
               address ->
                   snapContext.addAccountToHealingList(
-                      CompactEncoding.bytesToPath(address.addressHash())));
+                      CompactEncoding.bytesToPath(address.addressHash().getBytes())));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {

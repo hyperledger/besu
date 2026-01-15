@@ -111,16 +111,18 @@ public class BlockchainModule {
   @Singleton
   Bytes32 provideStateRoot(final BlockParameter blockParameter, final Blockchain blockchain) {
     if (blockParameter.isEarliest()) {
-      return blockchain.getBlockHeader(0).orElseThrow().getStateRoot();
+      return Bytes32.wrap(blockchain.getBlockHeader(0).orElseThrow().getStateRoot().getBytes());
     } else if (blockParameter.isLatest() || blockParameter.isPending()) {
-      return blockchain.getChainHeadHeader().getStateRoot();
+      return Bytes32.wrap(blockchain.getChainHeadHeader().getStateRoot().getBytes());
     } else if (blockParameter.isNumeric()) {
-      return blockchain
-          .getBlockHeader(blockParameter.getNumber().orElseThrow())
-          .orElseThrow()
-          .getStateRoot();
+      return Bytes32.wrap(
+          blockchain
+              .getBlockHeader(blockParameter.getNumber().orElseThrow())
+              .orElseThrow()
+              .getStateRoot()
+              .getBytes());
     } else {
-      return Hash.EMPTY_TRIE_HASH;
+      return Bytes32.wrap(Hash.EMPTY_TRIE_HASH.getBytes());
     }
   }
 }

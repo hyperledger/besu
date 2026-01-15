@@ -74,8 +74,8 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    assertThat(diff).containsKey(A.toHexString());
-    AccountDiff a = diff.get(A.toHexString());
+    assertThat(diff).containsKey(A.getBytes().toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getBalance()).isNotNull();
     assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
   }
@@ -107,8 +107,8 @@ public class StateTraceGeneratorTest {
     TransactionTrace txTrace = mockFrameWithUpdater(address, account, account);
 
     StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
-    assertThat(diff).containsKey(address.toHexString());
-    AccountDiff a = diff.get(address.toHexString());
+    assertThat(diff).containsKey(address.getBytes().toHexString());
+    AccountDiff a = diff.get(address.getBytes().toHexString());
     assertThat(a.getStorage()).containsKey(UInt256.ZERO.toHexString());
     assertThat(a.getStorage().get(UInt256.ZERO.toHexString()).getFrom().orElseThrow())
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
@@ -129,7 +129,7 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    AccountDiff a = diff.get(A.toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getStorage()).containsKey(UInt256.ONE.toHexString());
     assertThat(a.getStorage()).doesNotContainKey(UInt256.ZERO.toHexString());
   }
@@ -142,7 +142,7 @@ public class StateTraceGeneratorTest {
         mockAccount(A, 0, 0, Map.of(UInt256.ZERO, UInt256.ZERO, UInt256.ONE, UInt256.valueOf(999)));
     TransactionTrace txTrace = mockFrameWithUpdater(A, account, account);
     StateDiffTrace diff = generator.generatePreState(txTrace).findFirst().orElseThrow();
-    assertThat(diff.get(A.toHexString()).getStorage())
+    assertThat(diff.get(A.getBytes().toHexString()).getStorage())
         .containsKeys(UInt256.ZERO.toHexString(), UInt256.ONE.toHexString());
   }
 
@@ -160,7 +160,7 @@ public class StateTraceGeneratorTest {
 
     StateDiffTrace diff = generator.generateStateDiff(trace(f)).findFirst().orElseThrow();
 
-    AccountDiff a = diff.get(A.toHexString());
+    AccountDiff a = diff.get(A.getBytes().toHexString());
     assertThat(a.getBalance().getFrom()).contains("0x64");
     assertThat(a.getBalance().getTo()).isEmpty();
   }

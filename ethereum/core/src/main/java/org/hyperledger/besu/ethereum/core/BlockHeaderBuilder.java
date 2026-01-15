@@ -148,7 +148,7 @@ public class BlockHeaderBuilder {
         .stateRoot(header.getStateRoot())
         .transactionsRoot(header.getTransactionsRoot())
         .receiptsRoot(header.getReceiptsRoot())
-        .logsBloom(new LogsBloomFilter(header.getLogsBloom()))
+        .logsBloom(new LogsBloomFilter(header.getLogsBloom().getBytes()))
         .difficulty(Difficulty.of(header.getDifficulty().getAsBigInteger()))
         .number(header.getNumber())
         .gasLimit(header.getGasLimit())
@@ -231,7 +231,7 @@ public class BlockHeaderBuilder {
     }
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(Bytes32.ZERO);
-    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(Hash.ZERO);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(Bytes32.ZERO);
 
     // For PoS, coinbase is always configured, but for PoA it is not configured,
     // rather generated for each block via MiningBeneficiaryCalculator.
@@ -467,7 +467,7 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder mixHash(final Hash mixHash) {
     checkNotNull(mixHash);
-    this.mixHashOrPrevRandao = mixHash;
+    this.mixHashOrPrevRandao = Bytes32.wrap(mixHash.getBytes());
     return this;
   }
 

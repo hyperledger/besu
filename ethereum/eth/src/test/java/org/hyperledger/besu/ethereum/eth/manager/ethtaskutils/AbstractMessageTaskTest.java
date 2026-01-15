@@ -21,7 +21,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -84,7 +83,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                   "0x3a514176466fa815ed481ffad09110a2d344f6c9b78c1d14afc351c3a51be33d8072e77939dc03ba44790779b7a1025baf3003f6732430e20cd9b76d953391b3"),
               "ECDSA"));
   protected static final Address genesisAccountSender =
-      Address.extract(Hash.hash(genesisAccountKeyPair.getPublicKey().getEncodedBytes()));
+      Address.extract(genesisAccountKeyPair.getPublicKey());
   protected static final long genesisAccountNonce = 32;
   protected static Blockchain blockchain;
   protected static ProtocolSchedule protocolSchedule;
