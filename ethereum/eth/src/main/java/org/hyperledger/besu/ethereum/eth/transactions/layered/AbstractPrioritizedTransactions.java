@@ -219,43 +219,40 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
    *
    * @return pending txs by sender and ordered by score desc
    */
-  public NavigableMap<Byte, List<SenderPendingTransactions>> getByScore() {
+  public List<PendingTransaction> getByScore() {
     final var sendersToAdd = new HashSet<>(txsBySender.keySet());
-    return orderByFee.descendingSet().stream()
-        .map(PendingTransaction::getSender)
-        .filter(sendersToAdd::remove)
-        .flatMap(sender -> splitByScore(sender, txsBySender.get(sender)).entrySet().stream())
-        .collect(
-            Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (a, b) -> {
-                  a.addAll(b);
-                  return a;
-                },
-                TreeMap::new))
-        .descendingMap();
+    final var candidatesByScore =
+        orderByFee.descendingSet().stream()
+            .map(PendingTransaction::getSender)
+            .filter(sendersToAdd::remove)
+            .flatMap(sender -> splitByScore(txsBySender.get(sender)).entrySet().stream())
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (a, b) -> {
+                      a.addAll(b);
+                      return a;
+                    },
+                    TreeMap::new))
+            .descendingMap();
+
+    final List<PendingTransaction> result = new ArrayList<>(pendingTransactions.size());
+    candidatesByScore.values().forEach(result::addAll);
+    return result;
   }
 
-  private Map<Byte, List<SenderPendingTransactions>> splitByScore(
-      final Address sender, final NavigableMap<Long, PendingTransaction> txsBySender) {
-    final var splitByScore = new HashMap<Byte, List<SenderPendingTransactions>>();
+  private Map<Byte, List<PendingTransaction>> splitByScore(
+      final NavigableMap<Long, PendingTransaction> txsBySender) {
+    final var splitByScore = new HashMap<Byte, List<PendingTransaction>>();
     byte currScore = txsBySender.firstEntry().getValue().getScore();
-    var currSplit = new ArrayList<PendingTransaction>();
     for (final var entry : txsBySender.entrySet()) {
       if (entry.getValue().getScore() < currScore) {
-        // score decreased, we need to save current split and start a new one
-        splitByScore
-            .computeIfAbsent(currScore, k -> new ArrayList<>())
-            .add(new SenderPendingTransactions(sender, currSplit));
-        currSplit = new ArrayList<>();
+        // score decreased, we need to start a new split
         currScore = entry.getValue().getScore();
       }
-      currSplit.add(entry.getValue());
+      splitByScore.computeIfAbsent(currScore, k -> new ArrayList<>()).add(entry.getValue());
     }
-    splitByScore
-        .computeIfAbsent(currScore, k -> new ArrayList<>())
-        .add(new SenderPendingTransactions(sender, currSplit));
     return splitByScore;
   }
 
