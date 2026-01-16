@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -58,9 +57,6 @@ public class DebugStandardTraceBlockToFileIntegrationTest {
 
   @BeforeAll
   public static void setUpOnce() throws Exception {
-    // experimental tracers are meant to be enabled in tests
-    DebugTraceTransactionStepFactory.enableExtraTracers = true;
-
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), StandardCharsets.UTF_8);
 
