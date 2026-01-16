@@ -24,11 +24,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.GetBlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMethod {
 
@@ -77,10 +75,7 @@ public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMe
         .<JsonRpcResponse>map(
             bal ->
                 new JsonRpcSuccessResponse(
-                    requestId,
-                    new GetBlockAccessListResult(
-                        BodyValidation.balHash(bal).toString(),
-                        BlockAccessListResult.fromBlockAccessList(bal))))
+                    requestId, BlockAccessListResult.fromBlockAccessList(bal)))
         .orElseGet(
             () ->
                 new JsonRpcErrorResponse(
