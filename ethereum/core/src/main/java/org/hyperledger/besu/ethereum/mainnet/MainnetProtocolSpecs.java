@@ -866,7 +866,10 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
-        .preExecutionProcessor(new CancunPreExecutionProcessor())
+        .preExecutionProcessor(
+            isPoAConsensus(genesisConfigOptions)
+                ? new FrontierPreExecutionProcessor()
+                : new CancunPreExecutionProcessor())
         .hardforkId(CANCUN);
   }
 
@@ -947,20 +950,34 @@ public abstract class MainnetProtocolSpecs {
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
-            .preExecutionProcessor(new PraguePreExecutionProcessor())
+            .preExecutionProcessor(
+                isPoAConsensus(genesisConfigOptions)
+                    ? new FrontierPreExecutionProcessor()
+                    : new PraguePreExecutionProcessor())
             .hardforkId(PRAGUE);
-    try {
-      RequestContractAddresses requestContractAddresses =
-          RequestContractAddresses.fromGenesis(genesisConfigOptions);
+    if (isPoAConsensus(genesisConfigOptions)) {
+      LOG.debug(
+          "Skipping system contract request processors for PoA consensus (clique/ibft/qbft).");
+    } else {
+      try {
+        RequestContractAddresses requestContractAddresses =
+            RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
-      pragueSpecBuilder.requestProcessorCoordinator(
-          pragueRequestsProcessors(requestContractAddresses));
-    } catch (NoSuchElementException nsee) {
-      LOG.warn("Prague definitions require system contract addresses in genesis");
-      throw nsee;
+        pragueSpecBuilder.requestProcessorCoordinator(
+            pragueRequestsProcessors(requestContractAddresses));
+      } catch (NoSuchElementException nsee) {
+        LOG.warn("Prague definitions require system contract addresses in genesis");
+        throw nsee;
+      }
     }
 
     return pragueSpecBuilder;
+  }
+
+  private static boolean isPoAConsensus(final GenesisConfigOptions genesisConfigOptions) {
+    return genesisConfigOptions.isClique()
+        || genesisConfigOptions.isIbft2()
+        || genesisConfigOptions.isQbft();
   }
 
   static ProtocolSpecBuilder osakaDefinition(
