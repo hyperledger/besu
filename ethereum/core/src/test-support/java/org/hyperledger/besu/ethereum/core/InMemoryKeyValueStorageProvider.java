@@ -40,8 +40,6 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
-import java.util.Optional;
-
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public InMemoryKeyValueStorageProvider() {
@@ -112,7 +110,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
             inMemoryKeyValueStorageProvider.createWorldStateStorage(
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
         blockchain,
-        Optional.empty(),
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG.getPathBasedExtraStorageConfiguration(),
         bonsaiCachedMerkleTrieLoader,
         serviceManager,
         evmConfiguration,

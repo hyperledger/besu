@@ -30,7 +30,7 @@ public class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
-  private static final int NB_CHILD = 16;
+  public static final int NB_CHILD = 16;
 
   private final Function<V, Bytes> valueSerializer;
 

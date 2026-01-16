@@ -21,9 +21,8 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -54,7 +54,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -62,22 +61,24 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class BonsaiWorldStateProviderTest {
-  final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 
-  @Mock Blockchain blockchain;
+  private static final DataStorageConfiguration DEFAULT_CONFIG =
+      DataStorageConfiguration.DEFAULT_BONSAI_CONFIG;
 
-  @Mock StorageProvider storageProvider;
+  private final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 
-  @Mock SegmentedKeyValueStorage segmentedKeyValueStorage;
-  @Mock KeyValueStorage trieLogStorage;
-  @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
-  BonsaiWorldStateProvider bonsaiWorldStateArchive;
+  @Mock private Blockchain blockchain;
+  @Mock private StorageProvider storageProvider;
+  @Mock private SegmentedKeyValueStorage segmentedKeyValueStorage;
+  @Mock private KeyValueStorage trieLogStorage;
+  @Mock private SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
+  @Mock private BonsaiCachedWorldStorageManager cachedWorldStorageManager;
+  @Mock private TrieLogManager trieLogManager;
 
-  @Mock BonsaiCachedWorldStorageManager cachedWorldStorageManager;
-  @Mock TrieLogManager trieLogManager;
+  private BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     when(storageProvider.getStorageBySegmentIdentifiers(anyList()))
         .thenReturn(segmentedKeyValueStorage);
     when(segmentedKeyValueStorage.startTransaction())
@@ -87,21 +88,8 @@ class BonsaiWorldStateProviderTest {
   }
 
   @Test
-  void testGetMutableReturnPersistedStateWhenNeeded() {
-
-    bonsaiWorldStateArchive =
-        new BonsaiWorldStateProvider(
-            cachedWorldStorageManager,
-            trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(
-                storageProvider,
-                new NoOpMetricsSystem(),
-                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
-            blockchain,
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier(),
-            new CodeCache());
+  void shouldReturnPersistedStateWhenRequested() {
+    bonsaiWorldStateArchive = createBonsaiWorldStateProvider();
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -113,35 +101,37 @@ class BonsaiWorldStateProviderTest {
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(blockchain.getBlockHeader(blockHeader1.getHash())).thenReturn(Optional.of(blockHeader1));
 
-    TrieLogLayer trieLogLayer1 = mock(TrieLogLayer.class);
-    when(trieLogLayer1.getBlockHash()).thenReturn(blockHeader1.getHash());
-    doAnswer(__ -> Optional.of(trieLogLayer1))
-        .when(trieLogManager)
-        .getTrieLogLayer(eq(blockHeader1.getHash()));
+    final TrieLogLayer trieLogLayer1 = mockTrieLogLayer(blockHeader1.getHash());
+    when(trieLogManager.getTrieLogLayer(blockHeader1.getHash()))
+        .thenReturn(Optional.of(trieLogLayer1));
 
     final Optional<BonsaiWorldState> worldStateGenesis =
         bonsaiWorldStateArchive
             .getWorldState(withBlockHeaderAndUpdateNodeHead(genesis))
             .map(BonsaiWorldState.class::cast);
-    assertThat(worldStateGenesis.get().getWorldStateBlockHash()).isEqualTo(genesis.getBlockHash());
+    assertThat(worldStateGenesis)
+        .isPresent()
+        .hasValueSatisfying(
+            ws -> assertThat(ws.getWorldStateBlockHash()).isEqualTo(genesis.getBlockHash()));
 
     final Optional<BonsaiWorldState> worldState1 =
         bonsaiWorldStateArchive
             .getWorldState(withBlockHeaderAndUpdateNodeHead(blockHeader1))
             .map(BonsaiWorldState.class::cast);
-    assertThat(worldState1.get().getWorldStateBlockHash()).isEqualTo(blockHeader1.getBlockHash());
+    assertThat(worldState1)
+        .isPresent()
+        .hasValueSatisfying(
+            ws -> assertThat(ws.getWorldStateBlockHash()).isEqualTo(blockHeader1.getBlockHash()));
   }
 
   @Test
-  void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
+  void shouldReturnEmptyWhenLoadingMoreThanMaxLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             new BonsaiWorldStateKeyValueStorage(
-                storageProvider,
-                new NoOpMetricsSystem(),
-                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+                storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG),
             blockchain,
-            Optional.of(512L),
+            ImmutablePathBasedExtraStorageConfiguration.builder().maxLayersToLoad(512L).build(),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
@@ -155,29 +145,16 @@ class BonsaiWorldStateProviderTest {
     when(blockchain.getBlockHeader(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(blockchain.getBlockHeader(blockHeader512.getHash()))
         .thenReturn(Optional.of(blockHeader512));
-
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader512);
+
     assertThat(bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(genesis)))
         .isEmpty();
-    verify(cachedWorldStorageManager, Mockito.never()).getWorldState(any(Hash.class));
+    verify(cachedWorldStorageManager, never()).getWorldState(any(Hash.class));
   }
 
   @Test
-  void testGetMutableWhenLoadLessThanLimitLayersBack() {
-
-    bonsaiWorldStateArchive =
-        new BonsaiWorldStateProvider(
-            cachedWorldStorageManager,
-            trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(
-                storageProvider,
-                new NoOpMetricsSystem(),
-                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
-            blockchain,
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT,
-            throwingWorldStateHealerSupplier(),
-            new CodeCache());
+  void shouldReturnWorldStateWhenLoadingLessThanMaxLayersBack() {
+    bonsaiWorldStateArchive = createBonsaiWorldStateProvider();
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader511 =
@@ -189,37 +166,25 @@ class BonsaiWorldStateProviderTest {
 
     bonsaiWorldStateArchive.getWorldState().persist(blockHeader511);
 
-    final BonsaiWorldState mockWorldState0 = mock(BonsaiWorldState.class);
-    when(mockWorldState0.blockHash()).thenReturn(genesis.getHash());
-    when(mockWorldState0.freezeStorage()).thenReturn(mockWorldState0);
+    final BonsaiWorldState mockWorldState = createMockWorldState(genesis.getHash());
     when(cachedWorldStorageManager.getWorldState(genesis.getHash()))
-        .thenReturn(Optional.of(mockWorldState0));
+        .thenReturn(Optional.of(mockWorldState));
 
-    when(trieLogManager.getMaxLayersToLoad()).thenReturn(Long.valueOf(512));
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(512L);
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader511);
+
     assertThat(bonsaiWorldStateArchive.getWorldState(withBlockHeaderAndNoUpdateNodeHead(genesis)))
+        .isPresent()
         .containsInstanceOf(BonsaiWorldState.class);
   }
 
   @Test
-  void testGetMutableWithStorageInconsistencyRollbackTheState() {
-
-    var worldStateKeyValueStorage =
+  void shouldRollbackStateWhenStorageInconsistencyDetected() {
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
-    bonsaiWorldStateArchive =
-        spy(
-            new BonsaiWorldStateProvider(
-                cachedWorldStorageManager,
-                trieLogManager,
-                worldStateKeyValueStorage,
-                blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier(),
-                new CodeCache()));
+            storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG);
+
+    bonsaiWorldStateArchive = spy(createBonsaiWorldStateProvider(worldStateKeyValueStorage));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -231,40 +196,27 @@ class BonsaiWorldStateProviderTest {
     bonsaiWorldStateArchive.getWorldState().persist(genesis);
     bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
 
-    TrieLogLayer trieLogLayer1 = mock(TrieLogLayer.class);
-    when(trieLogLayer1.getBlockHash()).thenReturn(blockHeader1.getHash());
-    doAnswer(__ -> Optional.of(trieLogLayer1))
-        .when(trieLogManager)
-        .getTrieLogLayer(eq(blockHeader1.getHash()));
+    final TrieLogLayer trieLogLayer1 = mockTrieLogLayer(blockHeader1.getHash());
+    when(trieLogManager.getTrieLogLayer(blockHeader1.getHash()))
+        .thenReturn(Optional.of(trieLogLayer1));
+
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
                 withStateRootAndBlockHashAndUpdateNodeHead(null, genesis.getHash())))
+        .isPresent()
         .containsInstanceOf(BonsaiWorldState.class);
 
-    // verify is trying to get the trie log layer to rollback
+    // Verify that trie log layer was retrieved to perform rollback
     verify(trieLogManager).getTrieLogLayer(blockHeader1.getBlockHash());
   }
 
-  //    @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
-  void testGetMutableWithStorageConsistencyNotRollbackTheState() {
-
-    var worldStateKeyValueStorage =
+  void shouldNotRollbackStateWhenStorageIsConsistent() {
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
-    bonsaiWorldStateArchive =
-        spy(
-            new BonsaiWorldStateProvider(
-                cachedWorldStorageManager,
-                trieLogManager,
-                worldStateKeyValueStorage,
-                blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier(),
-                new CodeCache()));
+            storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG);
+
+    bonsaiWorldStateArchive = spy(createBonsaiWorldStateProvider(worldStateKeyValueStorage));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -279,32 +231,20 @@ class BonsaiWorldStateProviderTest {
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
                 withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader1.getHash())))
+        .isPresent()
         .containsInstanceOf(BonsaiWorldState.class);
 
-    // verify is not trying to get the trie log layer to rollback when block is present
-    verify(trieLogManager, Mockito.never()).getTrieLogLayer(any());
+    // Verify that no rollback was attempted when block is present
+    verify(trieLogManager, never()).getTrieLogLayer(any());
   }
 
   @Test
-  void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
-
-    var worldStateKeyValueStorage =
+  void shouldRollbackAndRollForwardDuringReorg() {
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider,
-            new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG);
 
-    bonsaiWorldStateArchive =
-        spy(
-            new BonsaiWorldStateProvider(
-                cachedWorldStorageManager,
-                trieLogManager,
-                worldStateKeyValueStorage,
-                blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
-                EvmConfiguration.DEFAULT,
-                throwingWorldStateHealerSupplier(),
-                new CodeCache()));
+    bonsaiWorldStateArchive = spy(createBonsaiWorldStateProvider(worldStateKeyValueStorage));
 
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeader1 =
@@ -320,25 +260,57 @@ class BonsaiWorldStateProviderTest {
     bonsaiWorldStateArchive.getWorldState().persist(genesis);
     bonsaiWorldStateArchive.getWorldState().persist(blockHeader1);
 
-    TrieLogLayer trieLogLayerA = mock(TrieLogLayer.class);
-    when(trieLogLayerA.getBlockHash()).thenReturn(blockHeader1.getBlockHash());
-    doAnswer(__ -> Optional.of(trieLogLayerA))
-        .when(trieLogManager)
-        .getTrieLogLayer(eq(blockHeader1.getHash()));
+    final TrieLogLayer trieLogLayer1 = mockTrieLogLayer(blockHeader1.getHash());
+    final TrieLogLayer trieLogLayer1Reorg = mockTrieLogLayer(blockHeader1Reorg.getHash());
 
-    TrieLogLayer trieLogLayerB = mock(TrieLogLayer.class);
-    when(trieLogLayerB.getBlockHash()).thenReturn(blockHeader1Reorg.getBlockHash());
-    doAnswer(__ -> Optional.of(trieLogLayerB))
-        .when(trieLogManager)
-        .getTrieLogLayer(eq(blockHeader1Reorg.getHash()));
+    when(trieLogManager.getTrieLogLayer(blockHeader1.getHash()))
+        .thenReturn(Optional.of(trieLogLayer1));
+    when(trieLogManager.getTrieLogLayer(blockHeader1Reorg.getHash()))
+        .thenReturn(Optional.of(trieLogLayer1Reorg));
 
     assertThat(
             bonsaiWorldStateArchive.getWorldState(
                 withStateRootAndBlockHashAndUpdateNodeHead(null, blockHeader1Reorg.getHash())))
+        .isPresent()
         .containsInstanceOf(BonsaiWorldState.class);
 
-    // verify is trying to get the trie log layers to rollback and roll forward
+    // Verify that both rollback and roll forward were performed
     verify(trieLogManager).getTrieLogLayer(blockHeader1.getHash());
     verify(trieLogManager).getTrieLogLayer(blockHeader1Reorg.getHash());
+  }
+
+  // Helper methods
+
+  private BonsaiWorldStateProvider createBonsaiWorldStateProvider() {
+    return createBonsaiWorldStateProvider(
+        new BonsaiWorldStateKeyValueStorage(
+            storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG));
+  }
+
+  private BonsaiWorldStateProvider createBonsaiWorldStateProvider(
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
+    return new BonsaiWorldStateProvider(
+        cachedWorldStorageManager,
+        DEFAULT_CONFIG.getPathBasedExtraStorageConfiguration(),
+        trieLogManager,
+        worldStateKeyValueStorage,
+        blockchain,
+        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+        EvmConfiguration.DEFAULT,
+        throwingWorldStateHealerSupplier(),
+        new CodeCache());
+  }
+
+  private BonsaiWorldState createMockWorldState(final Hash blockHash) {
+    final BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class);
+    when(mockWorldState.blockHash()).thenReturn(blockHash);
+    when(mockWorldState.freezeStorage()).thenReturn(mockWorldState);
+    return mockWorldState;
+  }
+
+  private TrieLogLayer mockTrieLogLayer(final Hash blockHash) {
+    final TrieLogLayer trieLogLayer = mock(TrieLogLayer.class);
+    when(trieLogLayer.getBlockHash()).thenReturn(blockHash);
+    return trieLogLayer;
   }
 }
