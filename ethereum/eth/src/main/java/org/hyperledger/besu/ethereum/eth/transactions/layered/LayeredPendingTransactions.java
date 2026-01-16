@@ -44,6 +44,7 @@ import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -269,8 +270,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
-    final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
+  public void selectTransactions(final PendingTransactionsSelector selector) {
+    final List<PendingTransaction> candidateTxsByScore;
     synchronized (this) {
       // since selecting transactions for block creation is a potential long operation
       // we want to avoid to keep the lock for all the process, but we just lock to get
@@ -278,52 +279,42 @@ public class LayeredPendingTransactions implements PendingTransactions {
       candidateTxsByScore = prioritizedTransactions.getByScore();
     }
 
-    selection:
-    for (final var entry : candidateTxsByScore.entrySet()) {
-      LOG.trace("Evaluating txs with score {}", entry.getKey());
+    final var evaluationResults =
+        selector.evaluatePendingTransactions(Collections.unmodifiableList(candidateTxsByScore));
 
-      for (final var senderTxs : entry.getValue()) {
-        LOG.trace("Evaluating sender txs {}", senderTxs);
+    for (final var evaluationResult : evaluationResults.entrySet()) {
+      final var evaluatedPendingTx = evaluationResult.getKey();
+      final var result = evaluationResult.getValue();
 
-        for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
-          final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
+      LOG.atTrace()
+          .setMessage("Selection result {} for transaction {}")
+          .addArgument(result)
+          .addArgument(evaluatedPendingTx::toTraceLog)
+          .log();
 
-          LOG.atTrace()
-              .setMessage("Selection result {} for transaction {}")
-              .addArgument(selectionResult)
-              .addArgument(candidatePendingTx::toTraceLog)
-              .log();
-
-          if (selectionResult.discard()) {
-            ethScheduler.scheduleServiceTask(
-                () -> {
-                  synchronized (this) {
-                    prioritizedTransactions.remove(candidatePendingTx, INVALIDATED);
-                    logInvalidTransaction(candidatePendingTx, selectionResult);
-                    LOG.atTrace()
-                        .setMessage("Transaction {} remove by block selection")
-                        .addArgument(candidatePendingTx::toTraceLog)
-                        .log();
-                  }
-                });
-          } else if (selectionResult.penalize()) {
-            ethScheduler.scheduleServiceTask(
-                () -> {
-                  synchronized (this) {
-                    prioritizedTransactions.penalize(candidatePendingTx, selectionResult);
-                    LOG.atTrace()
-                        .setMessage("Transaction {} penalized by block selection")
-                        .addArgument(candidatePendingTx::toTraceLog)
-                        .log();
-                  }
-                });
-          }
-
-          if (selectionResult.stop()) {
-            LOG.trace("Stopping selection");
-            break selection;
-          }
-        }
+      if (result.discard()) {
+        ethScheduler.scheduleServiceTask(
+            () -> {
+              synchronized (this) {
+                prioritizedTransactions.remove(evaluatedPendingTx, INVALIDATED);
+                logInvalidTransaction(evaluatedPendingTx, result);
+                LOG.atTrace()
+                    .setMessage("Transaction {} removed by block selection")
+                    .addArgument(evaluatedPendingTx::toTraceLog)
+                    .log();
+              }
+            });
+      } else if (result.penalize()) {
+        ethScheduler.scheduleServiceTask(
+            () -> {
+              synchronized (this) {
+                prioritizedTransactions.penalize(evaluatedPendingTx, result);
+                LOG.atTrace()
+                    .setMessage("Transaction {} penalized by block selection")
+                    .addArgument(evaluatedPendingTx::toTraceLog)
+                    .log();
+              }
+            });
       }
     }
   }

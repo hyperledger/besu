@@ -39,8 +39,6 @@ import com.fasterxml.jackson.annotation.JsonGetter;
  * the {@code create} and {@code createAsync} methods respectively.
  */
 public class DebugTraceTransactionStepFactory {
-  // feature flag to enable non-default tracers
-  public static boolean enableExtraTracers = false;
 
   /**
    * Creates a function that processes a {@link TransactionTrace} and returns a {@link
@@ -63,12 +61,8 @@ public class DebugTraceTransactionStepFactory {
           };
       case CALL_TRACER ->
           transactionTrace -> {
-            if (enableExtraTracers) {
-              var result = CallTracerResultConverter.convert(transactionTrace);
-              return new DebugTraceTransactionResult(transactionTrace, result);
-            }
-            return new DebugTraceTransactionResult(
-                transactionTrace, new UnimplementedTracerResult());
+            var result = CallTracerResultConverter.convert(transactionTrace);
+            return new DebugTraceTransactionResult(transactionTrace, result);
           };
       case FLAT_CALL_TRACER ->
           transactionTrace -> {
