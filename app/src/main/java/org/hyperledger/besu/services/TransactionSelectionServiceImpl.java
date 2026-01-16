@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -63,10 +64,13 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
   @Override
   public void selectPendingTransactions(
       final BlockTransactionSelectionService selectionService,
-      final ProcessableBlockHeader pendingBlockHeader) {
+      final ProcessableBlockHeader pendingBlockHeader,
+      final List<? extends PendingTransaction> candidatePendingTransactions) {
     if (factories != null) {
       factories.forEach(
-          factory -> factory.selectPendingTransactions(selectionService, pendingBlockHeader));
+          factory ->
+              factory.selectPendingTransactions(
+                  selectionService, pendingBlockHeader, candidatePendingTransactions));
     }
   }
 
