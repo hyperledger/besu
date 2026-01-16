@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -118,7 +119,25 @@ public interface MutableBlockchain extends Blockchain {
       final List<TransactionReceipt> receipts,
       final Optional<Difficulty> maybeTotalDifficulty);
 
+  /**
+   * Import blocks and receipts during syncing and update the chain state. This method is NOT THREAD
+   * SAFE. It has to be called from a single thread. Blocks and receipts have to be imported in
+   * order.
+   *
+   * @param blocksAndReceipts The blocks and receipts to import
+   * @param indexTransactions Boolean whether to index transactions
+   */
+  void unsafeImportSyncBodiesAndReceipts(
+      List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
+
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
+
+  /**
+   * Stores block headers, without updating the chain state.
+   *
+   * @param blockHeaders The block headers to store.
+   */
+  void storeBlockHeaders(List<BlockHeader> blockHeaders);
 
   Difficulty calculateTotalDifficulty(final BlockHeader blockHeader);
 
