@@ -19,10 +19,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.GetBlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMethod {
@@ -49,18 +54,36 @@ public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMe
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    return getBlockchainQueries()
-        .getBlockHashByNumber(blockNumber)
-        .flatMap(
-            hash ->
-                getBlockchainQueries()
-                    .getBlockchain()
-                    .getBlockAccessList(hash)
-                    .map(
-                        bal ->
-                            new GetBlockAccessListResult(
-                                BodyValidation.balHash(bal).toString(),
-                                BlockAccessListResult.fromBlockAccessList(bal))))
-        .orElse(null);
+    final var maybeHeader = getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
+    if (maybeHeader.isEmpty()) {
+      return null;
+    }
+
+    final var requestId = requestContext.getRequest().getId();
+    final BlockHeader header = maybeHeader.get();
+    if (!getBlockchainQueries().isBlockAccessListSupported(header)) {
+      return new JsonRpcErrorResponse(
+          requestId, RpcErrorType.BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS);
+    }
+
+    final var maybeBody = getBlockchainQueries().getBlockchain().getBlockBody(header.getHash());
+    if (maybeBody.isEmpty()) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), RpcErrorType.PRUNED_HISTORY_UNAVAILABLE);
+    }
+
+    final BlockBody body = maybeBody.get();
+    return body.getBlockAccessList()
+        .<JsonRpcResponse>map(
+            bal ->
+                new JsonRpcSuccessResponse(
+                    requestId,
+                    new GetBlockAccessListResult(
+                        BodyValidation.balHash(bal).toString(),
+                        BlockAccessListResult.fromBlockAccessList(bal))))
+        .orElseGet(
+            () ->
+                new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), RpcErrorType.PRUNED_HISTORY_UNAVAILABLE));
   }
 }
