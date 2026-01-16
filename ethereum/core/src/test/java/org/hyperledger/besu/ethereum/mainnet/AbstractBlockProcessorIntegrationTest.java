@@ -1138,11 +1138,7 @@ class AbstractBlockProcessorIntegrationTest {
             .baseFeePerGas(baseFeePerGas)
             .buildHeader();
     BlockBody blockBody =
-        new BlockBody(
-            Arrays.asList(transactions),
-            Collections.emptyList(),
-            Optional.empty(),
-            Optional.of(BlockAccessList.builder().build()));
+        new BlockBody(Arrays.asList(transactions), Collections.emptyList(), Optional.empty());
     return new Block(blockHeader, blockBody);
   }
 

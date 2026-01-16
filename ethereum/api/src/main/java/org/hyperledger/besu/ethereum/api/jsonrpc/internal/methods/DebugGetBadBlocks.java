@@ -50,6 +50,7 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
                     BadBlockResult.from(
                         blockResultFactory.transactionComplete(block),
                         block,
+                        protocolContext.getBadBlockManager().getBlockAccessList(block.getHash()),
                         protocolContext
                             .getBadBlockManager()
                             .getGeneratedBlockAccessList(block.getHash())))

@@ -112,11 +112,12 @@ public class QbftRoundTest {
 
     proposedBlock = new QbftBlockTestFixture().blockHeader(header).build();
 
-    when(blockCreator.createBlock(anyLong(), any())).thenReturn(proposedBlock);
+    when(blockCreator.createBlock(anyLong(), any()))
+        .thenReturn(new QbftBlockCreator.BlockCreationResult(proposedBlock, Optional.empty()));
 
     when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
-    when(blockImporter.importBlock(any())).thenReturn(true);
+    when(blockImporter.importBlock(any(), any())).thenReturn(true);
 
     subscribers.subscribe(minedBlockObserver);
   }
@@ -190,7 +191,7 @@ public class QbftRoundTest {
 
     round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
     verify(transmitter, times(1))
-        .multicastProposal(eq(roundIdentifier), any(), eq(emptyList()), eq(emptyList()));
+        .multicastProposal(eq(roundIdentifier), any(), any(), eq(emptyList()), eq(emptyList()));
     verify(transmitter, times(1)).multicastPrepare(eq(roundIdentifier), any());
   }
 
@@ -240,6 +241,7 @@ public class QbftRoundTest {
         .multicastProposal(
             eq(roundIdentifier),
             blockCaptor.capture(),
+            any(),
             eq(singletonList(roundChange.getSignedPayload())),
             eq(singletonList(preparedPayload)));
     verify(transmitter, times(1))
@@ -286,6 +288,7 @@ public class QbftRoundTest {
         .multicastProposal(
             eq(roundIdentifier),
             blockCaptor.capture(),
+            any(),
             eq(List.of(roundChange.getSignedPayload())),
             eq(Collections.emptyList()));
     verify(transmitter, times(1))
@@ -322,16 +325,16 @@ public class QbftRoundTest {
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
-    verify(blockImporter, never()).importBlock(any());
+    verify(blockImporter, never()).importBlock(any(), any());
 
     round.handleCommitMessage(
         messageFactory2.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
-    verify(blockImporter, never()).importBlock(any());
+    verify(blockImporter, never()).importBlock(any(), any());
 
     round.handleProposalMessage(
         messageFactory.createProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
-    verify(blockImporter).importBlock(proposedBlock);
+    verify(blockImporter).importBlock(eq(proposedBlock), any());
   }
 
   @Test
@@ -358,12 +361,12 @@ public class QbftRoundTest {
 
     round.handleCommitMessage(
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
-    verify(blockImporter, never()).importBlock(any());
+    verify(blockImporter, never()).importBlock(any(), any());
 
     round.handleProposalMessage(
         messageFactory.createProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
-    verify(blockImporter).importBlock(proposedBlock);
+    verify(blockImporter).importBlock(eq(proposedBlock), any());
   }
 
   @Test

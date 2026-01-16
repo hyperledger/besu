@@ -127,7 +127,11 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
         new BlockWithReceipts(mockBlock, Collections.emptyList());
     final PayloadWrapper mockPayload =
         new PayloadWrapper(
-            mockPid, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+            mockPid,
+            mockBlockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
 

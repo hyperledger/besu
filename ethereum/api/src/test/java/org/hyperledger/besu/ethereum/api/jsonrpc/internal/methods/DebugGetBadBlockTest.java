@@ -155,8 +155,7 @@ public class DebugGetBadBlockTest {
         new BlockBody(
             baseBlock.getBody().getTransactions(),
             baseBlock.getBody().getOmmers(),
-            baseBlock.getBody().getWithdrawals(),
-            Optional.of(blockAccessList));
+            baseBlock.getBody().getWithdrawals());
 
     final Block blockWithBal =
         new Block(
@@ -166,7 +165,11 @@ public class DebugGetBadBlockTest {
                 .buildBlockHeader(),
             bodyWithBal);
 
-    badBlockManager.addBadBlock(blockWithBal, BadBlockCause.fromValidationFailure("failed"));
+    badBlockManager.addBadBlock(
+        blockWithBal,
+        BadBlockCause.fromValidationFailure("failed"),
+        Optional.of(blockAccessList),
+        Optional.empty());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_getBadBlocks", new Object[] {}));
@@ -180,10 +183,6 @@ public class DebugGetBadBlockTest {
     final BadBlockResult badBlockResult = result.iterator().next();
     assertThat(badBlockResult.getBlockResult().getBalHash())
         .isEqualTo(BodyValidation.balHash(blockAccessList).toString());
-    assertThat(badBlockResult.getBlockResult().getBlockAccessList()).isPresent();
-    assertThat(
-            badBlockResult.getBlockResult().getBlockAccessList().orElseThrow().getAccountChanges())
-        .isNotEmpty();
     assertThat(badBlockResult.getGeneratedBlockAccessList()).isEmpty();
   }
 
@@ -211,8 +210,7 @@ public class DebugGetBadBlockTest {
         new BlockBody(
             baseBlock.getBody().getTransactions(),
             baseBlock.getBody().getOmmers(),
-            baseBlock.getBody().getWithdrawals(),
-            Optional.of(providedBlockAccessList));
+            baseBlock.getBody().getWithdrawals());
 
     final Block blockWithBal =
         new Block(
@@ -236,6 +234,7 @@ public class DebugGetBadBlockTest {
     badBlockManager.addBadBlock(
         blockWithBal,
         BadBlockCause.fromValidationFailure("failed"),
+        Optional.of(providedBlockAccessList),
         Optional.of(generatedBlockAccessList));
 
     final JsonRpcRequestContext request =

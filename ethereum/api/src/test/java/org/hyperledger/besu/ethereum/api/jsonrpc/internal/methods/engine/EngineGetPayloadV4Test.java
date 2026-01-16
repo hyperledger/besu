@@ -167,7 +167,11 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
     PayloadWrapper payload =
         new PayloadWrapper(
-            payloadIdentifier, block, Optional.of(requests), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            block,
+            Optional.empty(),
+            Optional.of(requests),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -227,7 +231,11 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.WITHDRAWAL, Bytes.EMPTY));
     PayloadWrapper payload =
         new PayloadWrapper(
-            payloadIdentifier, block, Optional.of(unorderedRequests), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            block,
+            Optional.empty(),
+            Optional.of(unorderedRequests),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 

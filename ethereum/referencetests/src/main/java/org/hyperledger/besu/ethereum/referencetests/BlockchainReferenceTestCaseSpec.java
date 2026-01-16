@@ -89,10 +89,11 @@ public class BlockchainReferenceTestCaseSpec {
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
-              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+              public <T extends BesuService> void addService(
+                  final Class<T> serviceType, final T service) {}
 
               @Override
-              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+              public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
                 return Optional.empty();
               }
             },
@@ -318,12 +319,24 @@ public class BlockchainReferenceTestCaseSpec {
           input.isEndOfCurrentList()
               ? Optional.empty()
               : Optional.of(input.readList(Withdrawal::readFrom));
-      final Optional<BlockAccessList> blockAccessList =
-          input.isEndOfCurrentList()
-              ? Optional.empty()
-              : Optional.of(BlockAccessListDecoder.decode(input));
-      final BlockBody body = new BlockBody(transactions, ommers, withdrawals, blockAccessList);
+      final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
       return new Block(header, body);
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      final RLPInput input = new BytesValueRLPInput(rlp, false);
+      input.enterList();
+      final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+      BlockHeader.readFrom(input, blockHeaderFunctions);
+      input.readList(Transaction::readFrom);
+      input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions));
+      if (input.isEndOfCurrentList()) {
+        return Optional.empty();
+      }
+      input.readList(Withdrawal::readFrom);
+      return input.isEndOfCurrentList()
+          ? Optional.empty()
+          : Optional.of(BlockAccessListDecoder.decode(input));
     }
   }
 }

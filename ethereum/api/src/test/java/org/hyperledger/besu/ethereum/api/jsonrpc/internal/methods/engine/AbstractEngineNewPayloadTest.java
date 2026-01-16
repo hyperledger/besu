@@ -235,7 +235,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
+    when(mergeCoordinator.rememberBlock(any(), any()))
+        .thenThrow(new MerkleTrieException("missing leaf"));
 
     var resp = resp(mockEnginePayload(mockHeader, emptyList()));
 
@@ -416,7 +417,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
+    when(mergeCoordinator.rememberBlock(any(), any())).thenReturn(value);
     return mockHeader;
   }
 

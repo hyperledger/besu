@@ -167,7 +167,11 @@ public class EngineGetPayloadV5Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
     PayloadWrapper payload =
         new PayloadWrapper(
-            payloadIdentifier, block, Optional.of(requests), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            block,
+            Optional.empty(),
+            Optional.of(requests),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 

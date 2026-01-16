@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
+import java.util.Optional;
 
 /** Adaptor class to allow a {@link BlockValidator} to be used as a {@link QbftBlockValidator}. */
 public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
@@ -40,13 +43,15 @@ public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
   }
 
   @Override
-  public ValidationResult validateBlock(final QbftBlock block) {
+  public ValidationResult validateBlock(
+      final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
     final BlockProcessingResult blockProcessingResult =
         blockValidator.validateAndProcessBlock(
             protocolContext,
             AdaptorUtil.toBesuBlock(block),
             HeaderValidationMode.LIGHT,
             HeaderValidationMode.FULL,
+            blockAccessList,
             false);
     return new ValidationResult(
         blockProcessingResult.isSuccessful(), blockProcessingResult.errorMessage);
