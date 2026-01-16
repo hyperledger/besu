@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.txvalidator.TransactionValidationRul
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -49,6 +50,8 @@ public interface ProtocolSchedule {
   Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
 
   Optional<ScheduledProtocolSpec> getLatestProtocolSpec();
+
+  NavigableSet<ScheduledProtocolSpec> getProtocolSpecs();
 
   Optional<BigInteger> getChainId();
 
