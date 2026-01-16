@@ -31,6 +31,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ChainDataPrunerStorage {
   private static final Bytes PRUNING_MARK_KEY =
       Bytes.wrap("pruningMark".getBytes(StandardCharsets.UTF_8));
+  private static final Bytes BAL_PRUNING_MARK_KEY =
+      Bytes.wrap("balPruningMark".getBytes(StandardCharsets.UTF_8));
 
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   private static final Bytes FORK_BLOCKS_PREFIX = Bytes.of(2);
@@ -49,6 +51,10 @@ public class ChainDataPrunerStorage {
     return get(VARIABLES_PREFIX, PRUNING_MARK_KEY).map(UInt256::fromBytes).map(UInt256::toLong);
   }
 
+  public Optional<Long> getBalPruningMark() {
+    return get(VARIABLES_PREFIX, BAL_PRUNING_MARK_KEY).map(UInt256::fromBytes).map(UInt256::toLong);
+  }
+
   public Collection<Hash> getForkBlocks(final long blockNumber) {
     return get(FORK_BLOCKS_PREFIX, UInt256.valueOf(blockNumber))
         .map(bytes -> RLP.input(bytes).readList(in -> bytesToHash(in.readBytes32())))
@@ -57,6 +63,11 @@ public class ChainDataPrunerStorage {
 
   public void setPruningMark(final KeyValueStorageTransaction transaction, final long pruningMark) {
     set(transaction, VARIABLES_PREFIX, PRUNING_MARK_KEY, UInt256.valueOf(pruningMark));
+  }
+
+  public void setBalPruningMark(
+      final KeyValueStorageTransaction transaction, final long balPruningMark) {
+    set(transaction, VARIABLES_PREFIX, BAL_PRUNING_MARK_KEY, UInt256.valueOf(balPruningMark));
   }
 
   public void setForkBlocks(

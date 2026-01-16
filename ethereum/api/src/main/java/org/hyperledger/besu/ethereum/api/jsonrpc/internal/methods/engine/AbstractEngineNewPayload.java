@@ -351,9 +351,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final var block =
         new Block(
-            newBlockHeader,
-            new BlockBody(
-                transactions, Collections.emptyList(), maybeWithdrawals, maybeBlockAccessList));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -372,7 +370,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // execute block and return result response
     final long startTimeNs = System.nanoTime();
-    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
+    final BlockProcessingResult executionResult =
+        mergeCoordinator.rememberBlock(block, maybeBlockAccessList);
     if (executionResult.isSuccessful()) {
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(

@@ -109,9 +109,11 @@ public class MainnetBlockValidatorTest {
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
         .thenReturn(true);
     when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
-    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any()))
+    when(blockProcessor.processBlock(
+            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
         .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any(), any()))
+    when(blockProcessor.processBlock(
+            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();
@@ -243,7 +245,11 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateAndProcessBlock_whenProcessBlockFails() {
     when(blockProcessor.processBlock(
-            eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block)))
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -281,7 +287,12 @@ public class MainnetBlockValidatorTest {
       final String caseName, final Exception storageException) {
     doThrow(storageException)
         .when(blockProcessor)
-        .processBlock(eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block));
+        .processBlock(
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty()));
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -321,7 +332,11 @@ public class MainnetBlockValidatorTest {
     final BlockProcessingResult exceptionalResult =
         new BlockProcessingResult(Optional.empty(), cause);
     when(blockProcessor.processBlock(
-            eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block)))
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty())))
         .thenReturn(exceptionalResult);
 
     BlockProcessingResult result =
@@ -338,7 +353,11 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockFalse() {
     when(blockProcessor.processBlock(
-            eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block)))
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -347,6 +366,7 @@ public class MainnetBlockValidatorTest {
             block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
+            Optional.empty(),
             false,
             false);
 
@@ -357,7 +377,11 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockTrue() {
     when(blockProcessor.processBlock(
-            eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block)))
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -366,6 +390,7 @@ public class MainnetBlockValidatorTest {
             block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
+            Optional.empty(),
             false,
             true);
 
@@ -376,7 +401,11 @@ public class MainnetBlockValidatorTest {
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockNotSet() {
     when(blockProcessor.processBlock(
-            eq(protocolContext), eq(blockchain), any(MutableWorldState.class), eq(block)))
+            eq(protocolContext),
+            eq(blockchain),
+            any(MutableWorldState.class),
+            eq(block),
+            eq(Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -385,6 +414,7 @@ public class MainnetBlockValidatorTest {
             block,
             HeaderValidationMode.DETACHED_ONLY,
             HeaderValidationMode.DETACHED_ONLY,
+            Optional.empty(),
             false);
 
     assertThat(result.isFailed()).isTrue();
@@ -526,7 +556,8 @@ public class MainnetBlockValidatorTest {
     when(protocolContext.getWorldStateArchive()).thenReturn(blockchainSetupUtil.getWorldArchive());
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any()))
+    when(blockProcessor.processBlock(
+            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
         .thenReturn(successfulProcessingResult);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
         .thenReturn(true);

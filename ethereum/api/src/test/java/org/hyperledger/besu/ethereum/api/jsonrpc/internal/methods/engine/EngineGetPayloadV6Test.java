@@ -122,8 +122,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
                 new BlockBody(
                     List.of(new TransactionTestFixture().createTransaction(senderKeys)),
                     emptyList(),
-                    Optional.of(emptyList()),
-                    Optional.of(blockAccessList))),
+                    Optional.of(emptyList()))),
             List.of(mock(TransactionReceipt.class)));
 
     final PayloadIdentifier payloadIdentifier =
@@ -143,7 +142,11 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
 
     final PayloadWrapper payload =
         new PayloadWrapper(
-            payloadIdentifier, blockWithReceipts, Optional.of(requests), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            blockWithReceipts,
+            Optional.of(blockAccessList),
+            Optional.of(requests),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -181,7 +184,11 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
             new Block(header, new BlockBody(emptyList(), emptyList())), emptyList());
     final PayloadWrapper payload =
         new PayloadWrapper(
-            payloadIdentifier, blockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            blockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 

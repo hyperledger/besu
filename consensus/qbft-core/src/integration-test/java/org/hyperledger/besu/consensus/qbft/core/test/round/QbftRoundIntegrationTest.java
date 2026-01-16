@@ -127,7 +127,7 @@ public class QbftRoundIntegrationTest {
 
     when(protocolSchedule.getBlockImporter(any())).thenReturn(blockImporter);
 
-    when(blockImporter.importBlock(any())).thenReturn(true);
+    when(blockImporter.importBlock(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -212,6 +212,6 @@ public class QbftRoundIntegrationTest {
     assertThat(roundState.isCommitted()).isTrue();
     verifyNoInteractions(multicaster);
 
-    verify(blockImporter).importBlock(any());
+    verify(blockImporter).importBlock(any(), any());
   }
 }

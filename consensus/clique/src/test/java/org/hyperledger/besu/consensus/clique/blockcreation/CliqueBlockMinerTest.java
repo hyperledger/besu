@@ -94,7 +94,10 @@ class CliqueBlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -102,7 +105,8 @@ class CliqueBlockMinerTest {
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
+    when(blockImporter.importBlock(any(), any(), any(), any(), any()))
+        .thenReturn(new BlockImportResult(true));
 
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
@@ -121,7 +125,12 @@ class CliqueBlockMinerTest {
     final boolean result = miner.mineBlock();
     assertThat(result).isFalse();
     verify(blockImporter, never())
-        .importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
+        .importBlock(
+            protocolContext,
+            blockToCreate,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty());
     verify(observer, never()).blockMined(blockToCreate);
   }
 
@@ -150,7 +159,10 @@ class CliqueBlockMinerTest {
     when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreator.BlockCreationResult(
-                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
+                blockToCreate,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -158,7 +170,8 @@ class CliqueBlockMinerTest {
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
+    when(blockImporter.importBlock(any(), any(), any(), any(), any()))
+        .thenReturn(new BlockImportResult(true));
 
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
@@ -176,7 +189,13 @@ class CliqueBlockMinerTest {
 
     final boolean result = miner.mineBlock();
     assertThat(result).isTrue();
-    verify(blockImporter).importBlock(protocolContext, blockToCreate, HeaderValidationMode.FULL);
+    verify(blockImporter)
+        .importBlock(
+            protocolContext,
+            blockToCreate,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty());
     verify(observer).blockMined(blockToCreate);
   }
 

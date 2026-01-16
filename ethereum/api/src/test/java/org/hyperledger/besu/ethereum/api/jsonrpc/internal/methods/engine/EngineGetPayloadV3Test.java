@@ -116,7 +116,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 shanghaiHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
             emptyList());
     PayloadWrapper payloadShanghai =
-        new PayloadWrapper(shanghaiPid, shanghaiBlock, Optional.empty(), BlockCreationTiming.EMPTY);
+        new PayloadWrapper(
+            shanghaiPid,
+            shanghaiBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(shanghaiPid)).thenReturn(Optional.of(payloadShanghai));
 
@@ -151,7 +156,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 pragueHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
             emptyList());
     PayloadWrapper payloadPostCancun =
-        new PayloadWrapper(postCancunPid, pragueBlock, Optional.empty(), BlockCreationTiming.EMPTY);
+        new PayloadWrapper(
+            postCancunPid,
+            pragueBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(postCancunPid))
         .thenReturn(Optional.of(payloadPostCancun));
@@ -208,7 +218,11 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
             List.of(blobReceipt));
     PayloadWrapper payloadPostCancun =
         new PayloadWrapper(
-            postCancunPid, postCancunBlock, Optional.empty(), BlockCreationTiming.EMPTY);
+            postCancunPid,
+            postCancunBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(postCancunPid))
         .thenReturn(Optional.of(payloadPostCancun));

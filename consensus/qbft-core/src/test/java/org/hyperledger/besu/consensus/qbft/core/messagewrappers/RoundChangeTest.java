@@ -71,6 +71,7 @@ public class RoundChangeTest {
         new RoundChange(
             signedRoundChangePayload,
             Optional.of(BLOCK),
+            Optional.empty(),
             blockEncoder,
             List.of(signedPreparePayload));
 
@@ -100,7 +101,11 @@ public class RoundChangeTest {
 
     final RoundChange roundChange =
         new RoundChange(
-            signedRoundChangePayload, Optional.empty(), blockEncoder, Collections.emptyList());
+            signedRoundChangePayload,
+            Optional.empty(),
+            Optional.empty(),
+            blockEncoder,
+            Collections.emptyList());
 
     final RoundChange decodedRoundChange = RoundChange.decode(roundChange.encode(), blockEncoder);
 

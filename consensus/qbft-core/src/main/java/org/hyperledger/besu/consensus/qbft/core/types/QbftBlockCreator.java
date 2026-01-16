@@ -15,11 +15,21 @@
 package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /** Responsible for creating a block. */
 public interface QbftBlockCreator {
+
+  /**
+   * Block creation result.
+   *
+   * @param block the block
+   * @param blockAccessList optional block access list
+   */
+  public record BlockCreationResult(QbftBlock block, Optional<BlockAccessList> blockAccessList) {}
 
   /**
    * Create a block.
@@ -28,7 +38,7 @@ public interface QbftBlockCreator {
    * @param parentHeader the parent header
    * @return the block
    */
-  QbftBlock createBlock(long headerTimeStampSeconds, QbftBlockHeader parentHeader);
+  BlockCreationResult createBlock(long headerTimeStampSeconds, QbftBlockHeader parentHeader);
 
   /**
    * Create sealed block.

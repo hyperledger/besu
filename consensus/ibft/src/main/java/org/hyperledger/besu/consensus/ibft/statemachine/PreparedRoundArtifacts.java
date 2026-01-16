@@ -18,8 +18,10 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** The Prepared round artifacts. */
@@ -46,6 +48,15 @@ public class PreparedRoundArtifacts {
    */
   public Block getBlock() {
     return proposal.getBlock();
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return proposal.getBlockAccessList();
   }
 
   /**

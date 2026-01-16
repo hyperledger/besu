@@ -58,7 +58,6 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
-    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -66,12 +65,10 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals(),
-        Optional.empty());
+        blockWithMetadata.getWithdrawals());
   }
 
   public BlockResult transactionComplete(final Block block) {
-
     final int count = block.getBody().getTransactions().size();
     final List<TransactionWithMetadata> transactionWithMetadata = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
@@ -101,8 +98,7 @@ public class BlockResultFactory {
         block.getHeader().getDifficulty(),
         block.getSize(),
         false,
-        block.getBody().getWithdrawals(),
-        block.getBody().getBlockAccessList());
+        block.getBody().getWithdrawals());
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
@@ -121,7 +117,6 @@ public class BlockResultFactory {
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
-    // TODO: Pass BAL once part of the block interface
     return new BlockResult(
         blockWithMetadata.getHeader(),
         txs,
@@ -129,8 +124,7 @@ public class BlockResultFactory {
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
         includeCoinbase,
-        blockWithMetadata.getWithdrawals(),
-        Optional.empty());
+        blockWithMetadata.getWithdrawals());
   }
 
   // endregion BlockResult
@@ -210,10 +204,8 @@ public class BlockResultFactory {
         new BlobsBundleV2(blockWithReceipts.getBlock().getBody().getTransactions());
 
     final String blockAccessList =
-        blockWithReceipts
-            .getBlock()
-            .getBody()
-            .getBlockAccessList()
+        payload
+            .blockAccessList()
             .map(
                 bal -> {
                   final BytesValueRLPOutput output = new BytesValueRLPOutput();
