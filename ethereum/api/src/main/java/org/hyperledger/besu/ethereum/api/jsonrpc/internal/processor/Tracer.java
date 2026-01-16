@@ -64,7 +64,9 @@ public class Tracer {
     }
 
     @Override
-    public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
+    public void persist(
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader,
+        final StateRootCommitter committer) {
       mutableWorldState.persist(blockHeader, committer);
     }
 
