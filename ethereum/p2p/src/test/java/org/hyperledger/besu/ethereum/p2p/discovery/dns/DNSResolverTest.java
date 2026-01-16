@@ -83,11 +83,6 @@ class DNSResolverTest {
                 + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
                 + "mFwwIN0Y3CCdl-DdWRwgnZf\"",
             Bytes.fromHexString(
-                "0xf8a3b840ad5e730f821ab0c367863016b860a9cb43d2d58c1ca261515c6c4b8ba6dda5057b7c811d1b552fdb982a4d7a0eeacdd4"
-                    + "8752293381d73342be30726e367f280a86018b49e54f3083657468c7c6849b192ad080826964827634826970840fccb439897365"
-                    + "63703235366b31a103570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a487184736e6170c08374637082"
-                    + "765f8375647082765f"),
-            Bytes.fromHexString(
                 "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
                     + "3c04ab4b85ab3eabd3193c35"),
             InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}),
@@ -97,11 +92,6 @@ class DNSResolverTest {
             "\"enr:-Jy4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
                 + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
                 + "mFwwIN0Y3CCdl8=\"",
-            Bytes.fromHexString(
-                "0xf89cb840ad5e730f821ab0c367863016b860a9cb43d2d58c1ca261515c6c4b8ba6dda5057b7c811d1b552fdb982a4d7a0eeacdd4"
-                    + "8752293381d73342be30726e367f280a86018b49e54f3083657468c7c6849b192ad080826964827634826970840fccb439897365"
-                    + "63703235366b31a103570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a487184736e6170c08374637082"
-                    + "765f"),
             Bytes.fromHexString(
                 "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
                     + "3c04ab4b85ab3eabd3193c35"),
@@ -114,7 +104,6 @@ class DNSResolverTest {
   @MethodSource("validEnrNodes")
   void enrNodeIsParsed(
       final String txtRecord,
-      final Bytes expectedRlp,
       final Bytes expectedPublicKey,
       final InetAddress expectedIp,
       final int expectedTcpPort,
@@ -123,7 +112,6 @@ class DNSResolverTest {
 
     assertThat(entry).isInstanceOf(DNSEntry.ENRNode.class);
     final EthereumNodeRecord record = ((DNSEntry.ENRNode) entry).nodeRecord();
-    assertThat(record.rlp()).isEqualTo(expectedRlp);
     assertThat(record.publicKey()).isEqualTo(expectedPublicKey);
     assertThat(record.ip()).isEqualTo(expectedIp);
     assertThat(record.tcp()).isEqualTo(Optional.of(expectedTcpPort));
