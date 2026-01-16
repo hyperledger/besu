@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -86,6 +87,24 @@ class DebugTraceTransactionStepFactoryTest {
     assertThat(result).isNotNull();
     assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
     assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
+  }
+
+  @Test
+  @DisplayName("should create function for FOUR_BYTE_TRACER that returns FourByteTracerResult")
+  void shouldCreateFunctionForFourByteTracer() {
+    // Given
+    TracerType tracerType = TracerType.FOUR_BYTE_TRACER;
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(traceOptions);
+
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isInstanceOf(FourByteTracerResult.class);
   }
 
   @ParameterizedTest

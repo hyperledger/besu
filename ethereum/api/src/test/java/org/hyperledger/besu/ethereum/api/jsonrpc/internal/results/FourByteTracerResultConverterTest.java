@@ -1,0 +1,438 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+@DisplayName("FourByteTracerResultConverter")
+class FourByteTracerResultConverterTest {
+
+  @Test
+  @DisplayName("should throw NullPointerException when transactionTrace is null")
+  void shouldThrowNullPointerExceptionWhenTransactionTraceIsNull() {
+    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("FourByteTracerResultConverter requires a non-null TransactionTrace");
+  }
+
+  @Test
+  @DisplayName("should return empty result when trace frames are null")
+  void shouldReturnEmptyResultWhenTraceFramesAreNull() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    when(mockTrace.getTraceFrames()).thenReturn(null);
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should return empty result when trace frames are empty")
+  void shouldReturnEmptyResultWhenTraceFramesAreEmpty() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    when(mockTrace.getTraceFrames()).thenReturn(List.of());
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should count function selector from CALL operation that enters")
+  void shouldCountFunctionSelectorFromCallOperationThatEnters() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame callFrame = mock(TraceFrame.class);
+    TraceFrame nextFrame = mock(TraceFrame.class);
+
+    // Setup CALL frame
+    when(callFrame.getOpcode()).thenReturn("CALL");
+    when(callFrame.getDepth()).thenReturn(1);
+    when(callFrame.isPrecompile()).thenReturn(false);
+
+    // Setup next frame (call entered)
+    when(nextFrame.getDepth()).thenReturn(2);
+    // Function selector: 0x12345678, plus 96 bytes of data = 100 bytes total
+    Bytes inputData = Bytes.fromHexString("0x" + "12345678" + "00".repeat(96));
+    when(nextFrame.getInputData()).thenReturn(inputData);
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(1);
+    assertThat(counts).containsEntry("0x12345678-96", 1);
+  }
+
+  @Test
+  @DisplayName("should skip CALL operation that does not enter")
+  void shouldSkipCallOperationThatDoesNotEnter() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame callFrame = mock(TraceFrame.class);
+    TraceFrame nextFrame = mock(TraceFrame.class);
+
+    // Setup CALL frame
+    when(callFrame.getOpcode()).thenReturn("CALL");
+    when(callFrame.getDepth()).thenReturn(1);
+    when(callFrame.isPrecompile()).thenReturn(false);
+
+    // Setup next frame (call did NOT enter - same depth)
+    when(nextFrame.getDepth()).thenReturn(1);
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should skip precompiled contracts")
+  void shouldSkipPrecompiledContracts() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame callFrame = mock(TraceFrame.class);
+    TraceFrame nextFrame = mock(TraceFrame.class);
+
+    // Setup CALL frame for precompile
+    when(callFrame.getOpcode()).thenReturn("CALL");
+    when(callFrame.getDepth()).thenReturn(1);
+    when(callFrame.isPrecompile()).thenReturn(true); // Precompile
+
+    // Setup next frame
+    when(nextFrame.getDepth()).thenReturn(2);
+    when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x12345678"));
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should skip calls with less than 4 bytes of input")
+  void shouldSkipCallsWithLessThanFourBytesOfInput() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame callFrame = mock(TraceFrame.class);
+    TraceFrame nextFrame = mock(TraceFrame.class);
+
+    // Setup CALL frame
+    when(callFrame.getOpcode()).thenReturn("CALL");
+    when(callFrame.getDepth()).thenReturn(1);
+    when(callFrame.isPrecompile()).thenReturn(false);
+
+    // Setup next frame with only 2 bytes of input
+    when(nextFrame.getDepth()).thenReturn(2);
+    when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x1234"));
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should skip CREATE operations")
+  void shouldSkipCreateOperations() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame createFrame = mock(TraceFrame.class);
+    TraceFrame nextFrame = mock(TraceFrame.class);
+
+    // Setup CREATE frame
+    when(createFrame.getOpcode()).thenReturn("CREATE");
+    when(createFrame.getDepth()).thenReturn(1);
+
+    // Setup next frame
+    when(nextFrame.getDepth()).thenReturn(2);
+    when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x12345678"));
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(createFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should count multiple calls with same selector")
+  void shouldCountMultipleCallsWithSameSelector() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+
+    // First CALL
+    TraceFrame callFrame1 = mock(TraceFrame.class);
+    when(callFrame1.getOpcode()).thenReturn("CALL");
+    when(callFrame1.getDepth()).thenReturn(1);
+    when(callFrame1.isPrecompile()).thenReturn(false);
+
+    TraceFrame nextFrame1 = mock(TraceFrame.class);
+    when(nextFrame1.getDepth()).thenReturn(2);
+    when(nextFrame1.getInputData()).thenReturn(Bytes.fromHexString("0x12345678" + "00".repeat(32)));
+
+    // Some other frame to separate the calls
+    TraceFrame otherFrame = mock(TraceFrame.class);
+    when(otherFrame.getOpcode()).thenReturn("ADD");
+    when(otherFrame.getDepth()).thenReturn(1);
+
+    // Second CALL with same selector
+    TraceFrame callFrame2 = mock(TraceFrame.class);
+    when(callFrame2.getOpcode()).thenReturn("DELEGATECALL");
+    when(callFrame2.getDepth()).thenReturn(1);
+    when(callFrame2.isPrecompile()).thenReturn(false);
+
+    TraceFrame nextFrame2 = mock(TraceFrame.class);
+    when(nextFrame2.getDepth()).thenReturn(2);
+    when(nextFrame2.getInputData()).thenReturn(Bytes.fromHexString("0x12345678" + "00".repeat(32)));
+
+    when(mockTrace.getTraceFrames())
+        .thenReturn(List.of(callFrame1, nextFrame1, otherFrame, callFrame2, nextFrame2));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(1);
+    assertThat(counts).containsEntry("0x12345678-32", 2);
+  }
+
+  @Test
+  @DisplayName("should count different selectors separately")
+  void shouldCountDifferentSelectorsSeparately() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+
+    // First CALL
+    TraceFrame callFrame1 = createCallFrame("CALL", 1);
+    TraceFrame nextFrame1 = createNextFrame(2, "0x12345678" + "00".repeat(32));
+
+    // Second CALL with different selector
+    TraceFrame callFrame2 = createCallFrame("STATICCALL", 1);
+    TraceFrame nextFrame2 = createNextFrame(2, "0xabcdef01" + "00".repeat(64));
+
+    when(mockTrace.getTraceFrames())
+        .thenReturn(List.of(callFrame1, nextFrame1, callFrame2, nextFrame2));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(2);
+    assertThat(counts).containsEntry("0x12345678-32", 1);
+    assertThat(counts).containsEntry("0xabcdef01-64", 1);
+  }
+
+  @Test
+  @DisplayName("should handle all CALL-type operations")
+  void shouldHandleAllCallTypeOperations() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+
+    TraceFrame callFrame = createCallFrame("CALL", 1);
+    TraceFrame callNextFrame = createNextFrame(2, "0x11111111" + "00".repeat(10));
+
+    TraceFrame callcodeFrame = createCallFrame("CALLCODE", 1);
+    TraceFrame callcodeNextFrame = createNextFrame(2, "0x22222222" + "00".repeat(20));
+
+    TraceFrame delegatecallFrame = createCallFrame("DELEGATECALL", 1);
+    TraceFrame delegatecallNextFrame = createNextFrame(2, "0x33333333" + "00".repeat(30));
+
+    TraceFrame staticcallFrame = createCallFrame("STATICCALL", 1);
+    TraceFrame staticcallNextFrame = createNextFrame(2, "0x44444444" + "00".repeat(40));
+
+    when(mockTrace.getTraceFrames())
+        .thenReturn(
+            Arrays.asList(
+                callFrame,
+                callNextFrame,
+                callcodeFrame,
+                callcodeNextFrame,
+                delegatecallFrame,
+                delegatecallNextFrame,
+                staticcallFrame,
+                staticcallNextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(4);
+    assertThat(counts).containsEntry("0x11111111-10", 1);
+    assertThat(counts).containsEntry("0x22222222-20", 1);
+    assertThat(counts).containsEntry("0x33333333-30", 1);
+    assertThat(counts).containsEntry("0x44444444-40", 1);
+  }
+
+  @Test
+  @DisplayName("should handle exactly 4 bytes of input")
+  void shouldHandleExactlyFourBytesOfInput() {
+    // Given
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TraceFrame callFrame = createCallFrame("CALL", 1);
+    TraceFrame nextFrame = createNextFrame(2, "0x12345678");
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(1);
+    assertThat(counts).containsEntry("0x12345678-0", 1);
+  }
+
+  @Test
+  @DisplayName("should handle nested sub-calls and count multiple occurrences")
+  void shouldHandleNestedSubCallsAndCountMultipleOccurrences() {
+    // Given: method-A (depth 1) calls method-B (depth 2) which calls method-C (depth 3) TWICE
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+
+    // Initial call to method-A
+    TraceFrame callA = createCallFrame("CALL", 0);
+    TraceFrame insideA = createNextFrame(1, "0xAAAAAAAA" + "00".repeat(32)); // method-A selector
+
+    // Some instructions executing inside method-A
+    TraceFrame instructionInA = mock(TraceFrame.class);
+    when(instructionInA.getOpcode()).thenReturn("ADD");
+    when(instructionInA.getDepth()).thenReturn(1);
+
+    // method-A calls method-B
+    TraceFrame callB = createCallFrame("CALL", 1);
+    TraceFrame insideB = createNextFrame(2, "0xBBBBBBBB" + "00".repeat(64)); // method-B selector
+
+    // Some instructions executing inside method-B
+    TraceFrame instructionInB1 = mock(TraceFrame.class);
+    when(instructionInB1.getOpcode()).thenReturn("MUL");
+    when(instructionInB1.getDepth()).thenReturn(2);
+
+    // method-B calls method-C (FIRST TIME)
+    TraceFrame callC1 = createCallFrame("CALL", 2);
+    TraceFrame insideC1 = createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96)); // method-C selector
+
+    // Some instructions executing inside method-C
+    TraceFrame instructionInC1 = mock(TraceFrame.class);
+    when(instructionInC1.getOpcode()).thenReturn("SSTORE");
+    when(instructionInC1.getDepth()).thenReturn(3);
+
+    // Back in method-B, more instructions
+    TraceFrame instructionInB2 = mock(TraceFrame.class);
+    when(instructionInB2.getOpcode()).thenReturn("SUB");
+    when(instructionInB2.getDepth()).thenReturn(2);
+
+    // method-B calls method-C (SECOND TIME)
+    TraceFrame callC2 = createCallFrame("CALL", 2);
+    TraceFrame insideC2 =
+        createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96)); // method-C selector (same)
+
+    // Some instructions executing inside method-C (second invocation)
+    TraceFrame instructionInC2 = mock(TraceFrame.class);
+    when(instructionInC2.getOpcode()).thenReturn("SLOAD");
+    when(instructionInC2.getDepth()).thenReturn(3);
+
+    when(mockTrace.getTraceFrames())
+        .thenReturn(
+            List.of(
+                callA,
+                insideA,
+                instructionInA, // method-A
+                callB,
+                insideB,
+                instructionInB1, // method-B
+                callC1,
+                insideC1,
+                instructionInC1, // method-C (first call)
+                instructionInB2, // back in method-B
+                callC2,
+                insideC2,
+                instructionInC2)); // method-C (second call)
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(3);
+    assertThat(counts).containsEntry("0xaaaaaaaa-32", 1); // method-A called once
+    assertThat(counts).containsEntry("0xbbbbbbbb-64", 1); // method-B called once
+    assertThat(counts).containsEntry("0xcccccccc-96", 2); // method-C called TWICE
+  }
+
+  // Helper methods
+  private TraceFrame createCallFrame(final String opcode, final int depth) {
+    TraceFrame frame = mock(TraceFrame.class);
+    when(frame.getOpcode()).thenReturn(opcode);
+    when(frame.getDepth()).thenReturn(depth);
+    when(frame.isPrecompile()).thenReturn(false);
+    return frame;
+  }
+
+  private TraceFrame createNextFrame(final int depth, final String inputDataHex) {
+    TraceFrame frame = mock(TraceFrame.class);
+    when(frame.getDepth()).thenReturn(depth);
+    when(frame.getInputData()).thenReturn(Bytes.fromHexString(inputDataHex));
+    return frame;
+  }
+}
