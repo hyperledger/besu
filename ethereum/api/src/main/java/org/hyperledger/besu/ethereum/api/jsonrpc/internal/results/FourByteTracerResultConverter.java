@@ -16,13 +16,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.OpcodeCategory;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -76,12 +79,57 @@ public class FourByteTracerResultConverter {
 
     final Map<String, Integer> selectorCounts = new HashMap<>();
 
+    processInitialTransaction(transactionTrace, selectorCounts);
+
     // Process all trace frames for internal calls only (not the initial transaction)
     if (transactionTrace.getTraceFrames() != null) {
       processTraceFrames(transactionTrace.getTraceFrames(), selectorCounts);
     }
 
     return new FourByteTracerResult(selectorCounts);
+  }
+
+  /**
+   * Processes the initial transaction to extract its function selector.
+   *
+   * <p>This matches Geth's behavior where OnEnter fires for the transaction's entry into the
+   * contract, not just for internal calls.
+   *
+   * @param transactionTrace the transaction trace
+   * @param selectorCounts the map to update with selector counts
+   */
+  private static void processInitialTransaction(
+      final TransactionTrace transactionTrace, final Map<String, Integer> selectorCounts) {
+
+    final Transaction tx = transactionTrace.getTransaction();
+
+    // Skip if this is a contract creation (no function selector)
+    if (tx.isContractCreation()) {
+      return;
+    }
+
+    // Skip if target is not present
+    final Optional<Address> to = tx.getTo();
+    if (to.isEmpty()) {
+      return;
+    }
+
+    // Skip precompiled contracts (addresses 0x01-0x0a typically)
+    // Note: This logic should match how precompiles are detected elsewhere in Besu
+    // For now, simple check for addresses <= 0x0a
+    if (to.get().numberOfLeadingZeroBytes() >= 19
+        && to.get().trimLeadingZeros().size() == 1
+        && to.get().trimLeadingZeros().get(0) <= 0x0a) {
+      return;
+    }
+
+    final Bytes inputData = tx.getPayload();
+
+    // Only process if we have at least 4 bytes for the function selector
+    if (inputData != null && inputData.size() >= FUNCTION_SELECTOR_LENGTH) {
+      final String key = createKey(inputData);
+      selectorCounts.merge(key, 1, Integer::sum);
+    }
   }
 
   /**

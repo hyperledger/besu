@@ -19,12 +19,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +35,51 @@ import org.junit.jupiter.api.Test;
 
 @DisplayName("FourByteTracerResultConverter")
 class FourByteTracerResultConverterTest {
+
+  // Helper methods for creating mocks
+
+  /**
+   * Creates a mock TransactionTrace with a contract creation transaction (to skip initial
+   * transaction processing in most tests)
+   */
+  private TransactionTrace createMockTraceWithContractCreation() {
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    Transaction mockTx = mock(Transaction.class);
+    when(mockTx.isContractCreation()).thenReturn(true);
+    when(mockTrace.getTransaction()).thenReturn(mockTx);
+    return mockTrace;
+  }
+
+  /**
+   * Creates a mock TransactionTrace with a regular contract call transaction
+   *
+   * @param to The recipient address
+   * @param payload The transaction input data
+   */
+  private TransactionTrace createMockTraceWithContractCall(final Address to, final Bytes payload) {
+    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    Transaction mockTx = mock(Transaction.class);
+    when(mockTx.isContractCreation()).thenReturn(false);
+    when(mockTx.getTo()).thenReturn(Optional.of(to));
+    when(mockTx.getPayload()).thenReturn(payload);
+    when(mockTrace.getTransaction()).thenReturn(mockTx);
+    return mockTrace;
+  }
+
+  private TraceFrame createCallFrame(final String opcode, final int depth) {
+    TraceFrame frame = mock(TraceFrame.class);
+    when(frame.getOpcode()).thenReturn(opcode);
+    when(frame.getDepth()).thenReturn(depth);
+    when(frame.isPrecompile()).thenReturn(false);
+    return frame;
+  }
+
+  private TraceFrame createNextFrame(final int depth, final String inputDataHex) {
+    TraceFrame frame = mock(TraceFrame.class);
+    when(frame.getDepth()).thenReturn(depth);
+    when(frame.getInputData()).thenReturn(Bytes.fromHexString(inputDataHex));
+    return frame;
+  }
 
   @Test
   @DisplayName("should throw NullPointerException when transactionTrace is null")
@@ -45,7 +93,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should return empty result when trace frames are null")
   void shouldReturnEmptyResultWhenTraceFramesAreNull() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     when(mockTrace.getTraceFrames()).thenReturn(null);
 
     // When
@@ -60,7 +108,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should return empty result when trace frames are empty")
   void shouldReturnEmptyResultWhenTraceFramesAreEmpty() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     when(mockTrace.getTraceFrames()).thenReturn(List.of());
 
     // When
@@ -75,7 +123,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should count function selector from CALL operation that enters")
   void shouldCountFunctionSelectorFromCallOperationThatEnters() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame callFrame = mock(TraceFrame.class);
     TraceFrame nextFrame = mock(TraceFrame.class);
 
@@ -106,7 +154,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should skip CALL operation that does not enter")
   void shouldSkipCallOperationThatDoesNotEnter() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame callFrame = mock(TraceFrame.class);
     TraceFrame nextFrame = mock(TraceFrame.class);
 
@@ -132,7 +180,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should skip precompiled contracts")
   void shouldSkipPrecompiledContracts() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame callFrame = mock(TraceFrame.class);
     TraceFrame nextFrame = mock(TraceFrame.class);
 
@@ -159,7 +207,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should skip calls with less than 4 bytes of input")
   void shouldSkipCallsWithLessThanFourBytesOfInput() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame callFrame = mock(TraceFrame.class);
     TraceFrame nextFrame = mock(TraceFrame.class);
 
@@ -186,7 +234,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should skip CREATE operations")
   void shouldSkipCreateOperations() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame createFrame = mock(TraceFrame.class);
     TraceFrame nextFrame = mock(TraceFrame.class);
 
@@ -212,7 +260,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should count multiple calls with same selector")
   void shouldCountMultipleCallsWithSameSelector() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
 
     // First CALL
     TraceFrame callFrame1 = mock(TraceFrame.class);
@@ -256,7 +304,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should count different selectors separately")
   void shouldCountDifferentSelectorsSeparately() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
 
     // First CALL
     TraceFrame callFrame1 = createCallFrame("CALL", 1);
@@ -284,7 +332,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should handle all CALL-type operations")
   void shouldHandleAllCallTypeOperations() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
 
     TraceFrame callFrame = createCallFrame("CALL", 1);
     TraceFrame callNextFrame = createNextFrame(2, "0x11111111" + "00".repeat(10));
@@ -327,7 +375,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should handle exactly 4 bytes of input")
   void shouldHandleExactlyFourBytesOfInput() {
     // Given
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
     TraceFrame callFrame = createCallFrame("CALL", 1);
     TraceFrame nextFrame = createNextFrame(2, "0x12345678");
 
@@ -347,7 +395,7 @@ class FourByteTracerResultConverterTest {
   @DisplayName("should handle nested sub-calls and count multiple occurrences")
   void shouldHandleNestedSubCallsAndCountMultipleOccurrences() {
     // Given: method-A (depth 1) calls method-B (depth 2) which calls method-C (depth 3) TWICE
-    TransactionTrace mockTrace = mock(TransactionTrace.class);
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
 
     // Initial call to method-A
     TraceFrame callA = createCallFrame("CALL", 0);
@@ -420,19 +468,100 @@ class FourByteTracerResultConverterTest {
     assertThat(counts).containsEntry("0xcccccccc-96", 2); // method-C called TWICE
   }
 
-  // Helper methods
-  private TraceFrame createCallFrame(final String opcode, final int depth) {
-    TraceFrame frame = mock(TraceFrame.class);
-    when(frame.getOpcode()).thenReturn(opcode);
-    when(frame.getDepth()).thenReturn(depth);
-    when(frame.isPrecompile()).thenReturn(false);
-    return frame;
+  @Test
+  @DisplayName("should capture function selector from initial transaction")
+  void shouldCaptureFunctionSelectorFromInitialTransaction() {
+    // Given: A transaction calling a contract function (no internal calls)
+    Address contractAddress = Address.fromHexString("0x1234567890123456789012345678901234567890");
+    Bytes inputData = Bytes.fromHexString("0x55241077" + "00".repeat(32)); // setValue(uint256)
+
+    TransactionTrace mockTrace = createMockTraceWithContractCall(contractAddress, inputData);
+    when(mockTrace.getTraceFrames()).thenReturn(List.of()); // No internal calls
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(1);
+    assertThat(counts).containsEntry("0x55241077-32", 1);
   }
 
-  private TraceFrame createNextFrame(final int depth, final String inputDataHex) {
-    TraceFrame frame = mock(TraceFrame.class);
-    when(frame.getDepth()).thenReturn(depth);
-    when(frame.getInputData()).thenReturn(Bytes.fromHexString(inputDataHex));
-    return frame;
+  @Test
+  @DisplayName("should capture both initial transaction and internal calls")
+  void shouldCaptureBothInitialTransactionAndInternalCalls() {
+    // Given: Initial transaction calls contract, which then makes an internal call
+    Address contractAddress = Address.fromHexString("0x1234567890123456789012345678901234567890");
+    Bytes initialInput = Bytes.fromHexString("0xaaaaaaaa" + "00".repeat(32));
+
+    TransactionTrace mockTrace = createMockTraceWithContractCall(contractAddress, initialInput);
+
+    // Internal CALL
+    TraceFrame callFrame = createCallFrame("CALL", 1);
+    TraceFrame nextFrame = createNextFrame(2, "0xbbbbbbbb" + "00".repeat(64));
+
+    when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(2);
+    assertThat(counts).containsEntry("0xaaaaaaaa-32", 1); // Initial transaction
+    assertThat(counts).containsEntry("0xbbbbbbbb-64", 1); // Internal call
+  }
+
+  @Test
+  @DisplayName("should skip initial transaction if it's a contract creation")
+  void shouldSkipInitialTransactionIfContractCreation() {
+    // Given: Contract creation transaction
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
+    when(mockTrace.getTraceFrames()).thenReturn(List.of());
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should skip initial transaction with less than 4 bytes")
+  void shouldSkipInitialTransactionWithLessThanFourBytes() {
+    // Given: Transaction with only 2 bytes of input
+    Address contractAddress = Address.fromHexString("0x1234567890123456789012345678901234567890");
+    Bytes inputData = Bytes.fromHexString("0x1234");
+
+    TransactionTrace mockTrace = createMockTraceWithContractCall(contractAddress, inputData);
+    when(mockTrace.getTraceFrames()).thenReturn(List.of());
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("should skip initial transaction to precompiled contract")
+  void shouldSkipInitialTransactionToPrecompiledContract() {
+    // Given: Transaction calling precompile (address 0x01)
+    Address precompileAddress = Address.fromHexString("0x0000000000000000000000000000000000000001");
+    Bytes inputData = Bytes.fromHexString("0x12345678" + "00".repeat(32));
+
+    TransactionTrace mockTrace = createMockTraceWithContractCall(precompileAddress, inputData);
+    when(mockTrace.getTraceFrames()).thenReturn(List.of());
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getSelectorCounts()).isEmpty();
   }
 }
