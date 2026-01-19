@@ -28,9 +28,9 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.encoding.BlockBodyEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockHeaderEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -575,7 +575,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     public EthNetworkConfig.Builder provideEthNetworkConfigBuilder() {
       final EthNetworkConfig.Builder networkConfigBuilder =
-          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkName.DEV));
+          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkDefinition.DEV));
       return networkConfigBuilder;
     }
 
@@ -646,9 +646,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PermissioningService.class, permissioningService);
 
       besuPluginContext.initialize(
-          new PluginConfiguration.Builder()
+          ImmutablePluginConfiguration.builder()
               .pluginsDir(pluginsPath)
-              .requestedPlugins(requestedPlugins.stream().map(PluginInfo::new).toList())
+              .requestedPluginsInfo(requestedPlugins.stream().map(PluginInfo::new).toList())
               .build());
       besuPluginContext.registerPlugins();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));

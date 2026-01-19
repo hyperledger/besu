@@ -15,42 +15,54 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.InetAddress;
-import java.util.Random;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class EthereumNodeRecordTest {
 
-  @Test
-  void buildFromRLP() throws Exception {
-    final Bytes rlp =
-        Bytes.fromHexString(
-            "0xf8a3b84033b8a07e5c8e19dc8ac2529354b21a6c09e5516335eb57c383924aa0ca73434c0c65d8625eb05236e172fcc00d80e913506bde5446fb5c55ea2035380c97480a86018d56dc241083657468c7c6849b192ad0808269648276348269708441157e4389736563703235366b31a102a48c4c032f4c2e1b4007dd15b0d7046b60774f6bc38e2f52a8e0361c65e4234284736e6170c08374637082765f8375647082765f");
-    // method under test
-    final EthereumNodeRecord enr = EthereumNodeRecord.fromRLP(rlp);
-    // expected values
-    final InetAddress expectedIPAddr =
-        InetAddress.getByAddress(Bytes.fromHexString("0x41157e43").toArrayUnsafe());
-    final Bytes expectedPublicKey =
-        Bytes.fromHexString(
-            "0xa48c4c032f4c2e1b4007dd15b0d7046b60774f6bc38e2f52a8e0361c65e423424520b07898c59a8c9e85c440594ca734f23b7f2b906d5da54676eee6a1d64874");
-
-    // assertions
-    assertThat(enr.ip()).isEqualTo(expectedIPAddr);
-    assertThat(enr.publicKey()).isEqualTo(expectedPublicKey);
-    assertThat(enr.tcp()).isNotEmpty().contains(30303);
-    assertThat(enr.udp()).isNotEmpty().contains(30303);
+  @ParameterizedTest
+  @MethodSource("validEnrNodes")
+  void enrIsParsed(
+      final String enr,
+      final Bytes expectedPublicKey,
+      final InetAddress expectedIp,
+      final int expectedTcpPort,
+      final int expectedUdpPort) {
+    final EthereumNodeRecord record = EthereumNodeRecord.fromEnr(enr);
+    assertThat(record.publicKey()).isEqualTo(expectedPublicKey);
+    assertThat(record.ip()).isEqualTo(expectedIp);
+    assertThat(record.tcp()).isEqualTo(Optional.of(expectedTcpPort));
+    assertThat(record.udp()).isEqualTo(Optional.of(expectedUdpPort));
   }
 
-  @Test
-  void buildFromRLPWithSizeGreaterThan300() {
-    final Bytes rlp = Bytes.random(301, new Random(1L));
-    assertThatThrownBy(() -> EthereumNodeRecord.fromRLP(rlp))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Record too long");
+  private static Stream<Arguments> validEnrNodes() throws Exception {
+    return Stream.of(
+        Arguments.of(
+            "enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf",
+            Bytes.fromHexString(
+                "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
+                    + "3c04ab4b85ab3eabd3193c35"),
+            InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}),
+            30303,
+            30303),
+        Arguments.of(
+            "enr:-Jy4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl8=",
+            Bytes.fromHexString(
+                "0x570fb7e3decb1cc8e281887632d788a08f5bc961674a6191fb9f74fca91a4871957e3775d4bdfd4fdeff9bff92ad2f5965234d0e"
+                    + "3c04ab4b85ab3eabd3193c35"),
+            InetAddress.getByAddress(new byte[] {15, (byte) 204, (byte) 180, 57}),
+            30303,
+            30303));
   }
 }

@@ -18,6 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -36,18 +38,29 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
+import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
+import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -88,6 +101,11 @@ public class BlockchainTestSubCommand implements Runnable {
       names = {"--test-name"},
       description = "Limit execution to one named test.")
   private String testName = null;
+
+  @Option(
+      names = {"--trace-output"},
+      description = "Output file for traces (default: stderr). Requires --json or --trace flag.")
+  private String traceOutput = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -205,18 +223,38 @@ public class BlockchainTestSubCommand implements Runnable {
   private void executeBlockchainTest(
       final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
       final TestResults results) {
-    blockchainTests.forEach((testName, spec) -> traceTestSpecs(testName, spec, results));
+    final Map<String, BlockchainReferenceTestCaseSpec> filteredTests =
+        blockchainTests.entrySet().stream()
+            .filter(
+                entry -> {
+                  final String test = entry.getKey();
+                  if (testName != null && !testName.equals(test)) {
+                    parentCommand.out.println("Skipping test: " + test);
+                    return false;
+                  }
+                  parentCommand.out.println("Considering " + test);
+                  return true;
+                })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    int repeatCount = Math.max(1, parentCommand.getRepeatCount());
+    for (int i = 0; i < repeatCount; i++) {
+      boolean isLastIteration = (i == repeatCount - 1);
+      parentCommand.out.println("Running iteration " + i);
+      filteredTests.forEach(
+          (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
+    }
   }
 
   private void traceTestSpecs(
-      final String test, final BlockchainReferenceTestCaseSpec spec, final TestResults results) {
-    if (testName != null && !testName.equals(test)) {
-      parentCommand.out.println("Skipping test: " + test);
-      return;
+      final String test,
+      final BlockchainReferenceTestCaseSpec spec,
+      final TestResults results,
+      final boolean isLastIteration) {
+    if (isLastIteration) {
+      parentCommand.out.println("Running " + test);
     }
-    parentCommand.out.println("Considering " + test);
-
-    final ProtocolContext context = spec.buildProtocolContext();
+    final MutableBlockchain blockchain = spec.buildBlockchain();
+    final ProtocolContext context = spec.buildProtocolContext(blockchain);
 
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
@@ -231,10 +269,41 @@ public class BlockchainTestSubCommand implements Runnable {
         ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
             .getByName(spec.getNetwork());
 
-    final MutableBlockchain blockchain = spec.getBlockchain();
+    BlockTestTracerManager tracerManager = null;
+    PrintStream traceWriter;
+    long totalGasUsed = 0;
+    int totalTxCount = 0;
+    int blockCount = 0;
+    long testStartTime = System.currentTimeMillis();
 
-    boolean testFailed = false;
+    boolean testPassed = true;
     String failureReason = "";
+
+    if (parentCommand.showJsonResults && isLastIteration) {
+      try {
+        final boolean isFileOutput = traceOutput != null;
+        if (isFileOutput) {
+          traceWriter = new PrintStream(new FileOutputStream(traceOutput, true), true, UTF_8);
+        } else {
+          traceWriter = new PrintStream(System.err, true, UTF_8);
+        }
+        tracerManager =
+            new BlockTestTracerManager(
+                traceWriter,
+                parentCommand.showMemory,
+                !parentCommand.hideStack,
+                parentCommand.showReturnData,
+                parentCommand.showStorage);
+
+        final ServiceManager serviceManager = context.getPluginServiceManager();
+        final BlockchainTestTracerProvider tracerProvider =
+            new BlockchainTestTracerProvider(tracerManager);
+        serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
+      } catch (final IOException e) {
+        parentCommand.out.println("Failed to open trace output: " + e.getMessage());
+        return;
+      }
+    }
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {
@@ -244,6 +313,7 @@ public class BlockchainTestSubCommand implements Runnable {
 
       try {
         final Block block = candidateBlock.getBlock();
+        blockCount++;
 
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
@@ -254,12 +324,25 @@ public class BlockchainTestSubCommand implements Runnable {
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                 ? HeaderValidationMode.LIGHT
                 : HeaderValidationMode.FULL;
+
         final Stopwatch timer = Stopwatch.createStarted();
+
         final BlockImportResult importResult =
             blockImporter.importBlock(context, block, validationMode, validationMode);
+
         timer.stop();
+
+        if (!isLastIteration) {
+          continue;
+        }
+
+        if (parentCommand.showJsonResults) {
+          totalGasUsed += block.getHeader().getGasUsed();
+          totalTxCount += block.getBody().getTransactions().size();
+        }
+
         if (importResult.isImported() != candidateBlock.isValid()) {
-          testFailed = true;
+          testPassed = false;
           failureReason =
               String.format(
                   "Block %d (%s) %s",
@@ -284,7 +367,7 @@ public class BlockchainTestSubCommand implements Runnable {
         }
       } catch (final RLPException e) {
         if (candidateBlock.isValid()) {
-          testFailed = true;
+          testPassed = false;
           failureReason =
               String.format(
                   "Block %d (%s) RLP exception: %s",
@@ -295,21 +378,37 @@ public class BlockchainTestSubCommand implements Runnable {
         }
       }
     }
+
+    if (!isLastIteration) {
+      return;
+    }
+
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
-      testFailed = true;
+      testPassed = false;
       failureReason =
           String.format(
               "Chain header mismatch, have %s want %s",
               blockchain.getChainHeadHash(), spec.getLastBlockHash());
       parentCommand.out.printf(
-          "Chain header mismatch, have %s want %s - %s%n",
-          blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
+          "Chain header mismatch, have %s want %s%n",
+          blockchain.getChainHeadHash(), spec.getLastBlockHash());
     } else {
-      parentCommand.out.println("Chain import successful - " + test);
+      parentCommand.out.println("Chain import successful");
     }
 
-    // Record test result
-    if (testFailed) {
+    if (parentCommand.showJsonResults) {
+      final long testDuration = System.currentTimeMillis() - testStartTime;
+      tracerManager.writeTestEnd(
+          test,
+          testPassed,
+          spec.getNetwork(),
+          testDuration,
+          totalGasUsed,
+          totalTxCount,
+          blockCount);
+    }
+
+    if (!testPassed) {
       results.recordFailure(test, failureReason);
     } else {
       results.recordPass();
@@ -330,6 +429,196 @@ public class BlockchainTestSubCommand implements Runnable {
         parentCommand.out.println(
             "Journaled account configured and fork prior to the merge specified");
       }
+    }
+  }
+
+  /**
+   * Implementation of BlockImportTracerProvider that provides BlockAwareOperationTracer instances
+   * for block import tracing. This class bridges the BlockTestTracerManager with Besu's standard
+   * BlockImportTracerProvider infrastructure.
+   */
+  private record BlockchainTestTracerProvider(BlockTestTracerManager tracerManager)
+      implements BlockImportTracerProvider {
+
+    @Override
+    public BlockAwareOperationTracer getBlockImportTracer(
+        final org.hyperledger.besu.plugin.data.BlockHeader blockHeader) {
+      return new BlockchainTestTracer(tracerManager.createTracer());
+    }
+  }
+
+  /**
+   * Adapter that wraps a StreamingOperationTracer and implements BlockAwareOperationTracer. This
+   * adapter delegates all OperationTracer method calls to the underlying StreamingOperationTracer
+   * while providing default implementations for block-level tracing methods.
+   */
+  private record BlockchainTestTracer(StreamingOperationTracer delegate)
+      implements BlockAwareOperationTracer {
+
+    @Override
+    public void tracePrepareTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      delegate.tracePrepareTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceStartTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      delegate.traceStartTransaction(worldView, transaction);
+    }
+
+    @Override
+    public void traceEndTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction tx,
+        final boolean status,
+        final org.apache.tuweni.bytes.Bytes output,
+        final List<org.hyperledger.besu.evm.log.Log> logs,
+        final long gasUsed,
+        final Set<Address> selfDestructs,
+        final long timeNs) {
+      delegate.traceEndTransaction(
+          worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    }
+
+    @Override
+    public void traceBeforeRewardTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction transaction,
+        final Wei miningReward) {
+      delegate.traceBeforeRewardTransaction(worldView, transaction, miningReward);
+    }
+
+    @Override
+    public void traceContextEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextEnter(frame);
+    }
+
+    @Override
+    public void traceContextReEnter(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextReEnter(frame);
+    }
+
+    @Override
+    public void traceContextExit(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.traceContextExit(frame);
+    }
+
+    @Override
+    public void tracePreExecution(final org.hyperledger.besu.evm.frame.MessageFrame frame) {
+      delegate.tracePreExecution(frame);
+    }
+
+    @Override
+    public void tracePostExecution(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final org.hyperledger.besu.evm.operation.Operation.OperationResult operationResult) {
+      delegate.tracePostExecution(frame, operationResult);
+    }
+
+    @Override
+    public void tracePrecompileCall(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final long gasRequirement,
+        final org.apache.tuweni.bytes.Bytes output) {
+      delegate.tracePrecompileCall(frame, gasRequirement, output);
+    }
+
+    @Override
+    public void traceAccountCreationResult(
+        final org.hyperledger.besu.evm.frame.MessageFrame frame,
+        final java.util.Optional<org.hyperledger.besu.evm.frame.ExceptionalHaltReason> haltReason) {
+      delegate.traceAccountCreationResult(frame, haltReason);
+    }
+
+    @Override
+    public boolean isExtendedTracing() {
+      return true;
+    }
+  }
+
+  /**
+   * Inner class to manage tracing for blockchain tests. This class encapsulates the logic for
+   * creating and managing StreamingOperationTracer instances for transaction-level tracing during
+   * block test execution.
+   *
+   * <p>Note: Trace output is separated from test execution status output to ensure JSONL purity.
+   * Test status messages go to stdout (parentCommand.out), while traces go to stderr or a file to
+   * prevent mixing human-readable messages with machine-parseable JSONL trace data.
+   */
+  private static class BlockTestTracerManager {
+    private final PrintStream output;
+    private final boolean showMemory;
+    private final boolean showStack;
+    private final boolean showReturnData;
+    private final boolean showStorage;
+    private StreamingOperationTracer currentTracer;
+
+    /**
+     * Constructs a BlockTestTracerManager with specified tracing options.
+     *
+     * @param output the PrintWriter for trace output
+     * @param showMemory whether to include memory in traces
+     * @param showStack whether to include stack in traces
+     * @param showReturnData whether to include return data in traces
+     * @param showStorage whether to include storage changes in traces
+     */
+    public BlockTestTracerManager(
+        final PrintStream output,
+        final boolean showMemory,
+        final boolean showStack,
+        final boolean showReturnData,
+        final boolean showStorage) {
+      this.output = output;
+      this.showMemory = showMemory;
+      this.showStack = showStack;
+      this.showReturnData = showReturnData;
+      this.showStorage = showStorage;
+    }
+
+    /**
+     * Creates a new StreamingOperationTracer for tracing a transaction.
+     *
+     * @return a new StreamingOperationTracer instance
+     */
+    public StreamingOperationTracer createTracer() {
+      currentTracer =
+          new StreamingOperationTracer(
+              output,
+              OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                  .traceMemory(showMemory)
+                  .traceStack(showStack)
+                  .traceReturnData(showReturnData)
+                  .traceStorage(showStorage)
+                  .eip3155Strict(true)
+                  .build());
+      return currentTracer;
+    }
+
+    /**
+     * Writes a test end marker with test execution metrics.
+     *
+     * @param testName the name of the test
+     * @param passed whether the test passed
+     * @param fork the fork name
+     * @param durationMs test duration in milliseconds
+     * @param gasUsed total gas used
+     * @param txCount transaction count
+     * @param blockCount block count
+     */
+    public void writeTestEnd(
+        final String testName,
+        final boolean passed,
+        final String fork,
+        final long durationMs,
+        final long gasUsed,
+        final int txCount,
+        final int blockCount) {
+      output.printf(
+          "{\"test\":\"%s\",\"pass\":%s,\"fork\":\"%s\",\"duration\":%d,"
+              + "\"gasUsed\":%d,\"txCount\":%d,\"blockCount\":%d}%n",
+          testName, passed, fork, durationMs, gasUsed, txCount, blockCount);
+      output.flush();
     }
   }
 }

@@ -75,9 +75,9 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
   private Optional<BonsaiContext> getStateArchiveContextForWrite(
       final SegmentedKeyValueStorage storage) {
-    // For Bonsai archive get the flat DB context to use for writing archive entries. We add one
-    // because we're working with the latest world state so putting new flat DB keys requires us to
-    // +1 to it
+    // For Bonsai archive get the flat DB context to use for writing archive entries.
+    // If WORLD_BLOCK_NUMBER_KEY doesn't exist, this is genesis (block 0), use suffix 0.
+    // Otherwise, we're processing block N+1, so use worldBlockNumber + 1 as the suffix.
     Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
@@ -91,8 +91,8 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                 + new String(archiveContext.get(), StandardCharsets.UTF_8));
       }
     } else {
-      // Archive flat-db entries cannot be PUT if we don't have block context
-      throw new IllegalStateException("World state missing archive context");
+      // No context exists - this is genesis block, use suffix 0
+      return Optional.of(new BonsaiContext(0L));
     }
   }
 

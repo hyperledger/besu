@@ -118,7 +118,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   @Override
-  protected Hash calculateRootHash(
+  public Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
     return internalCalculateRootHash(
@@ -170,6 +170,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
                         bonsaiUpdater.getWorldStateTransaction(),
                         location,
                         value)));
+
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }

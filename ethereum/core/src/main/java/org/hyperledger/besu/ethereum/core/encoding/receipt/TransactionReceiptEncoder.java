@@ -75,7 +75,7 @@ public class TransactionReceiptEncoder {
       final RLPOutput rlpOutput,
       final TransactionReceiptEncodingConfiguration options) {
     if (!receipt.getTransactionType().equals(TransactionType.FRONTIER)) {
-      rlpOutput.writeIntScalar(receipt.getTransactionType().getSerializedType());
+      rlpOutput.writeByte(receipt.getTransactionType().getSerializedType());
     }
     rlpOutput.startList();
     writeStatusOrStateRoot(receipt, rlpOutput);
@@ -135,7 +135,7 @@ public class TransactionReceiptEncoder {
       final RLPOutput output,
       final TransactionReceiptEncodingConfiguration options) {
     output.startList();
-    output.writeIntScalar(receipt.getTransactionType().getEthSerializedType());
+    output.writeByte(receipt.getTransactionType().getEthSerializedType());
     writeStatusOrStateRoot(receipt, output);
     output.writeLongScalar(receipt.getCumulativeGasUsed());
     writeLogs(receipt, output, options);

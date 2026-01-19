@@ -20,10 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -68,7 +68,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -101,7 +101,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -131,7 +131,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())

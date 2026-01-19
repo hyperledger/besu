@@ -1,0 +1,59 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x10",
+      {
+        "tracer": "callTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x6aed559a5dcf73efa132d8182585c40fdc6ef3b99a7629d80ffd4a62cb3db622",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xfffff2",
+          "gasUsed": "0xfffff2",
+          "to": "0x00c0000000000000000000000000000000000000",
+          "input": "0x",
+          "error": "invalid opcode: opcode 0x1f not defined",
+          "value": "0x0",
+          "type": "CALL"
+        }
+      },
+      {
+        "txHash": "0xb39fa8a1cb1db4663dc3733bc014d524e90a862bf2607e028eeb3932d92574fe",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xfffff2",
+          "gasUsed": "0xfffff2",
+          "to": "0x00d0000000000000000000000000000000000000",
+          "input": "0x",
+          "error": "stack underflow (1 <=> 2)",
+          "value": "0x0",
+          "type": "CALL"
+        }
+      },
+      {
+        "txHash": "0x11a725053a6ece79d8de11cb75dd1f09c40dcd109a1c63573e847ad4f456a296",
+        "result": {
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xfffff2",
+          "gasUsed": "0xfffff2",
+          "to": "0x00e0000000000000000000000000000000000000",
+          "input": "0x",
+          "error": "invalid jump destination",
+          "value": "0x0",
+          "type": "CALL"
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

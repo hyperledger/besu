@@ -15,20 +15,22 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
-import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
-import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
-import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
-import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
-import static org.hyperledger.besu.cli.config.NetworkName.HOODI;
-import static org.hyperledger.besu.cli.config.NetworkName.LUKSO;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
-import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
+import static org.hyperledger.besu.config.NetworkDefinition.CLASSIC;
+import static org.hyperledger.besu.config.NetworkDefinition.DEV;
+import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
+import static org.hyperledger.besu.config.NetworkDefinition.EXPERIMENTAL_EIPS;
+import static org.hyperledger.besu.config.NetworkDefinition.FUTURE_EIPS;
+import static org.hyperledger.besu.config.NetworkDefinition.HOLESKY;
+import static org.hyperledger.besu.config.NetworkDefinition.HOODI;
+import static org.hyperledger.besu.config.NetworkDefinition.LINEA_SEPOLIA;
+import static org.hyperledger.besu.config.NetworkDefinition.LUKSO;
+import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
+import static org.hyperledger.besu.config.NetworkDefinition.MORDOR;
+import static org.hyperledger.besu.config.NetworkDefinition.SEPOLIA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_DISCOVERY_URL;
@@ -45,18 +47,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NativeRequirement.NativeRequirementResult;
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.config.NativeRequirement;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -91,7 +92,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +115,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
@@ -141,6 +146,15 @@ public class BesuCommandTest extends CommandTestAbstract {
     "enode://" + VALID_NODE_ID + "@192.168.0.2:4567",
     "enode://" + VALID_NODE_ID + "@192.168.0.3:4567"
   };
+
+  public static final List<EnodeURL> EPHEMERY_BOOT_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://50a54ecbd2175497640bcf46a25bbe9bb4fae51d7cc2a29ef4947a7ee17496cf39a699b7fe6b703ed0feb9dbaae7e44fc3827fcb7435ca9ac6de4daa4d983b3d@137.74.203.240:30303",
+                  "enode://0f2c301a9a3f9fa2ccfa362b79552c052905d8c2982f707f46cd29ece5a9e1c14ecd06f4ac951b228f059a43c6284a1a14fce709e8976cac93b50345218bf2e9@135.181.140.168:30343")
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
+
   private static final String DNS_DISCOVERY_URL =
       "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org";
   private static final JsonObject VALID_GENESIS_WITH_DISCOVERY_OPTIONS =
@@ -432,7 +446,7 @@ public class BesuCommandTest extends CommandTestAbstract {
           .describedAs("Option '%s' should be a configurable option.", tomlKey)
           .isNotNull();
       // Verify TOML stores it by the appropriate type
-      if (optionSpec.type().equals(Boolean.class)) {
+      if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(boolean.class)) {
         tomlResult.getBoolean(tomlKey);
       } else if (optionSpec.isMultiValue() || optionSpec.arity().max() > 1) {
         tomlResult.getArray(tomlKey);
@@ -1789,6 +1803,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void namedNetworkOptionIsUnderscoreHyphenInsensitive() {
+    parseCommand("--network", "linea-sepolia");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(LINEA_SEPOLIA));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void nonExistingNetworkThrowsError() {
+    parseCommand("--network", "foo");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Network foo does not exist");
+  }
+
+  @Test
   public void futureEipsValuesAreUsed() {
     parseCommand("--network", "future_eips");
 
@@ -1884,7 +1922,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getTargetGasLimit()).isEmpty();
 
-    verify(mockLogger, never()).warn(contains("Holesky is deprecated and will be shutdown"));
+    verify(mockLogger).warn(contains("Holesky is deprecated and will be shutdown"));
   }
 
   @Test
@@ -1965,7 +2003,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
-    assertThat(NetworkName.valueOf(String.valueOf(EPHEMERY))).isEqualTo(EPHEMERY);
+    assertThat(NetworkDefinition.valueOf(String.valueOf(EPHEMERY))).isEqualTo(EPHEMERY);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2136,7 +2174,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void requiredBlocksMulpleBlocksOneArg() {
+  public void requiredBlocksMultipleBlocksOneArg() {
     final long block1 = 8675309L;
     final long block2 = 5551212L;
     final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
@@ -2589,31 +2627,39 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertNativeRequirements_UnMet() throws IOException {
     BesuCommand mockCmd = parseCommand("--network=mainnet");
-    NetworkName spyMainnet = spy(NetworkName.MAINNET);
-    when(spyMainnet.getNativeRequirements())
-        .thenReturn(
-            List.of(new NativeRequirementResult(false, "MOCKLIB", Optional.of("Mock error"))));
-    assertThatExceptionOfType(UnsupportedOperationException.class)
-        .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(spyMainnet))
-        .withMessageContaining("MOCKLIB")
-        .withMessageContaining("Mock error")
-        .withMessageContaining(System.getProperty("os.arch"))
-        .withMessageContaining(System.getProperty("os.name"));
+    NetworkDefinition mainnet = NetworkDefinition.MAINNET;
+    List<NativeRequirement.NativeRequirementResult> mockNativeRequirements =
+        List.of(
+            new NativeRequirement.NativeRequirementResult(
+                false, "MOCKLIB", Optional.of("Mock error")));
+    try (MockedStatic<NativeRequirement> mockStatic = mockStatic(NativeRequirement.class)) {
+      mockStatic
+          .when(() -> NativeRequirement.getNativeRequirements(mainnet))
+          .thenReturn(mockNativeRequirements);
+      assertThatExceptionOfType(UnsupportedOperationException.class)
+          .isThrownBy(() -> mockCmd.checkRequiredNativeLibraries(mainnet))
+          .withMessageContaining("MOCKLIB")
+          .withMessageContaining("Mock error")
+          .withMessageContaining(System.getProperty("os.arch"))
+          .withMessageContaining(System.getProperty("os.name"));
+    }
   }
 
   @Test
   public void assertNativeRequirements_UnMetForUnnamedNetwork() throws IOException {
     final Path fakeGenesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     BesuCommand mockCmd = parseCommand("--genesis-file=" + fakeGenesisFile.toString());
-    NetworkName spyMainnet = spy(NetworkName.MAINNET);
-    // assert no error output
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    try (var mockStatic = mockStatic(NativeRequirement.class)) {
+      // assert no error output
+      assertThat(commandOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    // assert no exception
-    assertThatNoException().isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(spyMainnet)));
-    // assert we didn't check for native requirements for a custom-genesis
-    verify(spyMainnet, times(0)).getNativeRequirements();
+      // assert no exception
+      assertThatNoException()
+          .isThrownBy(() -> mockCmd.configureNativeLibs(Optional.of(NetworkDefinition.MAINNET)));
+      // assert we didn't check for native requirements for a custom-genesis
+      mockStatic.verify(() -> NativeRequirement.getNativeRequirements(any()), times(0));
+    }
   }
 
   @Test
@@ -2983,5 +3029,30 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     // Verify that the logger does NOT warn about duplication
     verify(mockLogger, never()).warn(contains("bootnodes"));
+  }
+
+  @Test
+  public void networkEphemeryTest() {
+    parseCommand("--network", "ephemery");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+
+    assertThat(networkArg.getValue().networkId())
+        .isEqualTo(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get());
+
+    Map<String, String> overrides = new HashMap<>();
+
+    overrides.put("chainId", "39438151");
+    overrides.put("timestamp", String.valueOf(Instant.now().getEpochSecond()));
+    networkArg.getValue().genesisConfig().withOverrides(overrides);
+
+    assertThat(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get())
+        .isEqualTo("39438151");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

@@ -21,6 +21,7 @@ import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALI
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED_ROLLBACK;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTION_CANCELLED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
@@ -64,8 +65,10 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -124,7 +127,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
   private volatile TransactionEvaluationContext currTxEvaluationContext;
-  private final List<Runnable> selectedTxPendingActions = new ArrayList<>(1);
+  private final List<PendingAction> selectionPendingActions = new ArrayList<>(1);
   private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
   private volatile TransactionSelectionResult validTxSelectionTimeoutResult;
   private volatile TransactionSelectionResult invalidTxSelectionTimeoutResult;
@@ -198,7 +201,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
    *     evaluation.
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
-    timeLimitedSelection();
+    blockSelectionContext.transactionPool().selectTransactions(this::timeLimitedSelection);
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
@@ -214,12 +217,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
   }
 
-  private void timeLimitedSelection() {
+  private Map<PendingTransaction, TransactionSelectionResult> timeLimitedSelection(
+      final List<PendingTransaction> candidatePendingTransactions) {
     final long startTime = System.nanoTime();
 
     selectorsStateManager.blockSelectionStarted();
 
-    pluginTimeLimitedSelection(startTime);
+    pluginTimeLimitedSelection(candidatePendingTransactions, startTime);
 
     final long elapsedPluginTxsSelectionTime = System.nanoTime() - startTime;
     final long remainingSelectionTime =
@@ -236,12 +240,17 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     // reset timeout status for next selection run
     isTimeout.set(false);
 
-    internalTimeLimitedSelection(remainingSelectionTime);
+    return internalTimeLimitedSelection(candidatePendingTransactions, remainingSelectionTime);
   }
 
-  private void internalTimeLimitedSelection(final long remainingSelectionTime) {
+  private Map<PendingTransaction, TransactionSelectionResult> internalTimeLimitedSelection(
+      final List<PendingTransaction> candidateTransactions, final long remainingSelectionTime) {
     validTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT;
     invalidTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT_INVALID_TX;
+
+    final var selectionResults =
+        new ConcurrentHashMap<PendingTransaction, TransactionSelectionResult>(
+            candidateTransactions.size());
 
     currTxSelectionTask =
         new FutureTask<>(
@@ -252,7 +261,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                   .addArgument(() -> nanosToMillis(remainingSelectionTime))
                   .addArgument(blockSelectionContext.transactionPool()::logStats)
                   .log();
-              blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+
+              for (PendingTransaction candidateTx : candidateTransactions) {
+                final var selectionResult = evaluateTransaction(candidateTx);
+                selectionResults.put(candidateTx, selectionResult);
+                if (selectionResult.stop()) {
+                  break;
+                }
+              }
             },
             null);
     ethScheduler.scheduleBlockCreationTask(
@@ -282,9 +298,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               + " the allowed max duration of {}ms",
           nanosToMillis(remainingSelectionTime));
     }
+
+    return selectionResults;
   }
 
-  private void pluginTimeLimitedSelection(final long startTime) {
+  private void pluginTimeLimitedSelection(
+      final List<PendingTransaction> candidatePendingTransactions, final long startTime) {
     validTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT;
     invalidTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
 
@@ -299,7 +318,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                     .addArgument(() -> nanosToMillis(pluginTxsSelectionMaxTimeNanos))
                     .log();
                 transactionSelectionService.selectPendingTransactions(
-                    this, blockSelectionContext.pendingBlockHeader());
+                    this, blockSelectionContext.pendingBlockHeader(), candidatePendingTransactions);
               } finally {
                 pluginSelectionDone.countDown();
               }
@@ -516,17 +535,20 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     synchronized (isTimeout) {
       isTooLate = isTimeout.get();
       if (!isTooLate) {
-        for (final var pendingAction : selectedTxPendingActions) {
-          pendingAction.run();
-        }
+        // commit the state manager before executing the pending actions
+        // so the onTransactionSelected method on selectors has access to
+        // the committed state
         selectorsStateManager.commit();
+        for (final var pendingAction : selectionPendingActions) {
+          pendingAction.runOnCommit();
+        }
         txWorldStateUpdater.commit();
         blockWorldStateUpdater.commit();
         blockWorldStateUpdater.markTransactionBoundary();
       }
     }
 
-    selectedTxPendingActions.clear();
+    selectionPendingActions.clear();
     blockWorldStateUpdater = worldState.updater();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
 
@@ -535,7 +557,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   @Override
   public void rollback() {
-    selectedTxPendingActions.clear();
+    for (final var pendingAction : selectionPendingActions) {
+      pendingAction.runOnRollback();
+    }
+    selectionPendingActions.clear();
     selectorsStateManager.rollback();
     txWorldStateUpdater = blockWorldStateUpdater.updater();
   }
@@ -655,31 +680,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
     // queue the creation of the receipt and the update of the final results
     // these actions will be performed on commit if the pending tx is definitely selected
-    selectedTxPendingActions.add(
-        () -> {
-          final long cumulativeGasUsed =
-              transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
-
-          final TransactionReceipt receipt =
-              transactionReceiptFactory.create(
-                  transaction.getType(), processingResult, cumulativeGasUsed);
-
-          maybeBlockAccessListBuilder.ifPresent(
-              blockAccessListBuilder ->
-                  processingResult
-                      .getPartialBlockAccessView()
-                      .ifPresent(blockAccessListBuilder::apply));
-
-          transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
-
-          notifySelected(evaluationContext, processingResult);
-          LOG.atTrace()
-              .setMessage("Selected and commited {} with location {} for block creation")
-              .addArgument(transaction::toTraceLog)
-              .addArgument(currentTxnLocation.get())
-              .log();
-          currentTxnLocation.incrementAndGet();
-        });
+    selectionPendingActions.add(
+        new SelectedPendingAction(evaluationContext, processingResult, gasUsedByTransaction));
 
     if (isTimeout.get()) {
       // even if this tx passed all the checks, it is too late to include it in this block,
@@ -722,8 +724,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             ? rewriteSelectionResultForTimeout(evaluationContext, selectionResult)
             : selectionResult;
 
-    transactionSelectionResults.updateNotSelected(evaluationContext.getTransaction(), actualResult);
-    notifyNotSelected(evaluationContext, actualResult);
+    selectionPendingActions.add(new NotSelectedPendingAction(evaluationContext, actualResult));
 
     LOG.atTrace()
         .setMessage("Not selected {} for block creation with result {}{}, evaluated in {}")
@@ -818,5 +819,94 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   private long nanosToMillis(final long nanos) {
     return TimeUnit.NANOSECONDS.toMillis(nanos);
+  }
+
+  private abstract static class PendingAction {
+    final TransactionEvaluationContext evaluationContext;
+
+    PendingAction(final TransactionEvaluationContext evaluationContext) {
+      this.evaluationContext = evaluationContext;
+    }
+
+    abstract void runOnCommit();
+
+    abstract void runOnRollback();
+  }
+
+  private class SelectedPendingAction extends PendingAction {
+    final Transaction transaction;
+    final TransactionProcessingResult processingResult;
+    final long gasUsedByTransaction;
+
+    public SelectedPendingAction(
+        final TransactionEvaluationContext evaluationContext,
+        final TransactionProcessingResult processingResult,
+        final long gasUsedByTransaction) {
+      super(evaluationContext);
+      this.processingResult = processingResult;
+      this.gasUsedByTransaction = gasUsedByTransaction;
+      this.transaction = evaluationContext.getTransaction();
+    }
+
+    @Override
+    void runOnCommit() {
+      final long cumulativeGasUsed =
+          transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
+
+      final TransactionReceipt receipt =
+          transactionReceiptFactory.create(
+              transaction.getType(), processingResult, cumulativeGasUsed);
+
+      maybeBlockAccessListBuilder.ifPresent(
+          blockAccessListBuilder ->
+              processingResult
+                  .getPartialBlockAccessView()
+                  .ifPresent(blockAccessListBuilder::apply));
+
+      transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
+
+      notifySelected(evaluationContext, processingResult);
+      LOG.atTrace()
+          .setMessage("Selected and committed {} with location {} for block creation")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(currentTxnLocation.get())
+          .log();
+      currentTxnLocation.incrementAndGet();
+    }
+
+    @Override
+    void runOnRollback() {
+      final var selectionResult = SELECTED_ROLLBACK;
+      transactionSelectionResults.updateNotSelected(
+          evaluationContext.getTransaction(), selectionResult);
+      notifyNotSelected(evaluationContext, selectionResult);
+      LOG.atTrace()
+          .setMessage("Transaction {} removed from selection due to rollback")
+          .addArgument(transaction::toTraceLog)
+          .log();
+    }
+  }
+
+  private class NotSelectedPendingAction extends PendingAction {
+    final TransactionSelectionResult selectionResult;
+
+    NotSelectedPendingAction(
+        final TransactionEvaluationContext evaluationContext,
+        final TransactionSelectionResult selectionResult) {
+      super(evaluationContext);
+      this.selectionResult = selectionResult;
+    }
+
+    @Override
+    void runOnCommit() {
+      // no-op
+    }
+
+    @Override
+    void runOnRollback() {
+      transactionSelectionResults.updateNotSelected(
+          evaluationContext.getTransaction(), selectionResult);
+      notifyNotSelected(evaluationContext, selectionResult);
+    }
   }
 }

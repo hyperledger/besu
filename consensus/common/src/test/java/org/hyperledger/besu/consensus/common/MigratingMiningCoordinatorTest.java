@@ -121,13 +121,13 @@ public class MigratingMiningCoordinatorTest {
 
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
-    MiningCoordinator mockNoopCoordinator = mock(MiningCoordinator.class);
-    coordinatorSchedule = createCoordinatorSchedule(mockNoopCoordinator, coordinator2);
+    MiningCoordinator mockMiningCoordinator = mock(MiningCoordinator.class);
+    coordinatorSchedule = createCoordinatorSchedule(mockMiningCoordinator, coordinator2);
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
     new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
-    verifyNoInteractions(mockNoopCoordinator);
+    verifyNoInteractions(mockMiningCoordinator);
   }
 
   @Test

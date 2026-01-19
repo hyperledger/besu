@@ -59,6 +59,7 @@ public class TransactionSelectionResult {
 
   private enum BaseStatus implements Status {
     SELECTED,
+    SELECTED_ROLLBACK(false, false, false),
     BLOCK_FULL(true, false, false),
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
@@ -115,6 +116,14 @@ public class TransactionSelectionResult {
   /** The transaction has been selected to be included in the new block */
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(BaseStatus.SELECTED);
+
+  /**
+   * Relate to transactions that are evaluated in group (aka bundle), when a previously selected
+   * transaction decision is reverted due to the selection result of a following transaction in the
+   * same group
+   */
+  public static final TransactionSelectionResult SELECTED_ROLLBACK =
+      new TransactionSelectionResult(BaseStatus.SELECTED_ROLLBACK);
 
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =

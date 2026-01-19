@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
-import static org.hyperledger.besu.evm.code.CodeV0.EMPTY_CODE;
+import static org.hyperledger.besu.evm.Code.EMPTY_CODE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;

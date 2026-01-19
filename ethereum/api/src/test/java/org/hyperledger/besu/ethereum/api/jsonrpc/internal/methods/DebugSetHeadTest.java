@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpServiceTest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -146,13 +147,15 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
   }
 
   @Test
-  public void assertNotFound() {
+  public void assertNullWhenBlockNotFound() {
     var chainTip = blockchain.getChainHead().getBlockHeader();
 
     // move the head to number just after chain head
     var resp =
         debugSetHead.response(debugSetHead("" + chainTip.getNumber() + 1, Optional.of(TRUE)));
-    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
+    // success with null result if block not found
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    assertThat(((JsonRpcSuccessResponse) resp).getResult()).isNull();
 
     // move the head to some arbitrary hash
     var resp2 =
@@ -160,7 +163,10 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
             debugSetHead(
                 Hash.keccak256(Bytes.fromHexString("0xdeadbeef")).toHexString(),
                 Optional.of(TRUE)));
-    assertThat(resp2.getType()).isEqualTo(RpcResponseType.ERROR);
+
+    // success with null result if block not found
+    assertThat(resp2.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    assertThat(((JsonRpcSuccessResponse) resp2).getResult()).isNull();
 
     // get the new chainTip:
     var newChainTip = blockchain.getChainHead().getBlockHeader();

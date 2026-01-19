@@ -74,7 +74,8 @@ interface GenesisReader {
 
     @Override
     public Stream<GenesisAccount> streamAllocations() {
-      return Streams.stream(allocations.fields())
+      return allocations
+          .propertyStream()
           .map(
               entry -> {
                 final var on = normalizeKeys((ObjectNode) entry.getValue());
@@ -233,7 +234,8 @@ interface GenesisReader {
       return JsonUtil.getObjectNode(json, key)
           .map(
               storageMap ->
-                  Streams.stream(storageMap.fields())
+                  storageMap
+                      .propertyStream()
                       .collect(
                           Collectors.toMap(
                               e -> UInt256.fromHexString(e.getKey()),

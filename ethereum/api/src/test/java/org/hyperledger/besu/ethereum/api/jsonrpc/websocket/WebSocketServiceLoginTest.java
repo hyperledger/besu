@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -201,7 +201,7 @@ public class WebSocketServiceLoginTest {
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(MiningConfiguration.class),
-                    mock(PoWMiningCoordinator.class),
+                    new NoopMiningCoordinator(),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.empty(),

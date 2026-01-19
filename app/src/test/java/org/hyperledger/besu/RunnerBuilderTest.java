@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -132,7 +132,7 @@ public final class RunnerBuilderTest {
     when(besuController.getTransactionPool())
         .thenReturn(mock(TransactionPool.class, RETURNS_DEEP_STUBS));
     when(besuController.getSynchronizer()).thenReturn(mock(Synchronizer.class));
-    when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
+    when(besuController.getMiningCoordinator()).thenReturn(new NoopMiningCoordinator());
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
     final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);

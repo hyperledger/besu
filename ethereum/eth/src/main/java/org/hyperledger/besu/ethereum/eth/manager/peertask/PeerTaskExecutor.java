@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -158,6 +159,9 @@ public class PeerTaskExecutor {
         } else {
           LOG.debug(
               "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
+          if (validationResponse.recordUselessResponse()) {
+            peer.recordUselessResponse(taskClassName);
+          }
           validationResponse.getDisconnectReason().ifPresent(peer::disconnect);
           executorResult =
               new PeerTaskExecutorResult<>(
@@ -187,6 +191,18 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, List.of(peer));
 
+      } catch (MalformedRlpFromPeerException e) {
+        // Peer sent us malformed data - disconnect
+        LOG.debug(
+            "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
+            peer.getLoggableId(),
+            e);
+        LOG.trace("Peer {} Malformed message data: {}", peer, e.getMessageData());
+        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+        executorResult =
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, List.of(peer));
+
       } catch (Exception e) {
         internalExceptionCounter.labels(taskClassName).inc();
         LOG.error("Server error found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
@@ -196,6 +212,11 @@ public class PeerTaskExecutor {
                 PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
                 List.of(peer));
       }
+      LOG.debug(
+          "Executed peer task against {}, response code {}, retries remaining {}",
+          peer.getLoggableId(),
+          executorResult.responseCode(),
+          retriesRemaining);
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED

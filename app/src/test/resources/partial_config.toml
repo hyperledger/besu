@@ -1,7 +1,6 @@
 # this is a valid partial TOML config file
 
-#mining
-miner-coinbase="0x0000000000000000000000000000000000000002"
+min-gas-price=8888
 
 #network
 network="mainnet"

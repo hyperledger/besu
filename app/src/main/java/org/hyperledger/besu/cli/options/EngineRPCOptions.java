@@ -39,8 +39,7 @@ public class EngineRPCOptions implements CLIOptions<EngineRPCConfiguration> {
   @CommandLine.Option(
       names = {"--engine-rpc-port", "--engine-rpc-http-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})")
   private final Integer engineRpcPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
   @CommandLine.Option(
