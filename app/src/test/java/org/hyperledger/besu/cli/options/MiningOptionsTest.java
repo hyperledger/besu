@@ -358,7 +358,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Test
   public void extraDataDefaultValueIsBesuVersion() {
-    // Detect also a string with -test at the end (case in which metadata are missing because the
+    // Detect also a string with null at the end (case in which metadata are missing because the
     // JAR is not generated)
     final var expectedRegex = "besu (\\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)|null)";
     internalTestSuccess(
