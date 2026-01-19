@@ -46,8 +46,7 @@ public class PathBasedExtraStorageOptions
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
               + LIMIT_TRIE_LOGS_ENABLED
-              + " it will also be used as the number of layers of trie logs to retain.",
-      arity = "1")
+              + " it will also be used as the number of layers of trie logs to retain.")
   private Long maxLayersToLoad = DEFAULT_MAX_LAYERS_TO_LOAD;
 
   /** The bonsai limit trie logs enabled option name */

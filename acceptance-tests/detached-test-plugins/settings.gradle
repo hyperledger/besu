@@ -1,0 +1,8 @@
+// Configure plugin repositories - must be first
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+  }
+}
+
+rootProject.name = 'test-plugins'

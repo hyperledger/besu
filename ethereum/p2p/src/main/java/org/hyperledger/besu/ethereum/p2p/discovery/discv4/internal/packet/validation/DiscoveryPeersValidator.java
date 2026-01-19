@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.valid
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -27,7 +27,7 @@ public class DiscoveryPeersValidator {
 
   public @Inject DiscoveryPeersValidator() {}
 
-  public void validate(final List<DiscoveryPeer> peers) {
+  public void validate(final List<DiscoveryPeerV4> peers) {
     checkArgument(peers != null, "peer list cannot be null");
   }
 }

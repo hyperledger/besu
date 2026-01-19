@@ -566,7 +566,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void selectTransactions(
-      final PendingTransactions.TransactionSelector transactionSelector) {
+      final PendingTransactions.PendingTransactionsSelector transactionSelector) {
     pendingTransactions.selectTransactions(transactionSelector);
   }
 
