@@ -99,7 +99,9 @@ public class TestBundlePlugin implements BesuPlugin {
                 @Override
                 public void selectPendingTransactions(
                     final BlockTransactionSelectionService blockTransactionSelectionService,
-                    final ProcessableBlockHeader pendingBlockHeader) {
+                    final ProcessableBlockHeader pendingBlockHeader,
+                    final List<? extends org.hyperledger.besu.datatypes.PendingTransaction>
+                        candidatePendingTransactions) {
 
                   if (events.isEmpty()) {
                     boolean bundleFailed = false;
