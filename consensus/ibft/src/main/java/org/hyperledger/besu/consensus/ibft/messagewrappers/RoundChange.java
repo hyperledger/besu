@@ -136,9 +136,6 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
   }
 
   private static Optional<BlockAccessList> readBlockAccessList(final RLPInput rlpIn) {
-    if (rlpIn.isEndOfCurrentList()) {
-      return Optional.empty();
-    }
     if (!rlpIn.nextIsNull()) {
       return Optional.of(BlockAccessListDecoder.decode(rlpIn));
     }

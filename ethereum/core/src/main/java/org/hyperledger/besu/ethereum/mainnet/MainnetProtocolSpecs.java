@@ -1328,9 +1328,13 @@ public abstract class MainnetProtocolSpecs {
         final MutableWorldState worldState,
         final Block block,
         final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
-      updateWorldStateForDao(worldState);
-      return wrapped.processBlock(
-          protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
+      return processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          Optional.empty(),
+          preprocessingBlockFunction);
     }
 
     @Override
