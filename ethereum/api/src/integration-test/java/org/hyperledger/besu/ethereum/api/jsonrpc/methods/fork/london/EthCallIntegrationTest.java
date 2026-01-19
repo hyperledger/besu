@@ -99,7 +99,7 @@ public class EthCallIntegrationTest {
     final ValidationResult<TransactionInvalidReason> validationResult =
         ValidationResult.invalid(
             TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-            "transaction up-front cost 0x2000000000000000000000 exceeds transaction sender account balance 0x130ee8e7179044400000");
+            "transaction up-front cost 0x2000000000000000000000 exceeds transaction sender account balance 0x130ee8e7179044400000 for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.from(validationResult));
 
@@ -280,7 +280,7 @@ public class EthCallIntegrationTest {
     final ValidationResult<TransactionInvalidReason> validationResult =
         ValidationResult.invalid(
             TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-            "transaction up-front cost 0x7735940200000000 exceeds transaction sender account balance 0x0");
+            "transaction up-front cost 0x7735940200000000 exceeds transaction sender account balance 0x0 for sender 0xdeadbeef00000000000000000000000000000000");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.from(validationResult));
 

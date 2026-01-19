@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
@@ -71,32 +71,32 @@ public class PeerDiscoveryTestHelper {
    * @param count the number of agents to start
    * @return a list of discovery agents.
    */
-  public List<DiscoveryPeer> createDiscoveryPeers(final int count) {
+  public List<DiscoveryPeerV4> createDiscoveryPeers(final int count) {
     return Stream.generate(this::createDiscoveryPeer).limit(count).collect(Collectors.toList());
   }
 
-  public List<DiscoveryPeer> createDiscoveryPeers(final List<NodeKey> nodeKeys) {
+  public List<DiscoveryPeerV4> createDiscoveryPeers(final List<NodeKey> nodeKeys) {
     return nodeKeys.stream().map(this::createDiscoveryPeer).collect(Collectors.toList());
   }
 
-  public DiscoveryPeer createDiscoveryPeer() {
+  public DiscoveryPeerV4 createDiscoveryPeer() {
     return createDiscoveryPeer(NodeKeyUtils.generate());
   }
 
-  public DiscoveryPeer createDiscoveryPeer(final NodeKey nodeKey) {
+  public DiscoveryPeerV4 createDiscoveryPeer(final NodeKey nodeKey) {
     final Bytes peerId = nodeKey.getPublicKey().getEncodedBytes();
     final int port = nextAvailablePort.incrementAndGet();
-    final DiscoveryPeer discoveryPeer =
-        DiscoveryPeer.fromEnode(
+    final DiscoveryPeerV4 discoveryPeerV4 =
+        DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(peerId)
                 .ipAddress(LOOPBACK_IP_ADDR)
                 .discoveryAndListeningPorts(port)
                 .build());
-    discoveryPeer.setNodeRecord(
+    discoveryPeerV4.setNodeRecord(
         NodeRecord.fromValues(IdentitySchemaInterpreter.V4, UInt64.ONE, Collections.emptyList()));
 
-    return discoveryPeer;
+    return discoveryPeerV4;
   }
 
   public Packet createPingPacket(
@@ -149,7 +149,7 @@ public class PeerDiscoveryTestHelper {
    * @return a list of discovery agents.
    */
   public List<MockPeerDiscoveryAgent> startDiscoveryAgents(
-      final int count, final List<DiscoveryPeer> bootstrapPeers) {
+      final int count, final List<DiscoveryPeerV4> bootstrapPeers) {
     return Stream.generate(() -> startDiscoveryAgent(bootstrapPeers))
         .limit(count)
         .collect(Collectors.toList());
@@ -167,20 +167,20 @@ public class PeerDiscoveryTestHelper {
    * @param bootstrapPeers the list of bootstrap peers
    * @return a list of discovery agents.
    */
-  public MockPeerDiscoveryAgent startDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
+  public MockPeerDiscoveryAgent startDiscoveryAgent(final List<DiscoveryPeerV4> bootstrapPeers) {
     final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return startDiscoveryAgent(agentBuilder);
   }
 
-  public MockPeerDiscoveryAgent startDiscoveryAgent(final DiscoveryPeer... bootstrapPeers) {
+  public MockPeerDiscoveryAgent startDiscoveryAgent(final DiscoveryPeerV4... bootstrapPeers) {
     final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return startDiscoveryAgent(agentBuilder);
   }
 
   public MockPeerDiscoveryAgent startDiscoveryAgent(
-      final String advertisedHost, final DiscoveryPeer... bootstrapPeers) {
+      final String advertisedHost, final DiscoveryPeerV4... bootstrapPeers) {
     final AgentBuilder agentBuilder =
         agentBuilder().bootstrapPeers(bootstrapPeers).advertisedHost(advertisedHost);
 
@@ -195,7 +195,7 @@ public class PeerDiscoveryTestHelper {
    * @return a list of discovery agents.
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(
-      final List<DiscoveryPeer> bootstrapPeers, final PeerPermissions peerPermissions) {
+      final List<DiscoveryPeerV4> bootstrapPeers, final PeerPermissions peerPermissions) {
     final AgentBuilder agentBuilder =
         agentBuilder().bootstrapPeers(bootstrapPeers).peerPermissions(peerPermissions);
 
@@ -208,13 +208,13 @@ public class PeerDiscoveryTestHelper {
     return agent;
   }
 
-  public MockPeerDiscoveryAgent createDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
+  public MockPeerDiscoveryAgent createDiscoveryAgent(final List<DiscoveryPeerV4> bootstrapPeers) {
     final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return createDiscoveryAgent(agentBuilder);
   }
 
-  public MockPeerDiscoveryAgent createDiscoveryAgent(final DiscoveryPeer... bootstrapPeers) {
+  public MockPeerDiscoveryAgent createDiscoveryAgent(final DiscoveryPeerV4... bootstrapPeers) {
     final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return createDiscoveryAgent(agentBuilder);
@@ -246,12 +246,12 @@ public class PeerDiscoveryTestHelper {
       this.nextAvailablePort = nextAvailablePort;
     }
 
-    public AgentBuilder bootstrapPeers(final List<DiscoveryPeer> peers) {
+    public AgentBuilder bootstrapPeers(final List<DiscoveryPeerV4> peers) {
       this.bootnodes = asEnodes(peers);
       return this;
     }
 
-    public AgentBuilder bootstrapPeers(final DiscoveryPeer... peers) {
+    public AgentBuilder bootstrapPeers(final DiscoveryPeerV4... peers) {
       return bootstrapPeers(asList(peers));
     }
 
@@ -260,7 +260,7 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
-    private List<EnodeURL> asEnodes(final List<DiscoveryPeer> peers) {
+    private List<EnodeURL> asEnodes(final List<DiscoveryPeerV4> peers) {
       return peers.stream().map(Peer::getEnodeURL).collect(Collectors.toList());
     }
 

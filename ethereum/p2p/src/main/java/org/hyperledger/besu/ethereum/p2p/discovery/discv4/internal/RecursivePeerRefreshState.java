@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -38,7 +35,7 @@ public class RecursivePeerRefreshState {
   private Bytes target;
   private final PeerDiscoveryPermissions peerPermissions;
   private final PeerTable peerTable;
-  private final DiscoveryPeer localPeer;
+  private final DiscoveryPeerV4 localPeer;
 
   private final BondingAgent bondingAgent;
   private final FindNeighbourDispatcher findNeighbourDispatcher;
@@ -52,13 +49,13 @@ public class RecursivePeerRefreshState {
   private final TimerUtil timerUtil;
   private final int timeoutPeriodInSeconds;
 
-  List<DiscoveryPeer> initialPeers;
+  List<DiscoveryPeerV4> initialPeers;
 
   RecursivePeerRefreshState(
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
       final TimerUtil timerUtil,
-      final DiscoveryPeer localPeer,
+      final DiscoveryPeerV4 localPeer,
       final PeerTable peerTable,
       final PeerDiscoveryPermissions peerPermissions,
       final int timeoutPeriodInSeconds,
@@ -73,7 +70,7 @@ public class RecursivePeerRefreshState {
     this.maxRounds = maxRounds;
   }
 
-  void start(final List<DiscoveryPeer> initialPeers, final Bytes target) {
+  void start(final List<DiscoveryPeerV4> initialPeers, final Bytes target) {
     // TODO check this flag earlier
     if (iterativeSearchInProgress) {
       LOG.debug(
@@ -94,10 +91,10 @@ public class RecursivePeerRefreshState {
     return currentRound >= maxRounds;
   }
 
-  private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
+  private void addInitialPeers(final List<DiscoveryPeerV4> initialPeers) {
     LOG.debug("{} INITIAL PEERS: {}", initialPeers.size(), initialPeers);
     this.initialPeers = initialPeers;
-    for (final DiscoveryPeer peer : initialPeers) {
+    for (final DiscoveryPeerV4 peer : initialPeers) {
       final MetadataPeer iterationParticipant =
           new MetadataPeer(peer, PeerDistanceCalculator.distance(target, peer.getId()));
       oneTrueMap.put(peer.getId(), iterationParticipant);
@@ -198,14 +195,14 @@ public class RecursivePeerRefreshState {
     bondingInitiateRound();
   }
 
-  private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
+  private boolean satisfiesMapAdditionCriteria(final DiscoveryPeerV4 discoPeer) {
     return !oneTrueMap.containsKey(discoPeer.getId())
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
         && !discoPeer.getId().equals(localPeer.getId())
         && !peerTable.isIpAddressInvalid(discoPeer.getEndpoint());
   }
 
-  void onNeighboursReceived(final DiscoveryPeer peer, final List<DiscoveryPeer> peers) {
+  void onNeighboursReceived(final DiscoveryPeerV4 peer, final List<DiscoveryPeerV4> peers) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
     if (metadataPeer == null) {
       return;
@@ -214,7 +211,7 @@ public class RecursivePeerRefreshState {
         "Received neighbours packet with {} neighbours from {}",
         peers.size(),
         peer.getEnodeURLString());
-    for (final DiscoveryPeer receivedDiscoPeer : peers) {
+    for (final DiscoveryPeerV4 receivedDiscoPeer : peers) {
       if (satisfiesMapAdditionCriteria(receivedDiscoPeer)) {
         final MetadataPeer receivedMetadataPeer =
             new MetadataPeer(
@@ -233,7 +230,7 @@ public class RecursivePeerRefreshState {
     }
   }
 
-  void onBondingComplete(final DiscoveryPeer peer) {
+  void onBondingComplete(final DiscoveryPeerV4 peer) {
     if (!iterativeSearchInProgress) {
       // cancelled so we can ignore
       return;
@@ -293,7 +290,7 @@ public class RecursivePeerRefreshState {
 
   public static class MetadataPeer implements Comparable<MetadataPeer> {
 
-    DiscoveryPeer peer;
+    DiscoveryPeerV4 peer;
     int distance;
 
     boolean bondingStarted = false;
@@ -301,12 +298,12 @@ public class RecursivePeerRefreshState {
     boolean findNeighboursStarted = false;
     boolean findNeighboursComplete = false;
 
-    MetadataPeer(final DiscoveryPeer peer, final int distance) {
+    MetadataPeer(final DiscoveryPeerV4 peer, final int distance) {
       this.peer = peer;
       this.distance = distance;
     }
 
-    DiscoveryPeer getPeer() {
+    DiscoveryPeerV4 getPeer() {
       return peer;
     }
 
@@ -376,12 +373,12 @@ public class RecursivePeerRefreshState {
   @FunctionalInterface
   public interface FindNeighbourDispatcher {
     /**
-     * Sends a FIND_NEIGHBORS message to a {@link DiscoveryPeer}, in search of a target value.
+     * Sends a FIND_NEIGHBORS message to a {@link DiscoveryPeerV4}, in search of a target value.
      *
      * @param peer the peer to interrogate
      * @param target the target node ID to find
      */
-    void findNeighbours(final DiscoveryPeer peer, final Bytes target);
+    void findNeighbours(final DiscoveryPeerV4 peer, final Bytes target);
   }
 
   @FunctionalInterface
@@ -391,7 +388,7 @@ public class RecursivePeerRefreshState {
      *
      * @param peer The targeted peer.
      */
-    void performBonding(final DiscoveryPeer peer);
+    void performBonding(final DiscoveryPeerV4 peer);
   }
 
   private class RoundTimeout {
