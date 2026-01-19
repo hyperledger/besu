@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
 - RPC changes to enhance compatibility with other ELs
   - RPCs using filter parameter including `eth_getLogs` and `trace_filter` return an error if `fromBlock` is greater than `toBlock`, or if `toBlock` extends beyond chain head (previously returned an empty list) [#9604](https://github.com/hyperledger/besu/pull/9604)
 
