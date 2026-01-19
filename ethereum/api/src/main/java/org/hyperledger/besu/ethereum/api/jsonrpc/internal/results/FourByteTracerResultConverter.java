@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.Opco
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -47,8 +47,7 @@ import org.apache.tuweni.bytes.Bytes;
  * </ul>
  *
  * <p>CREATE and CREATE2 operations are excluded, as are calls to precompiled contracts and calls
- * that fail to enter. The initial transaction call is also excluded - only internal calls are
- * traced, matching Geth's OnEnter hook behavior.
+ * that fail to enter.
  *
  * <p>For each qualifying call operation, it extracts the first 4 bytes of the input data (the
  * function selector) and combines it with the size of the remaining call data (size - 4) to create
@@ -77,7 +76,8 @@ public class FourByteTracerResultConverter {
     checkNotNull(
         transactionTrace, "FourByteTracerResultConverter requires a non-null TransactionTrace");
 
-    final Map<String, Integer> selectorCounts = new LinkedHashMap<>();
+    // Sort keys alphabetically to match Geth's JSON encoding behavior
+    final Map<String, Integer> selectorCounts = new TreeMap<>();
 
     processInitialTransaction(transactionTrace, selectorCounts);
 
