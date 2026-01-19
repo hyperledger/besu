@@ -326,7 +326,13 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       return;
     }
     vertx.<Packet>executeBlocking(
-        () -> packetDeserializer.decode(datagram.data()),
+        future -> {
+          try {
+            future.complete(packetDeserializer.decode(datagram.data()));
+          } catch (final Throwable t) {
+            future.fail(t);
+          }
+        },
         event -> {
           if (event.succeeded()) {
             // Acquire the senders coordinates to build a Peer representation from them.
@@ -354,7 +360,13 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     public <T> CompletableFuture<T> execute(final Supplier<T> action) {
       final CompletableFuture<T> result = new CompletableFuture<>();
       vertx.<T>executeBlocking(
-          () -> action.get(),
+          future -> {
+            try {
+              future.complete(action.get());
+            } catch (final Throwable t) {
+              future.fail(t);
+            }
+          },
           false,
           event -> {
             if (event.succeeded()) {

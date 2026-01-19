@@ -74,7 +74,6 @@ import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
@@ -86,7 +85,6 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.http.ServerWebSocketHandshake;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
@@ -233,7 +231,6 @@ public class EngineJsonRpcService {
     try {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
-      httpServer.webSocketHandshakeHandler(handshakeHandler());
       httpServer.webSocketHandler(webSocketHandler());
       httpServer.connectionHandler(connectionHandler());
 
@@ -276,43 +273,6 @@ public class EngineJsonRpcService {
     }
 
     return resultFuture;
-  }
-
-  private Handler<ServerWebSocketHandshake> handshakeHandler() {
-    return handshake -> {
-      if (!hostIsInAllowlist(
-          Optional.ofNullable(handshake.headers().get("Host")).orElse("NOHOST"))) {
-        handshake.reject(403);
-      }
-      final String token = getJwtToken(handshake.headers());
-      if (token != null) {
-        LOG.atTrace()
-            .setMessage("JWT authentication token {}")
-            .addArgument(() -> truncToken(token))
-            .log();
-      }
-
-      if (authenticationService.isPresent()) {
-        authenticationService
-            .get()
-            .authenticate(
-                token,
-                user -> {
-                  if (user.isEmpty()) {
-                    handshake.reject(403);
-                  } else {
-                    handshake.accept();
-                  }
-                });
-      } else {
-        handshake.accept();
-      }
-    };
-  }
-
-  private static String getJwtToken(final MultiMap headers) {
-    return AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
-        headers.get("Authorization"));
   }
 
   public CompletableFuture<Void> stop() {
@@ -364,18 +324,35 @@ public class EngineJsonRpcService {
     return websocket -> {
       final SocketAddress socketAddress = websocket.remoteAddress();
       final String connectionId = websocket.textHandlerID();
+      final String token =
+          AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
+              websocket.headers().get("Authorization"));
+      if (token != null) {
+        LOG.atTrace()
+            .setMessage("JWT authentication token {}")
+            .addArgument(() -> truncToken(token))
+            .log();
+      }
 
-      final String token = getJwtToken(websocket.headers());
+      if (!hostIsInAllowlist(
+          Optional.ofNullable(websocket.headers().get("Host")).orElse("NOHOST"))) {
+        websocket.reject(403);
+      }
+
       if (authenticationService.isPresent()) {
         authenticationService
             .get()
             .authenticate(
                 token,
                 user -> {
-                  final Handler<Buffer> socketHandler =
-                      handlerForUser(socketAddress, websocket, user);
-                  websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
-                  websocket.binaryMessageHandler(socketHandler);
+                  if (user.isEmpty()) {
+                    websocket.reject(403);
+                  } else {
+                    final Handler<Buffer> socketHandler =
+                        handlerForUser(socketAddress, websocket, user);
+                    websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
+                    websocket.binaryMessageHandler(socketHandler);
+                  }
                 });
       } else {
         final Handler<Buffer> socketHandler =
@@ -562,7 +539,7 @@ public class EngineJsonRpcService {
       try {
         httpServerOptions
             .setSsl(true)
-            .setKeyCertOptions(
+            .setPfxKeyCertOptions(
                 new PfxOptions()
                     .setPath(tlsConfiguration.getKeyStorePath().toString())
                     .setPassword(tlsConfiguration.getKeyStorePassword()))

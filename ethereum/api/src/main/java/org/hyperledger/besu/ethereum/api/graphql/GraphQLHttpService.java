@@ -399,7 +399,14 @@ public class GraphQLHttpService {
 
       final HttpServerResponse response = routingContext.response();
       vertx.executeBlocking(
-          () -> process(query, operationName, variables),
+          future -> {
+            try {
+              final GraphQLResponse graphQLResponse = process(query, operationName, variables);
+              future.complete(graphQLResponse);
+            } catch (final Exception e) {
+              future.fail(e);
+            }
+          },
           false,
           (res) -> {
             if (response.closed()) {
@@ -417,7 +424,7 @@ public class GraphQLHttpService {
                                   Collections.singletonMap(
                                       "message", res.cause().getMessage()))))));
             } else {
-              final GraphQLResponse graphQLResponse = res.result();
+              final GraphQLResponse graphQLResponse = (GraphQLResponse) res.result();
               response.setStatusCode(status(graphQLResponse).code());
               response.end(serialise(graphQLResponse));
             }

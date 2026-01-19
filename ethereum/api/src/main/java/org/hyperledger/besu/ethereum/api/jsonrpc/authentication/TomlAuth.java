@@ -58,29 +58,37 @@ public class TomlAuth implements AuthenticationProvider {
     }
 
     vertx.executeBlocking(
-        () -> {
+        f -> {
           TomlParseResult parseResult;
           try {
             parseResult = Toml.parse(options.getTomlPath());
           } catch (IOException e) {
-            throw new RuntimeException(e);
+            f.fail(e);
+            return;
           }
 
           final TomlTable userData = parseResult.getTableOrEmpty("Users." + username);
           if (userData.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
+            f.fail("User not found");
+            return;
           }
 
           final TomlUser tomlUser = readTomlUserFromTable(username, userData);
           if ("".equals(tomlUser.getPassword())) {
-            throw new IllegalArgumentException("No password set for user");
+            f.fail("No password set for user");
+            return;
           }
 
-          if (checkPasswordHash(password, tomlUser.getPassword())) {
-            return tomlUser;
-          } else {
-            throw new IllegalArgumentException("Invalid password");
-          }
+          checkPasswordHash(
+              password,
+              tomlUser.getPassword(),
+              rs -> {
+                if (rs.succeeded()) {
+                  f.complete(tomlUser);
+                } else {
+                  f.fail(rs.cause());
+                }
+              });
         },
         false,
         res -> {
@@ -113,7 +121,15 @@ public class TomlAuth implements AuthenticationProvider {
         username, saltedAndHashedPassword, groups, permissions, roles, privacyPublicKey);
   }
 
-  private boolean checkPasswordHash(final String password, final String passwordHash) {
-    return BCrypt.checkpw(password, passwordHash);
+  private void checkPasswordHash(
+      final String password,
+      final String passwordHash,
+      final Handler<AsyncResult<Void>> resultHandler) {
+    boolean passwordMatches = BCrypt.checkpw(password, passwordHash);
+    if (passwordMatches) {
+      resultHandler.handle(Future.succeededFuture());
+    } else {
+      resultHandler.handle(Future.failedFuture("Invalid password"));
+    }
   }
 }
