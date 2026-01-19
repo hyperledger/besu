@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.Opco
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,7 +77,7 @@ public class FourByteTracerResultConverter {
     checkNotNull(
         transactionTrace, "FourByteTracerResultConverter requires a non-null TransactionTrace");
 
-    final Map<String, Integer> selectorCounts = new HashMap<>();
+    final Map<String, Integer> selectorCounts = new LinkedHashMap<>();
 
     processInitialTransaction(transactionTrace, selectorCounts);
 
