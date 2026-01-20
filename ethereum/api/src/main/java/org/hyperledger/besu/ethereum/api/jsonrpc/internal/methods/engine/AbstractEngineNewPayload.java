@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -264,6 +265,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Field extraData must not be null");
     }
 
+    // Check if the protocol supports requests (has a request processor)
+    // If not, use null for requestsHash even when an empty list is provided
+    final ProtocolSpec protocolSpec =
+        protocolSchedule
+            .get()
+            .getByBlockHeader(
+                BlockHeaderBuilder.createDefault()
+                    .timestamp(blockParam.getTimestamp())
+                    .number(blockParam.getBlockNumber())
+                    .buildBlockHeader());
+    final boolean supportsRequests = protocolSpec.getRequestProcessorCoordinator().isPresent();
+
     final BlockHeader newBlockHeader =
         new BlockHeader(
             blockParam.getParentHash(),
@@ -288,11 +301,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
-            // Use null for requestsHash when list is empty
-            maybeRequests
-                .filter(list -> !list.isEmpty())
-                .map(BodyValidation::requestsHash)
-                .orElse(null),
+            // Use null for requestsHash when fork doesn't support requests
+            supportsRequests ? maybeRequests.map(BodyValidation::requestsHash).orElse(null) : null,
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
             headerFunctions);
 
