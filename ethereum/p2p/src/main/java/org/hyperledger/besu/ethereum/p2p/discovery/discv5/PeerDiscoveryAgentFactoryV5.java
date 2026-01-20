@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.nat.NatService;
 
 import java.util.Optional;
 
@@ -62,18 +64,21 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    *
    * @param nodeKey the local node key used for identity and signing
    * @param config the networking configuration
-   * @param nodeRecordManager manager responsible for local node record lifecycle
+   * @param natService NAT service for external address discovery
+   * @param storageProvider storage provider for persisting node records
    * @param forkIdManager manager providing fork ID information for peer compatibility
    */
   public PeerDiscoveryAgentFactoryV5(
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
-      final NodeRecordManager nodeRecordManager,
+      final NatService natService,
+      final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
     this.config = config;
     this.nodeKey = nodeKey;
     this.forkIdManager = forkIdManager;
-    this.nodeRecordManager = nodeRecordManager;
+    this.nodeRecordManager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
   }
 
   /**

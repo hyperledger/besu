@@ -47,27 +47,42 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final Blockchain blockchain,
       final List<Long> blockNumberForks,
       final List<Long> timestampForks) {
-
     final ForkIdManager forkIdManager =
         new ForkIdManager(blockchain, blockNumberForks, timestampForks);
+    this.delegate =
+        createPeerDiscoveryAgentFactory(
+            vertx,
+            nodeKey,
+            config,
+            peerPermissions,
+            natService,
+            metricsSystem,
+            storageProvider,
+            forkIdManager);
+  }
 
+  private PeerDiscoveryAgentFactory createPeerDiscoveryAgentFactory(
+      final Vertx vertx,
+      final NodeKey nodeKey,
+      final NetworkingConfiguration config,
+      final PeerPermissions peerPermissions,
+      final NatService natService,
+      final MetricsSystem metricsSystem,
+      final StorageProvider storageProvider,
+      final ForkIdManager forkIdManager) {
     if (config.getDiscovery().isDiscoveryV5Enabled()) {
-      NodeRecordManager nodeRecordManager =
-          new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
-      this.delegate =
-          new PeerDiscoveryAgentFactoryV5(nodeKey, config, nodeRecordManager, forkIdManager);
-    } else {
-      this.delegate =
-          new PeerDiscoveryAgentFactoryV4(
-              vertx,
-              nodeKey,
-              config,
-              peerPermissions,
-              natService,
-              metricsSystem,
-              storageProvider,
-              forkIdManager);
+      return new PeerDiscoveryAgentFactoryV5(
+          nodeKey, config, natService, storageProvider, forkIdManager);
     }
+    return new PeerDiscoveryAgentFactoryV4(
+        vertx,
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        metricsSystem,
+        storageProvider,
+        forkIdManager);
   }
 
   @Override
