@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -299,5 +300,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   private void mockAllowedRequestsValidator() {
     var validator = new MainnetRequestsValidator();
     when(protocolSpec.getRequestsValidator()).thenReturn(validator);
+    // Prague and later forks support requests (have a request processor coordinator)
+    lenient()
+        .when(protocolSpec.getRequestProcessorCoordinator())
+        .thenReturn(Optional.of(mock(RequestProcessorCoordinator.class)));
   }
 }

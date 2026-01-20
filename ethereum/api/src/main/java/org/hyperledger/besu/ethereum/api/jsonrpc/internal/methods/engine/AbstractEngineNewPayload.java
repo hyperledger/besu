@@ -267,15 +267,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // Check if the protocol supports requests (has a request processor)
     // If not, use null for requestsHash even when an empty list is provided
-    final ProtocolSpec protocolSpec =
-        protocolSchedule
-            .get()
-            .getByBlockHeader(
-                BlockHeaderBuilder.createDefault()
-                    .timestamp(blockParam.getTimestamp())
-                    .number(blockParam.getBlockNumber())
-                    .buildBlockHeader());
-    final boolean supportsRequests = protocolSpec.getRequestProcessorCoordinator().isPresent();
+    final boolean supportsRequests =
+        Optional.ofNullable(
+                protocolSchedule
+                    .get()
+                    .getByBlockHeader(
+                        BlockHeaderBuilder.createDefault()
+                            .timestamp(blockParam.getTimestamp())
+                            .number(blockParam.getBlockNumber())
+                            .buildBlockHeader()))
+            .flatMap(ProtocolSpec::getRequestProcessorCoordinator)
+            .isPresent();
 
     final BlockHeader newBlockHeader =
         new BlockHeader(
