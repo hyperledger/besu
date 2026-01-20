@@ -111,8 +111,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     mockProhibitedRequestsValidator();
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    // By default, forks don't support requests (no request processor coordinator)
-    lenient().when(protocolSpec.getRequestProcessorCoordinator()).thenReturn(Optional.empty());
     lenient().when(ethPeers.peerCount()).thenReturn(1);
   }
 

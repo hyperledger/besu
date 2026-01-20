@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -265,20 +264,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Field extraData must not be null");
     }
 
-    // Check if the protocol supports requests (has a request processor)
-    // If not, use null for requestsHash even when an empty list is provided
-    final boolean supportsRequests =
-        Optional.ofNullable(
-                protocolSchedule
-                    .get()
-                    .getByBlockHeader(
-                        BlockHeaderBuilder.createDefault()
-                            .timestamp(blockParam.getTimestamp())
-                            .number(blockParam.getBlockNumber())
-                            .buildBlockHeader()))
-            .flatMap(ProtocolSpec::getRequestProcessorCoordinator)
-            .isPresent();
-
     final BlockHeader newBlockHeader =
         new BlockHeader(
             blockParam.getParentHash(),
@@ -303,8 +288,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
-            // Use null for requestsHash when fork doesn't support requests
-            supportsRequests ? maybeRequests.map(BodyValidation::requestsHash).orElse(null) : null,
+            maybeRequests.map(BodyValidation::requestsHash).orElse(null),
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
             headerFunctions);
 
