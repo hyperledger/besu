@@ -136,22 +136,10 @@ public class QbftRound {
    * Create a block
    *
    * @param headerTimeStampSeconds of the block
-   * @return a Block
-   */
-  public QbftBlock createBlock(final long headerTimeStampSeconds) {
-    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    return createBlockWithAccessList(headerTimeStampSeconds).block();
-  }
-
-  /**
-   * Create a block with additional data
-   *
-   * @param headerTimeStampSeconds of the block
    * @return a block creation result
    */
-  public BlockCreationResult createBlockWithAccessList(final long headerTimeStampSeconds) {
-    LOG.debug(
-        "Creating proposed block (with access list). round={}", roundState.getRoundIdentifier());
+  public BlockCreationResult createBlock(final long headerTimeStampSeconds) {
+    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     return blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader);
   }
 

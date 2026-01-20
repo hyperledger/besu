@@ -201,7 +201,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final QbftBlockCreator.BlockCreationResult blockCreationResult =
-        qbftRound.createBlockWithAccessList(headerTimeStampSeconds);
+        qbftRound.createBlock(headerTimeStampSeconds);
     final QbftBlock block = blockCreationResult.block();
     final Optional<BlockAccessList> blockAccessList = blockCreationResult.blockAccessList();
     if (!block.isEmpty()) {
