@@ -288,7 +288,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
-            maybeRequests.map(BodyValidation::requestsHash).orElse(null),
+            // Use null for requestsHash when list is empty
+            maybeRequests
+                .filter(list -> !list.isEmpty())
+                .map(BodyValidation::requestsHash)
+                .orElse(null),
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
             headerFunctions);
 

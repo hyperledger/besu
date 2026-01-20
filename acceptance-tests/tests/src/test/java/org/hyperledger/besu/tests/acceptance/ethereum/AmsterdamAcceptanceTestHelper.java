@@ -82,11 +82,12 @@ public class AmsterdamAcceptanceTestHelper {
     final ArrayNode executionRequests;
     final String blockAccessList;
     final String newBlockHash;
+    final String getPayloadResponseBody;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
       assertThat(getPayloadResponse.code()).isEqualTo(200);
 
-      String responseBody = getPayloadResponse.body().string();
-      JsonNode responseJson = mapper.readTree(responseBody);
+      getPayloadResponseBody = getPayloadResponse.body().string();
+      JsonNode responseJson = mapper.readTree(getPayloadResponseBody);
       JsonNode result = responseJson.get("result");
 
       if (result == null) {
@@ -96,29 +97,63 @@ public class AmsterdamAcceptanceTestHelper {
       }
 
       executionPayload = (ObjectNode) result.get("executionPayload");
-      executionRequests = (ArrayNode) result.get("executionRequests");
+      JsonNode executionRequestsNode = result.get("executionRequests");
+      executionRequests =
+          (executionRequestsNode != null && !executionRequestsNode.isNull())
+              ? (ArrayNode) executionRequestsNode
+              : mapper.createArrayNode();
 
-      // Extract blockAccessList for Amsterdam (required by newPayloadV5)
-      JsonNode blockAccessListNode = result.get("blockAccessList");
-      blockAccessList = blockAccessListNode != null ? blockAccessListNode.asText() : null;
+      // Extract blockAccessList from executionPayload for Amsterdam (required by newPayloadV5)
+      JsonNode blockAccessListNode = executionPayload.get("blockAccessList");
+      blockAccessList =
+          (blockAccessListNode != null && !blockAccessListNode.isNull())
+              ? blockAccessListNode.asText()
+              : null;
 
       newBlockHash = executionPayload.get("blockHash").asText();
 
       assertThat(newBlockHash).isNotEmpty();
     }
 
-    final Call newPayloadRequest =
-        createEngineCall(
-            createNewPayloadRequest(
-                executionPayload.toString(),
-                PARENT_BEACON_BLOCK_ROOT_TEST,
-                executionRequests.toString(),
-                blockAccessList));
+    String newPayloadRequestBody =
+        createNewPayloadRequest(
+            executionPayload.toString(),
+            PARENT_BEACON_BLOCK_ROOT_TEST,
+            executionRequests.toString(),
+            blockAccessList);
+    final Call newPayloadRequest = createEngineCall(newPayloadRequestBody);
     try (final Response newPayloadResponse = newPayloadRequest.execute()) {
       assertThat(newPayloadResponse.code()).isEqualTo(200);
 
-      final String responseStatus =
-          mapper.readTree(newPayloadResponse.body().string()).get("result").get("status").asText();
+      String newPayloadResponseBody = newPayloadResponse.body().string();
+      JsonNode responseJson = mapper.readTree(newPayloadResponseBody);
+      JsonNode result = responseJson.get("result");
+      if (result == null) {
+        JsonNode error = responseJson.get("error");
+        String errorMsg = error != null ? error.toString() : "Unknown error";
+        throw new RuntimeException(
+            "engine_newPayloadV5 returned null result. Response: "
+                + newPayloadResponseBody
+                + ". Error: "
+                + errorMsg);
+      }
+      final String responseStatus = result.get("status").asText();
+      if (!"VALID".equals(responseStatus)) {
+        JsonNode validationError = result.get("validationError");
+        String errorMsg =
+            validationError != null ? validationError.asText() : "No validation error";
+        throw new AssertionError(
+            "Expected VALID but was "
+                + responseStatus
+                + ". Validation error: "
+                + errorMsg
+                + "\n\n=== getPayloadV6 response ===\n"
+                + getPayloadResponseBody
+                + "\n\n=== blockAccessList extracted ===\n"
+                + blockAccessList
+                + "\n\n=== newPayloadV5 response ===\n"
+                + newPayloadResponseBody);
+      }
       assertThat(responseStatus).isEqualTo("VALID");
     }
 
