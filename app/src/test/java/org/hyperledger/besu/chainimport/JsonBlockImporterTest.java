@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCacheModule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
@@ -431,8 +431,8 @@ public abstract class JsonBlockImporterTest {
   public static class JsonBlockImporterModule {
 
     @Provides
-    BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule() {
-      return new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
+    BonsaiMerkleTriePreLoader provideCachedMerkleTrieLoaderModule() {
+      return new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem());
     }
   }
 

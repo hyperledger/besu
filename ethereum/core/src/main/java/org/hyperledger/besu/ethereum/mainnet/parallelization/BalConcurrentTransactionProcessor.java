@@ -108,8 +108,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final Executor executor) {
     CompletableFuture.runAsync(
         () -> {
-          final BonsaiWorldState ws = getWorldState(protocolContext, blockHeader);
-          try (ws) {
+          try (var ws = getWorldState(protocolContext, blockHeader)) {
             if (ws == null) return;
             ws.disableCacheMerkleTrieLoader();
             final List<BlockAccessList.AccountChanges> sortedAccounts =
@@ -117,7 +116,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                     .sorted(Comparator.comparing(ac -> ac.address().addressHash()))
                     .toList();
 
-            final List<CompletableFuture<Void>> allReadFutures = new ArrayList<>();
+            final List<CompletableFuture<?>> allReadFutures = new ArrayList<>();
 
             for (var accountChanges : sortedAccounts) {
               final Address address = accountChanges.address();
@@ -129,6 +128,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                         return accountChanges.address().addressHash();
                       },
                       PREFETCH_EXECUTOR);
+              allReadFutures.add(accountFuture);
 
               final Set<StorageSlotKey> uniqueSlots = new HashSet<>();
               accountChanges.storageChanges().forEach(sc -> uniqueSlots.add(sc.slot()));
@@ -151,17 +151,9 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                 allReadFutures.add(slotReadFuture);
               }
             }
-            CompletableFuture.allOf(allReadFutures.toArray(new CompletableFuture[0]))
-                .thenRun(
-                    () ->
-                        LOG.debug(
-                            "Prefetch completed: {} total read operations", allReadFutures.size()))
-                .exceptionally(
-                    throwable -> {
-                      LOG.error("Error during prefetch operation", throwable);
-                      return null;
-                    })
-                .join();
+            CompletableFuture.allOf(
+                    allReadFutures.toArray(new CompletableFuture[0])).join();
+            LOG.debug("Prefetch completed: {} total read operations", allReadFutures.size());
           }
         },
         executor);

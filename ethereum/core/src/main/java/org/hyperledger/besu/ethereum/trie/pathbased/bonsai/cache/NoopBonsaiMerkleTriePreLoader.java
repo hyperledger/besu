@@ -20,9 +20,9 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-public class NoopBonsaiCachedMerkleTrieLoader extends BonsaiCachedMerkleTrieLoader {
+public class NoopBonsaiMerkleTriePreLoader extends BonsaiMerkleTriePreLoader {
 
-  public NoopBonsaiCachedMerkleTrieLoader() {
+  public NoopBonsaiMerkleTriePreLoader() {
     super(new NoOpMetricsSystem());
   }
 

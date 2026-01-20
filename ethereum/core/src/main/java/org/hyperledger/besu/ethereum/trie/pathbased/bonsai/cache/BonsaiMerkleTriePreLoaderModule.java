@@ -21,11 +21,11 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class BonsaiCachedMerkleTrieLoaderModule {
+public class BonsaiMerkleTriePreLoaderModule {
 
   @Provides
-  BonsaiCachedMerkleTrieLoader provideCachedMerkleTrieLoaderModule(
+  BonsaiMerkleTriePreLoader provideCachedMerkleTrieLoaderModule(
       final MetricsSystem metricsSystem) {
-    return new BonsaiCachedMerkleTrieLoader((ObservableMetricsSystem) metricsSystem);
+    return new BonsaiMerkleTriePreLoader((ObservableMetricsSystem) metricsSystem);
   }
 }

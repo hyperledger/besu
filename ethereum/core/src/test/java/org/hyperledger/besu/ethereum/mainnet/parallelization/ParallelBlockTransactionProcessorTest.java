@@ -45,8 +45,8 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAcces
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
@@ -97,8 +97,8 @@ class ParallelBlockTransactionProcessorTest {
 
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
-        new NoopBonsaiCachedMerkleTrieLoader(),
-        new NoOpBonsaiCachedWorldStorageManager(
+        new NoopBonsaiMerkleTriePreLoader(),
+        new NoOpBonsaiWorldStateRegistry(
             bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, new CodeCache()),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,

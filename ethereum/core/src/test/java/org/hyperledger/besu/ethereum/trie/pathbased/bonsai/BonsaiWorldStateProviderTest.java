@@ -33,8 +33,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -73,7 +72,8 @@ class BonsaiWorldStateProviderTest {
   @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
-  @Mock BonsaiCachedWorldStorageManager cachedWorldStorageManager;
+  @Mock
+  BonsaiWorldStateRegistry cachedWorldStorageManager;
   @Mock TrieLogManager trieLogManager;
 
   @BeforeEach
@@ -98,7 +98,7 @@ class BonsaiWorldStateProviderTest {
                 new NoOpMetricsSystem(),
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier(),
             new CodeCache());
@@ -142,7 +142,7 @@ class BonsaiWorldStateProviderTest {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
             Optional.of(512L),
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier(),
@@ -174,7 +174,7 @@ class BonsaiWorldStateProviderTest {
                 new NoOpMetricsSystem(),
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier(),
             new CodeCache());
@@ -216,7 +216,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier(),
                 new CodeCache()));
@@ -261,7 +261,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier(),
                 new CodeCache()));
@@ -301,7 +301,7 @@ class BonsaiWorldStateProviderTest {
                 trieLogManager,
                 worldStateKeyValueStorage,
                 blockchain,
-                new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
+                new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
                 EvmConfiguration.DEFAULT,
                 throwingWorldStateHealerSupplier(),
                 new CodeCache()));

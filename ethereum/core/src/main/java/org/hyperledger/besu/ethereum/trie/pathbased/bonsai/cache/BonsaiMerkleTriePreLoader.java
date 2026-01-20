@@ -36,7 +36,7 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
+public class BonsaiMerkleTriePreLoader implements StorageSubscriber {
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -45,7 +45,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   private final Cache<Bytes, Bytes> storageNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
-  public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
+  public BonsaiMerkleTriePreLoader(final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
   }

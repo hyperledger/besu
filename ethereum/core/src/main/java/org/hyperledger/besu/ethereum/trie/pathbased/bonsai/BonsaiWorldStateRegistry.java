@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
+package org.hyperledger.besu.ethereum.trie.pathbased.bonsai;
 
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiSnapshotWorldStateStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -29,10 +29,10 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class BonsaiCachedWorldStorageManager extends PathBasedCachedWorldStorageManager {
+public class BonsaiWorldStateRegistry extends PathBasedCachedWorldStorageManager {
   private final CodeCache codeCache;
 
-  public BonsaiCachedWorldStorageManager(
+  public BonsaiWorldStateRegistry(
       final BonsaiWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
@@ -75,7 +75,7 @@ public class BonsaiCachedWorldStorageManager extends PathBasedCachedWorldStorage
         instanceof BonsaiCachedWorldStateStorage cachedWorldStateStorage) {
       return cachedWorldStateStorage.createSnapshot();
     } else {
-      return new BonsaiSnapshotWorldStateKeyValueStorage(
+      return new BonsaiSnapshotWorldStateStorage(
           (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage);
     }
   }

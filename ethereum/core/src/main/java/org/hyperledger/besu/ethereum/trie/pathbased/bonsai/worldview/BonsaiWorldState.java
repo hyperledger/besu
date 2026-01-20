@@ -27,9 +27,9 @@ import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
@@ -63,7 +63,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends PathBasedWorldState {
 
-  protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  protected BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader;
   private final CodeCache codeCache;
 
   public BonsaiWorldState(
@@ -84,23 +84,23 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader,
       final PathBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration,
       final WorldStateConfig worldStateConfig,
       final CodeCache codeCache) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager, worldStateConfig);
-    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.bonsaiMerkleTriePreLoader = bonsaiMerkleTriePreLoader;
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.setAccumulator(
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                this.bonsaiCachedMerkleTrieLoader.preLoadAccount(
+                this.bonsaiMerkleTriePreLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                this.bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
+                this.bonsaiMerkleTriePreLoader.preLoadStorageSlot(
                     getWorldStateStorage(), addr, value),
             evmConfiguration,
             codeCache));
@@ -152,7 +152,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
     final MerkleTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
+                bonsaiMerkleTriePreLoader.getAccountStateTrieNode(
                     getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
@@ -258,7 +258,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
+                  bonsaiMerkleTriePreLoader.getAccountStorageTrieNode(
                       getWorldStateStorage(), updatedAddressHash, location, key),
               storageRoot);
 
@@ -464,7 +464,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   public void disableCacheMerkleTrieLoader() {
-    this.bonsaiCachedMerkleTrieLoader = new NoopBonsaiCachedMerkleTrieLoader();
+    this.bonsaiMerkleTriePreLoader = new NoopBonsaiMerkleTriePreLoader();
   }
 
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {

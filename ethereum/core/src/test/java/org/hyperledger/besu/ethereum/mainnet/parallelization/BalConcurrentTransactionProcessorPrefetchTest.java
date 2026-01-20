@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -78,8 +78,8 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     worldState =
         new BonsaiWorldState(
             cachedStorage,
-            new NoopBonsaiCachedMerkleTrieLoader(),
-            new NoOpBonsaiCachedWorldStorageManager(
+            new NoopBonsaiMerkleTriePreLoader(),
+            new NoOpBonsaiWorldStateRegistry(
                 cachedStorage, EvmConfiguration.DEFAULT, new CodeCache()),
             new NoOpTrieLogManager(),
             EvmConfiguration.DEFAULT,

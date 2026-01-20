@@ -89,7 +89,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
@@ -659,10 +659,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       preloadBlockHeaderCache(blockchain, scheduler);
     }
 
-    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
+    final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
-            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
+            .orElseGet(() -> new BonsaiMerkleTriePreLoader(metricsSystem));
 
     final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
 
@@ -670,7 +670,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         createWorldStateArchive(
             worldStateStorageCoordinator,
             blockchain,
-            bonsaiCachedMerkleTrieLoader,
+                bonsaiMerkleTriePreLoader,
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
@@ -1253,7 +1253,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader,
       final Supplier<WorldStateHealer> worldStateHealerSupplier) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
@@ -1267,7 +1267,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
                 dataStorageConfiguration
                     .getPathBasedExtraStorageConfiguration()
                     .getMaxLayersToLoad()),
-            bonsaiCachedMerkleTrieLoader,
+                bonsaiMerkleTriePreLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier,
@@ -1284,7 +1284,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
                 dataStorageConfiguration
                     .getPathBasedExtraStorageConfiguration()
                     .getMaxLayersToLoad()),
-            bonsaiCachedMerkleTrieLoader,
+                bonsaiMerkleTriePreLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier,

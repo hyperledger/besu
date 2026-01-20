@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * snapshotVersion - It does NOT cache new reads (to avoid polluting the shared cache with
  * snapshot-specific data)
  */
-public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldStateKeyValueStorage {
+public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldStateStorage {
 
   private final BonsaiWorldStateKeyValueStorage parent;
   // Shared reference to the live cache's caches
@@ -49,7 +49,7 @@ public class BonsaiSnapshotCachedWorldStateStorage extends BonsaiSnapshotWorldSt
   // The version at which this snapshot was created
   private final long snapshotVersion;
 
-  public BonsaiSnapshotCachedWorldStateStorage(
+  public BonsaiCachedSnapshotWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parent,
       final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches,
       final long snapshotVersion) {

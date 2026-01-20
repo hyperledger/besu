@@ -31,15 +31,15 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
+public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueStorage
     implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
 
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
   private static final Logger LOG =
-      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
+      LoggerFactory.getLogger(BonsaiSnapshotWorldStateStorage.class);
   private final long subscribeParentId;
 
-  public BonsaiSnapshotWorldStateKeyValueStorage(
+  public BonsaiSnapshotWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
@@ -49,7 +49,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
-  public BonsaiSnapshotWorldStateKeyValueStorage(
+  public BonsaiSnapshotWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage worldStateStorageKeyValueStorage) {
     this(
         worldStateStorageKeyValueStorage,
