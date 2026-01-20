@@ -82,6 +82,7 @@ public final class DefaultP2PNetworkTestBuilder {
             .metricsSystem(noopMetricsSystem)
             .allConnectionsSupplier(Stream::empty)
             .allActiveConnectionsSupplier(Stream::empty)
+            .maxPeers(25)
             .build();
 
     return DefaultP2PNetwork.builder()

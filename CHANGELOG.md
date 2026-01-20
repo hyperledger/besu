@@ -22,6 +22,9 @@
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 
+### Bug fixes
+- Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
+
 ##  25.12.0
 
 ### Breaking Changes
