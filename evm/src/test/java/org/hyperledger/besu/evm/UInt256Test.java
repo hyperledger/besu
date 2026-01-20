@@ -61,22 +61,22 @@ public class UInt256Test {
   public void fromBytesBE() {
     byte[] input;
     UInt256 result;
-    long[] expectedLimbs;
+    UInt256 expected;
 
     input = new byte[] {-128, 0, 0, 0};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {0L, 0L, 0L, 2147483648L};
-    assertThat(result.limbs()).as("4b-neg-limbs").isEqualTo(expectedLimbs);
+    expected = new UInt256(0, 0, 0, 2147483648L);
+    assertThat(result).as("4b-neg-limbs").isEqualTo(expected);
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {0, 0, 0, 1 + 256 + 65536};
-    assertThat(result.limbs()).as("3b-limbs").isEqualTo(expectedLimbs);
+    expected= new UInt256(0, 0, 0, 1 + 256 + 65536);
+    assertThat(result).as("3b-limbs").isEqualTo(expected);
 
     input = new byte[] {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {0, 0, 16777216, 1 + 256 + 65536};
-    assertThat(result.limbs()).as("8b-limbs").isEqualTo(expectedLimbs);
+    expected = new UInt256(0, 0, 16777216, 1 + 256 + 65536);
+    assertThat(result).as("8b-limbs").isEqualTo(expected);
 
     input =
         new byte[] {
@@ -84,8 +84,8 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {72057594037927936L, 0, 0, 0};
-    assertThat(result.limbs()).as("32b-limbs").isEqualTo(expectedLimbs);
+    expected= new UInt256(72057594037927936L, 0, 0, 0);
+    assertThat(result).as("32b-limbs").isEqualTo(expected);
 
     input =
         new byte[] {
@@ -93,14 +93,14 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {257, 0, 0, 0};
-    assertThat(result.limbs()).as("32b-padded-limbs").isEqualTo(expectedLimbs);
+    expected = new UInt256(257, 0, 0, 0);
+    assertThat(result).as("32b-padded-limbs").isEqualTo(expected);
 
     Bytes inputBytes = Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
     input = inputBytes.toArrayUnsafe();
     result = UInt256.fromBytesBE(input);
-    expectedLimbs = new long[] {0, 4294967295L, -1L, -1L};
-    assertThat(result.limbs()).as("32b-case2-limbs").isEqualTo(expectedLimbs);
+    expected= new UInt256(0, 4294967295L, -1L, -1L);
+    assertThat(result).as("32b-case2-limbs").isEqualTo(expected);
   }
 
   @Test
@@ -254,6 +254,7 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(big_modulus) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(big_number.mod(big_modulus));
+      if (!remainder.equals(expected)) System.out.println(String.format("%s %% %s == %s", number, modulus, number.mod(modulus)));
       assertThat(remainder).isEqualTo(expected);
     }
   }
