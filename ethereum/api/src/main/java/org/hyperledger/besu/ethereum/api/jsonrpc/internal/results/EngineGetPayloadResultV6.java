@@ -53,7 +53,7 @@ public class EngineGetPayloadResultV6 {
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
-    this.executionRequests = executionRequests.orElse(List.of());
+    this.executionRequests = executionRequests.orElse(null);
   }
 
   @JsonGetter(value = "executionPayload")
