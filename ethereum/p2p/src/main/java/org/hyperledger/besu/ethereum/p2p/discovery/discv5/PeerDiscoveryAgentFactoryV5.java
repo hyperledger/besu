@@ -84,10 +84,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   /**
    * Creates and configures a DiscV5 {@link PeerDiscoveryAgent}.
    *
-   * <p>The provided {@link RlpxAgent} is ignored, as DiscV5 discovery operates independently of the
-   * RLPx transport layer.
-   *
-   * @param rlpxAgent unused RLPx agent
+   * @param rlpxAgent the RLPx agent
    * @return a fully configured DiscV5 peer discovery agent
    * @throws IllegalStateException if the local node record has not been initialized
    */

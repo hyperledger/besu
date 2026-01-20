@@ -63,7 +63,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
             forkIdManager);
   }
 
-  private PeerDiscoveryAgentFactory createPeerDiscoveryAgentFactory(
+  private static PeerDiscoveryAgentFactory createPeerDiscoveryAgentFactory(
       final Vertx vertx,
       final NodeKey nodeKey,
       final NetworkingConfiguration config,

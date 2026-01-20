@@ -66,7 +66,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   /** Minimum ratio of connected peers required to switch to slow discovery cadence. */
   private static final double MINIMUM_PEER_RATIO = 0.8;
 
-  public static final int DISCOVERY_TIMEOUT = 30;
+  public static final int DISCOVERY_TIMEOUT_SECONDS = 30;
 
   private final MutableDiscoverySystem discoverySystem;
   private final DiscoveryConfiguration discoveryConfig;
@@ -118,10 +118,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
     if (!isEnabled()) {
-      LOG.debug("DiscV5 peer discovery agent is disabled; start skipped");
+      LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
-    LOG.info("Starting DiscV5 Peer Discovery Agent on TCP port {}", tcpPort);
+    LOG.info("Starting DiscV5 peer discovery agent on TCP port {}", tcpPort);
     running = true;
     scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
     return discoverySystem
@@ -129,7 +129,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .thenApply(
             v -> {
               final int localPort = currentListeningPort();
-              LOG.info("P2P peer discovery agent started and listening on {}", localPort);
+              LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
         .whenComplete(
@@ -262,7 +262,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     }
     discoverySystem
         .searchForNewPeers()
-        .orTimeout(DISCOVERY_TIMEOUT, TimeUnit.SECONDS)
+        .orTimeout(DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .whenComplete(
             (nodeRecords, error) -> {
               try {
