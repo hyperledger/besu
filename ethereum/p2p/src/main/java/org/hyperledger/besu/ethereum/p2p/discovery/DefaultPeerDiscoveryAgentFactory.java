@@ -47,8 +47,10 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final Blockchain blockchain,
       final List<Long> blockNumberForks,
       final List<Long> timestampForks) {
+
     final ForkIdManager forkIdManager =
         new ForkIdManager(blockchain, blockNumberForks, timestampForks);
+
     this.delegate =
         createPeerDiscoveryAgentFactory(
             vertx,
