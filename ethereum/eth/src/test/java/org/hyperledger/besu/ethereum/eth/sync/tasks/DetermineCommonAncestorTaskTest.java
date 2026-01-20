@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -124,41 +123,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            metricsSystem);
-
-    final AtomicReference<Throwable> failure = new AtomicReference<>();
-    final CompletableFuture<BlockHeader> future = task.run();
-    future.whenComplete(
-        (response, error) -> {
-          failure.set(error);
-        });
-
-    // Disconnect the target peer
-    respondingEthPeer.disconnect(DisconnectReason.CLIENT_QUITTING);
-
-    assertThat(failure.get()).isNotNull();
-    final Throwable error = ExceptionUtils.rootCause(failure.get());
-    assertThat(error).isInstanceOf(EthTaskException.class);
-    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.NO_AVAILABLE_PEERS);
-  }
-
-  @Test
-  public void shouldFailIfPeerDisconnectsUsingPeerTaskSystem() {
-    final Block block = blockDataGenerator.nextBlock(localBlockchain.getChainHeadBlock());
-    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block));
-
-    final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-
-    final EthTask<BlockHeader> task =
-        DetermineCommonAncestorTask.create(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 
     PeerTaskExecutorResult<List<BlockHeader>> taskResult =
@@ -190,11 +154,9 @@ public class DetermineCommonAncestorTaskTest {
 
   @Test
   public void shouldHandleEmptyResponses() {
-    final Blockchain remoteBlockchain = setupLocalAndRemoteChains(11, 11, 5);
+    final Block block = blockDataGenerator.nextBlock(localBlockchain.getChainHeadBlock());
+    localBlockchain.appendBlock(block, blockDataGenerator.receipts(block));
 
-    final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
-    final RespondingEthPeer.Responder fullResponder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -205,22 +167,31 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             metricsSystem);
 
-    // Empty response should be handled without any error
+    PeerTaskExecutorResult<List<BlockHeader>> taskResult =
+        new PeerTaskExecutorResult<>(
+            Optional.of(Collections.emptyList()),
+            PeerTaskExecutorResponseCode.INVALID_RESPONSE,
+            List.of(respondingEthPeer.getEthPeer()));
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class),
+                Mockito.eq(respondingEthPeer.getEthPeer())))
+        .thenReturn(taskResult);
+
+    final AtomicReference<Throwable> failure = new AtomicReference<>();
     final CompletableFuture<BlockHeader> future = task.run();
-    respondingEthPeer.respond(emptyResponder);
-    assertThat(future).isNotDone();
+    future.whenComplete(
+        (response, error) -> {
+          failure.set(error);
+        });
 
-    // Task should continue on and complete when valid responses are received
-    // Execute task and wait for response
-    respondingEthPeer.respondWhile(fullResponder, () -> !future.isDone());
-
-    assertThat(future).isDone();
-    assertThat(future).isNotCompletedExceptionally();
-    final BlockHeader expectedResult = remoteBlockchain.getBlockHeader(4).get();
-    assertThat(future).isCompletedWithValue(expectedResult);
+    assertThat(failure.get()).isNotNull();
+    final Throwable error = ExceptionUtils.rootCause(failure.get());
+    assertThat(error).isInstanceOf(RuntimeException.class);
+    assertThat(((RuntimeException) error).getMessage())
+        .isEqualTo("Peer failed to successfully return requested block headers");
   }
 
   @Test
@@ -242,42 +213,6 @@ public class DetermineCommonAncestorTaskTest {
   public void shouldIssueConsistentNumberOfRequestsToPeer() {
     final Blockchain remoteBlockchain = setupLocalAndRemoteChains(101, 101, 1);
 
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-    final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-
-    final DetermineCommonAncestorTask task =
-        DetermineCommonAncestorTask.create(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            metricsSystem);
-    final DetermineCommonAncestorTask spy = spy(task);
-
-    // Execute task
-    final CompletableFuture<BlockHeader> future = spy.run();
-    respondingEthPeer.respondWhile(responder, () -> !future.isDone());
-
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
-    future.whenComplete(
-        (response, error) -> {
-          result.set(response);
-        });
-
-    Assertions.assertThat(result.get().getHash())
-        .isEqualTo(MainnetBlockHeaderFunctions.createHash(localGenesisBlock.getHeader()));
-
-    verify(spy, times(3)).requestHeaders();
-  }
-
-  @Test
-  public void shouldIssueConsistentNumberOfRequestsToPeerUsingPeerTaskSystem() {
-    final Blockchain remoteBlockchain = setupLocalAndRemoteChains(101, 101, 1);
-
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -288,7 +223,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 
     Mockito.when(
@@ -329,44 +263,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             10,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            metricsSystem);
-    final DetermineCommonAncestorTask spy = spy(task);
-
-    // Execute task
-    final CompletableFuture<BlockHeader> future = spy.run();
-    respondingEthPeer.respondWhile(responder, () -> !future.isDone());
-
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
-    future.whenComplete(
-        (response, error) -> {
-          result.set(response);
-        });
-
-    Assertions.assertThat(result.get().getHash())
-        .isEqualTo(MainnetBlockHeaderFunctions.createHash(commonHeader));
-
-    verify(spy, times(1)).requestHeaders();
-  }
-
-  @Test
-  public void shouldShortCircuitOnHeaderInInitialRequestUsingPeerTaskSystem() {
-    final Blockchain remoteBlockchain = setupLocalAndRemoteChains(100, 100, 96);
-    final BlockHeader commonHeader = localBlockchain.getBlockHeader(95).get();
-
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-    final RespondingEthPeer respondingEthPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-
-    final DetermineCommonAncestorTask task =
-        DetermineCommonAncestorTask.create(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            respondingEthPeer.getEthPeer(),
-            10,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
     final DetermineCommonAncestorTask spy = spy(task);
 
@@ -407,32 +303,6 @@ public class DetermineCommonAncestorTaskTest {
             ethContext,
             peer,
             defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
-            metricsSystem);
-
-    final CompletableFuture<BlockHeader> result = task.run();
-    assertThat(result).isCompletedWithValue(localGenesisBlock.getHeader());
-
-    // Make sure we didn't ask for any headers
-    verify(peer, times(0)).getHeadersByHash(any(), anyInt(), anyInt(), anyBoolean());
-    verify(peer, times(0)).getHeadersByNumber(anyLong(), anyInt(), anyInt(), anyBoolean());
-    verify(peer, times(0)).send(any());
-  }
-
-  @Test
-  public void returnsImmediatelyWhenThereIsNoWorkToDoUsingPeerTaskSystem() throws Exception {
-    final RespondingEthPeer respondingEthPeer =
-        spy(EthProtocolManagerTestUtil.createPeer(ethProtocolManager));
-    final EthPeer peer = spy(respondingEthPeer.getEthPeer());
-
-    final EthTask<BlockHeader> task =
-        DetermineCommonAncestorTask.create(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            peer,
-            defaultHeaderRequestSize,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             metricsSystem);
 
     final CompletableFuture<BlockHeader> result = task.run();
