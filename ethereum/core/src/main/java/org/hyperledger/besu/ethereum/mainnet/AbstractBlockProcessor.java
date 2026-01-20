@@ -58,6 +58,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +78,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
+  private static final Logger SLOW_BLOCK_LOG = LoggerFactory.getLogger("SlowBlock");
+  private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+
+  /** Threshold in milliseconds for slow block logging. */
+  private static final long SLOW_BLOCK_THRESHOLD_MS =
+      Long.getLong("besu.execution.slowBlockThresholdMs", 1000L);
 
   static final int MAX_GENERATION = 6;
 
@@ -239,6 +248,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
 
+      // Execution metrics tracking
+      final ExecutionStats executionStats = new ExecutionStats();
+      executionStats.startExecution();
+
       for (int i = 0; i < transactions.size(); i++) {
         final WorldUpdater blockUpdater = worldState.updater();
         final Transaction transaction = transactions.get(i);
@@ -299,6 +312,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             transactionReceiptFactory.create(
                 transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
         receipts.add(transactionReceipt);
+
+        // Track execution stats
+        executionStats.incrementTransactionCount();
+        executionStats.addGasUsed(
+            transaction.getGasLimit() - transactionProcessingResult.getGasRemaining());
+
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           parallelizedTxFound = true;
@@ -307,6 +326,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
+      // End execution timing
+      executionStats.endExecution();
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -452,8 +475,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
       blockTracer.traceEndBlock(blockHeader, blockBody);
 
+      // Track commit timing
+      final long commitStartNanos = System.nanoTime();
       try {
         worldState.persist(blockHeader, stateRootCommitter);
+        executionStats.addCommitTime(System.nanoTime() - commitStartNanos);
       } catch (MerkleTrieException e) {
         LOG.trace("Merkle trie exception during Transaction processing ", e);
         if (worldState instanceof BonsaiWorldState) {
@@ -472,6 +498,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       } catch (Exception e) {
         LOG.error("failed persisting block", e);
         return new BlockProcessingResult(Optional.empty(), e);
+      }
+
+      // Log slow blocks
+      if (executionStats.isSlowBlock(SLOW_BLOCK_THRESHOLD_MS)) {
+        logSlowBlock(blockHeader, executionStats);
       }
 
       return new BlockProcessingResult(
@@ -552,6 +583,66 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
     return miningBeneficiaryCalculator;
+  }
+
+  /**
+   * Logs slow block execution statistics in JSON format for performance monitoring.
+   *
+   * @param blockHeader the block header
+   * @param stats the execution statistics
+   */
+  private void logSlowBlock(final BlockHeader blockHeader, final ExecutionStats stats) {
+    try {
+      final ObjectNode json = JSON_MAPPER.createObjectNode();
+      json.put("level", "warn");
+      json.put("msg", "Slow block");
+
+      final ObjectNode blockNode = json.putObject("block");
+      blockNode.put("number", blockHeader.getNumber());
+      blockNode.put("hash", blockHeader.getHash().toHexString());
+      blockNode.put("gas_used", stats.getGasUsed());
+      blockNode.put("tx_count", stats.getTransactionCount());
+
+      final ObjectNode timingNode = json.putObject("timing");
+      timingNode.put("execution_ms", stats.getExecutionTimeMs());
+      timingNode.put("validation_ms", stats.getValidationTimeMs());
+      timingNode.put("commit_ms", stats.getCommitTimeMs());
+      timingNode.put("total_ms", stats.getTotalTimeMs());
+
+      final ObjectNode throughputNode = json.putObject("throughput");
+      throughputNode.put("mgas_per_sec", stats.getMgasPerSecond());
+
+      final ObjectNode stateReadsNode = json.putObject("state_reads");
+      stateReadsNode.put("accounts", stats.getAccountReads());
+      stateReadsNode.put("storage_slots", stats.getStorageReads());
+      stateReadsNode.put("code", stats.getCodeReads());
+      stateReadsNode.put("code_bytes", stats.getCodeBytesRead());
+
+      final ObjectNode stateWritesNode = json.putObject("state_writes");
+      stateWritesNode.put("accounts", stats.getAccountWrites());
+      stateWritesNode.put("storage_slots", stats.getStorageWrites());
+
+      final ObjectNode uniqueNode = json.putObject("unique");
+      uniqueNode.put("accounts", stats.getUniqueAccountsTouched());
+      uniqueNode.put("storage_slots", stats.getUniqueStorageSlots());
+      uniqueNode.put("contracts", stats.getUniqueContractsExecuted());
+
+      final ObjectNode evmNode = json.putObject("evm");
+      evmNode.put("sload", stats.getSloadCount());
+      evmNode.put("sstore", stats.getSstoreCount());
+
+      SLOW_BLOCK_LOG.warn(JSON_MAPPER.writeValueAsString(json));
+    } catch (JsonProcessingException e) {
+      // Fallback to simple log
+      SLOW_BLOCK_LOG.warn(
+          "Slow block number={} hash={} exec={}ms gas={} mgas/s={:.2f} txs={}",
+          blockHeader.getNumber(),
+          blockHeader.getHash().toHexString(),
+          stats.getExecutionTimeMs(),
+          stats.getGasUsed(),
+          stats.getMgasPerSecond(),
+          stats.getTransactionCount());
+    }
   }
 
   abstract boolean rewardCoinbase(
