@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryDiscv4;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryV4;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -45,8 +46,12 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final Blockchain blockchain,
       final List<Long> blockNumberForks,
       final List<Long> timestampForks) {
+
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(blockchain, blockNumberForks, timestampForks);
+
     this.delegate =
-        new PeerDiscoveryAgentFactoryDiscv4(
+        new PeerDiscoveryAgentFactoryV4(
             vertx,
             nodeKey,
             config,
@@ -54,9 +59,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
             natService,
             metricsSystem,
             storageProvider,
-            blockchain,
-            blockNumberForks,
-            timestampForks);
+            forkIdManager);
   }
 
   @Override

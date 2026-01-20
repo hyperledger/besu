@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.services.txselection.BlockTransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
+
+import java.util.List;
 
 /** Transaction selection service interface */
 @Unstable
@@ -41,10 +44,13 @@ public interface TransactionSelectionService extends BesuService {
    * @param blockTransactionSelectionService the service used by the plugin to evaluate pending
    *     transactions and commit or rollback changes
    * @param pendingBlockHeader the header of the block being created
+   * @param candidatePendingTransactions the unmodifiable list of candidate pending transactions
+   *     from the public pool, in the order they will be evaluated
    */
   void selectPendingTransactions(
       BlockTransactionSelectionService blockTransactionSelectionService,
-      final ProcessableBlockHeader pendingBlockHeader);
+      final ProcessableBlockHeader pendingBlockHeader,
+      final List<? extends PendingTransaction> candidatePendingTransactions);
 
   /**
    * Registers the transaction selector factory with the service

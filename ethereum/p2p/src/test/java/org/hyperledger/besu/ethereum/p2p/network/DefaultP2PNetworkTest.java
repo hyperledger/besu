@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentDiscv4;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -73,7 +73,7 @@ public final class DefaultP2PNetworkTest {
       SECP256K1.SecretKey.fromBytes(
           Bytes32.fromHexString(
               "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
-  @Mock PeerDiscoveryAgentDiscv4 discoveryAgent;
+  @Mock PeerDiscoveryAgentV4 discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
   @Captor private ArgumentCaptor<DiscoveryPeerV4> peerCaptor;
@@ -107,7 +107,7 @@ public final class DefaultP2PNetworkTest {
 
     assertThat(maintainedPeers.contains(peer)).isTrue();
     verify(rlpxAgent).connect(peer);
-    verify(discoveryAgent).bond(peer);
+    verify(discoveryAgent).addPeer(peer);
   }
 
   @Test
@@ -119,7 +119,7 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainedConnectionPeer(peer)).isTrue();
     assertThat(network.addMaintainedConnectionPeer(peer)).isFalse();
     verify(rlpxAgent, times(2)).connect(peer);
-    verify(discoveryAgent, times(2)).bond(peer);
+    verify(discoveryAgent, times(2)).addPeer(peer);
     assertThat(maintainedPeers.contains(peer)).isTrue();
   }
 
@@ -134,7 +134,7 @@ public final class DefaultP2PNetworkTest {
 
     assertThat(maintainedPeers.contains(peer)).isFalse();
     verify(rlpxAgent).connect(peer);
-    verify(discoveryAgent).bond(peer);
+    verify(discoveryAgent).addPeer(peer);
     verify(rlpxAgent).disconnect(peer.getId(), DisconnectReason.REQUESTED);
     verify(discoveryAgent).dropPeer(peer);
   }
@@ -278,6 +278,19 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void attemptPeerConnections_unbondedPeers() {
     final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
+    when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
+
+    final DefaultP2PNetwork network = network();
+    network.attemptPeerConnections();
+    verify(rlpxAgent, times(0)).connect(any());
+  }
+
+  @Test
+  public void attemptPeerConnections_notListening() {
+    final DiscoveryPeerV4 discoPeer = mock(DiscoveryPeerV4.class);
+    when(discoPeer.isReadyForConnections()).thenCallRealMethod();
+    when(discoPeer.isListening()).thenReturn(false);
     final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 

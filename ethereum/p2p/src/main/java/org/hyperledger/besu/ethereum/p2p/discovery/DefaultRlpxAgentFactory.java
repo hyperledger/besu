@@ -36,6 +36,7 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
   private final MetricsSystem metricsSystem;
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+  private final int maxPeers;
 
   private DefaultRlpxAgentFactory(
       final NodeKey nodeKey,
@@ -43,13 +44,15 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
-      final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier,
+      final int maxPeers) {
     this.nodeKey = nodeKey;
     this.config = config;
     this.peerPermissions = peerPermissions;
     this.metricsSystem = metricsSystem;
     this.allConnectionsSupplier = allConnectionsSupplier;
     this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+    this.maxPeers = maxPeers;
   }
 
   @Override
@@ -66,6 +69,7 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
         .allConnectionsSupplier(allConnectionsSupplier)
         .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
         .peerLookup(peerLookup)
+        .maxPeers(maxPeers)
         .build();
   }
 
@@ -81,6 +85,7 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
     private MetricsSystem metricsSystem;
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+    private Integer maxPeers;
 
     private Builder() {}
 
@@ -116,6 +121,11 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
       return this;
     }
 
+    public Builder maxPeers(final int maxPeers) {
+      this.maxPeers = maxPeers;
+      return this;
+    }
+
     public DefaultRlpxAgentFactory build() {
       validate();
       return new DefaultRlpxAgentFactory(
@@ -124,7 +134,8 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
           peerPermissions,
           metricsSystem,
           allConnectionsSupplier,
-          allActiveConnectionsSupplier);
+          allActiveConnectionsSupplier,
+          maxPeers);
     }
 
     private void validate() {
@@ -135,6 +146,7 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
       Objects.requireNonNull(allConnectionsSupplier, "allConnectionsSupplier must be set");
       Objects.requireNonNull(
           allActiveConnectionsSupplier, "allActiveConnectionsSupplier must be set");
+      Objects.requireNonNull(maxPeers, "maxPeers must be set");
     }
   }
 }

@@ -22,7 +22,7 @@ import java.util.Optional;
 
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 
-public abstract class DiscoveryPeer extends DefaultPeer {
+public class DiscoveryPeer extends DefaultPeer {
   private long lastAttemptedConnection = 0;
   private NodeRecord nodeRecord;
   private Optional<ForkId> forkId = Optional.empty();
@@ -59,5 +59,16 @@ public abstract class DiscoveryPeer extends DefaultPeer {
     this.forkId = Optional.ofNullable(forkId);
   }
 
-  public abstract boolean isReady();
+  /**
+   * Indicates whether the peer is ready to accept RLPx connections.
+   *
+   * @return true if the peer is ready for connections, false otherwise
+   */
+  public boolean isReadyForConnections() {
+    return isListening();
+  }
+
+  public boolean isListening() {
+    return getEnodeURL().isListening();
+  }
 }

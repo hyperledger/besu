@@ -1,10 +1,8 @@
 // Configure plugin repositories - must be first
 pluginManagement {
-    repositories {
-        mavenLocal()
-        gradlePluginPortal()
-        mavenCentral()
-    }
+  repositories {
+    gradlePluginPortal()
+  }
 }
 
 rootProject.name = 'testPlugins'
