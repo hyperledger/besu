@@ -91,7 +91,10 @@ public class CallTracerResultConverter {
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
     final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
 
-    if (!trace.getResult().isSuccessful()) {
+    // Only process frames if transaction succeeded OR reverted (not exceptional halt)
+    // Exceptional halts (stack underflow, out of gas, etc.) happen before execution really begins
+    if (!trace.getResult().isSuccessful()
+        && trace.getResult().getExceptionalHaltReason().isPresent()) {
       return rootBuilder.build();
     }
 
