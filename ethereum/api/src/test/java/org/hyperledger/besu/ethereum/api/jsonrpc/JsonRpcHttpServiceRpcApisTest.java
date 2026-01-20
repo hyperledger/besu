@@ -313,6 +313,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .metricsSystem(new NoOpMetricsSystem())
             .allConnectionsSupplier(Stream::empty)
             .allActiveConnectionsSupplier(Stream::empty)
+            .maxPeers(25)
             .build();
 
     final P2PNetwork p2pNetwork =
