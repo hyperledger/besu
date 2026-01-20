@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -25,6 +28,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
 import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
@@ -83,21 +88,10 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    */
   @Override
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
-
-    final DiscoverySystemBuilder discoverySystemBuilder = new DiscoverySystemBuilder();
-    nodeRecordManager.initializeLocalNode(
-        config.getDiscovery().getAdvertisedHost(),
-        config.getDiscovery().getBindPort(),
-        config.getDiscovery().getBindPort());
-
-    NodeRecord localNodeRecord =
-        nodeRecordManager
-            .getLocalNode()
-            .flatMap(DiscoveryPeer::getNodeRecord)
-            .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
+    final NodeRecord localNodeRecord = initializeLocalNodeRecord();
 
     final MutableDiscoverySystem discoverySystem =
-        discoverySystemBuilder
+        new DiscoverySystemBuilder()
             .listen(config.getDiscovery().getBindHost(), config.getDiscovery().getBindPort())
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
@@ -109,5 +103,77 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
 
     return new PeerDiscoveryAgentV5(
         discoverySystem, config, forkIdManager, nodeRecordManager, rlpxAgent);
+  }
+
+  /**
+   * Initializes the local node record using the {@link NodeRecordManager}.
+   *
+   * @return the initialized local {@link NodeRecord}
+   * @throws IllegalStateException if the local node record has not been initialized
+   */
+  private NodeRecord initializeLocalNodeRecord() {
+    nodeRecordManager.initializeLocalNode(
+        config.getDiscovery().getAdvertisedHost(),
+        config.getDiscovery().getBindPort(),
+        config.getDiscovery().getBindPort());
+
+    return nodeRecordManager
+        .getLocalNode()
+        .flatMap(DiscoveryPeer::getNodeRecord)
+        .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
+  }
+
+  /**
+   * An implementation of the {@link org.ethereum.beacon.discovery.crypto.Signer} interface that
+   * uses a local {@link NodeKey} for signing and key agreement.
+   */
+  private static class LocalNodeKeySigner implements org.ethereum.beacon.discovery.crypto.Signer {
+    private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+    private final NodeKey nodeKey;
+
+    /**
+     * Creates a new LocalNodeKeySigner.
+     *
+     * @param nodeKey the node key to use for signing and key agreement
+     */
+    public LocalNodeKeySigner(final NodeKey nodeKey) {
+      this.nodeKey = nodeKey;
+    }
+
+    /**
+     * Derives a shared secret using ECDH with the given peer public key.
+     *
+     * @param destPubKey the destination peer's public key
+     * @return the derived shared secret
+     */
+    @Override
+    public Bytes deriveECDHKeyAgreement(final Bytes destPubKey) {
+      SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(destPubKey);
+      return nodeKey.calculateECDHKeyAgreement(publicKey);
+    }
+
+    /**
+     * Creates a signature of message `x`.
+     *
+     * @param messageHash message, hashed
+     * @return ECDSA signature with properties merged together: r || s
+     */
+    @Override
+    public Bytes sign(final Bytes32 messageHash) {
+      Bytes signature = nodeKey.sign(messageHash).encodedBytes();
+      return signature.slice(0, 64);
+    }
+
+    /**
+     * Derives the compressed public key corresponding to the private key held by this module.
+     *
+     * @return the compressed public key
+     */
+    @Override
+    public Bytes deriveCompressedPublicKeyFromPrivate() {
+      return Bytes.wrap(
+          signatureAlgorithm.publicKeyAsEcPoint(nodeKey.getPublicKey()).getEncoded(true));
+    }
   }
 }
