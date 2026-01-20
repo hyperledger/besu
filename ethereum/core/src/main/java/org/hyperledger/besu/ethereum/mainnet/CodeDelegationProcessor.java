@@ -126,7 +126,10 @@ public class CodeDelegationProcessor {
 
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
-    if (maybeAuthorityAccount.isEmpty()) {
+
+    // we check for empty accounts as well in case we are on a chain that has still leftover empty
+    // accounts after EIP-7523
+    if (maybeAuthorityAccount.isEmpty() || maybeAuthorityAccount.get().isEmpty()) {
       // only create an account if nonce is valid
       if (codeDelegation.nonce() != 0) {
         return;
