@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
@@ -1131,7 +1132,11 @@ public class MainnetEVMs {
       final EvmConfiguration evmConfiguration) {
     registerOsakaOperations(registry, gasCalculator, chainID, evmConfiguration);
 
-    // EIP-8024: DUPN, SWAPN, EXCHANGE
+    // EIP-7708: SelfDestruct with transfer log emission
+    registry.put(
+        new SelfDestructOperation(gasCalculator, true, EIP7708TransferLogEmitter.INSTANCE));
+
+        // EIP-8024: DUPN, SWAPN, EXCHANGE
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));
     registry.put(new ExchangeOperation(gasCalculator));

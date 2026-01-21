@@ -539,7 +539,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBpo5Time().ifPresent(l -> builder.put("bpo5Time", l));
     getAmsterdamTime().ifPresent(l -> builder.put("amsterdamTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
-    getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
+    getTerminalBlockHash()
+        .ifPresent(h -> builder.put("terminalBlockHash", h.getBytes().toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
     getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
 

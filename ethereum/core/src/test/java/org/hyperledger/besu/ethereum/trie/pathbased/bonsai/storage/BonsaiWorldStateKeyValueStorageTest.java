@@ -183,13 +183,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage
         .updater()
         .putAccountStateTrieNode(
-            Bytes.EMPTY, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE), MerkleTrie.EMPTY_TRIE_NODE)
-        .putAccountStateTrieNode(Bytes.EMPTY, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            Bytes.EMPTY,
+            Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes()),
+            MerkleTrie.EMPTY_TRIE_NODE)
+        .putAccountStateTrieNode(
+            Bytes.EMPTY, Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes()), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Bytes32.wrap(Hash.EMPTY.getBytes())))
+        .contains(Bytes.EMPTY);
   }
 
   @ParameterizedTest
@@ -199,9 +203,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Bytes location = Bytes.fromHexString("0x01");
     final Bytes bytes = Bytes.fromHexString("0x123456");
 
-    storage.updater().putAccountStateTrieNode(location, Hash.hash(bytes), bytes).commit();
+    storage
+        .updater()
+        .putAccountStateTrieNode(location, Bytes32.wrap(Hash.hash(bytes).getBytes()), bytes)
+        .commit();
 
-    assertThat(storage.getAccountStateTrieNode(location, Hash.hash(bytes))).contains(bytes);
+    assertThat(storage.getAccountStateTrieNode(location, Bytes32.wrap(Hash.hash(bytes).getBytes())))
+        .contains(bytes);
   }
 
   @ParameterizedTest
@@ -214,16 +222,21 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .putAccountStorageTrieNode(
             Hash.EMPTY,
             Bytes.EMPTY,
-            Hash.hash(MerkleTrie.EMPTY_TRIE_NODE),
+            Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes()),
             MerkleTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode(Hash.EMPTY, Bytes.EMPTY, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+        .putAccountStorageTrieNode(
+            Hash.EMPTY, Bytes.EMPTY, Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes()), Bytes.EMPTY)
         .commit();
 
     assertThat(
             storage.getAccountStorageTrieNode(
-                Hash.EMPTY, Bytes.EMPTY, Hash.hash(MerkleTrie.EMPTY_TRIE_NODE)))
+                Hash.EMPTY,
+                Bytes.EMPTY,
+                Bytes32.wrap(Hash.hash(MerkleTrie.EMPTY_TRIE_NODE).getBytes())))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getAccountStorageTrieNode(Hash.EMPTY, Bytes.EMPTY, Hash.EMPTY))
+    assertThat(
+            storage.getAccountStorageTrieNode(
+                Hash.EMPTY, Bytes.EMPTY, Bytes32.wrap(Hash.hash(Bytes.EMPTY).getBytes())))
         .contains(Bytes.EMPTY);
   }
 
@@ -237,10 +250,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     storage
         .updater()
-        .putAccountStorageTrieNode(accountHash, location, Hash.hash(bytes), bytes)
+        .putAccountStorageTrieNode(
+            accountHash, location, Bytes32.wrap(Hash.hash(bytes).getBytes()), bytes)
         .commit();
 
-    assertThat(storage.getAccountStorageTrieNode(accountHash, location, Hash.hash(bytes)))
+    assertThat(
+            storage.getAccountStorageTrieNode(
+                accountHash, location, Bytes32.wrap(Hash.hash(bytes).getBytes())))
         .contains(bytes);
   }
 
@@ -254,7 +270,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root ->
+                    StorageEntriesCollector.collectEntries(
+                        root, Bytes32.wrap(Hash.ZERO.getBytes()), 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -284,7 +303,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root ->
+                    StorageEntriesCollector.collectEntries(
+                        root, Bytes32.wrap(Hash.ZERO.getBytes()), 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -313,7 +335,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root ->
+                    StorageEntriesCollector.collectEntries(
+                        root, Bytes32.wrap(Hash.ZERO.getBytes()), 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -345,23 +370,28 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+            trie.entriesFrom(
+                root ->
+                    StorageEntriesCollector.collectEntries(
+                        root, Bytes32.wrap(Hash.ZERO.getBytes()), 1));
 
     final PmtStateTrieAccountValue stateTrieAccountValue =
         PmtStateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) ->
+            (Bytes location, Bytes32 hash) ->
                 storage.getAccountStorageTrieNode(Hash.wrap(accounts.firstKey()), location, hash),
-            stateTrieAccountValue.getStorageRoot(),
+            Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             b -> b,
             b -> b);
 
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
             storageTrie.entriesFrom(
-                root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+                root ->
+                    StorageEntriesCollector.collectEntries(
+                        root, Bytes32.wrap(Hash.ZERO.getBytes()), 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -462,7 +492,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // Get the raw key/value out of storage and check that as well. The key differs between flat DB
     // and flat archive DB
     // and we want to ensure keys put to the archive DB include the archive block context/suffix
-    byte[] lookupKey = keyMapper.apply(account.addressHash().toArrayUnsafe());
+    byte[] lookupKey = keyMapper.apply(account.addressHash().getBytes().toArrayUnsafe());
     assertThat(
             Bytes.wrap(
                 storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
@@ -518,17 +548,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // Check that the K/V store entries are correct
     // Convert the key to lookup the entry we expect to find in K/V storage. No-op for everything
     // except ARCHIVE, which needs to append the 000000000000000x suffix to the key
-    byte[] lookupKey = keyMapper.apply(account1.addressHash().toArrayUnsafe());
+    byte[] lookupKey = keyMapper.apply(account1.addressHash().getBytes().toArrayUnsafe());
     assertThat(
             Bytes32.wrap(
                 storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
         .isEqualTo(account1Value);
-    lookupKey = keyMapper.apply(account2.addressHash().toArrayUnsafe());
+    lookupKey = keyMapper.apply(account2.addressHash().getBytes().toArrayUnsafe());
     assertThat(
             Bytes32.wrap(
                 storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
         .isEqualTo(account2Value);
-    lookupKey = keyMapper.apply(account3.addressHash().toArrayUnsafe());
+    lookupKey = keyMapper.apply(account3.addressHash().getBytes().toArrayUnsafe());
     assertThat(
             Bytes32.wrap(
                 storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE, lookupKey).get()))
@@ -538,35 +568,47 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .size())
         .isEqualTo(3);
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .firstEntry()
                 .getKey())
-        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+        .isEqualTo(account2.addressHash().getBytes()); // NB: Account 2 hash is first in the DB
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .lastEntry()
                 .getKey())
-        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+        .isEqualTo(account1.addressHash().getBytes()); // NB: Account 1 hash is 3rd/last in the DB
 
     // clear
     storage.clear();
@@ -626,10 +668,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .size())
         .isEqualTo(3);
@@ -638,38 +684,50 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .firstEntry()
                 .getKey())
-        .isEqualTo(account2.addressHash()); // NB: Account 2 hash is first in the DB
+        .isEqualTo(account2.addressHash().getBytes()); // NB: Account 2 hash is first in the DB
 
     // Check that account 1 is the last entry (as per its hash)
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .lastEntry()
                 .getKey())
-        .isEqualTo(account1.addressHash()); // NB: Account 1 hash is 3rd/last in the DB
+        .isEqualTo(account1.addressHash().getBytes()); // NB: Account 1 hash is 3rd/last in the DB
 
     // Check the state for account 3 is the final state update at block 4, not an earlier state
     assertThat(
             storage
                 .streamFlatAccounts(
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
-                .get(account3.addressHash()))
+                .get(Bytes32.wrap(account3.addressHash().getBytes())))
         .isEqualTo(finalStateUpdate);
 
     // clear
@@ -758,10 +816,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
             storage
                 .streamFlatStorages(
                     account1.addressHash(),
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .size())
         .isEqualTo(1);
@@ -770,10 +832,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
             storage
                 .streamFlatStorages(
                     account2.addressHash(),
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .size())
         .isEqualTo(1);
@@ -782,10 +848,14 @@ public class BonsaiWorldStateKeyValueStorageTest {
             storage
                 .streamFlatStorages(
                     account3.addressHash(),
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
                 .size())
         .isEqualTo(1);
@@ -796,12 +866,16 @@ public class BonsaiWorldStateKeyValueStorageTest {
             storage
                 .streamFlatStorages(
                     account3.addressHash(),
-                    Hash.fromHexString(
-                        "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                    Hash.fromHexString(
-                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")
+                            .getBytes()),
+                    Bytes32.wrap(
+                        Hash.fromHexString(
+                                "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                            .getBytes()),
                     1000)
-                .get(slot1.getSlotHash()))
+                .get(Bytes32.wrap(slot1.getSlotHash().getBytes())))
         .isEqualTo(Bytes.fromHexString("0x14"));
 
     // clear
@@ -854,13 +928,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
     setUp(flatDbMode);
 
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
-    final Bytes rootHashKey = Bytes32.fromHexString("0x01");
+    final Bytes32 rootHashKey = Bytes32.fromHexString("0x01");
     updater
         .getWorldStateTransaction()
         .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
-    assertThat(storage.isWorldStateAvailable(Hash.wrap(Bytes32.wrap(rootHashKey)), Hash.EMPTY))
-        .isTrue();
+    assertThat(storage.isWorldStateAvailable(rootHashKey, Hash.EMPTY)).isTrue();
   }
 
   @ParameterizedTest

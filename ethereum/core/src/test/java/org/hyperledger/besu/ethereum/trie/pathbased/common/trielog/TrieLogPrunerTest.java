@@ -65,7 +65,10 @@ public class TrieLogPrunerTest {
     final BlockHeader header1 = generator.header(1);
     final BlockHeader header2 = generator.header(2);
     when(worldState.streamTrieLogKeys(loadingLimit))
-        .thenReturn(Stream.of(header1.getBlockHash().toArray(), header2.getBlockHash().toArray()));
+        .thenReturn(
+            Stream.of(
+                header1.getBlockHash().getBytes().toArray(),
+                header2.getBlockHash().getBytes().toArray()));
     when(blockchain.getBlockHeader(header1.getBlockHash())).thenReturn(Optional.of(header1));
     when(blockchain.getBlockHeader(header2.getBlockHash())).thenReturn(Optional.empty());
 

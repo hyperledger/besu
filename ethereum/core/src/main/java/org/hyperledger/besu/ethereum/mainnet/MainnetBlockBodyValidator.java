@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
 import java.util.List;
@@ -76,18 +76,23 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+    final Bytes32 transactionsRoot =
+        Bytes32.wrap(BodyValidation.transactionsRoot(body.getTransactions()).getBytes());
+    if (!validateTransactionsRoot(
+        header, Bytes32.wrap(header.getTransactionsRoot().getBytes()), transactionsRoot)) {
       return false;
     }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
+    final Bytes32 receiptsRoot = Bytes32.wrap(BodyValidation.receiptsRoot(receipts).getBytes());
+    if (!validateReceiptsRoot(
+        header, Bytes32.wrap(header.getReceiptsRoot().getBytes()), receiptsRoot)) {
       return false;
     }
 
     if (!validateStateRoot(
-        block.getHeader(), block.getHeader().getStateRoot(), worldStateRootHash)) {
+        block.getHeader(),
+        Bytes32.wrap(block.getHeader().getStateRoot().getBytes()),
+        Bytes32.wrap(worldStateRootHash.getBytes()))) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
@@ -203,8 +208,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 ommerHash = BodyValidation.ommersHash(body.getOmmers());
-    if (!validateOmmersHash(header, header.getOmmersHash(), ommerHash)) {
+    final Bytes32 ommerHash = Bytes32.wrap(BodyValidation.ommersHash(body.getOmmers()).getBytes());
+    if (!validateOmmersHash(header, Bytes32.wrap(header.getOmmersHash().getBytes()), ommerHash)) {
       return false;
     }
 

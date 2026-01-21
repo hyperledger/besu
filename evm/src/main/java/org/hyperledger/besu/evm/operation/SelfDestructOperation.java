@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,11 +23,13 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.log.TransferLogEmitter;
 
 /** The Self destruct operation. */
 public class SelfDestructOperation extends AbstractOperation {
 
   final boolean eip6780Semantics;
+  final TransferLogEmitter transferLogEmitter;
 
   /**
    * Instantiates a new Self destruct operation.
@@ -35,7 +37,7 @@ public class SelfDestructOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    this(gasCalculator, false);
+    this(gasCalculator, false, TransferLogEmitter.NOOP);
   }
 
   /**
@@ -47,8 +49,23 @@ public class SelfDestructOperation extends AbstractOperation {
    * @param eip6780Semantics Enforce EIP6780 semantics.
    */
   public SelfDestructOperation(final GasCalculator gasCalculator, final boolean eip6780Semantics) {
+    this(gasCalculator, eip6780Semantics, TransferLogEmitter.NOOP);
+  }
+
+  /**
+   * Instantiates a new Self destruct operation with EIP-6780 and transfer log emission support.
+   *
+   * @param gasCalculator the gas calculator
+   * @param eip6780Semantics Enforce EIP-6780 semantics (only destroy if created in same tx).
+   * @param transferLogEmitter strategy for emitting transfer logs.
+   */
+  public SelfDestructOperation(
+      final GasCalculator gasCalculator,
+      final boolean eip6780Semantics,
+      final TransferLogEmitter transferLogEmitter) {
     super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
     this.eip6780Semantics = eip6780Semantics;
+    this.transferLogEmitter = transferLogEmitter;
   }
 
   @Override
@@ -92,6 +109,10 @@ public class SelfDestructOperation extends AbstractOperation {
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
+
+    // Emit transfer log for nonzero value sweeps (no-op before Amsterdam, EIP-7708 after)
+    transferLogEmitter.emitTransferLog(
+        frame, originatorAddress, beneficiaryAddress, originatorBalance);
 
     // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
     // explicitly zero out the account balance (destroying ether/value if the originator is the

@@ -77,7 +77,7 @@ public class TrieGenerator {
       final PmtStateTrieAccountValue accountValue =
           new PmtStateTrieAccountValue(
               1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
-      accountStateTrie.put(accounts.get(i), RLP.encode(accountValue::writeTo));
+      accountStateTrie.put(accounts.get(i).getBytes(), RLP.encode(accountValue::writeTo));
       applyForStrategy(
           updater,
           onBonsai -> {
@@ -106,7 +106,7 @@ public class TrieGenerator {
       final UInt256 value) {
     final Hash keyHash = storageKeyHash(key);
     final Bytes encodedValue = encodeStorageValue(value);
-    storageTrie.put(keyHash, encodeStorageValue(value));
+    storageTrie.put(keyHash.getBytes(), encodeStorageValue(value));
     if (updater instanceof BonsaiWorldStateKeyValueStorage.Updater) {
       ((BonsaiWorldStateKeyValueStorage.Updater) updater)
           .putStorageValueBySlotHash(hash, keyHash, encodedValue);
