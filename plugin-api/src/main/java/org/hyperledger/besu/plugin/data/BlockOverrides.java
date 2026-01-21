@@ -263,7 +263,7 @@ public class BlockOverrides {
     private Hash stateRoot;
     private BigInteger difficulty;
     private Bytes extraData;
-    private Hash mixHashOrPrevRandao;
+    private Bytes32 mixHashOrPrevRandao;
     private Function<Long, Hash> blockHashLookup;
     private Bytes32 parentBeaconBlockRoot;
 
@@ -386,7 +386,7 @@ public class BlockOverrides {
      * @param mixHashOrPrevRandao the mix hash
      * @return the builder instance
      */
-    public Builder mixHashOrPrevRandao(final Hash mixHashOrPrevRandao) {
+    public Builder mixHashOrPrevRandao(final Bytes32 mixHashOrPrevRandao) {
       this.mixHashOrPrevRandao = mixHashOrPrevRandao;
       return this;
     }

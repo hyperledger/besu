@@ -50,7 +50,7 @@ class BlockHashOperationTest {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
     assertBlockHash(
         100,
-        blockHash,
+        Bytes32.wrap(blockHash.getBytes()),
         200,
         (__, block) -> block == 100 ? blockHash : Hash.EMPTY_LIST_HASH,
         ENOUGH_GAS);

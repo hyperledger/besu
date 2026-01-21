@@ -103,6 +103,6 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   public List<Bytes> getTrieNodePath() {
-    return List.of(accountHash, CompactEncoding.encode(getLocation()));
+    return List.of(accountHash.getBytes(), CompactEncoding.encode(getLocation()));
   }
 }

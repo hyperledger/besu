@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
+
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -24,7 +26,7 @@ public class SyncTransactionReceipt {
   private Bytes transactionTypeCode;
   private Bytes statusOrStateRoot;
   private Bytes cumulativeGasUsed;
-  private Bytes bloomFilter;
+  private LogsBloomFilter bloomFilter;
   private List<List<Bytes>> logs;
 
   public SyncTransactionReceipt(final Bytes rlpBytes) {
@@ -36,7 +38,7 @@ public class SyncTransactionReceipt {
       final Bytes transactionTypeCode,
       final Bytes statusOrStateRoot,
       final Bytes cumulativeGasUsed,
-      final Bytes bloomFilter,
+      final LogsBloomFilter bloomFilter,
       final List<List<Bytes>> logs) {
     this.rlpBytes = rlpBytes;
     this.transactionTypeCode = transactionTypeCode;
@@ -62,7 +64,7 @@ public class SyncTransactionReceipt {
     return cumulativeGasUsed;
   }
 
-  public Bytes getBloomFilter() {
+  public LogsBloomFilter getBloomFilter() {
     return bloomFilter;
   }
 

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -61,7 +61,6 @@ class TraceServiceImplTest {
   TraceService traceService;
   private MutableBlockchain blockchain;
   private WorldStateArchive worldStateArchive;
-  private BlockchainQueries blockchainQueries;
 
   /**
    * The blockchain for testing has a height of 32 and the account
@@ -75,7 +74,7 @@ class TraceServiceImplTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     worldStateArchive = blockchainSetupUtil.getWorldArchive();
-    blockchainQueries =
+    BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),
             blockchain,
@@ -108,7 +107,7 @@ class TraceServiceImplTest {
     assertThat(worldStateArchive.getWorldState().get(addressToVerify).getNonce())
         .isEqualTo(persistedNonceForAccount);
 
-    final Block tracedBlock = blockchain.getBlockByNumber(blockNumber).get();
+    final Block tracedBlock = blockchain.getBlockByNumber(blockNumber).orElseThrow();
 
     verify(opTracer)
         .traceStartBlock(
@@ -158,7 +157,7 @@ class TraceServiceImplTest {
 
     LongStream.rangeClosed(startBlock, endBlock)
         .mapToObj(blockchain::getBlockByNumber)
-        .map(Optional::get)
+        .map(Optional::orElseThrow)
         .forEach(
             tracedBlock -> {
               verify(opTracer)
@@ -203,10 +202,10 @@ class TraceServiceImplTest {
         blockTraceResult.transactionTraceResults();
     assertThat(transactionTraceResults.size()).isEqualTo(1);
 
-    assertThat(transactionTraceResults.get(0).getTxHash()).isNotNull();
-    assertThat(transactionTraceResults.get(0).getStatus())
+    assertThat(transactionTraceResults.getFirst().getTxHash()).isNotNull();
+    assertThat(transactionTraceResults.getFirst().getStatus())
         .isEqualTo(TransactionTraceResult.Status.SUCCESS);
-    assertThat(transactionTraceResults.get(0).errorMessage()).isEmpty();
+    assertThat(transactionTraceResults.getFirst().errorMessage()).isEmpty();
 
     assertThat(txStartEndTracer.txStartWorldView).isNotNull();
     assertThat(txStartEndTracer.txEndWorldView).isNotNull();
@@ -217,8 +216,8 @@ class TraceServiceImplTest {
     assertThat(txStartEndTracer.txStartTransaction.getGasLimit())
         .isEqualTo(txStartEndTracer.txEndTransaction.getGasLimit())
         .isEqualTo(314159);
-    assertThat(txStartEndTracer.txStartTransaction.getTo().get())
-        .isEqualTo(txStartEndTracer.txEndTransaction.getTo().get())
+    assertThat(txStartEndTracer.txStartTransaction.getTo().orElseThrow())
+        .isEqualTo(txStartEndTracer.txEndTransaction.getTo().orElseThrow())
         .isEqualTo(Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"));
     assertThat(txStartEndTracer.txStartTransaction.getValue())
         .isEqualTo(txStartEndTracer.txEndTransaction.getValue())
@@ -237,7 +236,7 @@ class TraceServiceImplTest {
 
     assertThat(txStartEndTracer.txEndLogs).isNotEmpty();
 
-    final Log actualLog = txStartEndTracer.txEndLogs.get(0);
+    final Log actualLog = txStartEndTracer.txEndLogs.getFirst();
     assertThat(actualLog.getLogger())
         .isEqualTo(Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"));
     assertThat(actualLog.getData())
@@ -245,19 +244,19 @@ class TraceServiceImplTest {
             Bytes.fromHexString(
                 "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9000000000000000000000000000000000000000000000000000000000000002a"));
     assertThat(actualLog.getTopics()).hasSize(4);
-    assertThat(actualLog.getTopics().get(0))
+    assertThat(actualLog.getTopics().getFirst().getBytes())
         .isEqualTo(
             Bytes.fromHexString(
                 "0xd5f0a30e4be0c6be577a71eceb7464245a796a7e6a55c0d971837b250de05f4e"));
-    assertThat(actualLog.getTopics().get(1))
+    assertThat(actualLog.getTopics().get(1).getBytes())
         .isEqualTo(
             Bytes.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000001"));
-    assertThat(actualLog.getTopics().get(2))
+    assertThat(actualLog.getTopics().get(2).getBytes())
         .isEqualTo(
             Bytes.fromHexString(
                 "0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"));
-    assertThat(actualLog.getTopics().get(3))
+    assertThat(actualLog.getTopics().get(3).getBytes())
         .isEqualTo(
             Bytes.fromHexString(
                 "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
