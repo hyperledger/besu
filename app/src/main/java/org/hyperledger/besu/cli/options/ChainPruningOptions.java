@@ -35,13 +35,17 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_BAL_PRUNING_ENABLED_FLAG = "--Xchain-bal-pruning-enabled";
   private static final String PRE_MERGE_PRUNING_QUANTITY_FLAG = "--Xpre-merge-pruning-quantity";
 
+  private static final long WSP_EPOCHS_PER_WINDOW = 3533L;
+  private static final long SLOTS_PER_EPOCH = 32L;
+
   /**
    * The "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT" field sets the minimum limit for the
    * "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED" value. For most networks, the default value of this
    * limit is the safest. Reducing this value requires careful consideration and understanding of
    * the potential implications. Lowering this limit may have unintended side effects.
    */
-  public static final long CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT = 7200;
+  public static final long CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT =
+      WSP_EPOCHS_PER_WINDOW * SLOTS_PER_EPOCH;
 
   /** The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY. */
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
@@ -86,7 +90,9 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_PRUNING_BALS_RETAINED_FLAG},
       description =
-          "The number of recent blocks for which to keep block access lists. Defaults to "
+          "The number of recent blocks for which to keep block access lists. Must be >= "
+              + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
+              + ". Defaults to "
               + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
               + " when not specified.")
   private Long balsRetained;
@@ -170,12 +176,12 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
    * @return the number of bals retained
    */
   public Long getBalsRetained() {
-    return balsRetained;
+    return balsRetained == null ? chainDataPruningBlocksRetained : balsRetained;
   }
 
   @Override
   public ChainPrunerConfiguration toDomainObject() {
-    final long balsRetainedOrDefault = getBalsRetainedOrDefault();
+    final long balsRetainedOrDefault = getBalsRetained();
     return new ChainPrunerConfiguration(
         chainDataPruningEnabled,
         chainBalPruningEnabled,
@@ -199,17 +205,13 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
         CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG,
         chainDataPruningBlocksRetainedLimit.toString(),
         CHAIN_PRUNING_BALS_RETAINED_FLAG,
-        Long.toString(getBalsRetainedOrDefault()),
+        Long.toString(getBalsRetained()),
         CHAIN_PRUNING_BALS_FREQUENCY_FLAG,
         Long.toString(getBalsPruningFrequencyOrDefault()),
         CHAIN_PRUNING_FREQUENCY_FLAG,
         chainDataPruningBlocksFrequency.toString(),
         PRE_MERGE_PRUNING_QUANTITY_FLAG,
         preMergePruningBlocksQuantity.toString());
-  }
-
-  private long getBalsRetainedOrDefault() {
-    return balsRetained == null ? chainDataPruningBlocksRetained : balsRetained;
   }
 
   private long getBalsPruningFrequencyOrDefault() {

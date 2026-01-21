@@ -1643,41 +1643,55 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    Long chainDataPruningBlocksRetained =
-        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
-    final Long balsRetained = unstableChainPruningOptions.getBalsRetained();
-    if (balsRetained != null && balsRetained < 0) {
+    final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    final long blocksRetainedLimit =
+        unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit();
+
+    final long balsRetained = unstableChainPruningOptions.getBalsRetained();
+
+    if (blocksRetained < 0) {
+      throw new ParameterException(
+          this.commandLine, "--Xchain-pruning-blocks-retained must be >= 0");
+    }
+    if (blocksRetainedLimit < 0) {
+      throw new ParameterException(
+          this.commandLine, "--Xchain-pruning-blocks-retained-limit must be >= 0");
+    }
+    if (balsRetained < 0) {
       throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
     }
+
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      if (unstableChainPruningOptions.getChainBalPruningEnabled()
-          && balsRetained != null
-          && balsRetained > chainDataPruningBlocksRetained) {
+      if (blocksRetained < blocksRetainedLimit) {
         throw new ParameterException(
-            this.commandLine,
-            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained");
+            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + blocksRetainedLimit);
       }
+
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-      if (chainDataPruningBlocksRetained
-          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
-        throw new ParameterException(
-            this.commandLine,
-            "--Xchain-pruning-blocks-retained must be >= "
-                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
-      } else if (genesisConfigOptions.isPoa()) {
+      if (genesisConfigOptions.isPoa()) {
         final var epochLengthOpt = getPoaEpochLength(genesisConfigOptions);
         if (epochLengthOpt.isPresent()) {
           final long epochLength = epochLengthOpt.getAsLong();
-          if (chainDataPruningBlocksRetained < epochLength) {
+          if (blocksRetained < epochLength) {
             throw new ParameterException(
                 this.commandLine,
                 String.format(
                     "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
-                    chainDataPruningBlocksRetained,
-                    epochLength,
-                    getConsensusMechanism(genesisConfigOptions)));
+                    blocksRetained, epochLength, getConsensusMechanism(genesisConfigOptions)));
           }
         }
+      }
+    }
+
+    if (unstableChainPruningOptions.getChainBalPruningEnabled()) {
+      if (balsRetained < blocksRetainedLimit) {
+        throw new ParameterException(
+            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + blocksRetainedLimit);
+      }
+      if (balsRetained > blocksRetained) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained");
       }
     }
   }

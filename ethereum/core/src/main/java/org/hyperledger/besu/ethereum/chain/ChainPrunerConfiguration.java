@@ -24,5 +24,5 @@ public record ChainPrunerConfiguration(
     long balsRetained,
     long balsPruningFrequency) {
   public static final ChainPrunerConfiguration DEFAULT =
-      new ChainPrunerConfiguration(false, true, 7200, 256, 7200, 1000, 7200, 256);
+      new ChainPrunerConfiguration(false, true, 13056, 256, 13056, 1000, 13056, 256);
 }
