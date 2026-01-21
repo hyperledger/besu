@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -128,7 +127,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
-              final int localPort = currentListeningPort();
+              final int localPort =
+                  discoverySystem.getLocalNodeRecord().getTcpAddress().orElseThrow().getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
@@ -292,14 +292,5 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .toList();
     LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
     return candidates.stream();
-  }
-
-  /** Retrieves the currently advertised TCP listening port from the discovery system. */
-  private int currentListeningPort() {
-    return discoverySystem
-        .getLocalNodeRecord()
-        .getTcpAddress()
-        .map(InetSocketAddress::getPort)
-        .orElse(0);
   }
 }
