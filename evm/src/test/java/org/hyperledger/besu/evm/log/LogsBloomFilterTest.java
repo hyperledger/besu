@@ -15,6 +15,9 @@
 package org.hyperledger.besu.evm.log;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;

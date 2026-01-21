@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
-import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Locale;
 

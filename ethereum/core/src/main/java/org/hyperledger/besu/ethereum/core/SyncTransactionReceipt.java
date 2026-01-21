@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 
 import java.util.List;
 

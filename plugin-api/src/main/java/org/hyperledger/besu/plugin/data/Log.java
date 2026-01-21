@@ -15,7 +15,7 @@
 package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.datatypes.LogTopic;
 
 import java.util.List;
 

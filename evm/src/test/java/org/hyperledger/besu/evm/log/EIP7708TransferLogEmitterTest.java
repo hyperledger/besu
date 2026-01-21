@@ -19,6 +19,8 @@ import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.EIP7708_SYS
 import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.TRANSFER_TOPIC;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
