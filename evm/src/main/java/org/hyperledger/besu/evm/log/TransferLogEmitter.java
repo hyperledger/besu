@@ -41,6 +41,6 @@ public interface TransferLogEmitter {
    */
   void emitTransferLog(MessageFrame frame, Address from, Address to, Wei value);
 
-  /** No-op implementation that does nothing. Used for pre-Amsterdam forks. */
+  /** No-op implementation. Used for pre-Amsterdam forks. */
   TransferLogEmitter NOOP = (frame, from, to, value) -> {};
 }
