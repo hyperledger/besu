@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -97,6 +98,7 @@ public class BesuNodeConfigurationBuilder {
   private Map<String, String> environment = new HashMap<>();
   private SynchronizerConfiguration synchronizerConfiguration;
   private Optional<KeyValueStorageFactory> storageImplementation = Optional.empty();
+  private PluginConfiguration pluginConfiguration;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -462,6 +464,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder pluginConfiguration(
+      final PluginConfiguration pluginConfiguration) {
+    this.pluginConfiguration = pluginConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     if (name == null) {
       throw new IllegalStateException("Name is required");
@@ -503,6 +511,7 @@ public class BesuNodeConfigurationBuilder {
         strictTxReplayProtectionEnabled,
         environment,
         synchronizerConfiguration,
-        storageImplementation);
+        storageImplementation,
+        pluginConfiguration);
   }
 }
