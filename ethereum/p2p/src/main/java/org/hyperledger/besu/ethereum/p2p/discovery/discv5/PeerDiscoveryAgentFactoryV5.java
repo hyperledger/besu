@@ -146,12 +146,12 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
     /**
      * Derives a shared secret using ECDH with the given peer public key.
      *
-     * @param destPubKey the destination peer's public key
+     * @param remotePubKey the destination peer's public key
      * @return the derived shared secret
      */
     @Override
-    public Bytes deriveECDHKeyAgreement(final Bytes destPubKey) {
-      SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(destPubKey);
+    public Bytes deriveECDHKeyAgreement(final Bytes remotePubKey) {
+      SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(remotePubKey);
       return nodeKey.calculateECDHKeyAgreement(publicKey);
     }
 
