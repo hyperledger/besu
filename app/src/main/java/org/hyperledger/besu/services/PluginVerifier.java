@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.util.BesuVersionUtils;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -411,7 +412,7 @@ public class PluginVerifier {
       try {
         return objectMapper.readValue(url, ArtifactCatalog.class);
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new UncheckedIOException(e);
       }
     }
 
