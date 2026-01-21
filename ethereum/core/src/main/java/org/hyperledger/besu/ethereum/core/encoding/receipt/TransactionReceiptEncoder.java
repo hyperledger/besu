@@ -23,6 +23,44 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Encoder for transaction receipts to RLP format.
+ *
+ * <h2>Receipt RLP Format</h2>
+ *
+ * <p>The receipt format varies by transaction type and fork:
+ *
+ * <h3>Legacy (Frontier) Receipt</h3>
+ *
+ * <pre>
+ * rlp([status/stateRoot, cumulativeGasUsed, logsBloom?, logs, revertReason?, gasSpent?])
+ * </pre>
+ *
+ * <h3>Typed Receipt (EIP-2718, Berlin+)</h3>
+ *
+ * <pre>
+ * transactionType || rlp([status, cumulativeGasUsed, logsBloom?, logs, revertReason?, gasSpent?])
+ * </pre>
+ *
+ * <h3>Field Descriptions</h3>
+ *
+ * <ul>
+ *   <li><b>status/stateRoot</b>: Transaction status (0=fail, 1=success) or state root
+ *       (pre-Byzantium)
+ *   <li><b>cumulativeGasUsed</b>: Total gas used in block up to and including this transaction
+ *       (pre-refund in Amsterdam+, post-refund pre-Amsterdam)
+ *   <li><b>logsBloom</b>: 256-byte bloom filter (optional, omitted when compacted)
+ *   <li><b>logs</b>: List of log entries
+ *   <li><b>revertReason</b>: ABI-encoded revert reason (optional, when enabled)
+ *   <li><b>gasSpent</b>: Post-refund gas spent by user (optional, EIP-7778, Amsterdam+)
+ * </ul>
+ *
+ * <h3>EIP-7778 (Amsterdam+)</h3>
+ *
+ * <p>Starting from Amsterdam, receipts include the optional gasSpent field which represents the
+ * post-refund gas (what users actually pay). This is distinct from cumulativeGasUsed which now
+ * represents pre-refund gas for block accounting purposes.
+ */
 public class TransactionReceiptEncoder {
   public Bytes encode(
       final List<TransactionReceipt> transactionReceipts,

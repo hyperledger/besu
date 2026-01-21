@@ -37,11 +37,16 @@ import org.apache.tuweni.bytes.Bytes;
  *   post-state-or-status: {B_32, {0, 1}},
  *   cumulative-gas: P,
  *   bloom: B_256,
- *   logs: [log₁, log₂, ...]
+ *   logs: [log₁, log₂, ...],
+ *   revert-reason?: B,          (optional, when enabled)
+ *   gas-spent?: P               (optional, EIP-7778 Amsterdam+)
  * ]
  *
  * (eth/69): receipt = [tx-type, post-state-or-status, cumulative-gas, logs]
  * </pre>
+ *
+ * <p><b>EIP-7778 (Amsterdam+):</b> The optional gas-spent field represents post-refund gas (what
+ * users actually pay). When present, cumulative-gas represents pre-refund gas for block accounting.
  */
 public class TransactionReceiptDecoder {
 

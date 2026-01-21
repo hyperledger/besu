@@ -65,9 +65,6 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
   private static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
-  private final Account sender =
-      accounts.createAccount(
-          Address.fromHexStringStrict("a05b21E5186Ce93d2a226722b85D6e550Ac7D6E3"));
   public static final Bytes SENDER_PRIVATE_KEY =
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
 
@@ -190,7 +187,88 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Helper method to get transaction receipt via direct JSON-RPC call to verify the gasSpent field.
+   * Tests that SSTORE refunds result in gasSpent being less than gasUsed. This test calls a
+   * contract that clears a pre-set storage slot, generating a gas refund.
+   *
+   * <p>The test contract at address 0x7778 has storage slot 0 pre-set to 1. When called, it
+   * executes PUSH0 PUSH0 SSTORE STOP, which clears the storage slot and generates a refund.
+   *
+   * <p>Expected behavior:
+   *
+   * <ul>
+   *   <li>gasUsed (cumulative): Pre-refund gas for block accounting
+   *   <li>gasSpent: Post-refund gas (what user pays), should be less due to SSTORE refund
+   * </ul>
+   */
+  @Test
+  public void shouldHaveGasSpentLessThanGasUsedWithSstoreRefund() throws IOException {
+    // Contract address for the SSTORE refund test contract (defined in dev_amsterdam.json)
+    final Address sstoreRefundContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007778");
+
+    // Call the contract which clears storage slot 0, generating a refund
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(100_000) // Enough gas for SSTORE and refund
+            .to(sstoreRefundContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY) // No calldata needed, contract executes on any call
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    final JsonNode receiptJson = getReceiptViaJsonRpc(txHash);
+    assertThat(receiptJson.has("gasSpent")).isTrue();
+    assertThat(receiptJson.has("gasUsed")).isTrue();
+
+    final long gasUsed = Long.decode(receiptJson.get("gasUsed").asText());
+    final long gasSpent = Long.decode(receiptJson.get("gasSpent").asText());
+
+    // With SSTORE refund (clearing storage from non-zero to zero), gasSpent should be less
+    // The refund is applied to gasSpent but NOT to gasUsed (which is pre-refund for block
+    // accounting)
+    assertThat(gasSpent)
+        .as(
+            "gasSpent (%d) should be less than gasUsed (%d) due to SSTORE refund for clearing storage",
+            gasSpent, gasUsed)
+        .isLessThan(gasUsed);
+
+    // The difference should be the SSTORE refund amount (4800 gas for clearing storage in
+    // post-EIP-3529)
+    final long refundAmount = gasUsed - gasSpent;
+    assertThat(refundAmount)
+        .as("Refund amount should be 4800 (SSTORE_CLEARS_SCHEDULE)")
+        .isEqualTo(4800L);
+  }
+
+  /**
+   * Fetches the transaction receipt via direct JSON-RPC call to access the raw JSON response.
+   *
+   * <p>This is necessary because web3j's {@link TransactionReceipt} class doesn't include the
+   * {@code gasSpent} field introduced by EIP-7778. The standard web3j model only knows about
+   * pre-EIP-7778 receipt fields, so we need to parse the raw JSON to verify that Besu correctly
+   * includes the new {@code gasSpent} field in the response.
    */
   private JsonNode getReceiptViaJsonRpc(final String txHash) throws IOException {
     final String requestBody =
@@ -205,7 +283,7 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
 
     final Request request =
         new Request.Builder()
-            .url(besuNode.jsonRpcListenHost().get())
+            .url(besuNode.jsonRpcBaseUrl().orElseThrow())
             .post(RequestBody.create(requestBody, MEDIA_TYPE_JSON))
             .build();
 
