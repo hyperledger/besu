@@ -135,7 +135,7 @@ public class BackwardSyncContext {
       if (!isTrusted(newBlockHash)) {
         LOG.atDebug()
             .setMessage("Appending new head block hash {} to backward sync")
-            .addArgument(newBlockHash::toHexString)
+            .addArgument(() -> newBlockHash.getBytes().toHexString())
             .log();
         backwardChain.addNewHash(newBlockHash);
       }
@@ -181,7 +181,7 @@ public class BackwardSyncContext {
       LOG.atDebug()
           .setMessage(
               "Not fetching or appending hash {} to backward sync since it is present in successors")
-          .addArgument(hash::toHexString)
+          .addArgument(() -> hash.getBytes().toHexString())
           .log();
       return true;
     }

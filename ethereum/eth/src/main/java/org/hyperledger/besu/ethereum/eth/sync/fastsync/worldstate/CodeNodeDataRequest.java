@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 class CodeNodeDataRequest extends NodeDataRequest {
 
@@ -43,7 +44,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
           onBonsai.putCode(accountHash.orElse(Hash.EMPTY), getHash(), getData());
         },
         onForest -> {
-          onForest.putCode(getHash(), getData());
+          onForest.putCode(Bytes32.wrap(getHash().getBytes()), getData());
         });
   }
 
@@ -76,8 +77,8 @@ class CodeNodeDataRequest extends NodeDataRequest {
   protected void writeTo(final RLPOutput out) {
     out.startList();
     out.writeByte(getRequestType().getValue());
-    out.writeBytes(getHash());
-    getAccountHash().ifPresent(out::writeBytes);
+    out.writeBytes(getHash().getBytes());
+    getAccountHash().ifPresent(hash -> out.writeBytes(hash.getBytes()));
     out.endList();
   }
 }

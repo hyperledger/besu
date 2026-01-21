@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
@@ -37,7 +38,10 @@ public class BesuEventsPluginTest extends AcceptanceTestBase {
                     GenesisConfigurationFactory::createQbftLondonGenesisConfig));
     pluginNode =
         besu.createQbftPluginsNode(
-            "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
+            "node1",
+            Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
+            Collections.emptyList());
     cluster.start(pluginNode, minerNode);
 
     // Ensure nodes are connected before starting test

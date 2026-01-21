@@ -141,12 +141,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
             .addArgument(() -> slots.isEmpty() ? "none" : slots.lastKey())
             .log();
 
-        downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+        downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash.getBytes()));
         // We will request the new storage root of the account because it is apparently no longer
         // valid with the new pivot block.
         downloadState.enqueueRequest(
-            createAccountDataRequest(
-                getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
+            createAccountDataRequest(getRootHash(), accountHash, startKeyHash, endKeyHash));
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, slots);
@@ -191,20 +190,24 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                       (key, value) -> {
                         final StorageRangeDataRequest storageRangeDataRequest =
                             createStorageRangeDataRequest(
-                                getRootHash(), accountHash, storageRoot, key, value);
+                                getRootHash(),
+                                Bytes32.wrap(accountHash.getBytes()),
+                                storageRoot,
+                                key,
+                                value);
                         childRequests.add(storageRangeDataRequest);
                       });
             });
 
     if (startKeyHash.equals(MIN_RANGE) && !taskElement.proofs().isEmpty()) {
       // need to heal this account storage
-      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash.getBytes()));
     }
 
     return childRequests.stream();
   }
 
-  public Bytes32 getAccountHash() {
+  public Hash getAccountHash() {
     return accountHash;
   }
 
