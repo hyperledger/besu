@@ -92,7 +92,7 @@ class DebugTraceTransactionStepFactoryTest {
   @ParameterizedTest
   @EnumSource(
       value = TracerType.class,
-      names = {"CALL_TRACER", "FLAT_CALL_TRACER"})
+      names = {"FLAT_CALL_TRACER"})
   @DisplayName("should create function for unimplemented tracers")
   void shouldCreateFunctionForNotYetImplementedTracers(final TracerType tracerType) {
     // Given
