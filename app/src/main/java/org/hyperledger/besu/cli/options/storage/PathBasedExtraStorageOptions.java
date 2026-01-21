@@ -90,7 +90,7 @@ public class PathBasedExtraStorageOptions
       names = {PARALLEL_STATE_ROOT_COMPUTATION_ENABLED},
       arity = "1",
       description =
-          "Enables parallel computation of state root hash to optimize performance by concurrently processing trie operations during block validation. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
+          "Enables parallel computation of state root hash to optimize performance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
   private Boolean isParallelStateRootComputationEnabled = DEFAULT_PARALLEL_STATE_ROOT_COMPUTATION;
 
   @CommandLine.ArgGroup(validate = false)

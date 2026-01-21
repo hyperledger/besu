@@ -57,7 +57,10 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-  /** Shared ForkJoinPool with 2x cores for I/O-bound operations */
+  /**
+   * Shared ForkJoinPool with 2x cores for I/O-bound operations. This choice was validated by
+   * testing, and that ForkJoinPool performed best despite not being an obvious fit.
+   */
   private static final ForkJoinPool FORK_JOIN_POOL = new ForkJoinPool(NCPU * 2);
 
   /** Pending updates accumulated between commits */
