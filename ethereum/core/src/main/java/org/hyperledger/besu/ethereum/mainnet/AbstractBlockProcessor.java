@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -251,6 +252,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       // Execution metrics tracking
       final ExecutionStats executionStats = new ExecutionStats();
       executionStats.startExecution();
+      // Set the execution stats context for EVM operations to access
+      ExecutionStatsHolder.set(executionStats);
+      // Reset EVM operation counters for this block
+      EvmOperationCounters.reset();
 
       for (int i = 0; i < transactions.size(); i++) {
         final WorldUpdater blockUpdater = worldState.updater();
@@ -326,6 +331,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
+      // Collect EVM operation counters before ending execution
+      executionStats.collectEvmCounters();
 
       // End execution timing
       executionStats.endExecution();
@@ -511,6 +519,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   worldState, receipts, maybeRequests, maybeBlockAccessList)),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } finally {
+      // Clear the execution stats context and EVM operation counters
+      ExecutionStatsHolder.clear();
+      EvmOperationCounters.clear();
       stateRootCommitter.cancel();
     }
   }

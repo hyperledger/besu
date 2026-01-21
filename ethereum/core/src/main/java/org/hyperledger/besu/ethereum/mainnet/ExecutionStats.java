@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -55,6 +56,14 @@ public class ExecutionStats {
   private int callCount;
   private int createCount;
 
+  // Cache statistics
+  private long accountCacheHits;
+  private long accountCacheMisses;
+  private long storageCacheHits;
+  private long storageCacheMisses;
+  private long codeCacheHits;
+  private long codeCacheMisses;
+
   // Unique tracking
   private final Set<Address> uniqueAccountsTouched = new HashSet<>();
   private final Set<StorageSlotKey> uniqueStorageSlots = new HashSet<>();
@@ -85,6 +94,12 @@ public class ExecutionStats {
     sstoreCount = 0;
     callCount = 0;
     createCount = 0;
+    accountCacheHits = 0;
+    accountCacheMisses = 0;
+    storageCacheHits = 0;
+    storageCacheMisses = 0;
+    codeCacheHits = 0;
+    codeCacheMisses = 0;
     uniqueAccountsTouched.clear();
     uniqueStorageSlots.clear();
     uniqueContractsExecuted.clear();
@@ -206,6 +221,143 @@ public class ExecutionStats {
     createCount++;
   }
 
+  /**
+   * Collects EVM operation counters from the thread-local EvmOperationCounters. This should be
+   * called at the end of block execution to aggregate the counters from the EVM module.
+   */
+  public void collectEvmCounters() {
+    this.sloadCount = EvmOperationCounters.getSloadCount();
+    this.sstoreCount = EvmOperationCounters.getSstoreCount();
+    this.callCount = EvmOperationCounters.getCallCount();
+    this.createCount = EvmOperationCounters.getCreateCount();
+  }
+
+  // Cache statistics methods
+
+  /**
+   * Sets cache statistics for all cache types.
+   *
+   * @param accountHits account cache hits
+   * @param accountMisses account cache misses
+   * @param storageHits storage cache hits
+   * @param storageMisses storage cache misses
+   * @param codeHits code cache hits
+   * @param codeMisses code cache misses
+   */
+  public void setCacheStats(
+      final long accountHits,
+      final long accountMisses,
+      final long storageHits,
+      final long storageMisses,
+      final long codeHits,
+      final long codeMisses) {
+    this.accountCacheHits = accountHits;
+    this.accountCacheMisses = accountMisses;
+    this.storageCacheHits = storageHits;
+    this.storageCacheMisses = storageMisses;
+    this.codeCacheHits = codeHits;
+    this.codeCacheMisses = codeMisses;
+  }
+
+  /** Increments account cache hit counter. */
+  public void incrementAccountCacheHits() {
+    accountCacheHits++;
+  }
+
+  /** Increments account cache miss counter. */
+  public void incrementAccountCacheMisses() {
+    accountCacheMisses++;
+  }
+
+  /** Increments storage cache hit counter. */
+  public void incrementStorageCacheHits() {
+    storageCacheHits++;
+  }
+
+  /** Increments storage cache miss counter. */
+  public void incrementStorageCacheMisses() {
+    storageCacheMisses++;
+  }
+
+  /** Increments code cache hit counter. */
+  public void incrementCodeCacheHits() {
+    codeCacheHits++;
+  }
+
+  /** Increments code cache miss counter. */
+  public void incrementCodeCacheMisses() {
+    codeCacheMisses++;
+  }
+
+  /**
+   * Calculates hit rate percentage for a cache.
+   *
+   * @param hits the number of hits
+   * @param misses the number of misses
+   * @return the hit rate as a percentage (0-100)
+   */
+  private static double calculateHitRate(final long hits, final long misses) {
+    long total = hits + misses;
+    if (total > 0) {
+      return (hits * 100.0) / total;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets account cache hits.
+   *
+   * @return the account cache hit count
+   */
+  public long getAccountCacheHits() {
+    return accountCacheHits;
+  }
+
+  /**
+   * Gets account cache misses.
+   *
+   * @return the account cache miss count
+   */
+  public long getAccountCacheMisses() {
+    return accountCacheMisses;
+  }
+
+  /**
+   * Gets storage cache hits.
+   *
+   * @return the storage cache hit count
+   */
+  public long getStorageCacheHits() {
+    return storageCacheHits;
+  }
+
+  /**
+   * Gets storage cache misses.
+   *
+   * @return the storage cache miss count
+   */
+  public long getStorageCacheMisses() {
+    return storageCacheMisses;
+  }
+
+  /**
+   * Gets code cache hits.
+   *
+   * @return the code cache hit count
+   */
+  public long getCodeCacheHits() {
+    return codeCacheHits;
+  }
+
+  /**
+   * Gets code cache misses.
+   *
+   * @return the code cache miss count
+   */
+  public long getCodeCacheMisses() {
+    return codeCacheMisses;
+  }
+
   // Unique tracking methods
 
   /**
@@ -223,7 +375,8 @@ public class ExecutionStats {
    * @param address the contract address
    * @param slot the storage slot key
    */
-  public void recordStorageSlotAccessed(final Address address, final org.apache.tuweni.units.bigints.UInt256 slot) {
+  public void recordStorageSlotAccessed(
+      final Address address, final org.apache.tuweni.units.bigints.UInt256 slot) {
     uniqueStorageSlots.add(new StorageSlotKey(address, slot));
   }
 
@@ -386,6 +539,42 @@ public class ExecutionStats {
   }
 
   /**
+   * Gets CALL count.
+   *
+   * @return the CALL count
+   */
+  public int getCallCount() {
+    return callCount;
+  }
+
+  /**
+   * Gets CREATE count.
+   *
+   * @return the CREATE count
+   */
+  public int getCreateCount() {
+    return createCount;
+  }
+
+  /**
+   * Gets account creates count.
+   *
+   * @return the account creates count
+   */
+  public int getAccountCreates() {
+    return accountCreates;
+  }
+
+  /**
+   * Gets account destructs count.
+   *
+   * @return the account destructs count
+   */
+  public int getAccountDestructs() {
+    return accountDestructs;
+  }
+
+  /**
    * Gets unique accounts touched.
    *
    * @return the count
@@ -438,8 +627,11 @@ public class ExecutionStats {
         "throughput":{"mgas_per_sec":%.2f},\
         "state_reads":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d},\
         "state_writes":{"accounts":%d,"storage_slots":%d},\
+        "cache":{"account":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
+        "storage":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
+        "code":{"hits":%d,"misses":%d,"hit_rate":%.2f}},\
         "unique":{"accounts":%d,"storage_slots":%d,"contracts":%d},\
-        "evm":{"sload":%d,"sstore":%d}}""",
+        "evm":{"sload":%d,"sstore":%d,"calls":%d,"creates":%d}}""",
         blockNumber,
         blockHash,
         gasUsed,
@@ -455,11 +647,22 @@ public class ExecutionStats {
         codeBytesRead,
         accountWrites,
         storageWrites,
+        accountCacheHits,
+        accountCacheMisses,
+        calculateHitRate(accountCacheHits, accountCacheMisses),
+        storageCacheHits,
+        storageCacheMisses,
+        calculateHitRate(storageCacheHits, storageCacheMisses),
+        codeCacheHits,
+        codeCacheMisses,
+        calculateHitRate(codeCacheHits, codeCacheMisses),
         getUniqueAccountsTouched(),
         getUniqueStorageSlots(),
         getUniqueContractsExecuted(),
         sloadCount,
-        sstoreCount);
+        sstoreCount,
+        callCount,
+        createCount);
   }
 
   /** Inner class to represent a unique storage slot key. */
