@@ -63,7 +63,7 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
 
     final var txHash = node.execute(transferTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.toHexString()));
+    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.getBytes().toHexString()));
   }
 
   @ParameterizedTest
@@ -86,10 +86,11 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
     final var sameSenderGoodHash = node.execute(sameSenderGoodTx);
     final var anotherSenderGoodHash = node.execute(anotherSenderGoodTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(anotherSenderGoodHash.toHexString()));
-    node.verify(eth.expectNoTransactionReceipt(badHash.toHexString()));
+    node.verify(
+        eth.expectSuccessfulTransactionReceipt(anotherSenderGoodHash.getBytes().toHexString()));
+    node.verify(eth.expectNoTransactionReceipt(badHash.getBytes().toHexString()));
     // good tx from the same sender is not mined due to the nonce gap
-    node.verify(eth.expectNoTransactionReceipt(sameSenderGoodHash.toHexString()));
+    node.verify(eth.expectNoTransactionReceipt(sameSenderGoodHash.getBytes().toHexString()));
   }
 
   @Test
@@ -129,9 +130,11 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
 
     final var dummyTransferTxHash = node.execute(dummyTransferTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(dummyTransferTxHash.toHexString()));
+    node.verify(
+        eth.expectSuccessfulTransactionReceipt(dummyTransferTxHash.getBytes().toHexString()));
     final var dummyTransferReceipt =
-        node.execute(ethTransactions.getTransactionReceipt(dummyTransferTxHash.toHexString()));
+        node.execute(
+            ethTransactions.getTransactionReceipt(dummyTransferTxHash.getBytes().toHexString()));
     assertThat(dummyTransferReceipt.get().getBlockNumber()).isEqualTo(nextBlockNumber.get());
 
     // next we send 2 tx, the first tx throws an unhandled exception from a plugin validator
@@ -156,13 +159,13 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
     final var throwingTxHash = node.execute(throwingTransferTx);
     final var goodTxHash = node.execute(goodTransferTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(goodTxHash.toHexString()));
+    node.verify(eth.expectSuccessfulTransactionReceipt(goodTxHash.getBytes().toHexString()));
 
     final var goodReceipt =
-        node.execute(ethTransactions.getTransactionReceipt(goodTxHash.toHexString()));
+        node.execute(ethTransactions.getTransactionReceipt(goodTxHash.getBytes().toHexString()));
     assertThat(goodReceipt.get().getBlockNumber()).isEqualTo(preSendBlock.add(BigInteger.ONE));
 
-    node.verify(eth.expectNoTransactionReceipt(throwingTxHash.toHexString()));
+    node.verify(eth.expectNoTransactionReceipt(throwingTxHash.getBytes().toHexString()));
   }
 
   @Test
@@ -176,9 +179,10 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
 
     final var txHash = node.execute(transferTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.toHexString()));
+    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.getBytes().toHexString()));
 
-    final var receipt = node.execute(ethTransactions.getTransactionReceipt(txHash.toHexString()));
+    final var receipt =
+        node.execute(ethTransactions.getTransactionReceipt(txHash.getBytes().toHexString()));
     final var blockNumber = receipt.get().getBlockNumber();
 
     final Path callbackFile =
@@ -187,7 +191,6 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
                 "plugins/seenCandidatePendingTransactions-%d-%d.txt".formatted(1, blockNumber));
     waitForFile(callbackFile);
 
-    assertThat(Files.readString(callbackFile))
-        .isEqualTo("%s,%d".formatted(sender.getAddress().toString(), 0));
+    assertThat(Files.readString(callbackFile)).isEqualTo("%s,%d".formatted(sender.getAddress(), 0));
   }
 }

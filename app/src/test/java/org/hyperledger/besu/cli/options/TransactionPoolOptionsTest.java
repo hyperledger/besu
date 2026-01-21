@@ -283,7 +283,7 @@ public class TransactionPoolOptionsTest
     internalTestSuccess(
         config -> assertThat(config.getPrioritySenders()).containsExactly(prioritySender),
         "--tx-pool-priority-senders",
-        prioritySender.toHexString());
+        prioritySender.getBytes().toHexString());
   }
 
   @Test
@@ -296,11 +296,11 @@ public class TransactionPoolOptionsTest
             assertThat(config.getPrioritySenders())
                 .containsExactly(prioritySender1, prioritySender2, prioritySender3),
         "--tx-pool-priority-senders",
-        prioritySender1.toHexString()
+        prioritySender1.getBytes().toHexString()
             + ","
-            + prioritySender2.toHexString()
+            + prioritySender2.getBytes().toHexString()
             + ","
-            + prioritySender3.toHexString());
+            + prioritySender3.getBytes().toHexString());
   }
 
   @Test
@@ -320,11 +320,11 @@ public class TransactionPoolOptionsTest
             + "cannot convert '0x0000000000000000000000000000000000abc123;0x0000000000000000000000000000000000def456' "
             + "to Address (java.lang.IllegalArgumentException: Invalid odd-length hex binary representation)",
         "--tx-pool-priority-senders",
-        prioritySender1.toHexString()
+        prioritySender1.getBytes().toHexString()
             + ";"
-            + prioritySender2.toHexString()
+            + prioritySender2.getBytes().toHexString()
             + ","
-            + prioritySender3.toHexString());
+            + prioritySender3.getBytes().toHexString());
   }
 
   @Test

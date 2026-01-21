@@ -178,7 +178,7 @@ public class Action {
     public static Builder from(final TransactionTrace trace) {
       final Builder builder =
           new Builder()
-              .from(trace.getTransaction().getSender().toHexString())
+              .from(trace.getTransaction().getSender().getBytes().toHexString())
               .value(Quantity.create(trace.getTransaction().getValue()));
       if (!trace.getTraceFrames().isEmpty()) {
         final TraceFrame traceFrame = trace.getTraceFrames().get(0);

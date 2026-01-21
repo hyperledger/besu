@@ -96,19 +96,19 @@ class TrieLogHelperTest {
     var updater = inMemoryWorldState.updater();
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader1.getHash().toArrayUnsafe(), createTrieLog(blockHeader1));
+        .put(blockHeader1.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader1));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader2.getHash().toArrayUnsafe(), createTrieLog(blockHeader2));
+        .put(blockHeader2.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader2));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader3.getHash().toArrayUnsafe(), createTrieLog(blockHeader3));
+        .put(blockHeader3.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader3));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader4.getHash().toArrayUnsafe(), createTrieLog(blockHeader4));
+        .put(blockHeader4.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader4));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader5.getHash().toArrayUnsafe(), createTrieLog(blockHeader5));
+        .put(blockHeader5.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader5));
     updater.getTrieLogStorageTransaction().commit();
 
     nonValidatingTrieLogHelper = new NonValidatingTrieLogHelper();
@@ -418,7 +418,7 @@ class TrieLogHelperTest {
             .findFirst()
             .get();
 
-    assertThat(trieLog.getKey()).isEqualTo(blockHeader1.getHash().toArrayUnsafe());
+    assertThat(trieLog.getKey()).isEqualTo(blockHeader1.getHash().getBytes().toArrayUnsafe());
     assertThat(trieLog.getValue())
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
@@ -437,11 +437,11 @@ class TrieLogHelperTest {
             .stream()
             .collect(Collectors.toMap(e -> Bytes.wrap(e.getKey()), Map.Entry::getValue));
 
-    assertThat(trieLogs.get(blockHeader1.getHash()))
+    assertThat(trieLogs.get(blockHeader1.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
-    assertThat(trieLogs.get(blockHeader2.getHash()))
+    assertThat(trieLogs.get(blockHeader2.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
-    assertThat(trieLogs.get(blockHeader3.getHash()))
+    assertThat(trieLogs.get(blockHeader3.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
   }
 

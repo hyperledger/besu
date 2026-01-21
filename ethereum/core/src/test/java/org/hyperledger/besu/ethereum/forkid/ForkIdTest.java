@@ -584,7 +584,7 @@ public class ForkIdTest {
   public void testGenesisTimestampEqualToShanghaiTimestamp() {
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(Hash.ZERO.toHexString(), 10L, 0L),
+            mockBlockchain(Hash.ZERO.getBytes().toHexString(), 10L, 0L),
             Collections.emptyList(),
             List.of(1L, 2L));
     assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(2);
@@ -596,7 +596,9 @@ public class ForkIdTest {
   public void testNoBlockNoForksAndNoTimestampForksGreaterThanGenesisTimestamp() {
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain(Hash.ZERO.toHexString(), 10L, 1L), Collections.emptyList(), List.of(1L));
+            mockBlockchain(Hash.ZERO.getBytes().toHexString(), 10L, 1L),
+            Collections.emptyList(),
+            List.of(1L));
     assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(0);
     // There is no ForkId, so peerCheck always has to return true
     assertThat(forkIdManager.peerCheck(new ForkId(Bytes.fromHexString("0xdeadbeef"), 100L)))

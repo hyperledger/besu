@@ -33,7 +33,7 @@ public interface Words {
    *     (Appendix H. of the Yellow paper)).
    */
   static UInt256 fromAddress(final Address address) {
-    return UInt256.fromBytes(Bytes32.leftPad(address));
+    return UInt256.fromBytes(Bytes32.leftPad(address.getBytes()));
   }
 
   /**

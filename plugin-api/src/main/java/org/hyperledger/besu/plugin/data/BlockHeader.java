@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
 
@@ -69,7 +70,7 @@ public interface BlockHeader extends ProcessableBlockHeader {
    * @return The Bloom filter composed from indexable information (logger address and log topics)
    *     contained in each log entry from the receipt of each transaction in the transactions list.
    */
-  Bytes getLogsBloom();
+  LogsBloomFilter getLogsBloom();
 
   /**
    * A scalar value equal to the total gas used in transactions in this block.

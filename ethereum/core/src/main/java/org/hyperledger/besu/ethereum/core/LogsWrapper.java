@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class LogsWrapper implements org.hyperledger.besu.plugin.data.Log {
 
@@ -36,7 +36,7 @@ public class LogsWrapper implements org.hyperledger.besu.plugin.data.Log {
   }
 
   @Override
-  public List<? extends Bytes32> getTopics() {
+  public List<LogTopic> getTopics() {
     return delegate.getTopics();
   }
 
