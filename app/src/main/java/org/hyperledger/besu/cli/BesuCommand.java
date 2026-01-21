@@ -1644,27 +1644,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateChainDataPruningParams() {
     final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
-    final long blocksRetainedLimit =
-        unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit();
-
-    final long balsRetained = unstableChainPruningOptions.getBalsRetained();
+    final long balsRetained = unstableChainPruningOptions.getChainDataPruningBalsRetained();
+    final long balsRetainedLimit =
+        unstableChainPruningOptions.getChainDataPruningBalsRetainedLimit();
 
     if (blocksRetained < 0) {
       throw new ParameterException(
           this.commandLine, "--Xchain-pruning-blocks-retained must be >= 0");
     }
-    if (blocksRetainedLimit < 0) {
+    if (balsRetainedLimit < 0) {
       throw new ParameterException(
-          this.commandLine, "--Xchain-pruning-blocks-retained-limit must be >= 0");
+          this.commandLine, "--Xchain-pruning-bals-retained-limit must be >= 0");
     }
     if (balsRetained < 0) {
       throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
     }
 
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      if (blocksRetained < blocksRetainedLimit) {
+      if (blocksRetained < balsRetainedLimit) {
         throw new ParameterException(
-            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + blocksRetainedLimit);
+            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + balsRetainedLimit);
       }
 
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
@@ -1684,9 +1683,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (unstableChainPruningOptions.getChainBalPruningEnabled()) {
-      if (balsRetained < blocksRetainedLimit) {
+      if (balsRetained < balsRetainedLimit) {
         throw new ParameterException(
-            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + blocksRetainedLimit);
+            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + balsRetainedLimit);
       }
       if (balsRetained > blocksRetained) {
         throw new ParameterException(
