@@ -207,7 +207,7 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
       return new BlockAccessList(
           accountChangesBuilders.values().stream()
               .map(AccountBuilder::build)
-              .sorted(Comparator.comparing(ac -> ac.address().toUnprefixedHexString()))
+              .sorted(Comparator.comparing(ac -> ac.address().getBytes().toUnprefixedHexString()))
               .toList());
     }
 

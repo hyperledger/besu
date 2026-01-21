@@ -62,7 +62,7 @@ public class TransactionAnnouncementEncoder {
    */
   private static Bytes encodeForEth66(final List<Transaction> transactions) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(toHashList(transactions), (h, w) -> w.writeBytes(h));
+    out.writeList(toHashList(transactions), (h, w) -> w.writeBytes(h.getBytes()));
     return out.encoded();
   }
 
@@ -113,7 +113,7 @@ public class TransactionAnnouncementEncoder {
     out.startList();
     out.writeBytes(Bytes.wrap((types)));
     out.writeList(sizes, (h, w) -> w.writeUnsignedInt(h));
-    out.writeList(hashes, (h, w) -> w.writeBytes(h));
+    out.writeList(hashes, (h, w) -> w.writeBytes(h.getBytes()));
     out.endList();
     return out.encoded();
   }
