@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -177,7 +178,7 @@ public class FullSyncTargetManagerTest {
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
   public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor(
-      final DataStorageFormat storageFormat) throws InterruptedException {
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
@@ -188,9 +189,9 @@ public class FullSyncTargetManagerTest {
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
-    // have to sleep here as we're expecting result to NOT complete, but peer disconnection happens
-    // in another thread.
-    Thread.sleep(1000);
+    Awaitility.await()
+        .atMost(1, TimeUnit.SECONDS)
+        .until(() -> bestPeer.getPeerConnection().isDisconnected());
     assertThat(result).isNotCompleted();
     assertThat(bestPeer.getPeerConnection().isDisconnected()).isTrue();
   }
