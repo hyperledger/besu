@@ -27,6 +27,9 @@ public interface PluginConfiguration {
   List<PluginInfo> DEFAULT_REQUESTED_PLUGINS_INFO = Collections.emptyList();
   boolean DEFAULT_EXTERNAL_PLUGINS_ENABLED = true;
   boolean DEFAULT_CONTINUE_ON_PLUGIN_ERROR = false;
+  PluginsVerificationMode DEFAULT_PLUGINS_VERIFICATION_MODE = PluginsVerificationMode.NONE;
+
+  PluginConfiguration DEFAULT = ImmutablePluginConfiguration.builder().build();
 
   @Value.Default
   default List<PluginInfo> getRequestedPluginsInfo() {
@@ -54,5 +57,10 @@ public interface PluginConfiguration {
   @Value.Default
   default boolean isContinueOnPluginError() {
     return DEFAULT_CONTINUE_ON_PLUGIN_ERROR;
+  }
+
+  @Value.Default
+  default PluginsVerificationMode getPluginsVerificationMode() {
+    return DEFAULT_PLUGINS_VERIFICATION_MODE;
   }
 }

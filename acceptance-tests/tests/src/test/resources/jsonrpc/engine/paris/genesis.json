@@ -13,10 +13,7 @@
     "berlinBlock":0,
     "londonBlock":0,
     "terminalTotalDifficulty":0,
-    "clique": {
-      "period": 5,
-      "epoch": 30000
-    }
+    "ethash": {}
   },
   "nonce":"0x42",
   "timestamp":"0x0",

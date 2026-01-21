@@ -16,12 +16,16 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,6 +45,7 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-tx-selector1-test-enabled=true",
                 "--plugin-tx-selector2-test-enabled=true"),
@@ -91,7 +96,7 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
   public void unhandledExceptionInPluginSelectorIsManaged() {
     final Account recipient = accounts.createAccount("recipient");
 
-    // selectors are badly coded, and they do not manage properly when the value
+    // test selectors are intentionally badly coded, and they do not manage properly when the value
     // of the transfer does not fit in a long, throwing an exception, that is
     // managed by the block creation, that will ignore that tx and continue.
     final var overflowValue = Amount.wei(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.TEN));
@@ -158,5 +163,31 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
     assertThat(goodReceipt.get().getBlockNumber()).isEqualTo(preSendBlock.add(BigInteger.ONE));
 
     node.verify(eth.expectNoTransactionReceipt(throwingTxHash.toHexString()));
+  }
+
+  @Test
+  public void pluginsSeeContentOfPublicTransactionPool() throws IOException {
+    final Account sender = accounts.getPrimaryBenefactor();
+    final Account recipient = accounts.createAccount("recipient");
+
+    final var transferTx =
+        accountTransactions.createTransfer(
+            sender, recipient, Amount.wei(BigInteger.ONE), BigInteger.ZERO);
+
+    final var txHash = node.execute(transferTx);
+
+    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.toHexString()));
+
+    final var receipt = node.execute(ethTransactions.getTransactionReceipt(txHash.toHexString()));
+    final var blockNumber = receipt.get().getBlockNumber();
+
+    final Path callbackFile =
+        node.homeDirectory()
+            .resolve(
+                "plugins/seenCandidatePendingTransactions-%d-%d.txt".formatted(1, blockNumber));
+    waitForFile(callbackFile);
+
+    assertThat(Files.readString(callbackFile))
+        .isEqualTo("%s,%d".formatted(sender.getAddress().toString(), 0));
   }
 }

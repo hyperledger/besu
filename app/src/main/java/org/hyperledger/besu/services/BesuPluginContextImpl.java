@@ -86,6 +86,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
 
   private final Map<String, String> pluginVersions = new LinkedHashMap<>();
   private PluginConfiguration config;
+  private URLClassLoader pluginClassLoader;
 
   /** Instantiates a new Besu plugin context. */
   public BesuPluginContextImpl() {}
@@ -110,31 +111,6 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   @Override
   public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
-  }
-
-  private List<BesuPlugin> detectPlugins(final PluginConfiguration config) {
-    ClassLoader pluginLoader =
-        pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
-    ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
-    final var loadedPlugins = StreamSupport.stream(serviceLoader.spliterator(), false).toList();
-
-    // Check for duplicate plugin names
-    final var pluginNameCounts =
-        loadedPlugins.stream()
-            .collect(Collectors.groupingBy(BesuPlugin::getName, Collectors.counting()));
-
-    final var duplicateNames =
-        pluginNameCounts.entrySet().stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Map.Entry::getKey)
-            .toList();
-
-    if (!duplicateNames.isEmpty()) {
-      throw new IllegalStateException(
-          "Plugins duplicate name detected: " + String.join(", ", duplicateNames));
-    }
-
-    return loadedPlugins;
   }
 
   /**
@@ -360,6 +336,16 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       }
     }
 
+    // Close the plugin classloader to release file handles
+    if (pluginClassLoader != null) {
+      try {
+        pluginClassLoader.close();
+        LOG.debug("Closed plugin classloader");
+      } catch (final IOException e) {
+        LOG.debug("Error closing plugin classloader", e);
+      }
+    }
+
     LOG.debug("Plugin shutdown complete.");
     state = Lifecycle.STOPPED;
   }
@@ -372,7 +358,8 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
     }
   }
 
-  private Optional<ClassLoader> pluginDirectoryLoader(final Path pluginsDir) {
+  private List<BesuPlugin> detectPlugins(final PluginConfiguration config) {
+    final var pluginsDir = config.getPluginsDir();
     if (pluginsDir != null && pluginsDir.toFile().isDirectory()) {
       LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath());
 
@@ -382,7 +369,18 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
                 .filter(p -> p.getFileName().toString().endsWith(".jar"))
                 .map(BesuPluginContextImpl::pathToURIOrNull)
                 .toArray(URL[]::new);
-        return Optional.of(new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
+        // The URLClassLoader must remain open for the entire application lifecycle
+        // as plugins may load classes lazily during their operation. The classloader
+        // will be closed in stopPlugins() during shutdown.
+        this.pluginClassLoader =
+            new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader());
+        ServiceLoader<BesuPlugin> serviceLoader =
+            ServiceLoader.load(BesuPlugin.class, this.pluginClassLoader);
+        final var foundPlugins = StreamSupport.stream(serviceLoader.spliterator(), false).toList();
+        PluginVerifier.verify(
+            config.getPluginsVerificationMode(), this.pluginClassLoader, foundPlugins);
+
+        return foundPlugins;
       } catch (final MalformedURLException e) {
         LOG.error("Error converting files to URLs, could not load plugins", e);
       } catch (final IOException e) {
@@ -392,7 +390,7 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
       LOG.debug("Plugin directory does not exist, skipping registration. - {}", pluginsDir);
     }
 
-    return Optional.empty();
+    return List.of();
   }
 
   @Override
@@ -460,5 +458,10 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
             registeredPlugins.size(), detectedPlugins.size()));
 
     return summary;
+  }
+
+  /** Resets the lifecycle state to uninitialized for Ephemery restart. */
+  public void resetState() {
+    state = Lifecycle.UNINITIALIZED;
   }
 }
