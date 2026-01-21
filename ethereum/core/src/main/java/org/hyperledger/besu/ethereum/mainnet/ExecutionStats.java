@@ -31,7 +31,8 @@ public class ExecutionStats {
   // Timing in nanoseconds
   private long executionStartNanos;
   private long executionTimeNanos;
-  private long validationTimeNanos;
+  private long stateReadTimeNanos;
+  private long stateHashTimeNanos;
   private long commitTimeNanos;
 
   // Gas metrics
@@ -47,6 +48,8 @@ public class ExecutionStats {
   // State write counters
   private int accountWrites;
   private int storageWrites;
+  private int codeWrites;
+  private long codeBytesWritten;
   private int accountCreates;
   private int accountDestructs;
 
@@ -78,7 +81,8 @@ public class ExecutionStats {
   public void reset() {
     executionStartNanos = 0;
     executionTimeNanos = 0;
-    validationTimeNanos = 0;
+    stateReadTimeNanos = 0;
+    stateHashTimeNanos = 0;
     commitTimeNanos = 0;
     gasUsed = 0;
     transactionCount = 0;
@@ -88,6 +92,8 @@ public class ExecutionStats {
     codeBytesRead = 0;
     accountWrites = 0;
     storageWrites = 0;
+    codeWrites = 0;
+    codeBytesWritten = 0;
     accountCreates = 0;
     accountDestructs = 0;
     sloadCount = 0;
@@ -118,12 +124,21 @@ public class ExecutionStats {
   }
 
   /**
-   * Adds validation time.
+   * Adds state read time.
    *
-   * @param nanos the validation time in nanoseconds
+   * @param nanos the state read time in nanoseconds
    */
-  public void addValidationTime(final long nanos) {
-    validationTimeNanos += nanos;
+  public void addStateReadTime(final long nanos) {
+    stateReadTimeNanos += nanos;
+  }
+
+  /**
+   * Adds state hash time (Merkle trie rehashing).
+   *
+   * @param nanos the state hash time in nanoseconds
+   */
+  public void addStateHashTime(final long nanos) {
+    stateHashTimeNanos += nanos;
   }
 
   /**
@@ -187,6 +202,20 @@ public class ExecutionStats {
   /** Increments storage write counter. */
   public void incrementStorageWrites() {
     storageWrites++;
+  }
+
+  /** Increments code write counter. */
+  public void incrementCodeWrites() {
+    codeWrites++;
+  }
+
+  /**
+   * Adds bytes written for code.
+   *
+   * @param bytes the number of bytes written
+   */
+  public void addCodeBytesWritten(final long bytes) {
+    codeBytesWritten += bytes;
   }
 
   /** Increments account create counter. */
@@ -392,12 +421,12 @@ public class ExecutionStats {
   // Getters
 
   /**
-   * Gets execution time in milliseconds.
+   * Gets execution time in milliseconds with sub-millisecond precision.
    *
-   * @return the execution time in ms
+   * @return the execution time in ms as a double
    */
-  public long getExecutionTimeMs() {
-    return executionTimeNanos / 1_000_000;
+  public double getExecutionTimeMs() {
+    return executionTimeNanos / 1_000_000.0;
   }
 
   /**
@@ -410,30 +439,39 @@ public class ExecutionStats {
   }
 
   /**
-   * Gets validation time in milliseconds.
+   * Gets state read time in milliseconds with sub-millisecond precision.
    *
-   * @return the validation time in ms
+   * @return the state read time in ms as a double
    */
-  public long getValidationTimeMs() {
-    return validationTimeNanos / 1_000_000;
+  public double getStateReadTimeMs() {
+    return stateReadTimeNanos / 1_000_000.0;
   }
 
   /**
-   * Gets commit time in milliseconds.
+   * Gets state hash time in milliseconds (Merkle trie rehashing) with sub-millisecond precision.
    *
-   * @return the commit time in ms
+   * @return the state hash time in ms as a double
    */
-  public long getCommitTimeMs() {
-    return commitTimeNanos / 1_000_000;
+  public double getStateHashTimeMs() {
+    return stateHashTimeNanos / 1_000_000.0;
   }
 
   /**
-   * Gets total time in milliseconds.
+   * Gets commit time in milliseconds with sub-millisecond precision.
    *
-   * @return the total time in ms
+   * @return the commit time in ms as a double
    */
-  public long getTotalTimeMs() {
-    return (executionTimeNanos + validationTimeNanos + commitTimeNanos) / 1_000_000;
+  public double getCommitTimeMs() {
+    return commitTimeNanos / 1_000_000.0;
+  }
+
+  /**
+   * Gets total time in milliseconds with sub-millisecond precision.
+   *
+   * @return the total time in ms as a double
+   */
+  public double getTotalTimeMs() {
+    return (executionTimeNanos + stateHashTimeNanos + commitTimeNanos) / 1_000_000.0;
   }
 
   /**
@@ -518,6 +556,24 @@ public class ExecutionStats {
    */
   public int getStorageWrites() {
     return storageWrites;
+  }
+
+  /**
+   * Gets code writes.
+   *
+   * @return the code write count
+   */
+  public int getCodeWrites() {
+    return codeWrites;
+  }
+
+  /**
+   * Gets code bytes written.
+   *
+   * @return the code bytes written
+   */
+  public long getCodeBytesWritten() {
+    return codeBytesWritten;
   }
 
   /**
@@ -612,7 +668,8 @@ public class ExecutionStats {
   }
 
   /**
-   * Generates a JSON representation for slow block logging.
+   * Generates a JSON representation for slow block logging following the cross-client execution
+   * metrics specification.
    *
    * @param blockNumber the block number
    * @param blockHash the block hash
@@ -623,10 +680,10 @@ public class ExecutionStats {
         """
         {"level":"warn","msg":"Slow block",\
         "block":{"number":%d,"hash":"%s","gas_used":%d,"tx_count":%d},\
-        "timing":{"execution_ms":%d,"validation_ms":%d,"commit_ms":%d,"total_ms":%d},\
+        "timing":{"execution_ms":%.3f,"state_read_ms":%.3f,"state_hash_ms":%.3f,"commit_ms":%.3f,"total_ms":%.3f},\
         "throughput":{"mgas_per_sec":%.2f},\
         "state_reads":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d},\
-        "state_writes":{"accounts":%d,"storage_slots":%d},\
+        "state_writes":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d},\
         "cache":{"account":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
         "storage":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
         "code":{"hits":%d,"misses":%d,"hit_rate":%.2f}},\
@@ -637,7 +694,8 @@ public class ExecutionStats {
         gasUsed,
         transactionCount,
         getExecutionTimeMs(),
-        getValidationTimeMs(),
+        getStateReadTimeMs(),
+        getStateHashTimeMs(),
         getCommitTimeMs(),
         getTotalTimeMs(),
         getMgasPerSecond(),
@@ -647,6 +705,8 @@ public class ExecutionStats {
         codeBytesRead,
         accountWrites,
         storageWrites,
+        codeWrites,
+        codeBytesWritten,
         accountCacheHits,
         accountCacheMisses,
         calculateHitRate(accountCacheHits, accountCacheMisses),

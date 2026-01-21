@@ -158,11 +158,11 @@ public class ExecutionStatsTest {
 
   @Test
   void shouldCalculateTotalTime() {
-    stats.addValidationTime(1_000_000); // 1ms
+    stats.addStateReadTime(1_000_000); // 1ms
     stats.addCommitTime(2_000_000); // 2ms
 
-    assertThat(stats.getValidationTimeMs()).isEqualTo(1);
-    assertThat(stats.getCommitTimeMs()).isEqualTo(2);
+    assertThat(stats.getStateReadTimeMs()).isEqualTo(1.0);
+    assertThat(stats.getCommitTimeMs()).isEqualTo(2.0);
   }
 
   // =============================================

@@ -482,12 +482,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
       blockTracer.traceEndBlock(blockHeader, blockBody);
-
-      // Track commit timing
-      final long commitStartNanos = System.nanoTime();
       try {
         worldState.persist(blockHeader, stateRootCommitter);
-        executionStats.addCommitTime(System.nanoTime() - commitStartNanos);
       } catch (MerkleTrieException e) {
         LOG.trace("Merkle trie exception during Transaction processing ", e);
         if (worldState instanceof BonsaiWorldState) {
@@ -597,7 +593,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   /**
-   * Logs slow block execution statistics in JSON format for performance monitoring.
+   * Logs slow block execution statistics in JSON format for performance monitoring. Follows the
+   * cross-client execution metrics specification.
    *
    * @param blockHeader the block header
    * @param stats the execution statistics
@@ -616,7 +613,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final ObjectNode timingNode = json.putObject("timing");
       timingNode.put("execution_ms", stats.getExecutionTimeMs());
-      timingNode.put("validation_ms", stats.getValidationTimeMs());
+      timingNode.put("state_read_ms", stats.getStateReadTimeMs());
+      timingNode.put("state_hash_ms", stats.getStateHashTimeMs());
       timingNode.put("commit_ms", stats.getCommitTimeMs());
       timingNode.put("total_ms", stats.getTotalTimeMs());
 
@@ -632,6 +630,30 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final ObjectNode stateWritesNode = json.putObject("state_writes");
       stateWritesNode.put("accounts", stats.getAccountWrites());
       stateWritesNode.put("storage_slots", stats.getStorageWrites());
+      stateWritesNode.put("code", stats.getCodeWrites());
+      stateWritesNode.put("code_bytes", stats.getCodeBytesWritten());
+
+      final ObjectNode cacheNode = json.putObject("cache");
+
+      final ObjectNode accountCacheNode = cacheNode.putObject("account");
+      accountCacheNode.put("hits", stats.getAccountCacheHits());
+      accountCacheNode.put("misses", stats.getAccountCacheMisses());
+      accountCacheNode.put(
+          "hit_rate",
+          calculateHitRate(stats.getAccountCacheHits(), stats.getAccountCacheMisses()));
+
+      final ObjectNode storageCacheNode = cacheNode.putObject("storage");
+      storageCacheNode.put("hits", stats.getStorageCacheHits());
+      storageCacheNode.put("misses", stats.getStorageCacheMisses());
+      storageCacheNode.put(
+          "hit_rate",
+          calculateHitRate(stats.getStorageCacheHits(), stats.getStorageCacheMisses()));
+
+      final ObjectNode codeCacheNode = cacheNode.putObject("code");
+      codeCacheNode.put("hits", stats.getCodeCacheHits());
+      codeCacheNode.put("misses", stats.getCodeCacheMisses());
+      codeCacheNode.put(
+          "hit_rate", calculateHitRate(stats.getCodeCacheHits(), stats.getCodeCacheMisses()));
 
       final ObjectNode uniqueNode = json.putObject("unique");
       uniqueNode.put("accounts", stats.getUniqueAccountsTouched());
@@ -654,6 +676,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           stats.getMgasPerSecond(),
           stats.getTransactionCount());
     }
+  }
+
+  /**
+   * Calculates the cache hit rate as a percentage.
+   *
+   * @param hits the number of cache hits
+   * @param misses the number of cache misses
+   * @return the hit rate as a percentage (0-100)
+   */
+  private static double calculateHitRate(final long hits, final long misses) {
+    final long total = hits + misses;
+    if (total > 0) {
+      return (hits * 100.0) / total;
+    }
+    return 0.0;
   }
 
   abstract boolean rewardCoinbase(
