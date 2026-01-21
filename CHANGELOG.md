@@ -24,6 +24,7 @@
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
+- Fix callTracer to properly capture nested calls and populate revertReason field when transactions revert [#9651](https://github.com/hyperledger/besu/pull/9651)
 
 ##  25.12.0
 
