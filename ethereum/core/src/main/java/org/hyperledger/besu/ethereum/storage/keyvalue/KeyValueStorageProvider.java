@@ -85,9 +85,9 @@ public class KeyValueStorageProvider implements StorageProvider {
     if (dataStorageConfiguration.getDataStorageFormat().isBonsaiFormat()) {
       return new BonsaiCachedWorldStateStorage(
           new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration),
-          5000,
+          50000,
           0,
-          15000,
+          150000,
           0,
           metricsSystem);
     } else {

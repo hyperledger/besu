@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -128,7 +129,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   }
 
   private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
-    return Caffeine.newBuilder().maximumSize(maxSize).recordStats().build();
+    return Caffeine.newBuilder().initialCapacity((int) maxSize).maximumSize(maxSize).expireAfterAccess(10, TimeUnit.MINUTES).build();
   }
 
   /**
@@ -218,23 +219,18 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    return getFromCacheOrParent(
-        CODE_STORAGE, accountHash, () -> parent.getCode(codeHash, accountHash));
+    return parent.getCode(codeHash, accountHash);
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
-        TRIE_BRANCH_STORAGE, nodeHash, () -> parent.getAccountStateTrieNode(location, nodeHash));
+    return parent.getAccountStateTrieNode(location, nodeHash);
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
-        TRIE_BRANCH_STORAGE,
-        nodeHash,
-        () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
+    return  parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
   }
 
   @Override
@@ -298,15 +294,15 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      if (!code.isEmpty()) {
+      /*if (!code.isEmpty()) {
         stagePut(CODE_STORAGE, accountHash, code);
-      }
+      }*/
       return super.putCode(accountHash, codeHash, code);
     }
 
     @Override
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      stageRemoval(CODE_STORAGE, accountHash);
+      //stageRemoval(CODE_STORAGE, accountHash);
       return super.removeCode(accountHash, codeHash);
     }
 
@@ -327,7 +323,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
+      //stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStateTrieNode(location, nodeHash, node);
     }
 
@@ -339,7 +335,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public synchronized Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
+      //stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
