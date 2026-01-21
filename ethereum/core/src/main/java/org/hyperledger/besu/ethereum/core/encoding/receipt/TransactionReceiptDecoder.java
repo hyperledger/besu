@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -89,9 +88,17 @@ public class TransactionReceiptDecoder {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     }
     Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
+    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
+    Optional<Long> gasSpent = readMaybeGasSpent(input);
     input.leaveList();
     return createReceipt(
-        transactionType, statusOrStateRoot, cumulativeGas, logs, bloomFilter, revertReason);
+        transactionType,
+        statusOrStateRoot,
+        cumulativeGas,
+        logs,
+        bloomFilter,
+        revertReason,
+        gasSpent);
   }
 
   private static TransactionReceipt decodeFlatReceipt(
@@ -161,13 +168,16 @@ public class TransactionReceiptDecoder {
     final boolean isCompacted = bloomFilter == null;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
     Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
+    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
+    Optional<Long> gasSpent = readMaybeGasSpent(input);
     return createReceipt(
         TransactionType.FRONTIER,
         statusOrStateRootRlpInput,
         cumulativeGas,
         logs,
         isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
-        revertReason);
+        revertReason,
+        gasSpent);
   }
 
   private static TransactionReceipt createReceipt(
@@ -177,8 +187,31 @@ public class TransactionReceiptDecoder {
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
+    return createReceipt(
+        transactionType,
+        statusOrStateRoot,
+        cumulativeGas,
+        logs,
+        bloomFilter,
+        revertReason,
+        Optional.empty());
+  }
+
+  private static TransactionReceipt createReceipt(
+      final TransactionType transactionType,
+      final RLPInput statusOrStateRoot,
+      final long cumulativeGas,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter,
+      final Optional<Bytes> revertReason,
+      final Optional<Long> gasSpent) {
     if (statusOrStateRoot.raw().size() == 1) {
       final int status = statusOrStateRoot.readIntScalar();
+      if (gasSpent.isPresent()) {
+        // EIP-7778 Amsterdam+ receipt with gasSpent
+        return new TransactionReceipt(
+            transactionType, status, cumulativeGas, gasSpent.get(), logs, revertReason);
+      }
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
@@ -190,16 +223,27 @@ public class TransactionReceiptDecoder {
 
   private static Optional<Bytes> readMaybeRevertReason(
       final RLPInput input, final boolean revertReasonAllowed) {
-    final Optional<Bytes> revertReason;
     if (input.isEndOfCurrentList()) {
-      revertReason = Optional.empty();
-    } else {
-      if (!revertReasonAllowed) {
-        throw new RLPException("Unexpected value at end of TransactionReceipt");
-      }
-      revertReason = Optional.of(input.readBytes());
+      return Optional.empty();
     }
-    return revertReason;
+    if (!revertReasonAllowed) {
+      // Don't read, leave for gasSpent parsing
+      return Optional.empty();
+    }
+    // Read the revert reason bytes
+    return Optional.of(input.readBytes());
+  }
+
+  /**
+   * Reads gasSpent from the RLP input if present (EIP-7778, Amsterdam+ receipts). GasSpent is
+   * encoded as a long scalar after the optional revert reason.
+   */
+  private static Optional<Long> readMaybeGasSpent(final RLPInput input) {
+    if (input.isEndOfCurrentList()) {
+      return Optional.empty();
+    }
+    // GasSpent is a scalar value
+    return Optional.of(input.readLongScalar());
   }
 
   private static boolean isNextNotBloomFilter(final RLPInput input) {

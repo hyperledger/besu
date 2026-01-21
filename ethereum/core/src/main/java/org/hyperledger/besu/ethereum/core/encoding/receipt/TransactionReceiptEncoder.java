@@ -87,6 +87,10 @@ public class TransactionReceiptEncoder {
     if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
       rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
+    // EIP-7778: Write gasSpent if present (Amsterdam+ receipts)
+    if (receipt.getGasSpent().isPresent()) {
+      rlpOutput.writeLongScalar(receipt.getGasSpent().get());
+    }
     rlpOutput.endList();
   }
 
