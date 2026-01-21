@@ -28,6 +28,11 @@ jar {
   }
 }
 
+tasks.withType(AbstractArchiveTask).configureEach {
+    archiveVersion = ''
+    archiveBaseName = 'testPlugins'
+}
+
 spotless {
   java {
     // This path needs to be relative to each project
