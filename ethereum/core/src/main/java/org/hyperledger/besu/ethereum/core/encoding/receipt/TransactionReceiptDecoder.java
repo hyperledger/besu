@@ -90,12 +90,11 @@ public class TransactionReceiptDecoder {
   private static TransactionReceipt decodeTypedReceipt(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
     final ReceiptComponents components = decodeTypedReceiptComponents(rlpInput);
-    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
-    // gasSpent is a standard field and comes before revertReason
-    Optional<Long> gasSpent = readMaybeGasSpent(components.input());
+    // Pre-Amsterdam receipts don't have gasSpent field
+    // For Amsterdam+, use AmsterdamTransactionReceiptDecoder which reads mandatory gasSpent
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
     components.input().leaveList();
-    return createReceipt(components, gasSpent, revertReason);
+    return createReceipt(components, Optional.empty(), revertReason);
   }
 
   /**
@@ -200,11 +199,10 @@ public class TransactionReceiptDecoder {
     final ReceiptComponents components =
         decodeLegacyReceiptComponents(
             input, statusOrStateRootRlpInput, cumulativeGasRlpInput, bloomFilter);
-    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
-    // gasSpent is a standard field and comes before revertReason (Besu-specific extension)
-    Optional<Long> gasSpent = readMaybeGasSpent(components.input());
+    // Pre-Amsterdam receipts don't have gasSpent field
+    // For Amsterdam+, use AmsterdamTransactionReceiptDecoder which reads mandatory gasSpent
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
-    return createReceipt(components, gasSpent, revertReason);
+    return createReceipt(components, Optional.empty(), revertReason);
   }
 
   /**
@@ -316,26 +314,6 @@ public class TransactionReceiptDecoder {
     }
     // Read the revert reason bytes
     return Optional.of(input.readBytes());
-  }
-
-  /**
-   * Reads gasSpent from the RLP input if present (EIP-7778, Amsterdam+ receipts). GasSpent is
-   * encoded as a long scalar before the optional revert reason.
-   *
-   * <p>To disambiguate from revertReason (which follows gasSpent), we use a size heuristic:
-   * gasSpent is a gas value that fits in at most 4 bytes (max ~30 million gas), while revert
-   * reasons are typically larger (at least a 4-byte error selector plus encoded data).
-   */
-  private static Optional<Long> readMaybeGasSpent(final RLPInput input) {
-    if (input.isEndOfCurrentList()) {
-      return Optional.empty();
-    }
-    // GasSpent is a scalar value that fits in at most 4 bytes (max ~30 million gas).
-    // If the next element is larger, it's likely revertReason, not gasSpent.
-    if (input.nextSize() > 4) {
-      return Optional.empty();
-    }
-    return Optional.of(input.readLongScalar());
   }
 
   private static boolean isNextNotBloomFilter(final RLPInput input) {

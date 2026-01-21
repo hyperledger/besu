@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.encoding.receipt.AmsterdamTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
@@ -31,7 +32,7 @@ public class TransactionReceiptTest {
 
   /**
    * Tests RLP round-trip for receipts with gasSpent (EIP-7778, Amsterdam+). Verifies that the
-   * gasSpent field is properly encoded and decoded.
+   * gasSpent field is properly encoded and decoded using the Amsterdam decoder.
    */
   @Test
   public void toFromRlpWithGasSpent() {
@@ -48,8 +49,9 @@ public class TransactionReceiptTest {
             List.of(), // no logs
             Optional.empty()); // no revert reason
 
+    // Use AmsterdamTransactionReceiptDecoder for Amsterdam+ receipts with mandatory gasSpent
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        AmsterdamTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     output ->
@@ -68,7 +70,7 @@ public class TransactionReceiptTest {
 
   /**
    * Tests RLP round-trip for receipts with both gasSpent and revert reason. Verifies correct
-   * ordering of optional fields in RLP encoding.
+   * ordering of optional fields in RLP encoding using the Amsterdam decoder.
    */
   @Test
   public void toFromRlpWithGasSpentAndRevertReason() {
@@ -88,8 +90,9 @@ public class TransactionReceiptTest {
             List.of(),
             Optional.of(revertReason));
 
+    // Use AmsterdamTransactionReceiptDecoder for Amsterdam+ receipts with mandatory gasSpent
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        AmsterdamTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
