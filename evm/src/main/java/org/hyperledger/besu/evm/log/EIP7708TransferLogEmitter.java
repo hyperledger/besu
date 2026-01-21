@@ -66,8 +66,8 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
    */
   public static Log createTransferLog(final Address from, final Address to, final Wei value) {
     // Zero-pad addresses to 32 bytes for topics
-    final LogTopic fromTopic = LogTopic.create(leftPad(from));
-    final LogTopic toTopic = LogTopic.create(leftPad(to));
+    final LogTopic fromTopic = LogTopic.create(leftPad(from.getBytes()));
+    final LogTopic toTopic = LogTopic.create(leftPad(to.getBytes()));
 
     // Value as big-endian uint256 (32 bytes, zero-padded)
     final Bytes32 data = leftPad(value);

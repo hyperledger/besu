@@ -177,9 +177,10 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
 
     final var txHash = node.execute(transferTx);
 
-    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.toHexString()));
+    node.verify(eth.expectSuccessfulTransactionReceipt(txHash.getBytes().toHexString()));
 
-    final var receipt = node.execute(ethTransactions.getTransactionReceipt(txHash.toHexString()));
+    final var receipt =
+        node.execute(ethTransactions.getTransactionReceipt(txHash.getBytes().toHexString()));
     final var blockNumber = receipt.get().getBlockNumber();
 
     final Path callbackFile =
@@ -188,7 +189,6 @@ public class TransactionSelectorPluginTest extends AcceptanceTestBase {
                 "plugins/seenCandidatePendingTransactions-%d-%d.txt".formatted(1, blockNumber));
     waitForFile(callbackFile);
 
-    assertThat(Files.readString(callbackFile))
-        .isEqualTo("%s,%d".formatted(sender.getAddress().toString(), 0));
+    assertThat(Files.readString(callbackFile)).isEqualTo("%s,%d".formatted(sender.getAddress(), 0));
   }
 }
