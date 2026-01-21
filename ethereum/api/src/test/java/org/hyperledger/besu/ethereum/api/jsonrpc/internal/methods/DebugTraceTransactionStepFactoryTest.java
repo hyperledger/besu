@@ -18,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResult;
@@ -61,7 +63,11 @@ class DebugTraceTransactionStepFactoryTest {
     // Set up transaction hash chain
     when(mockTransactionTrace.getTransaction()).thenReturn(mockTransaction);
     when(mockTransaction.getHash()).thenReturn(mockHash);
-    when(mockHash.toHexString()).thenReturn(EXPECTED_HASH);
+    when(mockTransaction.getSender()).thenReturn(Address.fromHexString("0x00"));
+    when(mockTransaction.getValue()).thenReturn(Wei.ZERO);
+    when(mockTransaction.getPayload()).thenReturn(Bytes.EMPTY);
+    Bytes hashBytes = Bytes.fromHexString(EXPECTED_HASH);
+    when(mockHash.getBytes()).thenReturn(hashBytes);
 
     // Minimal setup for DebugStructLoggerTracerResult - just enough to avoid NPE
     when(mockTransactionTrace.getGas()).thenReturn(0L);

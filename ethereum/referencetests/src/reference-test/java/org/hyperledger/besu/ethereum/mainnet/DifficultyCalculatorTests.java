@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

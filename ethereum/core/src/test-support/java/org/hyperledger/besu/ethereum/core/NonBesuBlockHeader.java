@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
@@ -65,7 +66,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Bytes getLogsBloom() {
+  public LogsBloomFilter getLogsBloom() {
     return null;
   }
 

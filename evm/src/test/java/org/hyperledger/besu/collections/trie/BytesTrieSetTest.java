@@ -17,21 +17,28 @@ package org.hyperledger.besu.collections.trie;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.BytesHolder;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class BytesTrieSetTest {
 
-  private static final Bytes BYTES_1234 = Bytes.of(1, 2, 3, 4);
-  private static final Bytes BYTES_4321 = Bytes.of(4, 3, 2, 1);
-  private static final Bytes BYTES_4567 = Bytes.of(4, 5, 6, 7);
-  private static final Bytes BYTES_4568 = Bytes.of(4, 5, 6, 8);
-  private static final Bytes BYTES_4556 = Bytes.of(4, 5, 5, 6);
-  private static final Bytes BYTES_123 = Bytes.of(1, 2, 3);
+  private static final BytesHolder BYTES_1234 =
+      BytesHolder.createDefaultHolder(Bytes.of(1, 2, 3, 4));
+  private static final BytesHolder BYTES_4321 =
+      BytesHolder.createDefaultHolder(Bytes.of(4, 3, 2, 1));
+  private static final BytesHolder BYTES_4567 =
+      BytesHolder.createDefaultHolder(Bytes.of(4, 5, 6, 7));
+  private static final BytesHolder BYTES_4568 =
+      BytesHolder.createDefaultHolder(Bytes.of(4, 5, 6, 8));
+  private static final BytesHolder BYTES_4556 =
+      BytesHolder.createDefaultHolder(Bytes.of(4, 5, 5, 6));
+  private static final BytesHolder BYTES_123 = BytesHolder.createDefaultHolder(Bytes.of(1, 2, 3));
 
   @Test
   void testInserts() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThat(trieSet).isEmpty();
     System.out.println(trieSet);
 
@@ -55,7 +62,7 @@ class BytesTrieSetTest {
 
   @Test
   void testRemoves() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
 
     assertThat(trieSet.remove(BYTES_1234)).isFalse();
 
@@ -91,7 +98,7 @@ class BytesTrieSetTest {
   @SuppressWarnings(
       "squid:S5838") // contains and doesNotContains uses iterables, not the contains method
   void testContains() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
 
     assertThat(trieSet.contains(BYTES_1234)).isFalse();
 
@@ -133,14 +140,14 @@ class BytesTrieSetTest {
   @Test
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   void checkLengthAdd() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.add(BYTES_123)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   void checkLengthRemove() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.remove(BYTES_123))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("4");
@@ -149,25 +156,33 @@ class BytesTrieSetTest {
   @Test
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   void checkLengthContains() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.contains(BYTES_123))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("4");
   }
 
   @Test
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "SuspiciousMethodCalls"})
+  @SuppressWarnings({
+    "MismatchedQueryAndUpdateOfCollection",
+    "SuspiciousMethodCalls",
+    "CollectionIncompatibleType"
+  })
   void checkWrongClassRemove() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.remove(this))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Bytes");
   }
 
   @Test
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "SuspiciousMethodCalls"})
+  @SuppressWarnings({
+    "MismatchedQueryAndUpdateOfCollection",
+    "SuspiciousMethodCalls",
+    "CollectionIncompatibleType"
+  })
   void checkWrongClassContains() {
-    BytesTrieSet<Bytes> trieSet = new BytesTrieSet<>(4);
+    BytesTrieSet<BytesHolder> trieSet = new BytesTrieSet<>(4);
     assertThatThrownBy(() -> trieSet.contains(this))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Bytes");
