@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -38,8 +39,8 @@ import org.apache.tuweni.bytes.Bytes;
  *   cumulative-gas: P,
  *   bloom: B_256,
  *   logs: [log₁, log₂, ...],
- *   revert-reason?: B,          (optional, when enabled)
- *   gas-spent?: P               (optional, EIP-7778 Amsterdam+)
+ *   gas-spent?: P,              (optional, EIP-7778 Amsterdam+)
+ *   revert-reason?: B           (optional, Besu-specific extension)
  * ]
  *
  * (eth/69): receipt = [tx-type, post-state-or-status, cumulative-gas, logs]
@@ -49,6 +50,25 @@ import org.apache.tuweni.bytes.Bytes;
  * users actually pay). When present, cumulative-gas represents pre-refund gas for block accounting.
  */
 public class TransactionReceiptDecoder {
+
+  /**
+   * Container for decoded receipt fields that are common across all receipt formats. This record
+   * holds the intermediate decoding state before the final TransactionReceipt is constructed.
+   *
+   * @param transactionType the transaction type (FRONTIER for legacy receipts)
+   * @param statusOrStateRoot the RLP input containing either status code or state root
+   * @param cumulativeGas the cumulative gas used in the block
+   * @param bloomFilter the logs bloom filter (may be null if compacted)
+   * @param logs the list of logs
+   * @param input the RLP input positioned after logs (for reading optional fields)
+   */
+  protected record ReceiptComponents(
+      TransactionType transactionType,
+      RLPInput statusOrStateRoot,
+      long cumulativeGas,
+      @Nullable LogsBloomFilter bloomFilter,
+      List<Log> logs,
+      RLPInput input) {}
 
   /**
    * Creates a transaction receipt for the given RLP
@@ -69,6 +89,24 @@ public class TransactionReceiptDecoder {
 
   private static TransactionReceipt decodeTypedReceipt(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
+    final ReceiptComponents components = decodeTypedReceiptComponents(rlpInput);
+    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
+    // gasSpent is a standard field and comes before revertReason
+    Optional<Long> gasSpent = readMaybeGasSpent(components.input());
+    Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
+    components.input().leaveList();
+    return createReceipt(components, gasSpent, revertReason);
+  }
+
+  /**
+   * Decodes a typed receipt (EIP-2718+) up to and including logs, returning the components needed
+   * to construct the final receipt. The returned RLPInput is positioned after logs, ready to read
+   * optional fields (gasSpent, revertReason).
+   *
+   * @param rlpInput the RLP input positioned at the start of a typed receipt
+   * @return the decoded receipt components
+   */
+  protected static ReceiptComponents decodeTypedReceiptComponents(final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     final Bytes typedTransactionReceiptBytes = input.readBytes();
     TransactionType transactionType =
@@ -92,18 +130,8 @@ public class TransactionReceiptDecoder {
     if (isCompacted) {
       bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
     }
-    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
-    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
-    Optional<Long> gasSpent = readMaybeGasSpent(input);
-    input.leaveList();
-    return createReceipt(
-        transactionType,
-        statusOrStateRoot,
-        cumulativeGas,
-        logs,
-        bloomFilter,
-        revertReason,
-        gasSpent);
+    return new ReceiptComponents(
+        transactionType, statusOrStateRoot, cumulativeGas, bloomFilter, logs, input);
   }
 
   private static TransactionReceipt decodeFlatReceipt(
@@ -169,20 +197,42 @@ public class TransactionReceiptDecoder {
       final RLPInput cumulativeGasRlpInput,
       final LogsBloomFilter bloomFilter,
       final boolean revertReasonAllowed) {
+    final ReceiptComponents components =
+        decodeLegacyReceiptComponents(
+            input, statusOrStateRootRlpInput, cumulativeGasRlpInput, bloomFilter);
+    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
+    // gasSpent is a standard field and comes before revertReason (Besu-specific extension)
+    Optional<Long> gasSpent = readMaybeGasSpent(components.input());
+    Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
+    return createReceipt(components, gasSpent, revertReason);
+  }
+
+  /**
+   * Decodes a legacy receipt (pre-EIP-2718) up to and including logs, returning the components
+   * needed to construct the final receipt. The returned RLPInput is positioned after logs, ready to
+   * read optional fields (gasSpent, revertReason).
+   *
+   * @param input the RLP input positioned at the logs list
+   * @param statusOrStateRootRlpInput the already-read status/state root RLP input
+   * @param cumulativeGasRlpInput the already-read cumulative gas RLP input
+   * @param bloomFilter the bloom filter (may be null if compacted)
+   * @return the decoded receipt components
+   */
+  protected static ReceiptComponents decodeLegacyReceiptComponents(
+      final RLPInput input,
+      final RLPInput statusOrStateRootRlpInput,
+      final RLPInput cumulativeGasRlpInput,
+      final LogsBloomFilter bloomFilter) {
     final long cumulativeGas = cumulativeGasRlpInput.readLongScalar();
     final boolean isCompacted = bloomFilter == null;
     final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, isCompacted));
-    Optional<Bytes> revertReason = readMaybeRevertReason(input, revertReasonAllowed);
-    // EIP-7778: Read gasSpent if present (Amsterdam+ receipts)
-    Optional<Long> gasSpent = readMaybeGasSpent(input);
-    return createReceipt(
+    return new ReceiptComponents(
         TransactionType.FRONTIER,
         statusOrStateRootRlpInput,
         cumulativeGas,
-        logs,
         isCompacted ? LogsBloomFilter.builder().insertLogs(logs).build() : bloomFilter,
-        revertReason,
-        gasSpent);
+        logs,
+        input);
   }
 
   private static TransactionReceipt createReceipt(
@@ -200,6 +250,28 @@ public class TransactionReceiptDecoder {
         bloomFilter,
         revertReason,
         Optional.empty());
+  }
+
+  /**
+   * Creates a transaction receipt from decoded components and optional fields.
+   *
+   * @param components the decoded receipt components
+   * @param gasSpent the optional gasSpent field (EIP-7778, Amsterdam+)
+   * @param revertReason the optional revert reason (Besu-specific extension)
+   * @return the constructed TransactionReceipt
+   */
+  protected static TransactionReceipt createReceipt(
+      final ReceiptComponents components,
+      final Optional<Long> gasSpent,
+      final Optional<Bytes> revertReason) {
+    return createReceipt(
+        components.transactionType(),
+        components.statusOrStateRoot(),
+        components.cumulativeGas(),
+        components.logs(),
+        components.bloomFilter(),
+        revertReason,
+        gasSpent);
   }
 
   private static TransactionReceipt createReceipt(
@@ -226,7 +298,14 @@ public class TransactionReceiptDecoder {
     }
   }
 
-  private static Optional<Bytes> readMaybeRevertReason(
+  /**
+   * Reads the optional revert reason field from the RLP input if present and allowed.
+   *
+   * @param input the RLP input positioned after logs (and gasSpent if present)
+   * @param revertReasonAllowed whether revert reason is allowed in this context
+   * @return the revert reason bytes, or empty if not present or not allowed
+   */
+  protected static Optional<Bytes> readMaybeRevertReason(
       final RLPInput input, final boolean revertReasonAllowed) {
     if (input.isEndOfCurrentList()) {
       return Optional.empty();
@@ -241,13 +320,21 @@ public class TransactionReceiptDecoder {
 
   /**
    * Reads gasSpent from the RLP input if present (EIP-7778, Amsterdam+ receipts). GasSpent is
-   * encoded as a long scalar after the optional revert reason.
+   * encoded as a long scalar before the optional revert reason.
+   *
+   * <p>To disambiguate from revertReason (which follows gasSpent), we use a size heuristic:
+   * gasSpent is a gas value that fits in at most 4 bytes (max ~30 million gas), while revert
+   * reasons are typically larger (at least a 4-byte error selector plus encoded data).
    */
   private static Optional<Long> readMaybeGasSpent(final RLPInput input) {
     if (input.isEndOfCurrentList()) {
       return Optional.empty();
     }
-    // GasSpent is a scalar value
+    // GasSpent is a scalar value that fits in at most 4 bytes (max ~30 million gas).
+    // If the next element is larger, it's likely revertReason, not gasSpent.
+    if (input.nextSize() > 4) {
+      return Optional.empty();
+    }
     return Optional.of(input.readLongScalar());
   }
 

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEA
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_STORE;
 
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -30,9 +31,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.AmsterdamTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -40,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -63,18 +68,49 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
   final BlockHeaderFunctions blockHeaderFunctions;
+  @Nullable final ProtocolSchedule protocolSchedule;
   final boolean receiptCompaction;
 
+  /**
+   * Creates a new blockchain storage instance.
+   *
+   * @param blockchainStorage the key-value storage for blockchain data
+   * @param variablesStorage the storage for blockchain variables
+   * @param blockHeaderFunctions functions for block header operations
+   * @param protocolSchedule the protocol schedule for fork-aware receipt decoding (nullable for
+   *     backward compatibility - if null, uses pre-Amsterdam decoder for all receipts)
+   * @param receiptCompaction whether to use receipt compaction
+   */
+  public KeyValueStoragePrefixedKeyBlockchainStorage(
+      final KeyValueStorage blockchainStorage,
+      final VariablesStorage variablesStorage,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      @Nullable final ProtocolSchedule protocolSchedule,
+      final boolean receiptCompaction) {
+    this.blockchainStorage = blockchainStorage;
+    this.variablesStorage = variablesStorage;
+    this.blockHeaderFunctions = blockHeaderFunctions;
+    this.protocolSchedule = protocolSchedule;
+    this.receiptCompaction = receiptCompaction;
+    migrateVariables();
+  }
+
+  /**
+   * Creates a new blockchain storage instance without protocol schedule. This constructor is
+   * provided for backward compatibility with tests that don't need fork-aware receipt decoding.
+   * Receipt decoding will use the pre-Amsterdam heuristic-based approach.
+   *
+   * @param blockchainStorage the key-value storage for blockchain data
+   * @param variablesStorage the storage for blockchain variables
+   * @param blockHeaderFunctions functions for block header operations
+   * @param receiptCompaction whether to use receipt compaction
+   */
   public KeyValueStoragePrefixedKeyBlockchainStorage(
       final KeyValueStorage blockchainStorage,
       final VariablesStorage variablesStorage,
       final BlockHeaderFunctions blockHeaderFunctions,
       final boolean receiptCompaction) {
-    this.blockchainStorage = blockchainStorage;
-    this.variablesStorage = variablesStorage;
-    this.blockHeaderFunctions = blockHeaderFunctions;
-    this.receiptCompaction = receiptCompaction;
-    migrateVariables();
+    this(blockchainStorage, variablesStorage, blockHeaderFunctions, null, receiptCompaction);
   }
 
   @Override
@@ -111,7 +147,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
-    return get(TRANSACTION_RECEIPTS_PREFIX, blockHash).map(this::rlpDecodeTransactionReceipts);
+    return get(TRANSACTION_RECEIPTS_PREFIX, blockHash)
+        .map(bytes -> rlpDecodeTransactionReceipts(bytes, blockHash));
   }
 
   @Override
@@ -136,8 +173,42 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         blockchainStorage.startTransaction(), variablesStorage.updater(), receiptCompaction);
   }
 
-  private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
-    return RLP.input(bytes).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
+  private List<TransactionReceipt> rlpDecodeTransactionReceipts(
+      final Bytes bytes, final Hash blockHash) {
+    // Determine if this block is Amsterdam+ to use the appropriate decoder
+    final boolean isAmsterdamOrLater = isAmsterdamOrLater(blockHash);
+    return RLP.input(bytes)
+        .readList(
+            in ->
+                isAmsterdamOrLater
+                    ? AmsterdamTransactionReceiptDecoder.readFrom(in, true)
+                    : TransactionReceiptDecoder.readFrom(in, true));
+  }
+
+  /**
+   * Determines if the block with the given hash is from Amsterdam or a later hardfork. This is used
+   * to select the appropriate receipt decoder, since Amsterdam+ receipts have mandatory gasSpent.
+   *
+   * @param blockHash the hash of the block to check
+   * @return true if the block is from Amsterdam or later, false if earlier or if protocol schedule
+   *     is not available
+   */
+  private boolean isAmsterdamOrLater(final Hash blockHash) {
+    if (protocolSchedule == null) {
+      // Without protocol schedule, fall back to pre-Amsterdam decoder (uses size heuristic)
+      return false;
+    }
+    final Optional<BlockHeader> header = getBlockHeader(blockHash);
+    if (header.isEmpty()) {
+      return false;
+    }
+    final ProtocolSpec spec = protocolSchedule.getByBlockHeader(header.get());
+    // Check if the hardfork is Amsterdam or later by comparing enum ordinals
+    if (spec.getHardforkId() instanceof MainnetHardforkId hardforkId) {
+      return hardforkId.ordinal() >= MainnetHardforkId.AMSTERDAM.ordinal();
+    }
+    // For non-mainnet hardforks (e.g., Classic), fall back to pre-Amsterdam decoder
+    return false;
   }
 
   private Hash bytesToHash(final Bytes bytes) {

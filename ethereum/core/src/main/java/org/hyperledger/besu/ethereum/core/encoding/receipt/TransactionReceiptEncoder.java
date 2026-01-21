@@ -33,13 +33,13 @@ import org.apache.tuweni.bytes.Bytes;
  * <h3>Legacy (Frontier) Receipt</h3>
  *
  * <pre>
- * rlp([status/stateRoot, cumulativeGasUsed, logsBloom?, logs, revertReason?, gasSpent?])
+ * rlp([status/stateRoot, cumulativeGasUsed, logsBloom?, logs, gasSpent?, revertReason?])
  * </pre>
  *
  * <h3>Typed Receipt (EIP-2718, Berlin+)</h3>
  *
  * <pre>
- * transactionType || rlp([status, cumulativeGasUsed, logsBloom?, logs, revertReason?, gasSpent?])
+ * transactionType || rlp([status, cumulativeGasUsed, logsBloom?, logs, gasSpent?, revertReason?])
  * </pre>
  *
  * <h3>Field Descriptions</h3>
@@ -122,12 +122,13 @@ public class TransactionReceiptEncoder {
       rlpOutput.writeBytes(receipt.getBloomFilter());
     }
     writeLogs(receipt, rlpOutput, options);
-    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
-      rlpOutput.writeBytes(receipt.getRevertReason().get());
-    }
     // EIP-7778: Write gasSpent if present (Amsterdam+ receipts)
+    // gasSpent is a standard field and comes before revertReason (Besu-specific extension)
     if (receipt.getGasSpent().isPresent()) {
       rlpOutput.writeLongScalar(receipt.getGasSpent().get());
+    }
+    if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
+      rlpOutput.writeBytes(receipt.getRevertReason().get());
     }
     rlpOutput.endList();
   }
