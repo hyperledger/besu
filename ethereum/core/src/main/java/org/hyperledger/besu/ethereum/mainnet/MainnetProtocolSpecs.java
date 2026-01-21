@@ -98,6 +98,7 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
@@ -867,7 +868,10 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
-        .preExecutionProcessor(new CancunPreExecutionProcessor())
+        .preExecutionProcessor(
+            isPoAConsensus(genesisConfigOptions)
+                ? new FrontierPreExecutionProcessor()
+                : new CancunPreExecutionProcessor())
         .hardforkId(CANCUN);
   }
 
@@ -948,20 +952,34 @@ public abstract class MainnetProtocolSpecs {
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
-            .preExecutionProcessor(new PraguePreExecutionProcessor())
+            .preExecutionProcessor(
+                isPoAConsensus(genesisConfigOptions)
+                    ? new FrontierPreExecutionProcessor()
+                    : new PraguePreExecutionProcessor())
             .hardforkId(PRAGUE);
-    try {
-      RequestContractAddresses requestContractAddresses =
-          RequestContractAddresses.fromGenesis(genesisConfigOptions);
+    if (isPoAConsensus(genesisConfigOptions)) {
+      LOG.debug(
+          "Skipping system contract request processors for PoA consensus (clique/ibft/qbft).");
+    } else {
+      try {
+        RequestContractAddresses requestContractAddresses =
+            RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
-      pragueSpecBuilder.requestProcessorCoordinator(
-          pragueRequestsProcessors(requestContractAddresses));
-    } catch (NoSuchElementException nsee) {
-      LOG.warn("Prague definitions require system contract addresses in genesis");
-      throw nsee;
+        pragueSpecBuilder.requestProcessorCoordinator(
+            pragueRequestsProcessors(requestContractAddresses));
+      } catch (NoSuchElementException nsee) {
+        LOG.warn("Prague definitions require system contract addresses in genesis");
+        throw nsee;
+      }
     }
 
     return pragueSpecBuilder;
+  }
+
+  private static boolean isPoAConsensus(final GenesisConfigOptions genesisConfigOptions) {
+    return genesisConfigOptions.isClique()
+        || genesisConfigOptions.isIbft2()
+        || genesisConfigOptions.isQbft();
   }
 
   static ProtocolSpecBuilder osakaDefinition(
@@ -1147,6 +1165,52 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
+        // EIP-7708: Override evmBuilder to use Amsterdam EVM with transfer logging
+        .evmBuilder(
+            (gasCalculator, __) ->
+                MainnetEVMs.amsterdam(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-7708: ContractCreationProcessor with transfer log emission enabled
+        .contractCreationProcessorBuilder(
+            evm ->
+                new ContractCreationProcessor(
+                    evm,
+                    true,
+                    List.of(MaxCodeSizeRule.from(evm), PrefixCodeRule.of()),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
+                    EIP7708TransferLogEmitter.INSTANCE))
+        // EIP-7708: MessageCallProcessor with transfer log emission enabled
+        .messageCallProcessorBuilder(
+            (evm, precompileContractRegistry) ->
+                new MessageCallProcessor(
+                    evm,
+                    precompileContractRegistry,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
+                    EIP7708TransferLogEmitter.INSTANCE))
+        // EIP-7708: TransactionProcessor configured for Amsterdam
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccounts(true)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .codeDelegationProcessor(
+                        new CodeDelegationProcessor(
+                            chainId,
+                            SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                            new CodeDelegationService()))
+                    .build())
         .blockAccessListFactory(
             new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))

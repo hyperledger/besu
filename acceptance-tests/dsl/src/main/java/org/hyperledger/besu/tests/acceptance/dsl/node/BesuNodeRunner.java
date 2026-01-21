@@ -14,15 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
-import org.awaitility.Awaitility;
-
 public interface BesuNodeRunner {
 
   static BesuNodeRunner instance() {
@@ -44,19 +35,6 @@ public interface BesuNodeRunner {
   void shutdown();
 
   boolean isActive(String nodeName);
-
-  default void waitForFile(final Path dataDir, final String fileName) {
-    final File file = new File(dataDir.toFile(), fileName);
-    Awaitility.waitAtMost(60, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              try (final Stream<String> s = Files.lines(file.toPath())) {
-                return s.count() > 0;
-              } catch (NoSuchFileException __) {
-                return false;
-              }
-            });
-  }
 
   /**
    * Starts a capture of System.out and System.err. Once getConsole is called the capture will end.

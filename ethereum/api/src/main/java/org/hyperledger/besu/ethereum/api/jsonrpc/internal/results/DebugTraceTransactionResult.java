@@ -29,7 +29,7 @@ public class DebugTraceTransactionResult {
   private final Object result;
 
   public DebugTraceTransactionResult(final TransactionTrace transactionTrace, final Object result) {
-    this.txHash = transactionTrace.getTransaction().getHash().toHexString();
+    this.txHash = transactionTrace.getTransaction().getHash().getBytes().toHexString();
     this.result = result;
   }
 

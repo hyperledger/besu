@@ -54,7 +54,7 @@ public interface BadBlockResult {
       final Optional<BlockAccessList> generatedBlockAccessList) {
     return ImmutableBadBlockResult.of(
         blockResult,
-        block.getHash().toHexString(),
+        block.getHash().getBytes().toHexString(),
         block.toRlp().toHexString(),
         blockAccessList.map(BlockAccessListResult::fromBlockAccessList),
         generatedBlockAccessList.map(BlockAccessListResult::fromBlockAccessList));

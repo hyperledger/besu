@@ -294,8 +294,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               MessageFormat.format(
                   "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
                   transactionProcessingResult.getValidationResult().getErrorMessage(),
-                  blockHeader.getHash().toHexString(),
-                  transaction.getHash().toHexString());
+                  blockHeader.getHash().getBytes().toHexString(),
+                  transaction.getHash().getBytes().toHexString());
           LOG.info(errorMessage);
           if (worldState instanceof BonsaiWorldState) {
             ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
@@ -407,7 +407,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           String errorMessage =
               String.format(
                   "Requests hash mismatch, calculated: %s header: %s",
-                  calculatedRequestHash.toHexString(), headerRequestsHash.toHexString());
+                  calculatedRequestHash.getBytes().toHexString(),
+                  headerRequestsHash.getBytes().toHexString());
           LOG.error(errorMessage);
           if (worldState instanceof BonsaiWorldState) {
             ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
@@ -435,7 +436,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               final String errorMessage =
                   String.format(
                       "Block access list hash mismatch, calculated: %s header: %s",
-                      expectedHash.toHexString(), headerBalHash.get().toHexString());
+                      expectedHash.getBytes().toHexString(),
+                      headerBalHash.get().getBytes().toHexString());
               LOG.error(errorMessage);
 
               if (balConfiguration.shouldLogBalsOnMismatch()) {
@@ -485,8 +487,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       } catch (StateRootMismatchException ex) {
         LOG.error(
             "failed persisting block due to stateroot mismatch; expected {}, actual {}",
-            ex.getExpectedRoot().toHexString(),
-            ex.getActualRoot().toHexString());
+            ex.getExpectedRoot().getBytes().toHexString(),
+            ex.getActualRoot().getBytes().toHexString());
         return new BlockProcessingResult(Optional.empty(), ex.getMessage());
       } catch (Exception e) {
         LOG.error("failed persisting block", e);
@@ -537,8 +539,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               + " remaining {}. Block {} Transaction {}",
           transaction.getGasLimit(),
           remainingGasBudget,
-          blockHeader.getHash().toHexString(),
-          transaction.getHash().toHexString());
+          blockHeader.getHash().getBytes().toHexString(),
+          transaction.getHash().getBytes().toHexString());
       return false;
     }
 

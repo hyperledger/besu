@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -66,7 +67,8 @@ public class ProposalTest {
 
     final ProposalPayload payload = createProposalPayload(blockAccessList);
     final SignedData<ProposalPayload> signedPayload =
-        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
+        SignedData.create(
+            payload, nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes())));
 
     final SignedData<PreparePayload> prepare = createPrepare(nodeKey);
     final SignedData<RoundChangePayload> roundChange = createRoundChange(nodeKey);
@@ -88,7 +90,8 @@ public class ProposalTest {
   private SignedData<PreparePayload> createPrepare(final NodeKey nodeKey) {
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
-    return SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
+    return SignedData.create(
+        preparePayload, nodeKey.sign(Bytes32.wrap(preparePayload.hashForSignature().getBytes())));
   }
 
   private SignedData<RoundChangePayload> createRoundChange(final NodeKey nodeKey) {
@@ -97,7 +100,8 @@ public class ProposalTest {
             new ConsensusRoundIdentifier(1, 0),
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
     return SignedData.create(
-        roundChangePayload, nodeKey.sign(roundChangePayload.hashForSignature()));
+        roundChangePayload,
+        nodeKey.sign(Bytes32.wrap(roundChangePayload.hashForSignature().getBytes())));
   }
 
   private void assertProposal(

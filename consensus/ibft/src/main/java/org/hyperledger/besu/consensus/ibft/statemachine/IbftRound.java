@@ -47,6 +47,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -362,7 +363,7 @@ public class IbftRound {
     final Hash commitHash =
         new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
-    return nodeKey.sign(commitHash);
+    return nodeKey.sign(Bytes32.wrap(commitHash.getBytes()));
   }
 
   private void notifyNewBlockListeners(final Block block) {

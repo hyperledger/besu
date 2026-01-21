@@ -37,10 +37,16 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
@@ -63,7 +69,7 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
                       Bytes32.fromHexString(Accounts.GENESIS_ACCOUNT_THREE_PRIVATE_KEY)));
 
   private ServiceManager serviceManager;
-
+  private File callbackDir;
   private final int pluginNum;
   private final int preMultiple;
   private final int postMultiple;
@@ -82,6 +88,8 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
         .getService(PicoCLIOptions.class)
         .orElseThrow()
         .addPicoCLIOptions("tx-selector" + pluginNum, this);
+
+    callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
   }
 
   protected abstract boolean isEnabled();
@@ -97,7 +105,11 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
                 @Override
                 public void selectPendingTransactions(
                     final BlockTransactionSelectionService blockTransactionSelectionService,
-                    final ProcessableBlockHeader pendingBlockHeader) {
+                    final ProcessableBlockHeader pendingBlockHeader,
+                    final List<? extends org.hyperledger.besu.datatypes.PendingTransaction>
+                        candidatePendingTransactions) {
+                  writeCandidatePendingTransactions(
+                      pendingBlockHeader, candidatePendingTransactions);
                   if (pendingBlockHeader.getNumber() == preMultiple) {
                     throw new RuntimeException(
                         "Unhandled exception: block number is multiple of " + preMultiple);
@@ -174,4 +186,37 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
 
   @Override
   public void stop() {}
+
+  private void writeCandidatePendingTransactions(
+      final ProcessableBlockHeader pendingBlockHeader,
+      final List<? extends org.hyperledger.besu.datatypes.PendingTransaction>
+          candidatePendingTransactions) {
+
+    final File callbackFile =
+        new File(
+            callbackDir,
+            "seenCandidatePendingTransactions-%d-%d.txt"
+                .formatted(pluginNum, pendingBlockHeader.getNumber()));
+
+    try {
+      if (!callbackFile.getParentFile().exists()) {
+        callbackFile.getParentFile().mkdirs();
+        callbackFile.getParentFile().deleteOnExit();
+      }
+
+      final var content =
+          candidatePendingTransactions.stream()
+              .map(org.hyperledger.besu.datatypes.PendingTransaction::getTransaction)
+              .map(
+                  tx ->
+                      String.join(",", tx.getSender().getBytes().toHexString(), Long.toString(tx.getNonce())))
+              .collect(Collectors.joining(System.lineSeparator()));
+
+      Files.write(callbackFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
+    } catch (final IOException ioe) {
+      throw new RuntimeException(ioe);
+    } finally {
+      callbackFile.deleteOnExit();
+    }
+  }
 }

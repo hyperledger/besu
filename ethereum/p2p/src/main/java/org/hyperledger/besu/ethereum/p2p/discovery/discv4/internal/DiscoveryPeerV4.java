@@ -109,8 +109,9 @@ public class DiscoveryPeerV4 extends DiscoveryPeer {
   }
 
   @Override
-  public boolean isReady() {
-    return this.isBonded();
+  public boolean isReadyForConnections() {
+    // On discv4, we consider a peer ready for connections if it's bonded and listening
+    return isListening() && this.isBonded();
   }
 
   public Endpoint getEndpoint() {

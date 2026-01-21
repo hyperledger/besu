@@ -21,6 +21,7 @@ import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -34,7 +35,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
@@ -561,7 +561,7 @@ public class EvmToolCommand implements Runnable {
           final long evmGas = txGas - initialMessageFrame.getRemainingGas();
           final JsonObject resultLine = new JsonObject();
           resultLine
-              .put("stateRoot", worldState.rootHash().toHexString())
+              .put("stateRoot", worldState.rootHash().getBytes().toHexString())
               .put("output", initialMessageFrame.getOutputData().toHexString())
               .put("gasUsed", "0x" + Long.toHexString(evmGas))
               .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
@@ -594,11 +594,12 @@ public class EvmToolCommand implements Runnable {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).toHexString()))
+        .sorted(
+            Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).getBytes().toHexString()))
         .forEach(
             a -> {
               var account = worldState.get(a.getAddress().get());
-              out.println(" \"" + account.getAddress().toHexString() + "\": {");
+              out.println(" \"" + account.getAddress().getBytes().toHexString() + "\": {");
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }

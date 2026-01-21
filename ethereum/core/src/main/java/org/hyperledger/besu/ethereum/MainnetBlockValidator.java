@@ -196,12 +196,13 @@ public class MainnetBlockValidator implements BlockValidator {
           errorMessage =
               String.format(
                   "Block access list provided with hash %s but header is missing balHash",
-                  providedBalHash.toHexString());
+                  providedBalHash.getBytes().toHexString());
         } else if (!headerBalHash.get().equals(providedBalHash)) {
           errorMessage =
               String.format(
                   "Block access list hash mismatch, provided: %s header: %s",
-                  providedBalHash.toHexString(), headerBalHash.get().toHexString());
+                  providedBalHash.getBytes().toHexString(),
+                  headerBalHash.get().getBytes().toHexString());
         }
         if (errorMessage != null) {
           var result = new BlockProcessingResult(errorMessage);
