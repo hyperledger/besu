@@ -280,25 +280,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
-    final Block emptyBlock =
-        mergeBlockCreator
-            .createBlock(
-                Optional.of(Collections.emptyList()),
-                prevRandao,
-                timestamp,
-                withdrawals,
-                parentBeaconBlockRoot,
-                slotNumber,
-                parentHeader)
-            .getBlock();
+    final BlockCreationResult emptyBlockResult =
+        mergeBlockCreator.createBlock(
+            Optional.of(Collections.emptyList()),
+            prevRandao,
+            timestamp,
+            withdrawals,
+            parentBeaconBlockRoot,
+            slotNumber,
+            parentHeader);
+    final Block emptyBlock = emptyBlockResult.getBlock();
 
-    BlockProcessingResult result = validateProposedBlock(emptyBlock, Optional.empty());
+    BlockProcessingResult result =
+        validateProposedBlock(emptyBlock, emptyBlockResult.getBlockAccessList());
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
-              Optional.empty(),
+              emptyBlockResult.getBlockAccessList(),
               result.getRequests(),
               BlockCreationTiming.EMPTY));
       LOG.info(
