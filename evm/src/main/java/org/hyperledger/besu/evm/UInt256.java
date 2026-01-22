@@ -327,13 +327,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   public UInt256 shiftLeft(final int shift) {
     // Unchecked: 0 <= shift < 64
     if (shift == 0) return this;
+    int invShift = (N_BITS_PER_LIMB - shift);
     long z0 = (u0 << shift);
-    long carry = u0 >>> (N_BITS_PER_LIMB - shift);
-    long z1 = (u1 << shift) | carry;
-    carry = u1 >>> (N_BITS_PER_LIMB - shift);
-    long z2 = (u2 << shift) | carry;
-    carry = u2 >>> (N_BITS_PER_LIMB - shift);
-    long z3 = (u3 << shift) | carry;
+    long z1 = (u1 << shift) | u0 >>> invShift;
+    long z2 = (u2 << shift) | u1 >>> invShift;
+    long z3 = (u3 << shift) | u2 >>> invShift;
     return new UInt256(z3, z2, z1, z0);
   }
 
@@ -346,13 +344,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   public UInt256 shiftRight(final int shift) {
     // Unchecked: 0 <= shift < 64
     if (shift == 0) return this;
+    int invShift = (N_BITS_PER_LIMB - shift);
     long z3 = (u3 >>> shift);
-    long carry = u3 << (N_BITS_PER_LIMB - shift);
-    long z2 = (u2 >>> shift) | carry;
-    carry = u2 << (N_BITS_PER_LIMB - shift);
-    long z1 = (u1 >>> shift) | carry;
-    carry = u1 << (N_BITS_PER_LIMB - shift);
-    long z0 = (u0 >>> shift) | carry;
+    long z2 = (u2 >>> shift) | u3 << invShift;
+    long z1 = (u1 >>> shift) | u2 << invShift;
+    long z0 = (u0 >>> shift) | u1 << invShift;
     return new UInt256(z3, z2, z1, z0);
   }
 
@@ -828,41 +824,47 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     long z2 = u3;
     long z1 = u2;
     long z0 = u1;
+
     Div2Result qr = div3by2(z3, z2, z1, y2, y1, yInv);
+    z3 = 0;
+    z2 = qr.r1;
+    z1 = qr.r0;
 
-    // Multiply-subtract: already have highest 2 limbs
-    // <u4, u3, u2, u1>  =  <y2, y1, y0> * q
-    p0 = y1 * qr.q;
-    p1 = Math.unsignedMultiplyHigh(y1, qr.q);
-    res = z0 - p0;
-    p1 += ((~z0 & p0) | ((~z0 | p0) & res)) >>> 63;
-    z0 = res;
-
-    // Propagate overflows (borrows)
-    res = z1 - p1;
-    borrow = ((~z1 & p1) | ((~z1 | p1) & res)) >>> 63;
-    z1 = res;
-
-    res = z2 - borrow;
-    borrow = (((borrow ^ 1L) | z2) == 0) ? 1 : 0;
-    z2 = res;
-
-    z3 -= borrow;
-    borrow = (z3 >>> 63) & 1;
-
-    if (borrow != 0) { // unlikely
-      // Add back
-      long carry = 0;
-      res = z0 + y0 + carry;
-      carry = ((z0 & y0) | ((z0 | y0) & ~res)) >>> 63;
+    if (qr.q != 0) {
+      // Multiply-subtract: already have highest 2 limbs
+      // <u4, u3, u2, u1>  =  <y2, y1, y0> * q
+      p0 = y0 * qr.q;
+      p1 = Math.unsignedMultiplyHigh(y0, qr.q);
+      res = z0 - p0;
+      p1 += ((~z0 & p0) | ((~z0 | p0) & res)) >>> 63;
       z0 = res;
-      res = z1 + y1 + carry;
-      carry = ((z1 & y1) | ((z1 | y1) & ~res)) >>> 63;
+
+      // Propagate overflows (borrows)
+      res = z1 - p1;
+      borrow = ((~z1 & p1) | ((~z1 | p1) & res)) >>> 63;
       z1 = res;
-      res = z2 + y2 + carry;
-      carry = ((z2 & y2) | ((z2 | y2) & ~res)) >>> 63;
+
+      res = z2 - borrow;
+      borrow = (((borrow ^ 1L) | z2) == 0) ? 1 : 0;
       z2 = res;
-      z3 = z3 + carry;
+
+      z3 -= borrow;
+      borrow = (z3 >>> 63) & 1;
+
+      if (borrow != 0) { // unlikely
+        // Add back
+        long carry = 0;
+        res = z0 + y0 + carry;
+        carry = ((z0 & y0) | ((z0 | y0) & ~res)) >>> 63;
+        z0 = res;
+        res = z1 + y1 + carry;
+        carry = ((z1 & y1) | ((z1 | y1) & ~res)) >>> 63;
+        z1 = res;
+        res = z2 + y2 + carry;
+        carry = ((z2 & y2) | ((z2 | y2) & ~res)) >>> 63;
+        z2 = res;
+        z3 = z3 + carry;
+      }
     }
 
     // Divide step -> get highest 2 limbs.
@@ -871,41 +873,67 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     z2 = z1;
     z1 = z0;
     z0 = u0;
-    qr = div3by2(z3, z2, z1, y2, y1, yInv);
 
-    // Multiply-subtract: already have highest 2 limbs
-    // u4, u3, u2, u1  /  0, y2, y1, y0
-    p0 = y1 * qr.q;
-    p1 = Math.unsignedMultiplyHigh(y1, qr.q);
-    res = z0 - p0;
-    p1 += ((~z0 & p0) | ((~z0 | p0) & res)) >>> 63;
-    z0 = res;
-
-    // Propagate overflows (borrows)
-    res = z1 - p1;
-    borrow = ((~z1 & p1) | ((~z1 | p1) & res)) >>> 63;
-    z1 = res;
-
-    res = z2 - borrow;
-    borrow = (((borrow ^ 1L) | z2) == 0) ? 1 : 0;
-    z2 = res;
-
-    z3 -= borrow;
-    borrow = (z3 >>> 63) & 1;
-
-    if (borrow != 0) { // unlikely
-      // Add back
-      long carry = 0;
-      res = z0 + y0 + carry;
-      carry = ((z0 & y0) | ((z0 | y0) & ~res)) >>> 63;
+    if (z3 == y2 && z2 == y1) {
+      // Overflow case: div3by2 quotient would be <1, 0>, but adjusts to <0, -1>
+      // <p1, p0> = -1 * y0 = <y0 - 1, -y0>
+      res = z0 + y0;
+      p1 = y0 - 1 + (((~z0 & ~y0) | ((~z0 | ~y0) & res)) >>> 63);
       z0 = res;
-      res = z1 + y1 + carry;
-      carry = ((z1 & y1) | ((z1 | y1) & ~res)) >>> 63;
-      z1 = res;
-      res = z2 + y2 + carry;
-      // carry = ((z2 & y2) | ((z2 | y2) & ~res)) >>> 63;
-      z2 = res;
-      // z3 = z3 + carry;
+
+      res = z1 - p1;
+      borrow = ((~z1 & p1) | ((~z1 | p1) & res)) >>> 63;
+      p1 = y1 - 1 + borrow;
+      z1 = res + y1;
+      borrow = ((~res & ~y1) | ((~res | ~y1) & z1)) >>> 63;
+
+      z2 = z2 - p1 + y1;
+      // borrow = ((~z2 & p1) | ((~z2 | p1) & res)) >>> 63;
+      // p1 = y2 - 1 + borrow;
+      // borrow = ((~res & ~y1) | ((~res | ~y1) & z1)) >>> 63;
+      // assert p1 + borrow == z3 : "Division did not cancel top digit"
+    } else {
+      qr = div3by2(z3, z2, z1, y2, y1, yInv);
+      z3 = 0;
+      z2 = qr.r1;
+      z1 = qr.r0;
+
+      if (qr.q != 0) {
+        // Multiply-subtract: already have highest 2 limbs
+        // u4, u3, u2, u1  /  0, y2, y1, y0
+        p0 = y0 * qr.q;
+        p1 = Math.unsignedMultiplyHigh(y0, qr.q);
+        res = z0 - p0;
+        p1 += ((~z0 & p0) | ((~z0 | p0) & res)) >>> 63;
+        z0 = res;
+
+        // Propagate overflows (borrows)
+        res = z1 - p1;
+        borrow = ((~z1 & p1) | ((~z1 | p1) & res)) >>> 63;
+        z1 = res;
+
+        res = z2 - borrow;
+        borrow = (((borrow ^ 1L) | z2) == 0) ? 1 : 0;
+        z2 = res;
+
+        z3 -= borrow;
+        borrow = (z3 >>> 63) & 1;
+
+        if (borrow != 0) { // unlikely
+          // Add back
+          long carry = 0;
+          res = z0 + y0 + carry;
+          carry = ((z0 & y0) | ((z0 | y0) & ~res)) >>> 63;
+          z0 = res;
+          res = z1 + y1 + carry;
+          carry = ((z1 & y1) | ((z1 | y1) & ~res)) >>> 63;
+          z1 = res;
+          res = z2 + y2 + carry;
+          // carry = ((z2 & y2) | ((z2 | y2) & ~res)) >>> 63;
+          z2 = res;
+          // z3 = z3 + carry;
+        }
+      }
     }
     return new UInt256(0, z2, z1, z0);
   }
@@ -976,7 +1004,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     int shift = Long.numberOfLeadingZeros(modulus.u3);
     UInt256 m = modulus.shiftLeft(shift);
     UInt256 a = shiftLeft(shift);
-    long u4 = u3 >>> (N_BITS_PER_LIMB - shift);
+    long u4 = (shift == 0) ? 0 : u3 >>> (N_BITS_PER_LIMB - shift);
     long mInv = reciprocal2(m.u3, m.u2);
     UInt256 r = a.mod4by4(u4, m, mInv);
     return r.shiftRight(shift);
@@ -986,7 +1014,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     int shift = Long.numberOfLeadingZeros(modulus.u2);
     UInt256 m = modulus.shiftLeft(shift);
     UInt256 a = shiftLeft(shift);
-    long u4 = u3 >>> (N_BITS_PER_LIMB - shift);
+    long u4 = (shift == 0) ? 0 : u3 >>> (N_BITS_PER_LIMB - shift);
     long mInv = reciprocal2(m.u2, m.u1);
     UInt256 r = a.mod4by3(u4, m, mInv);
     return r.shiftRight(shift);
@@ -996,7 +1024,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     int shift = Long.numberOfLeadingZeros(modulus.u1);
     UInt256 m = modulus.shiftLeft(shift);
     UInt256 a = shiftLeft(shift);
-    long u4 = u3 >>> (N_BITS_PER_LIMB - shift);
+    long u4 = (shift == 0) ? 0 : u3 >>> (N_BITS_PER_LIMB - shift);
     long mInv = reciprocal2(m.u1, m.u0);
     UInt256 r = a.mod4by2(u4, m.u1, m.u0, mInv);
     return r.shiftRight(shift);
@@ -1006,7 +1034,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     int shift = Long.numberOfLeadingZeros(modulus.u0);
     long m0 = modulus.u0 << shift;
     UInt256 a = shiftLeft(shift);
-    long u4 = u3 >>> (N_BITS_PER_LIMB - shift);
+    long u4 = (shift == 0) ? 0 : u3 >>> (N_BITS_PER_LIMB - shift);
     long mInv = reciprocal(m0);
     UInt256 r = a.mod4by1(u4, m0, mInv);
     return r.shiftRight(shift);
