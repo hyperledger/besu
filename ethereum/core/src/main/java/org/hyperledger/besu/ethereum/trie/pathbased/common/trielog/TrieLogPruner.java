@@ -61,7 +61,9 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   private final Counter prunedOrphanCounter;
 
   private final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
-      TreeMultimap.create(Comparator.reverseOrder(), Comparator.naturalOrder());
+      TreeMultimap.create(
+          Comparator.reverseOrder(),
+          Comparator.comparing(Hash::getBytes, Comparator.naturalOrder()));
 
   public TrieLogPruner(
       final PathBasedWorldStateKeyValueStorage rootWorldStateStorage,

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -473,7 +474,7 @@ public class BlockchainTestSubCommand implements Runnable {
         final org.hyperledger.besu.datatypes.Transaction tx,
         final boolean status,
         final org.apache.tuweni.bytes.Bytes output,
-        final List<org.hyperledger.besu.evm.log.Log> logs,
+        final List<Log> logs,
         final long gasUsed,
         final Set<Address> selfDestructs,
         final long timeNs) {

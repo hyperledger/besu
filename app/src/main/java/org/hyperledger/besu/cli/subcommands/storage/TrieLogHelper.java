@@ -387,7 +387,8 @@ public class TrieLogHelper {
         final Bytes trieLogBytes = input.currentListAsBytes();
         TrieLogLayer trieLogLayer =
             TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(trieLogBytes), false));
-        trieLogs.put(trieLogLayer.getBlockHash().toArrayUnsafe(), trieLogBytes.toArrayUnsafe());
+        trieLogs.put(
+            trieLogLayer.getBlockHash().getBytes().toArrayUnsafe(), trieLogBytes.toArrayUnsafe());
       }
       input.leaveList();
 
@@ -407,7 +408,8 @@ public class TrieLogHelper {
         hash ->
             rootWorldStateStorage
                 .getTrieLog(hash)
-                .ifPresent(trieLog -> trieLogsToRetain.put(hash.toArrayUnsafe(), trieLog)));
+                .ifPresent(
+                    trieLog -> trieLogsToRetain.put(hash.getBytes().toArrayUnsafe(), trieLog)));
     return trieLogsToRetain;
   }
 

@@ -19,6 +19,8 @@ import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.EIP7708_SYS
 import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.TRANSFER_TOPIC;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -65,10 +67,10 @@ class EIP7708TransferLogEmitterTest {
     assertThat(topics.get(0)).isEqualTo(LogTopic.create(TRANSFER_TOPIC));
 
     // Second topic is the sender address (zero-padded to 32 bytes)
-    assertThat(topics.get(1)).isEqualTo(LogTopic.create(Bytes32.leftPad(SENDER)));
+    assertThat(topics.get(1)).isEqualTo(LogTopic.create(Bytes32.leftPad(SENDER.getBytes())));
 
     // Third topic is the recipient address (zero-padded to 32 bytes)
-    assertThat(topics.get(2)).isEqualTo(LogTopic.create(Bytes32.leftPad(RECIPIENT)));
+    assertThat(topics.get(2)).isEqualTo(LogTopic.create(Bytes32.leftPad(RECIPIENT.getBytes())));
 
     // Data should be the value as 32-byte big-endian
     assertThat(log.getData()).isEqualTo(Bytes32.leftPad(value));
