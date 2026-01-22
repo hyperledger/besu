@@ -28,7 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -37,11 +40,15 @@ public class DebugTraceTransaction implements JsonRpcMethod {
 
   private final TransactionTracer transactionTracer;
   private final BlockchainQueries blockchain;
+  private final ProtocolSchedule protocolSchedule;
 
   public DebugTraceTransaction(
-      final BlockchainQueries blockchain, final TransactionTracer transactionTracer) {
+      final BlockchainQueries blockchain,
+      final TransactionTracer transactionTracer,
+      final ProtocolSchedule protocolSchedule) {
     this.blockchain = blockchain;
     this.transactionTracer = transactionTracer;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -94,10 +101,23 @@ public class DebugTraceTransaction implements JsonRpcMethod {
       final Hash hash,
       final TransactionWithMetadata transactionWithMetadata,
       final TraceOptions traceOptions) {
-    final Hash blockHash = transactionWithMetadata.getBlockHash().get();
+    // Check if transaction is in a block (not pending)
+    final Optional<Hash> maybeBlockHash = transactionWithMetadata.getBlockHash();
+    if (maybeBlockHash.isEmpty()) {
+      return null; // Can't trace pending transactions
+    }
+    final Hash blockHash = maybeBlockHash.get();
 
     final DebugOperationTracer execTracer =
         new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
+
+    final Optional<BlockHeader> maybeBlockHeader =
+        blockchain.getBlockchain().getBlockHeader(blockHash);
+    if (maybeBlockHeader.isEmpty()) {
+      return null; // Block header not found
+    }
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(maybeBlockHeader.get());
 
     return Tracer.processTracing(
             blockchain,
@@ -105,7 +125,9 @@ public class DebugTraceTransaction implements JsonRpcMethod {
             mutableWorldState ->
                 transactionTracer
                     .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
-                    .map(DebugTraceTransactionStepFactory.create(traceOptions)))
+                    .map(
+                        DebugTraceTransactionStepFactory.create(
+                            traceOptions, protocolSpec.getPrecompileContractRegistry())))
         .orElse(null);
   }
 }

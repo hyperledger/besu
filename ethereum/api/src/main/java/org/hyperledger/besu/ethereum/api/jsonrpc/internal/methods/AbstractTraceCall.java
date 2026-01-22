@@ -23,10 +23,12 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Optional;
 
@@ -73,6 +75,10 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(maybeBlockHeader.get());
+    final PrecompileContractRegistry precompileContractRegistry =
+        protocolSpec.getPrecompileContractRegistry();
+
     final DebugOperationTracer tracer =
         new DebugOperationTracer(traceOptions.opCodeTracerConfig(), recordChildCallGas);
     return transactionSimulator
@@ -81,7 +87,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
             Optional.ofNullable(traceOptions.stateOverrides()),
             buildTransactionValidationParams(),
             tracer,
-            getSimulatorResultHandler(requestContext, tracer),
+            getSimulatorResultHandler(requestContext, tracer, precompileContractRegistry),
             maybeBlockHeader.get())
         .orElseGet(
             () -> new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
@@ -90,5 +96,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
   protected abstract TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext);
 
   protected abstract PreCloseStateHandler<Object> getSimulatorResultHandler(
-      final JsonRpcRequestContext requestContext, final DebugOperationTracer tracer);
+      final JsonRpcRequestContext requestContext,
+      final DebugOperationTracer tracer,
+      final PrecompileContractRegistry precompileContractRegistry);
 }
