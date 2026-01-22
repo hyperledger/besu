@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.transaction;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -98,5 +99,9 @@ public class BlockSimulationResult {
 
   public Optional<Bytes> getSerializedTrieLog() {
     return trieLogSerializer.flatMap(trieLog::map);
+  }
+
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockStateCallSimulationResult.getBlockAccessList();
   }
 }

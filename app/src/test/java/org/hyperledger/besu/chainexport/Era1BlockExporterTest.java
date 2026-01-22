@@ -117,7 +117,8 @@ public class Era1BlockExporterTest {
             Mockito.verify(block, Mockito.times(3)).getHash();
             Mockito.verify(blockchain).getTxReceipts(blockHash);
             Mockito.verify(blockchain).getTotalDifficultyByHash(blockHash);
-            Mockito.verify(era1Accumulator).addBlock(blockHash, difficulty.toUInt256());
+            Mockito.verify(era1Accumulator)
+                .addBlock(Bytes32.wrap(blockHash.getBytes()), difficulty.toUInt256());
 
             try {
               Mockito.verify(blockHeaderEncoder).encode(blockHeader);
@@ -141,10 +142,10 @@ public class Era1BlockExporterTest {
     }
 
     Hash accumulatorHash = Hash.wrap(Bytes32.random());
-    Mockito.when(era1Accumulator.accumulate()).thenReturn(accumulatorHash);
+    Mockito.when(era1Accumulator.accumulate()).thenReturn(Bytes32.wrap(accumulatorHash.getBytes()));
 
     String expectedFilename =
-        "mainnet-00000-" + accumulatorHash.toFastHex(false).substring(0, 8) + ".era1";
+        "mainnet-00000-" + accumulatorHash.getBytes().toFastHex(false).substring(0, 8) + ".era1";
     Mockito.when(era1FileWriterFactory.era1FileWriter(Mockito.any(File.class)))
         .thenReturn(era1FileWriter);
 
@@ -164,7 +165,8 @@ public class Era1BlockExporterTest {
     Mockito.verify(era1FileWriterFactory).era1FileWriter(fileArgumentCaptor.capture());
     Mockito.verify(era1FileWriter).writeSection(Era1Type.VERSION, new byte[] {});
     blockVerifications.forEach(Runnable::run);
-    Mockito.verify(era1FileWriter).writeSection(Era1Type.ACCUMULATOR, accumulatorHash.toArray());
+    Mockito.verify(era1FileWriter)
+        .writeSection(Era1Type.ACCUMULATOR, accumulatorHash.getBytes().toArray());
     Mockito.verify(era1FileWriter).writeSection(Era1Type.BLOCK_INDEX, blockIndex);
 
     File file = fileArgumentCaptor.getValue();

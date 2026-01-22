@@ -43,7 +43,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
   public static GetReceiptsMessage create(final Iterable<Hash> hashes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    hashes.forEach(tmp::writeBytes);
+    hashes.forEach(hash -> tmp.writeBytes(hash.getBytes()));
     tmp.endList();
     return new GetReceiptsMessage(tmp.encoded());
   }

@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,31 +44,46 @@ class QbftBlockImporterAdaptorTest {
 
   @Test
   void importsBlockSuccessfullyWhenBesuBlockImports() {
-    when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
+    when(blockImporter.importBlock(
+            protocolContext,
+            besuBlock,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty()))
         .thenReturn(new BlockImportResult(IMPORTED));
 
     QbftBlockImporterAdaptor qbftBlockImporter =
         new QbftBlockImporterAdaptor(blockImporter, protocolContext);
-    assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(true);
+    assertThat(qbftBlockImporter.importBlock(block, Optional.empty())).isEqualTo(true);
   }
 
   @Test
   void importsBlockSuccessfullyWhenBesuBlockAlreadyImported() {
-    when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
+    when(blockImporter.importBlock(
+            protocolContext,
+            besuBlock,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty()))
         .thenReturn(new BlockImportResult(ALREADY_IMPORTED));
 
     QbftBlockImporterAdaptor qbftBlockImporter =
         new QbftBlockImporterAdaptor(blockImporter, protocolContext);
-    assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(true);
+    assertThat(qbftBlockImporter.importBlock(block, Optional.empty())).isEqualTo(true);
   }
 
   @Test
   void importsBlockFailsWhenBesuBlockNotImported() {
-    when(blockImporter.importBlock(protocolContext, besuBlock, HeaderValidationMode.FULL))
+    when(blockImporter.importBlock(
+            protocolContext,
+            besuBlock,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty()))
         .thenReturn(new BlockImportResult(NOT_IMPORTED));
 
     QbftBlockImporterAdaptor qbftBlockImporter =
         new QbftBlockImporterAdaptor(blockImporter, protocolContext);
-    assertThat(qbftBlockImporter.importBlock(block)).isEqualTo(false);
+    assertThat(qbftBlockImporter.importBlock(block, Optional.empty())).isEqualTo(false);
   }
 }

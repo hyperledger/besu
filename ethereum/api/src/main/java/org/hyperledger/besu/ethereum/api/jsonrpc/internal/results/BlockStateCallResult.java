@@ -50,8 +50,7 @@ public class BlockStateCallResult extends BlockResult {
         null,
         block.getSize(),
         false,
-        block.getBody().getWithdrawals(),
-        block.getBody().getBlockAccessList());
+        block.getBody().getWithdrawals());
     this.callProcessingResults = callProcessingResults;
     this.trieLog = trieLog.map(Bytes::toHexString);
   }
