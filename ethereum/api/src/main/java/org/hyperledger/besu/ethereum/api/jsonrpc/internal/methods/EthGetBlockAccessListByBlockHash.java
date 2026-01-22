@@ -53,7 +53,7 @@ public class EthGetBlockAccessListByBlockHash implements JsonRpcMethod {
     final var requestId = requestContext.getRequest().getId();
     final var maybeHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
     if (maybeHeader.isEmpty()) {
-      return new JsonRpcSuccessResponse(requestId, null);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.BLOCK_NOT_FOUND);
     }
 
     final BlockHeader header = maybeHeader.get();
