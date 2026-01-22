@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryBal;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -960,6 +961,7 @@ public abstract class MainnetProtocolSpecs {
     if (isPoAConsensus(genesisConfigOptions)) {
       LOG.debug(
           "Skipping system contract request processors for PoA consensus (clique/ibft/qbft).");
+      pragueSpecBuilder.requestProcessorCoordinator(RequestProcessorCoordinator.noOp());
     } else {
       try {
         RequestContractAddresses requestContractAddresses =

@@ -49,6 +49,10 @@ public class RequestProcessorCoordinator {
         .toList();
   }
 
+  public static RequestProcessorCoordinator noOp() {
+    return new RequestProcessorCoordinator(ImmutableSortedMap.of());
+  }
+
   public static class Builder {
     private final ImmutableSortedMap.Builder<RequestType, RequestProcessor>
         requestProcessorBuilder = ImmutableSortedMap.naturalOrder();
