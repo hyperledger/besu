@@ -53,6 +53,10 @@ public class ExecutionStats {
   private int accountCreates;
   private int accountDestructs;
 
+  // EIP-7702 delegation tracking
+  private int eip7702DelegationsSet;
+  private int eip7702DelegationsCleared;
+
   // EVM operation counters
   private int sloadCount;
   private int sstoreCount;
@@ -96,6 +100,8 @@ public class ExecutionStats {
     codeBytesWritten = 0;
     accountCreates = 0;
     accountDestructs = 0;
+    eip7702DelegationsSet = 0;
+    eip7702DelegationsCleared = 0;
     sloadCount = 0;
     sstoreCount = 0;
     callCount = 0;
@@ -226,6 +232,18 @@ public class ExecutionStats {
   /** Increments account destruct counter. */
   public void incrementAccountDestructs() {
     accountDestructs++;
+  }
+
+  // EIP-7702 delegation tracking methods
+
+  /** Increments EIP-7702 delegations set counter. */
+  public void incrementEip7702DelegationsSet() {
+    eip7702DelegationsSet++;
+  }
+
+  /** Increments EIP-7702 delegations cleared counter. */
+  public void incrementEip7702DelegationsCleared() {
+    eip7702DelegationsCleared++;
   }
 
   // EVM operation methods
@@ -631,6 +649,24 @@ public class ExecutionStats {
   }
 
   /**
+   * Gets EIP-7702 delegations set count.
+   *
+   * @return the EIP-7702 delegations set count
+   */
+  public int getEip7702DelegationsSet() {
+    return eip7702DelegationsSet;
+  }
+
+  /**
+   * Gets EIP-7702 delegations cleared count.
+   *
+   * @return the EIP-7702 delegations cleared count
+   */
+  public int getEip7702DelegationsCleared() {
+    return eip7702DelegationsCleared;
+  }
+
+  /**
    * Gets unique accounts touched.
    *
    * @return the count
@@ -683,7 +719,7 @@ public class ExecutionStats {
         "timing":{"execution_ms":%.3f,"state_read_ms":%.3f,"state_hash_ms":%.3f,"commit_ms":%.3f,"total_ms":%.3f},\
         "throughput":{"mgas_per_sec":%.2f},\
         "state_reads":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d},\
-        "state_writes":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d},\
+        "state_writes":{"accounts":%d,"storage_slots":%d,"code":%d,"code_bytes":%d,"eip7702_delegations_set":%d,"eip7702_delegations_cleared":%d},\
         "cache":{"account":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
         "storage":{"hits":%d,"misses":%d,"hit_rate":%.2f},\
         "code":{"hits":%d,"misses":%d,"hit_rate":%.2f}},\
@@ -707,6 +743,8 @@ public class ExecutionStats {
         storageWrites,
         codeWrites,
         codeBytesWritten,
+        eip7702DelegationsSet,
+        eip7702DelegationsCleared,
         accountCacheHits,
         accountCacheMisses,
         calculateHitRate(accountCacheHits, accountCacheMisses),
