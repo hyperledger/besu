@@ -3,13 +3,13 @@
 ## Unreleased
 
 ### Breaking Changes
+- ETC Classic and Mordor network support in Besu is removed
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
 - RPC changes to enhance compatibility with other ELs
   - RPCs using filter parameter including `eth_getLogs` and `trace_filter` return an error if `fromBlock` is greater than `toBlock`, or if `toBlock` extends beyond chain head (previously returned an empty list) [#9604](https://github.com/hyperledger/besu/pull/9604)
 - Plugin API changes to BlockHeader, Log, LogWithMetadata, TransactionProcessingResult and TransactionReceipt to use specific types for LogsBloomFilter, LogTopic and Log [#9556](https://github.com/hyperledger/besu/pull/9556)
 
 ### Upcoming Breaking Changes
-- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
     - ETC (Ethereum Classic) network support
