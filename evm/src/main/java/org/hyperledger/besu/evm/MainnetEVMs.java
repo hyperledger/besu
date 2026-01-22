@@ -1136,7 +1136,7 @@ public class MainnetEVMs {
     registry.put(
         new SelfDestructOperation(gasCalculator, true, EIP7708TransferLogEmitter.INSTANCE));
 
-        // EIP-8024: DUPN, SWAPN, EXCHANGE
+    // EIP-8024: DUPN, SWAPN, EXCHANGE
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));
     registry.put(new ExchangeOperation(gasCalculator));

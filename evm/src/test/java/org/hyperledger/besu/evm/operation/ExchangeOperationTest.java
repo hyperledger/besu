@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -218,5 +218,102 @@ class ExchangeOperationTest {
     final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getGasCost()).isEqualTo(3);
+  }
+
+  // ==================== EIP-8024 Spec Test Vectors ====================
+
+  /**
+   * Spec test vector: EXCHANGE with immediate 0x01. Bytecode sequence: 5f60016002e801 (PUSH0, PUSH1
+   * 1, PUSH1 2, EXCHANGE 01) Stack before: [2, 1, 0] (top to bottom) Expected after: [2, 0, 1]
+   * (swaps stack[1] with stack[2])
+   *
+   * <p>For immediate 0x01: k=1, q=0, r=1, q < r so (n,m) = (1, 2)
+   */
+  @Test
+  void testSpecVector_exchange_e801() {
+    final Bytes code = Bytes.of(0xe8, 0x01); // EXCHANGE 01
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Stack setup: PUSH0, PUSH1 1, PUSH1 2 -> [2, 1, 0]
+    builder.pushStackItem(Bytes.of(0)); // stack[2] = 0
+    builder.pushStackItem(Bytes.of(1)); // stack[1] = 1
+    builder.pushStackItem(Bytes.of(2)); // stack[0] = 2
+    final MessageFrame frame = builder.build();
+
+    // Verify initial state
+    assertThat(frame.stackSize()).isEqualTo(3);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(2)); // top
+    assertThat(frame.getStackItem(1)).isEqualTo(Bytes.of(1));
+    assertThat(frame.getStackItem(2)).isEqualTo(Bytes.of(0)); // bottom
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getPcIncrement()).isEqualTo(2);
+
+    // After EXCHANGE 01: stack[1] and stack[2] swapped
+    assertThat(frame.stackSize()).isEqualTo(3); // size unchanged
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(2)); // unchanged
+    assertThat(frame.getStackItem(1)).isEqualTo(Bytes.of(0)); // swapped
+    assertThat(frame.getStackItem(2)).isEqualTo(Bytes.of(1)); // swapped
+  }
+
+  /**
+   * Spec test vector: EXCHANGE with 30 items on stack. Uses immediate 0x00 which decodes to (n=1,
+   * m=29), swapping stack[1] with stack[29].
+   */
+  @Test
+  void testSpecVector_exchange30Items() {
+    final Bytes code = Bytes.of(0xe8, 0x00); // EXCHANGE 00 -> (1, 29)
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Push 30 items: stack[29]=1, stack[28..1]=values, stack[0]=2
+    // Using distinct values at positions we care about
+    builder.pushStackItem(Bytes.of(1)); // stack[29] = 1 (bottom)
+    for (int i = 28; i >= 2; i--) {
+      builder.pushStackItem(Bytes.of(0)); // stack[28..2] = 0
+    }
+    builder.pushStackItem(Bytes.of(99)); // stack[1] = 99
+    builder.pushStackItem(Bytes.of(2)); // stack[0] = 2 (top)
+    final MessageFrame frame = builder.build();
+
+    assertThat(frame.stackSize()).isEqualTo(30);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(2)); // top
+    assertThat(frame.getStackItem(1)).isEqualTo(Bytes.of(99));
+    assertThat(frame.getStackItem(29)).isEqualTo(Bytes.of(1)); // bottom
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isNull();
+
+    // After EXCHANGE: stack[1] and stack[29] swapped
+    assertThat(frame.stackSize()).isEqualTo(30);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(2)); // unchanged
+    assertThat(frame.getStackItem(1)).isEqualTo(Bytes.of(1)); // was 99, now 1
+    assertThat(frame.getStackItem(29)).isEqualTo(Bytes.of(99)); // was 1, now 99
+  }
+
+  /**
+   * Spec test vector: Invalid immediate 0x50 (POP opcode). Bytecode: e850 0x50 (80) is in invalid
+   * range 80-127, should return INVALID_OPERATION.
+   */
+  @Test
+  void testSpecVector_invalidImmediate0x50() {
+    final Bytes code = Bytes.of(0xe8, 0x50); // EXCHANGE with invalid immediate 0x50
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Add sufficient stack items
+    for (int i = 0; i < 50; i++) {
+      builder.pushStackItem(Bytes.ofUnsignedInt(i));
+    }
+    final MessageFrame frame = builder.build();
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
+    assertThat(result.getPcIncrement()).isEqualTo(2);
   }
 }

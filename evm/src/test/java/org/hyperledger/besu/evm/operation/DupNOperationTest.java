@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -221,6 +221,117 @@ class DupNOperationTest {
 
     // Should fail with stack overflow since duplicating would exceed 1024
     assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+    assertThat(result.getPcIncrement()).isEqualTo(2);
+  }
+
+  // ==================== EIP-8024 Spec Test Vectors ====================
+
+  /**
+   * Spec test vector: DUPN with immediate 0 (n=17) duplicating 17th item from 18-item stack.
+   * Bytecode: 60016000808080808080808080808080808080e600 Stack setup: PUSH1 1, PUSH1 0, 16xDUP1 ->
+   * 18 items with value 1 at bottom.
+   */
+  @Test
+  void testSpecVector_dupn17With18Items() {
+    // Set up stack as if: PUSH1 1, PUSH1 0, 16xDUP1 were executed
+    // Result: 18 items, stack[0-16]=0, stack[17]=1
+    final Bytes code = Bytes.of(0xe6, 0x00); // DUPN 0 -> n=17
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Bottom of stack (pushed first) = 1, then 0, then 16 copies of 0 (via DUP1)
+    builder.pushStackItem(Bytes.of(1)); // stack[17] = 1
+    for (int i = 0; i < 17; i++) {
+      builder.pushStackItem(Bytes.of(0)); // stack[16..0] = 0
+    }
+    final MessageFrame frame = builder.build();
+
+    assertThat(frame.stackSize()).isEqualTo(18);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0)); // top
+    assertThat(frame.getStackItem(17)).isEqualTo(Bytes.of(1)); // bottom
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getPcIncrement()).isEqualTo(2);
+    // DUPN 0 -> n=17, duplicates stack[16] which is 0
+    assertThat(frame.stackSize()).isEqualTo(19);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0)); // duplicated value
+  }
+
+  /**
+   * Spec test vector: DUPN at end of code (implicit immediate 0). Bytecode:
+   * 60016000808080808080808080808080808080e6 Same behavior as above - immediate defaults to 0 when
+   * code ends.
+   */
+  @Test
+  void testSpecVector_dupnEndOfCode() {
+    // Code ends right after opcode, immediate treated as 0 -> n=17
+    final Bytes code = Bytes.of(0xe6); // Just DUPN, no immediate
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Same stack setup as testSpecVector_dupn17With18Items
+    builder.pushStackItem(Bytes.of(1)); // stack[17] = 1
+    for (int i = 0; i < 17; i++) {
+      builder.pushStackItem(Bytes.of(0)); // stack[16..0] = 0
+    }
+    final MessageFrame frame = builder.build();
+
+    assertThat(frame.stackSize()).isEqualTo(18);
+
+    final OperationResult result = operation.execute(frame, null);
+
+    // Implicit immediate 0 is valid, should behave same as explicit 0
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(frame.stackSize()).isEqualTo(19);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0));
+  }
+
+  /**
+   * Spec test vector: Invalid immediate 0x5f (PUSH0 opcode). Bytecode: e65f 0x5f (95) is in invalid
+   * range 91-127, should return INVALID_OPERATION.
+   */
+  @Test
+  void testSpecVector_invalidImmediate0x5f() {
+    final Bytes code = Bytes.of(0xe6, 0x5f); // DUPN with invalid immediate 0x5f
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Add sufficient stack items
+    for (int i = 0; i < 250; i++) {
+      builder.pushStackItem(Bytes.ofUnsignedInt(i));
+    }
+    final MessageFrame frame = builder.build();
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
+    assertThat(result.getPcIncrement()).isEqualTo(2);
+  }
+
+  /**
+   * Spec test vector: Stack underflow with 16 items (needs 17). Bytecode:
+   * 6000808080808080808080808080808080e600 Stack has 16 items from PUSH1 0 + 15xDUP1, but DUPN 0
+   * needs 17.
+   */
+  @Test
+  void testSpecVector_stackUnderflow() {
+    final Bytes code = Bytes.of(0xe6, 0x00); // DUPN 0 -> n=17
+    final TestMessageFrameBuilder builder =
+        new TestMessageFrameBuilder().code(new Code(code)).pc(0);
+
+    // Only 16 items (simulating PUSH1 0 + 15xDUP1)
+    for (int i = 0; i < 16; i++) {
+      builder.pushStackItem(Bytes.of(0));
+    }
+    final MessageFrame frame = builder.build();
+
+    assertThat(frame.stackSize()).isEqualTo(16);
+
+    final OperationResult result = operation.execute(frame, null);
+
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     assertThat(result.getPcIncrement()).isEqualTo(2);
   }
 }
