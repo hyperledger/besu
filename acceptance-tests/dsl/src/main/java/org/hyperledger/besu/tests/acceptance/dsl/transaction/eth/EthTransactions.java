@@ -84,4 +84,12 @@ public class EthTransactions {
   public EthFilterChangesTransaction filterChanges(final BigInteger filterId) {
     return new EthFilterChangesTransaction(filterId);
   }
+
+  public EthCallTransaction call(final String contractAddress, final String functionCall) {
+    return new EthCallTransaction(contractAddress, functionCall);
+  }
+
+  public EthCallTransaction call(final String contractAddress) {
+    return new EthCallTransaction(contractAddress, "0x");
+  }
 }

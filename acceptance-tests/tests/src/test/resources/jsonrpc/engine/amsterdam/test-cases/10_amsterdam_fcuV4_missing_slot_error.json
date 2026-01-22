@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_forkchoiceUpdatedV4",
+    "params": [
+      {
+        "headBlockHash": "0x29e8ddbc3e7de7a27a7fce4c0cfe25e2bfef7fc6bc0c5ca4cb6dede30f370fed",
+        "safeBlockHash": "0x29e8ddbc3e7de7a27a7fce4c0cfe25e2bfef7fc6bc0c5ca4cb6dede30f370fed",
+        "finalizedBlockHash": "0x29e8ddbc3e7de7a27a7fce4c0cfe25e2bfef7fc6bc0c5ca4cb6dede30f370fed"
+      },
+      {
+        "timestamp": "0x20",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "withdrawals": [],
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "error": {
+      "code": -32602,
+      "message": "Invalid slot number params (missing or invalid)",
+      "data": "Missing slot number field"
+    }
+  },
+  "statusCode": 200
+}
