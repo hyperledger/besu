@@ -96,7 +96,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void roundChangeWithValidPiggyBackDataIsValid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -121,7 +121,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void roundChangeWithBlockRoundMismatchingPreparesIsValid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -148,7 +148,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void blockIsInvalidFailsValidation() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(false, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -189,7 +189,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void insufficientPiggyBackedPrepareMessagesIsInvalid() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -214,7 +214,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void prepareFromNonValidatorFails() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -241,7 +241,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparedMetadataContainsDifferentRoundToBlock() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -274,7 +274,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesContainsDifferentRoundToBlock() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -309,7 +309,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesContainsWrongHeight() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -344,7 +344,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfPreparesHaveDuplicateAuthors() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -374,7 +374,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfBlockExistsButNotPreparedMetadata() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -397,7 +397,11 @@ public class RoundChangeMessageValidatorTest {
 
     final RoundChange message =
         new RoundChange(
-            SignedData.create(payload, signature), Optional.of(block), blockEncoder, emptyList());
+            SignedData.create(payload, signature),
+            Optional.of(block),
+            Optional.empty(),
+            blockEncoder,
+            emptyList());
 
     assertThat(messageValidator.validate(message)).isFalse();
   }
@@ -405,7 +409,7 @@ public class RoundChangeMessageValidatorTest {
   @Test
   public void validationFailsIfBlockHashDoesNotMatchPreparedMetadata() {
     when(payloadValidator.validate(any())).thenReturn(true);
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new ValidationResult(true, Optional.empty()));
     messageValidator =
         new RoundChangeMessageValidator(
@@ -435,6 +439,7 @@ public class RoundChangeMessageValidatorTest {
         new RoundChange(
             SignedData.create(payload, signature),
             Optional.of(block),
+            Optional.empty(),
             blockEncoder,
             createPreparePayloads(
                 roundIdentifier, block.getHash(), toArray(validators.getNodes(), QbftNode.class)));
