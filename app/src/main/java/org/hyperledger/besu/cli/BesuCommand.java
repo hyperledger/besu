@@ -1645,25 +1645,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     final long balsRetained = unstableChainPruningOptions.getChainDataPruningBalsRetained();
-    final long balsRetainedLimit =
-        unstableChainPruningOptions.getChainDataPruningBalsRetainedLimit();
+    final long retainedLimit = unstableChainPruningOptions.getChainDataPruningRetainedLimit();
 
     if (blocksRetained < 0) {
       throw new ParameterException(
           this.commandLine, "--Xchain-pruning-blocks-retained must be >= 0");
     }
-    if (balsRetainedLimit < 0) {
+    if (retainedLimit < 0) {
       throw new ParameterException(
-          this.commandLine, "--Xchain-pruning-bals-retained-limit must be >= 0");
+          this.commandLine, "--Xchain-pruning-retained-limit must be >= 0");
     }
     if (balsRetained < 0) {
       throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
     }
 
     if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      if (blocksRetained < balsRetainedLimit) {
+      if (blocksRetained < retainedLimit) {
         throw new ParameterException(
-            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + balsRetainedLimit);
+            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + retainedLimit);
       }
 
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
@@ -1683,9 +1682,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (unstableChainPruningOptions.getChainBalPruningEnabled()) {
-      if (balsRetained < balsRetainedLimit) {
+      if (balsRetained < retainedLimit) {
         throw new ParameterException(
-            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + balsRetainedLimit);
+            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + retainedLimit);
       }
       if (balsRetained > blocksRetained) {
         throw new ParameterException(
