@@ -52,11 +52,12 @@ public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMe
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final var maybeHeader = getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
+    final var requestId = requestContext.getRequest().getId();
+
     if (maybeHeader.isEmpty()) {
-      return null;
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.BLOCK_NOT_FOUND);
     }
 
-    final var requestId = requestContext.getRequest().getId();
     final BlockHeader header = maybeHeader.get();
     if (!getBlockchainQueries().isBlockAccessListSupported(header)) {
       return new JsonRpcErrorResponse(
