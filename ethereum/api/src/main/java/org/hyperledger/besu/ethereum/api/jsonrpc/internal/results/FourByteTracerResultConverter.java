@@ -117,9 +117,10 @@ public class FourByteTracerResultConverter {
     // Skip precompiled contracts (addresses 0x01-0x0a typically)
     // Note: This logic should match how precompiles are detected elsewhere in Besu
     // For now, simple check for addresses <= 0x0a
-    if (to.get().numberOfLeadingZeroBytes() >= 19
-        && to.get().trimLeadingZeros().size() == 1
-        && to.get().trimLeadingZeros().get(0) <= 0x0a) {
+    final Bytes toAddressBytes = to.get().getBytes();
+    if (toAddressBytes.numberOfLeadingZeroBytes() >= 19
+        && toAddressBytes.trimLeadingZeros().size() == 1
+        && toAddressBytes.trimLeadingZeros().get(0) <= 0x0a) {
       return;
     }
 
