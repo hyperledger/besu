@@ -65,7 +65,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_BAL_PRUNING_ENABLED_FLAG},
       description = "Enable pruning of block access lists (default: ${DEFAULT-VALUE}).")
-  private final Boolean chainBalPruningEnabled = Boolean.TRUE;
+  private final Boolean chainBalPruningEnabled = Boolean.FALSE;
 
   @CommandLine.Option(
       hidden = true,
