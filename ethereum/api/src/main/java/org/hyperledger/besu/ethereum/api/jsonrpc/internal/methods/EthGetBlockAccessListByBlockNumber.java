@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -64,16 +62,13 @@ public class EthGetBlockAccessListByBlockNumber extends AbstractBlockParameterMe
           requestId, RpcErrorType.BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS);
     }
 
-    return getBlockchainQueries()
-        .getBlockchain()
-        .getBlockAccessList(header.getHash())
-        .<JsonRpcResponse>map(
-            bal ->
-                new JsonRpcSuccessResponse(
-                    requestId, BlockAccessListResult.fromBlockAccessList(bal)))
-        .orElseGet(
-            () ->
-                new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), RpcErrorType.PRUNED_HISTORY_UNAVAILABLE));
+    final var maybeAccessList =
+        getBlockchainQueries().getBlockchain().getBlockAccessList(header.getHash());
+
+    if (maybeAccessList.isEmpty()) {
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.PRUNED_HISTORY_UNAVAILABLE);
+    }
+
+    return BlockAccessListResult.fromBlockAccessList(maybeAccessList.get());
   }
 }
