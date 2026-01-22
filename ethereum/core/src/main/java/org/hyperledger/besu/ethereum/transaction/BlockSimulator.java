@@ -466,10 +466,7 @@ public class BlockSimulator {
             .buildBlockHeader();
 
     Block block =
-        new Block(
-            finalBlockHeader,
-            new BlockBody(
-                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
+        new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
 
     if (returnTrieLog && ws instanceof PathBasedWorldState) {
       // if requested and path-based worldstate, return result with trielog and serializer:

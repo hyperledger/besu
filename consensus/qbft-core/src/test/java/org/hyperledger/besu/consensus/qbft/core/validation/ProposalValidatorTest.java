@@ -92,7 +92,7 @@ public class ProposalValidatorTest {
   public void setup() {
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
     // typically tests require the blockValidation to be successful
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
@@ -132,7 +132,8 @@ public class ProposalValidatorTest {
       final List<SignedData<PreparePayload>> prepares) {
     return validators
         .getMessageFactory(0)
-        .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, prepares);
+        .createProposal(
+            roundItem.roundIdentifier, roundItem.block, Optional.empty(), roundChanges, prepares);
   }
 
   @Test
@@ -149,7 +150,7 @@ public class ProposalValidatorTest {
 
     reset(blockValidator);
 
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.of("Failed")));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
