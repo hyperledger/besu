@@ -23,6 +23,8 @@ import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -36,6 +38,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
 
   private static final IbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
   private final Block proposedBlock;
+  private final Optional<BlockAccessList> blockAccessList;
 
   private final Optional<RoundChangeCertificate> roundChangeCertificate;
 
@@ -44,14 +47,17 @@ public class Proposal extends BftMessage<ProposalPayload> {
    *
    * @param payload the payload
    * @param proposedBlock the proposed block
+   * @param blockAccessList the block access list
    * @param certificate the certificate
    */
   public Proposal(
       final SignedData<ProposalPayload> payload,
       final Block proposedBlock,
+      final Optional<BlockAccessList> blockAccessList,
       final Optional<RoundChangeCertificate> certificate) {
     super(payload);
     this.proposedBlock = proposedBlock;
+    this.blockAccessList = blockAccessList;
     this.roundChangeCertificate = certificate;
   }
 
@@ -62,6 +68,15 @@ public class Proposal extends BftMessage<ProposalPayload> {
    */
   public Block getBlock() {
     return proposedBlock;
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
   }
 
   /**
@@ -93,6 +108,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
     } else {
       rlpOut.writeNull();
     }
+    blockAccessList.ifPresentOrElse((bal) -> bal.writeTo(rlpOut), rlpOut::writeNull);
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -113,9 +129,10 @@ public class Proposal extends BftMessage<ProposalPayload> {
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);
+    final Optional<BlockAccessList> blockAccessList = readBlockAccessList(rlpIn);
 
     rlpIn.leaveList();
-    return new Proposal(payload, proposedBlock, roundChangeCertificate);
+    return new Proposal(payload, proposedBlock, blockAccessList, roundChangeCertificate);
   }
 
   private static Optional<RoundChangeCertificate> readRoundChangeCertificate(final RLPInput rlpIn) {
@@ -127,5 +144,13 @@ public class Proposal extends BftMessage<ProposalPayload> {
     }
 
     return Optional.ofNullable(roundChangeCertificate);
+  }
+
+  private static Optional<BlockAccessList> readBlockAccessList(final RLPInput rlpIn) {
+    if (!rlpIn.nextIsNull()) {
+      return Optional.of(BlockAccessListDecoder.decode(rlpIn));
+    }
+    rlpIn.skipNext();
+    return Optional.empty();
   }
 }

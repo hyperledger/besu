@@ -344,8 +344,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             Optional.empty(),
             System.currentTimeMillis(),
             miningOn.parentHeader);
-    final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getBlock().getBody().getBlockAccessList();
+    final Optional<BlockAccessList> maybeBlockAccessList = blockCreationResult.getBlockAccessList();
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
     final List<AccountChanges> accountChanges = blockAccessList.accountChanges();
@@ -392,8 +391,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             Optional.empty(),
             System.currentTimeMillis(),
             miningOn.parentHeader);
-    final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getBlock().getBody().getBlockAccessList();
+    final Optional<BlockAccessList> maybeBlockAccessList = blockCreationResult.getBlockAccessList();
     assertThat(maybeBlockAccessList).isEmpty();
   }
 
