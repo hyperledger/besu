@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class EthGetBlockAccessListByBlockHash implements JsonRpcMethod {
@@ -63,13 +62,9 @@ public class EthGetBlockAccessListByBlockHash implements JsonRpcMethod {
           requestId, RpcErrorType.BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS);
     }
 
-    final var maybeBody = blockchainQueries.getBlockchain().getBlockBody(blockHash);
-    if (maybeBody.isEmpty()) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.PRUNED_HISTORY_UNAVAILABLE);
-    }
-
-    final BlockBody body = maybeBody.get();
-    return body.getBlockAccessList()
+    return blockchainQueries
+        .getBlockchain()
+        .getBlockAccessList(blockHash)
         .<JsonRpcResponse>map(
             bal ->
                 new JsonRpcSuccessResponse(
