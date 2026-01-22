@@ -21,6 +21,9 @@ package org.hyperledger.besu.evm.operation;
  * (0x5b) or PUSH opcodes (0x60-0x7f), ensuring backward compatibility with existing deployed
  * contracts.
  */
+// Thread-safety note: All static arrays in this class are effectively immutable.
+// They are populated once during class initialization and never modified thereafter,
+// making them safe for concurrent read access in a multi-threaded environment.
 @SuppressWarnings("MutablePublicArray") // Performance: hot-path direct array access is intentional
 public final class Eip8024Decoder {
 
