@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.CallTracerErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.CallTracerGasCalculator;
@@ -91,7 +90,10 @@ public class CallTracerResultConverter {
   private static CallTracerResult buildCallHierarchyFromFrames(final TransactionTrace trace) {
     final CallTracerResult.Builder rootBuilder = initializeRootBuilder(trace);
 
-    if (!trace.getResult().isSuccessful()) {
+    // Only process frames if transaction succeeded OR reverted (not exceptional halt)
+    // Exceptional halts (stack underflow, out of gas, etc.) happen before execution really begins
+    if (!trace.getResult().isSuccessful()
+        && trace.getResult().getExceptionalHaltReason().isPresent()) {
       return rootBuilder.build();
     }
 
@@ -187,7 +189,7 @@ public class CallTracerResultConverter {
     if (OpcodeCategory.isCreateOp(childCallInfo.builder.getType())
         && frame.getDepth() > 0
         && childCallInfo.builder.getTo() == null) {
-      childCallInfo.builder.to(frame.getRecipient().toHexString());
+      childCallInfo.builder.to(frame.getRecipient().getBytes().toHexString());
     }
 
     // Set output and error status
@@ -287,11 +289,11 @@ public class CallTracerResultConverter {
     final CallTracerResult.Builder builder =
         CallTracerResult.builder()
             .type(tx.isContractCreation() ? CREATE_TYPE : CALL_TYPE)
-            .from(tx.getSender().toHexString())
+            .from(tx.getSender().getBytes().toHexString())
             .to(
                 tx.isContractCreation()
-                    ? tx.contractAddress().map(Address::toHexString).orElse(null)
-                    : tx.getTo().map(Address::toHexString).orElse(null))
+                    ? tx.contractAddress().map(a -> a.getBytes().toHexString()).orElse(null)
+                    : tx.getTo().map(a -> a.getBytes().toHexString()).orElse(null))
             .value(tx.getValue().toShortHexString())
             .gas(tx.getGasLimit())
             .input(tx.getPayload().toHexString())
@@ -332,7 +334,7 @@ public class CallTracerResultConverter {
     }
 
     if (frame.isPrecompile() && frame.getPrecompileRecipient().isPresent()) {
-      return frame.getPrecompileRecipient().get().toHexString();
+      return frame.getPrecompileRecipient().get().getBytes().toHexString();
     }
 
     if (OpcodeCategory.isCallOp(opcode)) {
@@ -379,14 +381,14 @@ public class CallTracerResultConverter {
     StackExtractor.extractSelfDestructBeneficiary(frame)
         .ifPresent(
             beneficiary -> {
-              final String from = frame.getRecipient().toHexString();
+              final String from = frame.getRecipient().getBytes().toHexString();
               final String value = StackExtractor.extractSelfDestructValue(frame, beneficiary);
 
               final CallTracerResult selfDestructCall =
                   CallTracerResult.builder()
                       .type(SELFDESTRUCT_TYPE)
                       .from(from)
-                      .to(beneficiary.toHexString())
+                      .to(beneficiary.getBytes().toHexString())
                       .gas(0L)
                       .gasUsed(0L)
                       .value(value)

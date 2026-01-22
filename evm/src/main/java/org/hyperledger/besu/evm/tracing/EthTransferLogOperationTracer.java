@@ -17,12 +17,12 @@ package org.hyperledger.besu.evm.tracing;
 import static org.apache.tuweni.bytes.Bytes32.leftPad;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.ArrayList;
@@ -92,10 +92,9 @@ public class EthTransferLogOperationTracer implements OperationTracer {
   private void emitTransferLogs(final Address sender, final Address recipient, final Wei value) {
     final ImmutableList.Builder<LogTopic> builder = ImmutableList.builderWithExpectedSize(3);
     builder.add(LogTopic.create(SIMULATION_TRANSFER_TOPIC));
-    builder.add(LogTopic.create(leftPad(sender)));
-    builder.add(LogTopic.create(leftPad(recipient)));
-    traceTransfers.add(
-        new org.hyperledger.besu.evm.log.Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
+    builder.add(LogTopic.create(leftPad(sender.getBytes())));
+    builder.add(LogTopic.create(leftPad(recipient.getBytes())));
+    traceTransfers.add(new Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
   }
 
   /**

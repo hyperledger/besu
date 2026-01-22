@@ -28,7 +28,8 @@ class ValidatorTestUtils {
       final long block, final Address contractAddress) {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
+    qbftConfigOptions.setValidatorContractAddress(
+        Optional.of(contractAddress.getBytes().toHexString()));
     return new ForkSpec<>(block, qbftConfigOptions);
   }
 

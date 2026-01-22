@@ -76,7 +76,8 @@ public class ValidatorContractControllerTest {
     callParameter = ImmutableCallParameter.builder().to(CONTRACT_ADDRESS).input(payload).build();
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    qbftConfigOptions.setValidatorContractAddress(Optional.of(CONTRACT_ADDRESS.toHexString()));
+    qbftConfigOptions.setValidatorContractAddress(
+        Optional.of(CONTRACT_ADDRESS.getBytes().toHexString()));
   }
 
   @Test

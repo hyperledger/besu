@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,9 +50,9 @@ public class SyncTransactionReceiptDecoder {
     Bytes statusOrStateRoot = input.readBytes();
     Bytes cumulativeGasUsed = input.readBytes();
     final boolean isCompacted = isNextNotBloomFilter(input);
-    Bytes bloomFilter = null;
+    LogsBloomFilter bloomFilter = null;
     if (!isCompacted) {
-      bloomFilter = input.readBytes();
+      bloomFilter = new LogsBloomFilter(input.readBytes());
     }
     List<List<Bytes>> logs = parseLogs(input);
     // if the receipt is compacted, we need to build the bloom filter from the logs
@@ -75,9 +75,9 @@ public class SyncTransactionReceiptDecoder {
     // (eth/69)
     final Bytes secondElement = rlpInput.readBytes();
     final boolean isCompacted = isNextNotBloomFilter(rlpInput);
-    Bytes bloomFilter = null;
+    LogsBloomFilter bloomFilter = null;
     if (!isCompacted) {
-      bloomFilter = rlpInput.readBytes();
+      bloomFilter = new LogsBloomFilter(rlpInput.readBytes());
     }
     boolean isEth69Receipt = isCompacted && !rlpInput.nextIsList();
     SyncTransactionReceipt result;
@@ -101,7 +101,7 @@ public class SyncTransactionReceiptDecoder {
             : transactionByteRlp;
     Bytes cumulativeGasUsed = input.readBytes();
     List<List<Bytes>> logs = parseLogs(input);
-    Bytes bloomFilter = LogsBloomFilter.builder().insertRawLogs(logs).build();
+    LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertRawLogs(logs).build();
     return new SyncTransactionReceipt(
         rawRlp, transactionTypeCode, statusOrStateRoot, cumulativeGasUsed, bloomFilter, logs);
   }
@@ -111,7 +111,7 @@ public class SyncTransactionReceiptDecoder {
       final RLPInput input,
       final Bytes statusOrStateRoot,
       final Bytes cumulativeGasUsed,
-      final Bytes bloomFilter) {
+      final LogsBloomFilter bloomFilter) {
     Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
     List<List<Bytes>> logs = parseLogs(input);
     return new SyncTransactionReceipt(

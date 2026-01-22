@@ -123,23 +123,24 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     final List<Log> logs = receipt.getLogs();
     assertThat(logs).hasSize(1);
 
-    final Log transferLog = logs.get(0);
+    final Log transferLog = logs.getFirst();
 
     // Verify the log is from the EIP-7708 system address
     assertThat(transferLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
 
     // Verify the Transfer event signature topic
     assertThat(transferLog.getTopics()).hasSize(3);
-    assertThat(transferLog.getTopics().get(0)).isEqualToIgnoringCase(TRANSFER_TOPIC);
+    assertThat(transferLog.getTopics().getFirst()).isEqualToIgnoringCase(TRANSFER_TOPIC);
 
     // Verify sender address (zero-padded to 32 bytes)
     final Address senderAddress = Address.fromHexStringStrict(sender.getAddress());
-    final String expectedSenderTopic = Bytes32.leftPad(senderAddress).toHexString();
+    final String expectedSenderTopic = Bytes32.leftPad(senderAddress.getBytes()).toHexString();
     assertThat(transferLog.getTopics().get(1)).isEqualToIgnoringCase(expectedSenderTopic);
 
     // Verify recipient address (zero-padded to 32 bytes)
     final Address recipientAddress = Address.fromHexStringStrict(recipient.getAddress());
-    final String expectedRecipientTopic = Bytes32.leftPad(recipientAddress).toHexString();
+    final String expectedRecipientTopic =
+        Bytes32.leftPad(recipientAddress.getBytes()).toHexString();
     assertThat(transferLog.getTopics().get(2)).isEqualToIgnoringCase(expectedRecipientTopic);
 
     // Verify the data contains the transfer amount (big-endian uint256)
@@ -199,7 +200,7 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
 
     // Calldata is the recipient address left-padded to 32 bytes
     final Address recipientAddress = Address.fromHexStringStrict(recipient.getAddress());
-    final Bytes callData = Bytes32.leftPad(recipientAddress);
+    final Bytes callData = Bytes32.leftPad(recipientAddress.getBytes());
 
     final Transaction tx =
         Transaction.builder()
@@ -236,15 +237,15 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     assertThat(logs).hasSize(2);
 
     // Log 1: sender -> forwarder contract
-    final Log log1 = logs.get(0);
+    final Log log1 = logs.getFirst();
     assertThat(log1.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
     assertThat(log1.getTopics()).hasSize(3);
     assertThat(log1.getTopics().get(0)).isEqualToIgnoringCase(TRANSFER_TOPIC);
     final Address senderAddress = Address.fromHexStringStrict(sender.getAddress());
     assertThat(log1.getTopics().get(1))
-        .isEqualToIgnoringCase(Bytes32.leftPad(senderAddress).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(senderAddress.getBytes()).toHexString());
     assertThat(log1.getTopics().get(2))
-        .isEqualToIgnoringCase(Bytes32.leftPad(forwarderContract).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(forwarderContract.getBytes()).toHexString());
     assertThat(log1.getData()).isEqualToIgnoringCase(Bytes32.leftPad(transferAmount).toHexString());
 
     // Log 2: forwarder contract -> recipient (via internal CALL)
@@ -253,9 +254,9 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     assertThat(log2.getTopics()).hasSize(3);
     assertThat(log2.getTopics().get(0)).isEqualToIgnoringCase(TRANSFER_TOPIC);
     assertThat(log2.getTopics().get(1))
-        .isEqualToIgnoringCase(Bytes32.leftPad(forwarderContract).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(forwarderContract.getBytes()).toHexString());
     assertThat(log2.getTopics().get(2))
-        .isEqualToIgnoringCase(Bytes32.leftPad(recipientAddress).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(recipientAddress.getBytes()).toHexString());
     // The contract forwards its entire balance (which is the transfer amount)
     assertThat(log2.getData()).isEqualToIgnoringCase(Bytes32.leftPad(transferAmount).toHexString());
   }
@@ -276,7 +277,7 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
 
     // Calldata is the beneficiary address left-padded to 32 bytes
     final Address beneficiary = Address.fromHexStringStrict(recipient.getAddress());
-    final Bytes callData = Bytes32.leftPad(beneficiary);
+    final Bytes callData = Bytes32.leftPad(beneficiary.getBytes());
 
     final Transaction tx =
         Transaction.builder()
@@ -313,14 +314,14 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     assertThat(logs).hasSize(1);
 
     // Log: selfDestructContract -> beneficiary (via SELFDESTRUCT)
-    final Log transferLog = logs.get(0);
+    final Log transferLog = logs.getFirst();
     assertThat(transferLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
     assertThat(transferLog.getTopics()).hasSize(3);
     assertThat(transferLog.getTopics().get(0)).isEqualToIgnoringCase(TRANSFER_TOPIC);
     assertThat(transferLog.getTopics().get(1))
-        .isEqualToIgnoringCase(Bytes32.leftPad(selfDestructContract).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(selfDestructContract.getBytes()).toHexString());
     assertThat(transferLog.getTopics().get(2))
-        .isEqualToIgnoringCase(Bytes32.leftPad(beneficiary).toHexString());
+        .isEqualToIgnoringCase(Bytes32.leftPad(beneficiary.getBytes()).toHexString());
     assertThat(transferLog.getData())
         .isEqualToIgnoringCase(Bytes32.leftPad(contractBalance).toHexString());
   }

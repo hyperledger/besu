@@ -76,7 +76,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
 
   @Override
   protected EthTask<List<BlockHeader>> createTask(final List<BlockHeader> requestedData) {
-    final BlockHeader lastHeader = requestedData.get(requestedData.size() - 1);
+    final BlockHeader lastHeader = requestedData.getLast();
     final BlockHeader referenceHeader = blockchain.getBlockHeader(lastHeader.getNumber() + 1).get();
     return DownloadHeaderSequenceTask.endingAtHeader(
         protocolSchedule,
@@ -178,7 +178,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
     final RespondingEthPeer.Responder responder =
         (cap, peer, message) -> {
           final Optional<MessageData> fullResponse = fullResponder.respond(cap, peer, message);
-          if (!fullResponse.isPresent()
+          if (fullResponse.isEmpty()
               || message.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
             return fullResponse;
           }
@@ -291,7 +291,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
                   invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
               List<BlockHeader> headers = new ArrayList<>();
               for (long i = task.getBlockNumber();
-                  i > task.getBlockNumber() - task.getMaxHeaders() * (task.getSkip() + 1);
+                  i > task.getBlockNumber() - (long) task.getMaxHeaders() * (task.getSkip() + 1);
                   i -= task.getSkip() + 1) {
                 Optional<BlockHeader> header = blockchain.getBlockHeader(i);
                 if (header.isPresent()) {

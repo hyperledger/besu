@@ -462,7 +462,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(param::getBlockNumber)
         .addArgument(param::getBlockHash)
         .addArgument(param::getParentHash)
-        .addArgument(() -> latestValidHash == null ? null : latestValidHash.toHexString())
+        .addArgument(
+            () -> latestValidHash == null ? null : latestValidHash.getBytes().toHexString())
         .addArgument(status::name)
         .log();
     return new JsonRpcSuccessResponse(
@@ -488,7 +489,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             param.getBlockNumber(),
             param.getBlockHash(),
             param.getParentHash(),
-            latestValidHash == null ? null : latestValidHash.toHexString(),
+            latestValidHash == null ? null : latestValidHash.getBytes().toHexString(),
             invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG
