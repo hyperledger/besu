@@ -523,6 +523,8 @@ public class EngineJsonRpcService {
             .setHost(config.getHost())
             .setPort(config.getPort())
             .setHandle100ContinueAutomatically(true)
+            // Disable compression due performance degradation for large responses (e.g.,
+            // getBlobsV2)
             .setCompressionSupported(false);
 
     httpServerOptions.setMaxWebSocketFrameSize(socketConfiguration.getMaxFrameSize());
