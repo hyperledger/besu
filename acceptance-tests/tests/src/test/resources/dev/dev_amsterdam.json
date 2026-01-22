@@ -77,6 +77,41 @@
       "codeDecompiled": "PUSH0 CALLDATALOAD SELFDESTRUCT",
       "storage": {}
     },
+    "0x0000000000000000000000000000000000007709": {
+      "comment": "Contract that self-destructs to ITSELF (for testing Selfdestruct LOG2)",
+      "balance": "1000000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007700": {
+      "comment": "Destroyer contract - calls 7702, 7703, 7701 to test lexicographical sorting",
+      "balance": "0",
+      "code": "0x5F5F5F5F5F7300000000000000000000000000000000000077025AF15F5F5F5F5F7300000000000000000000000000000000000077035AF15F5F5F5F5F7300000000000000000000000000000000000077015AF100",
+      "codeDecompiled": "PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7702> GAS CALL PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7703> GAS CALL PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7701> GAS CALL STOP",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007701": {
+      "comment": "Selfdestruct-to-self contract 1 (lowest address)",
+      "balance": "100000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007702": {
+      "comment": "Selfdestruct-to-self contract 2 (middle address)",
+      "balance": "200000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007703": {
+      "comment": "Selfdestruct-to-self contract 3 (highest address)",
+      "balance": "300000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
     "0xa4664C40AACeBD82A2Db79f0ea36C06Bc6A19Adb": {
       "balance": "1000000000000000000000000000"
     },

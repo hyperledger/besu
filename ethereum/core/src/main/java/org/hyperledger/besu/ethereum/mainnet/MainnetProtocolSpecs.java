@@ -1187,7 +1187,7 @@ public abstract class MainnetProtocolSpecs {
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
                     EIP7708TransferLogEmitter.INSTANCE))
-        // EIP-7708: TransactionProcessor configured for Amsterdam
+        // EIP-7708: TransactionProcessor configured for Amsterdam with transfer log emission
         .transactionProcessorBuilder(
             (gasCalculator,
                 feeMarket,
@@ -1209,6 +1209,7 @@ public abstract class MainnetProtocolSpecs {
                             chainId,
                             SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
                             new CodeDelegationService()))
+                    .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
         .blockAccessListFactory(
             new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
