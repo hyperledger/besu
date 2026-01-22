@@ -75,13 +75,17 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
     // Get immediate byte, treating end-of-code as 0
     final int imm = (pc + 1 >= code.length) ? 0 : code[pc + 1] & 0xFF;
 
+    // Single lookup for validity and both indices
+    final int packed = Eip8024Decoder.DECODE_PAIR_PACKED[imm];
+
     // Check for invalid immediate range (80-127)
-    if (!Eip8024Decoder.VALID_PAIR[imm]) {
+    if (packed == Eip8024Decoder.INVALID_PAIR) {
       return INVALID_IMMEDIATE;
     }
 
-    final int n = Eip8024Decoder.DECODE_PAIR_N[imm];
-    final int m = Eip8024Decoder.DECODE_PAIR_M[imm];
+    // Extract n and m from packed value
+    final int n = packed & 0xFF;
+    final int m = (packed >>> 8) & 0xFF;
 
     try {
       // Swap the (n+1)'th item (index n) with the (m+1)'th item (index m)

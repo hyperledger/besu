@@ -31,6 +31,9 @@ public final class Eip8024Decoder {
     // Utility class
   }
 
+  /** Marker value indicating an invalid immediate in packed pair encoding. */
+  public static final int INVALID_PAIR = -1;
+
   // ==================== Single Operand Decoding (DUPN, SWAPN) ====================
 
   /**
@@ -49,22 +52,30 @@ public final class Eip8024Decoder {
   // ==================== Pair Operand Decoding (EXCHANGE) ====================
 
   /**
-   * Decode table for first index (n) in pair operand instructions (EXCHANGE). Valid range: 0-79 and
-   * 128-255. Invalid range: 80-127.
-   */
-  public static final int[] DECODE_PAIR_N = new int[256];
-
-  /**
-   * Decode table for second index (m) in pair operand instructions (EXCHANGE). Valid range: 0-79
-   * and 128-255. Invalid range: 80-127.
-   */
-  public static final int[] DECODE_PAIR_M = new int[256];
-
-  /**
    * Validity table for pair operand immediates. True for valid immediates (0-79, 128-255), false
    * for invalid (80-127).
    */
   public static final boolean[] VALID_PAIR = new boolean[256];
+
+  /**
+   * Packed decode table for pair operand instructions (EXCHANGE). Combines validity check and both
+   * indices into a single lookup for better cache performance.
+   *
+   * <p>Encoding: If valid, low 8 bits contain n, bits 8-15 contain m. If invalid, value is {@link
+   * #INVALID_PAIR} (-1).
+   *
+   * <p>Usage:
+   *
+   * <pre>{@code
+   * int packed = DECODE_PAIR_PACKED[imm];
+   * if (packed == INVALID_PAIR) {
+   *   // handle invalid
+   * }
+   * int n = packed & 0xFF;
+   * int m = (packed >>> 8) & 0xFF;
+   * }</pre>
+   */
+  public static final int[] DECODE_PAIR_PACKED = new int[256];
 
   static {
     initializeSingleDecodeTables();
@@ -105,6 +116,11 @@ public final class Eip8024Decoder {
    * <p>Valid range: 0-79 and 128-255. Invalid range: 80-127.
    */
   private static void initializePairDecodeTables() {
+    // Initialize all as invalid first
+    for (int x = 0; x < 256; x++) {
+      DECODE_PAIR_PACKED[x] = INVALID_PAIR;
+    }
+
     for (int x = 0; x <= 79; x++) {
       decodePairIntoTables(x, x);
       VALID_PAIR[x] = true;
@@ -113,19 +129,44 @@ public final class Eip8024Decoder {
       decodePairIntoTables(x, x - 48);
       VALID_PAIR[x] = true;
     }
-    // 80-127 remain at default values (0, 0, false)
+    // 80-127 remain at default values (0, 0, false, INVALID_PAIR)
   }
 
   private static void decodePairIntoTables(final int x, final int k) {
     final int q = k / 16;
     final int r = k % 16;
+    final int n;
+    final int m;
     if (q < r) {
-      DECODE_PAIR_N[x] = q + 1;
-      DECODE_PAIR_M[x] = r + 1;
+      n = q + 1;
+      m = r + 1;
     } else {
-      DECODE_PAIR_N[x] = r + 1;
-      DECODE_PAIR_M[x] = 29 - q;
+      n = r + 1;
+      m = 29 - q;
     }
+
+    // Populate packed table: n in low 8 bits, m in bits 8-15
+    DECODE_PAIR_PACKED[x] = (m << 8) | n;
+  }
+
+  /**
+   * Extracts the n value from a packed pair encoding.
+   *
+   * @param packed the packed value from {@link #DECODE_PAIR_PACKED}
+   * @return the n index value
+   */
+  public static int unpackN(final int packed) {
+    return packed & 0xFF;
+  }
+
+  /**
+   * Extracts the m value from a packed pair encoding.
+   *
+   * @param packed the packed value from {@link #DECODE_PAIR_PACKED}
+   * @return the m index value
+   */
+  public static int unpackM(final int packed) {
+    return (packed >>> 8) & 0xFF;
   }
 
   /**
@@ -148,9 +189,13 @@ public final class Eip8024Decoder {
    * @return an array of [n, m], or null if the immediate is invalid
    */
   public static int[] decodePair(final int imm) {
-    if (imm < 0 || imm > 255 || !VALID_PAIR[imm]) {
+    if (imm < 0 || imm > 255) {
       return null;
     }
-    return new int[] {DECODE_PAIR_N[imm], DECODE_PAIR_M[imm]};
+    final int packed = DECODE_PAIR_PACKED[imm];
+    if (packed == INVALID_PAIR) {
+      return null;
+    }
+    return new int[] {unpackN(packed), unpackM(packed)};
   }
 }
