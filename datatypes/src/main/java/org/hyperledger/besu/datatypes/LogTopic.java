@@ -12,16 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.log;
+package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.DelegatingBytes32;
 
 /** The Log topic. */
-public class LogTopic extends DelegatingBytes32 {
+public class LogTopic extends BytesHolder {
 
   /**
    * Instantiates a new Log topic.
@@ -88,6 +87,6 @@ public class LogTopic extends DelegatingBytes32 {
    * @param out the output in which to encode the log topic.
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytes(this);
+    out.writeBytes(getBytes());
   }
 }

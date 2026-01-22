@@ -270,6 +270,7 @@ public class TestNode implements Closeable {
             .metricsSystem(new NoOpMetricsSystem())
             .allConnectionsSupplier(ethPeers::streamAllConnections)
             .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
+            .maxPeers(ethPeers.getMaxPeers())
             .build();
 
     return DefaultP2PNetwork.builder()

@@ -104,17 +104,19 @@ public class BackwardSyncStepTest {
   public void setup() {
     headersStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     blocksStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     chainStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+            hash -> hash.getBytes().toArrayUnsafe(),
+            new HashConvertor(),
+            new InMemoryKeyValueStorage());
     sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),

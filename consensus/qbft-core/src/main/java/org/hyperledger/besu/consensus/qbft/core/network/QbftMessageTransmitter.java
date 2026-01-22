@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.qbft.core.statemachine.PreparedCertificate
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.util.List;
@@ -65,17 +66,20 @@ public class QbftMessageTransmitter {
    *
    * @param roundIdentifier the round identifier
    * @param block the block
+   * @param blockAccessList the block access list
    * @param roundChanges the round changes
    * @param prepares the prepares
    */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final QbftBlock block,
+      final Optional<BlockAccessList> blockAccessList,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
     try {
       final Proposal data =
-          messageFactory.createProposal(roundIdentifier, block, roundChanges, prepares);
+          messageFactory.createProposal(
+              roundIdentifier, block, blockAccessList, roundChanges, prepares);
 
       final ProposalMessageData message = ProposalMessageData.create(data);
 

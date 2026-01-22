@@ -1,0 +1,22 @@
+plugins {
+    id 'net.consensys.besu-plugin-distribution' version '0.1.4'
+}
+
+group = 'org.hyperledger.besu.tests'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    archiveFileName = 'outdatedTestPlugins.jar'
+    manifest {
+        attributes(
+                'Specification-Title': archiveBaseName,
+                'Specification-Version': project.version,
+                'Implementation-Title': archiveBaseName,
+                'Implementation-Version': project.version
+        )
+    }
+}

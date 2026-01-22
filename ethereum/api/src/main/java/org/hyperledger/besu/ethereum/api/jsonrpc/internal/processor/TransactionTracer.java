@@ -191,9 +191,9 @@ public class TransactionTracer {
         .resolve(
             String.format(
                 "block_%.10s-%d-%.10s-%s",
-                blockHash.toHexString(),
+                blockHash.getBytes().toHexString(),
                 indexTransaction,
-                transaction.getHash().toHexString(),
+                transaction.getHash().getBytes().toHexString(),
                 System.currentTimeMillis()))
         .toFile();
   }

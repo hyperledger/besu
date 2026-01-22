@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -38,6 +39,7 @@ public class WorldStateServicePluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "pluginNode",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             Collections.singletonList("--plugin-world-state-service-test-enabled=true"));
 
     cluster.start(pluginNode);

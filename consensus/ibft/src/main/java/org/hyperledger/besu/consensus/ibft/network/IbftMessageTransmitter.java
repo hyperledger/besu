@@ -30,6 +30,7 @@ import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.util.Optional;
@@ -62,15 +63,18 @@ public class IbftMessageTransmitter {
    *
    * @param roundIdentifier the round identifier
    * @param block the block
+   * @param blockAccessList the block access list
    * @param roundChangeCertificate the round change certificate
    */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
+      final Optional<BlockAccessList> blockAccessList,
       final Optional<RoundChangeCertificate> roundChangeCertificate) {
     try {
       final Proposal data =
-          messageFactory.createProposal(roundIdentifier, block, roundChangeCertificate);
+          messageFactory.createProposal(
+              roundIdentifier, block, blockAccessList, roundChangeCertificate);
 
       final ProposalMessageData message = ProposalMessageData.create(data);
 
