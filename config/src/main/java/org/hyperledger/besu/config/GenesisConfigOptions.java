@@ -524,8 +524,7 @@ public interface GenesisConfigOptions {
   /**
    * Number of rounds contained within an Era for calculating Ethereum Classic Emission Schedule,
    * ECIP defines this as 5,000,000 however this config option allows for adjusting (for using with
-   * other networks, for example Mordor testnet uses 2,000,000). The values defaults to 5,000,000 if
-   * not set.
+   * other networks). The value defaults to 5,000,000 if not set.
    *
    * @return number of rounds pre Era
    * @see <a
