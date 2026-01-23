@@ -94,9 +94,6 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             engineCallListener,
             new NoOpMetricsSystem());
     lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
-    lenient()
-        .when(protocolSchedule.milestoneFor(AMSTERDAM))
-        .thenReturn(Optional.of(pragueHardfork.milestone() + 100L));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
     mockAllowedRequestsValidator();
   }

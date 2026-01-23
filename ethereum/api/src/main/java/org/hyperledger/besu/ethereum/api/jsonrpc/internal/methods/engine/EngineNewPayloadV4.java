@@ -90,6 +90,10 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     return ForkSupportHelper.validateForkSupported(
-        PRAGUE, pragueMilestone, AMSTERDAM, amsterdamMilestone, blockTimestamp);
+        PRAGUE,
+        pragueMilestone,
+        AMSTERDAM,
+        protocolSchedule.flatMap(s -> s.milestoneFor(AMSTERDAM)),
+        blockTimestamp);
   }
 }
