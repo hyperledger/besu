@@ -137,7 +137,8 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
     when(finalState.getClock()).thenReturn(clock);
-    when(blockCreator.createBlock(anyLong(), any())).thenReturn(createdBlock);
+    when(blockCreator.createBlock(anyLong(), any()))
+        .thenReturn(new QbftBlockCreator.BlockCreationResult(createdBlock, Optional.empty()));
 
     when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
@@ -236,7 +237,7 @@ public class QbftBlockHeightManagerTest {
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, atLeastOnce())
-        .multicastProposal(eq(roundIdentifier), any(), any(), any());
+        .multicastProposal(eq(roundIdentifier), any(), any(), any(), any());
     verify(messageTransmitter, atLeastOnce()).multicastPrepare(eq(roundIdentifier), any());
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
     verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
@@ -260,7 +261,8 @@ public class QbftBlockHeightManagerTest {
             validatorProvider);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
+    verify(messageTransmitter, never())
+        .multicastProposal(eq(roundIdentifier), any(), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
     verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
@@ -294,7 +296,8 @@ public class QbftBlockHeightManagerTest {
     // to the proposal
     manager.handleBlockTimerExpiry(roundIdentifier);
 
-    verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
+    verify(messageTransmitter, never())
+        .multicastProposal(eq(roundIdentifier), any(), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
     verify(finalState, never()).isLocalNodeProposerForRound(any());
   }
@@ -378,6 +381,7 @@ public class QbftBlockHeightManagerTest {
     verify(messageTransmitter, times(1))
         .multicastProposal(
             eq(futureRoundIdentifier),
+            any(),
             any(),
             eq(roundChangArtifacts.getRoundChanges()),
             eq(emptyList()));

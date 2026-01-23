@@ -95,7 +95,8 @@ public class RoundChangeArtifacts {
                 new PreparedCertificate(
                     roundChange.getProposedBlock().get(),
                     roundChange.getPrepares(),
-                    roundChange.getPreparedRound().get()));
+                    roundChange.getPreparedRound().get(),
+                    roundChange.getBlockAccessList()));
 
     return new RoundChangeArtifacts(
         roundChanges.stream().map(RoundChange::getSignedPayload).collect(Collectors.toList()),
