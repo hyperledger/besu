@@ -64,6 +64,7 @@ public final class ReferenceTestMergeBlockCreator {
             withdrawals,
             Optional.of(random),
             parentBeaconBlockRoot,
+            Optional.empty(),
             timestamp,
             true,
             parentHeader)
