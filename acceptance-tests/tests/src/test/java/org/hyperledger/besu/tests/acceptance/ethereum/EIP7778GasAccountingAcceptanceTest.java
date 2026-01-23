@@ -25,24 +25,17 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory.TransactionReceiptWithGasSpent;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 /**
  * Acceptance tests for EIP-7778: Block gas accounting without refunds.
@@ -62,8 +55,6 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/dev/dev_amsterdam.json";
   private static final SECP256K1 secp256k1 = new SECP256K1();
-  private static final MediaType MEDIA_TYPE_JSON =
-      MediaType.parse("application/json; charset=utf-8");
 
   public static final Bytes SENDER_PRIVATE_KEY =
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
@@ -72,8 +63,6 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode besuNode;
   private AmsterdamAcceptanceTestHelper testHelper;
-  private OkHttpClient httpClient;
-  private ObjectMapper mapper;
 
   @BeforeEach
   void setUp() throws IOException {
@@ -81,8 +70,6 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
     cluster.start(besuNode);
 
     testHelper = new AmsterdamAcceptanceTestHelper(besuNode, ethTransactions);
-    httpClient = new OkHttpClient();
-    mapper = new ObjectMapper();
   }
 
   @AfterEach
@@ -117,28 +104,28 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+    final AtomicReference<Optional<TransactionReceiptWithGasSpent>> maybeReceiptHolder =
         new AtomicReference<>(Optional.empty());
     WaitUtils.waitFor(
         60,
         () -> {
-          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          maybeReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceiptWithGasSpent(txHash)));
           assertThat(maybeReceiptHolder.get()).isPresent();
         });
 
-    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    final TransactionReceiptWithGasSpent receipt = maybeReceiptHolder.get().orElseThrow();
     assertThat(receipt.getStatus()).isEqualTo("0x1");
 
-    // Verify gasSpent is present via JSON-RPC
-    final JsonNode receiptJson = getReceiptViaJsonRpc(txHash);
-    assertThat(receiptJson.has("gasSpent")).isTrue();
+    // Verify gasSpent is present
+    assertThat(receipt.getGasSpent()).isNotNull();
 
-    final String gasUsed = receiptJson.get("gasUsed").asText();
-    final String gasSpent = receiptJson.get("gasSpent").asText();
+    final long gasUsed = receipt.getGasUsed().longValue();
+    final long gasSpent = Long.decode(receipt.getGasSpent());
 
     // For simple transfers without refunds, gasSpent should equal gasUsed
     assertThat(gasSpent).isEqualTo(gasUsed);
-    assertThat(gasUsed).isEqualTo("0x5208"); // 21000 in hex
+    assertThat(gasUsed).isEqualTo(21000L);
   }
 
   /**
@@ -167,20 +154,21 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+    final AtomicReference<Optional<TransactionReceiptWithGasSpent>> maybeReceiptHolder =
         new AtomicReference<>(Optional.empty());
     WaitUtils.waitFor(
         60,
         () -> {
-          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          maybeReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceiptWithGasSpent(txHash)));
           assertThat(maybeReceiptHolder.get()).isPresent();
         });
 
-    final JsonNode receiptJson = getReceiptViaJsonRpc(txHash);
-    assertThat(receiptJson.has("gasSpent")).isTrue();
+    final TransactionReceiptWithGasSpent receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getGasSpent()).isNotNull();
 
-    final long gasUsed = Long.decode(receiptJson.get("gasUsed").asText());
-    final long gasSpent = Long.decode(receiptJson.get("gasSpent").asText());
+    final long gasUsed = receipt.getGasUsed().longValue();
+    final long gasSpent = Long.decode(receipt.getGasSpent());
 
     // gasSpent should always be <= gasUsed (refunds can only reduce, not increase)
     assertThat(gasSpent).isLessThanOrEqualTo(gasUsed);
@@ -226,24 +214,23 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testHelper.buildNewBlock();
 
-    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+    final AtomicReference<Optional<TransactionReceiptWithGasSpent>> maybeReceiptHolder =
         new AtomicReference<>(Optional.empty());
     WaitUtils.waitFor(
         60,
         () -> {
-          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          maybeReceiptHolder.set(
+              besuNode.execute(ethTransactions.getTransactionReceiptWithGasSpent(txHash)));
           assertThat(maybeReceiptHolder.get()).isPresent();
         });
 
-    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    final TransactionReceiptWithGasSpent receipt = maybeReceiptHolder.get().orElseThrow();
     assertThat(receipt.getStatus()).isEqualTo("0x1");
+    assertThat(receipt.getGasSpent()).isNotNull();
+    assertThat(receipt.getGasUsed()).isNotNull();
 
-    final JsonNode receiptJson = getReceiptViaJsonRpc(txHash);
-    assertThat(receiptJson.has("gasSpent")).isTrue();
-    assertThat(receiptJson.has("gasUsed")).isTrue();
-
-    final long gasUsed = Long.decode(receiptJson.get("gasUsed").asText());
-    final long gasSpent = Long.decode(receiptJson.get("gasSpent").asText());
+    final long gasUsed = receipt.getGasUsed().longValue();
+    final long gasSpent = Long.decode(receipt.getGasSpent());
 
     // With SSTORE refund (clearing storage from non-zero to zero), gasSpent should be less
     // The refund is applied to gasSpent but NOT to gasUsed (which is pre-refund for block
@@ -260,37 +247,5 @@ public class EIP7778GasAccountingAcceptanceTest extends AcceptanceTestBase {
     assertThat(refundAmount)
         .as("Refund amount should be 4800 (SSTORE_CLEARS_SCHEDULE)")
         .isEqualTo(4800L);
-  }
-
-  /**
-   * Fetches the transaction receipt via direct JSON-RPC call to access the raw JSON response.
-   *
-   * <p>This is necessary because web3j's {@link TransactionReceipt} class doesn't include the
-   * {@code gasSpent} field introduced by EIP-7778. The standard web3j model only knows about
-   * pre-EIP-7778 receipt fields, so we need to parse the raw JSON to verify that Besu correctly
-   * includes the new {@code gasSpent} field in the response.
-   */
-  private JsonNode getReceiptViaJsonRpc(final String txHash) throws IOException {
-    final String requestBody =
-        "{"
-            + "  \"jsonrpc\": \"2.0\","
-            + "  \"method\": \"eth_getTransactionReceipt\","
-            + "  \"params\": [\""
-            + txHash
-            + "\"],"
-            + "  \"id\": 1"
-            + "}";
-
-    final Request request =
-        new Request.Builder()
-            .url(besuNode.jsonRpcBaseUrl().orElseThrow())
-            .post(RequestBody.create(requestBody, MEDIA_TYPE_JSON))
-            .build();
-
-    try (final Response response = httpClient.newCall(request).execute()) {
-      assertThat(response.code()).isEqualTo(200);
-      final JsonNode responseJson = mapper.readTree(response.body().string());
-      return responseJson.get("result");
-    }
   }
 }

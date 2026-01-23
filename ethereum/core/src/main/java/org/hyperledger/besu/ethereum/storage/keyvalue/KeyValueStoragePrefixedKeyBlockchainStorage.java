@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEA
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_STORE;
 
-import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -33,12 +32,10 @@ import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.AmsterdamTransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptDecoderStrategy;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -184,40 +181,24 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(
       final Bytes bytes, final Hash blockHash) {
-    // Determine if this block is Amsterdam+ to use the appropriate decoder
-    final boolean isAmsterdamOrLater = isAmsterdamOrLater(blockHash);
-    return RLP.input(bytes)
-        .readList(
-            in ->
-                isAmsterdamOrLater
-                    ? AmsterdamTransactionReceiptDecoder.readFrom(in, true)
-                    : TransactionReceiptDecoder.readFrom(in, true));
+    // Get the appropriate decoder strategy from the protocol spec for this block
+    final TransactionReceiptDecoderStrategy decoderStrategy = getDecoderStrategyForBlock(blockHash);
+    return RLP.input(bytes).readList(in -> decoderStrategy.decode(in, true));
   }
 
   /**
-   * Determines if the block with the given hash is from Amsterdam or a later hardfork. This is used
-   * to select the appropriate receipt decoder, since Amsterdam+ receipts have mandatory gasSpent.
+   * Gets the appropriate receipt decoder strategy for the given block.
    *
-   * @param blockHash the hash of the block to check
-   * @return true if the block is from Amsterdam or later, false if earlier or if protocol schedule
-   *     is not available
+   * @param blockHash the hash of the block
+   * @return the decoder strategy from the protocol spec, or PRE_AMSTERDAM if not available
    */
-  private boolean isAmsterdamOrLater(final Hash blockHash) {
+  private TransactionReceiptDecoderStrategy getDecoderStrategyForBlock(final Hash blockHash) {
     if (protocolSchedule == null) {
-      // Without protocol schedule, fall back to pre-Amsterdam decoder (uses size heuristic)
-      return false;
+      return TransactionReceiptDecoderStrategy.FRONTIER;
     }
-    final Optional<BlockHeader> header = getBlockHeader(blockHash);
-    if (header.isEmpty()) {
-      return false;
-    }
-    final ProtocolSpec spec = protocolSchedule.getByBlockHeader(header.get());
-    // Check if the hardfork is Amsterdam or later by comparing enum ordinals
-    if (spec.getHardforkId() instanceof MainnetHardforkId hardforkId) {
-      return hardforkId.ordinal() >= MainnetHardforkId.AMSTERDAM.ordinal();
-    }
-    // For non-mainnet hardforks (e.g., Classic), fall back to pre-Amsterdam decoder
-    return false;
+    return getBlockHeader(blockHash)
+        .map(header -> protocolSchedule.getByBlockHeader(header).getReceiptDecoderStrategy())
+        .orElse(TransactionReceiptDecoderStrategy.FRONTIER);
   }
 
   private BlockAccessList rlpDecodeBlockAccessList(final Bytes bytes) {

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptDecoderStrategy;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryDefault;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -224,6 +225,7 @@ public class SyncBlockBodyTest {
         Optional.empty(),
         Optional.empty(),
         new StateRootCommitterFactoryDefault(),
-        BlockGasAccountingStrategy.FRONTIER);
+        BlockGasAccountingStrategy.FRONTIER,
+        TransactionReceiptDecoderStrategy.FRONTIER);
   }
 }

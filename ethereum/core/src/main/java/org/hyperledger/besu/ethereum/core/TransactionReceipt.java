@@ -73,7 +73,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -90,7 +91,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         bloomFilter,
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   /**
@@ -113,7 +115,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -123,7 +126,15 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
-    this(transactionType, null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
+    this(
+        transactionType,
+        null,
+        status,
+        cumulativeGasUsed,
+        logs,
+        bloomFilter,
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -169,26 +180,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         LogsBloomFilter.builder().insertLogs(logs).build(),
         revertReason,
         Optional.of(gasSpent));
-  }
-
-  /** Private constructor without gasSpent, defaults to Optional.empty() for pre-Amsterdam forks. */
-  private TransactionReceipt(
-      final TransactionType transactionType,
-      final Hash stateRoot,
-      final int status,
-      final long cumulativeGasUsed,
-      final List<Log> logs,
-      final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason) {
-    this(
-        transactionType,
-        stateRoot,
-        status,
-        cumulativeGasUsed,
-        logs,
-        bloomFilter,
-        revertReason,
-        Optional.empty());
   }
 
   /** Private constructor with gasSpent for Amsterdam+ forks (EIP-7778). */

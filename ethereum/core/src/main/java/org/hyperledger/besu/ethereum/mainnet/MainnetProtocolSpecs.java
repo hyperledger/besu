@@ -1220,6 +1220,8 @@ public abstract class MainnetProtocolSpecs {
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
         // EIP-7778: Receipt factory with gasSpent field
         .transactionReceiptFactory(new AmsterdamTransactionReceiptFactory(enableRevertReason))
+        // EIP-7778: Receipt decoder strategy for mandatory gasSpent field
+        .receiptDecoderStrategy(TransactionReceiptDecoderStrategy.AMSTERDAM)
         .hardforkId(AMSTERDAM);
   }
 

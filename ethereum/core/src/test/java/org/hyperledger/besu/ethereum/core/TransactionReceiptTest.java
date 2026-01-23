@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.encoding.receipt.AmsterdamTransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -119,7 +119,7 @@ public class TransactionReceiptTest {
 
     // Verify round-trip still works
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     output ->
@@ -139,7 +139,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     output ->
@@ -160,7 +160,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
@@ -179,7 +179,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
@@ -199,7 +199,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions))),
@@ -233,9 +233,9 @@ public class TransactionReceiptTest {
             rlpOut ->
                 TransactionReceiptEncoder.writeTo(
                     receipt, rlpOut, encodingOptionsWithoutCompaction));
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt), true))
+    assertThat(FrontierTransactionReceiptDecoder.readFrom(RLP.input(compactedReceipt), true))
         .isEqualTo(receipt);
-    assertThat(TransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt), true))
+    assertThat(FrontierTransactionReceiptDecoder.readFrom(RLP.input(unCompactedReceipt), true))
         .isEqualTo(receipt);
   }
 
@@ -247,7 +247,7 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(
                 RLP.encode(
                     rlpOut ->
@@ -263,10 +263,10 @@ public class TransactionReceiptTest {
     String encodedReceiptWith0x80AsType =
         "0xf85880808844e52a8ce6476327f84be494fccc2c35f0b84609e5f12c55dd85aba8d5d9bef7c08d72e5900112b81927ba5bb5f67ee594b4049bf0e4aed78db15d7bf2fc0c34e9a99de4efc08e8137ad659878f9e93df1f658367a";
     final TransactionReceipt with0x00 =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(Bytes.fromHexString(encodedReceiptWith0x00AsType)), false);
     final TransactionReceipt with0x80 =
-        TransactionReceiptDecoder.readFrom(
+        FrontierTransactionReceiptDecoder.readFrom(
             RLP.input(Bytes.fromHexString(encodedReceiptWith0x80AsType)), false);
     assertThat(with0x00).isEqualTo(with0x80);
   }

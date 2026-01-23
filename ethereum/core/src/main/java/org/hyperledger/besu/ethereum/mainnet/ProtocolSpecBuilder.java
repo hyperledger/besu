@@ -101,6 +101,8 @@ public class ProtocolSpecBuilder {
   private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private BlockGasAccountingStrategy blockGasAccountingStrategy =
       BlockGasAccountingStrategy.FRONTIER;
+  private TransactionReceiptDecoderStrategy receiptDecoderStrategy =
+      TransactionReceiptDecoderStrategy.FRONTIER;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -331,6 +333,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder receiptDecoderStrategy(
+      final TransactionReceiptDecoderStrategy receiptDecoderStrategy) {
+    this.receiptDecoderStrategy = receiptDecoderStrategy;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -449,7 +457,8 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(transactionPoolPreProcessor),
         Optional.ofNullable(finalBalFactory),
         stateRootCommitterFactory,
-        blockGasAccountingStrategy);
+        blockGasAccountingStrategy,
+        receiptDecoderStrategy);
   }
 
   private BlockProcessor createBlockProcessor(

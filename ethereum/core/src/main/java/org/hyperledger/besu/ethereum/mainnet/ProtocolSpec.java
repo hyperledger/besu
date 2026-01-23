@@ -92,6 +92,7 @@ public class ProtocolSpec {
   private final Optional<BlockAccessListFactory> blockAccessListFactory;
   private final StateRootCommitterFactory stateRootCommitterFactory;
   private final BlockGasAccountingStrategy blockGasAccountingStrategy;
+  private final TransactionReceiptDecoderStrategy receiptDecoderStrategy;
 
   /**
    * Creates a new protocol specification instance.
@@ -126,6 +127,8 @@ public class ProtocolSpec {
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
    * @param blockGasAccountingStrategy the strategy for calculating block gas usage
+   * @param receiptDecoderStrategy the strategy for decoding transaction receipts (nullable for
+   *     backward compatibility - if null, defaults to PRE_AMSTERDAM)
    */
   public ProtocolSpec(
       final HardforkId hardforkId,
@@ -160,7 +163,8 @@ public class ProtocolSpec {
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
       final Optional<BlockAccessListFactory> blockAccessListFactory,
       final StateRootCommitterFactory stateRootCommitterFactory,
-      final BlockGasAccountingStrategy blockGasAccountingStrategy) {
+      final BlockGasAccountingStrategy blockGasAccountingStrategy,
+      final TransactionReceiptDecoderStrategy receiptDecoderStrategy) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -194,6 +198,7 @@ public class ProtocolSpec {
     this.blockAccessListFactory = blockAccessListFactory;
     this.stateRootCommitterFactory = stateRootCommitterFactory;
     this.blockGasAccountingStrategy = blockGasAccountingStrategy;
+    this.receiptDecoderStrategy = receiptDecoderStrategy;
   }
 
   /**
@@ -438,5 +443,16 @@ public class ProtocolSpec {
    */
   public BlockGasAccountingStrategy getBlockGasAccountingStrategy() {
     return blockGasAccountingStrategy;
+  }
+
+  /**
+   * Returns the strategy for decoding transaction receipts.
+   *
+   * @return the receipt decoder strategy, defaulting to PRE_AMSTERDAM if not explicitly set
+   */
+  public TransactionReceiptDecoderStrategy getReceiptDecoderStrategy() {
+    return receiptDecoderStrategy != null
+        ? receiptDecoderStrategy
+        : TransactionReceiptDecoderStrategy.FRONTIER;
   }
 }

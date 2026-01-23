@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder.ReceiptComponents;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Optional;
@@ -25,8 +26,8 @@ import org.apache.tuweni.bytes.Bytes;
 /**
  * Decoder for Amsterdam+ transaction receipts (EIP-7778).
  *
- * <p>In Amsterdam and later forks, the gasSpent field is mandatory. This decoder extends the base
- * {@link TransactionReceiptDecoder} and expects gasSpent to always be present after logs.
+ * <p>In Amsterdam and later forks, the gasSpent field is mandatory. This decoder reuses utility
+ * methods from {@link FrontierTransactionReceiptDecoder} but adds gasSpent reading.
  *
  * <pre>
  * amsterdam-receipt = [
@@ -38,11 +39,8 @@ import org.apache.tuweni.bytes.Bytes;
  *   revert-reason?: B         (optional, Besu-specific extension)
  * ]
  * </pre>
- *
- * <p>Unlike the base decoder which uses a size heuristic to detect gasSpent, this decoder reads
- * gasSpent unconditionally since it's guaranteed to be present in Amsterdam+ receipts.
  */
-public class AmsterdamTransactionReceiptDecoder extends TransactionReceiptDecoder {
+public class AmsterdamTransactionReceiptDecoder {
 
   /**
    * Creates a transaction receipt for the given RLP, expecting mandatory gasSpent (EIP-7778).
@@ -63,36 +61,60 @@ public class AmsterdamTransactionReceiptDecoder extends TransactionReceiptDecode
 
   private static TransactionReceipt decodeTypedReceipt(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    final ReceiptComponents components = decodeTypedReceiptComponents(rlpInput);
-    // EIP-7778: gasSpent is mandatory in Amsterdam+ receipts
-    long gasSpent = components.input().readLongScalar();
-    Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
+    final ReceiptComponents components =
+        FrontierTransactionReceiptDecoder.decodeTypedReceiptComponents(rlpInput);
+    // Read mandatory gasSpent (EIP-7778)
+    final long gasSpent = components.input().readLongScalar();
+    Optional<Bytes> revertReason =
+        FrontierTransactionReceiptDecoder.readMaybeRevertReason(
+            components.input(), revertReasonAllowed);
     components.input().leaveList();
-    return createReceipt(components, Optional.of(gasSpent), revertReason);
+    return FrontierTransactionReceiptDecoder.createReceipt(
+        components, Optional.of(gasSpent), revertReason);
   }
 
   private static TransactionReceipt decodeFlatReceipt(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
     rlpInput.enterList();
-    // Flat receipts: first element is stateRootOrStatus, second is cumulativeGas
+    // Flat receipts can be either legacy or eth/69 receipts.
     final RLPInput firstElement = rlpInput.readAsRlp();
     final RLPInput secondElement = rlpInput.readAsRlp();
-    final boolean isCompacted = isNextNotBloomFilter(rlpInput);
+    final boolean isCompacted = FrontierTransactionReceiptDecoder.isNextNotBloomFilter(rlpInput);
     LogsBloomFilter bloomFilter = null;
     if (!isCompacted) {
       bloomFilter = LogsBloomFilter.readFrom(rlpInput);
     }
-    // Decode as legacy receipt with mandatory gasSpent
-    final ReceiptComponents components =
-        decodeLegacyReceiptComponents(rlpInput, firstElement, secondElement, bloomFilter);
-    // EIP-7778: gasSpent is mandatory in Amsterdam+ receipts
-    long gasSpent = components.input().readLongScalar();
-    Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
+    // eth/69 receipts don't have gasSpent in the same format - for now, only handle legacy
+    boolean isEth69Receipt = isCompacted && !rlpInput.nextIsList();
+    TransactionReceipt receipt;
+    if (isEth69Receipt) {
+      // eth/69 format doesn't include gasSpent - throw or handle appropriately
+      throw new IllegalStateException(
+          "eth/69 receipt format is not supported for Amsterdam+ receipts with mandatory gasSpent");
+    } else {
+      receipt =
+          decodeLegacyReceipt(
+              rlpInput, firstElement, secondElement, bloomFilter, revertReasonAllowed);
+    }
     rlpInput.leaveList();
-    return createReceipt(components, Optional.of(gasSpent), revertReason);
+    return receipt;
   }
 
-  private static boolean isNextNotBloomFilter(final RLPInput input) {
-    return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
+  private static TransactionReceipt decodeLegacyReceipt(
+      final RLPInput input,
+      final RLPInput statusOrStateRootRlpInput,
+      final RLPInput cumulativeGasRlpInput,
+      final LogsBloomFilter bloomFilter,
+      final boolean revertReasonAllowed) {
+    final ReceiptComponents components =
+        FrontierTransactionReceiptDecoder.decodeLegacyReceiptComponents(
+            input, statusOrStateRootRlpInput, cumulativeGasRlpInput, bloomFilter);
+    // Read mandatory gasSpent (EIP-7778)
+    final long gasSpent = components.input().readLongScalar();
+    Optional<Bytes> revertReason =
+        FrontierTransactionReceiptDecoder.readMaybeRevertReason(
+            components.input(), revertReasonAllowed);
+    return FrontierTransactionReceiptDecoder.createReceipt(
+        components, Optional.of(gasSpent), revertReason);
   }
 }

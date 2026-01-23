@@ -29,7 +29,9 @@ import javax.annotation.Nullable;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * Decodes a transaction receipt from RLP.
+ * Decodes Frontier-era transaction receipts from RLP.
+ *
+ * <p>This decoder handles pre-Amsterdam receipts which do not include the gasSpent field.
  *
  * <pre>
  * (eth/68): receipt = {legacy-receipt, typed-receipt} with typed-receipt = tx-type || rlp(legacy-receipt)
@@ -39,17 +41,16 @@ import org.apache.tuweni.bytes.Bytes;
  *   cumulative-gas: P,
  *   bloom: B_256,
  *   logs: [log₁, log₂, ...],
- *   gas-spent?: P,              (optional, EIP-7778 Amsterdam+)
  *   revert-reason?: B           (optional, Besu-specific extension)
  * ]
  *
  * (eth/69): receipt = [tx-type, post-state-or-status, cumulative-gas, logs]
  * </pre>
  *
- * <p><b>EIP-7778 (Amsterdam+):</b> The optional gas-spent field represents post-refund gas (what
- * users actually pay). When present, cumulative-gas represents pre-refund gas for block accounting.
+ * <p>This class also provides protected utility methods for decoding receipt components that can be
+ * reused by fork-specific decoders (e.g., AmsterdamTransactionReceiptDecoder).
  */
-public class TransactionReceiptDecoder {
+public class FrontierTransactionReceiptDecoder {
 
   /**
    * Container for decoded receipt fields that are common across all receipt formats. This record
@@ -71,7 +72,7 @@ public class TransactionReceiptDecoder {
       RLPInput input) {}
 
   /**
-   * Creates a transaction receipt for the given RLP
+   * Creates a transaction receipt for the given RLP (Frontier/pre-Amsterdam format).
    *
    * @param rlpInput the RLP-encoded transaction receipt
    * @param revertReasonAllowed whether the rlp input is allowed to have a revert reason
@@ -90,8 +91,6 @@ public class TransactionReceiptDecoder {
   private static TransactionReceipt decodeTypedReceipt(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
     final ReceiptComponents components = decodeTypedReceiptComponents(rlpInput);
-    // Pre-Amsterdam receipts don't have gasSpent field
-    // For Amsterdam+, use AmsterdamTransactionReceiptDecoder which reads mandatory gasSpent
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
     components.input().leaveList();
     return createReceipt(components, Optional.empty(), revertReason);
@@ -199,8 +198,6 @@ public class TransactionReceiptDecoder {
     final ReceiptComponents components =
         decodeLegacyReceiptComponents(
             input, statusOrStateRootRlpInput, cumulativeGasRlpInput, bloomFilter);
-    // Pre-Amsterdam receipts don't have gasSpent field
-    // For Amsterdam+, use AmsterdamTransactionReceiptDecoder which reads mandatory gasSpent
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
     return createReceipt(components, Optional.empty(), revertReason);
   }
@@ -316,7 +313,14 @@ public class TransactionReceiptDecoder {
     return Optional.of(input.readBytes());
   }
 
-  private static boolean isNextNotBloomFilter(final RLPInput input) {
+  /**
+   * Checks if the next element in the RLP input is NOT a bloom filter. Used to detect compacted
+   * receipts or eth/69 format.
+   *
+   * @param input the RLP input to check
+   * @return true if the next element is not a bloom filter
+   */
+  protected static boolean isNextNotBloomFilter(final RLPInput input) {
     return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 }
