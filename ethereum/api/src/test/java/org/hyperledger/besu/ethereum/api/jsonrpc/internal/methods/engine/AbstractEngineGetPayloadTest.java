@@ -103,7 +103,11 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   protected static final PayloadWrapper mockPayload =
       new PayloadWrapper(
-          mockPid, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+          mockPid,
+          mockBlockWithReceipts,
+          Optional.empty(),
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
   private static final Block mockBlockWithWithdrawals =
       new Block(
           mockHeader,
@@ -122,6 +126,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
           mockPid,
           mockBlockWithReceiptsAndWithdrawals,
           Optional.empty(),
+          Optional.empty(),
           BlockCreationTiming.EMPTY);
 
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDepositRequests =
@@ -130,6 +135,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
       new PayloadWrapper(
           mockPid,
           mockBlockWithReceiptsAndDepositRequests,
+          Optional.empty(),
           Optional.empty(),
           BlockCreationTiming.EMPTY);
 
@@ -206,7 +212,11 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         new BlockWithReceipts(mockBlock, Collections.emptyList());
     final PayloadWrapper mockPayload =
         new PayloadWrapper(
-            payloadIdentifier, mockBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+            payloadIdentifier,
+            mockBlockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(mockPayload));
     return payloadIdentifier;
   }
@@ -240,7 +250,11 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         new BlockWithReceipts(testBlock, Collections.emptyList());
     final PayloadWrapper testPayload =
         new PayloadWrapper(
-            testPid, testBlockWithReceipts, Optional.empty(), BlockCreationTiming.EMPTY);
+            testPid,
+            testBlockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     final Block testBlockWithWithdrawals =
         new Block(
@@ -255,6 +269,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         new PayloadWrapper(
             testPid,
             testBlockWithReceiptsAndWithdrawals,
+            Optional.empty(),
             Optional.empty(),
             BlockCreationTiming.EMPTY);
 
