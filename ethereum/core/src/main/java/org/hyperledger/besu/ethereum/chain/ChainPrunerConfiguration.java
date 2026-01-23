@@ -15,14 +15,47 @@
 package org.hyperledger.besu.ethereum.chain;
 
 public record ChainPrunerConfiguration(
-    boolean chainPruningEnabled,
-    boolean balPruningEnabled,
+    ChainPruningMode pruningMode,
     long chainPruningBlocksRetained,
-    long blocksFrequency,
+    long chainPruningBalsRetained,
     long chainPruningBlocksRetainedLimit,
-    int preMergePruningBlocksQuantity,
-    long balsRetained,
-    long balsPruningFrequency) {
+    long chainPruningFrequency,
+    int preMergePruningBlocksQuantity) {
+
   public static final ChainPrunerConfiguration DEFAULT =
-      new ChainPrunerConfiguration(false, false, 13056, 256, 13056, 1000, 13056, 256);
+      new ChainPrunerConfiguration(
+          ChainPruningMode.NONE,
+          113056 /*WSP_EPOCHS_PER_WINDOW * SLOTS_PER_EPOCH */,
+          113056,
+          113056,
+          256,
+          1000);
+
+  /** Enum for chain pruning modes. */
+  public enum ChainPruningMode {
+    /** Prune both blocks and BALs. */
+    ALL,
+    /** Prune only BALs. */
+    BAL,
+    /** Pruning disabled. */
+    NONE
+  }
+
+  /**
+   * Check if block chain pruning is enabled.
+   *
+   * @return true if ALL mode is enabled
+   */
+  public boolean isBlockPruningEnabled() {
+    return pruningMode == ChainPruningMode.ALL;
+  }
+
+  /**
+   * Check if BAL pruning is enabled.
+   *
+   * @return true if BAL or ALL mode is enabled
+   */
+  public boolean isBalPruningEnabled() {
+    return pruningMode == ChainPruningMode.BAL || pruningMode == ChainPruningMode.ALL;
+  }
 }

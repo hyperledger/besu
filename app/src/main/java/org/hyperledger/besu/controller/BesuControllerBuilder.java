@@ -745,8 +745,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.chainPruningEnabled()
-        || chainPrunerConfiguration.balPruningEnabled()
+    if (chainPrunerConfiguration.isBlockPruningEnabled()
+        || chainPrunerConfiguration.isBalPruningEnabled()
         || dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
@@ -756,18 +756,24 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               () -> blockchain.removeObserver(chainDataPrunerObserverId.get()),
               syncState);
       chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
-      if (chainPrunerConfiguration.chainPruningEnabled()) {
+      if (chainPrunerConfiguration.isBlockPruningEnabled()) {
         LOG.info(
-            "Chain data pruning enabled with recent blocks retained to be: "
-                + chainPrunerConfiguration.chainPruningBlocksRetained()
-                + " and frequency to be: "
-                + chainPrunerConfiguration.blocksFrequency());
-      } else if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+            "Chain pruning enabled (mode: {}) with blocks retained: {} and frequency: {}",
+            chainPrunerConfiguration.pruningMode(),
+            chainPrunerConfiguration.chainPruningBlocksRetained(),
+            chainPrunerConfiguration.chainPruningFrequency());
+      }
+      if (chainPrunerConfiguration.isBalPruningEnabled()) {
         LOG.info(
-            "Pre-merge block pruning enabled with frequency: "
-                + chainPrunerConfiguration.blocksFrequency()
-                + " and quantity: "
-                + chainPrunerConfiguration.preMergePruningBlocksQuantity());
+            "BAL pruning enabled (mode: {}) with BALs retained: {}",
+            chainPrunerConfiguration.pruningMode(),
+            chainPrunerConfiguration.chainPruningBalsRetained());
+      }
+      if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+        LOG.info(
+            "Pre-merge block pruning enabled with frequency: {} and quantity: {}",
+            chainPrunerConfiguration.chainPruningFrequency(),
+            chainPrunerConfiguration.preMergePruningBlocksQuantity());
       }
     }
 
@@ -1307,6 +1313,9 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final BlockchainStorage blockchainStorage,
       final Runnable unsubscribeRunnable,
       final SyncState syncState) {
+
+    final ChainDataPruner.Mode mode = determineChainPrunerMode();
+
     return new ChainDataPruner(
         blockchainStorage,
         unsubscribeRunnable,
@@ -1314,24 +1323,24 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
         syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L),
-        chainPrunerConfiguration.chainPruningEnabled()
-                || chainPrunerConfiguration.balPruningEnabled()
-            ? ChainDataPruner.Mode.CHAIN_PRUNING
-            : (dataStorageConfiguration.getHistoryExpiryPruneEnabled()
-                ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
-                : null),
-        chainPrunerConfiguration.chainPruningEnabled(),
-        chainPrunerConfiguration.balPruningEnabled(),
-        chainPrunerConfiguration.chainPruningBlocksRetained(),
-        chainPrunerConfiguration.balsRetained(),
-        chainPrunerConfiguration.blocksFrequency(),
-        chainPrunerConfiguration.balsPruningFrequency(),
-        chainPrunerConfiguration.preMergePruningBlocksQuantity(),
+        mode,
+        chainPrunerConfiguration,
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
+  }
+
+  private ChainDataPruner.Mode determineChainPrunerMode() {
+    if (chainPrunerConfiguration.isBlockPruningEnabled()
+        || chainPrunerConfiguration.isBalPruningEnabled()) {
+      return ChainDataPruner.Mode.CHAIN_PRUNING;
+    }
+    if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+      return ChainDataPruner.Mode.PRE_MERGE_PRUNING;
+    }
+    throw new IllegalStateException("Chain pruner created without any pruning mode enabled");
   }
 
   /**

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration.ChainPruningMode;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.Arrays;
@@ -27,11 +28,9 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
-  private static final String CHAIN_PRUNING_RETAINED_LIMIT_FLAG = "--Xchain-pruning-retained-limit";
   private static final String CHAIN_PRUNING_BALS_RETAINED_FLAG = "--Xchain-pruning-bals-retained";
-  private static final String CHAIN_PRUNING_BALS_FREQUENCY_FLAG = "--Xchain-pruning-bals-frequency";
+  private static final String CHAIN_PRUNING_RETAINED_LIMIT_FLAG = "--Xchain-pruning-retained-limit";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
-  private static final String CHAIN_BAL_PRUNING_ENABLED_FLAG = "--Xchain-bal-pruning-enabled";
   private static final String PRE_MERGE_PRUNING_QUANTITY_FLAG = "--Xpre-merge-pruning-quantity";
 
   private static final long WSP_EPOCHS_PER_WINDOW = 3533L;
@@ -56,14 +55,8 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_PRUNING_ENABLED_FLAG},
       description =
-          "Enable the chain pruner to actively prune old chain data (default: ${DEFAULT-VALUE})")
-  private final Boolean chainDataPruningEnabled = Boolean.FALSE;
-
-  @CommandLine.Option(
-      hidden = true,
-      names = {CHAIN_BAL_PRUNING_ENABLED_FLAG},
-      description = "Enable pruning of block access lists (default: ${DEFAULT-VALUE}).")
-  private final Boolean chainBalPruningEnabled = Boolean.FALSE;
+          "Enable the chain pruner to actively prune old chain data. Options: ALL (blocks and BALs), BAL (only BALs), NONE (disabled) (default: ${DEFAULT-VALUE})")
+  private final ChainPruningMode chainPruningMode = ChainPruningMode.NONE;
 
   @CommandLine.Option(
       hidden = true,
@@ -96,19 +89,10 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
 
   @CommandLine.Option(
       hidden = true,
-      names = {CHAIN_PRUNING_BALS_FREQUENCY_FLAG},
-      description =
-          "The number of blocks added to the chain between two BAL pruning operations. Must be non-negative. Defaults to "
-              + CHAIN_PRUNING_FREQUENCY_FLAG
-              + " when not specified.")
-  private PositiveNumber chainDataPruningBalsFrequency;
-
-  @CommandLine.Option(
-      hidden = true,
       names = {CHAIN_PRUNING_FREQUENCY_FLAG},
       description =
           "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
-  private final PositiveNumber chainDataPruningBlocksFrequency =
+  private final PositiveNumber chainDataPruningFrequency =
       PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
   @CommandLine.Option(
@@ -132,21 +116,12 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
-   * Gets chain data pruning enabled.
+   * Gets chain pruning mode.
    *
-   * @return the chain data pruning enabled
+   * @return the chain pruning mode
    */
-  public Boolean getChainDataPruningEnabled() {
-    return chainDataPruningEnabled;
-  }
-
-  /**
-   * Gets BAL chain data pruning enabled.
-   *
-   * @return the BAL chain data pruning enabled
-   */
-  public Boolean getChainBalPruningEnabled() {
-    return chainBalPruningEnabled;
+  public ChainPruningMode getChainPruningMode() {
+    return chainPruningMode;
   }
 
   /**
@@ -156,15 +131,6 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
    */
   public Long getChainDataPruningBlocksRetained() {
     return chainDataPruningBlocksRetained;
-  }
-
-  /**
-   * Get the configured retained limit for chain data pruning.
-   *
-   * @return the retained limit
-   */
-  public Long getChainDataPruningRetainedLimit() {
-    return chainDataPruningRetainedLimit;
   }
 
   /**
@@ -178,44 +144,40 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
         : chainDataPruningBalsRetained;
   }
 
+  /**
+   * Get the configured retained limit for chain data pruning.
+   *
+   * @return the retained limit
+   */
+  public Long getChainDataPruningRetainedLimit() {
+    return chainDataPruningRetainedLimit;
+  }
+
   @Override
   public ChainPrunerConfiguration toDomainObject() {
-    final long balsRetainedOrDefault = getChainDataPruningBalsRetained();
     return new ChainPrunerConfiguration(
-        chainDataPruningEnabled,
-        chainBalPruningEnabled,
-        chainDataPruningBlocksRetained,
-        chainDataPruningBlocksFrequency.getValue(),
+        chainPruningMode,
+        getChainDataPruningBlocksRetained(),
+        getChainDataPruningBalsRetained(),
         chainDataPruningRetainedLimit,
-        preMergePruningBlocksQuantity.getValue(),
-        balsRetainedOrDefault,
-        getBalsPruningFrequencyOrDefault());
+        chainDataPruningFrequency.getValue(),
+        preMergePruningBlocksQuantity.getValue());
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
         CHAIN_PRUNING_ENABLED_FLAG,
-        chainDataPruningEnabled.toString(),
-        CHAIN_BAL_PRUNING_ENABLED_FLAG,
-        chainBalPruningEnabled.toString(),
+        chainPruningMode.toString(),
         CHAIN_PRUNING_BLOCKS_RETAINED_FLAG,
-        chainDataPruningBlocksRetained.toString(),
+        getChainDataPruningBlocksRetained().toString(),
+        CHAIN_PRUNING_BALS_RETAINED_FLAG,
+        getChainDataPruningBalsRetained().toString(),
         CHAIN_PRUNING_RETAINED_LIMIT_FLAG,
         chainDataPruningRetainedLimit.toString(),
-        CHAIN_PRUNING_BALS_RETAINED_FLAG,
-        Long.toString(getChainDataPruningBalsRetained()),
-        CHAIN_PRUNING_BALS_FREQUENCY_FLAG,
-        Long.toString(getBalsPruningFrequencyOrDefault()),
         CHAIN_PRUNING_FREQUENCY_FLAG,
-        chainDataPruningBlocksFrequency.toString(),
+        chainDataPruningFrequency.toString(),
         PRE_MERGE_PRUNING_QUANTITY_FLAG,
         preMergePruningBlocksQuantity.toString());
-  }
-
-  private long getBalsPruningFrequencyOrDefault() {
-    return chainDataPruningBalsFrequency == null
-        ? chainDataPruningBlocksFrequency.getValue()
-        : chainDataPruningBalsFrequency.getValue();
   }
 }

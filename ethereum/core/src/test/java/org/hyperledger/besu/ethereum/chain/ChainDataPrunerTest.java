@@ -53,13 +53,8 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             0,
             ChainDataPruner.Mode.CHAIN_PRUNING,
-            true,
-            false,
-            512,
-            0,
-            0,
-            0,
-            0,
+            new ChainPrunerConfiguration(
+                ChainPrunerConfiguration.ChainPruningMode.ALL, 512, 512, 0, 0, 0),
             // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
@@ -101,13 +96,8 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             0,
             ChainDataPruner.Mode.CHAIN_PRUNING,
-            true,
-            false,
-            512,
-            0,
-            0,
-            0,
-            0,
+            new ChainPrunerConfiguration(
+                ChainPrunerConfiguration.ChainPruningMode.ALL, 512, 512, 0, 0, 0),
             // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
@@ -168,13 +158,8 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             mergeBlock,
             ChainDataPruner.Mode.PRE_MERGE_PRUNING,
-            true,
-            false,
-            0,
-            0,
-            0,
-            0,
-            pruningQuantity,
+            new ChainPrunerConfiguration(
+                ChainPrunerConfiguration.ChainPruningMode.ALL, 0, 0, 0, 0, pruningQuantity),
             new BlockingExecutor());
 
     BlockAddedEvent blockAddedEvent = Mockito.mock(BlockAddedEvent.class);

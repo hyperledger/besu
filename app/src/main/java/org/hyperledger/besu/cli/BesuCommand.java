@@ -118,6 +118,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration.ChainPruningMode;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
@@ -1643,23 +1644,31 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
+    final ChainPruningMode pruningMode = unstableChainPruningOptions.getChainPruningMode();
     final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     final long balsRetained = unstableChainPruningOptions.getChainDataPruningBalsRetained();
     final long retainedLimit = unstableChainPruningOptions.getChainDataPruningRetainedLimit();
 
+    // Skip validation if pruning is disabled
+    if (pruningMode == ChainPruningMode.NONE) {
+      return;
+    }
+
+    // Basic validation
     if (blocksRetained < 0) {
       throw new ParameterException(
           this.commandLine, "--Xchain-pruning-blocks-retained must be >= 0");
+    }
+    if (balsRetained < 0) {
+      throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
     }
     if (retainedLimit < 0) {
       throw new ParameterException(
           this.commandLine, "--Xchain-pruning-retained-limit must be >= 0");
     }
-    if (balsRetained < 0) {
-      throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
-    }
 
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
+    // Validate blocks pruning (when mode is ALL)
+    if (pruningMode == ChainPruningMode.ALL) {
       if (blocksRetained < retainedLimit) {
         throw new ParameterException(
             this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + retainedLimit);
@@ -1681,15 +1690,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
-    if (unstableChainPruningOptions.getChainBalPruningEnabled()) {
+    // Validate BAL pruning (when mode is BAL or ALL)
+    if (pruningMode == ChainPruningMode.BAL || pruningMode == ChainPruningMode.ALL) {
       if (balsRetained < retainedLimit) {
         throw new ParameterException(
             this.commandLine, "--Xchain-pruning-bals-retained must be >= " + retainedLimit);
       }
-      if (balsRetained > blocksRetained) {
+
+      // When both are enabled (ALL mode), BAL retention can't exceed block retention
+      if (pruningMode == ChainPruningMode.ALL && balsRetained > blocksRetained) {
         throw new ParameterException(
             this.commandLine,
-            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained");
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained when pruning mode is ALL");
       }
     }
   }
@@ -2779,7 +2791,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (!unstableChainPruningOptions.getChainDataPruningEnabled()
+    if (unstableChainPruningOptions.getChainPruningMode().equals(ChainPruningMode.NONE)
         && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }

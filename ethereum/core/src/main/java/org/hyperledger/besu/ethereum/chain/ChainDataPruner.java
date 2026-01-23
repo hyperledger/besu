@@ -36,13 +36,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   private final ChainDataPrunerStorage prunerStorage;
   private final long mergeBlock;
   private final Mode mode;
-  private final boolean chainPruningEnabled;
-  private final boolean balPruningEnabled;
-  private final long blocksToRetain;
-  private final long balBlocksToRetain;
-  private final long pruningFrequency;
-  private final long balPruningFrequency;
-  private final long pruningQuantity;
+  private final ChainPrunerConfiguration config;
   private final ExecutorService pruningExecutor;
   private final AtomicBoolean logPreMergePruningProgress = new AtomicBoolean(true);
 
@@ -52,27 +46,15 @@ public class ChainDataPruner implements BlockAddedObserver {
       final ChainDataPrunerStorage prunerStorage,
       final long mergeBlock,
       final Mode mode,
-      final boolean chainPruningEnabled,
-      final boolean balPruningEnabled,
-      final long blocksToRetain,
-      final long balBlocksToRetain,
-      final long pruningFrequency,
-      final long balPruningFrequency,
-      final long pruningQuantity,
+      final ChainPrunerConfiguration config,
       final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
     this.unsubscribeRunnable = unsubscribeRunnable;
     this.prunerStorage = prunerStorage;
     this.mergeBlock = mergeBlock;
     this.mode = mode;
-    this.chainPruningEnabled = chainPruningEnabled;
-    this.balPruningEnabled = balPruningEnabled;
-    this.blocksToRetain = blocksToRetain;
-    this.balBlocksToRetain = balBlocksToRetain;
-    this.pruningFrequency = pruningFrequency;
-    this.balPruningFrequency = balPruningFrequency;
+    this.config = config;
     this.pruningExecutor = pruningExecutor;
-    this.pruningQuantity = pruningQuantity;
   }
 
   @Override
@@ -87,64 +69,133 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   private void chainPrunerAction(final BlockAddedEvent event) {
     final long blockNumber = event.getHeader().getNumber();
-    final long storedPruningMark = prunerStorage.getPruningMark().orElse(blockNumber);
-    final long storedBalPruningMark = prunerStorage.getBalPruningMark().orElse(blockNumber);
-    if (chainPruningEnabled && blockNumber < storedPruningMark) {
-      LOG.warn(
-          "Block added event: "
-              + event
-              + " has a block number of "
-              + blockNumber
-              + " < pruning mark "
-              + storedPruningMark
-              + " which normally indicates chain-pruning-blocks-retained is too small");
+    final long storedBlockPruningMark = prunerStorage.getPruningMark().orElse(0L);
+    final long storedBalPruningMark = prunerStorage.getBalPruningMark().orElse(0L);
+
+    validatePruningMarks(blockNumber, storedBlockPruningMark, storedBalPruningMark);
+    recordForkBlock(event, blockNumber);
+
+    if (!event.isNewCanonicalHead()) {
+      return;
     }
-    if (balPruningEnabled && blockNumber < storedBalPruningMark) {
-      LOG.warn(
-          "Block added event: "
-              + event
-              + " has a block number of "
-              + blockNumber
-              + " < BAL pruning mark "
-              + storedBalPruningMark
-              + " which normally indicates chain-pruning-bals-retained is too small");
-    }
-    final KeyValueStorageTransaction recordBlockHashesTransaction =
-        prunerStorage.startTransaction();
-    final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
-    forkBlocks.add(event.getHeader().getHash());
-    prunerStorage.setForkBlocks(recordBlockHashesTransaction, blockNumber, forkBlocks);
-    recordBlockHashesTransaction.commit();
 
     pruningExecutor.submit(
-        () -> {
-          final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
-          long currentPruningMark = storedPruningMark;
-          long currentBalPruningMark = storedBalPruningMark;
-          if (event.isNewCanonicalHead() && chainPruningEnabled) {
-            final long newPruningMark = blockNumber - blocksToRetain;
-            final long blocksToBePruned = newPruningMark - currentPruningMark;
-            if (blocksToBePruned >= pruningFrequency) {
-              long currentRetainedBlock = blockNumber - currentPruningMark + 1;
-              while (currentRetainedBlock > blocksToRetain) {
-                LOG.debug("Pruning chain data with block height of {}", currentPruningMark);
-                pruneChainDataAtBlock(pruningTransaction, currentPruningMark);
-                currentPruningMark++;
-                currentRetainedBlock = blockNumber - currentPruningMark;
-              }
-            }
-          }
-          if (event.isNewCanonicalHead() && balPruningEnabled) {
-            final long newBalPruningMark = blockNumber - balBlocksToRetain;
-            final long balBlocksToBePruned = newBalPruningMark - currentBalPruningMark;
-            if (balBlocksToBePruned >= balPruningFrequency) {
-              currentBalPruningMark = pruneBalDataAtBlock(currentBalPruningMark, newBalPruningMark);
-            }
-          }
-          prunerStorage.setPruningMark(pruningTransaction, currentPruningMark);
-          prunerStorage.setBalPruningMark(pruningTransaction, currentBalPruningMark);
-          pruningTransaction.commit();
-        });
+        () -> pruneChainAndBalData(blockNumber, storedBlockPruningMark, storedBalPruningMark));
+  }
+
+  private void validatePruningMarks(
+      final long blockNumber, final long storedPruningMark, final long storedBalPruningMark) {
+    if (config.isBlockPruningEnabled() && blockNumber < storedPruningMark) {
+      LOG.warn(
+          "Block number {} is less than pruning mark {} - chain-pruning-blocks-retained may be too small",
+          blockNumber,
+          storedPruningMark);
+    }
+    if (config.isBalPruningEnabled() && blockNumber < storedBalPruningMark) {
+      LOG.warn(
+          "Block number {} is less than BAL pruning mark {} - chain-pruning-bals-retained may be too small",
+          blockNumber,
+          storedBalPruningMark);
+    }
+  }
+
+  private void recordForkBlock(final BlockAddedEvent event, final long blockNumber) {
+    final KeyValueStorageTransaction tx = prunerStorage.startTransaction();
+    final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
+    forkBlocks.add(event.getHeader().getHash());
+    prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
+    tx.commit();
+  }
+
+  private void pruneChainAndBalData(
+      final long blockNumber, final long storedBlockPruningMark, final long storedBalPruningMark) {
+
+    final long blockPruningMark = blockNumber - config.chainPruningBlocksRetained();
+    final long balPruningMark = blockNumber - config.chainPruningBalsRetained();
+
+    final boolean shouldPruneBlock =
+        config.isBlockPruningEnabled() && shouldPrune(blockPruningMark, storedBlockPruningMark);
+    final boolean shouldPruneBal =
+        config.isBalPruningEnabled() && shouldPrune(balPruningMark, storedBalPruningMark);
+
+    if (!shouldPruneBlock && !shouldPruneBal) {
+      return;
+    }
+
+    final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    long currentChainMark = storedBlockPruningMark;
+    long currentBalMark = storedBalPruningMark;
+
+    // Determine iteration range
+    // When chain pruning is active, BAL is also active (mode ALL)
+    // When only BAL pruning is active (mode BAL), we prune from storedBalPruningMark to
+    // balPruningMark
+    final long startBlock = shouldPruneBlock ? storedBlockPruningMark : storedBalPruningMark;
+    final long endBlock = shouldPruneBlock ? blockPruningMark : balPruningMark;
+
+    for (long blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+      // In mode ALL: prune chain data up to blockPruningMark, BAL data up to balPruningMark
+      // In mode BAL: only prune BAL data up to balPruningMark
+      final boolean pruneChainAtBlock = shouldPruneBlock && blockNum <= blockPruningMark;
+      final boolean pruneBalAtBlock = shouldPruneBal && blockNum <= balPruningMark;
+
+      if (!pruneChainAtBlock && !pruneBalAtBlock) {
+        continue;
+      }
+
+      final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNum);
+
+      for (final Hash blockHash : forkBlocks) {
+        if (pruneChainAtBlock) {
+          LOG.debug("Pruning chain data at block {}", blockNum);
+          removeChainData(updater, blockHash);
+        }
+        if (pruneBalAtBlock) {
+          LOG.debug("Pruning BAL data at block {}", blockNum);
+          updater.removeBlockAccessList(blockHash);
+        }
+      }
+
+      if (pruneChainAtBlock) {
+        updater.removeBlockHash(blockNum);
+        prunerStorage.removeForkBlocks(pruningTransaction, blockNum);
+        currentChainMark = blockNum;
+      }
+
+      if (pruneBalAtBlock) {
+        currentBalMark = blockNum;
+      }
+    }
+
+    updater.commit();
+    prunerStorage.setPruningMark(pruningTransaction, currentChainMark);
+    prunerStorage.setBalPruningMark(pruningTransaction, currentBalMark);
+    pruningTransaction.commit();
+  }
+
+  private boolean shouldPrune(final long newMark, final long currentMark) {
+    return (newMark - currentMark) >= config.chainPruningFrequency();
+  }
+
+  private void removeChainData(final BlockchainStorage.Updater updater, final Hash blockHash) {
+    updater.removeBlockHeader(blockHash);
+    updater.removeBlockBody(blockHash);
+    updater.removeTransactionReceipts(blockHash);
+    updater.removeTotalDifficulty(blockHash);
+    removeTransactionLocations(updater, blockHash);
+  }
+
+  private void removeTransactionLocations(
+      final BlockchainStorage.Updater updater, final Hash blockHash) {
+    blockchainStorage
+        .getBlockBody(blockHash)
+        .ifPresent(
+            blockBody ->
+                blockBody
+                    .getTransactions()
+                    .forEach(t -> updater.removeTransactionLocation(t.getHash())));
   }
 
   private void preMergePruningAction() {
@@ -154,7 +205,7 @@ public class ChainDataPruner implements BlockAddedObserver {
             Thread.sleep(1000);
             final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
             final long expectedNewPruningMark =
-                Math.min(storedPruningMark + pruningQuantity, mergeBlock);
+                Math.min(storedPruningMark + config.preMergePruningBlocksQuantity(), mergeBlock);
             LOG.debug(
                 "Attempting to prune blocks {} to {}", storedPruningMark, expectedNewPruningMark);
             final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
@@ -195,45 +246,6 @@ public class ChainDataPruner implements BlockAddedObserver {
             throw new RuntimeException(e);
           }
         });
-  }
-
-  private void pruneChainDataAtBlock(final KeyValueStorageTransaction tx, final long blockNumber) {
-    final Collection<Hash> oldForkBlocks = prunerStorage.getForkBlocks(blockNumber);
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    for (final Hash toPrune : oldForkBlocks) {
-      updater.removeBlockHeader(toPrune);
-      updater.removeBlockBody(toPrune);
-      updater.removeTransactionReceipts(toPrune);
-      updater.removeTotalDifficulty(toPrune);
-      blockchainStorage
-          .getBlockBody(toPrune)
-          .ifPresent(
-              blockBody ->
-                  blockBody
-                      .getTransactions()
-                      .forEach(t -> updater.removeTransactionLocation(t.getHash())));
-    }
-    updater.removeBlockHash(blockNumber);
-    updater.commit();
-    prunerStorage.removeForkBlocks(tx, blockNumber);
-  }
-
-  private long pruneBalDataAtBlock(final long currentBalPruningMark, final long newBalPruningMark) {
-    if (newBalPruningMark < currentBalPruningMark) {
-      return currentBalPruningMark;
-    }
-    long updatedBalPruningMark = currentBalPruningMark;
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    while (updatedBalPruningMark <= newBalPruningMark) {
-      LOG.debug("Pruning block access list data with block height of {}", updatedBalPruningMark);
-      final Collection<Hash> oldForkBlocks = prunerStorage.getForkBlocks(updatedBalPruningMark);
-      for (final Hash toPrune : oldForkBlocks) {
-        updater.removeBlockAccessList(toPrune);
-      }
-      updatedBalPruningMark++;
-    }
-    updater.commit();
-    return updatedBalPruningMark;
   }
 
   public enum Mode {
