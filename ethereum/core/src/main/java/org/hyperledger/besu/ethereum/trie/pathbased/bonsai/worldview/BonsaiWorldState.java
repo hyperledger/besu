@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView.encodeTrieValue;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -40,11 +39,10 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.patricia.ParallelStoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +59,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 
+@SuppressWarnings("rawtypes")
 public class BonsaiWorldState extends PathBasedWorldState {
 
   protected BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
@@ -162,15 +161,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     maybeStateUpdater.ifPresent(
-        bonsaiUpdater ->
-            accountTrie.commit(
-                (location, hash, value) ->
-                    writeTrieNode(
-                        TRIE_BRANCH_STORAGE,
-                        bonsaiUpdater.getWorldStateTransaction(),
-                        location,
-                        value)));
-
+        bonsaiUpdater -> accountTrie.commit(bonsaiUpdater::putAccountStateTrieNode));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -268,17 +259,20 @@ public class BonsaiWorldState extends PathBasedWorldState {
         final Hash slotHash = storageUpdate.getKey().getSlotHash();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         try {
-          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
-            storageTrie.remove(slotHash.getBytes());
-          } else {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.putStorageValueBySlotHash(
-                        updatedAddressHash, slotHash, updatedStorage));
-            storageTrie.put(slotHash.getBytes(), encodeTrieValue(updatedStorage));
+
+          if (!storageUpdate.getValue().isUnchanged()) {
+            if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
+              storageTrie.remove(slotHash.getBytes());
+            } else {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.putStorageValueBySlotHash(
+                          updatedAddressHash, slotHash, updatedStorage));
+              storageTrie.put(slotHash.getBytes(), encodeTrieValue(updatedStorage));
+            }
           }
         } catch (MerkleTrieException e) {
           // need to throw to trigger the heal
@@ -292,9 +286,9 @@ public class BonsaiWorldState extends PathBasedWorldState {
         maybeStateUpdater.ifPresent(
             bonsaiUpdater ->
                 storageTrie.commit(
-                    (location, key, value) ->
+                    (location, nodeHash, value) ->
                         writeStorageTrieNode(
-                            bonsaiUpdater, updatedAddressHash, location, key, value)));
+                            bonsaiUpdater, updatedAddressHash, location, nodeHash, value)));
         // only use storage root of the trie when trie is enabled
         if (!worldStateConfig.isTrieDisabled()) {
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
@@ -395,14 +389,6 @@ public class BonsaiWorldState extends PathBasedWorldState {
     return getWorldStateStorage().getAccountStateTrieNode(location, nodeHash);
   }
 
-  private void writeTrieNode(
-      final SegmentIdentifier segmentId,
-      final SegmentedKeyValueStorageTransaction tx,
-      final Bytes location,
-      final Bytes value) {
-    tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
-  }
-
   protected Optional<Bytes> getStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return getWorldStateStorage().getAccountStorageTrieNode(accountHash, location, nodeHash);
@@ -468,10 +454,13 @@ public class BonsaiWorldState extends PathBasedWorldState {
   private MerkleTrie<Bytes, Bytes> createTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
     if (worldStateConfig.isTrieDisabled()) {
       return new NoOpMerkleTrie<>();
-    } else {
-      return new StoredMerklePatriciaTrie<>(
+    }
+    if (worldStateConfig.isParallelStateRootComputationEnabled()) {
+      return new ParallelStoredMerklePatriciaTrie<>(
           nodeLoader, rootHash, Function.identity(), Function.identity());
     }
+    return new StoredMerklePatriciaTrie<>(
+        nodeLoader, rootHash, Function.identity(), Function.identity());
   }
 
   protected Hash hashAndSavePreImage(final Bytes value) {
