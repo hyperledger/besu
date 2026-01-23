@@ -170,6 +170,7 @@ public class ChainDataPruner implements BlockAddedObserver {
     for (final Hash toPrune : oldForkBlocks) {
       updater.removeBlockHeader(toPrune);
       updater.removeBlockBody(toPrune);
+      updater.removeBlockAccessList(toPrune);
       updater.removeTransactionReceipts(toPrune);
       updater.removeTotalDifficulty(toPrune);
       blockchainStorage

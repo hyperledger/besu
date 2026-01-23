@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -158,6 +159,15 @@ public class RoundState {
   }
 
   /**
+   * Gets proposed block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getProposedBlockAccessList() {
+    return proposalMessage.flatMap(Proposal::getBlockAccessList);
+  }
+
+  /**
    * Is prepared.
    *
    * @return the boolean
@@ -199,7 +209,8 @@ public class RoundState {
               prepareMessages.values().stream()
                   .map(Prepare::getSignedPayload)
                   .collect(Collectors.toList()),
-              roundIdentifier.getRoundNumber()));
+              roundIdentifier.getRoundNumber(),
+              proposalMessage.get().getBlockAccessList()));
     }
     return Optional.empty();
   }

@@ -25,16 +25,19 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
+import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCreator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -197,12 +200,16 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     }
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-    final QbftBlock block = qbftRound.createBlock(headerTimeStampSeconds);
+    final QbftBlockCreator.BlockCreationResult blockCreationResult =
+        qbftRound.createBlock(headerTimeStampSeconds);
+    final QbftBlock block = blockCreationResult.block();
+    final Optional<BlockAccessList> blockAccessList = blockCreationResult.blockAccessList();
     if (!block.isEmpty()) {
       LOG.trace(
           "Block is not empty and this node is a proposer so it will send a proposal: "
               + roundIdentifier);
-      qbftRound.updateStateWithProposalAndTransmit(block);
+      qbftRound.updateStateWithProposalAndTransmit(
+          block, blockAccessList, Collections.emptyList(), Collections.emptyList());
     } else {
       // handle the block times period
       final long currentTimeInMillis = finalState.getClock().millis();
@@ -214,7 +221,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         LOG.trace(
             "Block has no transactions and this node is a proposer so it will send a proposal: "
                 + roundIdentifier);
-        qbftRound.updateStateWithProposalAndTransmit(block);
+        qbftRound.updateStateWithProposalAndTransmit(
+            block, blockAccessList, Collections.emptyList(), Collections.emptyList());
       } else {
         LOG.trace(
             "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: "
