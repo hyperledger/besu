@@ -8,7 +8,6 @@
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,7 +15,6 @@
 package org.hyperledger.besu.evm;
 
 import java.math.BigInteger;
-
 
 /**
  * 256-bits wide unsigned integer class.
@@ -42,12 +40,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   public static final UInt256 ZERO = new UInt256(0, 0, 0, 0);
 
   /** The constant All ones */
-  public static final UInt256 MAX = new UInt256(
-    0xFFFFFFFFFFFFFFFFL,
-    0xFFFFFFFFFFFFFFFFL,
-    0xFFFFFFFFFFFFFFFFL,
-    0xFFFFFFFFFFFFFFFFL
-  );
+  public static final UInt256 MAX =
+      new UInt256(
+          0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL);
 
   // --------------------------------------------------------------------------
   // endregion
@@ -78,10 +73,10 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
     if (bytes.length == 0) return ZERO;
-    long u3 =0;
-    long u2 =0;
-    long u1 =0;
-    long u0 =0;
+    long u3 = 0;
+    long u2 = 0;
+    long u1 = 0;
+    long u0 = 0;
     int b = bytes.length - 1; // Index in bytes array
     for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
       u0 |= ((bytes[b] & 0xFFL) << shift);
@@ -352,7 +347,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // region Arithmetic Operations
   // --------------------------------------------------------------------------
 
-  /** Compute the two-complement negative representation of this integer.
+  /**
+   * Compute the two-complement negative representation of this integer.
    *
    * @return The negative of this integer.
    */
@@ -368,7 +364,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new UInt256(z3, z2, z1, z0);
   }
 
-  /** Compute the absolute value for a two-complement negative representation of this integer.
+  /**
+   * Compute the absolute value for a two-complement negative representation of this integer.
    *
    * @return The absolute value of this integer.
    */
@@ -379,7 +376,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   /**
    * Unsigned modulo reduction.
    *
-   * Compute dividend (mod modulus) as unsigned big-endian integer.
+   * <p>Compute dividend (mod modulus) as unsigned big-endian integer.
    *
    * @param modulus The modulus of the reduction.
    * @return The remainder.
@@ -397,7 +394,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     if (cmp == 0) return ZERO;
     if (cmp < 0) return this;
 
-    if (isUint64()) return UInt256.fromLong(Long.remainderUnsigned(longValue(), modulus.longValue()));
+    if (isUint64())
+      return UInt256.fromLong(Long.remainderUnsigned(longValue(), modulus.longValue()));
     if (modulus.u3() != 0) return knuthRemainder4by4(modulus);
     if (modulus.u2() != 0) return knuthRemainder4by3(modulus);
     if (modulus.u1() != 0) return knuthRemainder4by2(modulus);
@@ -559,7 +557,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   //   return carryOut;
   // }
 
-  // private static long[] addMul(final long[] a, final int aOffset, final long[] b, final int bOffset) {
+  // private static long[] addMul(final long[] a, final int aOffset, final long[] b, final int
+  // bOffset) {
   //   // Shortest in outer loop, swap if needed
   //   long[] x;
   //   long[] y;
@@ -669,7 +668,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return v;
   }
 
-  //private static DivResult div2by1(final long x1, final long x0, final long y, final long yInv) {
+  // private static DivResult div2by1(final long x1, final long x0, final long y, final long yInv) {
   //  long z1 = x1;
   //  long z0 = x0;
 
@@ -693,7 +692,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   //    z0 -= y;
   //  }
   //  return new DivResult(q1, z0);
-  //}
+  // }
 
   private static long mod2by1(final long x1, final long x0, final long y, final long yInv) {
     long z1 = x1;
@@ -721,12 +720,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   private static Div2Result div3by2(
-      final long x2, final long x1, final long x0,
-      final long y1, final long y0, final long yInv) {
+      final long x2, final long x1, final long x0, final long y1, final long y0, final long yInv) {
     // <x2, x1, x0> divided by <y1, y0>.
     // Requires <x2, x1> < <y1, y0> otherwise quotient overflows.
     long overflow; // carry or borrow
-    long res;  // sum or diff
+    long res; // sum or diff
     long z2 = x2;
     long z1 = x1;
     long z0 = x0;

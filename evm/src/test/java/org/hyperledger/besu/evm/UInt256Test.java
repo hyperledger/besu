@@ -70,7 +70,7 @@ public class UInt256Test {
 
     input = new byte[] {0, 0, 1, 1, 1};
     result = UInt256.fromBytesBE(input);
-    expected= new UInt256(0, 0, 0, 1 + 256 + 65536);
+    expected = new UInt256(0, 0, 0, 1 + 256 + 65536);
     assertThat(result).as("3b-limbs").isEqualTo(expected);
 
     input = new byte[] {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1};
@@ -84,7 +84,7 @@ public class UInt256Test {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
     result = UInt256.fromBytesBE(input);
-    expected= new UInt256(72057594037927936L, 0, 0, 0);
+    expected = new UInt256(72057594037927936L, 0, 0, 0);
     assertThat(result).as("32b-limbs").isEqualTo(expected);
 
     input =
@@ -96,10 +96,11 @@ public class UInt256Test {
     expected = new UInt256(257, 0, 0, 0);
     assertThat(result).as("32b-padded-limbs").isEqualTo(expected);
 
-    Bytes inputBytes = Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
+    Bytes inputBytes =
+        Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
     input = inputBytes.toArrayUnsafe();
     result = UInt256.fromBytesBE(input);
-    expected= new UInt256(0, 4294967295L, -1L, -1L);
+    expected = new UInt256(0, 4294967295L, -1L, -1L);
     assertThat(result).as("32b-case2-limbs").isEqualTo(expected);
   }
 
@@ -329,8 +330,16 @@ public class UInt256Test {
 
   @Test
   public void ExecutionSpecStateTest_453() {
-    byte[] xArr = new byte[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2};
-    byte[] mArr = new byte[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    byte[] xArr =
+        new byte[] {
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -2
+        };
+    byte[] mArr =
+        new byte[] {
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+        };
     BigInteger xbig = new BigInteger(1, xArr);
     BigInteger ybig = new BigInteger(1, xArr);
     BigInteger mbig = new BigInteger(1, mArr);
@@ -373,9 +382,12 @@ public class UInt256Test {
 
   @Test
   public void mulMod_ExecutionSpecStateTest_457() {
-    Bytes value0 = Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
-    Bytes value1 = Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
-    Bytes value2 = Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
+    Bytes value0 =
+        Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
+    Bytes value1 =
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    Bytes value2 =
+        Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
     BigInteger aInt = new BigInteger(1, value0.toArrayUnsafe());
     BigInteger bInt = new BigInteger(1, value1.toArrayUnsafe());
     BigInteger cInt = new BigInteger(1, value2.toArrayUnsafe());
@@ -386,9 +398,12 @@ public class UInt256Test {
     Bytes32 expected = bigIntTo32B(aInt.multiply(bInt).mod(cInt));
     assertThat(remainder).isEqualTo(expected);
 
-    value0 = Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
-    value1 = Bytes.fromHexString("0xffffffffffffffffffffffffb195148ca348dc57a7331852b390ccefa7b0c18b");
-    value2 = Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    value0 =
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    value1 =
+        Bytes.fromHexString("0xffffffffffffffffffffffffb195148ca348dc57a7331852b390ccefa7b0c18b");
+    value2 =
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
     aInt = new BigInteger(1, value0.toArrayUnsafe());
     bInt = new BigInteger(1, value1.toArrayUnsafe());
     cInt = new BigInteger(1, value2.toArrayUnsafe());
