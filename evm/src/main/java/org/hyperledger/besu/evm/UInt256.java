@@ -8,6 +8,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ *
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -76,32 +77,25 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    return fromBytesBE(bytes, 0);
-  }
-
-  /**
-   * Instantiates a new UInt256 from byte array.
-   *
-   * @param bytes raw bytes in BigEndian order.
-   * @param offset to ignore leading bytes from array
-   * @return Big-endian UInt256 represented by the bytes.
-   */
-  public static UInt256 fromBytesBE(final byte[] bytes, final int offset) {
-    // precondition bytes.length <= 32;
-    long[] limbs = new long[N_LIMBS];
-    if (bytes.length == 0 || offset == -1 || offset >= bytes.length) return ZERO;
-    int i = N_LIMBS - 1; // Index in long array
+    if (bytes.length == 0) return ZERO;
+    long u3 =0;
+    long u2 =0;
+    long u1 =0;
+    long u0 =0;
     int b = bytes.length - 1; // Index in bytes array
-    long limb;
-    for (; b >= offset; i--) {
-      int shift = 0;
-      limb = 0;
-      for (int j = 0; j < 8 && b >= offset; j++, b--, shift += 8) {
-        limb |= ((bytes[b] & 0xFFL) << shift);
-      }
-      limbs[i] = limb;
+    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+      u0 |= ((bytes[b] & 0xFFL) << shift);
     }
-    return new UInt256(limbs[0], limbs[1], limbs[2], limbs[3]);
+    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+      u1 |= ((bytes[b] & 0xFFL) << shift);
+    }
+    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+      u2 |= ((bytes[b] & 0xFFL) << shift);
+    }
+    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+      u3 |= ((bytes[b] & 0xFFL) << shift);
+    }
+    return new UInt256(u3, u2, u1, u0);
   }
 
   /**
