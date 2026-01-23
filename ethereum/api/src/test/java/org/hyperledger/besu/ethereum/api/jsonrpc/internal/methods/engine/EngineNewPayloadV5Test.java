@@ -101,7 +101,7 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   }
 
   @Override
-  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterFutureEipsMilestone() {
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterAmsterdamMilestone() {
     final BlockHeader header =
         setupValidPayload(
             new BlockProcessingResult(
