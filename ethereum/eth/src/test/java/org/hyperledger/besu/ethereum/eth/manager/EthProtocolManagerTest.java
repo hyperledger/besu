@@ -1285,7 +1285,7 @@ public final class EthProtocolManagerTest {
       // Verify the regular message executor execute.
       verifyNoInteractions(worker);
       // Verify that the scheduled executor scheduled the BlockRangeBroadcaster task.
-      verify(scheduled).scheduleWithFixedDelay(any(), anyLong(), anyLong(), any());
+      verify(scheduled, times(2)).scheduleWithFixedDelay(any(), anyLong(), anyLong(), any());
       // Verify our transactions executor got something to execute.
       verify(transactions).execute(any());
     }

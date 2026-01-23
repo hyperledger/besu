@@ -240,7 +240,10 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
     peerTransactionTracker =
-        new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethContext.getEthPeers());
+        new PeerTransactionTracker(
+            TransactionPoolConfiguration.DEFAULT,
+            ethContext.getEthPeers(),
+            ethContext.getScheduler());
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(
