@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class BftCoinbaseValidationRuleTest {
@@ -45,7 +46,8 @@ public class BftCoinbaseValidationRuleTest {
   public void proposerInValidatorListPassesValidation() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress =
-        Address.extract(Hash.hash(proposerNodeKey.getPublicKey().getEncodedBytes()));
+        Address.extract(
+            Bytes32.wrap(Hash.hash(proposerNodeKey.getPublicKey().getEncodedBytes()).getBytes()));
 
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
@@ -67,7 +69,9 @@ public class BftCoinbaseValidationRuleTest {
 
     final NodeKey otherValidatorNodeKey = NodeKeyUtils.generate();
     final Address otherValidatorNodeAddress =
-        Address.extract(Hash.hash(otherValidatorNodeKey.getPublicKey().getEncodedBytes()));
+        Address.extract(
+            Bytes32.wrap(
+                Hash.hash(otherValidatorNodeKey.getPublicKey().getEncodedBytes()).getBytes()));
 
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 

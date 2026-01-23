@@ -49,7 +49,7 @@ public final class ChainHead {
   }
 
   public String toLogString() {
-    return getHeight() + " (" + getHash().toHexString() + ")";
+    return getHeight() + " (" + getHash().getBytes().toHexString() + ")";
   }
 
   public BlockHeader getBlockHeader() {

@@ -119,7 +119,7 @@ public class TransactionReceiptEncoder {
     writeStatusOrStateRoot(receipt, rlpOutput);
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
     if (options.isWithBloomFilter()) {
-      rlpOutput.writeBytes(receipt.getBloomFilter());
+      rlpOutput.writeBytes(receipt.getBloomFilter().getBytes());
     }
     writeLogs(receipt, rlpOutput, options);
     // EIP-7778: Write gasSpent if present (Amsterdam+ receipts)
@@ -160,7 +160,7 @@ public class TransactionReceiptEncoder {
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
     if (receipt.getStateRoot() != null) {
-      output.writeBytes(receipt.getStateRoot());
+      output.writeBytes(receipt.getStateRoot().getBytes());
     } else {
       output.writeLongScalar(receipt.getStatus());
     }

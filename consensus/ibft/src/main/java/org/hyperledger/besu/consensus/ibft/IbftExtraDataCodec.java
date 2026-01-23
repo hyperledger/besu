@@ -110,7 +110,8 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(bftExtraData.getVanityData());
-    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(
+        bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
     if (bftExtraData.getVote().isPresent()) {
       encodeVote(encoder, bftExtraData.getVote().get());
     } else {
@@ -132,7 +133,7 @@ public class IbftExtraDataCodec extends BftExtraDataCodec {
   private void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
     final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
     rlpOutput.startList();
-    rlpOutput.writeBytes(vote.getRecipient());
+    rlpOutput.writeBytes(vote.getRecipient().getBytes());
     rlpOutput.writeByte(voteToValue.get(voteType));
     rlpOutput.endList();
   }

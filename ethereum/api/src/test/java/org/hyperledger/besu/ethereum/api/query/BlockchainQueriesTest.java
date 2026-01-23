@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,6 +35,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -48,7 +52,6 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 public class BlockchainQueriesTest {
   private BlockDataGenerator gen;
@@ -338,8 +341,7 @@ public class BlockchainQueriesTest {
     final Block targetBlock = data.blockData.get(1).block;
 
     final Optional<List<TransactionReceiptWithMetadata>> receipts =
-        queries.transactionReceiptsByBlockHash(
-            targetBlock.getHash(), Mockito.mock(ProtocolSchedule.class));
+        queries.transactionReceiptsByBlockHash(targetBlock.getHash(), mock(ProtocolSchedule.class));
     assertThat(receipts).isNotEmpty();
 
     receipts
@@ -361,7 +363,7 @@ public class BlockchainQueriesTest {
     final BlockchainQueries queries = data.blockchainQueries;
 
     final Optional<List<TransactionReceiptWithMetadata>> result =
-        queries.transactionReceiptsByBlockHash(gen.hash(), Mockito.mock(ProtocolSchedule.class));
+        queries.transactionReceiptsByBlockHash(gen.hash(), mock(ProtocolSchedule.class));
     assertThat(result).isEmpty();
   }
 
@@ -545,6 +547,133 @@ public class BlockchainQueriesTest {
   @Test
   public void getGasPriceLowerBound() {}
 
+  @Test
+  public void isBlockAccessListSupportedShouldReturnTrueWhenForkIsActivated() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockHeader header = data.blockData.get(1).block.getHeader();
+
+    // Mock the protocol schedule to return a protocol spec with block access list factory
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = mock(BlockAccessListFactory.class);
+
+    when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
+    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
+    when(blockAccessListFactory.isForkActivated()).thenReturn(true);
+
+    final BlockchainQueries queriesWithMockedSchedule =
+        new BlockchainQueries(
+            protocolSchedule,
+            data.blockchain,
+            data.worldStateArchive,
+            scheduler,
+            MiningConfiguration.newDefault());
+
+    final boolean result = queriesWithMockedSchedule.isBlockAccessListSupported(header);
+
+    assertThat(result).isTrue();
+  }
+
+  @Test
+  public void isBlockAccessListSupportedShouldReturnFalseWhenForkIsNotActivated() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockHeader header = data.blockData.get(1).block.getHeader();
+
+    // Mock the protocol schedule to return a protocol spec with block access list factory
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = mock(BlockAccessListFactory.class);
+
+    when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
+    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
+    when(blockAccessListFactory.isForkActivated()).thenReturn(false);
+
+    final BlockchainQueries queriesWithMockedSchedule =
+        new BlockchainQueries(
+            protocolSchedule,
+            data.blockchain,
+            data.worldStateArchive,
+            scheduler,
+            MiningConfiguration.newDefault());
+
+    final boolean result = queriesWithMockedSchedule.isBlockAccessListSupported(header);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  public void isBlockAccessListSupportedShouldReturnFalseWhenFactoryIsNotPresent() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockHeader header = data.blockData.get(1).block.getHeader();
+
+    // Mock the protocol schedule to return a protocol spec without block access list factory
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
+    when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
+    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.empty());
+
+    final BlockchainQueries queriesWithMockedSchedule =
+        new BlockchainQueries(
+            protocolSchedule,
+            data.blockchain,
+            data.worldStateArchive,
+            scheduler,
+            MiningConfiguration.newDefault());
+
+    final boolean result = queriesWithMockedSchedule.isBlockAccessListSupported(header);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  public void isBlockAccessListSupportedShouldWorkForDifferentBlockHeaders() {
+    final BlockchainWithData data = setupBlockchain(5);
+
+    // Mock the protocol schedule
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec preAmsterdamSpec = mock(ProtocolSpec.class);
+    final ProtocolSpec postAmsterdamSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = mock(BlockAccessListFactory.class);
+
+    // First 3 blocks don't support block access list
+    final BlockHeader header0 = data.blockData.get(0).block.getHeader();
+    final BlockHeader header1 = data.blockData.get(1).block.getHeader();
+    final BlockHeader header2 = data.blockData.get(2).block.getHeader();
+
+    when(protocolSchedule.getByBlockHeader(header0)).thenReturn(preAmsterdamSpec);
+    when(protocolSchedule.getByBlockHeader(header1)).thenReturn(preAmsterdamSpec);
+    when(protocolSchedule.getByBlockHeader(header2)).thenReturn(preAmsterdamSpec);
+    when(preAmsterdamSpec.getBlockAccessListFactory()).thenReturn(Optional.empty());
+
+    // Last 2 blocks support block access list
+    final BlockHeader header3 = data.blockData.get(3).block.getHeader();
+    final BlockHeader header4 = data.blockData.get(4).block.getHeader();
+
+    when(protocolSchedule.getByBlockHeader(header3)).thenReturn(postAmsterdamSpec);
+    when(protocolSchedule.getByBlockHeader(header4)).thenReturn(postAmsterdamSpec);
+    when(postAmsterdamSpec.getBlockAccessListFactory())
+        .thenReturn(Optional.of(blockAccessListFactory));
+    when(blockAccessListFactory.isForkActivated()).thenReturn(true);
+
+    final BlockchainQueries queriesWithMockedSchedule =
+        new BlockchainQueries(
+            protocolSchedule,
+            data.blockchain,
+            data.worldStateArchive,
+            scheduler,
+            MiningConfiguration.newDefault());
+
+    // Test pre-Amsterdam blocks
+    assertThat(queriesWithMockedSchedule.isBlockAccessListSupported(header0)).isFalse();
+    assertThat(queriesWithMockedSchedule.isBlockAccessListSupported(header1)).isFalse();
+    assertThat(queriesWithMockedSchedule.isBlockAccessListSupported(header2)).isFalse();
+
+    // Test post-Amsterdam blocks
+    assertThat(queriesWithMockedSchedule.isBlockAccessListSupported(header3)).isTrue();
+    assertThat(queriesWithMockedSchedule.isBlockAccessListSupported(header4)).isTrue();
+  }
+
   private void assertBlockMatchesResult(
       final Block targetBlock, final BlockWithMetadata<TransactionWithMetadata, Hash> result) {
     assertThat(result.getHeader()).isEqualTo(targetBlock.getHeader());
@@ -630,7 +759,7 @@ public class BlockchainQueriesTest {
       this.worldStateArchive = worldStateArchive;
       this.blockchainQueries =
           new BlockchainQueries(
-              Mockito.mock(ProtocolSchedule.class),
+              mock(ProtocolSchedule.class),
               blockchain,
               worldStateArchive,
               scheduler,

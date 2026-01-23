@@ -47,11 +47,11 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
           onBonsai.putAccountStorageTrieNode(
               accountHash.orElse(Hash.EMPTY),
               getLocation().orElse(Bytes.EMPTY),
-              getHash(),
+              Bytes32.wrap(getHash().getBytes()),
               getData());
         },
         onForest -> {
-          onForest.putAccountStorageTrieNode(getHash(), getData());
+          onForest.putAccountStorageTrieNode(Bytes32.wrap(getHash().getBytes()), getData());
         });
   }
 
@@ -65,7 +65,8 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
                     .flatMap(
                         location ->
                             worldStateStorageCoordinator
-                                .getAccountStorageTrieNode(accountHash, location, getHash())
+                                .getAccountStorageTrieNode(
+                                    accountHash, location, Bytes32.wrap(getHash().getBytes()))
                                 .filter(data -> Hash.hash(data).equals(getHash()))));
   }
 
@@ -104,8 +105,8 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   protected void writeTo(final RLPOutput out) {
     out.startList();
     out.writeByte(getRequestType().getValue());
-    out.writeBytes(getHash());
-    getAccountHash().ifPresent(out::writeBytes);
+    out.writeBytes(getHash().getBytes());
+    getAccountHash().ifPresent(hash -> out.writeBytes(hash.getBytes()));
     getLocation().ifPresent(out::writeBytes);
     out.endList();
   }
