@@ -146,7 +146,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
-    return processBlock(protocolContext, blockchain, worldState, block, new NoPreprocessing());
+    return processBlock(
+        protocolContext, blockchain, worldState, block, Optional.empty(), new NoPreprocessing());
   }
 
   @Override
@@ -155,6 +156,34 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block,
+      final PreprocessingFunction preprocessingBlockFunction) {
+    return processBlock(
+        protocolContext,
+        blockchain,
+        worldState,
+        block,
+        Optional.empty(),
+        preprocessingBlockFunction);
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList) {
+    return processBlock(
+        protocolContext, blockchain, worldState, block, blockAccessList, new NoPreprocessing());
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -181,17 +210,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<BlockAccessListFactory> maybeBalFactory =
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
-    final Optional<BlockAccessList> maybeBlockBal = blockBody.getBlockAccessList();
-    if (maybeBalFactory.isPresent() && maybeBlockBal.isEmpty()) {
-      final String errorMessage = "BALs enabled but BAL not found in block body";
-      LOG.error(errorMessage);
-      return new BlockProcessingResult(Optional.empty(), errorMessage);
-    }
-
     final StateRootCommitter stateRootCommitter =
         protocolSpec
             .getStateRootCommitterFactory()
-            .forBlock(protocolContext, blockHeader, maybeBlockBal);
+            .forBlock(protocolContext, blockHeader, blockAccessList);
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
@@ -234,7 +256,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              maybeBlockBal);
+              blockAccessList);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -421,13 +443,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               if (balConfiguration.shouldLogBalsOnMismatch()) {
                 final String constructedBalStr = bal.toString();
                 final String blockBalStr =
-                    blockBody
-                        .getBlockAccessList()
-                        .map(Object::toString)
-                        .orElse("<no BAL present in block body>");
+                    blockAccessList.map(Object::toString).orElse("<no BAL present for block>");
                 LOG.error(
                     "--- BAL constructed during execution ---\n{}\n"
-                        + "--- BAL from block body ---\n{}",
+                        + "--- BAL supplied for block ---\n{}",
                     constructedBalStr,
                     blockBalStr);
               }
