@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -65,28 +66,32 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final Optional<Long> maxLayersToLoad,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final ServiceManager pluginContext) {
     this(
         worldStateKeyValueStorage,
         blockchain,
+        pathBasedExtraStorageConfiguration,
         new TrieLogManager(
             blockchain,
             worldStateKeyValueStorage,
-            maxLayersToLoad.orElse(PathBasedCachedWorldStorageManager.RETAINED_LAYERS),
+            pathBasedExtraStorageConfiguration.getMaxLayersToLoad(),
             pluginContext));
   }
 
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final TrieLogManager trieLogManager) {
-
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateConfig = WorldStateConfig.newBuilder().build();
-    ;
+    this.worldStateConfig =
+        WorldStateConfig.newBuilder()
+            .parallelStateRootComputationEnabled(
+                pathBasedExtraStorageConfiguration.getParallelStateRootComputationEnabled())
+            .build();
   }
 
   protected void provideCachedWorldStorageManager(

@@ -27,9 +27,16 @@ public class WorldStateConfig {
   /** Indicates whether the mode is stateful. Default is true. */
   private boolean isStateful;
 
+  /**
+   * Indicates whether parallel processing is enabled for state root calculation. When enabled, the
+   * trie operations during root hash computation are parallelized. Default is true
+   */
+  private boolean isParallelStateRootComputationEnabled;
+
   private WorldStateConfig(final Builder builder) {
     this.isTrieDisabled = builder.isTrieDisabled;
     this.isStateful = builder.isStateful;
+    this.isParallelStateRootComputationEnabled = builder.isParallelStateRootComputationEnabled;
   }
 
   public boolean isTrieDisabled() {
@@ -40,12 +47,21 @@ public class WorldStateConfig {
     return isStateful;
   }
 
+  public boolean isParallelStateRootComputationEnabled() {
+    return isParallelStateRootComputationEnabled;
+  }
+
   public void setTrieDisabled(final boolean trieDisabled) {
     isTrieDisabled = trieDisabled;
   }
 
   public void setStateful(final boolean stateful) {
     isStateful = stateful;
+  }
+
+  public void setParallelStateRootComputationEnabled(
+      final boolean parallelStateRootComputationEnabled) {
+    isParallelStateRootComputationEnabled = parallelStateRootComputationEnabled;
   }
 
   /**
@@ -55,7 +71,11 @@ public class WorldStateConfig {
    * @return a new WorldStateConfig instance with merged values
    */
   public WorldStateConfig apply(final WorldStateConfig other) {
-    return new Builder(this).trieDisabled(other.isTrieDisabled).stateful(other.isStateful).build();
+    return new Builder(this)
+        .trieDisabled(other.isTrieDisabled)
+        .stateful(other.isStateful)
+        .parallelStateRootComputationEnabled(other.isParallelStateRootComputationEnabled)
+        .build();
   }
 
   public static Builder newBuilder() {
@@ -67,18 +87,24 @@ public class WorldStateConfig {
   }
 
   public static WorldStateConfig createStatefulConfigWithTrie() {
-    return newBuilder().stateful(true).trieDisabled(false).build();
+    return newBuilder()
+        .stateful(true)
+        .parallelStateRootComputationEnabled(true)
+        .trieDisabled(false)
+        .build();
   }
 
   public static class Builder {
     private boolean isStateful = true;
     private boolean isTrieDisabled = false;
+    private boolean isParallelStateRootComputationEnabled = true;
 
     public Builder() {}
 
     public Builder(final WorldStateConfig spec) {
       this.isTrieDisabled = spec.isTrieDisabled();
       this.isStateful = spec.isStateful();
+      this.isParallelStateRootComputationEnabled = spec.isParallelStateRootComputationEnabled();
     }
 
     public Builder trieDisabled(final boolean trieDisabled) {
@@ -88,6 +114,12 @@ public class WorldStateConfig {
 
     public Builder stateful(final boolean stateful) {
       this.isStateful = stateful;
+      return this;
+    }
+
+    public Builder parallelStateRootComputationEnabled(
+        final boolean parallelStateRootComputationEnabled) {
+      this.isParallelStateRootComputationEnabled = parallelStateRootComputationEnabled;
       return this;
     }
 
