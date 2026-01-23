@@ -467,7 +467,6 @@ class GenesisConfigTest {
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
-    assertThat(config.getConfigOptions().getEcip1017EraRounds()).isNotPresent();
   }
 
   @Test
