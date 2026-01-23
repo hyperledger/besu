@@ -208,8 +208,8 @@ public class SnapServerGetAccountRangeTest {
     testAccountRangeRequest(
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
-            .startHash(Hash.ZERO)
-            .limitHash(Hash.ZERO)
+            .startHash(Bytes32.wrap(Hash.ZERO.getBytes()))
+            .limitHash(Bytes32.wrap(Hash.ZERO.getBytes()))
             .expectedAccounts(1)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(firstAccount)
@@ -309,8 +309,8 @@ public class SnapServerGetAccountRangeTest {
     testAccountRangeRequest(
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
-            .startHash(Hash.LAST)
-            .limitHash(Hash.ZERO)
+            .startHash(Bytes32.wrap(Hash.LAST.getBytes()))
+            .limitHash(Bytes32.wrap(Hash.ZERO.getBytes()))
             .expectedAccounts(0)
             .build());
   }
@@ -343,7 +343,7 @@ public class SnapServerGetAccountRangeTest {
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
             .startHash(firstAccount)
-            .limitHash(Hash.ZERO)
+            .limitHash(Bytes32.wrap(Hash.ZERO.getBytes()))
             .expectedAccounts(1)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(firstAccount)
@@ -381,7 +381,11 @@ public class SnapServerGetAccountRangeTest {
   private void initAccounts() {
     rootHash = protocolContext.getWorldStateArchive().getWorldState().rootHash();
     GetAccountRangeMessage requestMessage =
-        GetAccountRangeMessage.create(rootHash, Hash.ZERO, Hash.LAST, BigInteger.valueOf(4000));
+        GetAccountRangeMessage.create(
+            rootHash,
+            Bytes32.wrap(Hash.ZERO.getBytes()),
+            Bytes32.wrap(Hash.LAST.getBytes()),
+            BigInteger.valueOf(4000));
     AccountRangeMessage resultMessage =
         AccountRangeMessage.readFrom(
             snapServer.constructGetAccountRangeResponse(
@@ -393,7 +397,7 @@ public class SnapServerGetAccountRangeTest {
   }
 
   private Bytes32 hashAdd(final Bytes32 hash, final int value) {
-    var result = Hash.wrap(hash).toBigInteger().add(BigInteger.valueOf(value));
+    var result = Hash.wrap(hash).getBytes().toBigInteger().add(BigInteger.valueOf(value));
     Bytes resultBytes = Bytes.wrap(result.toByteArray());
     return Bytes32.leftPad(resultBytes);
   }
@@ -420,7 +424,7 @@ public class SnapServerGetAccountRangeTest {
     public static class Builder {
       private Hash rootHash = null;
       private Bytes32 startHash = Bytes32.ZERO;
-      private Bytes32 limitHash = Hash.LAST;
+      private Bytes32 limitHash = Bytes32.wrap(Hash.LAST.getBytes());
       private int responseBytes = Integer.MAX_VALUE;
       private int expectedAccounts = 0;
       private Bytes32 expectedFirstAccount = null;

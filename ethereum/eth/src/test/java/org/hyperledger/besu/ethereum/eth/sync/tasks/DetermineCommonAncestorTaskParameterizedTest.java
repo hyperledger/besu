@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -54,15 +53,17 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
-public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
+public class DetermineCommonAncestorTaskParameterizedTest {
   private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.TESTING_NETWORK;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -97,12 +98,20 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
     peerTaskExecutor = mock(PeerTaskExecutor.class);
   }
 
-  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}, isPeerTaskSystemEnabled={2}")
+  public static Stream<Arguments> parameters() {
+    final int[] requestSizes = {5, 12, chainHeight, chainHeight * 2};
+    final Stream.Builder<Arguments> builder = Stream.builder();
+    for (final int requestSize : requestSizes) {
+      for (int i = 0; i <= chainHeight; i++) {
+        builder.add(Arguments.of(requestSize, i));
+      }
+    }
+    return builder.build();
+  }
+
+  @ParameterizedTest(name = "requestSize={0}, commonAncestor={1}")
   @MethodSource("parameters")
-  public void searchesAgainstNetwork(
-      final int headerRequestSize,
-      final int commonAncestorHeight,
-      final boolean isPeerTaskSystemEnabled) {
+  public void searchesAgainstNetwork(final int headerRequestSize, final int commonAncestorHeight) {
     BlockHeader commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {
       commonHeader = localBlockchain.getBlockHeader(i).get();
@@ -165,9 +174,6 @@ public abstract class AbstractDetermineCommonAncestorTaskParameterizedTest {
             ethContext,
             respondingEthPeer.getEthPeer(),
             headerRequestSize,
-            SynchronizerConfiguration.builder()
-                .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
-                .build(),
             metricsSystem);
 
     when(peerTaskExecutor.executeAgainstPeer(

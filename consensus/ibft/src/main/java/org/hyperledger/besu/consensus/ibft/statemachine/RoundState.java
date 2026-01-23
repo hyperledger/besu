@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -148,6 +149,15 @@ public class RoundState {
    */
   public Optional<Block> getProposedBlock() {
     return proposalMessage.map(Proposal::getBlock);
+  }
+
+  /**
+   * Gets proposed block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getProposedBlockAccessList() {
+    return proposalMessage.flatMap(Proposal::getBlockAccessList);
   }
 
   /**

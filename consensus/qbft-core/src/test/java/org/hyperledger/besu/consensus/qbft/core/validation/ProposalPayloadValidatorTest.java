@@ -71,9 +71,10 @@ public class ProposalPayloadValidatorTest {
         new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
-        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.empty(), emptyList(), emptyList());
 
-    when(blockValidator.validateBlock(eq(block)))
+    when(blockValidator.validateBlock(eq(block), eq(Optional.empty())))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -88,9 +89,10 @@ public class ProposalPayloadValidatorTest {
         new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
-        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.empty(), emptyList(), emptyList());
 
-    when(blockValidator.validateBlock(eq(block)))
+    when(blockValidator.validateBlock(eq(block), eq(Optional.empty())))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -107,9 +109,10 @@ public class ProposalPayloadValidatorTest {
         new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
-        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.empty(), emptyList(), emptyList());
 
-    when(blockValidator.validateBlock(eq(block)))
+    when(blockValidator.validateBlock(eq(block), eq(Optional.empty())))
         .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -123,7 +126,8 @@ public class ProposalPayloadValidatorTest {
         new QbftBlockHeaderTestFixture().number(roundIdentifier.getSequenceNumber()).buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
-        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.empty(), emptyList(), emptyList());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
     verifyNoMoreInteractions(blockValidator);
@@ -141,6 +145,7 @@ public class ProposalPayloadValidatorTest {
         messageFactory.createProposal(
             ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
             block,
+            Optional.empty(),
             emptyList(),
             emptyList());
 
@@ -160,6 +165,7 @@ public class ProposalPayloadValidatorTest {
         messageFactory.createProposal(
             ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0),
             block,
+            Optional.empty(),
             emptyList(),
             emptyList());
 
@@ -177,9 +183,10 @@ public class ProposalPayloadValidatorTest {
             .buildHeader();
     final QbftBlock block = new QbftBlockTestFixture().blockHeader(header).build();
     final Proposal proposal =
-        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.empty(), emptyList(), emptyList());
 
-    when(blockValidator.validateBlock(eq(block)))
+    when(blockValidator.validateBlock(eq(block), eq(Optional.empty())))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();

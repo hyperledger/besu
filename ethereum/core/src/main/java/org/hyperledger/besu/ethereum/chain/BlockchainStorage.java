@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,6 +40,8 @@ public interface BlockchainStorage {
 
   Optional<BlockBody> getBlockBody(Hash blockHash);
 
+  Optional<BlockAccessList> getBlockAccessList(Hash blockHash);
+
   Optional<List<TransactionReceipt>> getTransactionReceipts(Hash blockHash);
 
   Optional<Hash> getBlockHash(long blockNumber);
@@ -56,6 +59,8 @@ public interface BlockchainStorage {
     void putBlockBody(Hash blockHash, BlockBody blockBody);
 
     void putSyncBlockBody(Hash blockHash, SyncBlockBody blockBody);
+
+    void putBlockAccessList(Hash blockHash, BlockAccessList blockAccessList);
 
     void putTransactionLocation(Hash transactionHash, TransactionLocation transactionLocation);
 
@@ -78,6 +83,8 @@ public interface BlockchainStorage {
     void removeBlockHeader(final Hash blockHash);
 
     void removeBlockBody(final Hash blockHash);
+
+    void removeBlockAccessList(final Hash blockHash);
 
     void removeTransactionReceipts(final Hash blockHash);
 

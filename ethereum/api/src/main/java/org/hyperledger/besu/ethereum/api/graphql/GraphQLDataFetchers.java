@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import graphql.GraphQLContext;
@@ -133,7 +132,7 @@ public class GraphQLDataFetchers {
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
-          return Optional.of(transaction.getHash());
+          return Optional.of(Bytes32.wrap(transaction.getHash().getBytes()));
         } else {
           throw new GraphQLException(GraphQLError.of(validationResult.getInvalidReason()));
         }
@@ -262,7 +261,7 @@ public class GraphQLDataFetchers {
       final BlockchainQueries blockchain =
           dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
       final Long number = dataFetchingEnvironment.getArgument("number");
-      final Bytes32 hash = dataFetchingEnvironment.getArgument("hash");
+      final Hash hash = dataFetchingEnvironment.getArgument("hash");
       if ((number != null) && (hash != null)) {
         throw new GraphQLException(GraphQLError.INVALID_PARAMS);
       }
@@ -272,7 +271,7 @@ public class GraphQLDataFetchers {
         block = blockchain.blockByNumber(number);
         checkArgument(block.isPresent(), "Block number %s was not found", number);
       } else if (hash != null) {
-        block = blockchain.blockByHash(Hash.wrap(hash));
+        block = blockchain.blockByHash(hash);
         Preconditions.checkArgument(block.isPresent(), "Block hash %s was not found", hash);
       } else {
         block = blockchain.latestBlock();
@@ -310,7 +309,7 @@ public class GraphQLDataFetchers {
                 });
       } else {
         // return account on latest block
-        final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
+        final long latestBn = blockchainQuery.latestBlock().orElseThrow().getHeader().getNumber();
         return blockchainQuery.getAndMapWorldState(
             latestBn,
             ws -> {
@@ -342,14 +341,14 @@ public class GraphQLDataFetchers {
       @SuppressWarnings("unchecked")
       final List<Address> addrs = (List<Address>) filter.get("addresses");
       @SuppressWarnings("unchecked")
-      final List<List<Bytes32>> topics = (List<List<Bytes32>>) filter.get("topics");
+      final List<List<LogTopic>> topics = (List<List<LogTopic>>) filter.get("topics");
 
       final List<List<LogTopic>> transformedTopics = new ArrayList<>();
-      for (final List<Bytes32> topic : topics) {
+      for (final List<LogTopic> topic : topics) {
         if (topic.isEmpty()) {
           transformedTopics.add(Collections.singletonList(null));
         } else {
-          transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
+          transformedTopics.add(topic);
         }
       }
 
@@ -374,8 +373,8 @@ public class GraphQLDataFetchers {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchain =
           dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-      final Bytes32 hash = dataFetchingEnvironment.getArgument("hash");
-      final Optional<TransactionWithMetadata> tran = blockchain.transactionByHash(Hash.wrap(hash));
+      final Hash hash = dataFetchingEnvironment.getArgument("hash");
+      final Optional<TransactionWithMetadata> tran = blockchain.transactionByHash(hash);
       return tran.map(this::getTransactionAdapter);
     };
   }

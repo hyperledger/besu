@@ -33,6 +33,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -86,8 +88,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -344,8 +344,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             Optional.empty(),
             System.currentTimeMillis(),
             miningOn.parentHeader);
-    final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getBlock().getBody().getBlockAccessList();
+    final Optional<BlockAccessList> maybeBlockAccessList = blockCreationResult.getBlockAccessList();
     assertThat(maybeBlockAccessList).isNotEmpty();
     final BlockAccessList blockAccessList = maybeBlockAccessList.get();
     final List<AccountChanges> accountChanges = blockAccessList.accountChanges();
@@ -392,8 +391,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             Optional.empty(),
             System.currentTimeMillis(),
             miningOn.parentHeader);
-    final Optional<BlockAccessList> maybeBlockAccessList =
-        blockCreationResult.getBlock().getBody().getBlockAccessList();
+    final Optional<BlockAccessList> maybeBlockAccessList = blockCreationResult.getBlockAccessList();
     assertThat(maybeBlockAccessList).isEmpty();
   }
 
