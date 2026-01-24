@@ -69,13 +69,14 @@ public class RewardTraceGenerator {
                   .author(
                       miningBeneficiaryCalculator
                           .calculateBeneficiary(ommerBlockHeader)
+                          .getBytes()
                           .toHexString())
                   .rewardType(UNCLE_LABEL)
                   .value(ommerReward.toShortHexString());
           flatTraces.add(
               RewardTrace.builder()
                   .actionBuilder(uncleActionBuilder)
-                  .blockHash(block.getHash().toHexString())
+                  .blockHash(block.getHash().getBytes().toHexString())
                   .blockNumber(blockHeader.getNumber())
                   .type(REWARD_LABEL)
                   .build());
@@ -84,14 +85,18 @@ public class RewardTraceGenerator {
     // add block reward trace
     final Action.Builder blockActionBuilder =
         Action.builder()
-            .author(miningBeneficiaryCalculator.calculateBeneficiary(blockHeader).toHexString())
+            .author(
+                miningBeneficiaryCalculator
+                    .calculateBeneficiary(blockHeader)
+                    .getBytes()
+                    .toHexString())
             .rewardType(BLOCK_LABEL)
             .value(coinbaseReward.toShortHexString());
     flatTraces.add(
         0,
         RewardTrace.builder()
             .actionBuilder(blockActionBuilder)
-            .blockHash(block.getHash().toHexString())
+            .blockHash(block.getHash().getBytes().toHexString())
             .blockNumber(blockHeader.getNumber())
             .type(REWARD_LABEL)
             .build());

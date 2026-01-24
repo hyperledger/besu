@@ -1,0 +1,46 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.vm.operations;
+
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
+
+/** JMH benchmark for the SWAPN operation (EIP-8024). */
+public class SwapNOperationBenchmark extends ImmediateByteOperationBenchmark {
+
+  @Override
+  protected int getOpcode() {
+    return SwapNOperation.OPCODE;
+  }
+
+  @Override
+  protected byte getImmediate() {
+    // Immediate 0x00 decodes to n=17 (swap top with 18th stack item)
+    return 0x00;
+  }
+
+  @Override
+  protected Operation.OperationResult invoke(
+      final MessageFrame frame, final byte[] code, final int pc) {
+    return SwapNOperation.staticOperation(frame, code, pc);
+  }
+
+  @Override
+  protected int getStackDelta() {
+    // SWAPN does not change stack size
+    return 0;
+  }
+}

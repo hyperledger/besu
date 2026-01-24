@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
@@ -334,10 +334,10 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("d", spec.getDataIndex());
         summaryLine.put("g", spec.getGasIndex());
         summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("stateRoot", worldState.rootHash().toHexString());
+        summaryLine.put("stateRoot", worldState.rootHash().getBytes().toHexString());
         final List<Log> logs = result.getLogs();
         final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-        summaryLine.put("postLogsHash", actualLogsHash.toHexString());
+        summaryLine.put("postLogsHash", actualLogsHash.getBytes().toHexString());
         summaryLine.put(
             "pass",
             spec.getExpectException() == null

@@ -1325,7 +1325,7 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   tasks = [
     'clean',
     'compileJava',
-    'installDist'
+    'distZip'
   ]
 
   startParameter.projectProperties = [
@@ -1337,6 +1337,22 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   }
 }
 
+tasks.register('buildDetachedOutdatedTestPlugins', GradleBuild) {
+  group = 'build'
+  dependsOn 'prepareDetachedTestPlugins'
+
+  dir = file('acceptance-tests/detached-outdated-test-plugins')
+  tasks = [
+    'clean',
+    'compileJava',
+    'distZip'
+  ]
+
+  doFirst {
+    println "Building detached-outdated-test-plugins project"
+  }
+}
+
 tasks.register('printVersion') {
   group = 'help'
   description = 'Prints the calculated version'
@@ -1344,7 +1360,6 @@ tasks.register('printVersion') {
     println "Besu version: " + calculateVersion()
   }
 }
-
 
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions

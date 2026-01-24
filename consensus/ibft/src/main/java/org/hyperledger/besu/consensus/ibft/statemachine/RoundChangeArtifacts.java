@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,17 +31,22 @@ import java.util.stream.Collectors;
 public class RoundChangeArtifacts {
 
   private final Optional<Block> block;
+  private final Optional<BlockAccessList> blockAccessList;
   private final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
   /**
    * Instantiates a new Round change artifacts.
    *
    * @param block the block
+   * @param blockAccessList the block access list
    * @param roundChangePayloads the round change payloads
    */
   public RoundChangeArtifacts(
-      final Optional<Block> block, final List<SignedData<RoundChangePayload>> roundChangePayloads) {
+      final Optional<Block> block,
+      final Optional<BlockAccessList> blockAccessList,
+      final List<SignedData<RoundChangePayload>> roundChangePayloads) {
     this.block = block;
+    this.blockAccessList = blockAccessList;
     this.roundChangePayloads = roundChangePayloads;
   }
 
@@ -51,6 +57,15 @@ public class RoundChangeArtifacts {
    */
   public Optional<Block> getBlock() {
     return block;
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
   }
 
   /**
@@ -91,6 +106,8 @@ public class RoundChangeArtifacts {
 
     final Optional<Block> proposedBlock =
         roundChangeWithNewestPrepare.flatMap(RoundChange::getProposedBlock);
-    return new RoundChangeArtifacts(proposedBlock, payloads);
+    final Optional<BlockAccessList> proposedBlockAccessList =
+        roundChangeWithNewestPrepare.flatMap(RoundChange::getBlockAccessList);
+    return new RoundChangeArtifacts(proposedBlock, proposedBlockAccessList, payloads);
   }
 }

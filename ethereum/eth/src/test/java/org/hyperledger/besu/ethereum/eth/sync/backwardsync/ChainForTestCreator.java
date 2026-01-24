@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class ChainForTestCreator {
 
@@ -54,7 +55,7 @@ public class ChainForTestCreator {
         0,
         Bytes.EMPTY,
         null,
-        Hash.EMPTY,
+        Bytes32.wrap(Hash.EMPTY.getBytes()),
         0,
         null,
         null,
@@ -83,7 +84,7 @@ public class ChainForTestCreator {
         blockHeader.getTimestamp(),
         blockHeader.getExtraData(),
         blockHeader.getBaseFee().orElse(null),
-        blockHeader.getMixHash(),
+        Bytes32.wrap(blockHeader.getMixHash().getBytes()),
         blockHeader.getNonce(),
         blockHeader.getWithdrawalsRoot().orElse(null),
         blockHeader.getBlobGasUsed().orElse(null),
@@ -134,7 +135,7 @@ public class ChainForTestCreator {
         0,
         Bytes.EMPTY,
         Wei.ZERO,
-        Hash.EMPTY,
+        Bytes32.wrap(Hash.EMPTY.getBytes()),
         0,
         null,
         null,

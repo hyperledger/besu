@@ -114,12 +114,12 @@ public class TrieLogManager {
     LOG.atDebug()
         .setMessage("Persisting trie log for block hash {} and world state root {}")
         .addArgument(() -> Util.toLogString(blockHeader))
-        .addArgument(worldStateRootHash::toHexString)
+        .addArgument(() -> worldStateRootHash.getBytes().toHexString())
         .log();
 
     stateUpdater
         .getTrieLogStorageTransaction()
-        .put(blockHeader.getBlockHash().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
+        .put(blockHeader.getBlockHash().getBytes().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
   }
 
   public long getMaxLayersToLoad() {
@@ -183,7 +183,7 @@ public class TrieLogManager {
         final PathBasedWorldStateKeyValueStorage.Updater updater = rootWorldStateStorage.updater();
         updater
             .getTrieLogStorageTransaction()
-            .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
+            .put(blockHash.getBytes().toArrayUnsafe(), trieLog.toArrayUnsafe());
         updater.commitTrieLogOnly();
         // TODO maybe find a way to have a clean and complete trielog for observers
         trieLogObservers.forEach(

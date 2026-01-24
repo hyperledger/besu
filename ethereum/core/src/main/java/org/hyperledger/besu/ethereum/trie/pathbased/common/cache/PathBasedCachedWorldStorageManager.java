@@ -39,7 +39,6 @@ import java.util.function.Function;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,12 +56,12 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
           .build();
 
   private final PathBasedWorldStateKeyValueStorage rootWorldStateStorage;
-  private final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash;
+  private final Map<Hash, PathBasedCachedWorldView> cachedWorldStatesByHash;
 
   protected PathBasedCachedWorldStorageManager(
       final PathBasedWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash,
+      final Map<Hash, PathBasedCachedWorldView> cachedWorldStatesByHash,
       final EvmConfiguration evmConfiguration,
       final WorldStateConfig worldStateConfig) {
     worldStateKeyValueStorage.subscribe(this);
@@ -87,7 +86,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
         LOG.atDebug()
             .setMessage("updating layered world state for block {}, state root hash {}")
             .addArgument(() -> Util.toLogString(blockHeader))
-            .addArgument(worldStateRootHash::toShortHexString)
+            .addArgument(() -> worldStateRootHash.getBytes().toShortHexString())
             .log();
         cachedPathBasedWorldView
             .get()
@@ -98,7 +97,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
       LOG.atDebug()
           .setMessage("adding layered world state for block {}, state root hash {}")
           .addArgument(() -> Util.toLogString(blockHeader))
-          .addArgument(worldStateRootHash::toShortHexString)
+          .addArgument(() -> worldStateRootHash.getBytes().toShortHexString())
           .log();
       if (forWorldState.isModifyingHeadWorldState()) {
         cachedWorldStatesByHash.put(
@@ -147,7 +146,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
     }
     LOG.atDebug()
         .setMessage("did not find worldstate in cache for {}")
-        .addArgument(blockHash.toShortHexString())
+        .addArgument(blockHash.getBytes().toShortHexString())
         .log();
 
     return Optional.empty();

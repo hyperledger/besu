@@ -19,8 +19,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+
+import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -59,6 +68,52 @@ public class RoundChangeMessageTest {
 
     assertThat(roundChangeMessage.getData()).isEqualTo(messageBytes);
     assertThat(roundChangeMessage.getCode()).isEqualTo(IbftV2.ROUND_CHANGE);
+  }
+
+  @Test
+  public void createMessageFromRoundWithBlockAccessList() {
+    final NodeKey nodeKey = NodeKeyUtils.generate();
+    final Proposal expectedProposal =
+        TestHelpers.createSignedProposalPayload(
+            nodeKey, Optional.of(BlockAccessList.builder().build()));
+    final RoundChange expectedRoundChange =
+        TestHelpers.createSignedRoundChangePayload(
+            nodeKey,
+            Optional.of(new PreparedRoundArtifacts(expectedProposal, Collections.emptyList())));
+    final RoundChangeMessageData expectedMessage =
+        RoundChangeMessageData.create(expectedRoundChange);
+    when(messageData.getCode()).thenReturn(expectedMessage.getCode());
+    when(messageData.getData()).thenReturn(expectedMessage.getData());
+    final RoundChangeMessageData roundMessage = RoundChangeMessageData.fromMessageData(messageData);
+
+    assertThat(roundMessage.getData()).isEqualTo(expectedMessage.getData());
+    assertThat(roundMessage.getCode()).isEqualTo(expectedMessage.getCode());
+
+    final RoundChange decodedRound = roundMessage.decode();
+    assertThat(decodedRound).isEqualTo(expectedRoundChange);
+    assertThat(decodedRound.getBlockAccessList()).isPresent();
+  }
+
+  @Test
+  public void createMessageFromRoundWithoutBlockAccessList() {
+    final NodeKey nodeKey = NodeKeyUtils.generate();
+    final Proposal expectedProposal = TestHelpers.createSignedProposalPayload(nodeKey);
+    final RoundChange expectedRoundChange =
+        TestHelpers.createSignedRoundChangePayload(
+            nodeKey,
+            Optional.of(new PreparedRoundArtifacts(expectedProposal, Collections.emptyList())));
+    final RoundChangeMessageData expectedMessage =
+        RoundChangeMessageData.create(expectedRoundChange);
+    when(messageData.getCode()).thenReturn(expectedMessage.getCode());
+    when(messageData.getData()).thenReturn(expectedMessage.getData());
+    final RoundChangeMessageData roundMessage = RoundChangeMessageData.fromMessageData(messageData);
+
+    assertThat(roundMessage.getData()).isEqualTo(expectedMessage.getData());
+    assertThat(roundMessage.getCode()).isEqualTo(expectedMessage.getCode());
+
+    final RoundChange decodedRound = roundMessage.decode();
+    assertThat(decodedRound).isEqualTo(expectedRoundChange);
+    assertThat(decodedRound.getBlockAccessList()).isEmpty();
   }
 
   @Test

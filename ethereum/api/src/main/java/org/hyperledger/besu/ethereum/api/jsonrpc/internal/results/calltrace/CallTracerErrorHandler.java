@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.OpcodeCategory.isCreateOp;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -170,6 +171,9 @@ public final class CallTracerErrorHandler {
         && result.getRevertReason().isPresent()) {
       // For regular calls that reverted, set the output to the revert reason
       builder.output(result.getRevertReason().get().toHexString());
+      // Decode and set revertReason only if it's a valid Error(string) for Geth compatibility
+      JsonRpcErrorResponse.decodeRevertReason(result.getRevertReason().get())
+          .ifPresent(builder::revertReasonDecoded);
     }
   }
 
@@ -193,7 +197,18 @@ public final class CallTracerErrorHandler {
       handleExceptionalHalt(builder, frame);
     } else if (OpcodeCategory.isRevertOp(opcode)) {
       builder.error(EXECUTION_REVERTED);
-      frame.getRevertReason().ifPresent(builder::revertReason);
+
+      // Try to decode revert reason from output data for Geth compatibility
+      // First check if frame has revert reason set
+      if (frame.getRevertReason().isPresent()) {
+        JsonRpcErrorResponse.decodeRevertReason(frame.getRevertReason().get())
+            .ifPresent(builder::revertReasonDecoded);
+      }
+      // Otherwise, decode from output data if present
+      else if (frame.getOutputData() != null && !frame.getOutputData().isEmpty()) {
+        JsonRpcErrorResponse.decodeRevertReason(frame.getOutputData())
+            .ifPresent(builder::revertReasonDecoded);
+      }
     }
   }
 

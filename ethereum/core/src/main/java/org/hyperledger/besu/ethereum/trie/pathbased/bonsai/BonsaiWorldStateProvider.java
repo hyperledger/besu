@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
 
@@ -38,6 +39,7 @@ import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +52,13 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final Optional<Long> maxLayersToLoad,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
       final CodeCache codeCache) {
-    super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
+    super(worldStateKeyValueStorage, blockchain, pathBasedExtraStorageConfiguration, pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
@@ -71,6 +73,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
   @VisibleForTesting
   BonsaiWorldStateProvider(
       final BonsaiCachedWorldStorageManager bonsaiCachedWorldStorageManager,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
@@ -78,7 +81,8 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
       final CodeCache codeCache) {
-    super(worldStateKeyValueStorage, blockchain, trieLogManager);
+    super(
+        worldStateKeyValueStorage, blockchain, pathBasedExtraStorageConfiguration, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
@@ -108,7 +112,7 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
         getBonsaiWorldStateKeyValueStorage().updater();
     final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-        new StoredMerklePatriciaTrie<>(
+        new StoredMerklePatriciaTrie<Bytes, Bytes>(
             (l, h) -> {
               final Optional<Bytes> node =
                   getBonsaiWorldStateKeyValueStorage().getAccountStateTrieNode(l, h);
@@ -117,28 +121,28 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
               }
               return node;
             },
-            headWorldState.getWorldStateRootHash(),
+            Bytes32.wrap(headWorldState.getWorldStateRootHash().getBytes()),
             Function.identity(),
             Function.identity());
     try {
       accountTrie
-          .get(accountHash)
+          .get(accountHash.getBytes())
           .map(RLP::input)
           .map(PmtStateTrieAccountValue::readFrom)
           .ifPresent(
               account -> {
                 final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-                    new StoredMerklePatriciaTrie<>(
+                    new StoredMerklePatriciaTrie<Bytes, Bytes>(
                         (l, h) -> {
                           Optional<Bytes> node =
                               getBonsaiWorldStateKeyValueStorage()
                                   .getAccountStorageTrieNode(accountHash, l, h);
                           if (node.isPresent()) {
-                            keysToDelete.add(Bytes.concatenate(accountHash, l));
+                            keysToDelete.add(Bytes.concatenate(accountHash.getBytes(), l));
                           }
                           return node;
                         },
-                        account.getStorageRoot(),
+                        Bytes32.wrap(account.getStorageRoot().getBytes()),
                         Function.identity(),
                         Function.identity());
                 try {

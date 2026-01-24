@@ -351,9 +351,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final var block =
         new Block(
-            newBlockHeader,
-            new BlockBody(
-                transactions, Collections.emptyList(), maybeWithdrawals, maybeBlockAccessList));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -372,7 +370,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // execute block and return result response
     final long startTimeNs = System.nanoTime();
-    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
+    final BlockProcessingResult executionResult =
+        mergeCoordinator.rememberBlock(block, maybeBlockAccessList);
     if (executionResult.isSuccessful()) {
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
@@ -462,7 +461,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(param::getBlockNumber)
         .addArgument(param::getBlockHash)
         .addArgument(param::getParentHash)
-        .addArgument(() -> latestValidHash == null ? null : latestValidHash.toHexString())
+        .addArgument(
+            () -> latestValidHash == null ? null : latestValidHash.getBytes().toHexString())
         .addArgument(status::name)
         .log();
     return new JsonRpcSuccessResponse(
@@ -488,7 +488,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             param.getBlockNumber(),
             param.getBlockHash(),
             param.getParentHash(),
-            latestValidHash == null ? null : latestValidHash.toHexString(),
+            latestValidHash == null ? null : latestValidHash.getBytes().toHexString(),
             invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG

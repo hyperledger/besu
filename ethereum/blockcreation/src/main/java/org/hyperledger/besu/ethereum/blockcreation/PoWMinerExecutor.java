@@ -101,7 +101,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     if (coinbase == null) {
       throw new IllegalArgumentException("Coinbase cannot be unset.");
     } else {
-      miningConfiguration.setCoinbase(Address.wrap(coinbase.copy()));
+      miningConfiguration.setCoinbase(Address.wrap(coinbase.getBytes().copy()));
     }
   }
 
