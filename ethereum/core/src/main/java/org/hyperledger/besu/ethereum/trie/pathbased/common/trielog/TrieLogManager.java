@@ -119,7 +119,9 @@ public class TrieLogManager {
 
     stateUpdater
         .getTrieLogStorageTransaction()
-        .put(blockHeader.getBlockHash().getBytes().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
+        .put(
+            blockHeader.getBlockHash().getBytes().toArrayUnsafe(),
+            trieLogFactory.serialize(trieLog));
   }
 
   public long getMaxLayersToLoad() {
