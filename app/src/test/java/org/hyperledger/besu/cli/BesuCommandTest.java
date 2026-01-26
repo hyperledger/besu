@@ -2815,11 +2815,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=1000",
-        "--Xchain-pruning-bals-retained=2000");
+        "--Xchain-pruning-bals-retained=2000",
+        "--Xchain-pruning-retained-limit=500");
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xchain-pruning-bals-retained must be >= --Xchain-pruning-blocks-retained when pruning mode is ALL");
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained when pruning mode is ALL");
   }
 
   @Test
@@ -2828,9 +2829,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=2000",
-        "--Xchain-pruning-bals-retained=1000");
+        "--Xchain-pruning-bals-retained=1000",
+        "--Xchain-pruning-retained-limit=500");
 
     // Should succeed - we keep more BALs than blocks
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningBlocksRetainedCanBeGreaterThanBalsRetainedInBalMode() {
+    // In BAL mode, blocks are never pruned (Long.MAX_VALUE)
+    // BALs retained can be any value >= retained limit
+    parseCommand(
+        "--Xchain-pruning-enabled=BAL",
+        "--Xchain-pruning-blocks-retained=" + Long.MAX_VALUE,
+        "--Xchain-pruning-bals-retained=1000",
+        "--Xchain-pruning-retained-limit=500");
+
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -2846,23 +2861,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void chainPruningBalsRetainedCanBeGreaterThanBlocksRetainedInBalMode() {
-    // In BAL mode, blocks are never pruned (Long.MAX_VALUE)
-    // BALs retained can be any value >= retained limit
-    parseCommand(
-        "--Xchain-pruning-enabled=BAL",
-        "--Xchain-pruning-blocks-retained=" + Long.MAX_VALUE,
-        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
-
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void chainPruningAllModeWithValidValuesSucceeds() {
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
-        "--Xchain-pruning-bals-retained=" + (CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT + 1000),
+        "--Xchain-pruning-blocks-retained=" + (CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT + 100),
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
         "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
