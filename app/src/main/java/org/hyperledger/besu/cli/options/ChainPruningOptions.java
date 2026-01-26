@@ -56,7 +56,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       names = {CHAIN_PRUNING_ENABLED_FLAG},
       description =
           "Enable the chain pruner to actively prune old chain data. Options: ALL (blocks and BALs), BAL (only BALs), NONE (disabled) (default: ${DEFAULT-VALUE})")
-  private final ChainPruningMode chainPruningMode = ChainPruningMode.NONE;
+  private final ChainPruningMode chainPruningMode = ChainPruningMode.BAL;
 
   @CommandLine.Option(
       hidden = true,
